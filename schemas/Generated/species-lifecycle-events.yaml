@@ -11,6 +11,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to species.created when a species is created
       required:
       - eventName
@@ -87,6 +88,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to species.updated when a species is updated
       required:
       - eventName
@@ -130,6 +132,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to species.deleted when a species is deleted
       required:
       - eventName

@@ -377,6 +377,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "ListAccountsRequest": {
       "type": "object",
       "description": "Request to list accounts with optional filtering",
+      "additionalProperties": false,
       "properties": {
         "email": {
           "type": "string",
@@ -441,6 +442,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountListResponse": {
       "type": "object",
       "description": "Paginated list of accounts",
+      "additionalProperties": false,
       "required": [
         "accounts",
         "totalCount",
@@ -480,6 +482,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountResponse": {
       "type": "object",
       "description": "Account information response",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -548,6 +551,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -658,6 +662,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CreateAccountRequest": {
       "type": "object",
       "description": "Request to create a new account",
+      "additionalProperties": false,
       "required": [
         "email"
       ],
@@ -688,8 +693,8 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
           "items": {
             "type": "string"
           },
-          "default": [],
-          "description": "List of roles assigned to the account"
+          "nullable": true,
+          "description": "List of roles assigned to the account (null defaults to empty)"
         },
         "metadata": {
           "type": "object",
@@ -711,6 +716,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountResponse": {
       "type": "object",
       "description": "Account information response",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -779,6 +785,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -889,6 +896,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "GetAccountRequest": {
       "type": "object",
       "description": "Request to get a specific account by ID",
+      "additionalProperties": false,
       "required": [
         "accountId"
       ],
@@ -912,6 +920,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountResponse": {
       "type": "object",
       "description": "Account information response",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -980,6 +989,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -1090,6 +1100,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "UpdateAccountRequest": {
       "type": "object",
       "description": "Request to update an existing account",
+      "additionalProperties": false,
       "required": [
         "accountId"
       ],
@@ -1133,6 +1144,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountResponse": {
       "type": "object",
       "description": "Account information response",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -1201,6 +1213,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -1311,6 +1324,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "DeleteAccountRequest": {
       "type": "object",
       "description": "Request to delete a specific account",
+      "additionalProperties": false,
       "required": [
         "accountId"
       ],
@@ -1394,6 +1408,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "GetAccountByEmailRequest": {
       "type": "object",
       "description": "Request to get account by email address",
+      "additionalProperties": false,
       "required": [
         "email"
       ],
@@ -1417,6 +1432,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountResponse": {
       "type": "object",
       "description": "Account information response",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -1485,6 +1501,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -1595,6 +1612,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "GetAuthMethodsRequest": {
       "type": "object",
       "description": "Request to get authentication methods for an account",
+      "additionalProperties": false,
       "required": [
         "accountId"
       ],
@@ -1618,6 +1636,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodsResponse": {
       "type": "object",
       "description": "Response containing list of authentication methods",
+      "additionalProperties": false,
       "required": [
         "authMethods"
       ],
@@ -1634,6 +1653,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -1744,6 +1764,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AddAuthMethodRequest": {
       "type": "object",
       "description": "Request to add an authentication method to an account",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "provider"
@@ -1791,6 +1812,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodResponse": {
       "type": "object",
       "description": "Response after adding an authentication method",
+      "additionalProperties": false,
       "required": [
         "methodId",
         "provider",
@@ -1900,6 +1922,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "RemoveAuthMethodRequest": {
       "type": "object",
       "description": "Request to remove an authentication method from an account",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "methodId"
@@ -1989,6 +2012,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "GetAccountByProviderRequest": {
       "type": "object",
       "description": "Request to get account by external provider ID",
+      "additionalProperties": false,
       "required": [
         "provider",
         "externalId"
@@ -2026,6 +2050,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountResponse": {
       "type": "object",
       "description": "Account information response",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -2094,6 +2119,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -2204,6 +2230,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "UpdateProfileRequest": {
       "type": "object",
       "description": "Request to update an account profile",
+      "additionalProperties": false,
       "required": [
         "accountId"
       ],
@@ -2239,6 +2266,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AccountResponse": {
       "type": "object",
       "description": "Account information response",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -2307,6 +2335,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "AuthMethodInfo": {
       "type": "object",
       "description": "Information about a linked authentication method",
+      "additionalProperties": false,
       "required": [
         "provider",
         "linkedAt"
@@ -2417,6 +2446,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "UpdatePasswordRequest": {
       "type": "object",
       "description": "Request to update an account password",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "passwordHash"
@@ -2505,6 +2535,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     "UpdateVerificationRequest": {
       "type": "object",
       "description": "Request to update email verification status",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "emailVerified"

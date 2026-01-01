@@ -471,6 +471,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "StatusResponse": {
       "description": "Health and version status information for the website service",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "status",
         "version",
@@ -574,6 +575,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PageContent": {
       "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "slug",
         "title",
@@ -643,6 +645,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SEOMetadata": {
       "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "description": {
           "type": "string",
@@ -746,6 +749,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "NewsResponse": {
       "description": "Paginated list of news items with total count",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "items",
         "total"
@@ -771,6 +775,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "NewsItem": {
       "description": "A single news article or announcement entry",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "id",
         "title",
@@ -892,6 +897,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ServerStatusResponse": {
       "description": "Aggregated status of all game server realms",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realms",
         "globalStatus"
@@ -919,6 +925,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmStatus": {
       "description": "Status and population information for a single game realm",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "name",
@@ -1038,6 +1045,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DownloadsResponse": {
       "description": "Collection of available game client downloads by platform",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "clients"
       ],
@@ -1054,6 +1062,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DownloadInfo": {
       "description": "Download details for a specific game client version and platform",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "platform",
         "version",
@@ -1168,6 +1177,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ContactRequest": {
       "description": "User-submitted contact form data",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "email",
         "subject",
@@ -1222,6 +1232,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ContactResponse": {
       "description": "Confirmation response after submitting a contact form",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "ticketId",
         "message"
@@ -1311,6 +1322,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AccountProfile": {
       "description": "User account information displayed on the website profile page",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "email",
@@ -1425,6 +1437,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CharacterListResponse": {
       "description": "List of all characters belonging to an account",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characters"
       ],
@@ -1441,6 +1454,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CharacterSummary": {
       "description": "Brief overview of a character for display in character lists",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId",
         "name",
@@ -1553,6 +1567,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PageMetadata": {
       "description": "Summary metadata for a CMS page without full content",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "slug",
         "title",
@@ -1657,6 +1672,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PageContent": {
       "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "slug",
         "title",
@@ -1726,6 +1742,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SEOMetadata": {
       "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "description": {
           "type": "string",
@@ -1769,6 +1786,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PageContent": {
       "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "slug",
         "title",
@@ -1838,6 +1856,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SEOMetadata": {
       "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "description": {
           "type": "string",
@@ -1937,6 +1956,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PageContent": {
       "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "slug",
         "title",
@@ -2006,6 +2026,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SEOMetadata": {
       "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "description": {
           "type": "string",
@@ -2049,6 +2070,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PageContent": {
       "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "slug",
         "title",
@@ -2118,6 +2140,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SEOMetadata": {
       "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "description": {
           "type": "string",
@@ -2285,6 +2308,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SiteSettings": {
       "description": "Global website configuration including branding, languages, and integrations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "siteName",
         "siteUrl",
@@ -2353,6 +2377,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "Analytics": {
       "description": "Analytics and tracking configuration for website visitor metrics",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "googleAnalyticsId": {
           "type": "string",
@@ -2369,6 +2394,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CustomScripts": {
       "description": "Custom script injection configuration for adding JavaScript to pages",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "head": {
           "type": "string",
@@ -2455,6 +2481,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SiteSettings": {
       "description": "Global website configuration including branding, languages, and integrations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "siteName",
         "siteUrl",
@@ -2523,6 +2550,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "Analytics": {
       "description": "Analytics and tracking configuration for website visitor metrics",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "googleAnalyticsId": {
           "type": "string",
@@ -2539,6 +2567,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CustomScripts": {
       "description": "Custom script injection configuration for adding JavaScript to pages",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "head": {
           "type": "string",
@@ -2569,6 +2598,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SiteSettings": {
       "description": "Global website configuration including branding, languages, and integrations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "siteName",
         "siteUrl",
@@ -2637,6 +2667,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "Analytics": {
       "description": "Analytics and tracking configuration for website visitor metrics",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "googleAnalyticsId": {
           "type": "string",
@@ -2653,6 +2684,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CustomScripts": {
       "description": "Custom script injection configuration for adding JavaScript to pages",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "head": {
           "type": "string",
@@ -2743,6 +2775,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ThemeConfig": {
       "description": "Visual theme configuration including colors, fonts, and navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "themeName",
         "primaryColor"
@@ -2803,6 +2836,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "Logo": {
       "description": "Site logo configuration including image URL and accessibility text",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "url": {
           "type": "string",
@@ -2818,6 +2852,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "NavigationItem": {
       "description": "A navigation menu entry with optional nested children for dropdowns",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "label",
         "url",
@@ -2922,6 +2957,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ThemeConfig": {
       "description": "Visual theme configuration including colors, fonts, and navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "themeName",
         "primaryColor"
@@ -2982,6 +3018,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "Logo": {
       "description": "Site logo configuration including image URL and accessibility text",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "url": {
           "type": "string",
@@ -2997,6 +3034,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "NavigationItem": {
       "description": "A navigation menu entry with optional nested children for dropdowns",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "label",
         "url",
@@ -3109,6 +3147,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SubscriptionResponse": {
       "description": "Current subscription status and plan details for an account",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "status",
         "type"

@@ -165,6 +165,7 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
                 {'$ref': '../common-events.yaml#/components/schemas/BaseServiceEvent'}
             ],
             'type': 'object',
+            'additionalProperties': False,
             'description': f'Published to {topic} when a {entity.lower()} is {event_type}',
             'required': required,
             'properties': props

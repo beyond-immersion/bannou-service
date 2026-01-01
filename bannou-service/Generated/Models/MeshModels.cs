@@ -107,18 +107,6 @@ public partial class MeshEndpoint
     [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
     public System.DateTimeOffset RegisteredAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -189,22 +177,10 @@ public partial class GetEndpointsRequest
     public bool IncludeUnhealthy { get; set; } = false;
 
     /// <summary>
-    /// Optional filter by specific service name
+    /// Optional filter by specific service name (null for all services)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public string? ServiceName { get; set; } = default!;
 
 }
 
@@ -243,18 +219,6 @@ public partial class GetEndpointsResponse
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -276,18 +240,6 @@ public partial class ListEndpointsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appIdFilter")]
     public string? AppIdFilter { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -313,18 +265,6 @@ public partial class ListEndpointsResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public EndpointSummary Summary { get; set; } = new EndpointSummary();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -364,18 +304,6 @@ public partial class EndpointSummary
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uniqueAppIds")]
     public int UniqueAppIds { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -417,10 +345,10 @@ public partial class RegisterEndpointRequest
     public int Port { get; set; } = 80;
 
     /// <summary>
-    /// List of service names hosted on this endpoint
+    /// List of service names hosted on this endpoint (null for none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Services { get; set; } = default!;
 
     /// <summary>
     /// Maximum concurrent connections
@@ -429,22 +357,10 @@ public partial class RegisterEndpointRequest
     public int MaxConnections { get; set; } = 1000;
 
     /// <summary>
-    /// Optional metadata key-value pairs
+    /// Optional metadata key-value pairs (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 
@@ -475,18 +391,6 @@ public partial class RegisterEndpointResponse
     [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
     public int TtlSeconds { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -503,18 +407,6 @@ public partial class DeregisterEndpointRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -534,41 +426,29 @@ public partial class HeartbeatRequest
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Current health status of the endpoint
+    /// Current health status of the endpoint (null to keep previous)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EndpointStatus Status { get; set; } = default!;
+    public EndpointStatus? Status { get; set; } = default!;
 
     /// <summary>
-    /// Current load (0-100)
+    /// Current load 0-100 (null to keep previous)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loadPercent")]
-    public float LoadPercent { get; set; } = default!;
+    public float? LoadPercent { get; set; } = default!;
 
     /// <summary>
-    /// Current active connections
+    /// Current active connections (null to keep previous)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
-    public int CurrentConnections { get; set; } = default!;
+    public int? CurrentConnections { get; set; } = default!;
 
     /// <summary>
-    /// List of non-critical issues
+    /// List of non-critical issues (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("issues")]
-    public System.Collections.Generic.ICollection<string> Issues { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public System.Collections.Generic.ICollection<string>? Issues { get; set; } = default!;
 
 }
 
@@ -597,18 +477,6 @@ public partial class HeartbeatResponse
     [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
     public int TtlSeconds { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -627,10 +495,10 @@ public partial class GetRouteRequest
     public string AppId { get; set; } = default!;
 
     /// <summary>
-    /// Optional service name for affinity routing
+    /// Optional service name for affinity routing (null for no affinity)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = default!;
+    public string? ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Load balancing algorithm to use for endpoint selection
@@ -638,18 +506,6 @@ public partial class GetRouteRequest
     [System.Text.Json.Serialization.JsonPropertyName("algorithm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public LoadBalancerAlgorithm Algorithm { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -674,18 +530,6 @@ public partial class GetRouteResponse
     [System.Text.Json.Serialization.JsonPropertyName("alternates")]
     public System.Collections.Generic.ICollection<MeshEndpoint> Alternates { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -700,18 +544,6 @@ public partial class GetMappingsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceNameFilter")]
     public string? ServiceNameFilter { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -742,18 +574,6 @@ public partial class GetMappingsResponse
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public long Version { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -768,18 +588,6 @@ public partial class GetHealthRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeEndpoints")]
     public bool IncludeEndpoints { get; set; } = false;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -830,18 +638,6 @@ public partial class MeshHealthResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoints")]
     public System.Collections.Generic.ICollection<MeshEndpoint> Endpoints { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

@@ -16,6 +16,7 @@ components:
   schemas:
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       description: |
         Base schema for all service-to-service events.
         All service events MUST include these fields and inherit from this schema.
@@ -44,6 +45,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by any service during startup to register its API endpoints
         and permission requirements with the Permissions service.
@@ -87,6 +89,7 @@ components:
 
     ServiceEndpoint:
       type: object
+      additionalProperties: false
       description: |
         Individual API endpoint with permission requirements.
         Extracted from OpenAPI schema x-permissions sections.
@@ -116,6 +119,7 @@ components:
 
     PermissionRequirement:
       type: object
+      additionalProperties: false
       description: |
         Permission requirement mapping role and state to endpoint access.
         Defines which roles can access an endpoint in which states.
@@ -142,6 +146,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published periodically by each bannou instance to indicate health and capacity.
         Contains aggregated information for ALL services hosted by this app instance.
@@ -194,6 +199,7 @@ components:
 
     ServiceStatus:
       type: object
+      additionalProperties: false
       description: Status of an individual service/plugin within an app instance
       required:
         - serviceId
@@ -222,6 +228,7 @@ components:
 
     InstanceCapacity:
       type: object
+      additionalProperties: false
       description: Instance-level capacity and load information
       properties:
         maxConnections:
@@ -243,6 +250,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Structured error event for unexpected service failures (akin to Sentry).
         Use ONLY for internal faults, not for user/input errors.
@@ -319,6 +327,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published periodically by Orchestrator as the authoritative source of truth
         for all service-to-app-id mappings across the entire network.
@@ -359,6 +368,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by Connect service when a WebSocket connection is fully established.
         This event ensures the RabbitMQ exchange exists before any service publishes
@@ -412,6 +422,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by Connect service when a WebSocket connection is closed.
         Used by Permissions service to remove session from activeConnections.
@@ -451,6 +462,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by Connect service when a WebSocket session is restored after reconnection.
         Services should subscribe to this event to re-publish any session shortcuts they

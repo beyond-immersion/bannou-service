@@ -197,11 +197,11 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Password hashed successfully for registration");
 
             // Create account via AccountsClient service call
-            _logger.LogInformation("Creating account via AccountsClient for registration: {Email}", body.Email ?? $"{body.Username}@example.com");
+            _logger.LogInformation("Creating account via AccountsClient for registration: {Email}", body.Email);
 
             var createRequest = new CreateAccountRequest
             {
-                Email = body.Email ?? $"{body.Username}@example.com",
+                Email = body.Email,
                 DisplayName = body.Username,
                 PasswordHash = passwordHash, // Store hashed password
                 EmailVerified = false
@@ -221,7 +221,7 @@ public partial class AuthService : IAuthService
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
-                _logger.LogWarning("Account with email {Email} already exists", body.Email ?? body.Username);
+                _logger.LogWarning("Account with email {Email} already exists", body.Email);
                 return (StatusCodes.Conflict, null);
             }
             catch (ApiException ex) when (ex.StatusCode == 400)

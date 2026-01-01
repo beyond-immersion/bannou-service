@@ -11,6 +11,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to relationship-type.created when a relationshiptype is created
       required:
       - eventName
@@ -91,6 +92,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to relationship-type.updated when a relationshiptype is updated
       required:
       - eventName
@@ -136,6 +138,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to relationship-type.deleted when a relationshiptype is deleted
       required:
       - eventName

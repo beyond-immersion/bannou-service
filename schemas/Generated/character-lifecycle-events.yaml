@@ -11,6 +11,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to character.created when a character is created
       required:
       - eventName
@@ -60,6 +61,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to character.updated when a character is updated
       required:
       - eventName
@@ -93,6 +95,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to character.deleted when a character is deleted
       required:
       - eventName

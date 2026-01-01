@@ -1174,14 +1174,10 @@ public partial class AssetService : IAssetService
                 ExpiresAt = uploadResult.ExpiresAt
             };
 
-            // Add required headers to additional properties if any
+            // Add required headers if any
             if (uploadResult.RequiredHeaders != null)
             {
-                response.AdditionalProperties ??= new Dictionary<string, object>();
-                foreach (var header in uploadResult.RequiredHeaders)
-                {
-                    response.AdditionalProperties[$"header_{header.Key}"] = header.Value;
-                }
+                response.RequiredHeaders = new Dictionary<string, string>(uploadResult.RequiredHeaders);
             }
 
             return (StatusCodes.OK, response);

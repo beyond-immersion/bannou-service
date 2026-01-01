@@ -62,31 +62,32 @@ paths:
           description: Voice room already exists for this session
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateVoiceRoomRequest\"\
-        ,\n  \"$defs\": {\n    \"CreateVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
-        to create a voice room for a game session\",\n      \"required\": [\n        \"sessionId\"\n      ],\n      \"properties\"\
-        : {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Game session ID this voice room is associated with\"\n        },\n        \"preferredTier\": {\n          \"$ref\"\
-        : \"#/$defs/VoiceTier\",\n          \"description\": \"Preferred voice tier (defaults to p2p)\"\n        },\n    \
-        \    \"maxParticipants\": {\n          \"type\": \"integer\",\n          \"minimum\": 2,\n          \"maximum\": 100,\n\
-        \          \"default\": 6,\n          \"description\": \"Maximum participants before tier upgrade\"\n        },\n\
-        \        \"codec\": {\n          \"$ref\": \"#/$defs/VoiceCodec\",\n          \"description\": \"Preferred audio codec
-        (defaults to opus)\"\n        }\n      }\n    },\n    \"VoiceTier\": {\n      \"type\": \"string\",\n      \"enum\"\
-        : [\n        \"p2p\",\n        \"scaled\"\n      ],\n      \"description\": \"Voice communication tier:\\n- p2p: Direct
-        peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated communication (unlimited participants)\\\
-        n\"\n    },\n    \"VoiceCodec\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"opus\",\n        \"\
-        g711\",\n        \"g722\"\n      ],\n      \"description\": \"Audio codec for voice communication\"\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"CreateVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Request to create a voice room for a game session\",\n      \"required\": [\n \
+        \       \"sessionId\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Game session ID this voice room is associated with\"\
+        \n        },\n        \"preferredTier\": {\n          \"$ref\": \"#/$defs/VoiceTier\",\n          \"description\"\
+        : \"Preferred voice tier (defaults to p2p)\"\n        },\n        \"maxParticipants\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 2,\n          \"maximum\": 100,\n          \"default\": 6,\n          \"description\": \"\
+        Maximum participants before tier upgrade\"\n        },\n        \"codec\": {\n          \"$ref\": \"#/$defs/VoiceCodec\"\
+        ,\n          \"description\": \"Preferred audio codec (defaults to opus)\"\n        }\n      }\n    },\n    \"VoiceTier\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"p2p\",\n        \"scaled\"\n      ],\n      \"description\"\
+        : \"Voice communication tier:\\n- p2p: Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated
+        communication (unlimited participants)\\n\"\n    },\n    \"VoiceCodec\": {\n      \"type\": \"string\",\n      \"\
+        enum\": [\n        \"opus\",\n        \"g711\",\n        \"g722\"\n      ],\n      \"description\": \"Audio codec
+        for voice communication\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/VoiceRoomResponse\"\
-        ,\n  \"$defs\": {\n    \"VoiceRoomResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Voice room
-        details\",\n      \"required\": [\n        \"roomId\",\n        \"sessionId\",\n        \"tier\",\n        \"createdAt\"\
-        \n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"Unique voice room identifier\"\n        },\n        \"sessionId\": {\n \
-        \         \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Associated game session
-        ID\"\n        },\n        \"tier\": {\n          \"$ref\": \"#/$defs/VoiceTier\",\n          \"description\": \"Current
-        voice tier\"\n        },\n        \"codec\": {\n          \"$ref\": \"#/$defs/VoiceCodec\",\n          \"description\"\
-        : \"Active audio codec\"\n        },\n        \"maxParticipants\": {\n          \"type\": \"integer\",\n         \
-        \ \"description\": \"Maximum participants before tier upgrade\"\n        },\n        \"currentParticipants\": {\n\
-        \          \"type\": \"integer\",\n          \"description\": \"Current number of participants\"\n        },\n   \
-        \     \"participants\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/VoiceParticipant\"\
+        ,\n  \"$defs\": {\n    \"VoiceRoomResponse\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"description\": \"Voice room details\",\n      \"required\": [\n        \"roomId\",\n        \"sessionId\"\
+        ,\n        \"tier\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique voice room identifier\"\n\
+        \        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n        \
+        \  \"description\": \"Associated game session ID\"\n        },\n        \"tier\": {\n          \"$ref\": \"#/$defs/VoiceTier\"\
+        ,\n          \"description\": \"Current voice tier\"\n        },\n        \"codec\": {\n          \"$ref\": \"#/$defs/VoiceCodec\"\
+        ,\n          \"description\": \"Active audio codec\"\n        },\n        \"maxParticipants\": {\n          \"type\"\
+        : \"integer\",\n          \"description\": \"Maximum participants before tier upgrade\"\n        },\n        \"currentParticipants\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Current number of participants\"\n        },\n\
+        \        \"participants\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/VoiceParticipant\"\
         \n          },\n          \"description\": \"List of current participants\"\n        },\n        \"createdAt\": {\n\
         \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When the room
         was created\"\n        },\n        \"rtpServerUri\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
@@ -95,14 +96,15 @@ paths:
         : \"Voice communication tier:\\n- p2p: Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated
         communication (unlimited participants)\\n\"\n    },\n    \"VoiceCodec\": {\n      \"type\": \"string\",\n      \"\
         enum\": [\n        \"opus\",\n        \"g711\",\n        \"g722\"\n      ],\n      \"description\": \"Audio codec
-        for voice communication\"\n    },\n    \"VoiceParticipant\": {\n      \"type\": \"object\",\n      \"description\"\
-        : \"Participant in a voice room\",\n      \"required\": [\n        \"sessionId\",\n        \"joinedAt\"\n      ],\n\
-        \      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"\
-        WebSocket session ID (unique participant identifier)\"\n        },\n        \"displayName\": {\n          \"type\"\
-        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Display name\"\n        },\n        \"\
-        joinedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"\
-        When the participant joined\"\n        },\n        \"isMuted\": {\n          \"type\": \"boolean\",\n          \"\
-        default\": false,\n          \"description\": \"Whether participant is muted\"\n        }\n      }\n    }\n  }\n}"
+        for voice communication\"\n    },\n    \"VoiceParticipant\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Participant in a voice room\",\n      \"required\": [\n        \"sessionId\",\n\
+        \        \"joinedAt\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"WebSocket session ID (unique participant identifier)\"\n        },\n        \"displayName\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Display name\"\n\
+        \        },\n        \"joinedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n    \
+        \      \"description\": \"When the participant joined\"\n        },\n        \"isMuted\": {\n          \"type\": \"\
+        boolean\",\n          \"default\": false,\n          \"description\": \"Whether participant is muted\"\n        }\n\
+        \      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Create voice room for a game session\",\n  \"description\": \"Creates a new
         voice room associated with a game session.\\nCalled by GameSession service when creating a session with voice enabled.\\
         nReturns room ID and initial configuration.\\n\",\n  \"tags\": [\n    \"Voice Rooms\"\n  ],\n  \"deprecated\": false,\n\
@@ -133,22 +135,22 @@ paths:
           description: Voice room not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetVoiceRoomRequest\"\
-        ,\n  \"$defs\": {\n    \"GetVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to
-        get voice room details\",\n      \"required\": [\n        \"roomId\"\n      ],\n      \"properties\": {\n        \"\
-        roomId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Voice
-        room ID to retrieve\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"GetVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"description\": \"Request to get voice room details\",\n      \"required\": [\n        \"roomId\"\n      ],\n\
+        \      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"description\": \"Voice room ID to retrieve\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/VoiceRoomResponse\"\
-        ,\n  \"$defs\": {\n    \"VoiceRoomResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Voice room
-        details\",\n      \"required\": [\n        \"roomId\",\n        \"sessionId\",\n        \"tier\",\n        \"createdAt\"\
-        \n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"Unique voice room identifier\"\n        },\n        \"sessionId\": {\n \
-        \         \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Associated game session
-        ID\"\n        },\n        \"tier\": {\n          \"$ref\": \"#/$defs/VoiceTier\",\n          \"description\": \"Current
-        voice tier\"\n        },\n        \"codec\": {\n          \"$ref\": \"#/$defs/VoiceCodec\",\n          \"description\"\
-        : \"Active audio codec\"\n        },\n        \"maxParticipants\": {\n          \"type\": \"integer\",\n         \
-        \ \"description\": \"Maximum participants before tier upgrade\"\n        },\n        \"currentParticipants\": {\n\
-        \          \"type\": \"integer\",\n          \"description\": \"Current number of participants\"\n        },\n   \
-        \     \"participants\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/VoiceParticipant\"\
+        ,\n  \"$defs\": {\n    \"VoiceRoomResponse\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"description\": \"Voice room details\",\n      \"required\": [\n        \"roomId\",\n        \"sessionId\"\
+        ,\n        \"tier\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique voice room identifier\"\n\
+        \        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n        \
+        \  \"description\": \"Associated game session ID\"\n        },\n        \"tier\": {\n          \"$ref\": \"#/$defs/VoiceTier\"\
+        ,\n          \"description\": \"Current voice tier\"\n        },\n        \"codec\": {\n          \"$ref\": \"#/$defs/VoiceCodec\"\
+        ,\n          \"description\": \"Active audio codec\"\n        },\n        \"maxParticipants\": {\n          \"type\"\
+        : \"integer\",\n          \"description\": \"Maximum participants before tier upgrade\"\n        },\n        \"currentParticipants\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Current number of participants\"\n        },\n\
+        \        \"participants\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/VoiceParticipant\"\
         \n          },\n          \"description\": \"List of current participants\"\n        },\n        \"createdAt\": {\n\
         \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When the room
         was created\"\n        },\n        \"rtpServerUri\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
@@ -157,14 +159,15 @@ paths:
         : \"Voice communication tier:\\n- p2p: Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated
         communication (unlimited participants)\\n\"\n    },\n    \"VoiceCodec\": {\n      \"type\": \"string\",\n      \"\
         enum\": [\n        \"opus\",\n        \"g711\",\n        \"g722\"\n      ],\n      \"description\": \"Audio codec
-        for voice communication\"\n    },\n    \"VoiceParticipant\": {\n      \"type\": \"object\",\n      \"description\"\
-        : \"Participant in a voice room\",\n      \"required\": [\n        \"sessionId\",\n        \"joinedAt\"\n      ],\n\
-        \      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"\
-        WebSocket session ID (unique participant identifier)\"\n        },\n        \"displayName\": {\n          \"type\"\
-        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Display name\"\n        },\n        \"\
-        joinedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"\
-        When the participant joined\"\n        },\n        \"isMuted\": {\n          \"type\": \"boolean\",\n          \"\
-        default\": false,\n          \"description\": \"Whether participant is muted\"\n        }\n      }\n    }\n  }\n}"
+        for voice communication\"\n    },\n    \"VoiceParticipant\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Participant in a voice room\",\n      \"required\": [\n        \"sessionId\",\n\
+        \        \"joinedAt\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"WebSocket session ID (unique participant identifier)\"\n        },\n        \"displayName\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Display name\"\n\
+        \        },\n        \"joinedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n    \
+        \      \"description\": \"When the participant joined\"\n        },\n        \"isMuted\": {\n          \"type\": \"\
+        boolean\",\n          \"default\": false,\n          \"description\": \"Whether participant is muted\"\n        }\n\
+        \      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get voice room details\",\n  \"description\": \"Retrieves current state of
         a voice room including participant list.\\nCalled by GameSession service to check room status.\\n\",\n  \"tags\":
         [\n    \"Voice Rooms\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getVoiceRoom\"\n}"
@@ -200,15 +203,51 @@ paths:
           description: Voice tier unavailable (P2P full, scaled tier disabled)
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinVoiceRoomRequest\"\
-        ,\n  \"$defs\": {\n    \"JoinVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
-        to join a voice room\",\n      \"required\": [\n        \"roomId\",\n        \"sessionId\",\n        \"sipEndpoint\"\
-        \n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"Voice room ID to join\"\n        },\n        \"sessionId\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"WebSocket session ID (unique participant identifier)\"\n  \
-        \      },\n        \"sipEndpoint\": {\n          \"$ref\": \"#/$defs/SipEndpoint\",\n          \"description\": \"\
-        Participant's SIP endpoint details\"\n        },\n        \"displayName\": {\n          \"type\": \"string\",\n  \
-        \        \"maxLength\": 50,\n          \"description\": \"Display name for UI\"\n        }\n      }\n    },\n    \"\
-        SipEndpoint\": {\n      \"type\": \"object\",\n      \"description\": \"SIP/WebRTC endpoint details for a participant\"\
+        ,\n  \"$defs\": {\n    \"JoinVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"description\": \"Request to join a voice room\",\n      \"required\": [\n        \"roomId\",\n        \"\
+        sessionId\",\n        \"sipEndpoint\"\n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Voice room ID to join\"\n        },\n\
+        \        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"WebSocket session ID (unique
+        participant identifier)\"\n        },\n        \"sipEndpoint\": {\n          \"$ref\": \"#/$defs/SipEndpoint\",\n\
+        \          \"description\": \"Participant's SIP endpoint details\"\n        },\n        \"displayName\": {\n     \
+        \     \"type\": \"string\",\n          \"maxLength\": 50,\n          \"description\": \"Display name for UI\"\n  \
+        \      }\n      }\n    },\n    \"SipEndpoint\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"description\": \"SIP/WebRTC endpoint details for a participant\",\n      \"required\": [\n        \"sdpOffer\"\
+        \n      ],\n      \"properties\": {\n        \"sdpOffer\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"SDP offer for WebRTC negotiation\"\n        },\n        \"iceCandidates\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"ICE candidates
+        for NAT traversal\"\n        },\n        \"publicIp\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Public IP address if known\"\n        },\n        \"port\": {\n          \"\
+        type\": \"integer\",\n          \"nullable\": true,\n          \"description\": \"UDP port for RTP\"\n        }\n\
+        \      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinVoiceRoomResponse\"\
+        ,\n  \"$defs\": {\n    \"JoinVoiceRoomResponse\": {\n      \"type\": \"object\",\n      \"additionalProperties\":
+        false,\n      \"description\": \"Response after joining a voice room\",\n      \"required\": [\n        \"success\"\
+        ,\n        \"roomId\",\n        \"tier\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"\
+        type\": \"boolean\",\n          \"description\": \"Whether join was successful\"\n        },\n        \"roomId\":
+        {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Voice room ID\"\n\
+        \        },\n        \"tier\": {\n          \"$ref\": \"#/$defs/VoiceTier\",\n          \"description\": \"Current
+        voice tier\"\n        },\n        \"codec\": {\n          \"$ref\": \"#/$defs/VoiceCodec\",\n          \"description\"\
+        : \"Codec to use\"\n        },\n        \"peers\": {\n          \"type\": \"array\",\n          \"items\": {\n   \
+        \         \"$ref\": \"#/$defs/VoicePeer\"\n          },\n          \"description\": \"Current peers to connect to
+        (P2P mode only)\"\n        },\n        \"rtpServerUri\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"RTP server URI (scaled mode only)\"\n        },\n        \"stunServers\": {\n\
+        \          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n        \
+        \  \"description\": \"STUN server URIs for NAT traversal\"\n        },\n        \"tierUpgradePending\": {\n      \
+        \    \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"True if room is about to
+        upgrade to scaled tier\"\n        }\n      }\n    },\n    \"VoiceTier\": {\n      \"type\": \"string\",\n      \"\
+        enum\": [\n        \"p2p\",\n        \"scaled\"\n      ],\n      \"description\": \"Voice communication tier:\\n-
+        p2p: Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated communication (unlimited
+        participants)\\n\"\n    },\n    \"VoiceCodec\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"opus\"\
+        ,\n        \"g711\",\n        \"g722\"\n      ],\n      \"description\": \"Audio codec for voice communication\"\n\
+        \    },\n    \"VoicePeer\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"description\"\
+        : \"Peer endpoint details for P2P connection\",\n      \"required\": [\n        \"sessionId\",\n        \"sipEndpoint\"\
+        \n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"WebSocket session ID for this peer (ephemeral identifier)\"\n        },\n        \"displayName\": {\n        \
+        \  \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Display name\"\n        },\n\
+        \        \"sipEndpoint\": {\n          \"$ref\": \"#/$defs/SipEndpoint\",\n          \"description\": \"Peer's SIP
+        endpoint for direct connection\"\n        }\n      }\n    },\n    \"SipEndpoint\": {\n      \"type\": \"object\",\n\
+        \      \"additionalProperties\": false,\n      \"description\": \"SIP/WebRTC endpoint details for a participant\"\
         ,\n      \"required\": [\n        \"sdpOffer\"\n      ],\n      \"properties\": {\n        \"sdpOffer\": {\n     \
         \     \"type\": \"string\",\n          \"description\": \"SDP offer for WebRTC negotiation\"\n        },\n       \
         \ \"iceCandidates\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n\
@@ -216,40 +255,6 @@ paths:
         {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Public IP address
         if known\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n   \
         \       \"description\": \"UDP port for RTP\"\n        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinVoiceRoomResponse\"\
-        ,\n  \"$defs\": {\n    \"JoinVoiceRoomResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response
-        after joining a voice room\",\n      \"required\": [\n        \"success\",\n        \"roomId\",\n        \"tier\"\n\
-        \      ],\n      \"properties\": {\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\"\
-        : \"Whether join was successful\"\n        },\n        \"roomId\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\",\n          \"description\": \"Voice room ID\"\n        },\n        \"tier\": {\n          \"$ref\"\
-        : \"#/$defs/VoiceTier\",\n          \"description\": \"Current voice tier\"\n        },\n        \"codec\": {\n  \
-        \        \"$ref\": \"#/$defs/VoiceCodec\",\n          \"description\": \"Codec to use\"\n        },\n        \"peers\"\
-        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/VoicePeer\"\n       \
-        \   },\n          \"description\": \"Current peers to connect to (P2P mode only)\"\n        },\n        \"rtpServerUri\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"RTP server URI (scaled
-        mode only)\"\n        },\n        \"stunServers\": {\n          \"type\": \"array\",\n          \"items\": {\n   \
-        \         \"type\": \"string\"\n          },\n          \"description\": \"STUN server URIs for NAT traversal\"\n\
-        \        },\n        \"tierUpgradePending\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n\
-        \          \"description\": \"True if room is about to upgrade to scaled tier\"\n        }\n      }\n    },\n    \"\
-        VoiceTier\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"p2p\",\n        \"scaled\"\n      ],\n \
-        \     \"description\": \"Voice communication tier:\\n- p2p: Direct peer-to-peer connections (up to 6 participants)\\
-        n- scaled: RTP server-mediated communication (unlimited participants)\\n\"\n    },\n    \"VoiceCodec\": {\n      \"\
-        type\": \"string\",\n      \"enum\": [\n        \"opus\",\n        \"g711\",\n        \"g722\"\n      ],\n      \"\
-        description\": \"Audio codec for voice communication\"\n    },\n    \"VoicePeer\": {\n      \"type\": \"object\",\n\
-        \      \"description\": \"Peer endpoint details for P2P connection\",\n      \"required\": [\n        \"sessionId\"\
-        ,\n        \"sipEndpoint\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"WebSocket session ID for this peer (ephemeral identifier)\"\n        },\n        \"\
-        displayName\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Display
-        name\"\n        },\n        \"sipEndpoint\": {\n          \"$ref\": \"#/$defs/SipEndpoint\",\n          \"description\"\
-        : \"Peer's SIP endpoint for direct connection\"\n        }\n      }\n    },\n    \"SipEndpoint\": {\n      \"type\"\
-        : \"object\",\n      \"description\": \"SIP/WebRTC endpoint details for a participant\",\n      \"required\": [\n\
-        \        \"sdpOffer\"\n      ],\n      \"properties\": {\n        \"sdpOffer\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"SDP offer for WebRTC negotiation\"\n        },\n        \"iceCandidates\": {\n   \
-        \       \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"\
-        description\": \"ICE candidates for NAT traversal\"\n        },\n        \"publicIp\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Public IP address if known\"\n        },\n        \"\
-        port\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\": \"UDP port
-        for RTP\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Join voice room and register SIP endpoint\",\n  \"description\": \"Registers
         a participant's SIP endpoint with the voice room.\\nCalled by GameSession service when a player joins a session.\\
         nReturns connection info and current peer list for P2P mode,\\nor RTP server details for scaled mode.\\n\",\n  \"\
@@ -276,11 +281,12 @@ paths:
           description: Voice room or participant not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LeaveVoiceRoomRequest\"\
-        ,\n  \"$defs\": {\n    \"LeaveVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
-        to leave a voice room\",\n      \"required\": [\n        \"roomId\",\n        \"sessionId\"\n      ],\n      \"properties\"\
-        : {\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Voice room ID to leave\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"\
-        description\": \"WebSocket session ID of the leaving participant\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"LeaveVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\":
+        false,\n      \"description\": \"Request to leave a voice room\",\n      \"required\": [\n        \"roomId\",\n  \
+        \      \"sessionId\"\n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"uuid\",\n          \"description\": \"Voice room ID to leave\"\n        },\n        \"sessionId\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"WebSocket session ID of the leaving participant\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Leave voice room\",\n  \"description\": \"Removes a participant from the
         voice room and notifies other peers.\\nCalled by GameSession service when a player leaves a session.\\n\",\n  \"tags\"\
@@ -311,11 +317,12 @@ paths:
   # ============================================
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteVoiceRoomRequest\"\
-        ,\n  \"$defs\": {\n    \"DeleteVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
-        to delete a voice room\",\n      \"required\": [\n        \"roomId\"\n      ],\n      \"properties\": {\n        \"\
-        roomId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Voice
-        room ID to delete\"\n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Reason for deletion (e.g., \\\"session_ended\\\")\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"DeleteVoiceRoomRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Request to delete a voice room\",\n      \"required\": [\n        \"roomId\"\n\
+        \      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\":
+        \"uuid\",\n          \"description\": \"Voice room ID to delete\"\n        },\n        \"reason\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Reason for deletion (e.g., \\\"session_ended\\\")\"\n        }\n\
+        \      }\n    }\n  }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Delete voice room\",\n  \"description\": \"Deletes a voice room and notifies
         all participants.\\nCalled by GameSession service when a session is deleted.\\n\",\n  \"tags\": [\n    \"Voice Rooms\"\
@@ -342,11 +349,12 @@ paths:
           description: Peer not found in room
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PeerHeartbeatRequest\"\
-        ,\n  \"$defs\": {\n    \"PeerHeartbeatRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Heartbeat
-        to keep peer registration active\",\n      \"required\": [\n        \"roomId\",\n        \"sessionId\"\n      ],\n\
-        \      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Voice room ID\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"WebSocket session ID of the peer\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"PeerHeartbeatRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"description\": \"Heartbeat to keep peer registration active\",\n      \"required\": [\n        \"roomId\"\
+        ,\n        \"sessionId\"\n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Voice room ID\"\n        },\n        \"sessionId\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"WebSocket session ID of the peer\"\n        }\n\
+        \      }\n    }\n  }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Update peer endpoint TTL\",\n  \"description\": \"Refreshes the TTL for a
         participant's endpoint registration.\\nShould be called periodically to prevent endpoint expiration.\\n\",\n  \"tags\"\
@@ -384,18 +392,18 @@ paths:
           description: Not in voice:ringing state (no pending offers)
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AnswerPeerRequest\"\
-        ,\n  \"$defs\": {\n    \"AnswerPeerRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to
-        send an SDP answer to complete a WebRTC handshake.\\nSent by clients after receiving a VoicePeerJoinedEvent with an
-        SDP offer.\\n\",\n      \"required\": [\n        \"roomId\",\n        \"senderSessionId\",\n        \"targetSessionId\"\
-        ,\n        \"sdpAnswer\"\n      ],\n      \"properties\": {\n        \"roomId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"Voice room ID\"\n        },\n        \"senderSessionId\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Session ID of the answering peer (caller of this
-        endpoint)\"\n        },\n        \"targetSessionId\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Session ID of the peer whose offer we're answering\"\n        },\n        \"sdpAnswer\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"SDP answer generated by this client's WebRTC stack\"\n        },\n   \
-        \     \"iceCandidates\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
-        \n          },\n          \"description\": \"ICE candidates for NAT traversal (can be trickled later)\"\n        }\n\
-        \      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"AnswerPeerRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"description\": \"Request to send an SDP answer to complete a WebRTC handshake.\\nSent by clients after receiving
+        a VoicePeerJoinedEvent with an SDP offer.\\n\",\n      \"required\": [\n        \"roomId\",\n        \"senderSessionId\"\
+        ,\n        \"targetSessionId\",\n        \"sdpAnswer\"\n      ],\n      \"properties\": {\n        \"roomId\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Voice room ID\"\n\
+        \        },\n        \"senderSessionId\": {\n          \"type\": \"string\",\n          \"description\": \"Session
+        ID of the answering peer (caller of this endpoint)\"\n        },\n        \"targetSessionId\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Session ID of the peer whose offer we're answering\"\n        },\n   \
+        \     \"sdpAnswer\": {\n          \"type\": \"string\",\n          \"description\": \"SDP answer generated by this
+        client's WebRTC stack\"\n        },\n        \"iceCandidates\": {\n          \"type\": \"array\",\n          \"items\"\
+        : {\n            \"type\": \"string\"\n          },\n          \"description\": \"ICE candidates for NAT traversal
+        (can be trickled later)\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Send SDP answer to complete WebRTC handshake\",\n  \"description\": \"Called
         by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.\\nThe client generates an SDP answer and
@@ -428,6 +436,7 @@ components:
 
     CreateVoiceRoomRequest:
       type: object
+      additionalProperties: false
       description: Request to create a voice room for a game session
       required:
       - sessionId
@@ -451,6 +460,7 @@ components:
 
     GetVoiceRoomRequest:
       type: object
+      additionalProperties: false
       description: Request to get voice room details
       required:
       - roomId
@@ -462,6 +472,7 @@ components:
 
     JoinVoiceRoomRequest:
       type: object
+      additionalProperties: false
       description: Request to join a voice room
       required:
       - roomId
@@ -485,6 +496,7 @@ components:
 
     LeaveVoiceRoomRequest:
       type: object
+      additionalProperties: false
       description: Request to leave a voice room
       required:
       - roomId
@@ -500,6 +512,7 @@ components:
 
     DeleteVoiceRoomRequest:
       type: object
+      additionalProperties: false
       description: Request to delete a voice room
       required:
       - roomId
@@ -514,6 +527,7 @@ components:
 
     PeerHeartbeatRequest:
       type: object
+      additionalProperties: false
       description: Heartbeat to keep peer registration active
       required:
       - roomId
@@ -529,6 +543,7 @@ components:
 
     AnswerPeerRequest:
       type: object
+      additionalProperties: false
       description: |
         Request to send an SDP answer to complete a WebRTC handshake.
         Sent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.
@@ -563,6 +578,7 @@ components:
 
     VoiceRoomResponse:
       type: object
+      additionalProperties: false
       description: Voice room details
       required:
       - roomId
@@ -606,6 +622,7 @@ components:
 
     JoinVoiceRoomResponse:
       type: object
+      additionalProperties: false
       description: Response after joining a voice room
       required:
       - success
@@ -650,6 +667,7 @@ components:
 
     SipEndpoint:
       type: object
+      additionalProperties: false
       description: SIP/WebRTC endpoint details for a participant
       required:
       - sdpOffer
@@ -673,6 +691,7 @@ components:
 
     VoiceParticipant:
       type: object
+      additionalProperties: false
       description: Participant in a voice room
       required:
       - sessionId
@@ -696,6 +715,7 @@ components:
 
     VoicePeer:
       type: object
+      additionalProperties: false
       description: Peer endpoint details for P2P connection
       required:
       - sessionId

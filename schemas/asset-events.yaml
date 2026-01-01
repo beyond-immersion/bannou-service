@@ -41,6 +41,7 @@ components:
     # Base event schema for $ref resolution
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       required:
         - eventId
         - timestamp
@@ -61,6 +62,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when a new upload is initiated via requestUpload API
       required:
         - uploadId
@@ -106,6 +108,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when an upload is completed and file is stored
       required:
         - assetId
@@ -156,6 +159,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when an asset is queued for processing
       required:
         - assetId
@@ -184,6 +188,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when asset processing completes
       required:
         - assetId
@@ -222,6 +227,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when an asset is fully processed and available
       required:
         - assetId
@@ -267,6 +273,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when a bundle is successfully created
       required:
         - bundleId
@@ -352,6 +359,7 @@ components:
 
     ProcessingOutput:
       type: object
+      additionalProperties: false
       description: Information about a generated derivative asset
       properties:
         outputType:

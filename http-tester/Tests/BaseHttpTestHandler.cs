@@ -120,13 +120,24 @@ public abstract class BaseHttpTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Generates a unique test identifier based on current timestamp.
-    /// Use this for creating unique test data (usernames, emails, etc.).
+    /// Uses underscore separator - suitable for usernames (pattern: ^[a-zA-Z0-9_]+$).
     /// </summary>
     /// <param name="prefix">Optional prefix for the identifier</param>
-    /// <returns>A unique string identifier</returns>
+    /// <returns>A unique string identifier with underscore separator</returns>
     protected static string GenerateTestId(string prefix = "test")
     {
-        return $"{prefix}-{DateTime.Now.Ticks}";
+        return $"{prefix}_{DateTime.Now.Ticks}";
+    }
+
+    /// <summary>
+    /// Generates a unique test slug based on current timestamp.
+    /// Uses hyphen separator - suitable for slugs/stub names (pattern: ^[a-z0-9-]+$).
+    /// </summary>
+    /// <param name="prefix">Optional prefix for the slug</param>
+    /// <returns>A unique lowercase string with hyphen separator</returns>
+    protected static string GenerateTestSlug(string prefix = "test")
+    {
+        return $"{prefix}-{DateTime.Now.Ticks}".ToLowerInvariant();
     }
 
     /// <summary>

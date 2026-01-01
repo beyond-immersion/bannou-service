@@ -70,38 +70,39 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/InternalProxyRequest\"\
         ,\n  \"$defs\": {\n    \"InternalProxyRequest\": {\n      \"description\": \"Request to proxy an API call through
-        the Connect service to a target backend service\",\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        sessionId\",\n        \"targetService\",\n        \"targetEndpoint\",\n        \"method\"\n      ],\n      \"properties\"\
-        : {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"WebSocket session ID
-        making the request\"\n        },\n        \"targetService\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Target service name (e.g., \\\"accounts\\\", \\\"auth\\\", \\\"behavior\\\")\"\n        },\n        \"targetEndpoint\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Target API endpoint path (e.g., \\\"/accounts/{id}\\\
-        \")\"\n        },\n        \"method\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"GET\"\
-        ,\n            \"POST\",\n            \"PUT\",\n            \"DELETE\",\n            \"PATCH\"\n          ],\n   \
-        \       \"description\": \"HTTP method for the target endpoint\"\n        },\n        \"headers\": {\n          \"\
-        type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n     \
-        \     \"nullable\": true,\n          \"description\": \"Additional headers to forward to the service (null if none)\"\
-        \n        },\n        \"body\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true,\n          \"description\": \"Request body to forward to target service (null for no
-        body)\"\n        },\n        \"pathParameters\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : {\n            \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"\
-        Path parameters for the endpoint (null if none)\"\n        },\n        \"queryParameters\": {\n          \"type\"\
+        the Connect service to a target backend service\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
+        \      \"required\": [\n        \"sessionId\",\n        \"targetService\",\n        \"targetEndpoint\",\n        \"\
+        method\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n         \
+        \ \"description\": \"WebSocket session ID making the request\"\n        },\n        \"targetService\": {\n       \
+        \   \"type\": \"string\",\n          \"description\": \"Target service name (e.g., \\\"accounts\\\", \\\"auth\\\"\
+        , \\\"behavior\\\")\"\n        },\n        \"targetEndpoint\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Target API endpoint path (e.g., \\\"/accounts/{id}\\\")\"\n        },\n        \"method\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"GET\",\n            \"POST\",\n            \"PUT\",\n        \
+        \    \"DELETE\",\n            \"PATCH\"\n          ],\n          \"description\": \"HTTP method for the target endpoint\"\
+        \n        },\n        \"headers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n   \
+        \         \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"Additional
+        headers to forward to the service (null if none)\"\n        },\n        \"body\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Request
+        body to forward to target service (null for no body)\"\n        },\n        \"pathParameters\": {\n          \"type\"\
         : \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"\
-        nullable\": true,\n          \"description\": \"Query string parameters for the endpoint (null if none)\"\n      \
-        \  }\n      }\n    }\n  }\n}"
+        nullable\": true,\n          \"description\": \"Path parameters for the endpoint (null if none)\"\n        },\n  \
+        \      \"queryParameters\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n          \
+        \  \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"Query string parameters
+        for the endpoint (null if none)\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/InternalProxyResponse\"\
         ,\n  \"$defs\": {\n    \"InternalProxyResponse\": {\n      \"description\": \"Response from a proxied API call containing
-        the target service's response data\",\n      \"type\": \"object\",\n      \"required\": [\n        \"success\",\n\
-        \        \"statusCode\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether the proxy request was successful\"\n        },\n        \"statusCode\": {\n\
-        \          \"type\": \"integer\",\n          \"description\": \"HTTP status code from the target service\"\n     \
-        \   },\n        \"response\": {\n          \"type\": \"string\",\n          \"description\": \"JSON response from
-        the target service (as string)\"\n        },\n        \"headers\": {\n          \"type\": \"object\",\n          \"\
-        additionalProperties\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"\
-        string\"\n            }\n          },\n          \"description\": \"Response headers from the target service\"\n \
-        \       },\n        \"error\": {\n          \"type\": \"string\",\n          \"description\": \"Error message if the
-        request failed\"\n        },\n        \"executionTime\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Request execution time in milliseconds\"\n        }\n      }\n    }\n  }\n}"
+        the target service's response data\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n     \
+        \ \"required\": [\n        \"success\",\n        \"statusCode\"\n      ],\n      \"properties\": {\n        \"success\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the proxy request was successful\"\n \
+        \       },\n        \"statusCode\": {\n          \"type\": \"integer\",\n          \"description\": \"HTTP status
+        code from the target service\"\n        },\n        \"response\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"JSON response from the target service (as string)\"\n        },\n        \"headers\": {\n       \
+        \   \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"array\",\n            \"\
+        items\": {\n              \"type\": \"string\"\n            }\n          },\n          \"description\": \"Response
+        headers from the target service\"\n        },\n        \"error\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"Error message if the request failed\"\n        },\n        \"executionTime\": {\n          \"type\"\
+        : \"integer\",\n          \"description\": \"Request execution time in milliseconds\"\n        }\n      }\n    }\n\
+        \  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Internal API proxy for stateless requests\",\n  \"description\": \"Stateless
         HTTP proxy for internal requests that don't require persistent sessions.\\nApplies permission validation and rate
         limiting based on agent role and context.\\nPerfect for AI agents making one-off API calls or bulk operations.\\n\"\
@@ -150,58 +151,59 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetClientCapabilitiesRequest\"\
         ,\n  \"$defs\": {\n    \"GetClientCapabilitiesRequest\": {\n      \"type\": \"object\",\n      \"description\": \"\
-        Request to get client capability manifest (empty body allowed)\",\n      \"properties\": {\n        \"serviceFilter\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Optional filter by service name prefix\",\n   \
-        \       \"nullable\": true\n        },\n        \"includeMetadata\": {\n          \"type\": \"boolean\",\n       \
-        \   \"description\": \"Include additional metadata about each capability\",\n          \"default\": false\n      \
-        \  }\n      }\n    }\n  }\n}"
+        Request to get client capability manifest (empty body allowed)\",\n      \"additionalProperties\": false,\n      \"\
+        properties\": {\n        \"serviceFilter\": {\n          \"type\": \"string\",\n          \"description\": \"Optional
+        filter by service name prefix\",\n          \"nullable\": true\n        },\n        \"includeMetadata\": {\n     \
+        \     \"type\": \"boolean\",\n          \"description\": \"Include additional metadata about each capability\",\n\
+        \          \"default\": false\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ClientCapabilitiesResponse\"\
         ,\n  \"$defs\": {\n    \"ClientCapabilitiesResponse\": {\n      \"description\": \"Response containing the client's
-        capability manifest with available API endpoints and shortcuts\",\n      \"type\": \"object\",\n      \"required\"\
-        : [\n        \"sessionId\",\n        \"capabilities\",\n        \"version\",\n        \"generatedAt\"\n      ],\n\
-        \      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"\
-        Session ID this capability manifest belongs to\"\n        },\n        \"capabilities\": {\n          \"type\": \"\
-        array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ClientCapability\"\n          },\n          \"description\"\
-        : \"Available API capabilities for this client\"\n        },\n        \"shortcuts\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/ClientShortcut\"\n          },\n          \"description\"\
-        : \"Pre-bound API calls available for this session.\\nShortcuts are invoked like normal capabilities but Connect injects\\
-        na pre-bound payload instead of using the client's payload.\\n\",\n          \"nullable\": true\n        },\n    \
-        \    \"version\": {\n          \"type\": \"integer\",\n          \"description\": \"Capability manifest version (increments
-        on changes)\"\n        },\n        \"generatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        ,\n          \"description\": \"When this capability manifest was generated\"\n        },\n        \"expiresAt\":
-        {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When these
-        capabilities expire and need refresh\",\n          \"nullable\": true\n        }\n      }\n    },\n    \"ClientCapability\"\
-        : {\n      \"description\": \"A single API capability available to the client, mapping a client-salted GUID to a service
-        endpoint\",\n      \"type\": \"object\",\n      \"required\": [\n        \"guid\",\n        \"service\",\n       \
-        \ \"endpoint\",\n        \"method\"\n      ],\n      \"properties\": {\n        \"guid\": {\n          \"type\": \"\
-        string\",\n          \"format\": \"uuid\",\n          \"description\": \"Client-salted GUID for this API endpoint
-        (unique per session)\"\n        },\n        \"service\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Service name (e.g., \\\"accounts\\\", \\\"auth\\\")\"\n        },\n        \"endpoint\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"API endpoint path (e.g., \\\"/accounts/create\\\")\"\n        },\n   \
-        \     \"method\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"GET\",\n            \"\
-        POST\",\n            \"PUT\",\n            \"DELETE\",\n            \"PATCH\"\n          ],\n          \"description\"\
-        : \"HTTP method for this endpoint\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n   \
-        \       \"description\": \"Human-readable description of this capability\",\n          \"nullable\": true\n      \
-        \  },\n        \"channel\": {\n          \"type\": \"integer\",\n          \"format\": \"uint16\",\n          \"description\"\
-        : \"Preferred WebSocket channel for this capability\",\n          \"default\": 0\n        }\n      }\n    },\n   \
-        \ \"ClientShortcut\": {\n      \"type\": \"object\",\n      \"description\": \"Session shortcut information sent to
-        clients in the capability manifest.\\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\\
-        npayload when the shortcut GUID is used, replacing any client-provided payload.\\n\",\n      \"required\": [\n   \
-        \     \"guid\",\n        \"targetService\",\n        \"targetEndpoint\",\n        \"name\"\n      ],\n      \"properties\"\
-        : {\n        \"guid\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"GUID to use in WebSocket message header when invoking this shortcut.\\nUses UUID version 7 bits to distinguish
-        from regular service GUIDs (version 5).\\n\"\n        },\n        \"targetService\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"The service this shortcut invokes (for client display purposes).\"\n        },\n \
-        \       \"targetEndpoint\": {\n          \"type\": \"string\",\n          \"description\": \"The endpoint this shortcut
-        invokes (for client display purposes).\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n     \
-        \     \"description\": \"Machine-readable shortcut identifier (e.g., \\\"get_my_stats\\\", \\\"join_game\\\").\"\n\
-        \        },\n        \"description\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
-        description of what this shortcut does.\",\n          \"nullable\": true\n        },\n        \"displayName\": {\n\
-        \          \"type\": \"string\",\n          \"description\": \"User-friendly name for display in client UIs.\",\n\
-        \          \"nullable\": true\n        },\n        \"sourceService\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"The service that created this shortcut.\",\n          \"nullable\": true\n        },\n    \
-        \    \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n     \
-        \     },\n          \"description\": \"Categorization tags for client-side organization.\",\n          \"nullable\"\
+        capability manifest with available API endpoints and shortcuts\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"required\": [\n        \"sessionId\",\n        \"capabilities\",\n        \"version\",\n       \
+        \ \"generatedAt\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"Session ID this capability manifest belongs to\"\n        },\n        \"capabilities\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ClientCapability\"\n\
+        \          },\n          \"description\": \"Available API capabilities for this client\"\n        },\n        \"shortcuts\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ClientShortcut\"\n  \
+        \        },\n          \"description\": \"Pre-bound API calls available for this session.\\nShortcuts are invoked
+        like normal capabilities but Connect injects\\na pre-bound payload instead of using the client's payload.\\n\",\n\
+        \          \"nullable\": true\n        },\n        \"version\": {\n          \"type\": \"integer\",\n          \"\
+        description\": \"Capability manifest version (increments on changes)\"\n        },\n        \"generatedAt\": {\n \
+        \         \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When this capability
+        manifest was generated\"\n        },\n        \"expiresAt\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"date-time\",\n          \"description\": \"When these capabilities expire and need refresh\",\n          \"nullable\"\
+        : true\n        }\n      }\n    },\n    \"ClientCapability\": {\n      \"description\": \"A single API capability
+        available to the client, mapping a client-salted GUID to a service endpoint\",\n      \"type\": \"object\",\n    \
+        \  \"additionalProperties\": false,\n      \"required\": [\n        \"guid\",\n        \"service\",\n        \"endpoint\"\
+        ,\n        \"method\"\n      ],\n      \"properties\": {\n        \"guid\": {\n          \"type\": \"string\",\n \
+        \         \"format\": \"uuid\",\n          \"description\": \"Client-salted GUID for this API endpoint (unique per
+        session)\"\n        },\n        \"service\": {\n          \"type\": \"string\",\n          \"description\": \"Service
+        name (e.g., \\\"accounts\\\", \\\"auth\\\")\"\n        },\n        \"endpoint\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"API endpoint path (e.g., \\\"/accounts/create\\\")\"\n        },\n        \"method\"\
+        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"GET\",\n            \"POST\",\n       \
+        \     \"PUT\",\n            \"DELETE\",\n            \"PATCH\"\n          ],\n          \"description\": \"HTTP method
+        for this endpoint\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Human-readable description of this capability\",\n          \"nullable\": true\n        },\n        \"channel\"\
+        : {\n          \"type\": \"integer\",\n          \"format\": \"uint16\",\n          \"description\": \"Preferred WebSocket
+        channel for this capability\",\n          \"default\": 0\n        }\n      }\n    },\n    \"ClientShortcut\": {\n\
+        \      \"type\": \"object\",\n      \"description\": \"Session shortcut information sent to clients in the capability
+        manifest.\\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\\npayload when the shortcut
+        GUID is used, replacing any client-provided payload.\\n\",\n      \"additionalProperties\": false,\n      \"required\"\
+        : [\n        \"guid\",\n        \"targetService\",\n        \"targetEndpoint\",\n        \"name\"\n      ],\n    \
+        \  \"properties\": {\n        \"guid\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
+        \      \"description\": \"GUID to use in WebSocket message header when invoking this shortcut.\\nUses UUID version
+        7 bits to distinguish from regular service GUIDs (version 5).\\n\"\n        },\n        \"targetService\": {\n   \
+        \       \"type\": \"string\",\n          \"description\": \"The service this shortcut invokes (for client display
+        purposes).\"\n        },\n        \"targetEndpoint\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"The endpoint this shortcut invokes (for client display purposes).\"\n        },\n        \"name\": {\n       \
+        \   \"type\": \"string\",\n          \"description\": \"Machine-readable shortcut identifier (e.g., \\\"get_my_stats\\\
+        \", \\\"join_game\\\").\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Human-readable description of what this shortcut does.\",\n          \"nullable\": true\n        },\n        \"\
+        displayName\": {\n          \"type\": \"string\",\n          \"description\": \"User-friendly name for display in
+        client UIs.\",\n          \"nullable\": true\n        },\n        \"sourceService\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"The service that created this shortcut.\",\n          \"nullable\": true\n       \
+        \ },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
+        \n          },\n          \"description\": \"Categorization tags for client-side organization.\",\n          \"nullable\"\
         : true\n        },\n        \"expiresAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
         ,\n          \"description\": \"When this shortcut expires (if time-limited).\",\n          \"nullable\": true\n \
         \       }\n      }\n    }\n  }\n}"
@@ -414,6 +416,7 @@ components:
     GetClientCapabilitiesRequest:
       type: object
       description: Request to get client capability manifest (empty body allowed)
+      additionalProperties: false
       properties:
         serviceFilter:
           type: string
@@ -427,6 +430,7 @@ components:
     ClientCapabilitiesResponse:
       description: Response containing the client's capability manifest with available API endpoints and shortcuts
       type: object
+      additionalProperties: false
       required:
       - sessionId
       - capabilities
@@ -466,6 +470,7 @@ components:
     ClientCapability:
       description: A single API capability available to the client, mapping a client-salted GUID to a service endpoint
       type: object
+      additionalProperties: false
       required:
       - guid
       - service
@@ -502,6 +507,7 @@ components:
         Session shortcut information sent to clients in the capability manifest.
         Shortcuts appear as invocable capabilities but Connect injects a pre-bound
         payload when the shortcut GUID is used, replacing any client-provided payload.
+      additionalProperties: false
       required:
       - guid
       - targetService
@@ -550,6 +556,7 @@ components:
     InternalProxyRequest:
       description: Request to proxy an API call through the Connect service to a target backend service
       type: object
+      additionalProperties: false
       required:
       - sessionId
       - targetService
@@ -596,6 +603,7 @@ components:
     InternalProxyResponse:
       description: Response from a proxied API call containing the target service's response data
       type: object
+      additionalProperties: false
       required:
       - success
       - statusCode
@@ -643,6 +651,7 @@ components:
     ConnectErrorResponse:
       description: Error response returned when WebSocket connection establishment fails
       type: object
+      additionalProperties: false
       required:
       - error
       - message
@@ -662,7 +671,6 @@ components:
           type: integer
           description: HTTP status code
           enum: [400, 403, 500]
-      additionalProperties: false
 
     # NOTE: ServiceMappingsResponse moved to Orchestrator API as ServiceRoutingResponse
 
@@ -749,6 +757,7 @@ components:
         - Bytes 7-22: Service GUID (16 bytes)
         - Bytes 23-30: Message ID (8 bytes)
         - Bytes 31+: Payload (variable length)
+      additionalProperties: false
       required:
       - flags
       - channel
@@ -789,6 +798,7 @@ components:
 
         **Binary Header Layout (31 bytes):**
         - Same as ServiceRequestMessage but with Response flag (0x40) set
+      additionalProperties: false
       required:
       - flags
       - channel
@@ -830,6 +840,7 @@ components:
       description: |
         Configuration options for the connect service.
         These are server-side settings and not directly exposed via API.
+      additionalProperties: false
       properties:
         obfuscateNotFoundResponse:
           type: boolean
@@ -860,6 +871,7 @@ components:
       description: |
         Event published when a session's capabilities change (permissions, role changes, etc.).
         Triggers real-time WebSocket updates to connected clients.
+      additionalProperties: false
       required:
       - sessionId
       - version
@@ -895,6 +907,7 @@ components:
       description: |
         Authentication state change events (login, logout, token refresh).
         Triggers session capability updates for connected clients.
+      additionalProperties: false
       required:
       - sessionId
       - eventType
@@ -935,6 +948,7 @@ components:
       description: |
         Event for server-to-client push messaging.
         Allows services to send messages directly to connected WebSocket clients.
+      additionalProperties: false
       required:
       - clientId
       - serviceGuid
@@ -977,6 +991,7 @@ components:
       description: |
         Event for bidirectional RPC where services call clients and expect responses.
         Extends ClientMessageEvent with response handling.
+      additionalProperties: false
       required:
       - clientId
       - serviceGuid
@@ -1029,6 +1044,7 @@ components:
       description: |
         Event to trigger permission recompilation for all sessions.
         Published when services register new APIs or permission rules change.
+      additionalProperties: false
       required:
       - eventId
       - timestamp

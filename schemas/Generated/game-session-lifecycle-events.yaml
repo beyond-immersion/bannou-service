@@ -11,6 +11,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to game-session.created when a gamesession is created
       required:
       - eventName
@@ -59,6 +60,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to game-session.updated when a gamesession is updated
       required:
       - eventName
@@ -92,6 +94,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to game-session.deleted when a gamesession is deleted
       required:
       - eventName

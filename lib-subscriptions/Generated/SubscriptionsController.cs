@@ -284,6 +284,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "GetAccountSubscriptionsRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to get subscriptions for an account",
       "required": [
         "accountId"
@@ -317,6 +318,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "SubscriptionListResponse": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Response containing list of subscriptions",
       "required": [
         "subscriptions",
@@ -338,6 +340,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
     },
     "SubscriptionInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a subscription",
       "required": [
         "subscriptionId",
@@ -478,6 +481,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "GetCurrentSubscriptionsRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to get current active subscriptions",
       "required": [
         "accountId"
@@ -501,6 +505,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "CurrentSubscriptionsResponse": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Response containing current active subscriptions and authorization strings",
       "required": [
         "accountId",
@@ -530,6 +535,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
     },
     "SubscriptionInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a subscription",
       "required": [
         "subscriptionId",
@@ -670,6 +676,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "GetSubscriptionRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to get a specific subscription",
       "required": [
         "subscriptionId"
@@ -693,6 +700,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "SubscriptionInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a subscription",
       "required": [
         "subscriptionId",
@@ -833,6 +841,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "CreateSubscriptionRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to create a new subscription",
       "required": [
         "accountId",
@@ -879,6 +888,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "SubscriptionInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a subscription",
       "required": [
         "subscriptionId",
@@ -1019,6 +1029,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "UpdateSubscriptionRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to update an existing subscription",
       "required": [
         "subscriptionId"
@@ -1053,6 +1064,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "SubscriptionInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a subscription",
       "required": [
         "subscriptionId",
@@ -1193,6 +1205,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "CancelSubscriptionRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to cancel a subscription",
       "required": [
         "subscriptionId"
@@ -1222,6 +1235,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "SubscriptionInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a subscription",
       "required": [
         "subscriptionId",
@@ -1362,6 +1376,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "RenewSubscriptionRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to renew or extend a subscription",
       "required": [
         "subscriptionId"
@@ -1395,6 +1410,7 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
   "$defs": {
     "SubscriptionInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a subscription",
       "required": [
         "subscriptionId",

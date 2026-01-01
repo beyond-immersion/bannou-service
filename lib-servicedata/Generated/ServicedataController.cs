@@ -230,6 +230,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "ListServicesRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to list all game services",
       "properties": {
         "activeOnly": {
@@ -250,6 +251,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "ListServicesResponse": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Response containing list of game services",
       "required": [
         "services",
@@ -271,6 +273,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
     },
     "ServiceInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a game service",
       "required": [
         "serviceId",
@@ -382,16 +385,19 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "GetServiceRequest": {
       "type": "object",
-      "description": "Request to get a service by ID or stub name",
+      "additionalProperties": false,
+      "description": "Request to get a service by ID or stub name (provide either one)",
       "properties": {
         "serviceId": {
           "type": "string",
           "format": "uuid",
-          "description": "ID of the service to retrieve"
+          "nullable": true,
+          "description": "ID of the service to retrieve (null if using stubName)"
         },
         "stubName": {
           "type": "string",
-          "description": "Stub name of the service to retrieve (e.g., \"arcadia\")"
+          "nullable": true,
+          "description": "Stub name of the service to retrieve (null if using serviceId)"
         }
       }
     }
@@ -406,6 +412,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "ServiceInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a game service",
       "required": [
         "serviceId",
@@ -517,6 +524,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "CreateServiceRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to create a new game service",
       "required": [
         "stubName",
@@ -560,6 +568,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "ServiceInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a game service",
       "required": [
         "serviceId",
@@ -671,6 +680,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "UpdateServiceRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to update an existing game service",
       "required": [
         "serviceId"
@@ -711,6 +721,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "ServiceInfo": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Information about a game service",
       "required": [
         "serviceId",
@@ -822,6 +833,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "DeleteServiceRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to delete a game service",
       "required": [
         "serviceId"

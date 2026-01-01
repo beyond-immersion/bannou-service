@@ -109,9 +109,9 @@ public partial class ServicedataService : IServicedataService
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
             // Try by service ID first
-            if (body.ServiceId != Guid.Empty)
+            if (body.ServiceId.HasValue && body.ServiceId.Value != Guid.Empty)
             {
-                serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
+                serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId.Value}", cancellationToken);
             }
             // Try by stub name if not found
             else if (!string.IsNullOrWhiteSpace(body.StubName))

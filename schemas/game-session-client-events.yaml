@@ -26,6 +26,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all session participants when the session state changes.
@@ -72,6 +73,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all session participants when a new player joins.
@@ -104,6 +106,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all session participants when a player leaves voluntarily.
@@ -143,6 +146,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all session participants when a player is kicked.
@@ -188,6 +192,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to recipients when a chat message is posted in the session.
@@ -242,6 +247,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when game state changes that all players should see.
@@ -282,6 +288,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to relevant players when a game action produces results.
@@ -336,6 +343,7 @@ components:
 
     PlayerInfo:
       type: object
+      additionalProperties: false
       description: Information about a player in the session
       required:
         - accountId
@@ -361,6 +369,7 @@ components:
 
     VisibleEffect:
       type: object
+      additionalProperties: false
       description: A visual or audio effect that should be rendered
       required:
         - effectType
@@ -385,6 +394,7 @@ components:
 
     Position:
       type: object
+      additionalProperties: false
       description: 3D world coordinates representing a position in game space
       properties:
         x:

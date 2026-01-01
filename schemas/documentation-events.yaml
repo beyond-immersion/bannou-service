@@ -102,6 +102,7 @@ components:
     # Analytics events
     DocumentationQueriedEvent:
       type: object
+      additionalProperties: false
       description: Published when documentation is queried with natural language
       required:
         - eventId
@@ -142,6 +143,7 @@ components:
 
     DocumentationSearchedEvent:
       type: object
+      additionalProperties: false
       description: Published when documentation is searched with keywords
       required:
         - eventId
@@ -174,6 +176,7 @@ components:
     # Repository binding events
     DocumentationBindingCreatedEvent:
       type: object
+      additionalProperties: false
       description: Published when a repository binding is created
       required:
         - eventId
@@ -205,6 +208,7 @@ components:
 
     DocumentationBindingRemovedEvent:
       type: object
+      additionalProperties: false
       description: Published when a repository binding is removed
       required:
         - eventId
@@ -233,6 +237,7 @@ components:
     # Sync events
     DocumentationSyncStartedEvent:
       type: object
+      additionalProperties: false
       description: Published when a repository sync starts
       required:
         - eventId
@@ -269,6 +274,7 @@ components:
 
     DocumentationSyncCompletedEvent:
       type: object
+      additionalProperties: false
       description: Published when a repository sync completes
       required:
         - eventId
@@ -326,6 +332,7 @@ components:
     # Archive events
     DocumentationArchiveCreatedEvent:
       type: object
+      additionalProperties: false
       description: Published when a documentation archive is created
       required:
         - eventId

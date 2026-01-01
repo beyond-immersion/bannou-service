@@ -22,6 +22,7 @@ components:
   schemas:
     SessionShortcut:
       type: object
+      additionalProperties: false
       description: |
         A pre-bound API call that clients can invoke with a single GUID.
         The bound_payload is injected by Connect when the shortcut is invoked.
@@ -61,6 +62,7 @@ components:
 
     SessionShortcutMetadata:
       type: object
+      additionalProperties: false
       description: |
         Metadata about a session shortcut for display, debugging, and lifecycle management.
       required:
@@ -126,6 +128,7 @@ components:
 
     ShortcutPublishedEvent:
       type: object
+      additionalProperties: false
       description: |
         Published by services to create or update a session shortcut.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
@@ -162,6 +165,7 @@ components:
 
     ShortcutRevokedEvent:
       type: object
+      additionalProperties: false
       description: |
         Published by services to remove shortcuts.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
@@ -210,6 +214,7 @@ components:
 
     ClientShortcut:
       type: object
+      additionalProperties: false
       description: |
         Shortcut information sent to clients in the capability manifest.
         Contains only the information clients need to invoke and display the shortcut.

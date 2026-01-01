@@ -301,9 +301,9 @@ public partial class MeshService : IMeshService
             var success = await _redisManager.UpdateHeartbeatAsync(
                 body.InstanceId,
                 endpoint.AppId,
-                body.Status,
-                body.LoadPercent,
-                body.CurrentConnections,
+                body.Status ?? EndpointStatus.Healthy,
+                body.LoadPercent ?? 0,
+                body.CurrentConnections ?? 0,
                 DEFAULT_TTL_SECONDS);
 
             if (!success)

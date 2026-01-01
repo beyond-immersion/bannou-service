@@ -316,6 +316,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "CreateVoiceRoomRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to create a voice room for a game session",
       "required": [
         "sessionId"
@@ -371,6 +372,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "VoiceRoomResponse": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Voice room details",
       "required": [
         "roomId",
@@ -443,6 +445,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "VoiceParticipant": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Participant in a voice room",
       "required": [
         "sessionId",
@@ -537,6 +540,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "GetVoiceRoomRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to get voice room details",
       "required": [
         "roomId"
@@ -560,6 +564,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "VoiceRoomResponse": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Voice room details",
       "required": [
         "roomId",
@@ -632,6 +637,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "VoiceParticipant": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Participant in a voice room",
       "required": [
         "sessionId",
@@ -726,6 +732,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "JoinVoiceRoomRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to join a voice room",
       "required": [
         "roomId",
@@ -755,6 +762,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "SipEndpoint": {
       "type": "object",
+      "additionalProperties": false,
       "description": "SIP/WebRTC endpoint details for a participant",
       "required": [
         "sdpOffer"
@@ -794,6 +802,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "JoinVoiceRoomResponse": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Response after joining a voice room",
       "required": [
         "success",
@@ -850,7 +859,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
         "p2p",
         "scaled"
       ],
-      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\ n- scaled: RTP server-mediated communication (unlimited participants)\n"
+      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
     },
     "VoiceCodec": {
       "type": "string",
@@ -863,6 +872,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "VoicePeer": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Peer endpoint details for P2P connection",
       "required": [
         "sessionId",
@@ -886,6 +896,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "SipEndpoint": {
       "type": "object",
+      "additionalProperties": false,
       "description": "SIP/WebRTC endpoint details for a participant",
       "required": [
         "sdpOffer"
@@ -981,6 +992,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "LeaveVoiceRoomRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to leave a voice room",
       "required": [
         "roomId",
@@ -1069,6 +1081,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "DeleteVoiceRoomRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to delete a voice room",
       "required": [
         "roomId"
@@ -1156,6 +1169,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "PeerHeartbeatRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Heartbeat to keep peer registration active",
       "required": [
         "roomId",
@@ -1244,6 +1258,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "AnswerPeerRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to send an SDP answer to complete a WebRTC handshake.\nSent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.\n",
       "required": [
         "roomId",

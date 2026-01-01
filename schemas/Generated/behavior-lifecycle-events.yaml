@@ -11,6 +11,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to behavior.created when a behavior is created
       required:
       - eventName
@@ -58,6 +59,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to behavior.updated when a behavior is updated
       required:
       - eventName
@@ -90,6 +92,7 @@ components:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to behavior.deleted when a behavior is deleted
       required:
       - eventName

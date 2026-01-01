@@ -411,6 +411,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "LoginRequest": {
       "description": "Request to authenticate a user with email and password credentials",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "email",
         "password"
@@ -441,6 +442,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeviceInfo": {
       "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "deviceType": {
           "type": "string",
@@ -480,6 +482,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AuthResponse": {
       "description": "Successful authentication response containing tokens and session information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "accessToken",
@@ -592,9 +595,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RegisterRequest": {
       "type": "object",
       "description": "Request to register a new user account",
+      "additionalProperties": false,
       "required": [
         "username",
-        "password"
+        "password",
+        "email"
       ],
       "properties": {
         "username": {
@@ -615,7 +620,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         "email": {
           "type": "string",
           "format": "email",
-          "description": "Optional email for account recovery",
+          "description": "Email address for account recovery and notifications",
           "example": "user@example.com"
         }
       }
@@ -632,6 +637,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RegisterResponse": {
       "type": "object",
       "description": "Response from successful user registration",
+      "additionalProperties": false,
       "required": [
         "accessToken",
         "connectUrl"
@@ -787,6 +793,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "OAuthCallbackRequest": {
       "description": "Request containing OAuth provider callback data to complete authentication",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "code"
       ],
@@ -810,6 +817,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeviceInfo": {
       "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "deviceType": {
           "type": "string",
@@ -849,6 +857,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AuthResponse": {
       "description": "Successful authentication response containing tokens and session information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "accessToken",
@@ -961,13 +970,14 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SteamVerifyRequest": {
       "type": "object",
       "description": "Request to verify a Steam Session Ticket. The ticket is obtained client-side via\nISteamUser::GetAuthTicketForWebApi(\"bannou\"). SteamID is NOT included because\nit must be obtained from Steam's Web API response (never trust client-provided SteamID).\n",
+      "additionalProperties": false,
       "required": [
         "ticket"
       ],
       "properties": {
         "ticket": {
           "type": "string",
-          "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\ nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
+          "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
           "example": "140000006A7B3C8E..."
         },
         "deviceInfo": {
@@ -980,6 +990,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeviceInfo": {
       "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "deviceType": {
           "type": "string",
@@ -1019,6 +1030,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AuthResponse": {
       "description": "Successful authentication response containing tokens and session information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "accessToken",
@@ -1131,6 +1143,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RefreshRequest": {
       "description": "Request to obtain a new access token using a valid refresh token",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "refreshToken"
       ],
@@ -1153,6 +1166,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AuthResponse": {
       "description": "Successful authentication response containing tokens and session information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "accessToken",
@@ -1269,6 +1283,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ValidateTokenResponse": {
       "description": "Response from token validation containing validity status and associated account details",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "valid",
         "accountId",
@@ -1377,6 +1392,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "LogoutRequest": {
       "description": "Request to logout and invalidate authentication tokens",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "allSessions": {
           "type": "boolean",
@@ -1461,6 +1477,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SessionsResponse": {
       "description": "Response containing a list of all active sessions for an account",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessions"
       ],
@@ -1477,6 +1494,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SessionInfo": {
       "description": "Information about an active user session including device and activity details",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "createdAt",
@@ -1517,6 +1535,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeviceInfo": {
       "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "deviceType": {
           "type": "string",
@@ -1612,6 +1631,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "TerminateSessionRequest": {
       "type": "object",
       "description": "Request to terminate a specific session",
+      "additionalProperties": false,
       "required": [
         "sessionId"
       ],
@@ -1695,6 +1715,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PasswordResetRequest": {
       "description": "Request to initiate a password reset by sending a reset link to the email",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "email"
       ],
@@ -1778,6 +1799,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PasswordResetConfirmRequest": {
       "description": "Request to confirm a password reset using the emailed token and new password",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "token",
         "newPassword"

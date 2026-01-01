@@ -483,6 +483,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "GetRelationshipTypeRequest": {
       "description": "Request to retrieve a relationship type by its unique identifier",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId"
       ],
@@ -506,6 +507,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -671,6 +673,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "GetRelationshipTypeByCodeRequest": {
       "description": "Request to retrieve a relationship type by its unique code string",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "code"
       ],
@@ -696,6 +699,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -861,6 +865,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "ListRelationshipTypesRequest": {
       "description": "Request to list relationship types with optional filtering by category, hierarchy, and deprecation status",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "category": {
           "type": "string",
@@ -896,6 +901,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeListResponse": {
       "description": "Response containing a list of relationship types with total count",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "types",
         "totalCount"
@@ -917,6 +923,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -1082,6 +1089,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "GetChildRelationshipTypesRequest": {
       "description": "Request to retrieve all child relationship types for a given parent type",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "parentTypeId"
       ],
@@ -1110,6 +1118,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeListResponse": {
       "description": "Response containing a list of relationship types with total count",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "types",
         "totalCount"
@@ -1131,6 +1140,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -1296,6 +1306,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "MatchesHierarchyRequest": {
       "description": "Request to check if a relationship type matches or descends from an ancestor type in the hierarchy",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "typeId",
         "ancestorTypeId"
@@ -1325,6 +1336,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "MatchesHierarchyResponse": {
       "description": "Response indicating whether a type matches an ancestor in the hierarchy and the depth between them",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "matches"
       ],
@@ -1407,6 +1419,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "GetAncestorsRequest": {
       "description": "Request to retrieve all ancestor types in the hierarchy chain from a relationship type up to the root",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "typeId"
       ],
@@ -1430,6 +1443,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeListResponse": {
       "description": "Response containing a list of relationship types with total count",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "types",
         "totalCount"
@@ -1451,6 +1465,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -1616,6 +1631,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "CreateRelationshipTypeRequest": {
       "description": "Request to create a new relationship type with code, name, and optional hierarchy and inverse settings",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "code",
         "name"
@@ -1683,6 +1699,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -1848,6 +1865,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "UpdateRelationshipTypeRequest": {
       "description": "Request to update an existing relationship type's properties such as name, description, category, or hierarchy",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId"
       ],
@@ -1913,6 +1931,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -2078,6 +2097,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "DeleteRelationshipTypeRequest": {
       "description": "Request to permanently delete a relationship type (typically after deprecation and merge)",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId"
       ],
@@ -2161,6 +2181,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "DeprecateRelationshipTypeRequest": {
       "description": "Request to deprecate a relationship type, preventing its use for new relationships while preserving existing ones",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId"
       ],
@@ -2190,6 +2211,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -2355,6 +2377,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "UndeprecateRelationshipTypeRequest": {
       "description": "Request to restore a deprecated relationship type back to active status",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId"
       ],
@@ -2378,6 +2401,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "RelationshipTypeResponse": {
       "description": "Complete representation of a relationship type including hierarchy, inverse, and deprecation information",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId",
         "code",
@@ -2543,6 +2567,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "MergeRelationshipTypeRequest": {
       "description": "Request to migrate all relationships from a deprecated source type to a target type",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sourceTypeId",
         "targetTypeId"
@@ -2577,6 +2602,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "MergeRelationshipTypeResponse": {
       "description": "Response summarizing the results of a merge operation including the number of relationships migrated",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sourceTypeId",
         "targetTypeId",
@@ -2672,6 +2698,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "SeedRelationshipTypesRequest": {
       "description": "Request to bulk seed relationship types from configuration, typically used at startup",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "types"
       ],
@@ -2693,6 +2720,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "SeedRelationshipType": {
       "description": "A relationship type definition used for seeding, with code-based parent and inverse references",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "code",
         "name"
@@ -2751,6 +2779,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     "SeedRelationshipTypesResponse": {
       "description": "Response summarizing the results of a bulk seed operation with counts of created, updated, and skipped types",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "created",
         "updated",

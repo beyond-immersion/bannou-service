@@ -19,6 +19,7 @@ components:
     # Base event schema for $ref resolution
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       required:
         - eventId
         - timestamp
@@ -35,6 +36,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published when a subscription changes state (created, updated, cancelled, expired).
         Auth service subscribes to this event to update session authorizations.
@@ -78,7 +80,9 @@ components:
           description: When the subscription expires (if applicable)
         previousValues:
           type: object
+          additionalProperties: false
           description: Previous values for updated fields (for update action)
         newValues:
           type: object
+          additionalProperties: false
           description: New values for updated fields (for update action)

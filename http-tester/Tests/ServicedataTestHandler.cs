@@ -29,7 +29,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
-            var testStubName = GenerateTestId("test-service");
+            var testStubName = GenerateTestSlug("test-service");
 
             var createRequest = new CreateServiceRequest
             {
@@ -57,7 +57,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
-            var testStubName = GenerateTestId("get-by-id");
+            var testStubName = GenerateTestSlug("get-by-id");
 
             // First create a test service
             var createRequest = new CreateServiceRequest
@@ -93,7 +93,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
-            var testStubName = GenerateTestId("get-by-stub");
+            var testStubName = GenerateTestSlug("get-by-stub");
 
             // First create a test service
             var createRequest = new CreateServiceRequest
@@ -128,7 +128,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             var servicedataClient = GetServiceClient<IServicedataClient>();
 
             // Create a test service to ensure list is not empty
-            var testStubName = GenerateTestId("list-test");
+            var testStubName = GenerateTestSlug("list-test");
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
             {
                 StubName = testStubName,
@@ -155,7 +155,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
-            var testStubName = GenerateTestId("update-test");
+            var testStubName = GenerateTestSlug("update-test");
 
             // Create a test service
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
@@ -203,7 +203,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
-            var testStubName = GenerateTestId("delete-test");
+            var testStubName = GenerateTestSlug("delete-test");
 
             // Create a service to delete
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
@@ -238,7 +238,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
-            var testStubName = GenerateTestId("duplicate-test");
+            var testStubName = GenerateTestSlug("duplicate-test");
 
             // Create first service
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
@@ -277,7 +277,7 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
-            var testPrefix = GenerateTestId("active-filter");
+            var testPrefix = GenerateTestSlug("active-filter");
 
             // Create an active service
             var activeResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest

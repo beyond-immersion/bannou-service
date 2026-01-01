@@ -223,6 +223,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CreateCharacterRequest": {
       "description": "Request payload for creating a new character in the game world",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "name",
         "realmId",
@@ -283,6 +284,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CharacterResponse": {
       "description": "Complete character data returned from character operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId",
         "name",
@@ -417,6 +419,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "GetCharacterRequest": {
       "description": "Request payload for retrieving a single character by ID",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId"
       ],
@@ -440,6 +443,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CharacterResponse": {
       "description": "Complete character data returned from character operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId",
         "name",
@@ -574,6 +578,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "UpdateCharacterRequest": {
       "description": "Request payload for updating an existing character's properties",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId"
       ],
@@ -634,6 +639,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CharacterResponse": {
       "description": "Complete character data returned from character operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId",
         "name",
@@ -768,6 +774,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "DeleteCharacterRequest": {
       "description": "Request payload for permanently deleting a character",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId"
       ],
@@ -851,6 +858,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "ListCharactersRequest": {
       "description": "Request payload for listing characters with optional filtering and pagination",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "realmId": {
           "type": "string",
@@ -909,6 +917,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CharacterListResponse": {
       "description": "Paginated list of characters with metadata for navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characters",
         "totalCount",
@@ -948,6 +957,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CharacterResponse": {
       "description": "Complete character data returned from character operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId",
         "name",
@@ -1082,6 +1092,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "GetCharactersByRealmRequest": {
       "description": "Request payload for retrieving all characters within a specific realm",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId"
       ],
@@ -1142,6 +1153,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CharacterListResponse": {
       "description": "Paginated list of characters with metadata for navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characters",
         "totalCount",
@@ -1181,6 +1193,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CharacterResponse": {
       "description": "Complete character data returned from character operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "characterId",
         "name",

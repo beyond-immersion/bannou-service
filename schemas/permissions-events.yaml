@@ -39,6 +39,7 @@ components:
     # Base event schema for $ref resolution
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       required:
         - eventId
         - timestamp
@@ -56,6 +57,7 @@ components:
 
     PermissionCapabilityUpdate:
       type: object
+      additionalProperties: false
       description: |
         Event published to specific Connect service instances (CONNECT_{session_id} channel).
         Contains compiled permission capabilities for a session with optional delta updates.
@@ -125,6 +127,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by services when a session's state changes within that service.
         Triggers permission recompilation in the Permissions service.

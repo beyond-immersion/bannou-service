@@ -257,6 +257,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     "InternalProxyRequest": {
       "description": "Request to proxy an API call through the Connect service to a target backend service",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "targetService",
@@ -331,6 +332,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     "InternalProxyResponse": {
       "description": "Response from a proxied API call containing the target service's response data",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "success",
         "statusCode"
@@ -436,6 +438,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     "GetClientCapabilitiesRequest": {
       "type": "object",
       "description": "Request to get client capability manifest (empty body allowed)",
+      "additionalProperties": false,
       "properties": {
         "serviceFilter": {
           "type": "string",
@@ -461,6 +464,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     "ClientCapabilitiesResponse": {
       "description": "Response containing the client's capability manifest with available API endpoints and shortcuts",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "capabilities",
@@ -484,7 +488,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
           "items": {
             "$ref": "#/$defs/ClientShortcut"
           },
-          "description": "Pre-bound API calls available for this session.\nShortcuts are invoked like normal capabilities but Connect injects\ na pre-bound payload instead of using the client's payload.\n",
+          "description": "Pre-bound API calls available for this session.\nShortcuts are invoked like normal capabilities but Connect injects\na pre-bound payload instead of using the client's payload.\n",
           "nullable": true
         },
         "version": {
@@ -507,6 +511,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     "ClientCapability": {
       "description": "A single API capability available to the client, mapping a client-salted GUID to a service endpoint",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "guid",
         "service",
@@ -553,7 +558,8 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     },
     "ClientShortcut": {
       "type": "object",
-      "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\ npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
+      "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
+      "additionalProperties": false,
       "required": [
         "guid",
         "targetService",

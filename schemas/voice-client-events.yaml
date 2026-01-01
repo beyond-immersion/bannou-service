@@ -29,6 +29,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to a client when they join a voice room.
@@ -84,6 +85,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to existing room participants when a new peer joins.
@@ -114,6 +116,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to remaining room participants when a peer leaves.
@@ -147,6 +150,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
@@ -178,6 +182,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all room participants when the voice tier upgrades.
@@ -227,6 +232,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all room participants when the voice room is closed.
@@ -257,6 +263,7 @@ components:
 
     VoicePeerInfo:
       type: object
+      additionalProperties: false
       description: Peer connection information for P2P voice
       required:
         - peerSessionId
@@ -285,6 +292,7 @@ components:
 
     SipCredentials:
       type: object
+      additionalProperties: false
       description: |
         SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
         These credentials are dynamically generated per-user per-room and should be used

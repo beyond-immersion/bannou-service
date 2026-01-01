@@ -223,6 +223,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetStateRequest": {
       "description": "Request to retrieve a single state value by key from a state store",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "storeName",
         "key"
@@ -250,9 +251,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetStateResponse": {
       "description": "Response containing a retrieved state value with its metadata and ETag",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "value": {
           "type": "object",
+          "additionalProperties": false,
           "nullable": true,
           "description": "The stored value (null if not found)"
         },
@@ -270,6 +273,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "StateMetadata": {
       "description": "Metadata associated with a state entry including creation time, last update time, and version",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "createdAt": {
           "type": "string",
@@ -357,6 +361,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SaveStateRequest": {
       "description": "Request to save a state value to a state store with optional TTL and consistency settings",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "storeName",
         "key",
@@ -373,6 +378,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "value": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Value to store"
         },
         "options": {
@@ -384,6 +390,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "StateOptions": {
       "description": "Configuration options for state save operations including TTL, consistency level, and optimistic concurrency",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "ttl": {
           "type": "integer",
@@ -418,6 +425,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SaveStateResponse": {
       "description": "Response from a save operation containing the new ETag and success status",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "etag": {
           "type": "string",
@@ -497,6 +505,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeleteStateRequest": {
       "description": "Request to delete a state value by key from a state store",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "storeName",
         "key"
@@ -524,6 +533,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeleteStateResponse": {
       "description": "Response from a delete operation indicating whether the key was removed",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "deleted": {
           "type": "boolean",
@@ -599,6 +609,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "QueryStateRequest": {
       "description": "Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis backends",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "storeName"
       ],
@@ -609,8 +620,9 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "filter": {
           "type": "object",
+          "additionalProperties": false,
           "nullable": true,
-          "description": "Filter expression. Format depends on backend:\n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\ n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
+          "description": "Filter expression. Format depends on backend:\ n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
         },
         "indexName": {
           "type": "string",
@@ -645,6 +657,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SortField": {
       "description": "Specifies a field and direction for sorting query results",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "field": {
           "type": "string",
@@ -673,11 +686,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "QueryStateResponse": {
       "description": "Response containing paginated query results with total count information",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "results": {
           "type": "array",
           "items": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": false
           },
           "description": "Query results"
         },
@@ -763,6 +778,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "BulkGetStateRequest": {
       "description": "Request to retrieve multiple state values by key in a single operation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "storeName",
         "keys"
@@ -793,6 +809,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "BulkGetStateResponse": {
       "description": "Response containing the results of a bulk get operation for multiple keys",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "items": {
           "type": "array",
@@ -806,6 +823,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "BulkStateItem": {
       "description": "A single item result from a bulk get operation including the key, value, ETag, and found status",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "key": {
           "type": "string",
@@ -813,6 +831,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "value": {
           "type": "object",
+          "additionalProperties": false,
           "nullable": true,
           "description": "The value (null if not found)"
         },
@@ -894,6 +913,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "ListStoresRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Optional filters for store listing (empty object returns all)",
       "properties": {
         "backendFilter": {
@@ -924,6 +944,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListStoresResponse": {
       "description": "Response containing the list of configured state stores",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "stores": {
           "type": "array",
@@ -937,6 +958,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "StoreInfo": {
       "description": "Information about a configured state store including its name, backend type, and optional key count",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "name": {
           "type": "string",

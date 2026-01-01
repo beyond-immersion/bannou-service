@@ -27,6 +27,7 @@ components:
     # Base event schema for $ref resolution
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       required:
         - eventId
         - timestamp
@@ -46,6 +47,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Simple health ping event published to verify pub/sub path is active.
         Used by infrastructure health checks.

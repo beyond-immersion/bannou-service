@@ -331,6 +331,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "CapabilityRequest": {
       "description": "Request to retrieve available API methods for a session",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId"
       ],
@@ -362,6 +363,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "CapabilityResponse": {
       "description": "Response containing the compiled permissions for a session",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "permissions"
@@ -457,6 +459,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "ValidationRequest": {
       "description": "Request to validate whether a session has access to a specific API method",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "serviceId",
@@ -490,6 +493,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "ValidationResponse": {
       "description": "Response indicating whether access to a specific API method is permitted",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "allowed",
         "sessionId"
@@ -578,6 +582,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "ServicePermissionMatrix": {
       "description": "Complete permission matrix for a service defining state-role-method access rules",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "serviceId",
         "permissions"
@@ -638,6 +643,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "RegistrationResponse": {
       "description": "Response from registering or updating a service permission matrix",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "serviceId",
         "success",
@@ -739,6 +745,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "SessionStateUpdate": {
       "description": "Request to update a session's state for a specific service",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "serviceId",
@@ -783,6 +790,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "SessionUpdateResponse": {
       "description": "Response from updating a session's state or role with recompiled permissions",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "success",
@@ -891,6 +899,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "SessionRoleUpdate": {
       "description": "Request to update a session's role affecting permissions across all services",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "newRole"
@@ -924,6 +933,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "SessionUpdateResponse": {
       "description": "Response from updating a session's state or role with recompiled permissions",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "success",
@@ -1032,6 +1042,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "ClearSessionStateRequest": {
       "description": "Request to clear a session's state for a specific service",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "serviceId"
@@ -1051,7 +1062,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
           "items": {
             "type": "string"
           },
-          "description": "Optional list of state values to match. If provided, only clears if\ncurrent state matches one of these values. If empty or not provided,\nclears the state unconditionally.\n",
+          "description": "Optional list of state values to match. If provided, only clears if\ncurrent state matches one of these values. If empty or not provided,\ nclears the state unconditionally.\n",
           "nullable": true
         }
       }
@@ -1068,6 +1079,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "SessionUpdateResponse": {
       "description": "Response from updating a session's state or role with recompiled permissions",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "success",
@@ -1176,6 +1188,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "SessionInfoRequest": {
       "description": "Request to retrieve complete information about a session",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId"
       ],
@@ -1199,6 +1212,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "SessionInfo": {
       "description": "Complete session information including role, states, and compiled permissions",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "role",
@@ -1320,6 +1334,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$defs": {
     "ListServicesRequest": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Request to list registered services (empty body allowed for listing all)",
       "properties": {
         "serviceIdFilter": {
@@ -1341,6 +1356,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "RegisteredServicesResponse": {
       "description": "Response containing list of all services that have registered their permissions",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "services",
         "timestamp"
@@ -1363,6 +1379,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     "RegisteredServiceInfo": {
       "description": "Information about a registered service including its ID, version, and endpoint count",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "serviceId",
         "registeredAt",

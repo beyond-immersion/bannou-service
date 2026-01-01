@@ -25,6 +25,7 @@ components:
     # Base event schema for $ref resolution
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       required:
         - eventId
         - timestamp

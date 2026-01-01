@@ -301,6 +301,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "ListGameSessionsRequest": {
       "type": "object",
       "description": "Request to list available game sessions",
+      "additionalProperties": false,
       "properties": {
         "gameType": {
           "type": "string",
@@ -333,6 +334,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GameSessionListResponse": {
       "description": "Response containing a list of game sessions matching filter criteria",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessions"
       ],
@@ -353,6 +355,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GameSessionResponse": {
       "description": "Complete details of a game session including players and settings",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "gameType",
@@ -426,6 +429,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GamePlayer": {
       "description": "Information about a player currently participating in a game session",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "joinedAt",
@@ -536,6 +540,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "CreateGameSessionRequest": {
       "description": "Request to create a new game session with specified settings",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "gameType",
         "maxPlayers"
@@ -590,6 +595,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GameSessionResponse": {
       "description": "Complete details of a game session including players and settings",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "gameType",
@@ -663,6 +669,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GamePlayer": {
       "description": "Information about a player currently participating in a game session",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "joinedAt",
@@ -773,6 +780,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GetGameSessionRequest": {
       "type": "object",
       "description": "Request to get a specific game session",
+      "additionalProperties": false,
       "required": [
         "sessionId"
       ],
@@ -796,6 +804,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GameSessionResponse": {
       "description": "Complete details of a game session including players and settings",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "gameType",
@@ -869,6 +878,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GamePlayer": {
       "description": "Information about a player currently participating in a game session",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "accountId",
         "joinedAt",
@@ -979,6 +989,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "JoinGameSessionRequest": {
       "description": "Request to join an existing game session as a player",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "accountId"
@@ -1015,6 +1026,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "VoiceSipEndpoint": {
       "type": "object",
       "description": "Client's SIP/WebRTC endpoint for voice communication",
+      "additionalProperties": false,
       "required": [
         "sdpOffer"
       ],
@@ -1044,6 +1056,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "JoinGameSessionResponse": {
       "description": "Response after successfully joining a game session with role and permissions",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "success",
         "sessionId",
@@ -1088,7 +1101,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     },
     "VoiceConnectionInfo": {
       "type": "object",
-      "description": "Minimal voice metadata returned when joining a session.\ n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
+      "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
+      "additionalProperties": false,
       "required": [
         "voiceEnabled"
       ],
@@ -1198,6 +1212,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "LeaveGameSessionRequest": {
       "type": "object",
       "description": "Request to leave a game session",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "accountId"
@@ -1287,6 +1302,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "KickPlayerRequest": {
       "description": "Request to remove a player from a game session (admin only)",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "targetAccountId"
@@ -1381,6 +1397,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "ChatMessageRequest": {
       "description": "Request to send a chat message to players in a game session",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "message"
@@ -1485,6 +1502,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GameActionRequest": {
       "description": "Request to perform a game action such as movement or combat",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "sessionId",
         "actionType"
@@ -1530,6 +1548,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "GameActionResponse": {
       "description": "Response indicating the result of a game action with any state changes",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "success",
         "actionId"

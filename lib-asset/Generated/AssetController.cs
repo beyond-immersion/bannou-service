@@ -335,6 +335,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UploadRequest": {
       "description": "Request to initiate an asset upload and receive a pre-signed URL",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "filename",
         "size",
@@ -362,6 +363,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "AssetMetadataInput": {
       "type": "object",
+      "additionalProperties": false,
       "description": "User-provided metadata for asset categorization",
       "properties": {
         "assetType": {
@@ -416,6 +418,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UploadResponse": {
       "description": "Response containing pre-signed URL and configuration for uploading an asset",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "uploadId",
         "uploadUrl",
@@ -440,12 +443,20 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         "multipart": {
           "$ref": "#/$defs/MultipartConfig",
           "description": "Configuration for multipart uploads if file size requires it"
+        },
+        "requiredHeaders": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Headers the client must include when uploading to the pre-signed URL"
         }
       }
     },
     "MultipartConfig": {
       "description": "Configuration for multipart uploads of large files",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "required": {
           "type": "boolean",
@@ -471,6 +482,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PartUploadInfo": {
       "description": "Upload information for a single part in a multipart upload",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "partNumber",
         "uploadUrl"
@@ -565,6 +577,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CompleteUploadRequest": {
       "description": "Request to finalize an upload and trigger asset processing",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "uploadId"
       ],
@@ -587,6 +600,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CompletedPart": {
       "description": "Information about a completed part in a multipart upload",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "partNumber",
         "etag"
@@ -613,6 +627,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "AssetMetadata": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Complete asset metadata including system-generated fields",
       "properties": {
         "assetId": {
@@ -773,6 +788,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetAssetRequest": {
       "description": "Request to retrieve asset metadata and download URL",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "assetId"
       ],
@@ -800,6 +816,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetWithDownloadUrl": {
       "description": "Asset metadata combined with a pre-signed download URL",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "assetId": {
           "type": "string",
@@ -840,6 +857,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "AssetMetadata": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Complete asset metadata including system-generated fields",
       "properties": {
         "assetId": {
@@ -1000,6 +1018,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListVersionsRequest": {
       "description": "Request to list all versions of an asset with pagination",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "assetId"
       ],
@@ -1032,6 +1051,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetVersionList": {
       "description": "Paginated list of asset versions",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "assetId": {
           "type": "string",
@@ -1061,6 +1081,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetVersion": {
       "description": "Metadata for a specific version of an asset",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "versionId": {
           "type": "string",
@@ -1150,6 +1171,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetSearchRequest": {
       "description": "Search criteria for filtering assets with pagination",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "assetType",
         "realm"
@@ -1223,6 +1245,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetSearchResult": {
       "description": "Paginated results from an asset search query",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "assets": {
           "type": "array",
@@ -1247,6 +1270,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "AssetMetadata": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Complete asset metadata including system-generated fields",
       "properties": {
         "assetId": {
@@ -1407,6 +1431,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CreateBundleRequest": {
       "description": "Request to create a new asset bundle from multiple assets",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "bundleId",
         "assetIds"
@@ -1435,7 +1460,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Custom metadata for the bundle"
+          "nullable": true,
+          "description": "Custom metadata for the bundle (null if none)"
         }
       }
     },
@@ -1460,6 +1486,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CreateBundleResponse": {
       "description": "Response with bundle creation status and estimated size",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "bundleId": {
           "type": "string",
@@ -1550,6 +1577,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetBundleRequest": {
       "description": "Request to retrieve bundle metadata and download URL",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "bundleId"
       ],
@@ -1584,6 +1612,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "BundleWithDownloadUrl": {
       "description": "Bundle metadata combined with a pre-signed download URL",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "bundleId": {
           "type": "string",
@@ -1698,6 +1727,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "BundleUploadRequest": {
       "description": "Request to upload a pre-built asset bundle file",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "filename",
         "size"
@@ -1720,6 +1750,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     },
     "BundleManifestPreview": {
       "type": "object",
+      "additionalProperties": false,
       "description": "Preview of bundle manifest for validation",
       "properties": {
         "bundleId": {
@@ -1748,6 +1779,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UploadResponse": {
       "description": "Response containing pre-signed URL and configuration for uploading an asset",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "uploadId",
         "uploadUrl",
@@ -1772,12 +1804,20 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         "multipart": {
           "$ref": "#/$defs/MultipartConfig",
           "description": "Configuration for multipart uploads if file size requires it"
+        },
+        "requiredHeaders": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Headers the client must include when uploading to the pre-signed URL"
         }
       }
     },
     "MultipartConfig": {
       "description": "Configuration for multipart uploads of large files",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "required": {
           "type": "boolean",
@@ -1803,6 +1843,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PartUploadInfo": {
       "description": "Upload information for a single part in a multipart upload",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "partNumber",
         "uploadUrl"

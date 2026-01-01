@@ -27,6 +27,7 @@ components:
     # Base event schema for $ref resolution
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       required:
         - eventId
         - timestamp
@@ -46,6 +47,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published when a new endpoint is registered in the service mesh.
         Consumers can use this to update local routing caches.
@@ -78,6 +80,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published when an endpoint is removed from the service mesh.
         Either via explicit deregistration or TTL expiration.

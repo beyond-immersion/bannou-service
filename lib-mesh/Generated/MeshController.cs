@@ -337,6 +337,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetEndpointsRequest": {
       "type": "object",
       "description": "Request to get endpoints for a service",
+      "additionalProperties": false,
       "required": [
         "appId"
       ],
@@ -352,7 +353,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "serviceName": {
           "type": "string",
-          "description": "Optional filter by specific service name"
+          "nullable": true,
+          "description": "Optional filter by specific service name (null for all services)"
         }
       }
     }
@@ -368,6 +370,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetEndpointsResponse": {
       "type": "object",
       "description": "Response containing endpoints for a service",
+      "additionalProperties": false,
       "required": [
         "appId",
         "endpoints"
@@ -397,6 +400,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "MeshEndpoint": {
       "type": "object",
       "description": "A service endpoint in the mesh",
+      "additionalProperties": false,
       "required": [
         "instanceId",
         "appId",
@@ -537,6 +541,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListEndpointsRequest": {
       "type": "object",
       "description": "Request to list all endpoints",
+      "additionalProperties": false,
       "properties": {
         "statusFilter": {
           "$ref": "#/$defs/EndpointStatus",
@@ -572,6 +577,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListEndpointsResponse": {
       "type": "object",
       "description": "Response containing all endpoints",
+      "additionalProperties": false,
       "required": [
         "endpoints",
         "summary"
@@ -593,6 +599,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "MeshEndpoint": {
       "type": "object",
       "description": "A service endpoint in the mesh",
+      "additionalProperties": false,
       "required": [
         "instanceId",
         "appId",
@@ -668,6 +675,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "EndpointSummary": {
       "type": "object",
       "description": "Summary statistics for endpoints",
+      "additionalProperties": false,
       "properties": {
         "totalEndpoints": {
           "type": "integer",
@@ -759,6 +767,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RegisterEndpointRequest": {
       "type": "object",
       "description": "Request to register a service endpoint",
+      "additionalProperties": false,
       "required": [
         "instanceId",
         "appId",
@@ -789,7 +798,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "items": {
             "type": "string"
           },
-          "description": "List of service names hosted on this endpoint"
+          "nullable": true,
+          "description": "List of service names hosted on this endpoint (null for none)"
         },
         "maxConnections": {
           "type": "integer",
@@ -801,7 +811,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional metadata key-value pairs"
+          "nullable": true,
+          "description": "Optional metadata key-value pairs (null if none)"
         }
       }
     }
@@ -817,6 +828,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RegisterEndpointResponse": {
       "type": "object",
       "description": "Response after registering endpoint",
+      "additionalProperties": false,
       "required": [
         "success",
         "endpoint"
@@ -839,6 +851,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "MeshEndpoint": {
       "type": "object",
       "description": "A service endpoint in the mesh",
+      "additionalProperties": false,
       "required": [
         "instanceId",
         "appId",
@@ -979,6 +992,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeregisterEndpointRequest": {
       "type": "object",
       "description": "Request to deregister an endpoint",
+      "additionalProperties": false,
       "required": [
         "instanceId"
       ],
@@ -1062,6 +1076,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "HeartbeatRequest": {
       "type": "object",
       "description": "Heartbeat to refresh endpoint TTL and update metrics",
+      "additionalProperties": false,
       "required": [
         "instanceId"
       ],
@@ -1072,24 +1087,32 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Unique identifier for the instance sending the heartbeat"
         },
         "status": {
-          "$ref": "#/$defs/EndpointStatus",
-          "description": "Current health status of the endpoint"
+          "allOf": [
+            {
+              "$ref": "#/$defs/EndpointStatus"
+            }
+          ],
+          "nullable": true,
+          "description": "Current health status of the endpoint (null to keep previous)"
         },
         "loadPercent": {
           "type": "number",
           "format": "float",
-          "description": "Current load (0-100)"
+          "nullable": true,
+          "description": "Current load 0-100 (null to keep previous)"
         },
         "currentConnections": {
           "type": "integer",
-          "description": "Current active connections"
+          "nullable": true,
+          "description": "Current active connections (null to keep previous)"
         },
         "issues": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "List of non-critical issues"
+          "nullable": true,
+          "description": "List of non-critical issues (null if none)"
         }
       }
     },
@@ -1115,6 +1138,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "HeartbeatResponse": {
       "type": "object",
       "description": "Response after heartbeat processed",
+      "additionalProperties": false,
       "required": [
         "success"
       ],
@@ -1201,6 +1225,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetRouteRequest": {
       "type": "object",
       "description": "Request to get optimal route for a service call",
+      "additionalProperties": false,
       "required": [
         "appId"
       ],
@@ -1211,7 +1236,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "serviceName": {
           "type": "string",
-          "description": "Optional service name for affinity routing"
+          "nullable": true,
+          "description": "Optional service name for affinity routing (null for no affinity)"
         },
         "algorithm": {
           "$ref": "#/$defs/LoadBalancerAlgorithm",
@@ -1241,6 +1267,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetRouteResponse": {
       "type": "object",
       "description": "Selected route for service call",
+      "additionalProperties": false,
       "required": [
         "endpoint"
       ],
@@ -1261,6 +1288,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "MeshEndpoint": {
       "type": "object",
       "description": "A service endpoint in the mesh",
+      "additionalProperties": false,
       "required": [
         "instanceId",
         "appId",
@@ -1401,6 +1429,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetMappingsRequest": {
       "type": "object",
       "description": "Request to get service-to-app-id mappings",
+      "additionalProperties": false,
       "properties": {
         "serviceNameFilter": {
           "type": "string",
@@ -1421,6 +1450,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetMappingsResponse": {
       "type": "object",
       "description": "Current service mappings",
+      "additionalProperties": false,
       "required": [
         "mappings",
         "version"
@@ -1513,6 +1543,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetHealthRequest": {
       "type": "object",
       "description": "Request for mesh health status",
+      "additionalProperties": false,
       "properties": {
         "includeEndpoints": {
           "type": "boolean",
@@ -1533,6 +1564,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "MeshHealthResponse": {
       "type": "object",
       "description": "Overall mesh health status",
+      "additionalProperties": false,
       "required": [
         "status",
         "summary"
@@ -1581,6 +1613,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "EndpointSummary": {
       "type": "object",
       "description": "Summary statistics for endpoints",
+      "additionalProperties": false,
       "properties": {
         "totalEndpoints": {
           "type": "integer",
@@ -1607,6 +1640,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     "MeshEndpoint": {
       "type": "object",
       "description": "A service endpoint in the mesh",
+      "additionalProperties": false,
       "required": [
         "instanceId",
         "appId",

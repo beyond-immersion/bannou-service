@@ -299,6 +299,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "CreateRelationshipRequest": {
       "description": "Request to create a new relationship between two entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "entity1Id",
         "entity1Type",
@@ -371,6 +372,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipResponse": {
       "description": "Complete details of a relationship between two entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId",
         "entity1Id",
@@ -453,7 +455,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -523,6 +525,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "GetRelationshipRequest": {
       "description": "Request to retrieve a specific relationship by its ID",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId"
       ],
@@ -546,6 +549,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipResponse": {
       "description": "Complete details of a relationship between two entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId",
         "entity1Id",
@@ -628,7 +632,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -698,6 +702,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "ListRelationshipsByEntityRequest": {
       "description": "Request to list all relationships for a specific entity with optional filters",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "entityId",
         "entityType"
@@ -770,6 +775,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipListResponse": {
       "description": "Paginated list of relationships with metadata for navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationships",
         "totalCount",
@@ -809,6 +815,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipResponse": {
       "description": "Complete details of a relationship between two entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId",
         "entity1Id",
@@ -891,7 +898,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -961,6 +968,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "GetRelationshipsBetweenRequest": {
       "description": "Request to get all relationships between two specific entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "entity1Id",
         "entity1Type",
@@ -1026,6 +1034,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipListResponse": {
       "description": "Paginated list of relationships with metadata for navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationships",
         "totalCount",
@@ -1065,6 +1074,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipResponse": {
       "description": "Complete details of a relationship between two entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId",
         "entity1Id",
@@ -1147,7 +1157,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -1217,6 +1227,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "ListRelationshipsByTypeRequest": {
       "description": "Request to list all relationships of a specific relationship type",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipTypeId"
       ],
@@ -1283,6 +1294,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipListResponse": {
       "description": "Paginated list of relationships with metadata for navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationships",
         "totalCount",
@@ -1322,6 +1334,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipResponse": {
       "description": "Complete details of a relationship between two entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId",
         "entity1Id",
@@ -1404,7 +1417,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -1474,6 +1487,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "UpdateRelationshipRequest": {
       "description": "Request to update the metadata or type of an existing relationship",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId"
       ],
@@ -1509,6 +1523,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "RelationshipResponse": {
       "description": "Complete details of a relationship between two entities",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId",
         "entity1Id",
@@ -1591,7 +1606,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -1661,6 +1676,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     "EndRelationshipRequest": {
       "description": "Request to end an existing relationship with an optional timestamp and reason",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "relationshipId"
       ],

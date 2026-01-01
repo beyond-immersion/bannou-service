@@ -179,6 +179,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "PublishEventRequest": {
       "description": "Request to publish an event to a messaging topic",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "topic",
         "payload"
@@ -202,6 +203,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "PublishOptions": {
       "type": "object",
       "description": "Options for publishing messages to RabbitMQ",
+      "additionalProperties": false,
       "properties": {
         "exchange": {
           "type": "string",
@@ -268,6 +270,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "PublishEventResponse": {
       "description": "Response confirming event publication with message identifier",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "success": {
           "type": "boolean",
@@ -348,6 +351,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CreateSubscriptionRequest": {
       "description": "Request to create a new subscription to a messaging topic",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "topic",
         "callbackUrl"
@@ -372,6 +376,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "SubscriptionOptions": {
       "type": "object",
       "description": "Options for subscribing to RabbitMQ topics",
+      "additionalProperties": false,
       "properties": {
         "durable": {
           "type": "boolean",
@@ -417,6 +422,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "CreateSubscriptionResponse": {
       "description": "Response containing the created subscription details",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "subscriptionId": {
           "type": "string",
@@ -497,6 +503,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "RemoveSubscriptionRequest": {
       "description": "Request to remove an existing subscription",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "subscriptionId"
       ],
@@ -520,6 +527,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "RemoveSubscriptionResponse": {
       "description": "Response confirming subscription removal status",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "success": {
           "type": "boolean",
@@ -595,6 +603,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "ListTopicsRequest": {
       "type": "object",
       "description": "Optional filters for topic listing (empty object returns all)",
+      "additionalProperties": false,
       "properties": {
         "exchangeFilter": {
           "type": "string",
@@ -619,6 +628,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "ListTopicsResponse": {
       "description": "Response containing a list of available messaging topics",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "topics": {
           "type": "array",
@@ -632,6 +642,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "TopicInfo": {
       "description": "Information about a messaging topic including its name and statistics",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "name": {
           "type": "string",

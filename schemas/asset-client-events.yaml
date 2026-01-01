@@ -29,6 +29,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when an asset upload has completed (success or failure).
@@ -80,6 +81,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
@@ -122,6 +124,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when asset processing fails. Includes retry information.
@@ -163,6 +166,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when a bundle upload has been validated and processed.
@@ -208,6 +212,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when bundle validation fails. Includes detailed error information.
@@ -236,6 +241,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when bundle creation from asset_ids completes.
@@ -287,6 +293,7 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Final notification that an asset is ready for use.
@@ -367,6 +374,7 @@ components:
 
     ProcessingOutput:
       type: object
+      additionalProperties: false
       description: Information about a generated derivative asset
       properties:
         outputType:
@@ -382,6 +390,7 @@ components:
 
     ValidationWarning:
       type: object
+      additionalProperties: false
       description: Non-fatal warning from bundle validation
       properties:
         code:
@@ -397,6 +406,7 @@ components:
 
     ValidationError:
       type: object
+      additionalProperties: false
       description: Fatal error from bundle validation
       required:
         - code

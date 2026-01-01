@@ -375,6 +375,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetRealmRequest": {
       "description": "Request to retrieve a specific realm by its unique identifier",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId"
       ],
@@ -398,6 +399,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmResponse": {
       "description": "Complete realm information returned from API operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "code",
@@ -536,6 +538,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetRealmByCodeRequest": {
       "description": "Request to retrieve a realm by its unique code identifier",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "code"
       ],
@@ -561,6 +564,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmResponse": {
       "description": "Complete realm information returned from API operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "code",
@@ -699,6 +703,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListRealmsRequest": {
       "description": "Request to list realms with optional filtering and pagination",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "category": {
           "type": "string",
@@ -742,6 +747,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmListResponse": {
       "description": "Paginated list of realms with metadata for navigation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realms",
         "totalCount",
@@ -781,6 +787,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmResponse": {
       "description": "Complete realm information returned from API operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "code",
@@ -919,6 +926,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CreateRealmRequest": {
       "description": "Request to create a new realm with the specified properties",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "code",
         "name"
@@ -974,6 +982,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmResponse": {
       "description": "Complete realm information returned from API operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "code",
@@ -1112,6 +1121,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UpdateRealmRequest": {
       "description": "Request to update an existing realm's properties",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId"
       ],
@@ -1165,6 +1175,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmResponse": {
       "description": "Complete realm information returned from API operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "code",
@@ -1303,6 +1314,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeleteRealmRequest": {
       "description": "Request to permanently delete a realm from the system",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId"
       ],
@@ -1386,6 +1398,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeprecateRealmRequest": {
       "description": "Request to mark a realm as deprecated, preventing new entity creation",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId"
       ],
@@ -1415,6 +1428,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmResponse": {
       "description": "Complete realm information returned from API operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "code",
@@ -1553,6 +1567,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UndeprecateRealmRequest": {
       "description": "Request to restore a deprecated realm to active status",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId"
       ],
@@ -1576,6 +1591,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmResponse": {
       "description": "Complete realm information returned from API operations",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId",
         "code",
@@ -1714,6 +1730,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmExistsRequest": {
       "description": "Request to check if a realm exists and is available for use",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realmId"
       ],
@@ -1737,6 +1754,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "RealmExistsResponse": {
       "description": "Response indicating whether a realm exists and its active status",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "exists",
         "isActive"
@@ -1826,6 +1844,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SeedRealmsRequest": {
       "description": "Request to seed multiple realms from configuration data",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "realms"
       ],
@@ -1847,6 +1866,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SeedRealm": {
       "description": "Realm data used for seeding operations during service initialization",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "code",
         "name"
@@ -1895,6 +1915,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SeedRealmsResponse": {
       "description": "Summary of a realm seeding operation including counts and errors",
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "created",
         "updated",

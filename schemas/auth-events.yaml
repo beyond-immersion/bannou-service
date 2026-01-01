@@ -34,6 +34,7 @@ components:
     # Duplicated here for $ref resolution; actual implementation in common-events.yaml
     BaseServiceEvent:
       type: object
+      additionalProperties: false
       required:
         - eventId
         - timestamp
@@ -53,6 +54,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when sessions are invalidated (logout, account deletion, etc.)
       required:
         - sessionIds
@@ -85,6 +87,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published when a session's roles or authorizations change.
         Permissions service subscribes to update capability compilation.

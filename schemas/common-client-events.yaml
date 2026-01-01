@@ -21,6 +21,7 @@ components:
   schemas:
     BaseClientEvent:
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Base schema for all server-to-client push events.
@@ -50,6 +51,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to client when their available API capabilities change.
@@ -83,6 +85,7 @@ components:
 
     ClientCapabilityEntry:
       type: object
+      additionalProperties: false
       description: Individual API capability entry with routing information
       required:
         - serviceId
@@ -113,6 +116,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to client before WebSocket connection is closed.
@@ -150,6 +154,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Generic error notification sent to client.
@@ -182,6 +187,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Internal event carrying compiled capabilities from Permissions to Connect.
@@ -215,6 +221,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Generic notification event for system-level messages.
@@ -260,6 +267,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Published by services to create or update a session shortcut.
@@ -291,6 +299,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Published by services to remove shortcuts.
@@ -330,6 +339,7 @@ components:
 
     SessionShortcut:
       type: object
+      additionalProperties: false
       description: |
         A pre-bound API call that clients can invoke with a single GUID.
         The boundPayload is injected by Connect when the shortcut is invoked.
@@ -362,6 +372,7 @@ components:
 
     SessionShortcutMetadata:
       type: object
+      additionalProperties: false
       description: |
         Metadata about a session shortcut for display, debugging, and lifecycle management.
       required:

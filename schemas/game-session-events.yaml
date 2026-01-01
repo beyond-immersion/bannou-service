@@ -70,6 +70,7 @@ components:
     # =========================================================================
     GameSessionPlayerJoinedEvent:
       type: object
+      additionalProperties: false
       description: Published when a player joins a game session
       required:
         - eventId
@@ -96,6 +97,7 @@ components:
 
     GameSessionPlayerLeftEvent:
       type: object
+      additionalProperties: false
       description: Published when a player leaves a game session
       required:
         - eventId
