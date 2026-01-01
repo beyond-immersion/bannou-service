@@ -199,7 +199,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
         "routingKey": {
           "type": "string",
           "nullable": true,
-          "description": "Routing key for direct/topic exchanges (ignored for fanout exchanges)"
+          "description": "Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)"
         },
         "exchangeType": {
           "type": "string",
@@ -208,9 +208,9 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "direct",
             "topic"
           ],
-          "default": "fanout",
+          "default": "topic",
           "nullable": true,
-          "description": "Exchange type - determines how messages are routed"
+          "description": "Exchange type - determines how messages are routed (topic routes by routing key pattern)"
         },
         "persistent": {
           "type": "boolean",

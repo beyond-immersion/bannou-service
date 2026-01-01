@@ -78,10 +78,10 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             // Create a dedicated channel for this subscription
             var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
 
-            // Declare the exchange (fanout for service events)
+            // Declare the exchange (topic for service events - routes by routing key pattern)
             await channel.ExchangeDeclareAsync(
                 exchange: effectiveExchange,
-                type: ExchangeType.Fanout,
+                type: ExchangeType.Topic,
                 durable: true,
                 autoDelete: false,
                 arguments: null,
@@ -96,7 +96,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 arguments: effectiveOptions.UseDeadLetter ? CreateDeadLetterArguments() : null,
                 cancellationToken: cancellationToken);
 
-            // Bind queue to exchange - for fanout, routing key is ignored
+            // Bind queue to exchange - routing key determines which messages this queue receives
             await channel.QueueBindAsync(
                 queue: queueName,
                 exchange: effectiveExchange,
@@ -166,7 +166,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -181,8 +181,8 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         var rabbitExchangeType = exchangeType switch
         {
             SubscriptionExchangeType.Direct => ExchangeType.Direct,
-            SubscriptionExchangeType.Topic => ExchangeType.Topic,
-            _ => ExchangeType.Fanout
+            SubscriptionExchangeType.Fanout => ExchangeType.Fanout,
+            _ => ExchangeType.Topic
         };
 
         try
@@ -285,7 +285,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         string topic,
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(topic);
@@ -299,8 +299,8 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         var rabbitExchangeType = exchangeType switch
         {
             SubscriptionExchangeType.Direct => ExchangeType.Direct,
-            SubscriptionExchangeType.Topic => ExchangeType.Topic,
-            _ => ExchangeType.Fanout
+            SubscriptionExchangeType.Fanout => ExchangeType.Fanout,
+            _ => ExchangeType.Topic
         };
 
         try

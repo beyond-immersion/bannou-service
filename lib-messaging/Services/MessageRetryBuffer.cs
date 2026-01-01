@@ -221,7 +221,7 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
                 try
                 {
                     var exchange = message.Options?.Exchange ?? _connectionManager.DefaultExchange;
-                    var exchangeType = message.Options?.ExchangeType ?? PublishOptionsExchangeType.Fanout;
+                    var exchangeType = message.Options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
                     var routingKey = message.Options?.RoutingKey ?? message.Topic;
 
                     // Ensure exchange exists (cached in connection manager)

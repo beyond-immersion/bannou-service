@@ -141,7 +141,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -173,7 +173,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         string topic,
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(topic);

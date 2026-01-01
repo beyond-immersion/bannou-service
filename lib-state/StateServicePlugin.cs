@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +14,42 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
 {
     public override string PluginName => "state";
     public override string DisplayName => "State Service";
+
+    private IServiceProvider? _serviceProvider;
+
+    /// <inheritdoc/>
+    public override void ConfigureApplication(WebApplication app)
+    {
+        base.ConfigureApplication(app);
+        _serviceProvider = app.Services;
+    }
+
+    /// <summary>
+    /// Initialize the StateStoreFactory before any services try to use it.
+    /// This prevents sync-over-async initialization when services call GetStore() in constructors.
+    /// </summary>
+    protected override async Task<bool> OnInitializeAsync()
+    {
+        if (_serviceProvider == null)
+        {
+            Logger?.LogError("ServiceProvider not available - ConfigureApplication must be called first");
+            return false;
+        }
+
+        try
+        {
+            var stateStoreFactory = _serviceProvider.GetRequiredService<IStateStoreFactory>();
+            Logger?.LogInformation("Initializing StateStoreFactory connections...");
+            await stateStoreFactory.InitializeAsync();
+            Logger?.LogInformation("StateStoreFactory initialized successfully");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to initialize StateStoreFactory");
+            return false;
+        }
+    }
 
     public override void ConfigureServices(IServiceCollection services)
     {

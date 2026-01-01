@@ -20533,12 +20533,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.RoutingKey">
             <summary>
-            Routing key for direct/topic exchanges (ignored for fanout exchanges)
+            Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.ExchangeType">
             <summary>
-            Exchange type - determines how messages are routed
+            Exchange type - determines how messages are routed (topic routes by routing key pattern)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Persistent">
@@ -33410,7 +33410,7 @@
             <param name="topic">Topic/routing key to subscribe to</param>
             <param name="handler">Handler function called for each message</param>
             <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
-            <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
+            <param name="exchangeType">Exchange type (defaults to Topic for routing-key-based service events)</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>Disposable subscription handle - dispose to unsubscribe</returns>
         </member>
@@ -33422,7 +33422,7 @@
             <param name="topic">Topic/routing key to subscribe to</param>
             <param name="handler">Handler function called with raw message bytes</param>
             <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
-            <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
+            <param name="exchangeType">Exchange type (defaults to Topic for routing-key-based service events)</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>Disposable subscription handle - dispose to unsubscribe</returns>
         </member>
@@ -33440,7 +33440,7 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.SubscriptionExchangeType.Fanout">
             <summary>
-            Fanout exchange - broadcasts to all bound queues (default for service events).
+            Fanout exchange - broadcasts to all bound queues (use for broadcast scenarios).
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.SubscriptionExchangeType.Direct">
@@ -33450,7 +33450,7 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.SubscriptionExchangeType.Topic">
             <summary>
-            Topic exchange - routes by pattern matching on routing key.
+            Topic exchange - routes by pattern matching on routing key (default for service events).
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IMessageTap">

@@ -168,14 +168,14 @@ public interface IMessageSubscriber
     /// <param name="topic">Topic/routing key to subscribe to</param>
     /// <param name="handler">Handler function called for each message</param>
     /// <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
-    /// <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
+    /// <param name="exchangeType">Exchange type (defaults to Topic for routing-key-based service events)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Disposable subscription handle - dispose to unsubscribe</returns>
     Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
         CancellationToken cancellationToken = default)
         where TEvent : class;
 
@@ -186,14 +186,14 @@ public interface IMessageSubscriber
     /// <param name="topic">Topic/routing key to subscribe to</param>
     /// <param name="handler">Handler function called with raw message bytes</param>
     /// <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
-    /// <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
+    /// <param name="exchangeType">Exchange type (defaults to Topic for routing-key-based service events)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Disposable subscription handle - dispose to unsubscribe</returns>
     Task<IAsyncDisposable> SubscribeDynamicRawAsync(
         string topic,
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
-        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -210,7 +210,7 @@ public interface IMessageSubscriber
 public enum SubscriptionExchangeType
 {
     /// <summary>
-    /// Fanout exchange - broadcasts to all bound queues (default for service events).
+    /// Fanout exchange - broadcasts to all bound queues (use for broadcast scenarios).
     /// </summary>
     Fanout,
 
@@ -220,7 +220,7 @@ public enum SubscriptionExchangeType
     Direct,
 
     /// <summary>
-    /// Topic exchange - routes by pattern matching on routing key.
+    /// Topic exchange - routes by pattern matching on routing key (default for service events).
     /// </summary>
     Topic
 }

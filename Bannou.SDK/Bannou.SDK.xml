@@ -20896,12 +20896,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.RoutingKey">
             <summary>
-            Routing key for direct/topic exchanges (ignored for fanout exchanges)
+            Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.ExchangeType">
             <summary>
-            Exchange type - determines how messages are routed
+            Exchange type - determines how messages are routed (topic routes by routing key pattern)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Persistent">

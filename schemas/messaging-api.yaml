@@ -49,19 +49,20 @@ paths:
         to RabbitMQ\",\n      \"properties\": {\n        \"exchange\": {\n          \"type\": \"string\",\n          \"default\"\
         : \"bannou\",\n          \"description\": \"Exchange name for routing\"\n        },\n        \"routingKey\": {\n \
         \         \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Routing key for direct/topic
-        exchanges (ignored for fanout exchanges)\"\n        },\n        \"exchangeType\": {\n          \"type\": \"string\"\
-        ,\n          \"enum\": [\n            \"fanout\",\n            \"direct\",\n            \"topic\"\n          ],\n\
-        \          \"default\": \"fanout\",\n          \"nullable\": true,\n          \"description\": \"Exchange type - determines
-        how messages are routed\"\n        },\n        \"persistent\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : true,\n          \"description\": \"Whether the message should be persisted to disk\"\n        },\n        \"priority\"\
-        : {\n          \"type\": \"integer\",\n          \"minimum\": 0,\n          \"maximum\": 9,\n          \"default\"\
-        : 0,\n          \"description\": \"Message priority (0-9)\"\n        },\n        \"correlationId\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"\
-        Correlation ID for request/response patterns\"\n        },\n        \"expiration\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"duration\",\n          \"nullable\": true,\n          \"description\": \"Message expiration
-        time (ISO 8601 duration format)\"\n        },\n        \"headers\": {\n          \"type\": \"object\",\n         \
-        \ \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Custom headers to include
-        with the message\"\n        }\n      }\n    }\n  }\n}"
+        exchanges (required for topic exchanges, ignored for fanout)\"\n        },\n        \"exchangeType\": {\n        \
+        \  \"type\": \"string\",\n          \"enum\": [\n            \"fanout\",\n            \"direct\",\n            \"\
+        topic\"\n          ],\n          \"default\": \"topic\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Exchange type - determines how messages are routed (topic routes by routing key pattern)\"\n        },\n     \
+        \   \"persistent\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\":
+        \"Whether the message should be persisted to disk\"\n        },\n        \"priority\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 0,\n          \"maximum\": 9,\n          \"default\": 0,\n          \"description\": \"\
+        Message priority (0-9)\"\n        },\n        \"correlationId\": {\n          \"type\": \"string\",\n          \"\
+        format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Correlation ID for request/response
+        patterns\"\n        },\n        \"expiration\": {\n          \"type\": \"string\",\n          \"format\": \"duration\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"Message expiration time (ISO 8601 duration format)\"\
+        \n        },\n        \"headers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Custom headers to include with the message\"\n      \
+        \  }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PublishEventResponse\"\
         ,\n  \"$defs\": {\n    \"PublishEventResponse\": {\n      \"description\": \"Response confirming event publication
         with message identifier\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"success\": {\n       \
@@ -222,13 +223,13 @@ components:
         routingKey:
           type: string
           nullable: true
-          description: Routing key for direct/topic exchanges (ignored for fanout exchanges)
+          description: Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
         exchangeType:
           type: string
           enum: [fanout, direct, topic]
-          default: fanout
+          default: topic
           nullable: true
-          description: Exchange type - determines how messages are routed
+          description: Exchange type - determines how messages are routed (topic routes by routing key pattern)
         persistent:
           type: boolean
           default: true

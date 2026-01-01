@@ -76,7 +76,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             ArgumentNullException.ThrowIfNull(eventData);
 
             var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
-            var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Fanout;
+            var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
             var routingKey = options?.RoutingKey ?? topic;
 
             // Serialize - if this fails, it's a programming error (not retryable)
@@ -194,7 +194,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
             ArgumentNullException.ThrowIfNull(contentType);
 
             var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
-            var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Fanout;
+            var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
             var routingKey = options?.RoutingKey ?? topic;
 
             var channel = await _connectionManager.GetChannelAsync(cancellationToken);

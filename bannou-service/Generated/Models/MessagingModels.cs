@@ -71,17 +71,17 @@ public partial class PublishOptions
     public string Exchange { get; set; } = "bannou";
 
     /// <summary>
-    /// Routing key for direct/topic exchanges (ignored for fanout exchanges)
+    /// Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("routingKey")]
     public string? RoutingKey { get; set; } = default!;
 
     /// <summary>
-    /// Exchange type - determines how messages are routed
+    /// Exchange type - determines how messages are routed (topic routes by routing key pattern)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchangeType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PublishOptionsExchangeType? ExchangeType { get; set; } = BeyondImmersion.BannouService.Messaging.PublishOptionsExchangeType.Fanout;
+    public PublishOptionsExchangeType? ExchangeType { get; set; } = BeyondImmersion.BannouService.Messaging.PublishOptionsExchangeType.Topic;
 
     /// <summary>
     /// Whether the message should be persisted to disk
