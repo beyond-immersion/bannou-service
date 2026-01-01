@@ -18,12 +18,18 @@ using System = global::System;
 public partial class StatusResponse
 {
 
+    /// <summary>
+    /// Current health status of the website service
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public StatusResponseStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Current version of the website service
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -35,6 +41,9 @@ public partial class StatusResponse
     [System.Text.Json.Serialization.JsonPropertyName("uptime")]
     public int Uptime { get; set; } = default!;
 
+    /// <summary>
+    /// Message displayed during maintenance mode
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maintenanceMessage")]
     public string? MaintenanceMessage { get; set; } = default!;
 
@@ -53,12 +62,18 @@ public partial class StatusResponse
 public partial class PageContent
 {
 
+    /// <summary>
+    /// URL-friendly identifier for the page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Display title of the page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -72,6 +87,9 @@ public partial class PageContent
     [System.Text.Json.Serialization.JsonRequired]
     public string Content { get; set; } = default!;
 
+    /// <summary>
+    /// Format of the page content
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -84,15 +102,27 @@ public partial class PageContent
     [System.Text.Json.Serialization.JsonPropertyName("template")]
     public string? Template { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the page is publicly visible
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("published")]
     public bool Published { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time when the page was published
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("publishedAt")]
     public System.DateTimeOffset? PublishedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time of the last modification
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastModified")]
     public System.DateTimeOffset LastModified { get; set; } = default!;
 
+    /// <summary>
+    /// Name or identifier of the page author
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("author")]
     public string? Author { get; set; } = default!;
 
@@ -102,6 +132,9 @@ public partial class PageContent
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Search engine optimization settings for the page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seo")]
     public SEOMetadata Seo { get; set; } = default!;
 
@@ -120,25 +153,43 @@ public partial class PageContent
 public partial class PageMetadata
 {
 
+    /// <summary>
+    /// URL-friendly identifier for the page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Display title of the page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the page is publicly visible
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("published")]
     public bool Published { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time when the page was published
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("publishedAt")]
     public System.DateTimeOffset? PublishedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time of the last modification
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastModified")]
     public System.DateTimeOffset LastModified { get; set; } = default!;
 
+    /// <summary>
+    /// Name or identifier of the page author
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("author")]
     public string? Author { get; set; } = default!;
 
@@ -157,18 +208,33 @@ public partial class PageMetadata
 public partial class SEOMetadata
 {
 
+    /// <summary>
+    /// Meta description for search engines
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get; set; } = default!;
 
+    /// <summary>
+    /// Keywords for search engine indexing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("keywords")]
     public System.Collections.Generic.ICollection<string> Keywords { get; set; } = default!;
 
+    /// <summary>
+    /// Open Graph title for social media sharing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ogTitle")]
     public string? OgTitle { get; set; } = default!;
 
+    /// <summary>
+    /// Open Graph description for social media sharing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ogDescription")]
     public string? OgDescription { get; set; } = default!;
 
+    /// <summary>
+    /// Open Graph image URL for social media sharing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ogImage")]
     public System.Uri? OgImage { get; set; } = default!;
 
@@ -187,42 +253,75 @@ public partial class SEOMetadata
 public partial class SiteSettings
 {
 
+    /// <summary>
+    /// Display name of the website
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("siteName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string SiteName { get; set; } = default!;
 
+    /// <summary>
+    /// Base URL of the website
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("siteUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Uri SiteUrl { get; set; } = default!;
 
+    /// <summary>
+    /// Short slogan or description of the site
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tagline")]
     public string? Tagline { get; set; } = default!;
 
+    /// <summary>
+    /// Default language code for the website
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultLanguage")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string DefaultLanguage { get; set; } = "en";
 
+    /// <summary>
+    /// List of supported language codes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("supportedLanguages")]
     public System.Collections.Generic.ICollection<string> SupportedLanguages { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the site is in maintenance mode
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maintenanceMode")]
     public bool MaintenanceMode { get; set; } = false;
 
+    /// <summary>
+    /// Message displayed during maintenance mode
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maintenanceMessage")]
     public string? MaintenanceMessage { get; set; } = default!;
 
+    /// <summary>
+    /// Primary contact email address for the site
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contactEmail")]
     public string ContactEmail { get; set; } = default!;
 
+    /// <summary>
+    /// Map of social media platform names to profile URLs
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("socialLinks")]
     public System.Collections.Generic.IDictionary<string, System.Uri> SocialLinks { get; set; } = default!;
 
+    /// <summary>
+    /// Analytics and tracking configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("analytics")]
     public Analytics Analytics { get; set; } = default!;
 
+    /// <summary>
+    /// Custom script injection configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customScripts")]
     public CustomScripts CustomScripts { get; set; } = default!;
 
@@ -241,41 +340,71 @@ public partial class SiteSettings
 public partial class ThemeConfig
 {
 
+    /// <summary>
+    /// Name of the active theme
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("themeName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ThemeName { get; set; } = default!;
 
+    /// <summary>
+    /// Primary brand color in hex format
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("primaryColor")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
     public string PrimaryColor { get; set; } = default!;
 
+    /// <summary>
+    /// Secondary brand color in hex format
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("secondaryColor")]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
     public string SecondaryColor { get; set; } = default!;
 
+    /// <summary>
+    /// Default background color in hex format
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backgroundColor")]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
     public string BackgroundColor { get; set; } = default!;
 
+    /// <summary>
+    /// Default text color in hex format
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("textColor")]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
     public string TextColor { get; set; } = default!;
 
+    /// <summary>
+    /// Primary font family for the site
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fontFamily")]
     public string FontFamily { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom CSS styles
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customCSS")]
     public string? CustomCSS { get; set; } = default!;
 
+    /// <summary>
+    /// Site logo configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("logo")]
     public Logo Logo { get; set; } = default!;
 
+    /// <summary>
+    /// URL of the site favicon
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("favicon")]
     public System.Uri? Favicon { get; set; } = default!;
 
+    /// <summary>
+    /// Main navigation menu items
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("navigation")]
     public System.Collections.Generic.ICollection<NavigationItem> Navigation { get; set; } = default!;
 
@@ -294,23 +423,38 @@ public partial class ThemeConfig
 public partial class NavigationItem
 {
 
+    /// <summary>
+    /// Display text for the navigation link
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("label")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Label { get; set; } = default!;
 
+    /// <summary>
+    /// Target URL or path for the navigation link
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("url")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Url { get; set; } = default!;
 
+    /// <summary>
+    /// Sort order for the navigation item
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("order")]
     public int Order { get; set; } = default!;
 
+    /// <summary>
+    /// Link target attribute for opening behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("target")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Website.NavigationItemTarget._self;
 
+    /// <summary>
+    /// Nested child navigation items for dropdowns
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("children")]
     public System.Collections.Generic.ICollection<NavigationItem> Children { get; set; } = default!;
 
@@ -329,14 +473,23 @@ public partial class NavigationItem
 public partial class NewsResponse
 {
 
+    /// <summary>
+    /// List of news items for the current page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("items")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<NewsItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<NewsItem>();
 
+    /// <summary>
+    /// Total number of news items available
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("total")]
     public int Total { get; set; } = default!;
 
+    /// <summary>
+    /// Whether more news items are available beyond this page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasMore")]
     public bool HasMore { get; set; } = default!;
 
@@ -355,35 +508,59 @@ public partial class NewsResponse
 public partial class NewsItem
 {
 
+    /// <summary>
+    /// Unique identifier for the news item
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Id { get; set; } = default!;
 
+    /// <summary>
+    /// Headline of the news item
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Brief summary or excerpt of the news content
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Summary { get; set; } = default!;
 
+    /// <summary>
+    /// Full content body of the news item
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
     public string? Content { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the news item author
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("author")]
     public string Author { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time when the news was published
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("publishedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset PublishedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Category tags associated with the news item
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// URL of the featured image for the news item
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("imageUrl")]
     public System.Uri? ImageUrl { get; set; } = default!;
 
@@ -402,12 +579,18 @@ public partial class NewsItem
 public partial class ServerStatusResponse
 {
 
+    /// <summary>
+    /// Overall status across all game realms
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("globalStatus")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ServerStatusResponseGlobalStatus GlobalStatus { get; set; } = default!;
 
+    /// <summary>
+    /// Status information for each game realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realms")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -428,28 +611,43 @@ public partial class ServerStatusResponse
 public partial class RealmStatus
 {
 
+    /// <summary>
+    /// Unique identifier for the game realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the game realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Current operational status of the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RealmStatusStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Current player population level
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("population")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RealmStatusPopulation Population { get; set; } = default!;
 
+    /// <summary>
+    /// Current number of players online
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("playerCount")]
     public int? PlayerCount { get; set; } = default!;
 
@@ -474,6 +672,9 @@ public partial class RealmStatus
 public partial class DownloadsResponse
 {
 
+    /// <summary>
+    /// Available game client downloads
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clients")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -494,17 +695,26 @@ public partial class DownloadsResponse
 public partial class DownloadInfo
 {
 
+    /// <summary>
+    /// Target operating system platform
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platform")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DownloadInfoPlatform Platform { get; set; } = default!;
 
+    /// <summary>
+    /// Version number of the game client
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Version { get; set; } = default!;
 
+    /// <summary>
+    /// Download URL for the game client
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("url")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -524,9 +734,15 @@ public partial class DownloadInfo
     [System.Text.Json.Serialization.JsonRequired]
     public string Checksum { get; set; } = default!;
 
+    /// <summary>
+    /// Release notes or changelog for this version
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("releaseNotes")]
     public string? ReleaseNotes { get; set; } = default!;
 
+    /// <summary>
+    /// Minimum system requirements for the client
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("minimumRequirements")]
     public object MinimumRequirements { get; set; } = default!;
 
@@ -545,26 +761,41 @@ public partial class DownloadInfo
 public partial class ContactRequest
 {
 
+    /// <summary>
+    /// Sender email address for replies
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the person submitting the form
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     public string? Name { get; set; } = default!;
 
+    /// <summary>
+    /// Subject line of the contact message
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subject")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 5)]
     public string Subject { get; set; } = default!;
 
+    /// <summary>
+    /// Body content of the contact message
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(2000, MinimumLength = 10)]
     public string Message { get; set; } = default!;
 
+    /// <summary>
+    /// Category to route the contact request
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ContactRequestCategory Category { get; set; } = BeyondImmersion.BannouService.Website.ContactRequestCategory.General;
@@ -584,11 +815,17 @@ public partial class ContactRequest
 public partial class ContactResponse
 {
 
+    /// <summary>
+    /// Unique identifier for the created support ticket
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ticketId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TicketId { get; set; } = default!;
 
+    /// <summary>
+    /// Confirmation message displayed to the user
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -609,30 +846,51 @@ public partial class ContactResponse
 public partial class AccountProfile
 {
 
+    /// <summary>
+    /// Unique identifier for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// Email address associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
+    /// <summary>
+    /// User-chosen display name
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time when the account was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time of the last successful login
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastLogin")]
     public System.DateTimeOffset? LastLogin { get; set; } = default!;
 
+    /// <summary>
+    /// Total number of character slots available
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterSlots")]
     public int CharacterSlots { get; set; } = default!;
 
+    /// <summary>
+    /// Number of character slots currently in use
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("usedSlots")]
     public int UsedSlots { get; set; } = default!;
 
@@ -651,6 +909,9 @@ public partial class AccountProfile
 public partial class CharacterListResponse
 {
 
+    /// <summary>
+    /// List of characters owned by the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characters")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -671,27 +932,45 @@ public partial class CharacterListResponse
 public partial class CharacterSummary
 {
 
+    /// <summary>
+    /// Unique identifier for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the realm the character belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Realm { get; set; } = default!;
 
+    /// <summary>
+    /// Current level of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("level")]
     public int Level { get; set; } = default!;
 
+    /// <summary>
+    /// Character class or profession
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("class")]
     public string? Class { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time of last gameplay session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastPlayed")]
     public System.DateTimeOffset? LastPlayed { get; set; } = default!;
 
@@ -710,24 +989,39 @@ public partial class CharacterSummary
 public partial class SubscriptionResponse
 {
 
+    /// <summary>
+    /// Current state of the subscription
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SubscriptionResponseStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Subscription tier or plan type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SubscriptionResponseType Type { get; set; } = default!;
 
+    /// <summary>
+    /// Date and time when the subscription expires
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
+    /// <summary>
+    /// Whether automatic renewal is enabled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoRenew")]
     public bool AutoRenew { get; set; } = default!;
 
+    /// <summary>
+    /// List of benefits included in the subscription
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("benefits")]
     public System.Collections.Generic.ICollection<string> Benefits { get; set; } = default!;
 
@@ -746,16 +1040,25 @@ public partial class SubscriptionResponse
 public partial class ErrorResponse
 {
 
+    /// <summary>
+    /// Error code identifying the type of error
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Error { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable error message
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
+    /// <summary>
+    /// Additional error details or context
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("details")]
     public object? Details { get; set; } = default!;
 
@@ -819,9 +1122,15 @@ public enum PageContentContentType
 public partial class Analytics
 {
 
+    /// <summary>
+    /// Google Analytics tracking ID
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("googleAnalyticsId")]
     public string? GoogleAnalyticsId { get; set; } = default!;
 
+    /// <summary>
+    /// Configuration for other analytics trackers
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("otherTrackers")]
     public object OtherTrackers { get; set; } = default!;
 
@@ -840,12 +1149,21 @@ public partial class Analytics
 public partial class CustomScripts
 {
 
+    /// <summary>
+    /// Custom scripts to inject in the HTML head
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("head")]
     public string? Head { get; set; } = default!;
 
+    /// <summary>
+    /// Custom scripts to inject at the start of the body
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bodyStart")]
     public string? BodyStart { get; set; } = default!;
 
+    /// <summary>
+    /// Custom scripts to inject at the end of the body
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bodyEnd")]
     public string? BodyEnd { get; set; } = default!;
 
@@ -864,9 +1182,15 @@ public partial class CustomScripts
 public partial class Logo
 {
 
+    /// <summary>
+    /// URL of the site logo image
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("url")]
     public System.Uri Url { get; set; } = default!;
 
+    /// <summary>
+    /// Alt text for the logo image
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("alt")]
     public string Alt { get; set; } = default!;
 

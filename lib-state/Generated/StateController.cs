@@ -249,7 +249,8 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "ETag for optimistic concurrency"
         },
         "metadata": {
-          "$ref": "#/$defs/StateMetadata"
+          "$ref": "#/$defs/StateMetadata",
+          "description": "Metadata about the state entry including timestamps and version"
         }
       }
     },
@@ -360,7 +361,8 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Value to store"
         },
         "options": {
-          "$ref": "#/$defs/StateOptions"
+          "$ref": "#/$defs/StateOptions",
+          "description": "Optional settings for the save operation including TTL and consistency"
         }
       }
     },

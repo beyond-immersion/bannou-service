@@ -69,6 +69,9 @@ public partial class CreateCharacterRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset BirthDate { get; set; } = default!;
 
+    /// <summary>
+    /// Initial lifecycle status for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus Status { get; set; } = BeyondImmersion.BannouService.Character.CharacterStatus.Alive;
@@ -119,6 +122,9 @@ public partial class UpdateCharacterRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// New name for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? Name { get; set; } = default!;
@@ -129,6 +135,9 @@ public partial class UpdateCharacterRequest
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     public System.Guid? SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// New lifecycle status for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus? Status { get; set; } = default!;
@@ -196,10 +205,16 @@ public partial class ListCharactersRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus? Status { get; set; } = default!;
 
+    /// <summary>
+    /// Page number for pagination (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -240,10 +255,16 @@ public partial class GetCharactersByRealmRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus? Status { get; set; } = default!;
 
+    /// <summary>
+    /// Page number for pagination (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -263,11 +284,17 @@ public partial class GetCharactersByRealmRequest
 public partial class CharacterResponse
 {
 
+    /// <summary>
+    /// Unique identifier for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -281,6 +308,9 @@ public partial class CharacterResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Species ID (foreign key to Species service)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -300,6 +330,9 @@ public partial class CharacterResponse
     [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
     public System.DateTimeOffset? DeathDate { get; set; } = default!;
 
+    /// <summary>
+    /// Current lifecycle status of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -335,23 +368,41 @@ public partial class CharacterResponse
 public partial class CharacterListResponse
 {
 
+    /// <summary>
+    /// List of characters matching the query
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characters")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<CharacterResponse> Characters { get; set; } = new System.Collections.ObjectModel.Collection<CharacterResponse>();
 
+    /// <summary>
+    /// Total number of characters matching the filter criteria
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
+    /// <summary>
+    /// Current page number (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are more results after this page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are results before this page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasPreviousPage")]
     public bool HasPreviousPage { get; set; } = default!;
 
@@ -381,6 +432,9 @@ public partial class CharacterRealmJoinedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -434,6 +488,9 @@ public partial class CharacterRealmLeftEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

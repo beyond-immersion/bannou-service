@@ -247,6 +247,7 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "services": {
           "type": "array",
+          "description": "List of game services matching the request criteria",
           "items": {
             "$ref": "#/$defs/ServiceInfo"
           }

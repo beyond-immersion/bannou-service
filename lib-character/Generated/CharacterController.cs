@@ -245,7 +245,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
               "$ref": "#/$defs/CharacterStatus"
             }
           ],
-          "default": "alive"
+          "default": "alive",
+          "description": "Initial lifecycle status for the character"
         }
       }
     },
@@ -281,10 +282,12 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "characterId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the character"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the character"
         },
         "realmId": {
           "type": "string",
@@ -293,7 +296,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         },
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Species ID (foreign key to Species service)"
         },
         "birthDate": {
           "type": "string",
@@ -307,7 +311,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "description": "In-game death timestamp"
         },
         "status": {
-          "$ref": "#/$defs/CharacterStatus"
+          "$ref": "#/$defs/CharacterStatus",
+          "description": "Current lifecycle status of the character"
         },
         "createdAt": {
           "type": "string",
@@ -432,10 +437,12 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "characterId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the character"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the character"
         },
         "realmId": {
           "type": "string",
@@ -444,7 +451,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         },
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Species ID (foreign key to Species service)"
         },
         "birthDate": {
           "type": "string",
@@ -458,7 +466,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "description": "In-game death timestamp"
         },
         "status": {
-          "$ref": "#/$defs/CharacterStatus"
+          "$ref": "#/$defs/CharacterStatus",
+          "description": "Current lifecycle status of the character"
         },
         "createdAt": {
           "type": "string",
@@ -562,7 +571,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "type": "string",
           "minLength": 1,
           "maxLength": 100,
-          "nullable": true
+          "nullable": true,
+          "description": "New name for the character"
         },
         "speciesId": {
           "type": "string",
@@ -576,7 +586,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
               "$ref": "#/$defs/CharacterStatus"
             }
           ],
-          "nullable": true
+          "nullable": true,
+          "description": "New lifecycle status for the character"
         },
         "deathDate": {
           "type": "string",
@@ -618,10 +629,12 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "characterId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the character"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the character"
         },
         "realmId": {
           "type": "string",
@@ -630,7 +643,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         },
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Species ID (foreign key to Species service)"
         },
         "birthDate": {
           "type": "string",
@@ -644,7 +658,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "description": "In-game death timestamp"
         },
         "status": {
-          "$ref": "#/$defs/CharacterStatus"
+          "$ref": "#/$defs/CharacterStatus",
+          "description": "Current lifecycle status of the character"
         },
         "createdAt": {
           "type": "string",
@@ -842,13 +857,15 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-based)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page"
         }
       }
     },
@@ -883,22 +900,28 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "type": "array",
           "items": {
             "$ref": "#/$defs/CharacterResponse"
-          }
+          },
+          "description": "List of characters matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of characters matching the filter criteria"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-based)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more results after this page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are results before this page"
         }
       }
     },
@@ -916,10 +939,12 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "characterId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the character"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the character"
         },
         "realmId": {
           "type": "string",
@@ -928,7 +953,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         },
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Species ID (foreign key to Species service)"
         },
         "birthDate": {
           "type": "string",
@@ -942,7 +968,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "description": "In-game death timestamp"
         },
         "status": {
-          "$ref": "#/$defs/CharacterStatus"
+          "$ref": "#/$defs/CharacterStatus",
+          "description": "Current lifecycle status of the character"
         },
         "createdAt": {
           "type": "string",
@@ -1060,13 +1087,15 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-based)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page"
         }
       }
     },
@@ -1101,22 +1130,28 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "type": "array",
           "items": {
             "$ref": "#/$defs/CharacterResponse"
-          }
+          },
+          "description": "List of characters matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of characters matching the filter criteria"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-based)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more results after this page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are results before this page"
         }
       }
     },
@@ -1134,10 +1169,12 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "characterId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the character"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the character"
         },
         "realmId": {
           "type": "string",
@@ -1146,7 +1183,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         },
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Species ID (foreign key to Species service)"
         },
         "birthDate": {
           "type": "string",
@@ -1160,7 +1198,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
           "description": "In-game death timestamp"
         },
         "status": {
-          "$ref": "#/$defs/CharacterStatus"
+          "$ref": "#/$defs/CharacterStatus",
+          "description": "Current lifecycle status of the character"
         },
         "createdAt": {
           "type": "string",

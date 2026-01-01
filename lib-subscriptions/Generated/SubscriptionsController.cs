@@ -316,7 +316,8 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
           "type": "array",
           "items": {
             "$ref": "#/$defs/SubscriptionInfo"
-          }
+          },
+          "description": "List of subscriptions matching the filter criteria"
         },
         "totalCount": {
           "type": "integer",

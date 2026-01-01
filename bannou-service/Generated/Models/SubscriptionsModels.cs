@@ -414,6 +414,9 @@ public partial class CurrentSubscriptionsResponse
 public partial class SubscriptionListResponse
 {
 
+    /// <summary>
+    /// List of subscriptions matching the filter criteria
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptions")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]

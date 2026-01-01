@@ -343,7 +343,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "MIME content type (e.g., image/png, model/gltf-binary)"
         },
         "metadata": {
-          "$ref": "#/$defs/AssetMetadataInput"
+          "$ref": "#/$defs/AssetMetadataInput",
+          "description": "Optional metadata for asset categorization"
         }
       }
     },
@@ -352,10 +353,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "description": "User-provided metadata for asset categorization",
       "properties": {
         "assetType": {
-          "$ref": "#/$defs/AssetType"
+          "$ref": "#/$defs/AssetType",
+          "description": "Type classification for the asset"
         },
         "realm": {
-          "$ref": "#/$defs/Realm"
+          "$ref": "#/$defs/Realm",
+          "description": "Game realm the asset belongs to"
         },
         "tags": {
           "type": "array",
@@ -422,7 +425,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "When the upload URL expires"
         },
         "multipart": {
-          "$ref": "#/$defs/MultipartConfig"
+          "$ref": "#/$defs/MultipartConfig",
+          "description": "Configuration for multipart uploads if file size requires it"
         }
       }
     },
@@ -443,6 +447,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "uploadUrls": {
           "type": "array",
+          "description": "Pre-signed URLs for each part of the multipart upload",
           "items": {
             "$ref": "#/$defs/PartUploadInfo"
           }
@@ -614,19 +619,23 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "File size in bytes"
         },
         "assetType": {
-          "$ref": "#/$defs/AssetType"
+          "$ref": "#/$defs/AssetType",
+          "description": "Type classification for the asset"
         },
         "realm": {
-          "$ref": "#/$defs/Realm"
+          "$ref": "#/$defs/Realm",
+          "description": "Game realm the asset belongs to"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Searchable tags for the asset"
         },
         "processingStatus": {
-          "$ref": "#/$defs/ProcessingStatus"
+          "$ref": "#/$defs/ProcessingStatus",
+          "description": "Current status of asset processing pipeline"
         },
         "isArchived": {
           "type": "boolean",
@@ -635,11 +644,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the asset was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the asset was last updated"
         }
       }
     },
@@ -771,10 +782,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "properties": {
         "assetId": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique asset identifier"
         },
         "versionId": {
-          "type": "string"
+          "type": "string",
+          "description": "Version identifier for this specific asset version"
         },
         "downloadUrl": {
           "type": "string",
@@ -788,16 +801,20 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "size": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "File size in bytes"
         },
         "contentHash": {
-          "type": "string"
+          "type": "string",
+          "description": "SHA256 hash of file contents"
         },
         "contentType": {
-          "type": "string"
+          "type": "string",
+          "description": "MIME content type"
         },
         "metadata": {
-          "$ref": "#/$defs/AssetMetadata"
+          "$ref": "#/$defs/AssetMetadata",
+          "description": "Complete asset metadata"
         }
       }
     },
@@ -827,19 +844,23 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "File size in bytes"
         },
         "assetType": {
-          "$ref": "#/$defs/AssetType"
+          "$ref": "#/$defs/AssetType",
+          "description": "Type classification for the asset"
         },
         "realm": {
-          "$ref": "#/$defs/Realm"
+          "$ref": "#/$defs/Realm",
+          "description": "Game realm the asset belongs to"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Searchable tags for the asset"
         },
         "processingStatus": {
-          "$ref": "#/$defs/ProcessingStatus"
+          "$ref": "#/$defs/ProcessingStatus",
+          "description": "Current status of asset processing pipeline"
         },
         "isArchived": {
           "type": "boolean",
@@ -848,11 +869,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the asset was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the asset was last updated"
         }
       }
     },
@@ -961,15 +984,18 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "assetId": {
-          "type": "string"
+          "type": "string",
+          "description": "Asset identifier to list versions for"
         },
         "limit": {
           "type": "integer",
-          "default": 50
+          "default": 50,
+          "description": "Maximum number of versions to return"
         },
         "offset": {
           "type": "integer",
-          "default": 0
+          "default": 0,
+          "description": "Number of versions to skip for pagination"
         }
       }
     }
@@ -986,22 +1012,27 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "properties": {
         "assetId": {
-          "type": "string"
+          "type": "string",
+          "description": "Asset identifier"
         },
         "versions": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AssetVersion"
-          }
+          },
+          "description": "List of asset versions"
         },
         "total": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of versions available"
         },
         "limit": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum number of versions returned per page"
         },
         "offset": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of versions skipped"
         }
       }
     },
@@ -1009,15 +1040,18 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "properties": {
         "versionId": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique version identifier"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when this version was created"
         },
         "size": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "File size in bytes for this version"
         },
         "isArchived": {
           "type": "boolean",
@@ -1101,13 +1135,16 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Filter by tags (assets must have all specified tags)"
         },
         "assetType": {
-          "$ref": "#/$defs/AssetType"
+          "$ref": "#/$defs/AssetType",
+          "description": "Filter by asset type"
         },
         "realm": {
-          "$ref": "#/$defs/Realm"
+          "$ref": "#/$defs/Realm",
+          "description": "Filter by game realm"
         },
         "contentType": {
           "type": "string",
@@ -1115,11 +1152,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "limit": {
           "type": "integer",
-          "default": 50
+          "default": 50,
+          "description": "Maximum number of results to return"
         },
         "offset": {
           "type": "integer",
-          "default": 0
+          "default": 0,
+          "description": "Number of results to skip for pagination"
         }
       }
     },
@@ -1162,16 +1201,20 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/AssetMetadata"
-          }
+          },
+          "description": "List of matching assets"
         },
         "total": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of matching assets"
         },
         "limit": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum number of results returned per page"
         },
         "offset": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results skipped"
         }
       }
     },
@@ -1201,19 +1244,23 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "File size in bytes"
         },
         "assetType": {
-          "$ref": "#/$defs/AssetType"
+          "$ref": "#/$defs/AssetType",
+          "description": "Type classification for the asset"
         },
         "realm": {
-          "$ref": "#/$defs/Realm"
+          "$ref": "#/$defs/Realm",
+          "description": "Game realm the asset belongs to"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Searchable tags for the asset"
         },
         "processingStatus": {
-          "$ref": "#/$defs/ProcessingStatus"
+          "$ref": "#/$defs/ProcessingStatus",
+          "description": "Current status of asset processing pipeline"
         },
         "isArchived": {
           "type": "boolean",
@@ -1222,11 +1269,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the asset was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the asset was last updated"
         }
       }
     },
@@ -1352,7 +1401,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "List of asset IDs to include in the bundle"
         },
         "compression": {
-          "$ref": "#/$defs/CompressionType"
+          "$ref": "#/$defs/CompressionType",
+          "description": "Compression algorithm to use for the bundle"
         },
         "metadata": {
           "type": "object",
@@ -1383,7 +1433,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "properties": {
         "bundleId": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique bundle identifier"
         },
         "status": {
           "type": "string",
@@ -1474,10 +1525,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "bundleId": {
-          "type": "string"
+          "type": "string",
+          "description": "Bundle identifier to retrieve"
         },
         "format": {
-          "$ref": "#/$defs/BundleFormat"
+          "$ref": "#/$defs/BundleFormat",
+          "description": "Desired download format (bannou or zip)"
         }
       }
     },
@@ -1502,28 +1555,35 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "properties": {
         "bundleId": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique bundle identifier"
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Bundle version string"
         },
         "downloadUrl": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "description": "Pre-signed URL for downloading the bundle"
         },
         "format": {
-          "$ref": "#/$defs/BundleFormat"
+          "$ref": "#/$defs/BundleFormat",
+          "description": "Format of the downloadable bundle"
         },
         "expiresAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the download URL expires"
         },
         "size": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "Bundle file size in bytes"
         },
         "assetCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of assets contained in the bundle"
         },
         "fromCache": {
           "type": "boolean",
@@ -1617,10 +1677,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "size": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "Bundle file size in bytes"
         },
         "manifestPreview": {
-          "$ref": "#/$defs/BundleManifestPreview"
+          "$ref": "#/$defs/BundleManifestPreview",
+          "description": "Optional preview of bundle manifest for validation"
         }
       }
     },
@@ -1629,13 +1691,16 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "description": "Preview of bundle manifest for validation",
       "properties": {
         "bundleId": {
-          "type": "string"
+          "type": "string",
+          "description": "Bundle identifier from the manifest"
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Bundle version from the manifest"
         },
         "assetCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of assets declared in the manifest"
         }
       }
     }
@@ -1672,7 +1737,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "When the upload URL expires"
         },
         "multipart": {
-          "$ref": "#/$defs/MultipartConfig"
+          "$ref": "#/$defs/MultipartConfig",
+          "description": "Configuration for multipart uploads if file size requires it"
         }
       }
     },
@@ -1693,6 +1759,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "uploadUrls": {
           "type": "array",
+          "description": "Pre-signed URLs for each part of the multipart upload",
           "items": {
             "$ref": "#/$defs/PartUploadInfo"
           }

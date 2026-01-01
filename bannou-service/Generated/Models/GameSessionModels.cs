@@ -110,20 +110,32 @@ public partial class LeaveGameSessionRequest
 public partial class CreateGameSessionRequest
 {
 
+    /// <summary>
+    /// Type of game for this session (arcadia or generic)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CreateGameSessionRequestGameType GameType { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of players allowed in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int MaxPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Optional display name for the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string SessionName { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the session requires a password to join
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = false;
 
@@ -133,6 +145,9 @@ public partial class CreateGameSessionRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Game-specific configuration settings
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object GameSettings { get; set; } = default!;
 
@@ -151,46 +166,79 @@ public partial class CreateGameSessionRequest
 public partial class GameSessionResponse
 {
 
+    /// <summary>
+    /// Unique identifier for the game session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of game for this session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GameSessionResponseGameType GameType { get; set; } = default!;
 
+    /// <summary>
+    /// Display name for the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     public string SessionName { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the game session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GameSessionResponseStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of players allowed in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
     public int MaxPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Current number of players in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
     public int CurrentPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the session requires a password to join
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = default!;
 
+    /// <summary>
+    /// Account ID of the session owner
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid Owner { get; set; } = default!;
 
+    /// <summary>
+    /// List of players currently in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("players")]
     public System.Collections.Generic.ICollection<GamePlayer> Players { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the session was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Game-specific configuration settings
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object GameSettings { get; set; } = default!;
 
@@ -209,11 +257,17 @@ public partial class GameSessionResponse
 public partial class GameSessionListResponse
 {
 
+    /// <summary>
+    /// List of game sessions matching the filter criteria
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessions")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<GameSessionResponse> Sessions { get; set; } = new System.Collections.ObjectModel.Collection<GameSessionResponse>();
 
+    /// <summary>
+    /// Total number of sessions matching the filter (for pagination)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
@@ -281,14 +335,23 @@ public partial class JoinGameSessionRequest
 public partial class JoinGameSessionResponse
 {
 
+    /// <summary>
+    /// Whether the join operation was successful
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the joined game session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Role assigned to the player in this session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("playerRole")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -328,25 +391,40 @@ public partial class JoinGameSessionResponse
 public partial class GamePlayer
 {
 
+    /// <summary>
+    /// Unique identifier for the player's account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name shown to other players
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Role of the player in the game session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GamePlayerRole Role { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the player joined the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("joinedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset JoinedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Game-specific character data for this player
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object CharacterData { get; set; } = default!;
 
@@ -417,12 +495,18 @@ public partial class ChatMessageRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Content of the chat message
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string Message { get; set; } = default!;
 
+    /// <summary>
+    /// Type of message (public to all, whisper to one player, or system announcement)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ChatMessageRequestMessageType MessageType { get; set; } = BeyondImmersion.BannouService.GameSession.ChatMessageRequestMessageType.Public;
@@ -456,6 +540,9 @@ public partial class GameActionRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of game action to perform
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -489,9 +576,15 @@ public partial class GameActionRequest
 public partial class GameActionResponse
 {
 
+    /// <summary>
+    /// Whether the action was executed successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier for this action instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

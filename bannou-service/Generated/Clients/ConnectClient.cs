@@ -465,12 +465,8 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
             methodPath_))
         {
 
-            if (connection == null)
-                throw new System.ArgumentNullException("connection");
             request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
 
-            if (upgrade == null)
-                throw new System.ArgumentNullException("upgrade");
             request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
 
             if (authorization == null)
@@ -586,12 +582,8 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
             methodPath_))
         {
 
-            if (connection == null)
-                throw new System.ArgumentNullException("connection");
             request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
 
-            if (upgrade == null)
-                throw new System.ArgumentNullException("upgrade");
             request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
 
             if (authorization == null)
@@ -772,7 +764,7 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -784,7 +776,7 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

@@ -370,11 +370,13 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         "email": {
           "type": "string",
           "format": "email",
-          "nullable": true
+          "nullable": true,
+          "description": "Filter accounts by email address"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Filter accounts by display name"
         },
         "provider": {
           "allOf": [
@@ -382,22 +384,26 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
               "$ref": "#/$defs/AuthProvider"
             }
           ],
-          "nullable": true
+          "nullable": true,
+          "description": "Filter accounts by authentication provider"
         },
         "verified": {
           "type": "boolean",
-          "nullable": true
+          "nullable": true,
+          "description": "Filter accounts by email verification status"
         },
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of accounts per page"
         }
       }
     },
@@ -423,6 +429,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AccountListResponse": {
       "type": "object",
+      "description": "Paginated list of accounts",
       "required": [
         "accounts",
         "totalCount",
@@ -434,27 +441,34 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/AccountResponse"
-          }
+          },
+          "description": "List of accounts for the current page"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of accounts matching the filter"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of accounts per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more pages after this one"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are pages before this one"
         }
       }
     },
     "AccountResponse": {
       "type": "object",
+      "description": "Account information response",
       "required": [
         "accountId",
         "email",
@@ -465,15 +479,18 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name for the account"
         },
         "passwordHash": {
           "type": "string",
@@ -482,37 +499,44 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the account was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Timestamp when the account was last updated"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the account"
         },
         "authMethods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -520,22 +544,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -617,13 +646,15 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "CreateAccountRequest": {
       "type": "object",
+      "description": "Request to create a new account",
       "required": [
         "email"
       ],
       "properties": {
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address for the new account"
         },
         "passwordHash": {
           "type": "string",
@@ -633,23 +664,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         "displayName": {
           "type": "string",
           "nullable": true,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "Display name for the account"
         },
         "emailVerified": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "default": []
+          "default": [],
+          "description": "List of roles assigned to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     }
@@ -664,6 +699,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AccountResponse": {
       "type": "object",
+      "description": "Account information response",
       "required": [
         "accountId",
         "email",
@@ -674,15 +710,18 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name for the account"
         },
         "passwordHash": {
           "type": "string",
@@ -691,37 +730,44 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the account was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Timestamp when the account was last updated"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the account"
         },
         "authMethods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -729,22 +775,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -849,6 +900,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AccountResponse": {
       "type": "object",
+      "description": "Account information response",
       "required": [
         "accountId",
         "email",
@@ -859,15 +911,18 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name for the account"
         },
         "passwordHash": {
           "type": "string",
@@ -876,37 +931,44 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the account was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Timestamp when the account was last updated"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the account"
         },
         "authMethods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -914,22 +976,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -1011,6 +1078,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "UpdateAccountRequest": {
       "type": "object",
+      "description": "Request to update an existing account",
       "required": [
         "accountId"
       ],
@@ -1023,18 +1091,21 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         "displayName": {
           "type": "string",
           "nullable": true,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "New display name for the account"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Updated list of roles for the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Updated custom metadata for the account"
         }
       }
     }
@@ -1049,6 +1120,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AccountResponse": {
       "type": "object",
+      "description": "Account information response",
       "required": [
         "accountId",
         "email",
@@ -1059,15 +1131,18 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name for the account"
         },
         "passwordHash": {
           "type": "string",
@@ -1076,37 +1151,44 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the account was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Timestamp when the account was last updated"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the account"
         },
         "authMethods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -1114,22 +1196,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -1317,6 +1404,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AccountResponse": {
       "type": "object",
+      "description": "Account information response",
       "required": [
         "accountId",
         "email",
@@ -1327,15 +1415,18 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name for the account"
         },
         "passwordHash": {
           "type": "string",
@@ -1344,37 +1435,44 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the account was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Timestamp when the account was last updated"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the account"
         },
         "authMethods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -1382,22 +1480,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -1502,6 +1605,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AuthMethodsResponse": {
       "type": "object",
+      "description": "Response containing list of authentication methods",
       "required": [
         "authMethods"
       ],
@@ -1510,12 +1614,14 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -1523,22 +1629,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -1620,6 +1731,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AddAuthMethodRequest": {
       "type": "object",
+      "description": "Request to add an authentication method to an account",
       "required": [
         "accountId",
         "provider"
@@ -1631,14 +1743,17 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "ID of the account to add auth method to"
         },
         "provider": {
-          "$ref": "#/$defs/OAuthProvider"
+          "$ref": "#/$defs/OAuthProvider",
+          "description": "OAuth provider type to add"
         },
         "externalId": {
-          "type": "string"
+          "type": "string",
+          "description": "External user ID from the OAuth provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the OAuth provider"
         }
       }
     },
@@ -1663,6 +1778,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AuthMethodResponse": {
       "type": "object",
+      "description": "Response after adding an authentication method",
       "required": [
         "methodId",
         "provider",
@@ -1671,21 +1787,26 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/OAuthProvider"
+          "$ref": "#/$defs/OAuthProvider",
+          "description": "OAuth provider type"
         },
         "externalId": {
-          "type": "string"
+          "type": "string",
+          "description": "External user ID from the OAuth provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the OAuth provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -1892,6 +2013,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AccountResponse": {
       "type": "object",
+      "description": "Account information response",
       "required": [
         "accountId",
         "email",
@@ -1902,15 +2024,18 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name for the account"
         },
         "passwordHash": {
           "type": "string",
@@ -1919,37 +2044,44 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the account was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Timestamp when the account was last updated"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the account"
         },
         "authMethods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -1957,22 +2089,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -2054,6 +2191,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "UpdateProfileRequest": {
       "type": "object",
+      "description": "Request to update an account profile",
       "required": [
         "accountId"
       ],
@@ -2066,12 +2204,14 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         "displayName": {
           "type": "string",
           "nullable": true,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "New display name for the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Updated custom metadata for the account"
         }
       }
     }
@@ -2086,6 +2226,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "AccountResponse": {
       "type": "object",
+      "description": "Account information response",
       "required": [
         "accountId",
         "email",
@@ -2096,15 +2237,18 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name for the account"
         },
         "passwordHash": {
           "type": "string",
@@ -2113,37 +2257,44 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the account was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Timestamp when the account was last updated"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the email address has been verified"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the account"
         },
         "authMethods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/AuthMethodInfo"
-          }
+          },
+          "description": "List of authentication methods linked to the account"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Custom metadata associated with the account"
         }
       }
     },
     "AuthMethodInfo": {
       "type": "object",
+      "description": "Information about a linked authentication method",
       "required": [
         "provider",
         "linkedAt"
@@ -2151,22 +2302,27 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "methodId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authentication method"
         },
         "provider": {
-          "$ref": "#/$defs/AuthProvider"
+          "$ref": "#/$defs/AuthProvider",
+          "description": "Authentication provider type"
         },
         "externalId": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "External user ID from the authentication provider"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Display name from the authentication provider"
         },
         "linkedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the authentication method was linked"
         }
       }
     },
@@ -2248,6 +2404,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "UpdatePasswordRequest": {
       "type": "object",
+      "description": "Request to update an account password",
       "required": [
         "accountId",
         "passwordHash"
@@ -2335,6 +2492,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$defs": {
     "UpdateVerificationRequest": {
       "type": "object",
+      "description": "Request to update email verification status",
       "required": [
         "accountId",
         "emailVerified"
@@ -2346,7 +2504,8 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "ID of the account to update"
         },
         "emailVerified": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "New email verification status"
         }
       }
     }

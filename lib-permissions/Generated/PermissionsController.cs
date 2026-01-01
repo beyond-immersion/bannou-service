@@ -355,7 +355,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID that was queried"
         },
         "permissions": {
           "type": "object",
@@ -449,7 +450,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID to validate access for"
         },
         "serviceId": {
           "type": "string",
@@ -483,7 +485,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         },
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID that was validated"
         },
         "reason": {
           "type": "string",
@@ -623,7 +626,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "serviceId": {
-          "type": "string"
+          "type": "string",
+          "description": "Service ID that was registered"
         },
         "success": {
           "type": "boolean",
@@ -643,7 +647,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         },
         "recompiledAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when permissions were recompiled"
         }
       }
     }
@@ -722,7 +727,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID to update state for"
         },
         "serviceId": {
           "type": "string",
@@ -763,7 +769,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID that was updated"
         },
         "success": {
           "type": "boolean",
@@ -789,7 +796,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the session was updated"
         }
       }
     }
@@ -867,7 +875,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID to update role for"
         },
         "newRole": {
           "type": "string",
@@ -899,7 +908,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID that was updated"
         },
         "success": {
           "type": "boolean",
@@ -925,7 +935,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the session was updated"
         }
       }
     }
@@ -1039,7 +1050,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID that was updated"
         },
         "success": {
           "type": "boolean",
@@ -1065,7 +1077,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the session was updated"
         }
       }
     }
@@ -1142,7 +1155,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID to retrieve information for"
         }
       }
     }
@@ -1166,7 +1180,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Session ID being queried"
         },
         "role": {
           "type": "string",

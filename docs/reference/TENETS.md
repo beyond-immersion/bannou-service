@@ -76,6 +76,7 @@ Tenets are organized into three categories based on when they're needed:
 | Violation | Tenet | Fix |
 |-----------|-------|-----|
 | Editing Generated/ files | T1, T2 | Edit schema, regenerate |
+| Missing `description` on schema property | T1 | Add description field (causes CS1591) |
 | Wrong env var format (`JWTSECRET`) | T2 | Use `{SERVICE}_{PROPERTY}` pattern |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |

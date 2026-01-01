@@ -471,11 +471,13 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "healthy",
             "degraded",
             "maintenance"
-          ]
+          ],
+          "description": "Current health status of the website service"
         },
         "version": {
           "type": "string",
-          "example": "1.0.0"
+          "example": "1.0.0",
+          "description": "Current version of the website service"
         },
         "uptime": {
           "type": "integer",
@@ -483,7 +485,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "maintenanceMessage": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Message displayed during maintenance mode"
         }
       }
     }
@@ -568,10 +571,12 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "slug": {
           "type": "string",
-          "pattern": "^[a-z0-9-]+$"
+          "pattern": "^[a-z0-9-]+$",
+          "description": "URL-friendly identifier for the page"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the page"
         },
         "content": {
           "type": "string",
@@ -583,7 +588,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "html",
             "markdown",
             "blazor"
-          ]
+          ],
+          "description": "Format of the page content"
         },
         "template": {
           "type": "string",
@@ -591,20 +597,24 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Template name for custom layouts"
         },
         "published": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the page is publicly visible"
         },
         "publishedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time when the page was published"
         },
         "lastModified": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time of the last modification"
         },
         "author": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Name or identifier of the page author"
         },
         "metadata": {
           "type": "object",
@@ -612,7 +622,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Custom metadata for the page"
         },
         "seo": {
-          "$ref": "#/$defs/SEOMetadata"
+          "$ref": "#/$defs/SEOMetadata",
+          "description": "Search engine optimization settings for the page"
         }
       }
     },
@@ -621,26 +632,31 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Meta description for search engines"
         },
         "keywords": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Keywords for search engine indexing"
         },
         "ogTitle": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph title for social media sharing"
         },
         "ogDescription": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph description for social media sharing"
         },
         "ogImage": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph image URL for social media sharing"
         }
       }
     }
@@ -724,13 +740,16 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/NewsItem"
-          }
+          },
+          "description": "List of news items for the current page"
         },
         "total": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of news items available"
         },
         "hasMore": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether more news items are available beyond this page"
         }
       }
     },
@@ -745,35 +764,43 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the news item"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Headline of the news item"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "Brief summary or excerpt of the news content"
         },
         "content": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Full content body of the news item"
         },
         "author": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the news item author"
         },
         "publishedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time when the news was published"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Category tags associated with the news item"
         },
         "imageUrl": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "URL of the featured image for the news item"
         }
       }
     }
@@ -860,13 +887,15 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "partial",
             "offline",
             "maintenance"
-          ]
+          ],
+          "description": "Overall status across all game realms"
         },
         "realms": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/RealmStatus"
-          }
+          },
+          "description": "Status information for each game realm"
         }
       }
     },
@@ -880,10 +909,12 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "realmId": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for the game realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the game realm"
         },
         "status": {
           "type": "string",
@@ -892,7 +923,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "offline",
             "maintenance",
             "full"
-          ]
+          ],
+          "description": "Current operational status of the realm"
         },
         "population": {
           "type": "string",
@@ -901,11 +933,13 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "medium",
             "high",
             "full"
-          ]
+          ],
+          "description": "Current player population level"
         },
         "playerCount": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Current number of players online"
         },
         "ping": {
           "type": "integer",
@@ -993,7 +1027,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/DownloadInfo"
-          }
+          },
+          "description": "Available game client downloads"
         }
       }
     },
@@ -1013,14 +1048,17 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "windows",
             "macos",
             "linux"
-          ]
+          ],
+          "description": "Target operating system platform"
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Version number of the game client"
         },
         "url": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "description": "Download URL for the game client"
         },
         "size": {
           "type": "integer",
@@ -1032,11 +1070,13 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "releaseNotes": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Release notes or changelog for this version"
         },
         "minimumRequirements": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Minimum system requirements for the client"
         }
       }
     }
@@ -1115,21 +1155,25 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Sender email address for replies"
         },
         "name": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Name of the person submitting the form"
         },
         "subject": {
           "type": "string",
           "minLength": 5,
-          "maxLength": 200
+          "maxLength": 200,
+          "description": "Subject line of the contact message"
         },
         "message": {
           "type": "string",
           "minLength": 10,
-          "maxLength": 2000
+          "maxLength": 2000,
+          "description": "Body content of the contact message"
         },
         "category": {
           "type": "string",
@@ -1140,7 +1184,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "feedback",
             "business"
           ],
-          "default": "general"
+          "default": "general",
+          "description": "Category to route the contact request"
         }
       }
     }
@@ -1162,11 +1207,13 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "ticketId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the created support ticket"
         },
         "message": {
           "type": "string",
-          "default": "Thank you for contacting us. We will respond within 24-48 hours."
+          "default": "Thank you for contacting us. We will respond within 24-48 hours.",
+          "description": "Confirmation message displayed to the user"
         }
       }
     }
@@ -1249,30 +1296,37 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account"
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account"
         },
         "displayName": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "User-chosen display name"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time when the account was created"
         },
         "lastLogin": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time of the last successful login"
         },
         "characterSlots": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of character slots available"
         },
         "usedSlots": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of character slots currently in use"
         }
       }
     }
@@ -1355,7 +1409,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/CharacterSummary"
-          }
+          },
+          "description": "List of characters owned by the account"
         }
       }
     },
@@ -1370,25 +1425,31 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "characterId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the character"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the character"
         },
         "realm": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the realm the character belongs to"
         },
         "level": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current level of the character"
         },
         "class": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Character class or profession"
         },
         "lastPlayed": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time of last gameplay session"
         }
       }
     }
@@ -1473,26 +1534,32 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly identifier for the page"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the page"
         },
         "published": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the page is publicly visible"
         },
         "publishedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time when the page was published"
         },
         "lastModified": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time of the last modification"
         },
         "author": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Name or identifier of the page author"
         }
       }
     }
@@ -1573,10 +1640,12 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "slug": {
           "type": "string",
-          "pattern": "^[a-z0-9-]+$"
+          "pattern": "^[a-z0-9-]+$",
+          "description": "URL-friendly identifier for the page"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the page"
         },
         "content": {
           "type": "string",
@@ -1588,7 +1657,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "html",
             "markdown",
             "blazor"
-          ]
+          ],
+          "description": "Format of the page content"
         },
         "template": {
           "type": "string",
@@ -1596,20 +1666,24 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Template name for custom layouts"
         },
         "published": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the page is publicly visible"
         },
         "publishedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time when the page was published"
         },
         "lastModified": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time of the last modification"
         },
         "author": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Name or identifier of the page author"
         },
         "metadata": {
           "type": "object",
@@ -1617,7 +1691,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Custom metadata for the page"
         },
         "seo": {
-          "$ref": "#/$defs/SEOMetadata"
+          "$ref": "#/$defs/SEOMetadata",
+          "description": "Search engine optimization settings for the page"
         }
       }
     },
@@ -1626,26 +1701,31 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Meta description for search engines"
         },
         "keywords": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Keywords for search engine indexing"
         },
         "ogTitle": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph title for social media sharing"
         },
         "ogDescription": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph description for social media sharing"
         },
         "ogImage": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph image URL for social media sharing"
         }
       }
     }
@@ -1670,10 +1750,12 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "slug": {
           "type": "string",
-          "pattern": "^[a-z0-9-]+$"
+          "pattern": "^[a-z0-9-]+$",
+          "description": "URL-friendly identifier for the page"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the page"
         },
         "content": {
           "type": "string",
@@ -1685,7 +1767,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "html",
             "markdown",
             "blazor"
-          ]
+          ],
+          "description": "Format of the page content"
         },
         "template": {
           "type": "string",
@@ -1693,20 +1776,24 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Template name for custom layouts"
         },
         "published": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the page is publicly visible"
         },
         "publishedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time when the page was published"
         },
         "lastModified": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time of the last modification"
         },
         "author": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Name or identifier of the page author"
         },
         "metadata": {
           "type": "object",
@@ -1714,7 +1801,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Custom metadata for the page"
         },
         "seo": {
-          "$ref": "#/$defs/SEOMetadata"
+          "$ref": "#/$defs/SEOMetadata",
+          "description": "Search engine optimization settings for the page"
         }
       }
     },
@@ -1723,26 +1811,31 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Meta description for search engines"
         },
         "keywords": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Keywords for search engine indexing"
         },
         "ogTitle": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph title for social media sharing"
         },
         "ogDescription": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph description for social media sharing"
         },
         "ogImage": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph image URL for social media sharing"
         }
       }
     }
@@ -1823,10 +1916,12 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "slug": {
           "type": "string",
-          "pattern": "^[a-z0-9-]+$"
+          "pattern": "^[a-z0-9-]+$",
+          "description": "URL-friendly identifier for the page"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the page"
         },
         "content": {
           "type": "string",
@@ -1838,7 +1933,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "html",
             "markdown",
             "blazor"
-          ]
+          ],
+          "description": "Format of the page content"
         },
         "template": {
           "type": "string",
@@ -1846,20 +1942,24 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Template name for custom layouts"
         },
         "published": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the page is publicly visible"
         },
         "publishedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time when the page was published"
         },
         "lastModified": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time of the last modification"
         },
         "author": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Name or identifier of the page author"
         },
         "metadata": {
           "type": "object",
@@ -1867,7 +1967,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Custom metadata for the page"
         },
         "seo": {
-          "$ref": "#/$defs/SEOMetadata"
+          "$ref": "#/$defs/SEOMetadata",
+          "description": "Search engine optimization settings for the page"
         }
       }
     },
@@ -1876,26 +1977,31 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Meta description for search engines"
         },
         "keywords": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Keywords for search engine indexing"
         },
         "ogTitle": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph title for social media sharing"
         },
         "ogDescription": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph description for social media sharing"
         },
         "ogImage": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph image URL for social media sharing"
         }
       }
     }
@@ -1920,10 +2026,12 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "slug": {
           "type": "string",
-          "pattern": "^[a-z0-9-]+$"
+          "pattern": "^[a-z0-9-]+$",
+          "description": "URL-friendly identifier for the page"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the page"
         },
         "content": {
           "type": "string",
@@ -1935,7 +2043,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "html",
             "markdown",
             "blazor"
-          ]
+          ],
+          "description": "Format of the page content"
         },
         "template": {
           "type": "string",
@@ -1943,20 +2052,24 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Template name for custom layouts"
         },
         "published": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the page is publicly visible"
         },
         "publishedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time when the page was published"
         },
         "lastModified": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date and time of the last modification"
         },
         "author": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Name or identifier of the page author"
         },
         "metadata": {
           "type": "object",
@@ -1964,7 +2077,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Custom metadata for the page"
         },
         "seo": {
-          "$ref": "#/$defs/SEOMetadata"
+          "$ref": "#/$defs/SEOMetadata",
+          "description": "Search engine optimization settings for the page"
         }
       }
     },
@@ -1973,26 +2087,31 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Meta description for search engines"
         },
         "keywords": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Keywords for search engine indexing"
         },
         "ogTitle": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph title for social media sharing"
         },
         "ogDescription": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph description for social media sharing"
         },
         "ogImage": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "Open Graph image URL for social media sharing"
         }
       }
     }
@@ -2138,74 +2257,90 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "siteName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the website"
         },
         "siteUrl": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "description": "Base URL of the website"
         },
         "tagline": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Short slogan or description of the site"
         },
         "defaultLanguage": {
           "type": "string",
-          "default": "en"
+          "default": "en",
+          "description": "Default language code for the website"
         },
         "supportedLanguages": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of supported language codes"
         },
         "maintenanceMode": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the site is in maintenance mode"
         },
         "maintenanceMessage": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Message displayed during maintenance mode"
         },
         "contactEmail": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Primary contact email address for the site"
         },
         "socialLinks": {
           "type": "object",
           "additionalProperties": {
             "type": "string",
             "format": "uri"
-          }
+          },
+          "description": "Map of social media platform names to profile URLs"
         },
         "analytics": {
           "type": "object",
           "properties": {
             "googleAnalyticsId": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Google Analytics tracking ID"
             },
             "otherTrackers": {
               "type": "object",
-              "additionalProperties": true
+              "additionalProperties": true,
+              "description": "Configuration for other analytics trackers"
             }
-          }
+          },
+          "description": "Analytics and tracking configuration"
         },
         "customScripts": {
           "type": "object",
           "properties": {
             "head": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject in the HTML head"
             },
             "bodyStart": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject at the start of the body"
             },
             "bodyEnd": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject at the end of the body"
             }
-          }
+          },
+          "description": "Custom script injection configuration"
         }
       }
     }
@@ -2283,74 +2418,90 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "siteName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the website"
         },
         "siteUrl": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "description": "Base URL of the website"
         },
         "tagline": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Short slogan or description of the site"
         },
         "defaultLanguage": {
           "type": "string",
-          "default": "en"
+          "default": "en",
+          "description": "Default language code for the website"
         },
         "supportedLanguages": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of supported language codes"
         },
         "maintenanceMode": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the site is in maintenance mode"
         },
         "maintenanceMessage": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Message displayed during maintenance mode"
         },
         "contactEmail": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Primary contact email address for the site"
         },
         "socialLinks": {
           "type": "object",
           "additionalProperties": {
             "type": "string",
             "format": "uri"
-          }
+          },
+          "description": "Map of social media platform names to profile URLs"
         },
         "analytics": {
           "type": "object",
           "properties": {
             "googleAnalyticsId": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Google Analytics tracking ID"
             },
             "otherTrackers": {
               "type": "object",
-              "additionalProperties": true
+              "additionalProperties": true,
+              "description": "Configuration for other analytics trackers"
             }
-          }
+          },
+          "description": "Analytics and tracking configuration"
         },
         "customScripts": {
           "type": "object",
           "properties": {
             "head": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject in the HTML head"
             },
             "bodyStart": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject at the start of the body"
             },
             "bodyEnd": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject at the end of the body"
             }
-          }
+          },
+          "description": "Custom script injection configuration"
         }
       }
     }
@@ -2372,74 +2523,90 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "siteName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the website"
         },
         "siteUrl": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "description": "Base URL of the website"
         },
         "tagline": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Short slogan or description of the site"
         },
         "defaultLanguage": {
           "type": "string",
-          "default": "en"
+          "default": "en",
+          "description": "Default language code for the website"
         },
         "supportedLanguages": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of supported language codes"
         },
         "maintenanceMode": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the site is in maintenance mode"
         },
         "maintenanceMessage": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Message displayed during maintenance mode"
         },
         "contactEmail": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Primary contact email address for the site"
         },
         "socialLinks": {
           "type": "object",
           "additionalProperties": {
             "type": "string",
             "format": "uri"
-          }
+          },
+          "description": "Map of social media platform names to profile URLs"
         },
         "analytics": {
           "type": "object",
           "properties": {
             "googleAnalyticsId": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Google Analytics tracking ID"
             },
             "otherTrackers": {
               "type": "object",
-              "additionalProperties": true
+              "additionalProperties": true,
+              "description": "Configuration for other analytics trackers"
             }
-          }
+          },
+          "description": "Analytics and tracking configuration"
         },
         "customScripts": {
           "type": "object",
           "properties": {
             "head": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject in the HTML head"
             },
             "bodyStart": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject at the start of the body"
             },
             "bodyEnd": {
               "type": "string",
-              "nullable": true
+              "nullable": true,
+              "description": "Custom scripts to inject at the end of the body"
             }
-          }
+          },
+          "description": "Custom script injection configuration"
         }
       }
     }
@@ -2520,53 +2687,65 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "themeName": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the active theme"
         },
         "primaryColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Primary brand color in hex format"
         },
         "secondaryColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Secondary brand color in hex format"
         },
         "backgroundColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Default background color in hex format"
         },
         "textColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Default text color in hex format"
         },
         "fontFamily": {
-          "type": "string"
+          "type": "string",
+          "description": "Primary font family for the site"
         },
         "customCSS": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom CSS styles"
         },
         "logo": {
           "type": "object",
           "properties": {
             "url": {
               "type": "string",
-              "format": "uri"
+              "format": "uri",
+              "description": "URL of the site logo image"
             },
             "alt": {
-              "type": "string"
+              "type": "string",
+              "description": "Alt text for the logo image"
             }
-          }
+          },
+          "description": "Site logo configuration"
         },
         "favicon": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "URL of the site favicon"
         },
         "navigation": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/NavigationItem"
-          }
+          },
+          "description": "Main navigation menu items"
         }
       }
     },
@@ -2579,13 +2758,16 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "label": {
-          "type": "string"
+          "type": "string",
+          "description": "Display text for the navigation link"
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "Target URL or path for the navigation link"
         },
         "order": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Sort order for the navigation item"
         },
         "target": {
           "type": "string",
@@ -2593,13 +2775,15 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "_self",
             "_blank"
           ],
-          "default": "_self"
+          "default": "_self",
+          "description": "Link target attribute for opening behavior"
         },
         "children": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/NavigationItem"
-          }
+          },
+          "description": "Nested child navigation items for dropdowns"
         }
       }
     }
@@ -2676,53 +2860,65 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "themeName": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the active theme"
         },
         "primaryColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Primary brand color in hex format"
         },
         "secondaryColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Secondary brand color in hex format"
         },
         "backgroundColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Default background color in hex format"
         },
         "textColor": {
           "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$"
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Default text color in hex format"
         },
         "fontFamily": {
-          "type": "string"
+          "type": "string",
+          "description": "Primary font family for the site"
         },
         "customCSS": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom CSS styles"
         },
         "logo": {
           "type": "object",
           "properties": {
             "url": {
               "type": "string",
-              "format": "uri"
+              "format": "uri",
+              "description": "URL of the site logo image"
             },
             "alt": {
-              "type": "string"
+              "type": "string",
+              "description": "Alt text for the logo image"
             }
-          }
+          },
+          "description": "Site logo configuration"
         },
         "favicon": {
           "type": "string",
           "format": "uri",
-          "nullable": true
+          "nullable": true,
+          "description": "URL of the site favicon"
         },
         "navigation": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/NavigationItem"
-          }
+          },
+          "description": "Main navigation menu items"
         }
       }
     },
@@ -2735,13 +2931,16 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "label": {
-          "type": "string"
+          "type": "string",
+          "description": "Display text for the navigation link"
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "Target URL or path for the navigation link"
         },
         "order": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Sort order for the navigation item"
         },
         "target": {
           "type": "string",
@@ -2749,13 +2948,15 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "_self",
             "_blank"
           ],
-          "default": "_self"
+          "default": "_self",
+          "description": "Link target attribute for opening behavior"
         },
         "children": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/NavigationItem"
-          }
+          },
+          "description": "Nested child navigation items for dropdowns"
         }
       }
     }
@@ -2846,7 +3047,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "inactive",
             "trial",
             "expired"
-          ]
+          ],
+          "description": "Current state of the subscription"
         },
         "type": {
           "type": "string",
@@ -2855,21 +3057,25 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
             "basic",
             "premium",
             "lifetime"
-          ]
+          ],
+          "description": "Subscription tier or plan type"
         },
         "expiresAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Date and time when the subscription expires"
         },
         "autoRenew": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether automatic renewal is enabled"
         },
         "benefits": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of benefits included in the subscription"
         }
       }
     }

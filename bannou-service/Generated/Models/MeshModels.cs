@@ -191,11 +191,17 @@ public partial class GetEndpointsRequest
 public partial class GetEndpointsResponse
 {
 
+    /// <summary>
+    /// The app-id that was queried
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
+    /// <summary>
+    /// List of endpoints for the requested app-id
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoints")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -231,6 +237,9 @@ public partial class GetEndpointsResponse
 public partial class ListEndpointsRequest
 {
 
+    /// <summary>
+    /// Filter endpoints by health status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statusFilter")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EndpointStatus StatusFilter { get; set; } = default!;
@@ -259,11 +268,17 @@ public partial class ListEndpointsRequest
 public partial class ListEndpointsResponse
 {
 
+    /// <summary>
+    /// List of all registered endpoints
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoints")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<MeshEndpoint> Endpoints { get; set; } = new System.Collections.ObjectModel.Collection<MeshEndpoint>();
 
+    /// <summary>
+    /// Summary statistics for the endpoints
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -287,18 +302,33 @@ public partial class ListEndpointsResponse
 public partial class EndpointSummary
 {
 
+    /// <summary>
+    /// Total number of registered endpoints
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalEndpoints")]
     public int TotalEndpoints { get; set; } = default!;
 
+    /// <summary>
+    /// Number of endpoints with Healthy status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("healthyCount")]
     public int HealthyCount { get; set; } = default!;
 
+    /// <summary>
+    /// Number of endpoints with Degraded status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("degradedCount")]
     public int DegradedCount { get; set; } = default!;
 
+    /// <summary>
+    /// Number of endpoints with Unavailable status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("unavailableCount")]
     public int UnavailableCount { get; set; } = default!;
 
+    /// <summary>
+    /// Number of unique app-ids across all endpoints
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uniqueAppIds")]
     public int UniqueAppIds { get; set; } = default!;
 
@@ -386,9 +416,15 @@ public partial class RegisterEndpointRequest
 public partial class RegisterEndpointResponse
 {
 
+    /// <summary>
+    /// Whether the registration was successful
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
+    /// <summary>
+    /// The registered endpoint details
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -444,11 +480,17 @@ public partial class DeregisterEndpointRequest
 public partial class HeartbeatRequest
 {
 
+    /// <summary>
+    /// Unique identifier for the instance sending the heartbeat
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
 
+    /// <summary>
+    /// Current health status of the endpoint
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EndpointStatus Status { get; set; } = default!;
@@ -489,6 +531,9 @@ public partial class HeartbeatRequest
 public partial class HeartbeatResponse
 {
 
+    /// <summary>
+    /// Whether the heartbeat was processed successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
@@ -536,6 +581,9 @@ public partial class GetRouteRequest
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     public string ServiceName { get; set; } = default!;
 
+    /// <summary>
+    /// Load balancing algorithm to use for endpoint selection
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("algorithm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public LoadBalancerAlgorithm Algorithm { get; set; } = default!;
@@ -558,6 +606,9 @@ public partial class GetRouteRequest
 public partial class GetRouteResponse
 {
 
+    /// <summary>
+    /// The selected optimal endpoint for routing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -673,12 +724,18 @@ public partial class GetHealthRequest
 public partial class MeshHealthResponse
 {
 
+    /// <summary>
+    /// Overall health status of the mesh
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EndpointStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Summary statistics for all endpoints
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -690,6 +747,9 @@ public partial class MeshHealthResponse
     [System.Text.Json.Serialization.JsonPropertyName("redisConnected")]
     public bool RedisConnected { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp of the last health status update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastUpdateTime")]
     public System.DateTimeOffset LastUpdateTime { get; set; } = default!;
 

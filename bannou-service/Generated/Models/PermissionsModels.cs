@@ -71,6 +71,9 @@ public partial class CapabilityRequest
 public partial class CapabilityResponse
 {
 
+    /// <summary>
+    /// Session ID that was queried
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -105,6 +108,9 @@ public partial class CapabilityResponse
 public partial class ValidationRequest
 {
 
+    /// <summary>
+    /// Session ID to validate access for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -147,6 +153,9 @@ public partial class ValidationResponse
     [System.Text.Json.Serialization.JsonPropertyName("allowed")]
     public bool Allowed { get; set; } = default!;
 
+    /// <summary>
+    /// Session ID that was validated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -225,6 +234,9 @@ public partial class StatePermissions : System.Collections.Generic.Dictionary<st
 public partial class RegistrationResponse
 {
 
+    /// <summary>
+    /// Service ID that was registered
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -254,6 +266,9 @@ public partial class RegistrationResponse
     [System.Text.Json.Serialization.JsonPropertyName("affectedSessions")]
     public int AffectedSessions { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when permissions were recompiled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recompiledAt")]
     public System.DateTimeOffset RecompiledAt { get; set; } = default!;
 
@@ -272,6 +287,9 @@ public partial class RegistrationResponse
 public partial class SessionStateUpdate
 {
 
+    /// <summary>
+    /// Session ID to update state for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -320,6 +338,9 @@ public partial class SessionStateUpdate
 public partial class SessionRoleUpdate
 {
 
+    /// <summary>
+    /// Session ID to update role for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -394,6 +415,9 @@ public partial class ClearSessionStateRequest
 public partial class SessionUpdateResponse
 {
 
+    /// <summary>
+    /// Session ID that was updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -423,6 +447,9 @@ public partial class SessionUpdateResponse
     [System.Text.Json.Serialization.JsonPropertyName("newPermissions")]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> NewPermissions { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the session was updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
@@ -441,6 +468,9 @@ public partial class SessionUpdateResponse
 public partial class SessionInfoRequest
 {
 
+    /// <summary>
+    /// Session ID to retrieve information for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -461,6 +491,9 @@ public partial class SessionInfoRequest
 public partial class SessionInfo
 {
 
+    /// <summary>
+    /// Session ID being queried
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

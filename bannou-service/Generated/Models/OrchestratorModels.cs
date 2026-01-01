@@ -287,6 +287,9 @@ public partial class ContainerRestartRequestBody
     [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
+    /// <summary>
+    /// Urgency level for the restart
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RestartPriority Priority { get; set; } = default!;
@@ -559,6 +562,9 @@ public partial class ServiceHealthStatus
 
 }
 
+/// <summary>
+/// Request to execute a specific type of test
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TestExecutionRequest
 {
@@ -906,6 +912,9 @@ public enum BackendType
 public partial class BackendInfo
 {
 
+    /// <summary>
+    /// Backend type identifier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -986,6 +995,9 @@ public partial class BackendsResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<BackendInfo> Backends { get; set; } = new System.Collections.ObjectModel.Collection<BackendInfo>();
 
+    /// <summary>
+    /// Highest priority available backend
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recommended")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1037,6 +1049,9 @@ public partial class DeploymentPreset
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeploymentPresetCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Service topology defined by this preset
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topology")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1165,6 +1180,9 @@ public partial class TopologyNode
     [System.Text.Json.Serialization.JsonPropertyName("replicas")]
     public int Replicas { get; set; } = 1;
 
+    /// <summary>
+    /// Resource limits and requests for this node
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resources")]
     public ResourceLimits Resources { get; set; } = default!;
 
@@ -1197,19 +1215,34 @@ public partial class TopologyNode
 
 }
 
+/// <summary>
+/// Configuration for infrastructure services
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InfrastructureConfig
 {
 
+    /// <summary>
+    /// Redis configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("redis")]
     public InfraServiceConfig Redis { get; set; } = default!;
 
+    /// <summary>
+    /// RabbitMQ configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rabbitmq")]
     public InfraServiceConfig Rabbitmq { get; set; } = default!;
 
+    /// <summary>
+    /// MySQL configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mysql")]
     public InfraServiceConfig Mysql { get; set; } = default!;
 
+    /// <summary>
+    /// Ingress/reverse proxy configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ingress")]
     public IngressConfig Ingress { get; set; } = default!;
 
@@ -1224,10 +1257,16 @@ public partial class InfrastructureConfig
 
 }
 
+/// <summary>
+/// Configuration for an infrastructure service
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InfraServiceConfig
 {
 
+    /// <summary>
+    /// Whether this infrastructure service is enabled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("enabled")]
     public bool Enabled { get; set; } = true;
 
@@ -1237,9 +1276,15 @@ public partial class InfraServiceConfig
     [System.Text.Json.Serialization.JsonPropertyName("image")]
     public string Image { get; set; } = default!;
 
+    /// <summary>
+    /// Resource limits and requests
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resources")]
     public ResourceLimits Resources { get; set; } = default!;
 
+    /// <summary>
+    /// Environment variables for this service
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("environment")]
     public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
 
@@ -1260,20 +1305,35 @@ public partial class InfraServiceConfig
 
 }
 
+/// <summary>
+/// Ingress/reverse proxy configuration
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class IngressConfig
 {
 
+    /// <summary>
+    /// Whether ingress is enabled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("enabled")]
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// Type of ingress/reverse proxy to use
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("type")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public IngressConfigType Type { get; set; } = BeyondImmersion.BannouService.Orchestrator.IngressConfigType.Openresty;
 
+    /// <summary>
+    /// Port configuration for ingress
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ports")]
     public Ports Ports { get; set; } = default!;
 
+    /// <summary>
+    /// Whether SSL/TLS is enabled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ssl")]
     public bool Ssl { get; set; } = false;
 
@@ -1288,6 +1348,9 @@ public partial class IngressConfig
 
 }
 
+/// <summary>
+/// Resource limits and requests for container scheduling
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ResourceLimits
 {
@@ -1372,6 +1435,9 @@ public partial class DeployRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BackendType Backend { get; set; } = default!;
 
+    /// <summary>
+    /// How the deployment should be performed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeploymentMode Mode { get; set; } = BeyondImmersion.BannouService.Orchestrator.DeploymentMode.Graceful;
@@ -1423,6 +1489,9 @@ public partial class DeployResponse
     [System.Text.Json.Serialization.JsonRequired]
     public string DeploymentId { get; set; } = default!;
 
+    /// <summary>
+    /// Container orchestration backend used for deployment
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backend")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1490,6 +1559,9 @@ public partial class DeployedService
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the deployed service
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1543,6 +1615,9 @@ public partial class EnvironmentStatus
     [System.Text.Json.Serialization.JsonPropertyName("deployed")]
     public bool Deployed { get; set; } = default!;
 
+    /// <summary>
+    /// When this status was generated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1554,6 +1629,9 @@ public partial class EnvironmentStatus
     [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
     public string DeploymentId { get; set; } = default!;
 
+    /// <summary>
+    /// Container orchestration backend in use
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backend")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BackendType Backend { get; set; } = default!;
@@ -1690,6 +1768,9 @@ public partial class TeardownRequest
     [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
     public bool DryRun { get; set; } = false;
 
+    /// <summary>
+    /// How the teardown should be performed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TeardownMode Mode { get; set; } = BeyondImmersion.BannouService.Orchestrator.TeardownMode.Graceful;
@@ -1737,9 +1818,15 @@ public partial class TeardownRequest
 public partial class TeardownResponse
 {
 
+    /// <summary>
+    /// Whether teardown completed successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
+    /// <summary>
+    /// Time taken to complete teardown
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1775,6 +1862,9 @@ public partial class TeardownResponse
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
     public System.Collections.Generic.ICollection<string> Errors { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable teardown summary
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     public string Message { get; set; } = default!;
 
@@ -1859,6 +1949,9 @@ public partial class CleanRequest
 public partial class CleanResponse
 {
 
+    /// <summary>
+    /// Whether cleanup completed successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
@@ -1868,21 +1961,39 @@ public partial class CleanResponse
     [System.Text.Json.Serialization.JsonPropertyName("reclaimedSpaceMb")]
     public int ReclaimedSpaceMb { get; set; } = default!;
 
+    /// <summary>
+    /// Number of containers removed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedContainers")]
     public int RemovedContainers { get; set; } = default!;
 
+    /// <summary>
+    /// Number of networks removed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedNetworks")]
     public int RemovedNetworks { get; set; } = default!;
 
+    /// <summary>
+    /// Number of volumes removed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedVolumes")]
     public int RemovedVolumes { get; set; } = default!;
 
+    /// <summary>
+    /// Number of images removed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedImages")]
     public int RemovedImages { get; set; } = default!;
 
+    /// <summary>
+    /// Non-fatal errors during cleanup
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
     public System.Collections.Generic.ICollection<string> Errors { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable cleanup summary
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     public string Message { get; set; } = default!;
 
@@ -1913,6 +2024,9 @@ public partial class LogsResponse
     [System.Text.Json.Serialization.JsonPropertyName("container")]
     public string Container { get; set; } = default!;
 
+    /// <summary>
+    /// Log entries matching the query
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("logs")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1939,15 +2053,24 @@ public partial class LogsResponse
 public partial class LogEntry
 {
 
+    /// <summary>
+    /// When this log entry was recorded
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// Output stream type (stdout or stderr)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stream")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public LogEntryStream Stream { get; set; } = default!;
 
+    /// <summary>
+    /// Log message content
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1976,6 +2099,9 @@ public partial class TopologyUpdateRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TopologyChange> Changes { get; set; } = new System.Collections.ObjectModel.Collection<TopologyChange>();
 
+    /// <summary>
+    /// How the topology update should be performed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeploymentMode Mode { get; set; } = BeyondImmersion.BannouService.Orchestrator.DeploymentMode.Graceful;
@@ -2055,9 +2181,15 @@ public partial class TopologyChange
 public partial class TopologyUpdateResponse
 {
 
+    /// <summary>
+    /// Whether all topology changes were applied successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
+    /// <summary>
+    /// Details of each applied change
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appliedChanges")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2069,12 +2201,21 @@ public partial class TopologyUpdateResponse
     [System.Text.Json.Serialization.JsonPropertyName("topology")]
     public ServiceTopology Topology { get; set; } = default!;
 
+    /// <summary>
+    /// Time taken to apply topology changes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
     public string Duration { get; set; } = default!;
 
+    /// <summary>
+    /// Non-fatal warnings during topology update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("warnings")]
     public System.Collections.Generic.ICollection<string> Warnings { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable update summary
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     public string Message { get; set; } = default!;
 
@@ -2093,6 +2234,9 @@ public partial class TopologyUpdateResponse
 public partial class AppliedChange
 {
 
+    /// <summary>
+    /// Type of topology change that was applied
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2104,6 +2248,9 @@ public partial class AppliedChange
     [System.Text.Json.Serialization.JsonPropertyName("target")]
     public string Target { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this specific change was applied successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
@@ -2170,30 +2317,48 @@ public partial class ErrorResponse
 public partial class DeploymentEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// When this event occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// Type of deployment action that triggered this event
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeploymentEventAction Action { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier for the deployment
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string DeploymentId { get; set; } = default!;
 
+    /// <summary>
+    /// Preset name used for deployment (if applicable)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preset")]
     public string Preset { get; set; } = default!;
 
+    /// <summary>
+    /// Container orchestration backend used
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backend")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BackendType Backend { get; set; } = default!;
@@ -2230,24 +2395,39 @@ public partial class DeploymentEvent
 public partial class ServiceRestartEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the service that was restarted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
+    /// <summary>
+    /// Reason for the restart
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
+    /// <summary>
+    /// Whether restart was forced without waiting for graceful shutdown
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("forced")]
     public bool Forced { get; set; } = default!;
 
+    /// <summary>
+    /// Environment variables updated during restart
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newEnvironment")]
     public System.Collections.Generic.IDictionary<string, string> NewEnvironment { get; set; } = default!;
 
@@ -2281,6 +2461,9 @@ public partial class ConfigurationChangedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// When this configuration change occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2339,6 +2522,9 @@ public enum RestartPriority
 
 }
 
+/// <summary>
+/// Request to restart a container
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContainerRestartRequest
 {
@@ -2351,6 +2537,9 @@ public partial class ContainerRestartRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
+    /// <summary>
+    /// Urgency level for the restart
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RestartPriority Priority { get; set; } = BeyondImmersion.BannouService.Orchestrator.RestartPriority.Graceful;
@@ -2438,12 +2627,18 @@ public partial class ContainerStatus
     [System.Text.Json.Serialization.JsonRequired]
     public string AppName { get; set; } = default!;
 
+    /// <summary>
+    /// Current container status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ContainerStatusStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// When this status was captured
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2479,6 +2674,9 @@ public partial class ContainerStatus
     [System.Text.Json.Serialization.JsonPropertyName("restartHistory")]
     public System.Collections.Generic.ICollection<RestartHistoryEntry> RestartHistory { get; set; } = default!;
 
+    /// <summary>
+    /// Health check information for the container
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("healthChecks")]
     public HealthChecks HealthChecks { get; set; } = default!;
 
@@ -2503,16 +2701,25 @@ public partial class ContainerStatus
 public partial class RestartHistoryEntry
 {
 
+    /// <summary>
+    /// When the restart occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// Why the restart was triggered
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
+    /// <summary>
+    /// Priority level used for the restart
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RestartPriority Priority { get; set; } = default!;
@@ -2523,6 +2730,9 @@ public partial class RestartHistoryEntry
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
     public string Duration { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the restart completed successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
@@ -2570,6 +2780,9 @@ public partial class ConfigRollbackRequest
 public partial class ConfigRollbackResponse
 {
 
+    /// <summary>
+    /// Whether rollback completed successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
@@ -2591,6 +2804,9 @@ public partial class ConfigRollbackResponse
     [System.Text.Json.Serialization.JsonPropertyName("changedKeys")]
     public System.Collections.Generic.ICollection<string> ChangedKeys { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable rollback summary
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     public string Message { get; set; } = default!;
 
@@ -2932,6 +3148,9 @@ public partial class PoolStatusResponse
     [System.Text.Json.Serialization.JsonPropertyName("scaleUpThreshold")]
     public float ScaleUpThreshold { get; set; } = default!;
 
+    /// <summary>
+    /// Recent processing statistics
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recentMetrics")]
     public PoolMetrics RecentMetrics { get; set; } = default!;
 
@@ -2946,6 +3165,9 @@ public partial class PoolStatusResponse
 
 }
 
+/// <summary>
+/// Processing pool performance metrics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PoolMetrics
 {
@@ -3181,15 +3403,27 @@ public enum ComponentHealthStatus
 public partial class Capacity
 {
 
+    /// <summary>
+    /// Maximum number of connections this service can handle
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
     public int MaxConnections { get; set; } = default!;
 
+    /// <summary>
+    /// Current number of active connections
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
     public int CurrentConnections { get; set; } = default!;
 
+    /// <summary>
+    /// CPU usage as a percentage (0.0 to 1.0)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cpuUsage")]
     public float CpuUsage { get; set; } = default!;
 
+    /// <summary>
+    /// Memory usage as a percentage (0.0 to 1.0)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memoryUsage")]
     public float MemoryUsage { get; set; } = default!;
 
@@ -3259,9 +3493,15 @@ public enum IngressConfigType
 public partial class Ports
 {
 
+    /// <summary>
+    /// HTTP port number
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("http")]
     public int Http { get; set; } = 80;
 
+    /// <summary>
+    /// HTTPS port number
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("https")]
     public int Https { get; set; } = 443;
 
@@ -3385,12 +3625,21 @@ public enum ContainerStatusStatus
 public partial class HealthChecks
 {
 
+    /// <summary>
+    /// When the last health check was performed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastCheck")]
     public System.DateTimeOffset LastCheck { get; set; } = default!;
 
+    /// <summary>
+    /// Result of the last health check
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// Number of consecutive health check failures
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consecutiveFailures")]
     public int ConsecutiveFailures { get; set; } = default!;
 

@@ -132,10 +132,16 @@ public partial class ListLocationsRequest
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -170,13 +176,22 @@ public partial class ListLocationsByRealmRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public LocationType? LocationType { get; set; } = default!;
 
+    /// <summary>
+    /// Whether to include deprecated locations in the response
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -211,13 +226,22 @@ public partial class ListLocationsByParentRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public LocationType? LocationType { get; set; } = default!;
 
+    /// <summary>
+    /// Whether to include deprecated locations in the response
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -252,13 +276,22 @@ public partial class ListRootLocationsRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public LocationType? LocationType { get; set; } = default!;
 
+    /// <summary>
+    /// Whether to include deprecated locations in the response
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -323,13 +356,22 @@ public partial class GetLocationDescendantsRequest
     [System.ComponentModel.DataAnnotations.Range(1, 10)]
     public int? MaxDepth { get; set; } = default!;
 
+    /// <summary>
+    /// Whether to include deprecated locations in the response
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -383,6 +425,9 @@ public partial class CreateLocationRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification for this location
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -717,6 +762,9 @@ public partial class SeedLocation
     [System.Text.Json.Serialization.JsonRequired]
     public string RealmCode { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification for this location
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -729,6 +777,9 @@ public partial class SeedLocation
     [System.Text.Json.Serialization.JsonPropertyName("parentLocationCode")]
     public string? ParentLocationCode { get; set; } = default!;
 
+    /// <summary>
+    /// Additional metadata for the location (JSON)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
@@ -747,6 +798,9 @@ public partial class SeedLocation
 public partial class LocationResponse
 {
 
+    /// <summary>
+    /// Unique identifier for the location
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -760,19 +814,31 @@ public partial class LocationResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique code for the location within its realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the location
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Optional description of the location
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification of the location
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -809,14 +875,23 @@ public partial class LocationResponse
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string? DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Additional metadata for the location (JSON)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the location was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the location was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -837,23 +912,41 @@ public partial class LocationResponse
 public partial class LocationListResponse
 {
 
+    /// <summary>
+    /// List of locations matching the query
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locations")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<LocationResponse> Locations { get; set; } = new System.Collections.ObjectModel.Collection<LocationResponse>();
 
+    /// <summary>
+    /// Total number of locations matching the query (across all pages)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
+    /// <summary>
+    /// Current page number (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are more pages after the current page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are pages before the current page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasPreviousPage")]
     public bool HasPreviousPage { get; set; } = default!;
 

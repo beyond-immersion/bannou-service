@@ -69,24 +69,32 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get species by ID\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Species\"\
         \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getSpecies\"\n}"
   /species/get-by-code:
@@ -125,25 +133,33 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get species by code\",\n  \"description\": \"Retrieve a species using its\
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get species by code\",\n  \"description\": \"Retrieve a species using its
         unique code (e.g., \\\"HUMAN\\\", \\\"ELF\\\", \\\"DWARF\\\")\",\n  \"tags\": [\n    \"Species\"\n  ],\n  \"deprecated\"\
         : false,\n  \"operationId\": \"getSpeciesByCode\"\n}"
   /species/list:
@@ -172,42 +188,53 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListSpeciesRequest\"\
         ,\n  \"$defs\": {\n    \"ListSpeciesRequest\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
-        category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Filter\
+        category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Filter
         by category (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n  \
         \        \"type\": \"boolean\",\n          \"nullable\": true,\n          \"description\": \"Filter by playable status\"\
         \n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n\
         \          \"description\": \"Whether to include deprecated species in the response\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1\n        },\n        \"\
-        pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n        \
-        \  \"default\": 20\n        }\n      }\n    }\n  }\n}"
+        : {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n          \"description\"\
+        : \"Page number for pagination (1-based)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n\
+        \          \"minimum\": 1,\n          \"maximum\": 100,\n          \"default\": 20,\n          \"description\": \"\
+        Number of items per page\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SpeciesListResponse\"\
         ,\n  \"$defs\": {\n    \"SpeciesListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         species\",\n        \"totalCount\"\n      ],\n      \"properties\": {\n        \"species\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SpeciesResponse\"\n          }\n        },\n\
-        \        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\": {\n          \"type\":\
-        \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n  \
-        \  \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\",\n        \"\
-        code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"\
-        updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\",\n      \
-        \    \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"\
-        name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"\
-        nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n        \"isDeprecated\"\
-        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species is deprecated and cannot\
-        be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n         \
-        \ \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when this species\
-        was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"baseLifespan\": {\n\
-        \          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"maturityAge\": {\n        \
-        \  \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"traitModifiers\": {\n          \"type\"\
-        : \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true\n        },\n        \"realmIds\"\
-        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\"\
-        : \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\n        },\n    \
-        \    \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
-        \     }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"List all species\",\n  \"description\": \"Retrieve all species with optional\
+        : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SpeciesResponse\"\n          },\n          \"\
+        description\": \"List of species matching the query\"\n        },\n        \"totalCount\": {\n          \"type\":
+        \"integer\",\n          \"description\": \"Total number of species matching the query (for pagination)\"\n       \
+        \ },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current page number\"\n\
+        \        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of items
+        per page\"\n        }\n      }\n    },\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"speciesId\",\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\"\
+        ,\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n  \
+        \        \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of
+        the species\"\n        },\n        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique
+        code for the species (e.g., \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"\
+        string\",\n          \"description\": \"Display name for the species\"\n        },\n        \"description\": {\n \
+        \         \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Description of the species\"\
+        \n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
+        description\": \"Category for grouping (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n  \
+        \      \"isPlayable\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether players can create
+        characters of this species\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n        \
+        \  \"description\": \"Whether this species is deprecated and cannot be used for new characters\"\n        },\n   \
+        \     \"deprecatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason
+        for deprecation\"\n        },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n    \
+        \      \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\": \"Age at which the species
+        reaches maturity\"\n        },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n   \
+        \     },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"\
+        string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species
+        is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n     \
+        \   },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n        \
+        \  \"description\": \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species
+        was last updated\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List all species\",\n  \"description\": \"Retrieve all species with optional
         realm filtering\",\n  \"tags\": [\n    \"Species\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listSpecies\"\
         \n}"
   /species/list-by-realm:
@@ -240,38 +267,50 @@ paths:
         ,\n  \"$defs\": {\n    \"ListSpeciesByRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n    \
         \    \"realmId\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n   \
         \       \"format\": \"uuid\",\n          \"description\": \"ID of the realm to filter by\"\n        },\n        \"\
-        isPlayable\": {\n          \"type\": \"boolean\",\n          \"nullable\": true,\n          \"description\": \"Filter\
+        isPlayable\": {\n          \"type\": \"boolean\",\n          \"nullable\": true,\n          \"description\": \"Filter
         by playable status\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n\
-        \          \"default\": 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\"\
-        : 1,\n          \"maximum\": 100,\n          \"default\": 20\n        }\n      }\n    }\n  }\n}"
+        \          \"default\": 1,\n          \"description\": \"Page number for pagination (1-based)\"\n        },\n    \
+        \    \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n \
+        \         \"default\": 20,\n          \"description\": \"Number of items per page\"\n        }\n      }\n    }\n \
+        \ }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SpeciesListResponse\"\
         ,\n  \"$defs\": {\n    \"SpeciesListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         species\",\n        \"totalCount\"\n      ],\n      \"properties\": {\n        \"species\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SpeciesResponse\"\n          }\n        },\n\
-        \        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\": {\n          \"type\":\
-        \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n  \
-        \  \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\",\n        \"\
-        code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"\
-        updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\",\n      \
-        \    \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"\
-        name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"\
-        nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n        \"isDeprecated\"\
-        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species is deprecated and cannot\
-        be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n         \
-        \ \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when this species\
-        was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"baseLifespan\": {\n\
-        \          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"maturityAge\": {\n        \
-        \  \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"traitModifiers\": {\n          \"type\"\
-        : \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true\n        },\n        \"realmIds\"\
-        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\"\
-        : \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\n        },\n    \
-        \    \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
-        \     }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"List species available in a realm\",\n  \"description\": \"Retrieve all species\
+        : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SpeciesResponse\"\n          },\n          \"\
+        description\": \"List of species matching the query\"\n        },\n        \"totalCount\": {\n          \"type\":
+        \"integer\",\n          \"description\": \"Total number of species matching the query (for pagination)\"\n       \
+        \ },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current page number\"\n\
+        \        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of items
+        per page\"\n        }\n      }\n    },\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"speciesId\",\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\"\
+        ,\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n  \
+        \        \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of
+        the species\"\n        },\n        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique
+        code for the species (e.g., \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"\
+        string\",\n          \"description\": \"Display name for the species\"\n        },\n        \"description\": {\n \
+        \         \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Description of the species\"\
+        \n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
+        description\": \"Category for grouping (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n  \
+        \      \"isPlayable\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether players can create
+        characters of this species\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n        \
+        \  \"description\": \"Whether this species is deprecated and cannot be used for new characters\"\n        },\n   \
+        \     \"deprecatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason
+        for deprecation\"\n        },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n    \
+        \      \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\": \"Age at which the species
+        reaches maturity\"\n        },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n   \
+        \     },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"\
+        string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species
+        is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n     \
+        \   },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n        \
+        \  \"description\": \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species
+        was last updated\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List species available in a realm\",\n  \"description\": \"Retrieve all species
         that are available in a specific realm\",\n  \"tags\": [\n    \"Species\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
         : \"listSpeciesByRealm\"\n}"
   /species/create:
@@ -308,16 +347,16 @@ paths:
         \      \"description\": \"Unique code for the species (e.g., \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"\
         name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"maxLength\": 100,\n         \
         \ \"description\": \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"maxLength\": 1000,\n          \"nullable\": true,\n          \"description\": \"Description\
+        string\",\n          \"maxLength\": 1000,\n          \"nullable\": true,\n          \"description\": \"Description
         of the species\"\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"maxLength\": 50,\n\
         \          \"nullable\": true,\n          \"description\": \"Category for grouping (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\
         \", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\",\n          \"default\"\
         : true,\n          \"description\": \"Whether players can create characters of this species\"\n        },\n      \
         \  \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"nullable\": true,\n\
         \          \"description\": \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"\
-        type\": \"integer\",\n          \"minimum\": 0,\n          \"nullable\": true,\n          \"description\": \"Age at\
+        type\": \"integer\",\n          \"minimum\": 0,\n          \"nullable\": true,\n          \"description\": \"Age at
         which the species reaches maturity\"\n        },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n\
-        \          \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Base trait\
+        \          \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Base trait
         modifiers for this species (JSON)\"\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n       \
         \   \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"\
         description\": \"Initial realms where this species is available\"\n        },\n        \"metadata\": {\n         \
@@ -327,25 +366,33 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Create new species\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Species\
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Create new species\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Species
         Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createSpecies\"\n}"
   /species/update:
     post:
@@ -385,7 +432,7 @@ paths:
         \ \"maxLength\": 50,\n          \"nullable\": true,\n          \"description\": \"Category for grouping\"\n      \
         \  },\n        \"isPlayable\": {\n          \"type\": \"boolean\",\n          \"nullable\": true,\n          \"description\"\
         : \"Whether players can create characters of this species\"\n        },\n        \"baseLifespan\": {\n          \"\
-        type\": \"integer\",\n          \"minimum\": 1,\n          \"nullable\": true,\n          \"description\": \"Base\
+        type\": \"integer\",\n          \"minimum\": 1,\n          \"nullable\": true,\n          \"description\": \"Base
         lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n          \"minimum\"\
         : 0,\n          \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n  \
         \      },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
@@ -396,25 +443,33 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Update species\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Species\
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Update species\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Species
         Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"updateSpecies\"\n}"
   /species/delete:
     post:
@@ -449,8 +504,8 @@ paths:
         \    \"format\": \"uuid\",\n          \"description\": \"ID of the species to delete\"\n        }\n      }\n    }\n\
         \  }\n}"
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Delete species\",\n  \"description\": \"Hard delete a species. This will\
-        fail if the species is still in use.\\nFor safe removal, first deprecate the species, then merge it into another species\\\
+      x-endpoint-info-json: "{\n  \"summary\": \"Delete species\",\n  \"description\": \"Hard delete a species. This will
+        fail if the species is still in use.\\nFor safe removal, first deprecate the species, then merge it into another species\\
         n(or VOID), then delete. Only deprecated species with zero references can be deleted.\\n\",\n  \"tags\": [\n    \"\
         Species Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"deleteSpecies\"\n}"
   /species/deprecate:
@@ -498,27 +553,35 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Deprecate a species\",\n  \"description\": \"Soft-delete a species by marking\
-        it as deprecated.\\nDeprecated species:\\n- Remain queryable for historical data\\n- Cannot be used for creating new\
-        characters\\n- Can be merged into other species using the merge endpoint\\n- Can be hard-deleted after all references\
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Deprecate a species\",\n  \"description\": \"Soft-delete a species by marking
+        it as deprecated.\\nDeprecated species:\\n- Remain queryable for historical data\\n- Cannot be used for creating new
+        characters\\n- Can be merged into other species using the merge endpoint\\n- Can be hard-deleted after all references
         are removed\\n\",\n  \"tags\": [\n    \"Species Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"deprecateSpecies\"\
         \n}"
   /species/undeprecate:
@@ -560,25 +623,33 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Restore a deprecated species\",\n  \"description\": \"Remove the deprecated\
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Restore a deprecated species\",\n  \"description\": \"Remove the deprecated
         status from a species, making it\\navailable for new characters again.\\n\",\n  \"tags\": [\n    \"Species Admin\"\
         \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"undeprecateSpecies\"\n}"
   /species/merge:
@@ -625,9 +696,9 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/MergeSpeciesRequest\"\
         ,\n  \"$defs\": {\n    \"MergeSpeciesRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         sourceSpeciesId\",\n        \"targetSpeciesId\"\n      ],\n      \"properties\": {\n        \"sourceSpeciesId\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the deprecated\
+        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the deprecated
         species to merge from (must be deprecated)\"\n        },\n        \"targetSpeciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the species to merge into (can be VOID for\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the species to merge into (can be VOID for
         effective deletion)\"\n        },\n        \"deleteAfterMerge\": {\n          \"type\": \"boolean\",\n          \"\
         default\": false,\n          \"description\": \"If true, hard-delete the source species after successful merge\"\n\
         \        }\n      }\n    }\n  }\n}"
@@ -639,13 +710,13 @@ paths:
         \  \"targetSpeciesId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
         : \"ID of the species that characters were merged into\"\n        },\n        \"charactersMigrated\": {\n        \
         \  \"type\": \"integer\",\n          \"description\": \"Number of characters updated to use the target species\"\n\
-        \        },\n        \"sourceDeleted\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether\
+        \        },\n        \"sourceDeleted\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether
         the source species was hard-deleted after merge\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Merge a deprecated species into another species\",\n  \"description\": \"\
-        Migrate all characters using a deprecated species to a target species.\\nThis is the recommended way to handle species\
-        removal:\\n1. Deprecate the source species\\n2. Merge into the target species (or VOID for effective deletion)\\n3.\
-        Optionally hard-delete the now-empty deprecated species\\n\\nThe merge operation:\\n- Updates all characters using\
-        sourceSpeciesId to use targetSpeciesId\\n- Publishes events for each affected character\\n- Returns count of migrated\
+        Migrate all characters using a deprecated species to a target species.\\nThis is the recommended way to handle species
+        removal:\\n1. Deprecate the source species\\n2. Merge into the target species (or VOID for effective deletion)\\n3.
+        Optionally hard-delete the now-empty deprecated species\\n\\nThe merge operation:\\n- Updates all characters using
+        sourceSpeciesId to use targetSpeciesId\\n- Publishes events for each affected character\\n- Returns count of migrated
         characters\\n- Fails if source is not deprecated (safety check)\\n\",\n  \"tags\": [\n    \"Species Admin\"\n  ],\n\
         \  \"deprecated\": false,\n  \"operationId\": \"mergeSpecies\"\n}"
   /species/add-to-realm:
@@ -686,25 +757,33 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Add species to a realm\",\n  \"description\": \"Make a species available\
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Add species to a realm\",\n  \"description\": \"Make a species available
         in an additional realm\",\n  \"tags\": [\n    \"Species Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
         : \"addSpeciesToRealm\"\n}"
   /species/remove-from-realm:
@@ -745,25 +824,33 @@ paths:
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\"\
         ,\n        \"code\",\n        \"name\",\n        \"isPlayable\",\n        \"isDeprecated\",\n        \"createdAt\"\
         ,\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
-        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\"\n        },\n\
-        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the species\"\n        },\n\
+        \        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species (e.g.,
+        \\\"HUMAN\\\", \\\"ELF\\\")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Display name for the species\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Description of the species\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        (e.g., \\\"HUMANOID\\\", \\\"BEAST\\\", \\\"MAGICAL\\\")\"\n        },\n        \"isPlayable\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this species
         is deprecated and cannot be used for new characters\"\n        },\n        \"deprecatedAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
         Timestamp when this species was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"\
         string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n       \
-        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"nullable\": true\n        },\n        \"\
-        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true\n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this\
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Remove species from a realm\",\n  \"description\": \"Remove a species from\
+        \ },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Base lifespan in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n    \
+        \      \"nullable\": true,\n          \"description\": \"Age at which the species reaches maturity\"\n        },\n\
+        \        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n     \
+        \     \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n    \
+        \    \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n\
+        \            \"format\": \"uuid\"\n          },\n          \"description\": \"Realms where this species is available\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n        },\n \
+        \       \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the species was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the species was last updated\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Remove species from a realm\",\n  \"description\": \"Remove a species from
         a realm (species must not have characters in that realm)\",\n  \"tags\": [\n    \"Species Admin\"\n  ],\n  \"deprecated\"\
         : false,\n  \"operationId\": \"removeSpeciesFromRealm\"\n}"
   /species/seed:
@@ -797,34 +884,36 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedSpeciesRequest\"\
         ,\n  \"$defs\": {\n    \"SeedSpeciesRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"species\"\
-        \n      ],\n      \"properties\": {\n        \"species\": {\n          \"type\": \"array\",\n          \"items\":\
+        \n      ],\n      \"properties\": {\n        \"species\": {\n          \"type\": \"array\",\n          \"items\":
         {\n            \"$ref\": \"#/$defs/SeedSpecies\"\n          },\n          \"description\": \"List of species to seed\"\
         \n        },\n        \"updateExisting\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n   \
         \       \"description\": \"Whether to update species that already exist\"\n        }\n      }\n    },\n    \"SeedSpecies\"\
         : {\n      \"type\": \"object\",\n      \"required\": [\n        \"code\",\n        \"name\"\n      ],\n      \"properties\"\
         : {\n        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species\"\
         \n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display name\"\n\
-        \        },\n        \"description\": {\n          \"type\": \"string\",\n          \"description\": \"Description\"\
-        \n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"description\": \"Category for\
-        grouping\"\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\",\n          \"default\": true\n\
-        \        },\n        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"description\": \"Base lifespan\
-        in game years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Age at maturity\"\n        },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true\n        },\n        \"realmCodes\": {\n          \"type\": \"array\",\n          \"items\": {\n          \
-        \  \"type\": \"string\"\n          },\n          \"description\": \"Codes of realms where this species is available\
-        (resolved during seeding)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true\n        }\n      }\n    }\n  }\n}"
+        \        },\n        \"description\": {\n          \"type\": \"string\",\n          \"description\": \"Description
+        of the species\"\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Category for grouping\"\n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\",\n          \"\
+        default\": true,\n          \"description\": \"Whether players can create characters of this species\"\n        },\n\
+        \        \"baseLifespan\": {\n          \"type\": \"integer\",\n          \"description\": \"Base lifespan in game
+        years\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n          \"description\": \"Age
+        at maturity\"\n        },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"description\": \"Base trait modifiers for this species\"\n        },\n        \"realmCodes\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"Codes of realms where this species is available (resolved during seeding)\"\n        },\n\
+        \        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"\
+        description\": \"Additional metadata for the species\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedSpeciesResponse\"\
         ,\n  \"$defs\": {\n    \"SeedSpeciesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         created\",\n        \"updated\",\n        \"skipped\",\n        \"errors\"\n      ],\n      \"properties\": {\n  \
         \      \"created\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of new species created\"\
-        \n        },\n        \"updated\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of existing\
+        \n        },\n        \"updated\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of existing
         species updated\"\n        },\n        \"skipped\": {\n          \"type\": \"integer\",\n          \"description\"\
         : \"Number of species skipped (already exist, updateExisting=false)\"\n        },\n        \"errors\": {\n       \
         \   \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
         : \"List of error messages for species that failed to seed\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Seed species from configuration\",\n  \"description\": \"Idempotent operation\
-        to seed species from provided data.\\nCreates species that don't exist, optionally updates existing species.\\nTypically\
+      x-endpoint-info-json: "{\n  \"summary\": \"Seed species from configuration\",\n  \"description\": \"Idempotent operation
+        to seed species from provided data.\\nCreates species that don't exist, optionally updates existing species.\\nTypically
         called at service startup with YAML-defined species.\\n\",\n  \"tags\": [\n    \"Species Admin\"\n  ],\n  \"deprecated\"\
         : false,\n  \"operationId\": \"seedSpecies\"\n}"
 components:

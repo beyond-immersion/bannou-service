@@ -406,18 +406,22 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address for authentication"
         },
         "password": {
           "type": "string",
-          "format": "password"
+          "format": "password",
+          "description": "User password for authentication"
         },
         "rememberMe": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to extend the session duration for persistent login"
         },
         "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo"
+          "$ref": "#/$defs/DeviceInfo",
+          "description": "Information about the client device"
         }
       }
     },
@@ -431,18 +435,22 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
             "mobile",
             "tablet",
             "console"
-          ]
+          ],
+          "description": "Category of the device"
         },
         "platform": {
-          "type": "string"
+          "type": "string",
+          "description": "Operating system or platform name"
         },
         "browser": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Browser name and version if applicable"
         },
         "appVersion": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Version of the client application"
         }
       }
     }
@@ -467,13 +475,16 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authenticated account"
         },
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "JWT access token for API authentication"
         },
         "refreshToken": {
-          "type": "string"
+          "type": "string",
+          "description": "Token used to obtain new access tokens when the current one expires"
         },
         "expiresIn": {
           "type": "integer",
@@ -488,11 +499,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the authenticated user"
         },
         "requiresTwoFactor": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the user needs to complete two-factor authentication"
         }
       }
     }
@@ -763,14 +776,17 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Authorization code returned by the OAuth provider"
         },
         "state": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "State parameter for CSRF protection, must match the value sent in the init request"
         },
         "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo"
+          "$ref": "#/$defs/DeviceInfo",
+          "description": "Information about the client device"
         }
       }
     },
@@ -784,18 +800,22 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
             "mobile",
             "tablet",
             "console"
-          ]
+          ],
+          "description": "Category of the device"
         },
         "platform": {
-          "type": "string"
+          "type": "string",
+          "description": "Operating system or platform name"
         },
         "browser": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Browser name and version if applicable"
         },
         "appVersion": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Version of the client application"
         }
       }
     }
@@ -820,13 +840,16 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authenticated account"
         },
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "JWT access token for API authentication"
         },
         "refreshToken": {
-          "type": "string"
+          "type": "string",
+          "description": "Token used to obtain new access tokens when the current one expires"
         },
         "expiresIn": {
           "type": "integer",
@@ -841,11 +864,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the authenticated user"
         },
         "requiresTwoFactor": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the user needs to complete two-factor authentication"
         }
       }
     }
@@ -927,7 +952,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "example": "140000006A7B3C8E..."
         },
         "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo"
+          "$ref": "#/$defs/DeviceInfo",
+          "description": "Information about the client device"
         }
       }
     },
@@ -941,18 +967,22 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
             "mobile",
             "tablet",
             "console"
-          ]
+          ],
+          "description": "Category of the device"
         },
         "platform": {
-          "type": "string"
+          "type": "string",
+          "description": "Operating system or platform name"
         },
         "browser": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Browser name and version if applicable"
         },
         "appVersion": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Version of the client application"
         }
       }
     }
@@ -977,13 +1007,16 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authenticated account"
         },
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "JWT access token for API authentication"
         },
         "refreshToken": {
-          "type": "string"
+          "type": "string",
+          "description": "Token used to obtain new access tokens when the current one expires"
         },
         "expiresIn": {
           "type": "integer",
@@ -998,11 +1031,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the authenticated user"
         },
         "requiresTwoFactor": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the user needs to complete two-factor authentication"
         }
       }
     }
@@ -1078,7 +1113,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "refreshToken": {
-          "type": "string"
+          "type": "string",
+          "description": "Refresh token issued during authentication to obtain a new access token"
         }
       }
     }
@@ -1103,13 +1139,16 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the authenticated account"
         },
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "JWT access token for API authentication"
         },
         "refreshToken": {
-          "type": "string"
+          "type": "string",
+          "description": "Token used to obtain new access tokens when the current one expires"
         },
         "expiresIn": {
           "type": "integer",
@@ -1124,11 +1163,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the authenticated user"
         },
         "requiresTwoFactor": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the user needs to complete two-factor authentication"
         }
       }
     }
@@ -1210,11 +1251,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "valid": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the token is valid and not expired"
         },
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the account associated with the token"
         },
         "sessionId": {
           "type": "string",
@@ -1225,14 +1268,15 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of roles assigned to the authenticated user"
         },
         "authorizations": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Authorization strings from active subscriptions.\ nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
+          "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
         },
         "remainingTime": {
           "type": "integer",
@@ -1398,7 +1442,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/SessionInfo"
-          }
+          },
+          "description": "List of active sessions for the account"
         }
       }
     },
@@ -1412,25 +1457,31 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the session"
         },
         "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo"
+          "$ref": "#/$defs/DeviceInfo",
+          "description": "Information about the device used for this session"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the session was created"
         },
         "lastActive": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp of the last activity in this session"
         },
         "ipAddress": {
-          "type": "string"
+          "type": "string",
+          "description": "IP address from which the session was initiated"
         },
         "location": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Geographic location derived from the IP address"
         }
       }
     },
@@ -1444,18 +1495,22 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
             "mobile",
             "tablet",
             "console"
-          ]
+          ],
+          "description": "Category of the device"
         },
         "platform": {
-          "type": "string"
+          "type": "string",
+          "description": "Operating system or platform name"
         },
         "browser": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Browser name and version if applicable"
         },
         "appVersion": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Version of the client application"
         }
       }
     }
@@ -1615,7 +1670,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "description": "Email address associated with the account to reset"
         }
       }
     }
@@ -1696,12 +1752,14 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "token": {
-          "type": "string"
+          "type": "string",
+          "description": "Password reset token received via email"
         },
         "newPassword": {
           "type": "string",
           "format": "password",
-          "minLength": 8
+          "minLength": 8,
+          "description": "New password to set for the account"
         }
       }
     }

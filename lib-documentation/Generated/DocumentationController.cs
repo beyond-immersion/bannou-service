@@ -899,13 +899,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
           "maxLength": 50,
-          "description": "Documentation namespace"
+          "description": "Documentation namespace to search within"
         },
         "query": {
           "type": "string",
           "minLength": 3,
           "maxLength": 500,
-          "description": "Natural language query"
+          "description": "Natural language query to search for"
         },
         "sessionId": {
           "type": "string",
@@ -913,30 +913,35 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "description": "Optional session ID for conversational context"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Filter results to a specific category"
         },
         "maxResults": {
           "type": "integer",
           "default": 5,
           "minimum": 1,
-          "maximum": 20
+          "maximum": 20,
+          "description": "Maximum number of results to return"
         },
         "includeContent": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to include full document content in results"
         },
         "maxSummaryLength": {
           "type": "integer",
           "default": 300,
           "minimum": 50,
-          "maximum": 500
+          "maximum": 500,
+          "description": "Maximum length of summaries in characters"
         },
         "minRelevanceScore": {
           "type": "number",
           "format": "float",
           "default": 0.3,
           "minimum": 0.0,
-          "maximum": 1.0
+          "maximum": 1.0,
+          "description": "Minimum relevance score threshold for results"
         }
       }
     },
@@ -974,19 +979,23 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "The namespace that was searched"
         },
         "query": {
-          "type": "string"
+          "type": "string",
+          "description": "The original query string"
         },
         "results": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/DocumentResult"
-          }
+          },
+          "description": "List of matching documents"
         },
         "totalResults": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of matching documents"
         },
         "voiceSummary": {
           "type": "string",
@@ -996,10 +1005,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Suggested follow-up queries"
         },
         "noResultsMessage": {
-          "type": "string"
+          "type": "string",
+          "description": "User-friendly message when no results found"
         }
       }
     },
@@ -1014,35 +1025,44 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly unique identifier"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category of the document"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "Brief text summary of the document"
         },
         "voiceSummary": {
-          "type": "string"
+          "type": "string",
+          "description": "Concise summary optimized for voice AI"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "Full document content if requested"
         },
         "relevanceScore": {
           "type": "number",
-          "format": "float"
+          "format": "float",
+          "description": "Relevance score from 0.0 to 1.0"
         },
         "matchHighlights": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Text snippets showing where matches occurred"
         }
       }
     },
@@ -1136,30 +1156,37 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace containing the document"
         },
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document to retrieve"
         },
         "slug": {
           "type": "string",
-          "pattern": "^[a-z0-9-]+$"
+          "pattern": "^[a-z0-9-]+$",
+          "description": "URL-friendly slug of the document to retrieve"
         },
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Optional session ID for tracking document views"
         },
         "includeRelated": {
-          "$ref": "#/$defs/RelatedDepth"
+          "$ref": "#/$defs/RelatedDepth",
+          "description": "How deep to fetch related documents"
         },
         "includeContent": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to include full document content"
         },
         "renderHtml": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to render markdown content as HTML"
         }
       }
     },
@@ -1189,13 +1216,15 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "document": {
-          "$ref": "#/$defs/Document"
+          "$ref": "#/$defs/Document",
+          "description": "The requested document"
         },
         "relatedDocuments": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/DocumentSummary"
-          }
+          },
+          "description": "List of related documents based on includeRelated depth"
         },
         "contentFormat": {
           "type": "string",
@@ -1203,7 +1232,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             "markdown",
             "html",
             "none"
-          ]
+          ],
+          "description": "Format of the content field in the response"
         }
       }
     },
@@ -1221,53 +1251,66 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace the document belongs to"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly unique identifier"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category for organizing the document"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "Full markdown content of the document"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "Brief text summary of the document"
         },
         "voiceSummary": {
-          "type": "string"
+          "type": "string",
+          "description": "Concise summary optimized for voice AI"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Tags for filtering and search"
         },
         "relatedDocuments": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uuid"
-          }
+          },
+          "description": "IDs of related documents"
         },
         "metadata": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Custom metadata key-value pairs"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document was last updated"
         }
       }
     },
@@ -1298,28 +1341,35 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly unique identifier"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category of the document"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "Brief text summary of the document"
         },
         "voiceSummary": {
-          "type": "string"
+          "type": "string",
+          "description": "Concise summary optimized for voice AI"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Tags associated with the document"
         }
       }
     }
@@ -1398,31 +1448,37 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to search within"
         },
         "searchTerm": {
           "type": "string",
           "minLength": 2,
-          "maxLength": 200
+          "maxLength": 200,
+          "description": "Keyword or phrase to search for"
         },
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Optional session ID for tracking searches"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Filter results to a specific category"
         },
         "maxResults": {
           "type": "integer",
           "default": 10,
           "minimum": 1,
-          "maximum": 50
+          "maximum": 50,
+          "description": "Maximum number of results to return"
         },
         "searchIn": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/SearchField"
-          }
+          },
+          "description": "Fields to search within"
         },
         "sortBy": {
           "type": "string",
@@ -1431,11 +1487,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             "recency",
             "alphabetical"
           ],
-          "default": "relevance"
+          "default": "relevance",
+          "description": "How to sort the search results"
         },
         "includeContent": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to include full document content in results"
         }
       }
     },
@@ -1462,7 +1520,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "content",
         "tags",
         "summary"
-      ]
+      ],
+      "description": "Fields that can be searched within documents"
     }
   }
 }
@@ -1481,19 +1540,23 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "The namespace that was searched"
         },
         "results": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/DocumentResult"
-          }
+          },
+          "description": "List of matching documents"
         },
         "totalResults": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of matching documents"
         },
         "searchTerm": {
-          "type": "string"
+          "type": "string",
+          "description": "The original search term"
         }
       }
     },
@@ -1508,35 +1571,44 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly unique identifier"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category of the document"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "Brief text summary of the document"
         },
         "voiceSummary": {
-          "type": "string"
+          "type": "string",
+          "description": "Concise summary optimized for voice AI"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "Full document content if requested"
         },
         "relevanceScore": {
           "type": "number",
-          "format": "float"
+          "format": "float",
+          "description": "Relevance score from 0.0 to 1.0"
         },
         "matchHighlights": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Text snippets showing where matches occurred"
         }
       }
     },
@@ -1630,16 +1702,19 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to list documents from"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Filter to a specific category"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Filter by tags"
         },
         "tagsMatch": {
           "type": "string",
@@ -1647,41 +1722,50 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             "all",
             "any"
           ],
-          "default": "all"
+          "default": "all",
+          "description": "Whether documents must match all tags or any tag"
         },
         "createdAfter": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Filter to documents created after this timestamp"
         },
         "createdBefore": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Filter to documents created before this timestamp"
         },
         "updatedAfter": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Filter to documents updated after this timestamp"
         },
         "updatedBefore": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Filter to documents updated before this timestamp"
         },
         "titlesOnly": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Return only document titles without summaries"
         },
         "page": {
           "type": "integer",
           "default": 1,
-          "minimum": 1
+          "minimum": 1,
+          "description": "Page number for pagination"
         },
         "pageSize": {
           "type": "integer",
           "default": 20,
           "minimum": 1,
-          "maximum": 100
+          "maximum": 100,
+          "description": "Number of documents per page"
         },
         "sortBy": {
-          "$ref": "#/$defs/ListSortField"
+          "$ref": "#/$defs/ListSortField",
+          "description": "Field to sort results by"
         },
         "sortOrder": {
           "type": "string",
@@ -1689,7 +1773,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             "asc",
             "desc"
           ],
-          "default": "desc"
+          "default": "desc",
+          "description": "Sort order direction"
         }
       }
     },
@@ -1716,7 +1801,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "updated_at",
         "title"
       ],
-      "default": "updated_at"
+      "default": "updated_at",
+      "description": "Fields available for sorting document lists"
     }
   }
 }
@@ -1735,25 +1821,31 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "The namespace that was listed"
         },
         "documents": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/DocumentSummary"
-          }
+          },
+          "description": "List of documents in the namespace"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of documents matching filters"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents per page"
         },
         "totalPages": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of pages available"
         }
       }
     },
@@ -1768,28 +1860,35 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly unique identifier"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category of the document"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "Brief text summary of the document"
         },
         "voiceSummary": {
-          "type": "string"
+          "type": "string",
+          "description": "Concise summary optimized for voice AI"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Tags associated with the document"
         }
       }
     },
@@ -1884,27 +1983,33 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace for suggestions"
         },
         "suggestionSource": {
-          "$ref": "#/$defs/SuggestionSource"
+          "$ref": "#/$defs/SuggestionSource",
+          "description": "Type of source to base suggestions on"
         },
         "sourceValue": {
-          "type": "string"
+          "type": "string",
+          "description": "The value for the suggestion source (document ID, slug, topic, or category)"
         },
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Optional session ID for personalized suggestions"
         },
         "maxSuggestions": {
           "type": "integer",
           "default": 5,
           "minimum": 1,
-          "maximum": 10
+          "maximum": 10,
+          "description": "Maximum number of suggestions to return"
         },
         "excludeRecentlyViewed": {
           "type": "boolean",
-          "default": true
+          "default": true,
+          "description": "Exclude documents viewed in current session"
         }
       }
     },
@@ -1915,7 +2020,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "slug",
         "topic",
         "category"
-      ]
+      ],
+      "description": "Source type for generating related topic suggestions"
     }
   }
 }
@@ -1934,19 +2040,23 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "The namespace suggestions are from"
         },
         "suggestions": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/TopicSuggestion"
-          }
+          },
+          "description": "List of suggested related topics"
         },
         "voicePrompt": {
-          "type": "string"
+          "type": "string",
+          "description": "Voice-friendly prompt for presenting suggestions"
         },
         "sessionInfluenced": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether suggestions were influenced by session history"
         }
       }
     },
@@ -1959,19 +2069,24 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the suggested document"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly slug of the suggested document"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Title of the suggested document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category of the suggested document"
         },
         "relevanceReason": {
-          "type": "string"
+          "type": "string",
+          "description": "Explanation of why this document is relevant"
         }
       }
     },
@@ -2069,19 +2184,23 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to create document in"
         },
         "slug": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "URL-friendly unique identifier for the document"
         },
         "title": {
           "type": "string",
-          "maxLength": 200
+          "maxLength": 200,
+          "description": "Display title of the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category for organizing the document"
         },
         "content": {
           "type": "string",
@@ -2089,28 +2208,33 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         },
         "summary": {
           "type": "string",
-          "maxLength": 500
+          "maxLength": 500,
+          "description": "Brief text summary of the document"
         },
         "voiceSummary": {
           "type": "string",
-          "maxLength": 200
+          "maxLength": 200,
+          "description": "Concise summary optimized for voice AI"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Tags for filtering and search"
         },
         "relatedDocuments": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uuid"
-          }
+          },
+          "description": "IDs of related documents to link"
         },
         "metadata": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Custom metadata key-value pairs"
         }
       }
     },
@@ -2148,14 +2272,17 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the created document"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly slug of the created document"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document was created"
         }
       }
     }
@@ -2233,46 +2360,57 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace containing the document"
         },
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document to update"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "New URL-friendly slug for the document"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "New display title for the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "New category for the document"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "New markdown content for the document"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "New text summary for the document"
         },
         "voiceSummary": {
-          "type": "string"
+          "type": "string",
+          "description": "New voice-optimized summary for the document"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "New set of tags for the document"
         },
         "relatedDocuments": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uuid"
-          }
+          },
+          "description": "New set of related document IDs"
         },
         "metadata": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "New custom metadata key-value pairs"
         }
       }
     },
@@ -2310,11 +2448,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the updated document"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document was updated"
         }
       }
     }
@@ -2392,14 +2532,17 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace containing the document"
         },
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document to delete"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly slug of the document to delete"
         }
       }
     }
@@ -2422,15 +2565,18 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the deleted document"
         },
         "deletedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document was deleted"
         },
         "recoverableUntil": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Deadline for recovering the document from trashcan"
         }
       }
     }
@@ -2509,11 +2655,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace containing the trashcan"
         },
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the document to recover"
         }
       }
     }
@@ -2535,11 +2683,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the recovered document"
         },
         "recoveredAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document was recovered"
         }
       }
     }
@@ -2618,29 +2768,34 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace containing the documents"
         },
         "documentIds": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uuid"
-          }
+          },
+          "description": "List of document IDs to update"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "New category to apply to all documents"
         },
         "addTags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Tags to add to all documents"
         },
         "removeTags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Tags to remove from all documents"
         }
       }
     },
@@ -2681,13 +2836,15 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "items": {
             "type": "string",
             "format": "uuid"
-          }
+          },
+          "description": "IDs of documents successfully updated"
         },
         "failed": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/BulkOperationFailure"
-          }
+          },
+          "description": "Details of documents that failed to update"
         }
       }
     },
@@ -2700,10 +2857,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the document that failed"
         },
         "error": {
-          "type": "string"
+          "type": "string",
+          "description": "Error message explaining the failure"
         }
       }
     }
@@ -2782,14 +2941,16 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace containing the documents"
         },
         "documentIds": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uuid"
-          }
+          },
+          "description": "List of document IDs to delete"
         }
       }
     }
@@ -2814,13 +2975,15 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "items": {
             "type": "string",
             "format": "uuid"
-          }
+          },
+          "description": "IDs of documents successfully deleted"
         },
         "failed": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/BulkOperationFailure"
-          }
+          },
+          "description": "Details of documents that failed to delete"
         }
       }
     },
@@ -2833,10 +2996,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the document that failed"
         },
         "error": {
-          "type": "string"
+          "type": "string",
+          "description": "Error message explaining the failure"
         }
       }
     }
@@ -2915,13 +3080,15 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to import into"
         },
         "documents": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ImportDocument"
-          }
+          },
+          "description": "List of documents to import"
         },
         "onConflict": {
           "type": "string",
@@ -2930,7 +3097,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             "update",
             "fail"
           ],
-          "default": "skip"
+          "default": "skip",
+          "description": "How to handle documents with existing slugs"
         }
       }
     },
@@ -2944,32 +3112,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly unique identifier for the document"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Display title of the document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category for organizing the document"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "Markdown content of the document"
         },
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "Brief text summary of the document"
         },
         "voiceSummary": {
-          "type": "string"
+          "type": "string",
+          "description": "Concise summary optimized for voice AI"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Tags for filtering and search"
         },
         "metadata": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Custom metadata key-value pairs"
         }
       }
     },
@@ -3009,22 +3185,27 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "The namespace documents were imported into"
         },
         "created": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of new documents created"
         },
         "updated": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of existing documents updated"
         },
         "skipped": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents skipped due to conflicts"
         },
         "failed": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ImportFailure"
-          }
+          },
+          "description": "Details of documents that failed to import"
         }
       }
     },
@@ -3036,10 +3217,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "Slug of the document that failed to import"
         },
         "error": {
-          "type": "string"
+          "type": "string",
+          "description": "Error message explaining the failure"
         }
       }
     }
@@ -3117,15 +3300,18 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to list trashcan from"
         },
         "page": {
           "type": "integer",
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination"
         },
         "pageSize": {
           "type": "integer",
-          "default": 20
+          "default": 20,
+          "description": "Number of items per page"
         }
       }
     }
@@ -3146,16 +3332,19 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "The namespace the trashcan belongs to"
         },
         "items": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/TrashcanItem"
-          }
+          },
+          "description": "List of deleted documents in trashcan"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of items in trashcan"
         }
       }
     },
@@ -3170,24 +3359,30 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "documentId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the deleted document"
         },
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "URL-friendly slug of the deleted document"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Title of the deleted document"
         },
         "category": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Category of the deleted document"
         },
         "deletedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document was deleted"
         },
         "expiresAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the document will be permanently deleted"
         }
       }
     },
@@ -3281,7 +3476,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to purge trashcan from"
         },
         "documentIds": {
           "type": "array",
@@ -3309,7 +3505,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "purgedCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents permanently deleted"
         }
       }
     }
@@ -3387,7 +3584,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to get statistics for"
         }
       }
     }
@@ -3408,26 +3606,32 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "The namespace statistics are for"
         },
         "documentCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of documents in the namespace"
         },
         "categoryCounts": {
           "type": "object",
           "additionalProperties": {
             "type": "integer"
-          }
+          },
+          "description": "Document count per category"
         },
         "trashcanCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents in the trashcan"
         },
         "totalContentSizeBytes": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total size of all document content in bytes"
         },
         "lastUpdated": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp of most recent document update"
         }
       }
     }
@@ -3555,7 +3759,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "description": "Map directory prefixes to categories"
         },
         "defaultCategory": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "Default category for documents without mapping"
         },
         "archiveEnabled": {
           "type": "boolean",
@@ -3604,23 +3809,29 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "bindingId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the repository binding"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace the repository is bound to"
         },
         "repositoryUrl": {
-          "type": "string"
+          "type": "string",
+          "description": "URL of the bound repository"
         },
         "branch": {
-          "type": "string"
+          "type": "string",
+          "description": "Branch being synced"
         },
         "status": {
-          "$ref": "#/$defs/BindingStatus"
+          "$ref": "#/$defs/BindingStatus",
+          "description": "Current status of the binding"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the binding was created"
         }
       }
     },
@@ -3709,7 +3920,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to unbind"
         },
         "deleteDocuments": {
           "type": "boolean",
@@ -3735,7 +3947,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace that was unbound"
         },
         "documentsDeleted": {
           "type": "integer",
@@ -3817,7 +4030,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to sync"
         },
         "force": {
           "type": "boolean",
@@ -3844,32 +4058,41 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "syncId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of this sync operation"
         },
         "status": {
-          "$ref": "#/$defs/SyncStatus"
+          "$ref": "#/$defs/SyncStatus",
+          "description": "Result status of the sync"
         },
         "commitHash": {
-          "type": "string"
+          "type": "string",
+          "description": "Git commit hash that was synced"
         },
         "documentsCreated": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of new documents created"
         },
         "documentsUpdated": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of existing documents updated"
         },
         "documentsDeleted": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents deleted"
         },
         "documentsFailed": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents that failed to process"
         },
         "durationMs": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Time taken for sync in milliseconds"
         },
         "errorMessage": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Error message if sync failed"
         }
       }
     },
@@ -3956,7 +4179,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to get status for"
         }
       }
     }
@@ -3973,10 +4197,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "type": "object",
       "properties": {
         "binding": {
-          "$ref": "#/$defs/RepositoryBindingInfo"
+          "$ref": "#/$defs/RepositoryBindingInfo",
+          "description": "Current binding configuration and status"
         },
         "lastSync": {
-          "$ref": "#/$defs/SyncInfo"
+          "$ref": "#/$defs/SyncInfo",
+          "description": "Information about the most recent sync"
         }
       }
     },
@@ -3991,36 +4217,46 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "bindingId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the repository binding"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace the repository is bound to"
         },
         "repositoryUrl": {
-          "type": "string"
+          "type": "string",
+          "description": "URL of the bound repository"
         },
         "branch": {
-          "type": "string"
+          "type": "string",
+          "description": "Branch being synced"
         },
         "status": {
-          "$ref": "#/$defs/BindingStatus"
+          "$ref": "#/$defs/BindingStatus",
+          "description": "Current status of the binding"
         },
         "syncEnabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether automatic sync is enabled"
         },
         "syncIntervalMinutes": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Sync interval in minutes"
         },
         "documentCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents from this repository"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the binding was created"
         },
         "createdBy": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the user who created the binding"
         }
       }
     },
@@ -4040,27 +4276,34 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "syncId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the sync operation"
         },
         "status": {
-          "$ref": "#/$defs/SyncStatus"
+          "$ref": "#/$defs/SyncStatus",
+          "description": "Result status of the sync"
         },
         "triggeredBy": {
-          "$ref": "#/$defs/SyncTrigger"
+          "$ref": "#/$defs/SyncTrigger",
+          "description": "What triggered the sync"
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when sync started"
         },
         "completedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when sync completed"
         },
         "commitHash": {
-          "type": "string"
+          "type": "string",
+          "description": "Git commit hash that was synced"
         },
         "documentsProcessed": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total documents processed in sync"
         }
       }
     },
@@ -4150,18 +4393,21 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "type": "object",
       "properties": {
         "status": {
-          "$ref": "#/$defs/BindingStatus"
+          "$ref": "#/$defs/BindingStatus",
+          "description": "Filter by binding status"
         },
         "limit": {
           "type": "integer",
           "default": 50,
           "minimum": 1,
-          "maximum": 100
+          "maximum": 100,
+          "description": "Maximum number of bindings to return"
         },
         "offset": {
           "type": "integer",
           "default": 0,
-          "minimum": 0
+          "minimum": 0,
+          "description": "Number of bindings to skip"
         }
       }
     },
@@ -4196,10 +4442,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "type": "array",
           "items": {
             "$ref": "#/$defs/RepositoryBindingInfo"
-          }
+          },
+          "description": "List of repository bindings"
         },
         "total": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of bindings matching filter"
         }
       }
     },
@@ -4214,36 +4462,46 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "bindingId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the repository binding"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace the repository is bound to"
         },
         "repositoryUrl": {
-          "type": "string"
+          "type": "string",
+          "description": "URL of the bound repository"
         },
         "branch": {
-          "type": "string"
+          "type": "string",
+          "description": "Branch being synced"
         },
         "status": {
-          "$ref": "#/$defs/BindingStatus"
+          "$ref": "#/$defs/BindingStatus",
+          "description": "Current status of the binding"
         },
         "syncEnabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether automatic sync is enabled"
         },
         "syncIntervalMinutes": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Sync interval in minutes"
         },
         "documentCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents from this repository"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the binding was created"
         },
         "createdBy": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the user who created the binding"
         }
       }
     },
@@ -4332,42 +4590,51 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace of the binding to update"
         },
         "syncEnabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Enable or disable automatic syncing"
         },
         "syncIntervalMinutes": {
           "type": "integer",
           "minimum": 5,
-          "maximum": 1440
+          "maximum": 1440,
+          "description": "New sync interval in minutes"
         },
         "filePatterns": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "New glob patterns for files to include"
         },
         "excludePatterns": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "New glob patterns for files to exclude"
         },
         "categoryMapping": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          }
+          },
+          "description": "New directory-to-category mapping"
         },
         "defaultCategory": {
-          "$ref": "#/$defs/DocumentCategory"
+          "$ref": "#/$defs/DocumentCategory",
+          "description": "New default category for unmapped documents"
         },
         "archiveEnabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Enable or disable archive functionality"
         },
         "archiveOnSync": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Enable or disable archiving after each sync"
         }
       }
     },
@@ -4403,7 +4670,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "binding": {
-          "$ref": "#/$defs/RepositoryBindingInfo"
+          "$ref": "#/$defs/RepositoryBindingInfo",
+          "description": "Updated binding configuration"
         }
       }
     },
@@ -4418,36 +4686,46 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "bindingId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the repository binding"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace the repository is bound to"
         },
         "repositoryUrl": {
-          "type": "string"
+          "type": "string",
+          "description": "URL of the bound repository"
         },
         "branch": {
-          "type": "string"
+          "type": "string",
+          "description": "Branch being synced"
         },
         "status": {
-          "$ref": "#/$defs/BindingStatus"
+          "$ref": "#/$defs/BindingStatus",
+          "description": "Current status of the binding"
         },
         "syncEnabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether automatic sync is enabled"
         },
         "syncIntervalMinutes": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Sync interval in minutes"
         },
         "documentCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents from this repository"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the binding was created"
         },
         "createdBy": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the user who created the binding"
         }
       }
     },
@@ -4536,7 +4814,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to archive"
         },
         "description": {
           "type": "string",
@@ -4563,10 +4842,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "archiveId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the created archive"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace that was archived"
         },
         "bundleAssetId": {
           "type": "string",
@@ -4574,14 +4855,17 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "description": "Asset ID in Asset Service"
         },
         "documentCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents in the archive"
         },
         "sizeBytes": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total size of the archive in bytes"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the archive was created"
         },
         "commitHash": {
           "type": "string",
@@ -4664,18 +4948,21 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50
+          "maxLength": 50,
+          "description": "Documentation namespace to list archives for"
         },
         "limit": {
           "type": "integer",
           "default": 20,
           "minimum": 1,
-          "maximum": 100
+          "maximum": 100,
+          "description": "Maximum number of archives to return"
         },
         "offset": {
           "type": "integer",
           "default": 0,
-          "minimum": 0
+          "minimum": 0,
+          "description": "Number of archives to skip"
         }
       }
     }
@@ -4699,10 +4986,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "type": "array",
           "items": {
             "$ref": "#/$defs/ArchiveInfo"
-          }
+          },
+          "description": "List of archives for the namespace"
         },
         "total": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of archives"
         }
       }
     },
@@ -4716,35 +5005,44 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "archiveId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the archive"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace the archive belongs to"
         },
         "bundleAssetId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Asset ID in Asset Service"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Description of the archive"
         },
         "documentCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents in the archive"
         },
         "sizeBytes": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total size of the archive in bytes"
         },
         "commitHash": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Git commit hash if namespace was bound at archive time"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the archive was created"
         },
         "createdBy": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the user who created the archive"
         }
       }
     }
@@ -4821,7 +5119,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "archiveId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the archive to restore"
         },
         "targetNamespace": {
           "type": "string",
@@ -4848,13 +5147,16 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "description": "Namespace documents were restored to"
         },
         "documentsRestored": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of documents restored from archive"
         },
         "previousDocumentsDeleted": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of existing documents deleted before restore"
         }
       }
     }
@@ -4931,7 +5233,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "properties": {
         "archiveId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the archive to delete"
         }
       }
     }
@@ -4951,7 +5254,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       ],
       "properties": {
         "deleted": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the archive was successfully deleted"
         }
       }
     }

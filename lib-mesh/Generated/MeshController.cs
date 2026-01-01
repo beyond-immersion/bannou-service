@@ -363,13 +363,15 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "appId": {
-          "type": "string"
+          "type": "string",
+          "description": "The app-id that was queried"
         },
         "endpoints": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/MeshEndpoint"
-          }
+          },
+          "description": "List of endpoints for the requested app-id"
         },
         "healthyCount": {
           "type": "integer",
@@ -525,7 +527,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       "description": "Request to list all endpoints",
       "properties": {
         "statusFilter": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Filter endpoints by health status"
         },
         "appIdFilter": {
           "type": "string",
@@ -564,10 +567,12 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/MeshEndpoint"
-          }
+          },
+          "description": "List of all registered endpoints"
         },
         "summary": {
-          "$ref": "#/$defs/EndpointSummary"
+          "$ref": "#/$defs/EndpointSummary",
+          "description": "Summary statistics for the endpoints"
         }
       }
     },
@@ -650,19 +655,24 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       "description": "Summary statistics for endpoints",
       "properties": {
         "totalEndpoints": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of registered endpoints"
         },
         "healthyCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of endpoints with Healthy status"
         },
         "degradedCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of endpoints with Degraded status"
         },
         "unavailableCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of endpoints with Unavailable status"
         },
         "uniqueAppIds": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of unique app-ids across all endpoints"
         }
       }
     }
@@ -798,10 +808,12 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "success": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the registration was successful"
         },
         "endpoint": {
-          "$ref": "#/$defs/MeshEndpoint"
+          "$ref": "#/$defs/MeshEndpoint",
+          "description": "The registered endpoint details"
         },
         "ttlSeconds": {
           "type": "integer",
@@ -1040,10 +1052,12 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "instanceId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the instance sending the heartbeat"
         },
         "status": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Current health status of the endpoint"
         },
         "loadPercent": {
           "type": "number",
@@ -1090,7 +1104,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "success": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the heartbeat was processed successfully"
         },
         "nextHeartbeatSeconds": {
           "type": "integer",
@@ -1183,7 +1198,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Optional service name for affinity routing"
         },
         "algorithm": {
-          "$ref": "#/$defs/LoadBalancerAlgorithm"
+          "$ref": "#/$defs/LoadBalancerAlgorithm",
+          "description": "Load balancing algorithm to use for endpoint selection"
         }
       }
     },
@@ -1214,7 +1230,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "endpoint": {
-          "$ref": "#/$defs/MeshEndpoint"
+          "$ref": "#/$defs/MeshEndpoint",
+          "description": "The selected optimal endpoint for routing"
         },
         "alternates": {
           "type": "array",
@@ -1504,10 +1521,12 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "status": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Overall health status of the mesh"
         },
         "summary": {
-          "$ref": "#/$defs/EndpointSummary"
+          "$ref": "#/$defs/EndpointSummary",
+          "description": "Summary statistics for all endpoints"
         },
         "redisConnected": {
           "type": "boolean",
@@ -1515,7 +1534,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "lastUpdateTime": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp of the last health status update"
         },
         "uptime": {
           "type": "string",
@@ -1545,19 +1565,24 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       "description": "Summary statistics for endpoints",
       "properties": {
         "totalEndpoints": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of registered endpoints"
         },
         "healthyCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of endpoints with Healthy status"
         },
         "degradedCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of endpoints with Degraded status"
         },
         "unavailableCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of endpoints with Unavailable status"
         },
         "uniqueAppIds": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of unique app-ids across all endpoints"
         }
       }
     },

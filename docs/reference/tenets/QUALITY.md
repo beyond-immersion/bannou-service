@@ -210,7 +210,7 @@ Use when implementing an interface where the base documentation is sufficient. D
 
 ### Generated Code
 
-Generated files in `*/Generated/` directories do not require manual documentation - they inherit from schemas via NSwag.
+Generated files in `*/Generated/` directories get their XML documentation from OpenAPI schema `description` fields. NSwag automatically converts schema descriptions to `<summary>` tags. Therefore, **all schema properties MUST have `description` fields** - see T1 (Schema-First Development).
 
 ---
 

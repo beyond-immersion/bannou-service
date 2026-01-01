@@ -329,10 +329,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
           "type": "array",
           "items": {
             "$ref": "#/$defs/GameSessionResponse"
-          }
+          },
+          "description": "List of game sessions matching the filter criteria"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of sessions matching the filter (for pagination)"
         }
       }
     },
@@ -347,17 +349,20 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the game session"
         },
         "gameType": {
           "type": "string",
           "enum": [
             "arcadia",
             "generic"
-          ]
+          ],
+          "description": "Type of game for this session"
         },
         "sessionName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the session"
         },
         "status": {
           "type": "string",
@@ -366,34 +371,42 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "active",
             "full",
             "finished"
-          ]
+          ],
+          "description": "Current status of the game session"
         },
         "maxPlayers": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum number of players allowed in the session"
         },
         "currentPlayers": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current number of players in the session"
         },
         "isPrivate": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the session requires a password to join"
         },
         "owner": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Account ID of the session owner"
         },
         "players": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/GamePlayer"
-          }
+          },
+          "description": "List of players currently in the session"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the session was created"
         },
         "gameSettings": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Game-specific configuration settings"
         }
       }
     },
@@ -407,10 +420,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the player's account"
         },
         "displayName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name shown to other players"
         },
         "role": {
           "type": "string",
@@ -418,15 +433,18 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "player",
             "spectator",
             "moderator"
-          ]
+          ],
+          "description": "Role of the player in the game session"
         },
         "joinedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the player joined the session"
         },
         "characterData": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Game-specific character data for this player"
         },
         "voiceSessionId": {
           "type": "string",
@@ -512,20 +530,24 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
           "enum": [
             "arcadia",
             "generic"
-          ]
+          ],
+          "description": "Type of game for this session (arcadia or generic)"
         },
         "maxPlayers": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 100
+          "maximum": 100,
+          "description": "Maximum number of players allowed in the session"
         },
         "sessionName": {
           "type": "string",
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "Optional display name for the session"
         },
         "isPrivate": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the session requires a password to join"
         },
         "ownerId": {
           "type": "string",
@@ -534,7 +556,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         },
         "gameSettings": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Game-specific configuration settings"
         }
       }
     }
@@ -558,17 +581,20 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the game session"
         },
         "gameType": {
           "type": "string",
           "enum": [
             "arcadia",
             "generic"
-          ]
+          ],
+          "description": "Type of game for this session"
         },
         "sessionName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the session"
         },
         "status": {
           "type": "string",
@@ -577,34 +603,42 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "active",
             "full",
             "finished"
-          ]
+          ],
+          "description": "Current status of the game session"
         },
         "maxPlayers": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum number of players allowed in the session"
         },
         "currentPlayers": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current number of players in the session"
         },
         "isPrivate": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the session requires a password to join"
         },
         "owner": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Account ID of the session owner"
         },
         "players": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/GamePlayer"
-          }
+          },
+          "description": "List of players currently in the session"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the session was created"
         },
         "gameSettings": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Game-specific configuration settings"
         }
       }
     },
@@ -618,10 +652,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the player's account"
         },
         "displayName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name shown to other players"
         },
         "role": {
           "type": "string",
@@ -629,15 +665,18 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "player",
             "spectator",
             "moderator"
-          ]
+          ],
+          "description": "Role of the player in the game session"
         },
         "joinedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the player joined the session"
         },
         "characterData": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Game-specific character data for this player"
         },
         "voiceSessionId": {
           "type": "string",
@@ -745,17 +784,20 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the game session"
         },
         "gameType": {
           "type": "string",
           "enum": [
             "arcadia",
             "generic"
-          ]
+          ],
+          "description": "Type of game for this session"
         },
         "sessionName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the session"
         },
         "status": {
           "type": "string",
@@ -764,34 +806,42 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "active",
             "full",
             "finished"
-          ]
+          ],
+          "description": "Current status of the game session"
         },
         "maxPlayers": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum number of players allowed in the session"
         },
         "currentPlayers": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current number of players in the session"
         },
         "isPrivate": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the session requires a password to join"
         },
         "owner": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Account ID of the session owner"
         },
         "players": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/GamePlayer"
-          }
+          },
+          "description": "List of players currently in the session"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the session was created"
         },
         "gameSettings": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Game-specific configuration settings"
         }
       }
     },
@@ -805,10 +855,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "accountId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the player's account"
         },
         "displayName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name shown to other players"
         },
         "role": {
           "type": "string",
@@ -816,15 +868,18 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "player",
             "spectator",
             "moderator"
-          ]
+          ],
+          "description": "Role of the player in the game session"
         },
         "joinedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the player joined the session"
         },
         "characterData": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Game-specific character data for this player"
         },
         "voiceSessionId": {
           "type": "string",
@@ -968,11 +1023,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "success": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the join operation was successful"
         },
         "sessionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the joined game session"
         },
         "playerRole": {
           "type": "string",
@@ -980,7 +1037,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "player",
             "spectator",
             "moderator"
-          ]
+          ],
+          "description": "Role assigned to the player in this session"
         },
         "gameData": {
           "type": "object",
@@ -1305,7 +1363,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         },
         "message": {
           "type": "string",
-          "maxLength": 500
+          "maxLength": 500,
+          "description": "Content of the chat message"
         },
         "messageType": {
           "type": "string",
@@ -1314,7 +1373,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "whisper",
             "system"
           ],
-          "default": "public"
+          "default": "public",
+          "description": "Type of message (public to all, whisper to one player, or system announcement)"
         },
         "targetPlayerId": {
           "type": "string",
@@ -1412,7 +1472,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "attack",
             "cast_spell",
             "use_item"
-          ]
+          ],
+          "description": "Type of game action to perform"
         },
         "actionData": {
           "type": "object",
@@ -1443,11 +1504,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "success": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the action was executed successfully"
         },
         "actionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for this action instance"
         },
         "result": {
           "type": "object",

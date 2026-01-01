@@ -302,7 +302,8 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "ID of the first entity in the relationship"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity in the relationship"
         },
         "entity2Id": {
           "type": "string",
@@ -310,7 +311,8 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "ID of the second entity in the relationship"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity in the relationship"
         },
         "relationshipTypeId": {
           "type": "string",
@@ -369,34 +371,42 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "relationshipId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship"
         },
         "entity1Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the first entity in the relationship"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity in the relationship"
         },
         "entity2Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the second entity in the relationship"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity in the relationship"
         },
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Relationship type ID (from RelationshipType service)"
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "In-game timestamp when relationship started"
         },
         "endedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "In-game timestamp when relationship ended, null if still active"
         },
         "metadata": {
           "type": "object",
@@ -406,12 +416,14 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "System timestamp when the relationship record was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "System timestamp when the relationship record was last updated"
         }
       }
     },
@@ -428,7 +440,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -532,34 +544,42 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "relationshipId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship"
         },
         "entity1Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the first entity in the relationship"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity in the relationship"
         },
         "entity2Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the second entity in the relationship"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity in the relationship"
         },
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Relationship type ID (from RelationshipType service)"
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "In-game timestamp when relationship started"
         },
         "endedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "In-game timestamp when relationship ended, null if still active"
         },
         "metadata": {
           "type": "object",
@@ -569,12 +589,14 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "System timestamp when the relationship record was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "System timestamp when the relationship record was last updated"
         }
       }
     },
@@ -591,7 +613,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -671,7 +693,8 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "ID of the entity to get relationships for"
         },
         "entityType": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the entity to get relationships for"
         },
         "relationshipTypeId": {
           "type": "string",
@@ -692,13 +715,15 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for paginated results (1-based)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page (max 100)"
         }
       }
     },
@@ -715,7 +740,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\ n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\ n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -739,22 +764,28 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
           "type": "array",
           "items": {
             "$ref": "#/$defs/RelationshipResponse"
-          }
+          },
+          "description": "List of relationships matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of relationships matching the query"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-based)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more results on the next page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are results on the previous page"
         }
       }
     },
@@ -773,34 +804,42 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "relationshipId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship"
         },
         "entity1Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the first entity in the relationship"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity in the relationship"
         },
         "entity2Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the second entity in the relationship"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity in the relationship"
         },
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Relationship type ID (from RelationshipType service)"
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "In-game timestamp when relationship started"
         },
         "endedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "In-game timestamp when relationship ended, null if still active"
         },
         "metadata": {
           "type": "object",
@@ -810,12 +849,14 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "System timestamp when the relationship record was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "System timestamp when the relationship record was last updated"
         }
       }
     },
@@ -910,17 +951,21 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "entity1Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the first entity to check relationships for"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity"
         },
         "entity2Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the second entity to check relationships for"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity"
         },
         "relationshipTypeId": {
           "type": "string",
@@ -972,22 +1017,28 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
           "type": "array",
           "items": {
             "$ref": "#/$defs/RelationshipResponse"
-          }
+          },
+          "description": "List of relationships matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of relationships matching the query"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-based)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more results on the next page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are results on the previous page"
         }
       }
     },
@@ -1006,34 +1057,42 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "relationshipId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship"
         },
         "entity1Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the first entity in the relationship"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity in the relationship"
         },
         "entity2Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the second entity in the relationship"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity in the relationship"
         },
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Relationship type ID (from RelationshipType service)"
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "In-game timestamp when relationship started"
         },
         "endedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "In-game timestamp when relationship ended, null if still active"
         },
         "metadata": {
           "type": "object",
@@ -1043,12 +1102,14 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "System timestamp when the relationship record was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "System timestamp when the relationship record was last updated"
         }
       }
     },
@@ -1155,18 +1216,21 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "includeEnded": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Include relationships that have ended"
         },
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for paginated results (1-based)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page (max 100)"
         }
       }
     },
@@ -1183,7 +1247,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -1207,22 +1271,28 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
           "type": "array",
           "items": {
             "$ref": "#/$defs/RelationshipResponse"
-          }
+          },
+          "description": "List of relationships matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of relationships matching the query"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-based)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more results on the next page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are results on the previous page"
         }
       }
     },
@@ -1241,34 +1311,42 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "relationshipId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship"
         },
         "entity1Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the first entity in the relationship"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity in the relationship"
         },
         "entity2Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the second entity in the relationship"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity in the relationship"
         },
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Relationship type ID (from RelationshipType service)"
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "In-game timestamp when relationship started"
         },
         "endedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "In-game timestamp when relationship ended, null if still active"
         },
         "metadata": {
           "type": "object",
@@ -1278,12 +1356,14 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "System timestamp when the relationship record was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "System timestamp when the relationship record was last updated"
         }
       }
     },
@@ -1416,34 +1496,42 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "relationshipId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship"
         },
         "entity1Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the first entity in the relationship"
         },
         "entity1Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the first entity in the relationship"
         },
         "entity2Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the second entity in the relationship"
         },
         "entity2Type": {
-          "$ref": "#/$defs/EntityType"
+          "$ref": "#/$defs/EntityType",
+          "description": "Type of the second entity in the relationship"
         },
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Relationship type ID (from RelationshipType service)"
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "In-game timestamp when relationship started"
         },
         "endedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "In-game timestamp when relationship ended, null if still active"
         },
         "metadata": {
           "type": "object",
@@ -1453,12 +1541,14 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "System timestamp when the relationship record was created"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "System timestamp when the relationship record was last updated"
         }
       }
     },
@@ -1475,7 +1565,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }

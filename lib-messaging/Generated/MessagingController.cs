@@ -255,11 +255,13 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       "type": "object",
       "properties": {
         "success": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Indicates whether the event was published successfully"
         },
         "messageId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier assigned to the published message"
         }
       }
     }
@@ -336,7 +338,8 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       ],
       "properties": {
         "topic": {
-          "type": "string"
+          "type": "string",
+          "description": "Topic pattern to subscribe to for receiving events"
         },
         "callbackUrl": {
           "type": "string",
@@ -398,10 +401,12 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "subscriptionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the created subscription"
         },
         "queueName": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the RabbitMQ queue created for this subscription"
         }
       }
     }
@@ -478,7 +483,8 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "subscriptionId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the subscription to remove"
         }
       }
     }
@@ -495,7 +501,8 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       "type": "object",
       "properties": {
         "success": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Indicates whether the subscription was removed successfully"
         }
       }
     }
@@ -593,6 +600,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       "properties": {
         "topics": {
           "type": "array",
+          "description": "List of topics matching the filter criteria",
           "items": {
             "$ref": "#/$defs/TopicInfo"
           }
@@ -603,13 +611,16 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the topic/exchange"
         },
         "messageCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of messages currently in the topic queue"
         },
         "consumerCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of active consumers subscribed to this topic"
         }
       }
     }

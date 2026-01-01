@@ -84,10 +84,16 @@ public partial class ListRealmsRequest
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of realms to return per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -393,7 +399,7 @@ public partial class SeedRealm
     public string Code { get; set; } = default!;
 
     /// <summary>
-    /// Display name
+    /// Display name for the realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -401,20 +407,26 @@ public partial class SeedRealm
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Description
+    /// Detailed description of the realm and its characteristics
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Category for grouping
+    /// Category for grouping realms (e.g., "MAIN", "SPECIAL", "TEST")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string? Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm is currently active for gameplay
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Additional custom metadata for the realm (JSON)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
@@ -433,27 +445,45 @@ public partial class SeedRealm
 public partial class RealmResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique code for the realm (e.g., "OMEGA", "ARCADIA")
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Display name for the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category for grouping realms
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string? Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm is currently active for gameplay
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
 
@@ -475,14 +505,23 @@ public partial class RealmResponse
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string? DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -503,23 +542,41 @@ public partial class RealmResponse
 public partial class RealmListResponse
 {
 
+    /// <summary>
+    /// List of realms matching the query criteria
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realms")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RealmResponse> Realms { get; set; } = new System.Collections.ObjectModel.Collection<RealmResponse>();
 
+    /// <summary>
+    /// Total number of realms matching the query (before pagination)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
+    /// <summary>
+    /// Current page number (1-indexed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
+    /// <summary>
+    /// Number of realms per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are more realms available on the next page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are realms available on the previous page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasPreviousPage")]
     public bool HasPreviousPage { get; set; } = default!;
 

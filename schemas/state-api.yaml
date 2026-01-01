@@ -48,13 +48,13 @@ paths:
         : {\n          \"type\": \"object\",\n          \"nullable\": true,\n          \"description\": \"The stored value
         (null if not found)\"\n        },\n        \"etag\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
         \          \"description\": \"ETag for optimistic concurrency\"\n        },\n        \"metadata\": {\n          \"\
-        $ref\": \"#/$defs/StateMetadata\"\n        }\n      }\n    },\n    \"StateMetadata\": {\n      \"type\": \"object\"\
-        ,\n      \"properties\": {\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"When the state was created\"\n        },\n        \"\
-        updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n\
-        \          \"description\": \"When the state was last updated\"\n        },\n        \"version\": {\n          \"\
-        type\": \"integer\",\n          \"description\": \"Version number for optimistic concurrency\"\n        }\n      }\n\
-        \    }\n  }\n}"
+        $ref\": \"#/$defs/StateMetadata\",\n          \"description\": \"Metadata about the state entry including timestamps
+        and version\"\n        }\n      }\n    },\n    \"StateMetadata\": {\n      \"type\": \"object\",\n      \"properties\"\
+        : {\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        nullable\": true,\n          \"description\": \"When the state was created\"\n        },\n        \"updatedAt\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"\
+        description\": \"When the state was last updated\"\n        },\n        \"version\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"Version number for optimistic concurrency\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get state value by key\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
         State\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getState\"\n}"
   /state/save:
@@ -83,13 +83,14 @@ paths:
         type\": \"string\",\n          \"description\": \"Name of the state store\"\n        },\n        \"key\": {\n    \
         \      \"type\": \"string\",\n          \"description\": \"Key to save\"\n        },\n        \"value\": {\n     \
         \     \"type\": \"object\",\n          \"description\": \"Value to store\"\n        },\n        \"options\": {\n \
-        \         \"$ref\": \"#/$defs/StateOptions\"\n        }\n      }\n    },\n    \"StateOptions\": {\n      \"type\"\
-        : \"object\",\n      \"properties\": {\n        \"ttl\": {\n          \"type\": \"integer\",\n          \"nullable\"\
-        : true,\n          \"description\": \"TTL in seconds (Redis only)\"\n        },\n        \"consistency\": {\n    \
-        \      \"type\": \"string\",\n          \"enum\": [\n            \"strong\",\n            \"eventual\"\n         \
-        \ ],\n          \"default\": \"strong\",\n          \"description\": \"Consistency level\"\n        },\n        \"\
-        etag\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optimistic
-        concurrency check - save fails if ETag mismatch\"\n        }\n      }\n    }\n  }\n}"
+        \         \"$ref\": \"#/$defs/StateOptions\",\n          \"description\": \"Optional settings for the save operation
+        including TTL and consistency\"\n        }\n      }\n    },\n    \"StateOptions\": {\n      \"type\": \"object\",\n\
+        \      \"properties\": {\n        \"ttl\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n  \
+        \        \"description\": \"TTL in seconds (Redis only)\"\n        },\n        \"consistency\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"strong\",\n            \"eventual\"\n          ],\n          \"\
+        default\": \"strong\",\n          \"description\": \"Consistency level\"\n        },\n        \"etag\": {\n      \
+        \    \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optimistic concurrency check
+        - save fails if ETag mismatch\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SaveStateResponse\"\
         ,\n  \"$defs\": {\n    \"SaveStateResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
         etag\": {\n          \"type\": \"string\",\n          \"description\": \"New ETag after save\"\n        },\n     \
@@ -290,6 +291,7 @@ components:
           description: ETag for optimistic concurrency
         metadata:
           $ref: '#/components/schemas/StateMetadata'
+          description: Metadata about the state entry including timestamps and version
 
     SaveStateRequest:
       type: object
@@ -309,6 +311,7 @@ components:
           description: Value to store
         options:
           $ref: '#/components/schemas/StateOptions'
+          description: Optional settings for the save operation including TTL and consistency
 
     SaveStateResponse:
       type: object
@@ -457,6 +460,7 @@ components:
           description: JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
         operator:
           $ref: '#/components/schemas/QueryOperator'
+          description: Comparison operator to use for the condition
         value:
           description: Value to compare against. Not required for exists/notExists operators.
 

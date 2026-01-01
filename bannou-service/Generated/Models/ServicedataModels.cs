@@ -265,6 +265,9 @@ public partial class ServiceInfo
 public partial class ListServicesResponse
 {
 
+    /// <summary>
+    /// List of game services matching the request criteria
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]

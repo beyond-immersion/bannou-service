@@ -58,43 +58,51 @@ paths:
         \    \"entity1Id\",\n        \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\",\n        \"relationshipTypeId\"\
         ,\n        \"startedAt\"\n      ],\n      \"properties\": {\n        \"entity1Id\": {\n          \"type\": \"string\"\
         ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the first entity in the relationship\"\n  \
-        \      },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"entity2Id\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second
-        entity in the relationship\"\n        },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n\
-        \        },\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Relationship type ID (from RelationshipType service)\"\n        },\n        \"startedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"In-game timestamp
-        when relationship started\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true,\n          \"description\": \"Type-specific relationship data (JSON)\"\n  \
-        \      }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\"\
-        ,\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n \
-        \       \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in
-        a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or
-        neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
-        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
-        for future entity types\\n\"\n    }\n  }\n}"
+        \      },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\": \"\
+        Type of the first entity in the relationship\"\n        },\n        \"entity2Id\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second entity in the relationship\"\n \
+        \       },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\": \"\
+        Type of the second entity in the relationship\"\n        },\n        \"relationshipTypeId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Relationship type ID (from RelationshipType
+        service)\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"In-game timestamp when relationship started\"\n        },\n        \"metadata\": {\n\
+        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n     \
+        \     \"description\": \"Type-specific relationship data (JSON)\"\n        }\n      }\n    },\n    \"EntityType\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\"\
+        ,\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n\
+        \        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled
+        characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts,
+        etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or
+        social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipResponse\"\
         ,\n  \"$defs\": {\n    \"RelationshipResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         relationshipId\",\n        \"entity1Id\",\n        \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\"\
         ,\n        \"relationshipTypeId\",\n        \"startedAt\",\n        \"createdAt\"\n      ],\n      \"properties\"\
-        : {\n        \"relationshipId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n\
-        \        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"\
-        entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"entity2Id\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
-        \n        },\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n\
-        \        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n    \
-        \    },\n        \"endedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n         \
-        \ \"nullable\": true\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true,\n          \"description\": \"Type-specific relationship data\"\n        },\n\
-        \        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n    \
-        \    \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\"\
-        : true\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n      \
-        \  \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\"\
-        ,\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity
-        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
-        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
-        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
-        for future entity types\\n\"\n    }\n  }\n}"
+        : {\n        \"relationshipId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"\
+        description\": \"Unique identifier of the relationship\"\n        },\n        \"entity1Id\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the first entity in the relationship\"\
+        \n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\":
+        \"Type of the first entity in the relationship\"\n        },\n        \"entity2Id\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second entity in the relationship\"\n \
+        \       },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\": \"\
+        Type of the second entity in the relationship\"\n        },\n        \"relationshipTypeId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Relationship type ID (from RelationshipType
+        service)\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"In-game timestamp when relationship started\"\n        },\n        \"endedAt\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"\
+        description\": \"In-game timestamp when relationship ended, null if still active\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"Type-specific relationship data\"\n        },\n        \"createdAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"System timestamp when the
+        relationship record was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
+        \   \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"System timestamp when
+        the relationship record was last updated\"\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"\
+        string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n\
+        \        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n \
+        \     ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\
+        n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\
+        n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social
+        factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Create a new relationship between two entities\",\n  \"description\": \"\
         Creates a relationship between two entities.\\nDuplicate relationships (same entities + same type) are prevented.\\
         nRelationships can be re-created after being ended.\\n\",\n  \"tags\": [\n    \"Relationship Management\"\n  ],\n\
@@ -133,24 +141,31 @@ paths:
         ,\n  \"$defs\": {\n    \"RelationshipResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         relationshipId\",\n        \"entity1Id\",\n        \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\"\
         ,\n        \"relationshipTypeId\",\n        \"startedAt\",\n        \"createdAt\"\n      ],\n      \"properties\"\
-        : {\n        \"relationshipId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n\
-        \        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"\
-        entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"entity2Id\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
-        \n        },\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n\
-        \        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n    \
-        \    },\n        \"endedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n         \
-        \ \"nullable\": true\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true,\n          \"description\": \"Type-specific relationship data\"\n        },\n\
-        \        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n    \
-        \    \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\"\
-        : true\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n      \
-        \  \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\"\
-        ,\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity
-        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
-        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
-        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
-        for future entity types\\n\"\n    }\n  }\n}"
+        : {\n        \"relationshipId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"\
+        description\": \"Unique identifier of the relationship\"\n        },\n        \"entity1Id\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the first entity in the relationship\"\
+        \n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\":
+        \"Type of the first entity in the relationship\"\n        },\n        \"entity2Id\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second entity in the relationship\"\n \
+        \       },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\": \"\
+        Type of the second entity in the relationship\"\n        },\n        \"relationshipTypeId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Relationship type ID (from RelationshipType
+        service)\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"In-game timestamp when relationship started\"\n        },\n        \"endedAt\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"\
+        description\": \"In-game timestamp when relationship ended, null if still active\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"Type-specific relationship data\"\n        },\n        \"createdAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"System timestamp when the
+        relationship record was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
+        \   \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"System timestamp when
+        the relationship record was last updated\"\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"\
+        string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n\
+        \        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n \
+        \     ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\
+        n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\
+        n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social
+        factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get a relationship by ID\",\n  \"description\": \"\",\n  \"tags\": [\n  \
         \  \"Relationship Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getRelationship\"\n}"
   /relationship/list-by-entity:
@@ -184,50 +199,62 @@ paths:
         ,\n  \"$defs\": {\n    \"ListRelationshipsByEntityRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
         \        \"entityId\",\n        \"entityType\"\n      ],\n      \"properties\": {\n        \"entityId\": {\n     \
         \     \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the entity to get
-        relationships for\"\n        },\n        \"entityType\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n\
-        \        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"\
-        nullable\": true,\n          \"description\": \"Optional filter by relationship type\"\n        },\n        \"otherEntityType\"\
-        : {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"nullable\": true,\n          \"description\": \"Optional
-        filter by the other entity's type\"\n        },\n        \"includeEnded\": {\n          \"type\": \"boolean\",\n \
-        \         \"default\": false,\n          \"description\": \"Include relationships that have ended\"\n        },\n\
-        \        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1\n    \
-        \    },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\"\
-        : 100,\n          \"default\": 20\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\",\n\
-        \      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"\
-        LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n  \
-        \    \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player
-        characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places,
-        regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM:
-        Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
+        relationships for\"\n        },\n        \"entityType\": {\n          \"$ref\": \"#/$defs/EntityType\",\n        \
+        \  \"description\": \"Type of the entity to get relationships for\"\n        },\n        \"relationshipTypeId\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Optional filter by relationship type\"\n        },\n        \"otherEntityType\": {\n          \"$ref\": \"#/$defs/EntityType\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"Optional filter by the other entity's type\"\n    \
+        \    },\n        \"includeEnded\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"\
+        description\": \"Include relationships that have ended\"\n        },\n        \"page\": {\n          \"type\": \"\
+        integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n          \"description\": \"Page number for paginated
+        results (1-based)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\"\
+        : 1,\n          \"maximum\": 100,\n          \"default\": 20,\n          \"description\": \"Number of results per
+        page (max 100)\"\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\":
+        [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n    \
+        \    \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\"\
+        : \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\
+        n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions,
+        buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\
+        n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipListResponse\"\
         ,\n  \"$defs\": {\n    \"RelationshipListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
         \   \"relationships\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\"\
         : {\n        \"relationships\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"\
-        #/$defs/RelationshipResponse\"\n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\
-        \n        },\n        \"page\": {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n        \
-        \  \"type\": \"integer\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n  \
-        \      \"hasPreviousPage\": {\n          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"RelationshipResponse\"\
-        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"relationshipId\",\n        \"entity1Id\",\n   \
-        \     \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\",\n        \"relationshipTypeId\",\n      \
-        \  \"startedAt\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"relationshipId\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity1Id\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
-        \n        },\n        \"entity2Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n\
-        \        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"relationshipTypeId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"startedAt\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"endedAt\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true\n        },\n        \"metadata\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
-        \         \"description\": \"Type-specific relationship data\"\n        },\n        \"createdAt\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true\n        }\n      }\n    },\n  \
-        \  \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n \
-        \       \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n\
-        \        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER:
-        Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical
-        objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n-
-        FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\\
-        n\"\n    }\n  }\n}"
+        #/$defs/RelationshipResponse\"\n          },\n          \"description\": \"List of relationships matching the query\"\
+        \n        },\n        \"totalCount\": {\n          \"type\": \"integer\",\n          \"description\": \"Total number
+        of relationships matching the query\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n       \
+        \   \"description\": \"Current page number (1-based)\"\n        },\n        \"pageSize\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n  \
+        \        \"type\": \"boolean\",\n          \"description\": \"Whether there are more results on the next page\"\n\
+        \        },\n        \"hasPreviousPage\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether
+        there are results on the previous page\"\n        }\n      }\n    },\n    \"RelationshipResponse\": {\n      \"type\"\
+        : \"object\",\n      \"required\": [\n        \"relationshipId\",\n        \"entity1Id\",\n        \"entity1Type\"\
+        ,\n        \"entity2Id\",\n        \"entity2Type\",\n        \"relationshipTypeId\",\n        \"startedAt\",\n   \
+        \     \"createdAt\"\n      ],\n      \"properties\": {\n        \"relationshipId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the relationship\"\n       \
+        \ },\n        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"ID of the first entity in the relationship\"\n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
+        ,\n          \"description\": \"Type of the first entity in the relationship\"\n        },\n        \"entity2Id\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second
+        entity in the relationship\"\n        },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n\
+        \          \"description\": \"Type of the second entity in the relationship\"\n        },\n        \"relationshipTypeId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Relationship type
+        ID (from RelationshipType service)\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n    \
+        \      \"format\": \"date-time\",\n          \"description\": \"In-game timestamp when relationship started\"\n  \
+        \      },\n        \"endedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n       \
+        \   \"nullable\": true,\n          \"description\": \"In-game timestamp when relationship ended, null if still active\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Type-specific relationship data\"\n        },\n     \
+        \   \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"System timestamp when the relationship record was created\"\n        },\n        \"updatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"System timestamp when the relationship record was last updated\"\n        }\n      }\n    },\n    \"EntityType\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\"\
+        ,\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n\
+        \        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled
+        characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts,
+        etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or
+        social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List all relationships for an entity\",\n  \"description\": \"Returns all
         relationships where the specified entity is either\\nentity1 or entity2. Supports filtering by relationship type,\\
         nother entity type, and whether to include ended relationships.\\n\",\n  \"tags\": [\n    \"Relationship Management\"\
@@ -261,49 +288,61 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRelationshipsBetweenRequest\"\
         ,\n  \"$defs\": {\n    \"GetRelationshipsBetweenRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
         \        \"entity1Id\",\n        \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\"\n      ],\n   \
-        \   \"properties\": {\n        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n\
-        \        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"entity2Id\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity2Type\": {\n   \
-        \       \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"relationshipTypeId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Optional filter by
-        relationship type\"\n        },\n        \"includeEnded\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false,\n          \"description\": \"Include relationships that have ended\"\n        }\n      }\n    },\n    \"\
-        EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n      \
-        \  \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n     \
-        \   \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER:
-        Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical
-        objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n-
-        FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\\
-        n\"\n    }\n  }\n}"
+        \   \"properties\": {\n        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"description\": \"ID of the first entity to check relationships for\"\n        },\n        \"entity1Type\"\
+        : {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\": \"Type of the first entity\"\n      \
+        \  },\n        \"entity2Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"ID of the second entity to check relationships for\"\n        },\n        \"entity2Type\": {\n          \"$ref\"\
+        : \"#/$defs/EntityType\",\n          \"description\": \"Type of the second entity\"\n        },\n        \"relationshipTypeId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
+        description\": \"Optional filter by relationship type\"\n        },\n        \"includeEnded\": {\n          \"type\"\
+        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Include relationships that have ended\"\
+        \n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\"\
+        ,\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n \
+        \       \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in
+        a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or
+        neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
+        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
+        for future entity types\\n\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipListResponse\"\
         ,\n  \"$defs\": {\n    \"RelationshipListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
         \   \"relationships\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\"\
         : {\n        \"relationships\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"\
-        #/$defs/RelationshipResponse\"\n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\
-        \n        },\n        \"page\": {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n        \
-        \  \"type\": \"integer\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n  \
-        \      \"hasPreviousPage\": {\n          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"RelationshipResponse\"\
-        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"relationshipId\",\n        \"entity1Id\",\n   \
-        \     \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\",\n        \"relationshipTypeId\",\n      \
-        \  \"startedAt\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"relationshipId\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity1Id\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
-        \n        },\n        \"entity2Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n\
-        \        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"relationshipTypeId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"startedAt\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"endedAt\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true\n        },\n        \"metadata\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
-        \         \"description\": \"Type-specific relationship data\"\n        },\n        \"createdAt\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true\n        }\n      }\n    },\n  \
-        \  \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n \
-        \       \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n\
-        \        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER:
-        Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical
-        objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n-
-        FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\\
-        n\"\n    }\n  }\n}"
+        #/$defs/RelationshipResponse\"\n          },\n          \"description\": \"List of relationships matching the query\"\
+        \n        },\n        \"totalCount\": {\n          \"type\": \"integer\",\n          \"description\": \"Total number
+        of relationships matching the query\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n       \
+        \   \"description\": \"Current page number (1-based)\"\n        },\n        \"pageSize\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n  \
+        \        \"type\": \"boolean\",\n          \"description\": \"Whether there are more results on the next page\"\n\
+        \        },\n        \"hasPreviousPage\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether
+        there are results on the previous page\"\n        }\n      }\n    },\n    \"RelationshipResponse\": {\n      \"type\"\
+        : \"object\",\n      \"required\": [\n        \"relationshipId\",\n        \"entity1Id\",\n        \"entity1Type\"\
+        ,\n        \"entity2Id\",\n        \"entity2Type\",\n        \"relationshipTypeId\",\n        \"startedAt\",\n   \
+        \     \"createdAt\"\n      ],\n      \"properties\": {\n        \"relationshipId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the relationship\"\n       \
+        \ },\n        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"ID of the first entity in the relationship\"\n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
+        ,\n          \"description\": \"Type of the first entity in the relationship\"\n        },\n        \"entity2Id\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second
+        entity in the relationship\"\n        },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n\
+        \          \"description\": \"Type of the second entity in the relationship\"\n        },\n        \"relationshipTypeId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Relationship type
+        ID (from RelationshipType service)\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n    \
+        \      \"format\": \"date-time\",\n          \"description\": \"In-game timestamp when relationship started\"\n  \
+        \      },\n        \"endedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n       \
+        \   \"nullable\": true,\n          \"description\": \"In-game timestamp when relationship ended, null if still active\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Type-specific relationship data\"\n        },\n     \
+        \   \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"System timestamp when the relationship record was created\"\n        },\n        \"updatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"System timestamp when the relationship record was last updated\"\n        }\n      }\n    },\n    \"EntityType\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\"\
+        ,\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n\
+        \        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled
+        characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts,
+        etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or
+        social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get all relationships between two specific entities\",\n  \"description\"\
         : \"Returns all relationships that exist between two specific entities,\\nregardless of which is entity1 or entity2.\\\
         n\",\n  \"tags\": [\n    \"Relationship Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getRelationshipsBetween\"\
@@ -342,44 +381,56 @@ paths:
         \          \"description\": \"Optional filter by entity1 type\"\n        },\n        \"entity2Type\": {\n        \
         \  \"$ref\": \"#/$defs/EntityType\",\n          \"nullable\": true,\n          \"description\": \"Optional filter
         by entity2 type\"\n        },\n        \"includeEnded\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"\
-        default\": 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n \
-        \         \"maximum\": 100,\n          \"default\": 20\n        }\n      }\n    },\n    \"EntityType\": {\n      \"\
-        type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"\
-        ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\
-        \n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\
-        n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\
-        n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social
-        factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
+        : false,\n          \"description\": \"Include relationships that have ended\"\n        },\n        \"page\": {\n\
+        \          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n          \"description\"\
+        : \"Page number for paginated results (1-based)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"default\": 20,\n          \"description\":
+        \"Number of results per page (max 100)\"\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\"\
+        ,\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"\
+        LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n  \
+        \    \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player
+        characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places,
+        regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM:
+        Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipListResponse\"\
         ,\n  \"$defs\": {\n    \"RelationshipListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
         \   \"relationships\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\"\
         : {\n        \"relationships\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"\
-        #/$defs/RelationshipResponse\"\n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\
-        \n        },\n        \"page\": {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n        \
-        \  \"type\": \"integer\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n  \
-        \      \"hasPreviousPage\": {\n          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"RelationshipResponse\"\
-        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"relationshipId\",\n        \"entity1Id\",\n   \
-        \     \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\",\n        \"relationshipTypeId\",\n      \
-        \  \"startedAt\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"relationshipId\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity1Id\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
-        \n        },\n        \"entity2Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n\
-        \        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"relationshipTypeId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"startedAt\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"endedAt\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true\n        },\n        \"metadata\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
-        \         \"description\": \"Type-specific relationship data\"\n        },\n        \"createdAt\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true\n        }\n      }\n    },\n  \
-        \  \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n \
-        \       \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n\
-        \        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER:
-        Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical
-        objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n-
-        FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\\
-        n\"\n    }\n  }\n}"
+        #/$defs/RelationshipResponse\"\n          },\n          \"description\": \"List of relationships matching the query\"\
+        \n        },\n        \"totalCount\": {\n          \"type\": \"integer\",\n          \"description\": \"Total number
+        of relationships matching the query\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n       \
+        \   \"description\": \"Current page number (1-based)\"\n        },\n        \"pageSize\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n  \
+        \        \"type\": \"boolean\",\n          \"description\": \"Whether there are more results on the next page\"\n\
+        \        },\n        \"hasPreviousPage\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether
+        there are results on the previous page\"\n        }\n      }\n    },\n    \"RelationshipResponse\": {\n      \"type\"\
+        : \"object\",\n      \"required\": [\n        \"relationshipId\",\n        \"entity1Id\",\n        \"entity1Type\"\
+        ,\n        \"entity2Id\",\n        \"entity2Type\",\n        \"relationshipTypeId\",\n        \"startedAt\",\n   \
+        \     \"createdAt\"\n      ],\n      \"properties\": {\n        \"relationshipId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the relationship\"\n       \
+        \ },\n        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"ID of the first entity in the relationship\"\n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
+        ,\n          \"description\": \"Type of the first entity in the relationship\"\n        },\n        \"entity2Id\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second
+        entity in the relationship\"\n        },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n\
+        \          \"description\": \"Type of the second entity in the relationship\"\n        },\n        \"relationshipTypeId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Relationship type
+        ID (from RelationshipType service)\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n    \
+        \      \"format\": \"date-time\",\n          \"description\": \"In-game timestamp when relationship started\"\n  \
+        \      },\n        \"endedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n       \
+        \   \"nullable\": true,\n          \"description\": \"In-game timestamp when relationship ended, null if still active\"\
+        \n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Type-specific relationship data\"\n        },\n     \
+        \   \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"System timestamp when the relationship record was created\"\n        },\n        \"updatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"System timestamp when the relationship record was last updated\"\n        }\n      }\n    },\n    \"EntityType\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\"\
+        ,\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n\
+        \        \"OTHER\"\n      ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled
+        characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts,
+        etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or
+        social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List all relationships of a specific type\",\n  \"description\": \"Returns
         all relationships that use a specific relationship type.\\nUseful for finding all \\\"FRIEND\\\" relationships, for
         example.\\n\",\n  \"tags\": [\n    \"Relationship Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
@@ -423,24 +474,31 @@ paths:
         ,\n  \"$defs\": {\n    \"RelationshipResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         relationshipId\",\n        \"entity1Id\",\n        \"entity1Type\",\n        \"entity2Id\",\n        \"entity2Type\"\
         ,\n        \"relationshipTypeId\",\n        \"startedAt\",\n        \"createdAt\"\n      ],\n      \"properties\"\
-        : {\n        \"relationshipId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n\
-        \        \"entity1Id\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"\
-        entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\n        },\n        \"entity2Id\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\"\
-        \n        },\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n\
-        \        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n    \
-        \    },\n        \"endedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n         \
-        \ \"nullable\": true\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true,\n          \"description\": \"Type-specific relationship data\"\n        },\n\
-        \        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n    \
-        \    \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\"\
-        : true\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"string\",\n      \"enum\": [\n      \
-        \  \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n        \"LOCATION\",\n        \"ORGANIZATION\"\
-        ,\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n      ],\n      \"description\": \"Type of entity
-        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
-        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
-        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
-        for future entity types\\n\"\n    }\n  }\n}"
+        : {\n        \"relationshipId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"\
+        description\": \"Unique identifier of the relationship\"\n        },\n        \"entity1Id\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the first entity in the relationship\"\
+        \n        },\n        \"entity1Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\":
+        \"Type of the first entity in the relationship\"\n        },\n        \"entity2Id\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the second entity in the relationship\"\n \
+        \       },\n        \"entity2Type\": {\n          \"$ref\": \"#/$defs/EntityType\",\n          \"description\": \"\
+        Type of the second entity in the relationship\"\n        },\n        \"relationshipTypeId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Relationship type ID (from RelationshipType
+        service)\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"In-game timestamp when relationship started\"\n        },\n        \"endedAt\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"\
+        description\": \"In-game timestamp when relationship ended, null if still active\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"Type-specific relationship data\"\n        },\n        \"createdAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"System timestamp when the
+        relationship record was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
+        \   \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"System timestamp when
+        the relationship record was last updated\"\n        }\n      }\n    },\n    \"EntityType\": {\n      \"type\": \"\
+        string\",\n      \"enum\": [\n        \"CHARACTER\",\n        \"NPC\",\n        \"MONSTER\",\n        \"ITEM\",\n\
+        \        \"LOCATION\",\n        \"ORGANIZATION\",\n        \"FACTION\",\n        \"REALM\",\n        \"OTHER\"\n \
+        \     ],\n      \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\
+        n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\
+        n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social
+        factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Update relationship metadata\",\n  \"description\": \"Only metadata can be
         updated. Entity IDs and types cannot be changed.\",\n  \"tags\": [\n    \"Relationship Management\"\n  ],\n  \"deprecated\"\
         : false,\n  \"operationId\": \"updateRelationship\"\n}"

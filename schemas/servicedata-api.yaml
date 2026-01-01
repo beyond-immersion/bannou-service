@@ -46,22 +46,23 @@ paths:
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListServicesResponse\"\
         ,\n  \"$defs\": {\n    \"ListServicesResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response
         containing list of game services\",\n      \"required\": [\n        \"services\",\n        \"totalCount\"\n      ],\n\
-        \      \"properties\": {\n        \"services\": {\n          \"type\": \"array\",\n          \"items\": {\n      \
-        \      \"$ref\": \"#/$defs/ServiceInfo\"\n          }\n        },\n        \"totalCount\": {\n          \"type\":
-        \"integer\",\n          \"description\": \"Total number of services matching the filter\"\n        }\n      }\n  \
-        \  },\n    \"ServiceInfo\": {\n      \"type\": \"object\",\n      \"description\": \"Information about a game service\"\
-        ,\n      \"required\": [\n        \"serviceId\",\n        \"stubName\",\n        \"displayName\",\n        \"isActive\"\
-        ,\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"serviceId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the service\"\n        },\n\
-        \        \"stubName\": {\n          \"type\": \"string\",\n          \"description\": \"URL-safe identifier (e.g.,
-        \\\"arcadia\\\")\"\n        },\n        \"displayName\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Human-readable name (e.g., \\\"Arcadia Online\\\")\"\n        },\n        \"description\": {\n          \"type\"\
-        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional description\"\n        },\n  \
-        \      \"isActive\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the service is currently
-        active\"\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        ,\n          \"description\": \"When the service was created\"\n        },\n        \"updatedAt\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
-        : \"When the service was last updated\"\n        }\n      }\n    }\n  }\n}"
+        \      \"properties\": {\n        \"services\": {\n          \"type\": \"array\",\n          \"description\": \"List
+        of game services matching the request criteria\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ServiceInfo\"\
+        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Total number of services matching the filter\"\n        }\n      }\n    },\n    \"ServiceInfo\": {\n      \"type\"\
+        : \"object\",\n      \"description\": \"Information about a game service\",\n      \"required\": [\n        \"serviceId\"\
+        ,\n        \"stubName\",\n        \"displayName\",\n        \"isActive\",\n        \"createdAt\"\n      ],\n     \
+        \ \"properties\": {\n        \"serviceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"description\": \"Unique identifier for the service\"\n        },\n        \"stubName\": {\n         \
+        \ \"type\": \"string\",\n          \"description\": \"URL-safe identifier (e.g., \\\"arcadia\\\")\"\n        },\n\
+        \        \"displayName\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable name (e.g.,
+        \\\"Arcadia Online\\\")\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description\"\n        },\n        \"isActive\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether the service is currently active\"\n        },\n        \"createdAt\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When the
+        service was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"date-time\",\n          \"nullable\": true,\n          \"description\": \"When the service was last updated\"\n\
+        \        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List all registered game services\",\n  \"description\": \"Returns all game
         services, optionally filtered by active status.\",\n  \"tags\": [\n    \"Service Registry\"\n  ],\n  \"deprecated\"\
         : false,\n  \"operationId\": \"listServices\"\n}"
@@ -394,6 +395,7 @@ components:
       properties:
         services:
           type: array
+          description: List of game services matching the request criteria
           items:
             $ref: '#/components/schemas/ServiceInfo'
         totalCount:

@@ -61,6 +61,9 @@ public partial class GetStateResponse
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
     public string? Etag { get; set; } = default!;
 
+    /// <summary>
+    /// Metadata about the state entry including timestamps and version
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public StateMetadata Metadata { get; set; } = default!;
 
@@ -103,6 +106,9 @@ public partial class SaveStateRequest
     [System.Text.Json.Serialization.JsonRequired]
     public object Value { get; set; } = new object();
 
+    /// <summary>
+    /// Optional settings for the save operation including TTL and consistency
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("options")]
     public StateOptions Options { get; set; } = default!;
 
@@ -387,6 +393,9 @@ public partial class QueryCondition
     [System.Text.Json.Serialization.JsonRequired]
     public string Path { get; set; } = default!;
 
+    /// <summary>
+    /// Comparison operator to use for the condition
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("operator")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public QueryOperator Operator { get; set; } = default!;

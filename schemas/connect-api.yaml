@@ -743,6 +743,7 @@ components:
       properties:
         flags:
           $ref: '#/components/schemas/MessageFlags'
+          description: Bit flags controlling message behavior (binary, encrypted, compressed, etc.)
         channel:
           type: integer
           format: uint16
@@ -801,6 +802,7 @@ components:
           description: Matches the request message ID
         responseCode:
           $ref: '#/components/schemas/ResponseCodes'
+          description: Response status code indicating success or specific error condition
         payload:
           type: string
           format: byte
@@ -887,6 +889,7 @@ components:
           description: Session ID affected by the auth event
         eventType:
           $ref: '#/components/schemas/AuthEventType'
+          description: Type of authentication event (Login, Logout, TokenRefresh, PermissionChange)
         timestamp:
           type: string
           format: date-time
@@ -942,6 +945,7 @@ components:
           description: Message payload (binary data)
         flags:
           $ref: '#/components/schemas/MessageFlags'
+          description: Bit flags controlling message behavior (binary, encrypted, compressed, etc.)
         channel:
           type: integer
           format: uint16
@@ -984,6 +988,7 @@ components:
           description: RPC request payload (binary data)
         flags:
           $ref: '#/components/schemas/MessageFlags'
+          description: Bit flags controlling message behavior (binary, encrypted, compressed, etc.)
         channel:
           type: integer
           format: uint16

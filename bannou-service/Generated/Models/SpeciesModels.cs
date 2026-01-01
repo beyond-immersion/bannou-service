@@ -84,10 +84,16 @@ public partial class ListSpeciesRequest
     [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
     public bool IncludeDeprecated { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of items per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -121,10 +127,16 @@ public partial class ListSpeciesByRealmRequest
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
     public bool? IsPlayable { get; set; } = default!;
 
+    /// <summary>
+    /// Page number for pagination (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of items per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -527,7 +539,7 @@ public partial class SeedSpecies
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Description
+    /// Description of the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
@@ -538,6 +550,9 @@ public partial class SeedSpecies
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether players can create characters of this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
     public bool IsPlayable { get; set; } = true;
 
@@ -553,6 +568,9 @@ public partial class SeedSpecies
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
     public int MaturityAge { get; set; } = default!;
 
+    /// <summary>
+    /// Base trait modifiers for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object TraitModifiers { get; set; } = default!;
 
@@ -562,6 +580,9 @@ public partial class SeedSpecies
     [System.Text.Json.Serialization.JsonPropertyName("realmCodes")]
     public System.Collections.Generic.ICollection<string> RealmCodes { get; set; } = default!;
 
+    /// <summary>
+    /// Additional metadata for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
@@ -580,27 +601,45 @@ public partial class SeedSpecies
 public partial class SpeciesResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique code for the species (e.g., "HUMAN", "ELF")
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Display name for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Description of the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category for grouping (e.g., "HUMANOID", "BEAST", "MAGICAL")
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string? Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether players can create characters of this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
     public bool IsPlayable { get; set; } = default!;
 
@@ -622,12 +661,21 @@ public partial class SpeciesResponse
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string? DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Base lifespan in game years
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
     public int? BaseLifespan { get; set; } = default!;
 
+    /// <summary>
+    /// Age at which the species reaches maturity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
     public int? MaturityAge { get; set; } = default!;
 
+    /// <summary>
+    /// Base trait modifiers for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object? TraitModifiers { get; set; } = default!;
 
@@ -637,14 +685,23 @@ public partial class SpeciesResponse
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
+    /// <summary>
+    /// Additional metadata for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -665,17 +722,29 @@ public partial class SpeciesResponse
 public partial class SpeciesListResponse
 {
 
+    /// <summary>
+    /// List of species matching the query
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("species")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SpeciesResponse> Species { get; set; } = new System.Collections.ObjectModel.Collection<SpeciesResponse>();
 
+    /// <summary>
+    /// Total number of species matching the query (for pagination)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
+    /// <summary>
+    /// Current page number
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
+    /// <summary>
+    /// Number of items per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 

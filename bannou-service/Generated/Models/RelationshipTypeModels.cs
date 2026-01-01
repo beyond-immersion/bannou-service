@@ -481,7 +481,7 @@ public partial class SeedRelationshipType
     public string Code { get; set; } = default!;
 
     /// <summary>
-    /// Display name
+    /// Display name for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -489,13 +489,13 @@ public partial class SeedRelationshipType
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Description
+    /// Human-readable description of the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
     /// <summary>
-    /// Category for grouping
+    /// Category for grouping relationship types
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
@@ -512,9 +512,15 @@ public partial class SeedRelationshipType
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
     public string InverseTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the relationship is the same in both directions
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
     public bool IsBidirectional { get; set; } = false;
 
+    /// <summary>
+    /// Additional custom metadata for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
@@ -533,27 +539,45 @@ public partial class SeedRelationshipType
 public partial class RelationshipTypeResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique code for the relationship type (e.g., "SON", "MOTHER")
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable display name for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category for grouping relationship types (e.g., "FAMILY", "SOCIAL")
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string? Category { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the parent type in the hierarchy (null for root types)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
     public System.Guid? ParentTypeId { get; set; } = default!;
 
@@ -563,12 +587,21 @@ public partial class RelationshipTypeResponse
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
     public string? ParentTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeId")]
     public System.Guid? InverseTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Code of the inverse relationship type (for convenience)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
     public string? InverseTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the relationship is the same in both directions (e.g., SIBLING)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
     public bool IsBidirectional { get; set; } = default!;
 
@@ -596,14 +629,23 @@ public partial class RelationshipTypeResponse
     [System.Text.Json.Serialization.JsonPropertyName("depth")]
     public int Depth { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -624,11 +666,17 @@ public partial class RelationshipTypeResponse
 public partial class RelationshipTypeListResponse
 {
 
+    /// <summary>
+    /// List of relationship types matching the query
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("types")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RelationshipTypeResponse> Types { get; set; } = new System.Collections.ObjectModel.Collection<RelationshipTypeResponse>();
 
+    /// <summary>
+    /// Total number of relationship types returned
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 

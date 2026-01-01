@@ -506,26 +506,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -535,14 +541,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -566,15 +575,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -682,26 +694,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -711,14 +729,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -742,15 +763,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -863,10 +887,12 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
           "type": "array",
           "items": {
             "$ref": "#/$defs/RelationshipTypeResponse"
-          }
+          },
+          "description": "List of relationship types matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of relationship types returned"
         }
       }
     },
@@ -885,26 +911,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -914,14 +946,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -945,15 +980,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -1060,10 +1098,12 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
           "type": "array",
           "items": {
             "$ref": "#/$defs/RelationshipTypeResponse"
-          }
+          },
+          "description": "List of relationship types matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of relationship types returned"
         }
       }
     },
@@ -1082,26 +1122,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -1111,14 +1157,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1142,15 +1191,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -1361,10 +1413,12 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
           "type": "array",
           "items": {
             "$ref": "#/$defs/RelationshipTypeResponse"
-          }
+          },
+          "description": "List of relationship types matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of relationship types returned"
         }
       }
     },
@@ -1383,26 +1437,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -1412,14 +1472,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1443,15 +1506,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -1599,26 +1665,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -1628,14 +1700,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1659,15 +1734,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -1815,26 +1893,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -1844,14 +1928,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1875,15 +1962,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -2077,26 +2167,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -2106,14 +2202,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -2137,15 +2236,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -2251,26 +2353,32 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "relationshipTypeId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the relationship type"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the relationship type (e.g., \"SON\", \"MOTHER\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the relationship type"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping relationship types (e.g., \"FAMILY\", \"SOCIAL\")"
         },
         "parentTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the parent type in the hierarchy (null for root types)"
         },
         "parentTypeCode": {
           "type": "string",
@@ -2280,14 +2388,17 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "inverseTypeId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true
+          "nullable": true,
+          "description": "ID of the inverse relationship type (e.g., PARENT is inverse of CHILD)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Code of the inverse relationship type (for convenience)"
         },
         "isBidirectional": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the relationship is the same in both directions (e.g., SIBLING)"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -2311,15 +2422,18 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the relationship type was last updated"
         }
       }
     }
@@ -2548,15 +2662,15 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         },
         "name": {
           "type": "string",
-          "description": "Display name"
+          "description": "Display name for the relationship type"
         },
         "description": {
           "type": "string",
-          "description": "Description"
+          "description": "Human-readable description of the relationship type"
         },
         "category": {
           "type": "string",
-          "description": "Category for grouping"
+          "description": "Category for grouping relationship types"
         },
         "parentTypeCode": {
           "type": "string",
@@ -2568,11 +2682,13 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         },
         "isBidirectional": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether the relationship is the same in both directions"
         },
         "metadata": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Additional custom metadata for the relationship type"
         }
       }
     }

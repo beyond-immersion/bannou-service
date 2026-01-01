@@ -120,9 +120,15 @@ public partial class PublishOptions
 public partial class PublishEventResponse
 {
 
+    /// <summary>
+    /// Indicates whether the event was published successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier assigned to the published message
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageId")]
     public System.Guid MessageId { get; set; } = default!;
 
@@ -141,6 +147,9 @@ public partial class PublishEventResponse
 public partial class CreateSubscriptionRequest
 {
 
+    /// <summary>
+    /// Topic pattern to subscribe to for receiving events
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topic")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -226,9 +235,15 @@ public partial class SubscriptionOptions
 public partial class CreateSubscriptionResponse
 {
 
+    /// <summary>
+    /// Unique identifier for the created subscription
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     public System.Guid SubscriptionId { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the RabbitMQ queue created for this subscription
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queueName")]
     public string QueueName { get; set; } = default!;
 
@@ -247,6 +262,9 @@ public partial class CreateSubscriptionResponse
 public partial class RemoveSubscriptionRequest
 {
 
+    /// <summary>
+    /// Unique identifier of the subscription to remove
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -267,6 +285,9 @@ public partial class RemoveSubscriptionRequest
 public partial class RemoveSubscriptionResponse
 {
 
+    /// <summary>
+    /// Indicates whether the subscription was removed successfully
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
@@ -315,6 +336,9 @@ public partial class ListTopicsRequest
 public partial class ListTopicsResponse
 {
 
+    /// <summary>
+    /// List of topics matching the filter criteria
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topics")]
     public System.Collections.Generic.ICollection<TopicInfo> Topics { get; set; } = default!;
 
@@ -333,12 +357,21 @@ public partial class ListTopicsResponse
 public partial class TopicInfo
 {
 
+    /// <summary>
+    /// Name of the topic/exchange
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Number of messages currently in the topic queue
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageCount")]
     public int MessageCount { get; set; } = default!;
 
+    /// <summary>
+    /// Number of active consumers subscribed to this topic
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consumerCount")]
     public int ConsumerCount { get; set; } = default!;
 

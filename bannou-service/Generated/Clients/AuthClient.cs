@@ -453,8 +453,6 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task InitOAuthAsync(Provider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (provider == null)
-            throw new System.ArgumentNullException("provider");
 
         if (redirectUri == null)
             throw new System.ArgumentNullException("redirectUri");
@@ -549,8 +547,6 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (provider == null)
-            throw new System.ArgumentNullException("provider");
 
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -1342,7 +1338,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1354,7 +1350,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

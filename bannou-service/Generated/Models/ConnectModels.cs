@@ -490,6 +490,9 @@ public enum ResponseCodes
 public partial class ServiceRequestMessage
 {
 
+    /// <summary>
+    /// Bit flags controlling message behavior (binary, encrypted, compressed, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("flags")]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;
@@ -584,6 +587,9 @@ public partial class ServiceResponseMessage
     [System.Text.Json.Serialization.JsonPropertyName("messageId")]
     public long MessageId { get; set; } = default!;
 
+    /// <summary>
+    /// Response status code indicating success or specific error condition
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("responseCode")]
     public ResponseCodes ResponseCode { get; set; } = default!;
 
@@ -729,6 +735,9 @@ public partial class AuthEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of authentication event (Login, Logout, TokenRefresh, PermissionChange)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -832,6 +841,9 @@ public partial class ClientMessageEvent
     [System.Text.Json.Serialization.JsonRequired]
     public byte[] Payload { get; set; } = default!;
 
+    /// <summary>
+    /// Bit flags controlling message behavior (binary, encrypted, compressed, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("flags")]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;
@@ -904,6 +916,9 @@ public partial class ClientRPCEvent
     [System.Text.Json.Serialization.JsonRequired]
     public byte[] Payload { get; set; } = default!;
 
+    /// <summary>
+    /// Bit flags controlling message behavior (binary, encrypted, compressed, etc.)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("flags")]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;

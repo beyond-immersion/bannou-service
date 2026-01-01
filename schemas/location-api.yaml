@@ -71,25 +71,30 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get location by ID\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Location\"\
         \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getLocation\"\n}"
@@ -130,25 +135,30 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get location by code and realm\",\n  \"description\": \"Retrieve a location
         using its unique code within a specific realm\",\n  \"tags\": [\n    \"Location\"\n  ],\n  \"deprecated\": false,\n\
@@ -185,42 +195,52 @@ paths:
         : true,\n          \"description\": \"Filter by location type\"\n        },\n        \"includeDeprecated\": {\n  \
         \        \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to include deprecated
         locations in the response\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\"\
-        : 1,\n          \"default\": 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"\
-        minimum\": 1,\n          \"maximum\": 100,\n          \"default\": 20\n        }\n      }\n    },\n    \"LocationType\"\
-        : {\n      \"type\": \"string\",\n      \"description\": \"Type classification for locations\",\n      \"enum\": [\n\
-        \        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n  \
-        \      \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n\
-        \    }\n  }\n}"
+        : 1,\n          \"default\": 1,\n          \"description\": \"Page number for pagination (1-indexed)\"\n        },\n\
+        \        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n\
+        \          \"default\": 20,\n          \"description\": \"Number of results per page\"\n        }\n      }\n    },\n\
+        \    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type classification for locations\"\
+        ,\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n    \
+        \    \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n    \
+        \    \"OTHER\"\n      ]\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n  \"$defs\": {\n    \"LocationListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         locations\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
         \        \"locations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/LocationResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n  \
-        \      \"locationType\",\n        \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\
-        \n      ],\n      \"properties\": {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Realm this location belongs to\"\n        },\n        \"code\": {\n          \"type\"\
-        : \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"locationType\": {\n    \
-        \      \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Parent location ID
-        (null for root locations)\"\n        },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Depth in hierarchy (0 for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\":
-        {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for
-        deprecation\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
-        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
-        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        \n          },\n          \"description\": \"List of locations matching the query\"\n        },\n        \"totalCount\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of locations matching the query (across
+        all pages)\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        page number (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\",\n     \
+        \     \"description\": \"Whether there are more pages after the current page\"\n        },\n        \"hasPreviousPage\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether there are pages before the current page\"\
+        \n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n  \
+        \      \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
+        \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List locations with filtering\",\n  \"description\": \"Retrieve locations
         with optional realm, parent, and type filtering\",\n  \"tags\": [\n    \"Location\"\n  ],\n  \"deprecated\": false,\n\
         \  \"operationId\": \"listLocations\"\n}"
@@ -257,43 +277,54 @@ paths:
         \         \"format\": \"uuid\",\n          \"description\": \"Realm ID to query\"\n        },\n        \"locationType\"\
         : {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/LocationType\"\n            }\n    \
         \      ],\n          \"nullable\": true,\n          \"description\": \"Optional type filter\"\n        },\n      \
-        \  \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"\
-        page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1\n        },\n   \
-        \     \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n\
-        \          \"default\": 20\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n   \
-        \   \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"\
-        REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        \  \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\"\
+        : \"Whether to include deprecated locations in the response\"\n        },\n        \"page\": {\n          \"type\"\
+        : \"integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n          \"description\": \"Page number for
+        pagination (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\"\
+        : 1,\n          \"maximum\": 100,\n          \"default\": 20,\n          \"description\": \"Number of results per
+        page\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"\
+        Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
+        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n  \"$defs\": {\n    \"LocationListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         locations\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
         \        \"locations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/LocationResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n  \
-        \      \"locationType\",\n        \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\
-        \n      ],\n      \"properties\": {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Realm this location belongs to\"\n        },\n        \"code\": {\n          \"type\"\
-        : \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"locationType\": {\n    \
-        \      \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Parent location ID
-        (null for root locations)\"\n        },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Depth in hierarchy (0 for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\":
-        {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for
-        deprecation\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
-        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
-        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        \n          },\n          \"description\": \"List of locations matching the query\"\n        },\n        \"totalCount\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of locations matching the query (across
+        all pages)\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        page number (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\",\n     \
+        \     \"description\": \"Whether there are more pages after the current page\"\n        },\n        \"hasPreviousPage\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether there are pages before the current page\"\
+        \n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n  \
+        \      \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
+        \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List all locations in a realm (primary query pattern)\",\n  \"description\"\
         : \"Returns all locations within a specific realm, optionally filtered by\\nlocation type and parent. This is the
         primary access pattern for\\nrealm-scoped location queries.\\n\",\n  \"tags\": [\n    \"Location\"\n  ],\n  \"deprecated\"\
@@ -332,43 +363,54 @@ paths:
         : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the parent location\"\n       \
         \ },\n        \"locationType\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/LocationType\"\
         \n            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Optional filter by location
-        type\"\n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false\n\
-        \        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\"\
-        : 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"\
-        maximum\": 100,\n          \"default\": 20\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"\
-        string\",\n      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\"\
-        ,\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n     \
-        \   \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        type\"\n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n\
+        \          \"description\": \"Whether to include deprecated locations in the response\"\n        },\n        \"page\"\
+        : {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n          \"description\"\
+        : \"Page number for pagination (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"default\": 20,\n          \"description\":
+        \"Number of results per page\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
+        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
+        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
+        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n  \"$defs\": {\n    \"LocationListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         locations\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
         \        \"locations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/LocationResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n  \
-        \      \"locationType\",\n        \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\
-        \n      ],\n      \"properties\": {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Realm this location belongs to\"\n        },\n        \"code\": {\n          \"type\"\
-        : \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"locationType\": {\n    \
-        \      \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Parent location ID
-        (null for root locations)\"\n        },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Depth in hierarchy (0 for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\":
-        {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for
-        deprecation\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
-        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
-        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        \n          },\n          \"description\": \"List of locations matching the query\"\n        },\n        \"totalCount\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of locations matching the query (across
+        all pages)\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        page number (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\",\n     \
+        \     \"description\": \"Whether there are more pages after the current page\"\n        },\n        \"hasPreviousPage\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether there are pages before the current page\"\
+        \n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n  \
+        \      \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
+        \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get child locations for a parent location\",\n  \"description\": \"Retrieve
         all locations that have the specified location as their parent.\\nUseful for getting all cities in a region, all buildings
         in a city, etc.\\n\",\n  \"tags\": [\n    \"Location\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listLocationsByParent\"\
@@ -405,43 +447,54 @@ paths:
         \      \"format\": \"uuid\",\n          \"description\": \"Realm ID to get root locations for\"\n        },\n    \
         \    \"locationType\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/LocationType\"\n\
         \            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Optional filter by location
-        type\"\n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false\n\
-        \        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\"\
-        : 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"\
-        maximum\": 100,\n          \"default\": 20\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"\
-        string\",\n      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\"\
-        ,\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n     \
-        \   \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        type\"\n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n\
+        \          \"description\": \"Whether to include deprecated locations in the response\"\n        },\n        \"page\"\
+        : {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n          \"description\"\
+        : \"Page number for pagination (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"default\": 20,\n          \"description\":
+        \"Number of results per page\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
+        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
+        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
+        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n  \"$defs\": {\n    \"LocationListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         locations\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
         \        \"locations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/LocationResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n  \
-        \      \"locationType\",\n        \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\
-        \n      ],\n      \"properties\": {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Realm this location belongs to\"\n        },\n        \"code\": {\n          \"type\"\
-        : \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"locationType\": {\n    \
-        \      \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Parent location ID
-        (null for root locations)\"\n        },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Depth in hierarchy (0 for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\":
-        {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for
-        deprecation\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
-        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
-        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        \n          },\n          \"description\": \"List of locations matching the query\"\n        },\n        \"totalCount\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of locations matching the query (across
+        all pages)\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        page number (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\",\n     \
+        \     \"description\": \"Whether there are more pages after the current page\"\n        },\n        \"hasPreviousPage\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether there are pages before the current page\"\
+        \n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n  \
+        \      \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
+        \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get root locations in a realm\",\n  \"description\": \"Returns all top-level
         locations in a realm (locations with no parent).\\nThese are typically regions or major areas within the realm.\\\
         n\",\n  \"tags\": [\n    \"Location\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listRootLocations\"\n}"
@@ -483,32 +536,41 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         locations\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
         \        \"locations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/LocationResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n  \
-        \      \"locationType\",\n        \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\
-        \n      ],\n      \"properties\": {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Realm this location belongs to\"\n        },\n        \"code\": {\n          \"type\"\
-        : \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"locationType\": {\n    \
-        \      \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Parent location ID
-        (null for root locations)\"\n        },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Depth in hierarchy (0 for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\":
-        {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for
-        deprecation\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
-        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
-        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        \n          },\n          \"description\": \"List of locations matching the query\"\n        },\n        \"totalCount\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of locations matching the query (across
+        all pages)\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        page number (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\",\n     \
+        \     \"description\": \"Whether there are more pages after the current page\"\n        },\n        \"hasPreviousPage\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether there are pages before the current page\"\
+        \n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n  \
+        \      \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
+        \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get all ancestors of a location\",\n  \"description\": \"Returns the full
         ancestry chain from the specified location up to the\\nroot location (parentLocationId=null). For example, for a specific
         building\\nmight return [district, city, region].\\n\",\n  \"tags\": [\n    \"Location\"\n  ],\n  \"deprecated\":
@@ -551,9 +613,11 @@ paths:
         type\"\n        },\n        \"maxDepth\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n       \
         \   \"maximum\": 10,\n          \"nullable\": true,\n          \"description\": \"Maximum depth of descendants to
         return (null = all)\"\n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"\
-        default\": false\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n \
-        \         \"default\": 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\"\
-        : 1,\n          \"maximum\": 100,\n          \"default\": 20\n        }\n      }\n    },\n    \"LocationType\": {\n\
+        default\": false,\n          \"description\": \"Whether to include deprecated locations in the response\"\n      \
+        \  },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n\
+        \          \"description\": \"Page number for pagination (1-indexed)\"\n        },\n        \"pageSize\": {\n    \
+        \      \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"default\": 20,\n\
+        \          \"description\": \"Number of results per page\"\n        }\n      }\n    },\n    \"LocationType\": {\n\
         \      \"type\": \"string\",\n      \"description\": \"Type classification for locations\",\n      \"enum\": [\n \
         \       \"CONTINENT\",\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n   \
         \     \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n\
@@ -562,32 +626,41 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         locations\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
         \        \"locations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/LocationResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n  \
-        \      \"locationType\",\n        \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\
-        \n      ],\n      \"properties\": {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Realm this location belongs to\"\n        },\n        \"code\": {\n          \"type\"\
-        : \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"locationType\": {\n    \
-        \      \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Parent location ID
-        (null for root locations)\"\n        },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Depth in hierarchy (0 for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\":
-        {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for
-        deprecation\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"date-time\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
-        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
-        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        \n          },\n          \"description\": \"List of locations matching the query\"\n        },\n        \"totalCount\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of locations matching the query (across
+        all pages)\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        page number (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Number of results per page\"\n        },\n        \"hasNextPage\": {\n          \"type\": \"boolean\",\n     \
+        \     \"description\": \"Whether there are more pages after the current page\"\n        },\n        \"hasPreviousPage\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether there are pages before the current page\"\
+        \n        }\n      }\n    },\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"locationId\",\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n  \
+        \      \"depth\",\n        \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
+        \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get all descendants of a location\",\n  \"description\": \"Returns all locations
         that are descendants of the specified location\\n(direct children, grandchildren, etc.). Useful for finding all places\\
         nwithin a region or city.\\n\",\n  \"tags\": [\n    \"Location\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
@@ -629,38 +702,43 @@ paths:
         : {\n          \"type\": \"string\",\n          \"maxLength\": 2000,\n          \"nullable\": true,\n          \"\
         description\": \"Description of the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\"\
         ,\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n  \
-        \      \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
-        description\": \"Parent location ID for hierarchy (null for root locations)\"\n        },\n        \"metadata\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n     \
-        \     \"description\": \"Additional metadata for the location (JSON)\"\n        }\n      }\n    },\n    \"LocationType\"\
-        : {\n      \"type\": \"string\",\n      \"description\": \"Type classification for locations\",\n      \"enum\": [\n\
-        \        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n  \
-        \      \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n\
-        \    }\n  }\n}"
+        \      \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification
+        for this location\"\n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Parent location ID for hierarchy (null for
+        root locations)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\
+        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
+        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
+        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LocationResponse\"\
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Create new location\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Location
         Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createLocation\"\n}"
@@ -710,25 +788,30 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Update location\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Location
         Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"updateLocation\"\n}"
@@ -776,25 +859,30 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Set or change the parent of a location\",\n  \"description\": \"Update a
         location's parent, moving it in the hierarchy.\\nValidates that:\\n- New parent exists and is in the same realm\\\
@@ -837,25 +925,30 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Remove parent from a location (make it a root location)\",\n  \"description\"\
         : \"Remove the parent of a location, making it a top-level root location\\nwithin its realm. Updates depth for location
@@ -944,25 +1037,30 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Deprecate a location\",\n  \"description\": \"Soft-delete a location by marking
         it as deprecated.\\nDeprecated locations:\\n- Remain queryable for historical data\\n- Cannot be used for placing
@@ -1007,25 +1105,30 @@ paths:
         ,\n  \"$defs\": {\n    \"LocationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"locationId\"\
         ,\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"locationType\",\n        \"depth\",\n   \
         \     \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n      \
-        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"realmId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Realm this location
-        belongs to\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n \
-        \         \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true\n        },\n        \"locationType\": {\n          \"$ref\": \"#/$defs/LocationType\"\n   \
-        \     },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n        },\n\
-        \        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0 for root
-        locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
+        \  \"locationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for the location\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\",\n          \"description\": \"Realm this location belongs to\"\n        },\n      \
+        \  \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the location within
+        its realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
+        name of the location\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional description of the location\"\n        },\n        \"locationType\"\
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification of the location\"\
+        \n        },\n        \"parentLocationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Parent location ID (null for root locations)\"\n    \
+        \    },\n        \"depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Depth in hierarchy (0
+        for root locations)\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\"\
         : \"Whether this location is deprecated and cannot be used\"\n        },\n        \"deprecatedAt\": {\n          \"\
         type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
         : \"Timestamp when this location was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\"\
         : \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n   \
         \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
-        \        \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type
-        classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\"\
-        ,\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the location (JSON)\"\n       \
+        \ },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"\
+        description\": \"Timestamp when the location was created\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the location was
+        last updated\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n       \
+        \ \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\"\
         ,\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Restore a deprecated location\",\n  \"description\": \"Remove the deprecated
         status from a location, making it\\navailable for entity placement again.\\n\",\n  \"tags\": [\n    \"Location Admin\"\
@@ -1117,13 +1220,15 @@ paths:
         name\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n \
         \         \"description\": \"Description\"\n        },\n        \"realmCode\": {\n          \"type\": \"string\",\n\
         \          \"description\": \"Code of the realm (resolved during seeding)\"\n        },\n        \"locationType\"\
-        : {\n          \"$ref\": \"#/$defs/LocationType\"\n        },\n        \"parentLocationCode\": {\n          \"type\"\
-        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Code of the parent location (resolved during
-        seeding)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\"\
-        ,\n      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n    \
-        \    \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
-        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
+        : {\n          \"$ref\": \"#/$defs/LocationType\",\n          \"description\": \"Type classification for this location\"\
+        \n        },\n        \"parentLocationCode\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
+        \          \"description\": \"Code of the parent location (resolved during seeding)\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"Additional metadata for the location (JSON)\"\n        }\n      }\n    },\n    \"LocationType\"\
+        : {\n      \"type\": \"string\",\n      \"description\": \"Type classification for locations\",\n      \"enum\": [\n\
+        \        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n  \
+        \      \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n\
+        \    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedLocationsResponse\"\
         ,\n  \"$defs\": {\n    \"SeedLocationsResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         created\",\n        \"updated\",\n        \"skipped\",\n        \"errors\"\n      ],\n      \"properties\": {\n  \

@@ -17,10 +17,32 @@ These tenets define the architectural foundation of Bannou. Understanding them i
 - Define all endpoints in `/schemas/{service}-api.yaml`
 - Define all events in `/schemas/{service}-events.yaml` or `common-events.yaml`
 - Use `x-permissions` to declare role/state requirements for WebSocket clients
+- **ALL schema properties MUST have `description` fields** - NSwag generates XML documentation from these
 - Run `make generate` to generate all code
 - **NEVER** manually edit files in `*/Generated/` directories
 
 **Important**: Scripts in `/scripts/` assume execution from the solution root directory. Always use Makefile commands rather than running scripts directly.
+
+### Property Documentation (MANDATORY)
+
+Every property in every schema MUST have a `description` field. NSwag converts these to XML `<summary>` tags in generated code. Missing descriptions cause CS1591 compiler warnings.
+
+```yaml
+# CORRECT: Property has description
+properties:
+  accountId:
+    type: string
+    format: uuid
+    description: Unique identifier for the account
+
+# WRONG: Missing description causes CS1591 warning
+properties:
+  accountId:
+    type: string
+    format: uuid
+```
+
+**Why This Matters**: XML documentation enables IntelliSense, auto-generated API docs, and compile-time validation that all public members are documented.
 
 ### Best Practices
 

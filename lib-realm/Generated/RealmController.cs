@@ -397,24 +397,30 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "realmId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the realm"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the realm"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping realms"
         },
         "isActive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the realm is currently active for gameplay"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -434,15 +440,18 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was last updated"
         }
       }
     }
@@ -549,24 +558,30 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "realmId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the realm"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the realm"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping realms"
         },
         "isActive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the realm is currently active for gameplay"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -586,15 +601,18 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was last updated"
         }
       }
     }
@@ -684,13 +702,15 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-indexed)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of realms to return per page"
         }
       }
     }
@@ -716,22 +736,28 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/RealmResponse"
-          }
+          },
+          "description": "List of realms matching the query criteria"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of realms matching the query (before pagination)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of realms per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more realms available on the next page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are realms available on the previous page"
         }
       }
     },
@@ -749,24 +775,30 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "realmId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the realm"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the realm"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping realms"
         },
         "isActive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the realm is currently active for gameplay"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -786,15 +818,18 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was last updated"
         }
       }
     }
@@ -931,24 +966,30 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "realmId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the realm"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the realm"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping realms"
         },
         "isActive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the realm is currently active for gameplay"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -968,15 +1009,18 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was last updated"
         }
       }
     }
@@ -1111,24 +1155,30 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "realmId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the realm"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the realm"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping realms"
         },
         "isActive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the realm is currently active for gameplay"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1148,15 +1198,18 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was last updated"
         }
       }
     }
@@ -1349,24 +1402,30 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "realmId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the realm"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the realm"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping realms"
         },
         "isActive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the realm is currently active for gameplay"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1386,15 +1445,18 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was last updated"
         }
       }
     }
@@ -1499,24 +1561,30 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "realmId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the realm"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the realm (e.g., \"OMEGA\", \"ARCADIA\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Detailed description of the realm"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping realms"
         },
         "isActive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the realm is currently active for gameplay"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1536,15 +1604,18 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the realm was last updated"
         }
       }
     }
@@ -1756,26 +1827,28 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "name": {
           "type": "string",
-          "description": "Display name"
+          "description": "Display name for the realm"
         },
         "description": {
           "type": "string",
           "nullable": true,
-          "description": "Description"
+          "description": "Detailed description of the realm and its characteristics"
         },
         "category": {
           "type": "string",
           "nullable": true,
-          "description": "Category for grouping"
+          "description": "Category for grouping realms (e.g., \"MAIN\", \"SPECIAL\", \"TEST\")"
         },
         "isActive": {
           "type": "boolean",
-          "default": true
+          "default": true,
+          "description": "Whether the realm is currently active for gameplay"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional custom metadata for the realm (JSON)"
         }
       }
     }

@@ -75,6 +75,9 @@ public enum RelatedDepth
 
 }
 
+/// <summary>
+/// Fields that can be searched within documents
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SearchField
 {
@@ -93,6 +96,9 @@ public enum SearchField
 
 }
 
+/// <summary>
+/// Fields available for sorting document lists
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListSortField
 {
@@ -108,6 +114,9 @@ public enum ListSortField
 
 }
 
+/// <summary>
+/// Source type for generating related topic suggestions
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SuggestionSource
 {
@@ -131,7 +140,7 @@ public partial class QueryDocumentationRequest
 {
 
     /// <summary>
-    /// Documentation namespace
+    /// Documentation namespace to search within
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -141,7 +150,7 @@ public partial class QueryDocumentationRequest
     public string Namespace { get; set; } = default!;
 
     /// <summary>
-    /// Natural language query
+    /// Natural language query to search for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("query")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -155,21 +164,36 @@ public partial class QueryDocumentationRequest
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Filter results to a specific category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of results to return
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxResults")]
     [System.ComponentModel.DataAnnotations.Range(1, 20)]
     public int MaxResults { get; set; } = 5;
 
+    /// <summary>
+    /// Whether to include full document content in results
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeContent")]
     public bool IncludeContent { get; set; } = false;
 
+    /// <summary>
+    /// Maximum length of summaries in characters
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxSummaryLength")]
     [System.ComponentModel.DataAnnotations.Range(50, 500)]
     public int MaxSummaryLength { get; set; } = 300;
 
+    /// <summary>
+    /// Minimum relevance score threshold for results
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("minRelevanceScore")]
     [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
     public float MinRelevanceScore { get; set; } = 0.3F;
@@ -189,21 +213,33 @@ public partial class QueryDocumentationRequest
 public partial class QueryDocumentationResponse
 {
 
+    /// <summary>
+    /// The namespace that was searched
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// The original query string
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("query")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Query { get; set; } = default!;
 
+    /// <summary>
+    /// List of matching documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("results")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<DocumentResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<DocumentResult>();
 
+    /// <summary>
+    /// Total number of matching documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalResults")]
     public int TotalResults { get; set; } = default!;
 
@@ -213,9 +249,15 @@ public partial class QueryDocumentationResponse
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     public string VoiceSummary { get; set; } = default!;
 
+    /// <summary>
+    /// Suggested follow-up queries
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("suggestedFollowups")]
     public System.Collections.Generic.ICollection<string> SuggestedFollowups { get; set; } = default!;
 
+    /// <summary>
+    /// User-friendly message when no results found
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("noResultsMessage")]
     public string NoResultsMessage { get; set; } = default!;
 
@@ -234,6 +276,9 @@ public partial class QueryDocumentationResponse
 public partial class GetDocumentRequest
 {
 
+    /// <summary>
+    /// Documentation namespace containing the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -241,23 +286,41 @@ public partial class GetDocumentRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the document to retrieve
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly slug of the document to retrieve
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Optional session ID for tracking document views
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// How deep to fetch related documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeRelated")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RelatedDepth IncludeRelated { get; set; } = default!;
 
+    /// <summary>
+    /// Whether to include full document content
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeContent")]
     public bool IncludeContent { get; set; } = false;
 
+    /// <summary>
+    /// Whether to render markdown content as HTML
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("renderHtml")]
     public bool RenderHtml { get; set; } = false;
 
@@ -276,14 +339,23 @@ public partial class GetDocumentRequest
 public partial class GetDocumentResponse
 {
 
+    /// <summary>
+    /// The requested document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("document")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public Document Document { get; set; } = new Document();
 
+    /// <summary>
+    /// List of related documents based on includeRelated depth
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
     public System.Collections.Generic.ICollection<DocumentSummary> RelatedDocuments { get; set; } = default!;
 
+    /// <summary>
+    /// Format of the content field in the response
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentFormat")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GetDocumentResponseContentFormat ContentFormat { get; set; } = default!;
@@ -303,6 +375,9 @@ public partial class GetDocumentResponse
 public partial class SearchDocumentationRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to search within
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -310,31 +385,52 @@ public partial class SearchDocumentationRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Keyword or phrase to search for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("searchTerm")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 2)]
     public string SearchTerm { get; set; } = default!;
 
+    /// <summary>
+    /// Optional session ID for tracking searches
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Filter results to a specific category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of results to return
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxResults")]
     [System.ComponentModel.DataAnnotations.Range(1, 50)]
     public int MaxResults { get; set; } = 10;
 
+    /// <summary>
+    /// Fields to search within
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("searchIn")]
     // TODO(system.text.json): Add string enum item converter
     public System.Collections.Generic.ICollection<SearchField> SearchIn { get; set; } = default!;
 
+    /// <summary>
+    /// How to sort the search results
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortBy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SearchDocumentationRequestSortBy SortBy { get; set; } = BeyondImmersion.BannouService.Documentation.SearchDocumentationRequestSortBy.Relevance;
 
+    /// <summary>
+    /// Whether to include full document content in results
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeContent")]
     public bool IncludeContent { get; set; } = false;
 
@@ -353,19 +449,31 @@ public partial class SearchDocumentationRequest
 public partial class SearchDocumentationResponse
 {
 
+    /// <summary>
+    /// The namespace that was searched
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// List of matching documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("results")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<DocumentResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<DocumentResult>();
 
+    /// <summary>
+    /// Total number of matching documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalResults")]
     public int TotalResults { get; set; } = default!;
 
+    /// <summary>
+    /// The original search term
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("searchTerm")]
     public string SearchTerm { get; set; } = default!;
 
@@ -384,6 +492,9 @@ public partial class SearchDocumentationResponse
 public partial class ListDocumentsRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to list documents from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -391,44 +502,80 @@ public partial class ListDocumentsRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Filter to a specific category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Filter by tags
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Whether documents must match all tags or any tag
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tagsMatch")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ListDocumentsRequestTagsMatch TagsMatch { get; set; } = BeyondImmersion.BannouService.Documentation.ListDocumentsRequestTagsMatch.All;
 
+    /// <summary>
+    /// Filter to documents created after this timestamp
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAfter")]
     public System.DateTimeOffset CreatedAfter { get; set; } = default!;
 
+    /// <summary>
+    /// Filter to documents created before this timestamp
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBefore")]
     public System.DateTimeOffset CreatedBefore { get; set; } = default!;
 
+    /// <summary>
+    /// Filter to documents updated after this timestamp
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAfter")]
     public System.DateTimeOffset UpdatedAfter { get; set; } = default!;
 
+    /// <summary>
+    /// Filter to documents updated before this timestamp
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedBefore")]
     public System.DateTimeOffset UpdatedBefore { get; set; } = default!;
 
+    /// <summary>
+    /// Return only document titles without summaries
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("titlesOnly")]
     public bool TitlesOnly { get; set; } = false;
 
+    /// <summary>
+    /// Page number for pagination
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of documents per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
 
+    /// <summary>
+    /// Field to sort results by
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortBy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ListSortField SortBy { get; set; } = default!;
 
+    /// <summary>
+    /// Sort order direction
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ListDocumentsRequestSortOrder SortOrder { get; set; } = BeyondImmersion.BannouService.Documentation.ListDocumentsRequestSortOrder.Desc;
@@ -448,25 +595,43 @@ public partial class ListDocumentsRequest
 public partial class ListDocumentsResponse
 {
 
+    /// <summary>
+    /// The namespace that was listed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// List of documents in the namespace
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documents")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<DocumentSummary> Documents { get; set; } = new System.Collections.ObjectModel.Collection<DocumentSummary>();
 
+    /// <summary>
+    /// Total number of documents matching filters
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
+    /// <summary>
+    /// Current page number
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 
+    /// <summary>
+    /// Total number of pages available
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalPages")]
     public int TotalPages { get; set; } = default!;
 
@@ -485,6 +650,9 @@ public partial class ListDocumentsResponse
 public partial class SuggestRelatedRequest
 {
 
+    /// <summary>
+    /// Documentation namespace for suggestions
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -492,22 +660,37 @@ public partial class SuggestRelatedRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Type of source to base suggestions on
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("suggestionSource")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SuggestionSource SuggestionSource { get; set; } = default!;
 
+    /// <summary>
+    /// The value for the suggestion source (document ID, slug, topic, or category)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceValue")]
     public string SourceValue { get; set; } = default!;
 
+    /// <summary>
+    /// Optional session ID for personalized suggestions
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of suggestions to return
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxSuggestions")]
     [System.ComponentModel.DataAnnotations.Range(1, 10)]
     public int MaxSuggestions { get; set; } = 5;
 
+    /// <summary>
+    /// Exclude documents viewed in current session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("excludeRecentlyViewed")]
     public bool ExcludeRecentlyViewed { get; set; } = true;
 
@@ -526,19 +709,31 @@ public partial class SuggestRelatedRequest
 public partial class SuggestRelatedResponse
 {
 
+    /// <summary>
+    /// The namespace suggestions are from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// List of suggested related topics
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("suggestions")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TopicSuggestion> Suggestions { get; set; } = new System.Collections.ObjectModel.Collection<TopicSuggestion>();
 
+    /// <summary>
+    /// Voice-friendly prompt for presenting suggestions
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voicePrompt")]
     public string VoicePrompt { get; set; } = default!;
 
+    /// <summary>
+    /// Whether suggestions were influenced by session history
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionInfluenced")]
     public bool SessionInfluenced { get; set; } = default!;
 
@@ -557,23 +752,38 @@ public partial class SuggestRelatedResponse
 public partial class TopicSuggestion
 {
 
+    /// <summary>
+    /// Unique identifier of the suggested document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly slug of the suggested document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Title of the suggested document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category of the suggested document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation of why this document is relevant
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relevanceReason")]
     public string RelevanceReason { get; set; } = default!;
 
@@ -592,6 +802,9 @@ public partial class TopicSuggestion
 public partial class CreateDocumentRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to create document in
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -599,6 +812,9 @@ public partial class CreateDocumentRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly unique identifier for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -606,12 +822,18 @@ public partial class CreateDocumentRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Display title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category for organizing the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -626,20 +848,35 @@ public partial class CreateDocumentRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string Content { get; set; } = default!;
 
+    /// <summary>
+    /// Brief text summary of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string Summary { get; set; } = default!;
 
+    /// <summary>
+    /// Concise summary optimized for voice AI
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string VoiceSummary { get; set; } = default!;
 
+    /// <summary>
+    /// Tags for filtering and search
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// IDs of related documents to link
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
     public System.Collections.Generic.ICollection<System.Guid> RelatedDocuments { get; set; } = default!;
 
+    /// <summary>
+    /// Custom metadata key-value pairs
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
@@ -658,16 +895,25 @@ public partial class CreateDocumentRequest
 public partial class CreateDocumentResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the created document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly slug of the created document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
@@ -686,6 +932,9 @@ public partial class CreateDocumentResponse
 public partial class UpdateDocumentRequest
 {
 
+    /// <summary>
+    /// Documentation namespace containing the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -693,34 +942,64 @@ public partial class UpdateDocumentRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the document to update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// New URL-friendly slug for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// New display title for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// New category for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// New markdown content for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
     public string Content { get; set; } = default!;
 
+    /// <summary>
+    /// New text summary for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     public string Summary { get; set; } = default!;
 
+    /// <summary>
+    /// New voice-optimized summary for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     public string VoiceSummary { get; set; } = default!;
 
+    /// <summary>
+    /// New set of tags for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// New set of related document IDs
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
     public System.Collections.Generic.ICollection<System.Guid> RelatedDocuments { get; set; } = default!;
 
+    /// <summary>
+    /// New custom metadata key-value pairs
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
@@ -739,11 +1018,17 @@ public partial class UpdateDocumentRequest
 public partial class UpdateDocumentResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the updated document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -764,6 +1049,9 @@ public partial class UpdateDocumentResponse
 public partial class DeleteDocumentRequest
 {
 
+    /// <summary>
+    /// Documentation namespace containing the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -771,9 +1059,15 @@ public partial class DeleteDocumentRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the document to delete
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly slug of the document to delete
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     public string Slug { get; set; } = default!;
 
@@ -792,16 +1086,25 @@ public partial class DeleteDocumentRequest
 public partial class DeleteDocumentResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the deleted document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset DeletedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Deadline for recovering the document from trashcan
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recoverableUntil")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -822,6 +1125,9 @@ public partial class DeleteDocumentResponse
 public partial class RecoverDocumentRequest
 {
 
+    /// <summary>
+    /// Documentation namespace containing the trashcan
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -829,6 +1135,9 @@ public partial class RecoverDocumentRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the document to recover
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -849,11 +1158,17 @@ public partial class RecoverDocumentRequest
 public partial class RecoverDocumentResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the recovered document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was recovered
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recoveredAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -874,6 +1189,9 @@ public partial class RecoverDocumentResponse
 public partial class BulkUpdateRequest
 {
 
+    /// <summary>
+    /// Documentation namespace containing the documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -881,18 +1199,30 @@ public partial class BulkUpdateRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// List of document IDs to update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> DocumentIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
+    /// <summary>
+    /// New category to apply to all documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Tags to add to all documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("addTags")]
     public System.Collections.Generic.ICollection<string> AddTags { get; set; } = default!;
 
+    /// <summary>
+    /// Tags to remove from all documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removeTags")]
     public System.Collections.Generic.ICollection<string> RemoveTags { get; set; } = default!;
 
@@ -911,11 +1241,17 @@ public partial class BulkUpdateRequest
 public partial class BulkUpdateResponse
 {
 
+    /// <summary>
+    /// IDs of documents successfully updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("succeeded")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> Succeeded { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
+    /// <summary>
+    /// Details of documents that failed to update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failed")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -936,6 +1272,9 @@ public partial class BulkUpdateResponse
 public partial class BulkDeleteRequest
 {
 
+    /// <summary>
+    /// Documentation namespace containing the documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -943,6 +1282,9 @@ public partial class BulkDeleteRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// List of document IDs to delete
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -963,11 +1305,17 @@ public partial class BulkDeleteRequest
 public partial class BulkDeleteResponse
 {
 
+    /// <summary>
+    /// IDs of documents successfully deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("succeeded")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> Succeeded { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
+    /// <summary>
+    /// Details of documents that failed to delete
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failed")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -988,11 +1336,17 @@ public partial class BulkDeleteResponse
 public partial class BulkOperationFailure
 {
 
+    /// <summary>
+    /// ID of the document that failed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// Error message explaining the failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1013,6 +1367,9 @@ public partial class BulkOperationFailure
 public partial class ImportDocumentationRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to import into
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1020,11 +1377,17 @@ public partial class ImportDocumentationRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// List of documents to import
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documents")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ImportDocument> Documents { get; set; } = new System.Collections.ObjectModel.Collection<ImportDocument>();
 
+    /// <summary>
+    /// How to handle documents with existing slugs
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("onConflict")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ImportDocumentationRequestOnConflict OnConflict { get; set; } = BeyondImmersion.BannouService.Documentation.ImportDocumentationRequestOnConflict.Skip;
@@ -1044,36 +1407,60 @@ public partial class ImportDocumentationRequest
 public partial class ImportDocument
 {
 
+    /// <summary>
+    /// URL-friendly unique identifier for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Display title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category for organizing the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Markdown content of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Content { get; set; } = default!;
 
+    /// <summary>
+    /// Brief text summary of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     public string Summary { get; set; } = default!;
 
+    /// <summary>
+    /// Concise summary optimized for voice AI
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     public string VoiceSummary { get; set; } = default!;
 
+    /// <summary>
+    /// Tags for filtering and search
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Custom metadata key-value pairs
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
@@ -1092,20 +1479,35 @@ public partial class ImportDocument
 public partial class ImportDocumentationResponse
 {
 
+    /// <summary>
+    /// The namespace documents were imported into
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Number of new documents created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("created")]
     public int Created { get; set; } = default!;
 
+    /// <summary>
+    /// Number of existing documents updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updated")]
     public int Updated { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents skipped due to conflicts
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("skipped")]
     public int Skipped { get; set; } = default!;
 
+    /// <summary>
+    /// Details of documents that failed to import
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failed")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1126,11 +1528,17 @@ public partial class ImportDocumentationResponse
 public partial class ImportFailure
 {
 
+    /// <summary>
+    /// Slug of the document that failed to import
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Error message explaining the failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1151,6 +1559,9 @@ public partial class ImportFailure
 public partial class ListTrashcanRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to list trashcan from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1158,9 +1569,15 @@ public partial class ListTrashcanRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Page number for pagination
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of items per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = 20;
 
@@ -1179,16 +1596,25 @@ public partial class ListTrashcanRequest
 public partial class ListTrashcanResponse
 {
 
+    /// <summary>
+    /// The namespace the trashcan belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// List of deleted documents in trashcan
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("items")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TrashcanItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<TrashcanItem>();
 
+    /// <summary>
+    /// Total number of items in trashcan
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
@@ -1207,28 +1633,46 @@ public partial class ListTrashcanResponse
 public partial class TrashcanItem
 {
 
+    /// <summary>
+    /// Unique identifier of the deleted document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly slug of the deleted document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Title of the deleted document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category of the deleted document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset DeletedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document will be permanently deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1249,6 +1693,9 @@ public partial class TrashcanItem
 public partial class PurgeTrashcanRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to purge trashcan from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1277,6 +1724,9 @@ public partial class PurgeTrashcanRequest
 public partial class PurgeTrashcanResponse
 {
 
+    /// <summary>
+    /// Number of documents permanently deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("purgedCount")]
     public int PurgedCount { get; set; } = default!;
 
@@ -1295,6 +1745,9 @@ public partial class PurgeTrashcanResponse
 public partial class GetNamespaceStatsRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to get statistics for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1317,23 +1770,41 @@ public partial class GetNamespaceStatsRequest
 public partial class NamespaceStatsResponse
 {
 
+    /// <summary>
+    /// The namespace statistics are for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Total number of documents in the namespace
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
     public int DocumentCount { get; set; } = default!;
 
+    /// <summary>
+    /// Document count per category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryCounts")]
     public System.Collections.Generic.IDictionary<string, int> CategoryCounts { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents in the trashcan
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("trashcanCount")]
     public int TrashcanCount { get; set; } = default!;
 
+    /// <summary>
+    /// Total size of all document content in bytes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalContentSizeBytes")]
     public int TotalContentSizeBytes { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp of most recent document update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastUpdated")]
     public System.DateTimeOffset LastUpdated { get; set; } = default!;
 
@@ -1352,55 +1823,94 @@ public partial class NamespaceStatsResponse
 public partial class Document
 {
 
+    /// <summary>
+    /// Unique identifier of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// Namespace the document belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly unique identifier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Display title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category for organizing the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Full markdown content of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
     public string Content { get; set; } = default!;
 
+    /// <summary>
+    /// Brief text summary of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     public string Summary { get; set; } = default!;
 
+    /// <summary>
+    /// Concise summary optimized for voice AI
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     public string VoiceSummary { get; set; } = default!;
 
+    /// <summary>
+    /// Tags for filtering and search
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// IDs of related documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
     public System.Collections.Generic.ICollection<System.Guid> RelatedDocuments { get; set; } = default!;
 
+    /// <summary>
+    /// Custom metadata key-value pairs
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1421,33 +1931,54 @@ public partial class Document
 public partial class DocumentSummary
 {
 
+    /// <summary>
+    /// Unique identifier of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly unique identifier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Display title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Brief text summary of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     public string Summary { get; set; } = default!;
 
+    /// <summary>
+    /// Concise summary optimized for voice AI
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     public string VoiceSummary { get; set; } = default!;
 
+    /// <summary>
+    /// Tags associated with the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
@@ -1466,37 +1997,64 @@ public partial class DocumentSummary
 public partial class DocumentResult
 {
 
+    /// <summary>
+    /// Unique identifier of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly unique identifier
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Display title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
+    /// <summary>
+    /// Brief text summary of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     public string Summary { get; set; } = default!;
 
+    /// <summary>
+    /// Concise summary optimized for voice AI
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     public string VoiceSummary { get; set; } = default!;
 
+    /// <summary>
+    /// Full document content if requested
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
     public string Content { get; set; } = default!;
 
+    /// <summary>
+    /// Relevance score from 0.0 to 1.0
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relevanceScore")]
     public float RelevanceScore { get; set; } = default!;
 
+    /// <summary>
+    /// Text snippets showing where matches occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("matchHighlights")]
     public System.Collections.Generic.ICollection<string> MatchHighlights { get; set; } = default!;
 
@@ -1621,6 +2179,9 @@ public partial class BindRepositoryRequest
     [System.Text.Json.Serialization.JsonPropertyName("categoryMapping")]
     public System.Collections.Generic.IDictionary<string, string> CategoryMapping { get; set; } = default!;
 
+    /// <summary>
+    /// Default category for documents without mapping
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultCategory")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory DefaultCategory { get; set; } = default!;
@@ -1652,28 +2213,46 @@ public partial class BindRepositoryRequest
 public partial class BindRepositoryResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the repository binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
+    /// <summary>
+    /// Namespace the repository is bound to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// URL of the bound repository
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("repositoryUrl")]
     public string RepositoryUrl { get; set; } = default!;
 
+    /// <summary>
+    /// Branch being synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("branch")]
     public string Branch { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BindingStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the binding was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
@@ -1692,6 +2271,9 @@ public partial class BindRepositoryResponse
 public partial class UnbindRepositoryRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to unbind
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1720,6 +2302,9 @@ public partial class UnbindRepositoryRequest
 public partial class UnbindRepositoryResponse
 {
 
+    /// <summary>
+    /// Namespace that was unbound
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1746,6 +2331,9 @@ public partial class UnbindRepositoryResponse
 public partial class SyncRepositoryRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1774,35 +2362,62 @@ public partial class SyncRepositoryRequest
 public partial class SyncRepositoryResponse
 {
 
+    /// <summary>
+    /// Unique identifier of this sync operation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SyncId { get; set; } = default!;
 
+    /// <summary>
+    /// Result status of the sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SyncStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Git commit hash that was synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
     public string CommitHash { get; set; } = default!;
 
+    /// <summary>
+    /// Number of new documents created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsCreated")]
     public int DocumentsCreated { get; set; } = default!;
 
+    /// <summary>
+    /// Number of existing documents updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsUpdated")]
     public int DocumentsUpdated { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsDeleted")]
     public int DocumentsDeleted { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents that failed to process
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsFailed")]
     public int DocumentsFailed { get; set; } = default!;
 
+    /// <summary>
+    /// Time taken for sync in milliseconds
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
     public int DurationMs { get; set; } = default!;
 
+    /// <summary>
+    /// Error message if sync failed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
     public string? ErrorMessage { get; set; } = default!;
 
@@ -1821,6 +2436,9 @@ public partial class SyncRepositoryResponse
 public partial class RepositoryStatusRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to get status for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1843,9 +2461,15 @@ public partial class RepositoryStatusRequest
 public partial class RepositoryStatusResponse
 {
 
+    /// <summary>
+    /// Current binding configuration and status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("binding")]
     public RepositoryBindingInfo Binding { get; set; } = default!;
 
+    /// <summary>
+    /// Information about the most recent sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastSync")]
     public SyncInfo LastSync { get; set; } = default!;
 
@@ -1864,42 +2488,72 @@ public partial class RepositoryStatusResponse
 public partial class RepositoryBindingInfo
 {
 
+    /// <summary>
+    /// Unique identifier of the repository binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
+    /// <summary>
+    /// Namespace the repository is bound to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// URL of the bound repository
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("repositoryUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string RepositoryUrl { get; set; } = default!;
 
+    /// <summary>
+    /// Branch being synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("branch")]
     public string Branch { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BindingStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Whether automatic sync is enabled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncEnabled")]
     public bool SyncEnabled { get; set; } = default!;
 
+    /// <summary>
+    /// Sync interval in minutes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncIntervalMinutes")]
     public int SyncIntervalMinutes { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents from this repository
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
     public int DocumentCount { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the binding was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the user who created the binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
     public System.Guid CreatedBy { get; set; } = default!;
 
@@ -1918,26 +2572,47 @@ public partial class RepositoryBindingInfo
 public partial class SyncInfo
 {
 
+    /// <summary>
+    /// Unique identifier of the sync operation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncId")]
     public System.Guid SyncId { get; set; } = default!;
 
+    /// <summary>
+    /// Result status of the sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SyncStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// What triggered the sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("triggeredBy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SyncTrigger TriggeredBy { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when sync started
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when sync completed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
     public System.DateTimeOffset CompletedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Git commit hash that was synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
     public string CommitHash { get; set; } = default!;
 
+    /// <summary>
+    /// Total documents processed in sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsProcessed")]
     public int DocumentsProcessed { get; set; } = default!;
 
@@ -1956,14 +2631,23 @@ public partial class SyncInfo
 public partial class ListRepositoryBindingsRequest
 {
 
+    /// <summary>
+    /// Filter by binding status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BindingStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of bindings to return
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int Limit { get; set; } = 50;
 
+    /// <summary>
+    /// Number of bindings to skip
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
@@ -1983,11 +2667,17 @@ public partial class ListRepositoryBindingsRequest
 public partial class ListRepositoryBindingsResponse
 {
 
+    /// <summary>
+    /// List of repository bindings
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindings")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RepositoryBindingInfo> Bindings { get; set; } = new System.Collections.ObjectModel.Collection<RepositoryBindingInfo>();
 
+    /// <summary>
+    /// Total number of bindings matching filter
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("total")]
     public int Total { get; set; } = default!;
 
@@ -2006,6 +2696,9 @@ public partial class ListRepositoryBindingsResponse
 public partial class UpdateRepositoryBindingRequest
 {
 
+    /// <summary>
+    /// Documentation namespace of the binding to update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2013,29 +2706,53 @@ public partial class UpdateRepositoryBindingRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Enable or disable automatic syncing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncEnabled")]
     public bool SyncEnabled { get; set; } = default!;
 
+    /// <summary>
+    /// New sync interval in minutes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncIntervalMinutes")]
     [System.ComponentModel.DataAnnotations.Range(5, 1440)]
     public int SyncIntervalMinutes { get; set; } = default!;
 
+    /// <summary>
+    /// New glob patterns for files to include
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filePatterns")]
     public System.Collections.Generic.ICollection<string> FilePatterns { get; set; } = default!;
 
+    /// <summary>
+    /// New glob patterns for files to exclude
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("excludePatterns")]
     public System.Collections.Generic.ICollection<string> ExcludePatterns { get; set; } = default!;
 
+    /// <summary>
+    /// New directory-to-category mapping
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryMapping")]
     public System.Collections.Generic.IDictionary<string, string> CategoryMapping { get; set; } = default!;
 
+    /// <summary>
+    /// New default category for unmapped documents
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultCategory")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory DefaultCategory { get; set; } = default!;
 
+    /// <summary>
+    /// Enable or disable archive functionality
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveEnabled")]
     public bool ArchiveEnabled { get; set; } = default!;
 
+    /// <summary>
+    /// Enable or disable archiving after each sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveOnSync")]
     public bool ArchiveOnSync { get; set; } = default!;
 
@@ -2054,6 +2771,9 @@ public partial class UpdateRepositoryBindingRequest
 public partial class UpdateRepositoryBindingResponse
 {
 
+    /// <summary>
+    /// Updated binding configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("binding")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2074,6 +2794,9 @@ public partial class UpdateRepositoryBindingResponse
 public partial class CreateArchiveRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2103,11 +2826,17 @@ public partial class CreateArchiveRequest
 public partial class CreateArchiveResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the created archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
 
+    /// <summary>
+    /// Namespace that was archived
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2119,12 +2848,21 @@ public partial class CreateArchiveResponse
     [System.Text.Json.Serialization.JsonPropertyName("bundleAssetId")]
     public System.Guid BundleAssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents in the archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
     public int DocumentCount { get; set; } = default!;
 
+    /// <summary>
+    /// Total size of the archive in bytes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
     public int SizeBytes { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the archive was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
@@ -2149,6 +2887,9 @@ public partial class CreateArchiveResponse
 public partial class ListArchivesRequest
 {
 
+    /// <summary>
+    /// Documentation namespace to list archives for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2156,10 +2897,16 @@ public partial class ListArchivesRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of archives to return
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int Limit { get; set; } = 20;
 
+    /// <summary>
+    /// Number of archives to skip
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
@@ -2179,11 +2926,17 @@ public partial class ListArchivesRequest
 public partial class ListArchivesResponse
 {
 
+    /// <summary>
+    /// List of archives for the namespace
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archives")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ArchiveInfo> Archives { get; set; } = new System.Collections.ObjectModel.Collection<ArchiveInfo>();
 
+    /// <summary>
+    /// Total number of archives
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("total")]
     public int Total { get; set; } = default!;
 
@@ -2202,36 +2955,63 @@ public partial class ListArchivesResponse
 public partial class ArchiveInfo
 {
 
+    /// <summary>
+    /// Unique identifier of the archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
 
+    /// <summary>
+    /// Namespace the archive belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Asset ID in Asset Service
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleAssetId")]
     public System.Guid BundleAssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Description of the archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents in the archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
     public int DocumentCount { get; set; } = default!;
 
+    /// <summary>
+    /// Total size of the archive in bytes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
     public int SizeBytes { get; set; } = default!;
 
+    /// <summary>
+    /// Git commit hash if namespace was bound at archive time
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
     public string? CommitHash { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the archive was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the user who created the archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
     public System.Guid CreatedBy { get; set; } = default!;
 
@@ -2250,6 +3030,9 @@ public partial class ArchiveInfo
 public partial class RestoreArchiveRequest
 {
 
+    /// <summary>
+    /// Unique identifier of the archive to restore
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2278,14 +3061,23 @@ public partial class RestoreArchiveRequest
 public partial class RestoreArchiveResponse
 {
 
+    /// <summary>
+    /// Namespace documents were restored to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents restored from archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsRestored")]
     public int DocumentsRestored { get; set; } = default!;
 
+    /// <summary>
+    /// Number of existing documents deleted before restore
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousDocumentsDeleted")]
     public int PreviousDocumentsDeleted { get; set; } = default!;
 
@@ -2304,6 +3096,9 @@ public partial class RestoreArchiveResponse
 public partial class DeleteArchiveRequest
 {
 
+    /// <summary>
+    /// Unique identifier of the archive to delete
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2324,6 +3119,9 @@ public partial class DeleteArchiveRequest
 public partial class DeleteArchiveResponse
 {
 
+    /// <summary>
+    /// Whether the archive was successfully deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deleted")]
     public bool Deleted { get; set; } = default!;
 

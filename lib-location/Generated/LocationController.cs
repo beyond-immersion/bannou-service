@@ -625,7 +625,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -633,17 +634,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -673,15 +678,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -812,7 +820,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -820,17 +829,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -860,15 +873,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -979,13 +995,15 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-indexed)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page"
         }
       }
     },
@@ -1027,22 +1045,28 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/LocationResponse"
-          }
+          },
+          "description": "List of locations matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of locations matching the query (across all pages)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more pages after the current page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are pages before the current page"
         }
       }
     },
@@ -1062,7 +1086,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -1070,17 +1095,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -1110,15 +1139,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -1225,18 +1257,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "includeDeprecated": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to include deprecated locations in the response"
         },
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-indexed)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page"
         }
       }
     },
@@ -1278,22 +1313,28 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/LocationResponse"
-          }
+          },
+          "description": "List of locations matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of locations matching the query (across all pages)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more pages after the current page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are pages before the current page"
         }
       }
     },
@@ -1313,7 +1354,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -1321,17 +1363,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -1361,15 +1407,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -1476,18 +1525,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "includeDeprecated": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to include deprecated locations in the response"
         },
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-indexed)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page"
         }
       }
     },
@@ -1529,22 +1581,28 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/LocationResponse"
-          }
+          },
+          "description": "List of locations matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of locations matching the query (across all pages)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more pages after the current page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are pages before the current page"
         }
       }
     },
@@ -1564,7 +1622,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -1572,17 +1631,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -1612,15 +1675,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -1727,18 +1793,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "includeDeprecated": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to include deprecated locations in the response"
         },
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-indexed)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page"
         }
       }
     },
@@ -1780,22 +1849,28 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/LocationResponse"
-          }
+          },
+          "description": "List of locations matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of locations matching the query (across all pages)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more pages after the current page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are pages before the current page"
         }
       }
     },
@@ -1815,7 +1890,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -1823,17 +1899,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -1863,15 +1943,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -1991,22 +2074,28 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/LocationResponse"
-          }
+          },
+          "description": "List of locations matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of locations matching the query (across all pages)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more pages after the current page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are pages before the current page"
         }
       }
     },
@@ -2026,7 +2115,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -2034,17 +2124,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -2074,15 +2168,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -2196,18 +2293,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "includeDeprecated": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether to include deprecated locations in the response"
         },
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-indexed)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of results per page"
         }
       }
     },
@@ -2249,22 +2349,28 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "array",
           "items": {
             "$ref": "#/$defs/LocationResponse"
-          }
+          },
+          "description": "List of locations matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of locations matching the query (across all pages)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of results per page"
         },
         "hasNextPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are more pages after the current page"
         },
         "hasPreviousPage": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether there are pages before the current page"
         }
       }
     },
@@ -2284,7 +2390,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -2292,17 +2399,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -2332,15 +2443,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -2459,7 +2573,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification for this location"
         },
         "parentLocationId": {
           "type": "string",
@@ -2516,7 +2631,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -2524,17 +2640,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -2564,15 +2684,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -2739,7 +2862,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -2747,17 +2871,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -2787,15 +2915,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -2924,7 +3055,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -2932,17 +3064,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -2972,15 +3108,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -3103,7 +3242,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -3111,17 +3251,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -3151,15 +3295,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -3370,7 +3517,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -3378,17 +3526,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -3418,15 +3570,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -3549,7 +3704,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       "properties": {
         "locationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for the location"
         },
         "realmId": {
           "type": "string",
@@ -3557,17 +3713,21 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Realm this location belongs to"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the location within its realm"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name of the location"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Optional description of the location"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification of the location"
         },
         "parentLocationId": {
           "type": "string",
@@ -3597,15 +3757,18 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the location was last updated"
         }
       }
     },
@@ -3853,7 +4016,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Code of the realm (resolved during seeding)"
         },
         "locationType": {
-          "$ref": "#/$defs/LocationType"
+          "$ref": "#/$defs/LocationType",
+          "description": "Type classification for this location"
         },
         "parentLocationCode": {
           "type": "string",
@@ -3863,7 +4027,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the location (JSON)"
         }
       }
     },

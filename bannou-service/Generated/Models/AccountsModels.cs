@@ -66,23 +66,41 @@ public enum OAuthProvider
 public partial class ListAccountsRequest
 {
 
+    /// <summary>
+    /// Filter accounts by email address
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     public string? Email { get; set; } = default!;
 
+    /// <summary>
+    /// Filter accounts by display name
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Filter accounts by authentication provider
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AuthProvider? Provider { get; set; } = default!;
 
+    /// <summary>
+    /// Filter accounts by email verification status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("verified")]
     public bool? Verified { get; set; } = default!;
 
+    /// <summary>
+    /// Page number for pagination
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of accounts per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -271,10 +289,16 @@ public partial class GetAccountByProviderRequest
 
 }
 
+/// <summary>
+/// Request to create a new account
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateAccountRequest
 {
 
+    /// <summary>
+    /// Email address for the new account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -286,16 +310,28 @@ public partial class CreateAccountRequest
     [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
     public string? PasswordHash { get; set; } = default!;
 
+    /// <summary>
+    /// Display name for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the email address has been verified
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = false;
 
+    /// <summary>
+    /// List of roles assigned to the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
+    /// <summary>
+    /// Custom metadata associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
@@ -310,6 +346,9 @@ public partial class CreateAccountRequest
 
 }
 
+/// <summary>
+/// Request to update an existing account
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateAccountRequest
 {
@@ -322,13 +361,22 @@ public partial class UpdateAccountRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// New display name for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Updated list of roles for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
+    /// <summary>
+    /// Updated custom metadata for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
@@ -343,6 +391,9 @@ public partial class UpdateAccountRequest
 
 }
 
+/// <summary>
+/// Request to update an account profile
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateProfileRequest
 {
@@ -355,10 +406,16 @@ public partial class UpdateProfileRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// New display name for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Updated custom metadata for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
@@ -373,6 +430,9 @@ public partial class UpdateProfileRequest
 
 }
 
+/// <summary>
+/// Request to update an account password
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdatePasswordRequest
 {
@@ -404,6 +464,9 @@ public partial class UpdatePasswordRequest
 
 }
 
+/// <summary>
+/// Request to update email verification status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateVerificationRequest
 {
@@ -416,6 +479,9 @@ public partial class UpdateVerificationRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// New email verification status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = default!;
 
@@ -430,6 +496,9 @@ public partial class UpdateVerificationRequest
 
 }
 
+/// <summary>
+/// Request to add an authentication method to an account
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AddAuthMethodRequest
 {
@@ -442,15 +511,24 @@ public partial class AddAuthMethodRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// OAuth provider type to add
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OAuthProvider Provider { get; set; } = default!;
 
+    /// <summary>
+    /// External user ID from the OAuth provider
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name from the OAuth provider
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
@@ -465,20 +543,32 @@ public partial class AddAuthMethodRequest
 
 }
 
+/// <summary>
+/// Account information response
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AccountResponse
 {
 
+    /// <summary>
+    /// Unique identifier for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// Email address associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
+    /// <summary>
+    /// Display name for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
@@ -488,25 +578,43 @@ public partial class AccountResponse
     [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
     public string? PasswordHash { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the email address has been verified
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = default!;
 
+    /// <summary>
+    /// List of roles assigned to the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
+    /// <summary>
+    /// List of authentication methods linked to the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
     public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = default!;
 
+    /// <summary>
+    /// Custom metadata associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
@@ -521,25 +629,43 @@ public partial class AccountResponse
 
 }
 
+/// <summary>
+/// Information about a linked authentication method
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthMethodInfo
 {
 
+    /// <summary>
+    /// Unique identifier for the authentication method
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("methodId")]
     public System.Guid MethodId { get; set; } = default!;
 
+    /// <summary>
+    /// Authentication provider type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AuthProvider Provider { get; set; } = default!;
 
+    /// <summary>
+    /// External user ID from the authentication provider
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string? ExternalId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name from the authentication provider
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the authentication method was linked
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -556,27 +682,45 @@ public partial class AuthMethodInfo
 
 }
 
+/// <summary>
+/// Response after adding an authentication method
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthMethodResponse
 {
 
+    /// <summary>
+    /// Unique identifier for the authentication method
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("methodId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MethodId { get; set; } = default!;
 
+    /// <summary>
+    /// OAuth provider type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OAuthProvider Provider { get; set; } = default!;
 
+    /// <summary>
+    /// External user ID from the OAuth provider
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name from the OAuth provider
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the authentication method was linked
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -593,10 +737,16 @@ public partial class AuthMethodResponse
 
 }
 
+/// <summary>
+/// Response containing list of authentication methods
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthMethodsResponse
 {
 
+    /// <summary>
+    /// List of authentication methods linked to the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -613,27 +763,48 @@ public partial class AuthMethodsResponse
 
 }
 
+/// <summary>
+/// Paginated list of accounts
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AccountListResponse
 {
 
+    /// <summary>
+    /// List of accounts for the current page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accounts")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<AccountResponse> Accounts { get; set; } = new System.Collections.ObjectModel.Collection<AccountResponse>();
 
+    /// <summary>
+    /// Total number of accounts matching the filter
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
+    /// <summary>
+    /// Current page number
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
+    /// <summary>
+    /// Number of accounts per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are more pages after this one
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are pages before this one
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasPreviousPage")]
     public bool HasPreviousPage { get; set; } = default!;
 

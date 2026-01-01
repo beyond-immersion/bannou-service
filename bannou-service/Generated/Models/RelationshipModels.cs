@@ -72,6 +72,9 @@ public partial class CreateRelationshipRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type of the first entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -86,6 +89,9 @@ public partial class CreateRelationshipRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type of the second entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -160,6 +166,9 @@ public partial class ListRelationshipsByEntityRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of the entity to get relationships for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -185,10 +194,16 @@ public partial class ListRelationshipsByEntityRequest
     [System.Text.Json.Serialization.JsonPropertyName("includeEnded")]
     public bool IncludeEnded { get; set; } = false;
 
+    /// <summary>
+    /// Page number for paginated results (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page (max 100)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -208,22 +223,34 @@ public partial class ListRelationshipsByEntityRequest
 public partial class GetRelationshipsBetweenRequest
 {
 
+    /// <summary>
+    /// ID of the first entity to check relationships for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type of the first entity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity1Type { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the second entity to check relationships for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type of the second entity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -279,13 +306,22 @@ public partial class ListRelationshipsByTypeRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType? Entity2Type { get; set; } = default!;
 
+    /// <summary>
+    /// Include relationships that have ended
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeEnded")]
     public bool IncludeEnded { get; set; } = false;
 
+    /// <summary>
+    /// Page number for paginated results (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
+    /// <summary>
+    /// Number of results per page (max 100)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
@@ -376,43 +412,67 @@ public partial class EndRelationshipRequest
 public partial class RelationshipResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the first entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type of the first entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity1Type { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the second entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type of the second entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity2Type { get; set; } = default!;
 
+    /// <summary>
+    /// Relationship type ID (from RelationshipType service)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// In-game timestamp when relationship started
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
+    /// <summary>
+    /// In-game timestamp when relationship ended, null if still active
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
     public System.DateTimeOffset? EndedAt { get; set; } = default!;
 
@@ -422,11 +482,17 @@ public partial class RelationshipResponse
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// System timestamp when the relationship record was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// System timestamp when the relationship record was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
@@ -445,23 +511,41 @@ public partial class RelationshipResponse
 public partial class RelationshipListResponse
 {
 
+    /// <summary>
+    /// List of relationships matching the query
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationships")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RelationshipResponse> Relationships { get; set; } = new System.Collections.ObjectModel.Collection<RelationshipResponse>();
 
+    /// <summary>
+    /// Total number of relationships matching the query
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
+    /// <summary>
+    /// Current page number (1-based)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are more results on the next page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; } = default!;
 
+    /// <summary>
+    /// Whether there are results on the previous page
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hasPreviousPage")]
     public bool HasPreviousPage { get; set; } = default!;
 

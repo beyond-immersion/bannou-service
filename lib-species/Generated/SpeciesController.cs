@@ -499,24 +499,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -535,16 +541,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -557,15 +566,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -672,24 +684,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -708,16 +726,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -730,15 +751,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -828,13 +852,15 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-based)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of items per page"
         }
       }
     }
@@ -858,16 +884,20 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/SpeciesResponse"
-          }
+          },
+          "description": "List of species matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of species matching the query (for pagination)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of items per page"
         }
       }
     },
@@ -885,24 +915,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -921,16 +957,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -943,15 +982,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -1039,13 +1081,15 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "page": {
           "type": "integer",
           "minimum": 1,
-          "default": 1
+          "default": 1,
+          "description": "Page number for pagination (1-based)"
         },
         "pageSize": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
-          "default": 20
+          "default": 20,
+          "description": "Number of items per page"
         }
       }
     }
@@ -1069,16 +1113,20 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "array",
           "items": {
             "$ref": "#/$defs/SpeciesResponse"
-          }
+          },
+          "description": "List of species matching the query"
         },
         "totalCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of species matching the query (for pagination)"
         },
         "page": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Current page number"
         },
         "pageSize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of items per page"
         }
       }
     },
@@ -1096,24 +1144,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1132,16 +1186,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -1154,15 +1211,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -1325,24 +1385,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1361,16 +1427,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -1383,15 +1452,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -1544,24 +1616,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1580,16 +1658,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -1602,15 +1683,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -1803,24 +1887,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -1839,16 +1929,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -1861,15 +1954,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -1974,24 +2070,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -2010,16 +2112,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -2032,15 +2137,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -2278,24 +2386,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -2314,16 +2428,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -2336,15 +2453,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -2455,24 +2575,30 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "speciesId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier of the species"
         },
         "code": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name for the species"
         },
         "description": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"HUMANOID\", \"BEAST\", \"MAGICAL\")"
         },
         "isPlayable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether players can create characters of this species"
         },
         "isDeprecated": {
           "type": "boolean",
@@ -2491,16 +2617,19 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Base lifespan in game years"
         },
         "maturityAge": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Age at which the species reaches maturity"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmIds": {
           "type": "array",
@@ -2513,15 +2642,18 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Additional metadata for the species"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the species was last updated"
         }
       }
     }
@@ -2627,7 +2759,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "description": {
           "type": "string",
-          "description": "Description"
+          "description": "Description of the species"
         },
         "category": {
           "type": "string",
@@ -2635,7 +2767,8 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "isPlayable": {
           "type": "boolean",
-          "default": true
+          "default": true,
+          "description": "Whether players can create characters of this species"
         },
         "baseLifespan": {
           "type": "integer",
@@ -2647,7 +2780,8 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "traitModifiers": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Base trait modifiers for this species"
         },
         "realmCodes": {
           "type": "array",
@@ -2658,7 +2792,8 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "metadata": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Additional metadata for the species"
         }
       }
     }

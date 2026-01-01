@@ -352,15 +352,18 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "example": "blacksmith-behaviors-v1"
         },
         "characterContext": {
-          "$ref": "#/$defs/CharacterContext"
+          "$ref": "#/$defs/CharacterContext",
+          "description": "Character context for context variable resolution during compilation"
         },
         "compilationOptions": {
-          "$ref": "#/$defs/CompilationOptions"
+          "$ref": "#/$defs/CompilationOptions",
+          "description": "Options controlling the compilation process"
         }
       }
     },
     "CharacterContext": {
       "type": "object",
+      "description": "Context information about a character for behavior resolution",
       "properties": {
         "npcId": {
           "type": "string",
@@ -402,24 +405,31 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "location": {
           "type": "object",
+          "description": "Character location information",
           "properties": {
             "current": {
-              "type": "string"
+              "type": "string",
+              "description": "Current location name or identifier"
             },
             "region": {
-              "type": "string"
+              "type": "string",
+              "description": "Region or zone the character is in"
             },
             "coordinates": {
               "type": "object",
+              "description": "3D coordinates of the character position",
               "properties": {
                 "x": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "X coordinate position"
                 },
                 "y": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Y coordinate position"
                 },
                 "z": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Z coordinate position"
                 }
               }
             }
@@ -500,11 +510,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "example": "blacksmith_daily_routine"
         },
         "compiledBehavior": {
-          "$ref": "#/$defs/CompiledBehavior"
+          "$ref": "#/$defs/CompiledBehavior",
+          "description": "The compiled behavior data including behavior tree and metadata"
         },
         "compilationTimeMs": {
           "type": "integer",
-          "description": "Time taken to compile the behavior"
+          "description": "Time taken to compile the behavior in milliseconds"
         },
         "assetId": {
           "type": "string",
@@ -535,10 +546,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       ],
       "properties": {
         "behaviorTree": {
-          "$ref": "#/$defs/BehaviorTreeData"
+          "$ref": "#/$defs/BehaviorTreeData",
+          "description": "Compiled behavior tree data with bytecode or download reference"
         },
         "contextSchema": {
-          "$ref": "#/$defs/ContextSchemaData"
+          "$ref": "#/$defs/ContextSchemaData",
+          "description": "Schema defining required context variables for execution"
         },
         "serviceDependencies": {
           "type": "array",
@@ -556,6 +569,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "executionMetadata": {
           "type": "object",
+          "description": "Metadata about behavior execution requirements",
           "properties": {
             "estimatedDuration": {
               "type": "integer",
@@ -565,13 +579,15 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
               "type": "object",
               "additionalProperties": {
                 "type": "number"
-              }
+              },
+              "description": "Resource requirements for behavior execution"
             },
             "interruptConditions": {
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "description": "Conditions that can interrupt behavior execution"
             }
           }
         }
@@ -722,10 +738,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Array of behavior sets to compile together"
         },
         "characterContext": {
-          "$ref": "#/$defs/CharacterContext"
+          "$ref": "#/$defs/CharacterContext",
+          "description": "Character context for context variable resolution during compilation"
         },
         "compilationOptions": {
-          "$ref": "#/$defs/CompilationOptions"
+          "$ref": "#/$defs/CompilationOptions",
+          "description": "Options controlling the compilation process"
         }
       }
     },
@@ -773,6 +791,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     },
     "CharacterContext": {
       "type": "object",
+      "description": "Context information about a character for behavior resolution",
       "properties": {
         "npcId": {
           "type": "string",
@@ -814,24 +833,31 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "location": {
           "type": "object",
+          "description": "Character location information",
           "properties": {
             "current": {
-              "type": "string"
+              "type": "string",
+              "description": "Current location name or identifier"
             },
             "region": {
-              "type": "string"
+              "type": "string",
+              "description": "Region or zone the character is in"
             },
             "coordinates": {
               "type": "object",
+              "description": "3D coordinates of the character position",
               "properties": {
                 "x": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "X coordinate position"
                 },
                 "y": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Y coordinate position"
                 },
                 "z": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Z coordinate position"
                 }
               }
             }
@@ -912,11 +938,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "example": "blacksmith_daily_routine"
         },
         "compiledBehavior": {
-          "$ref": "#/$defs/CompiledBehavior"
+          "$ref": "#/$defs/CompiledBehavior",
+          "description": "The compiled behavior data including behavior tree and metadata"
         },
         "compilationTimeMs": {
           "type": "integer",
-          "description": "Time taken to compile the behavior"
+          "description": "Time taken to compile the behavior in milliseconds"
         },
         "assetId": {
           "type": "string",
@@ -947,10 +974,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       ],
       "properties": {
         "behaviorTree": {
-          "$ref": "#/$defs/BehaviorTreeData"
+          "$ref": "#/$defs/BehaviorTreeData",
+          "description": "Compiled behavior tree data with bytecode or download reference"
         },
         "contextSchema": {
-          "$ref": "#/$defs/ContextSchemaData"
+          "$ref": "#/$defs/ContextSchemaData",
+          "description": "Schema defining required context variables for execution"
         },
         "serviceDependencies": {
           "type": "array",
@@ -968,6 +997,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "executionMetadata": {
           "type": "object",
+          "description": "Metadata about behavior execution requirements",
           "properties": {
             "estimatedDuration": {
               "type": "integer",
@@ -977,13 +1007,15 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
               "type": "object",
               "additionalProperties": {
                 "type": "number"
-              }
+              },
+              "description": "Resource requirements for behavior execution"
             },
             "interruptConditions": {
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "description": "Conditions that can interrupt behavior execution"
             }
           }
         }
@@ -1312,7 +1344,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Unique identifier for the cached behavior"
         },
         "compiledBehavior": {
-          "$ref": "#/$defs/CompiledBehavior"
+          "$ref": "#/$defs/CompiledBehavior",
+          "description": "The compiled behavior data retrieved from cache"
         },
         "cacheTimestamp": {
           "type": "string",
@@ -1333,10 +1366,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       ],
       "properties": {
         "behaviorTree": {
-          "$ref": "#/$defs/BehaviorTreeData"
+          "$ref": "#/$defs/BehaviorTreeData",
+          "description": "Compiled behavior tree data with bytecode or download reference"
         },
         "contextSchema": {
-          "$ref": "#/$defs/ContextSchemaData"
+          "$ref": "#/$defs/ContextSchemaData",
+          "description": "Schema defining required context variables for execution"
         },
         "serviceDependencies": {
           "type": "array",
@@ -1354,6 +1389,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "executionMetadata": {
           "type": "object",
+          "description": "Metadata about behavior execution requirements",
           "properties": {
             "estimatedDuration": {
               "type": "integer",
@@ -1363,13 +1399,15 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
               "type": "object",
               "additionalProperties": {
                 "type": "number"
-              }
+              },
+              "description": "Resource requirements for behavior execution"
             },
             "interruptConditions": {
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "description": "Conditions that can interrupt behavior execution"
             }
           }
         }
@@ -1601,12 +1639,14 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "example": "${npc.stats.energy > 0.5 && world.time.hour < 18}"
         },
         "characterContext": {
-          "$ref": "#/$defs/CharacterContext"
+          "$ref": "#/$defs/CharacterContext",
+          "description": "Character context providing values for variable resolution"
         }
       }
     },
     "CharacterContext": {
       "type": "object",
+      "description": "Context information about a character for behavior resolution",
       "properties": {
         "npcId": {
           "type": "string",
@@ -1648,24 +1688,31 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "location": {
           "type": "object",
+          "description": "Character location information",
           "properties": {
             "current": {
-              "type": "string"
+              "type": "string",
+              "description": "Current location name or identifier"
             },
             "region": {
-              "type": "string"
+              "type": "string",
+              "description": "Region or zone the character is in"
             },
             "coordinates": {
               "type": "object",
+              "description": "3D coordinates of the character position",
               "properties": {
                 "x": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "X coordinate position"
                 },
                 "y": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Y coordinate position"
                 },
                 "z": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Z coordinate position"
                 }
               }
             }
@@ -1801,7 +1848,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Unique identifier for the agent requesting the plan"
         },
         "goal": {
-          "$ref": "#/$defs/GoapGoal"
+          "$ref": "#/$defs/GoapGoal",
+          "description": "The goal to achieve through planning"
         },
         "worldState": {
           "type": "object",
@@ -1818,7 +1866,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "ID of compiled behavior containing GOAP actions"
         },
         "options": {
-          "$ref": "#/$defs/GoapPlanningOptions"
+          "$ref": "#/$defs/GoapPlanningOptions",
+          "description": "Options controlling the planning process"
         }
       }
     },
@@ -1905,7 +1954,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Whether planning was successful"
         },
         "plan": {
-          "$ref": "#/$defs/GoapPlanResult"
+          "$ref": "#/$defs/GoapPlanResult",
+          "description": "The generated plan if successful"
         },
         "planningTimeMs": {
           "type": "integer",
@@ -2045,7 +2095,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       ],
       "properties": {
         "plan": {
-          "$ref": "#/$defs/GoapPlanResult"
+          "$ref": "#/$defs/GoapPlanResult",
+          "description": "The plan to validate"
         },
         "currentActionIndex": {
           "type": "integer",
