@@ -250,25 +250,40 @@ dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 csharp_style_prefer_primary_constructors = true:suggestion
 
-# Relax null-forgiving operator rules for generated files
-# Generated files use = default! pattern which is acceptable for auto-generated code
+# Generated file warning suppressions (T22 compliant - NSwag patterns we cannot control)
+# These suppressions exist because NSwag generates code patterns we cannot modify at the source:
+# - Nullable parameters passed to non-null interface methods
+# - Properties initialized with `= default!`
+# - Null comparisons in serialization code
+# All other warnings remain enabled. Non-generated code has NO suppressions.
+# See: docs/reference/tenets/QUALITY.md (T22)
+[**/Generated/**/*.cs]
+dotnet_diagnostic.CS8618.severity = none  # Non-nullable not initialized - NSwag uses = default!
+dotnet_diagnostic.CS8600.severity = none  # Converting null literal - NSwag nullable parameters
+dotnet_diagnostic.CS8602.severity = none  # Dereference possibly null - NSwag serialization patterns
+dotnet_diagnostic.CS8603.severity = none  # Possible null return - NSwag deserialization
+dotnet_diagnostic.CS8604.severity = none  # Null argument - NSwag nullable body → non-null interface
+dotnet_diagnostic.CS1591.severity = none  # Missing XML comment - generated code doesn't need docs
+dotnet_diagnostic.CS1573.severity = none  # Missing XML param tag - generated code doesn't need docs
+
+# Also match files directly in Generated/ (not in subdirectories)
 [**/Generated/*.cs]
 dotnet_diagnostic.CS8618.severity = none
-dotnet_diagnostic.CS8625.severity = none
 dotnet_diagnostic.CS8600.severity = none
 dotnet_diagnostic.CS8602.severity = none
 dotnet_diagnostic.CS8603.severity = none
 dotnet_diagnostic.CS8604.severity = none
-dotnet_diagnostic.CS8632.severity = none
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.CS1573.severity = none
 
 [*.Generated.cs]
-dotnet_diagnostic.CS8618.severity = none
-dotnet_diagnostic.CS8625.severity = none
-dotnet_diagnostic.CS8600.severity = none
-dotnet_diagnostic.CS8602.severity = none
-dotnet_diagnostic.CS8603.severity = none
-dotnet_diagnostic.CS8604.severity = none
-dotnet_diagnostic.CS8632.severity = none
+dotnet_diagnostic.CS8618.severity = none  # Non-nullable not initialized - NSwag uses = default!
+dotnet_diagnostic.CS8600.severity = none  # Converting null literal - NSwag nullable parameters
+dotnet_diagnostic.CS8602.severity = none  # Dereference possibly null - NSwag serialization patterns
+dotnet_diagnostic.CS8603.severity = none  # Possible null return - NSwag deserialization
+dotnet_diagnostic.CS8604.severity = none  # Null argument - NSwag nullable body → non-null interface
+dotnet_diagnostic.CS1591.severity = none  # Missing XML comment - generated code doesn't need docs
+dotnet_diagnostic.CS1573.severity = none  # Missing XML param tag - generated code doesn't need docs
 
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line

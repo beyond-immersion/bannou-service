@@ -146,29 +146,13 @@ if [ ! -f "$GLOBAL_USINGS_FILE" ]; then
     fi
 fi
 
-# Always create/overwrite GlobalSuppressions.cs to ensure latest suppressions are applied
-GLOBAL_SUPPRESSIONS_FILE="$TEST_PROJECT_DIR/GlobalSuppressions.cs"
-echo -e "${YELLOW}📝 Creating GlobalSuppressions.cs...${NC}"
-
-cat > "$GLOBAL_SUPPRESSIONS_FILE" << 'EOF'
-// This file is used to suppress code analysis warnings that are applied project-wide.
-// Note: Compiler warnings (CS8620, CS8602, etc.) are suppressed via Directory.Build.props
-// using the <NoWarn> property, which is the correct MSBuild approach for project-wide suppression.
-
-using System.Diagnostics.CodeAnalysis;
-
-// CA1822: Member does not access instance data and can be marked as static
-// Test methods often don't access instance data but should remain instance methods for test framework compatibility
-[assembly: SuppressMessage("Performance", "CA1822:Mark members as static",
-    Justification = "Test methods should remain instance methods for test framework compatibility")]
-EOF
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Created GlobalSuppressions.cs${NC}"
-else
-    echo -e "${RED}❌ Failed to create GlobalSuppressions.cs${NC}"
-    exit 1
-fi
+# Per T22: GlobalSuppressions.cs files with blanket CA1822 suppression are forbidden.
+# xUnit does NOT require instance methods - the previous justification was incorrect.
+# If CA1822 fires on a test method, either make it static or fix the underlying issue.
+# See: docs/reference/tenets/QUALITY.md (T22)
+#
+# NOTE: This script no longer creates GlobalSuppressions.cs files.
+# Any existing files should be deleted as part of T22 compliance cleanup.
 
 # Create basic service tests if they don't exist
 SERVICE_TESTS_FILE="$TEST_PROJECT_DIR/${SERVICE_PASCAL}ServiceTests.cs"

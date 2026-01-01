@@ -52,6 +52,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         Assert.NotNull(result.Bytecode);
         Assert.NotEmpty(result.Bytecode);
@@ -79,6 +80,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain PushConst (0x00) and StoreLocal (0x03)
         Assert.Contains((byte)BehaviorOpcode.PushConst, result.Bytecode);
@@ -98,6 +100,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain JmpUnless (0x42)
         Assert.Contains((byte)BehaviorOpcode.JmpUnless, result.Bytecode);
@@ -128,6 +131,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Jmp (0x40)
         Assert.Contains((byte)BehaviorOpcode.Jmp, result.Bytecode);
@@ -164,6 +168,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Add (0x10) and Mul (0x12)
         Assert.Contains((byte)BehaviorOpcode.Add, result.Bytecode);
@@ -183,6 +188,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Lt (0x22)
         Assert.Contains((byte)BehaviorOpcode.Lt, result.Bytecode);
@@ -201,6 +207,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Short-circuit AND uses Dup, JmpUnless, Pop
         Assert.Contains((byte)BehaviorOpcode.Dup, result.Bytecode);
@@ -236,6 +243,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain 3 Trace instructions (for repeat times <= 4, loop is unrolled)
         var traceCount = result.Bytecode!.Count(b => b == (byte)BehaviorOpcode.Trace);
@@ -267,6 +275,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain a backward Jmp for the loop
         Assert.Contains((byte)BehaviorOpcode.Jmp, result.Bytecode);
@@ -295,6 +304,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Halt (0x45)
         Assert.Contains((byte)BehaviorOpcode.Halt, result.Bytecode);
@@ -327,6 +337,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should use StoreLocal and PushLocal
         Assert.Contains((byte)BehaviorOpcode.StoreLocal, result.Bytecode);
@@ -356,6 +367,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Add and StoreLocal
         Assert.Contains((byte)BehaviorOpcode.Add, result.Bytecode);
@@ -385,6 +397,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Sub and StoreLocal
         Assert.Contains((byte)BehaviorOpcode.Sub, result.Bytecode);
@@ -423,6 +436,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain ContinuationPoint (0x70)
         Assert.Contains((byte)BehaviorOpcode.ContinuationPoint, result.Bytecode);
@@ -457,6 +471,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain EmitIntent (0x52)
         Assert.Contains((byte)BehaviorOpcode.EmitIntent, result.Bytecode);
@@ -531,6 +546,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Rand (0x60)
         Assert.Contains((byte)BehaviorOpcode.Rand, result.Bytecode);
@@ -562,6 +578,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Clamp (0x63)
         Assert.Contains((byte)BehaviorOpcode.Clamp, result.Bytecode);
@@ -595,6 +612,7 @@ flows:
             var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
             Assert.Fail($"Compilation failed with errors: {errorMessages}");
         }
+        Assert.NotNull(result.Bytecode);
 
         // Should contain Min (0x67) and Max (0x68)
         Assert.Contains((byte)BehaviorOpcode.Min, result.Bytecode);

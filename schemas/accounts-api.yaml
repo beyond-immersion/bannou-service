@@ -670,25 +670,31 @@ components:
           type: string
           format: email
           nullable: true
+          description: Filter accounts by email address
         displayName:
           type: string
           nullable: true
+          description: Filter accounts by display name
         provider:
           allOf:
           - $ref: '#/components/schemas/AuthProvider'
           nullable: true
+          description: Filter accounts by authentication provider
         verified:
           type: boolean
           nullable: true
+          description: Filter accounts by email verification status
         page:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of accounts per page
 
     GetAccountRequest:
       type: object
@@ -766,12 +772,14 @@ components:
 
     CreateAccountRequest:
       type: object
+      description: Request to create a new account
       required:
       - email
       properties:
         email:
           type: string
           format: email
+          description: Email address for the new account
         passwordHash:
           type: string
           nullable: true
@@ -780,21 +788,26 @@ components:
           type: string
           nullable: true
           maxLength: 100
+          description: Display name for the account
         emailVerified:
           type: boolean
           default: false
+          description: Whether the email address has been verified
         roles:
           type: array
           items:
             type: string
           default: []
+          description: List of roles assigned to the account
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          description: Custom metadata associated with the account
 
     UpdateAccountRequest:
       type: object
+      description: Request to update an existing account
       required:
       - accountId
       properties:
@@ -806,17 +819,21 @@ components:
           type: string
           nullable: true
           maxLength: 100
+          description: New display name for the account
         roles:
           type: array
           items:
             type: string
+          description: Updated list of roles for the account
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          description: Updated custom metadata for the account
 
     UpdateProfileRequest:
       type: object
+      description: Request to update an account profile
       required:
       - accountId
       properties:
@@ -828,13 +845,16 @@ components:
           type: string
           nullable: true
           maxLength: 100
+          description: New display name for the account
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          description: Updated custom metadata for the account
 
     UpdatePasswordRequest:
       type: object
+      description: Request to update an account password
       required:
       - accountId
       - passwordHash
@@ -849,6 +869,7 @@ components:
 
     UpdateVerificationRequest:
       type: object
+      description: Request to update email verification status
       required:
       - accountId
       - emailVerified
@@ -859,9 +880,11 @@ components:
           description: ID of the account to update
         emailVerified:
           type: boolean
+          description: New email verification status
 
     AddAuthMethodRequest:
       type: object
+      description: Request to add an authentication method to an account
       required:
       - accountId
       - provider
@@ -872,15 +895,19 @@ components:
           description: ID of the account to add auth method to
         provider:
           $ref: '#/components/schemas/OAuthProvider'
+          description: OAuth provider type to add
         externalId:
           type: string
+          description: External user ID from the OAuth provider
         displayName:
           type: string
           nullable: true
+          description: Display name from the OAuth provider
 
     # Response Models
     AccountResponse:
       type: object
+      description: Account information response
       required:
       - accountId
       - email
@@ -891,12 +918,15 @@ components:
         accountId:
           type: string
           format: uuid
+          description: Unique identifier for the account
         email:
           type: string
           format: email
+          description: Email address associated with the account
         displayName:
           type: string
           nullable: true
+          description: Display name for the account
         passwordHash:
           type: string
           nullable: true
@@ -904,27 +934,34 @@ components:
         createdAt:
           type: string
           format: date-time
+          description: Timestamp when the account was created
         updatedAt:
           type: string
           format: date-time
           nullable: true
+          description: Timestamp when the account was last updated
         emailVerified:
           type: boolean
+          description: Whether the email address has been verified
         roles:
           type: array
           items:
             type: string
+          description: List of roles assigned to the account
         authMethods:
           type: array
           items:
             $ref: '#/components/schemas/AuthMethodInfo'
+          description: List of authentication methods linked to the account
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          description: Custom metadata associated with the account
 
     AuthMethodInfo:
       type: object
+      description: Information about a linked authentication method
       required:
       - provider
       - linkedAt
@@ -932,20 +969,26 @@ components:
         methodId:
           type: string
           format: uuid
+          description: Unique identifier for the authentication method
         provider:
           $ref: '#/components/schemas/AuthProvider'
+          description: Authentication provider type
         externalId:
           type: string
           nullable: true
+          description: External user ID from the authentication provider
         displayName:
           type: string
           nullable: true
+          description: Display name from the authentication provider
         linkedAt:
           type: string
           format: date-time
+          description: Timestamp when the authentication method was linked
 
     AuthMethodResponse:
       type: object
+      description: Response after adding an authentication method
       required:
       - methodId
       - provider
@@ -954,19 +997,25 @@ components:
         methodId:
           type: string
           format: uuid
+          description: Unique identifier for the authentication method
         provider:
           $ref: '#/components/schemas/OAuthProvider'
+          description: OAuth provider type
         externalId:
           type: string
+          description: External user ID from the OAuth provider
         displayName:
           type: string
           nullable: true
+          description: Display name from the OAuth provider
         linkedAt:
           type: string
           format: date-time
+          description: Timestamp when the authentication method was linked
 
     AuthMethodsResponse:
       type: object
+      description: Response containing list of authentication methods
       required:
       - authMethods
       properties:
@@ -974,9 +1023,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuthMethodInfo'
+          description: List of authentication methods linked to the account
 
     AccountListResponse:
       type: object
+      description: Paginated list of accounts
       required:
       - accounts
       - totalCount
@@ -987,14 +1038,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AccountResponse'
+          description: List of accounts for the current page
         totalCount:
           type: integer
+          description: Total number of accounts matching the filter
         page:
           type: integer
+          description: Current page number
         pageSize:
           type: integer
+          description: Number of accounts per page
         hasNextPage:
           type: boolean
+          description: Whether there are more pages after this one
         hasPreviousPage:
           type: boolean
-
+          description: Whether there are pages before this one
