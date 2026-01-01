@@ -359,8 +359,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "species.created",
             It.IsAny<SpeciesCreatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -469,8 +467,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "species.updated",
             It.IsAny<SpeciesUpdatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
