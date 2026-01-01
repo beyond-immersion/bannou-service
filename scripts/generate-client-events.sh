@@ -48,6 +48,8 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
     if [ $? -eq 0 ]; then
         # Post-process: Add [JsonRequired] after each [Required] attribute
         sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$TARGET_DIR/CommonClientEventsModels.cs"
+        # Post-process: Fix EventName shadowing - add 'override' keyword
+        sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$TARGET_DIR/CommonClientEventsModels.cs"
         echo -e "${GREEN}✅ Common client events generated${NC}"
         echo -e "   📁 Output: $TARGET_DIR/CommonClientEventsModels.cs"
         GENERATED_EVENTS+=("BaseClientEvent")
@@ -124,6 +126,8 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
 
         # Post-process: Add [JsonRequired] after each [Required] attribute
         sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$output_file"
+        # Post-process: Fix EventName shadowing - add 'override' keyword
+        sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$output_file"
 
         echo -e "${GREEN}  ✅ $pascal_case client events generated${NC}"
         echo -e "     📁 Output: $TARGET_DIR/${pascal_case}ClientEventsModels.cs"

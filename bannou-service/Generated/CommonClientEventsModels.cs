@@ -40,7 +40,7 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "connect.capability_manifest";
+    public override string EventName { get; set; } = "connect.capability_manifest";
 
     /// <summary>
     /// Session ID this manifest applies to
@@ -144,7 +144,7 @@ public partial class DisconnectNotificationEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "connect.disconnect_notification";
+    public override string EventName { get; set; } = "connect.disconnect_notification";
 
     /// <summary>
     /// Token for reconnecting to the same session (valid for 5 minutes)
@@ -192,7 +192,7 @@ public partial class SystemErrorEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "system.error";
+    public override string EventName { get; set; } = "system.error";
 
     /// <summary>
     /// Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
@@ -238,7 +238,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// Fixed event type identifier (internal, not forwarded to client)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "permissions.session_capabilities";
+    public override string EventName { get; set; } = "permissions.session_capabilities";
 
     /// <summary>
     /// Session ID these capabilities apply to
@@ -277,7 +277,7 @@ public partial class SystemNotificationEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "system.notification";
+    public override string EventName { get; set; } = "system.notification";
 
     /// <summary>
     /// Type of notification
@@ -330,7 +330,7 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "session.shortcut_published";
+    public override string EventName { get; set; } = "session.shortcut_published";
 
     /// <summary>
     /// Target session for this shortcut.
@@ -370,7 +370,7 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public string EventName { get; set; } = "session.shortcut_revoked";
+    public override string EventName { get; set; } = "session.shortcut_revoked";
 
     /// <summary>
     /// Target session for revocation.

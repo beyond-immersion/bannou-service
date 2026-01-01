@@ -39,7 +39,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "location.created";
+    public override string EventName { get; set; } = "location.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -112,7 +112,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "location.updated";
+    public override string EventName { get; set; } = "location.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -193,7 +193,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "location.deleted";
+    public override string EventName { get; set; } = "location.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

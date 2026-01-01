@@ -43,7 +43,7 @@ public partial class SessionStateChangedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "game_session.state_changed";
+    public override string EventName { get; set; } = "game_session.state_changed";
 
     /// <summary>
     /// ID of the game session
@@ -99,7 +99,7 @@ public partial class PlayerJoinedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "game_session.player_joined";
+    public override string EventName { get; set; } = "game_session.player_joined";
 
     /// <summary>
     /// ID of the game session
@@ -142,7 +142,7 @@ public partial class PlayerLeftEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "game_session.player_left";
+    public override string EventName { get; set; } = "game_session.player_left";
 
     /// <summary>
     /// ID of the game session
@@ -195,7 +195,7 @@ public partial class PlayerKickedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "game_session.player_kicked";
+    public override string EventName { get; set; } = "game_session.player_kicked";
 
     /// <summary>
     /// ID of the game session
@@ -250,7 +250,7 @@ public partial class ChatMessageReceivedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "game_session.chat_received";
+    public override string EventName { get; set; } = "game_session.chat_received";
 
     /// <summary>
     /// ID of the game session
@@ -322,7 +322,7 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "game_session.state_updated";
+    public override string EventName { get; set; } = "game_session.state_updated";
 
     /// <summary>
     /// ID of the game session
@@ -375,7 +375,7 @@ public partial class GameActionResultEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "game_session.action_result";
+    public override string EventName { get; set; } = "game_session.action_result";
 
     /// <summary>
     /// ID of the game session

@@ -39,7 +39,7 @@ public partial class RelationshipCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "relationship.created";
+    public override string EventName { get; set; } = "relationship.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -105,7 +105,7 @@ public partial class RelationshipUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "relationship.updated";
+    public override string EventName { get; set; } = "relationship.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -179,7 +179,7 @@ public partial class RelationshipDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "relationship.deleted";
+    public override string EventName { get; set; } = "relationship.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

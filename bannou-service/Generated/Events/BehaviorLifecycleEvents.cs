@@ -39,7 +39,7 @@ public partial class BehaviorCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "behavior.created";
+    public override string EventName { get; set; } = "behavior.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -89,7 +89,7 @@ public partial class BehaviorUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "behavior.updated";
+    public override string EventName { get; set; } = "behavior.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -147,7 +147,7 @@ public partial class BehaviorDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "behavior.deleted";
+    public override string EventName { get; set; } = "behavior.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

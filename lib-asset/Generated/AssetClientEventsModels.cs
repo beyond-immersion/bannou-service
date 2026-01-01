@@ -43,7 +43,7 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "asset.upload.complete";
+    public override string EventName { get; set; } = "asset.upload.complete";
 
     /// <summary>
     /// Correlates with the upload request
@@ -104,7 +104,7 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "asset.processing.complete";
+    public override string EventName { get; set; } = "asset.processing.complete";
 
     /// <summary>
     /// ID of the asset that was processed
@@ -156,7 +156,7 @@ public partial class AssetProcessingFailedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "asset.processing.failed";
+    public override string EventName { get; set; } = "asset.processing.failed";
 
     /// <summary>
     /// ID of the asset that failed processing
@@ -205,7 +205,7 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "asset.bundle.validation.complete";
+    public override string EventName { get; set; } = "asset.bundle.validation.complete";
 
     /// <summary>
     /// Correlates with the bundle upload request
@@ -258,7 +258,7 @@ public partial class BundleValidationFailedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "asset.bundle.validation.failed";
+    public override string EventName { get; set; } = "asset.bundle.validation.failed";
 
     /// <summary>
     /// Correlates with the bundle upload request
@@ -289,7 +289,7 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "asset.bundle.creation.complete";
+    public override string EventName { get; set; } = "asset.bundle.creation.complete";
 
     /// <summary>
     /// ID of the created bundle
@@ -352,7 +352,7 @@ public partial class AssetReadyEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "asset.ready";
+    public override string EventName { get; set; } = "asset.ready";
 
     /// <summary>
     /// ID of the asset that is now ready

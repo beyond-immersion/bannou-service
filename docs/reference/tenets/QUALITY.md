@@ -227,7 +227,57 @@ Generated files in `*/Generated/` directories do not require manual documentatio
 | Wrong naming pattern | T16 | Follow category-specific pattern |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
 | Missing env var in config doc | T19 | Add environment variable to summary |
+| `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
+| Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
+| Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
 
 ---
 
-*This document covers tenets T10, T11, T12, T16, T19. See [TENETS.md](../TENETS.md) for the complete index.*
+## Tenet 22: Warning Suppression (FORBIDDEN)
+
+**Rule**: Warning suppressions (`#pragma warning disable`, `[SuppressMessage]`, `NoWarn`) are FORBIDDEN except for specific documented exceptions.
+
+### The Problem
+
+Suppressing warnings hides real issues until they manifest as runtime bugs. The `session.connected` deserialization failure was caused by CS0108 (member hiding) being suppressed - the warning would have caught the bug at compile time.
+
+### Forbidden Patterns
+
+**NEVER**:
+- Add blanket suppressions to hide warnings instead of fixing them
+- Suppress nullability warnings (CS8602, CS8603, CS8604) in non-generated code
+- Suppress member hiding warnings (CS0108, CS0114) without proper `override` or `new`
+- Create GlobalSuppressions.cs files with assembly-wide suppressions for convenience
+- Add warnings to `NoWarn` in Directory.Build.props to "make builds cleaner"
+
+### Allowed Exceptions
+
+**Moq Generic Inference (Tests Only)**:
+- CS8620, CS8619 - Moq's generic type inference causes unavoidable nullability mismatches
+- Suppress per-file or in test Directory.Build.props only
+
+**NSwag Generated Files Only**:
+- CS8618, CS8625 - NSwag uses `= default!` pattern we can't control
+- Configure in `.editorconfig` for `**/Generated/*.cs` paths only
+
+**Intentional Obsolete Testing**:
+- CS0618 - When testing obsolete API detection, must use obsolete members
+- Suppress with scoped `#pragma warning disable/restore`
+
+**Async Interface Compliance**:
+- CS1998 - Async methods without await are valid for interface compliance
+- Assembly-level suppression acceptable
+
+### When Warnings Appear
+
+1. **FIRST**: Understand what the warning is telling you
+2. **THEN**: Fix the underlying issue
+3. **ONLY IF**: The warning is from generated code you cannot control AND is in the allowed exceptions list, suppress it
+
+### Post-Processing Over Suppression
+
+If generated code has fixable issues, add post-processing to generation scripts rather than suppressing warnings. Example: adding `override` keyword to fix CS0108 in generated events.
+
+---
+
+*This document covers tenets T10, T11, T12, T16, T19, T22. See [TENETS.md](../TENETS.md) for the complete index.*

@@ -18,7 +18,7 @@ Tenets are organized into three categories based on when they're needed:
 |----------|--------|-------------------|
 | [**Foundation**](tenets/FOUNDATION.md) | T1, T2, T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
 | [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21 | While actively writing service code |
-| [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19 | During code review or before PR submission |
+| [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 ---
 
@@ -67,6 +67,7 @@ Tenets are organized into three categories based on when they're needed:
 | **T12** | Test Integrity | Never weaken tests to pass; failing test = fix implementation |
 | **T16** | Naming Conventions | Consistent patterns for methods, models, events, topics |
 | **T19** | XML Documentation | All public APIs documented with summary, params, returns |
+| **T22** | Warning Suppression | Forbidden except Moq/NSwag exceptions; fix warnings, don't hide them |
 
 ---
 
@@ -98,6 +99,9 @@ Tenets are organized into three categories based on when they're needed:
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
+| `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
+| Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
+| Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
 
 ---
 

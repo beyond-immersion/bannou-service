@@ -41,7 +41,7 @@ public partial class ServiceRegistrationEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "service.registration";
+    public override string EventName { get; set; } = "service.registration";
 
     /// <summary>
     /// Unique GUID identifying this bannou instance (for log correlation/debugging)
@@ -209,7 +209,7 @@ public partial class ServiceHeartbeatEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "service.heartbeat";
+    public override string EventName { get; set; } = "service.heartbeat";
 
     /// <summary>
     /// Unique GUID identifying this bannou instance (for log correlation/debugging)
@@ -373,7 +373,7 @@ public partial class ServiceErrorEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "service.error";
+    public override string EventName { get; set; } = "service.error";
 
     /// <summary>
     /// Unique GUID identifying this plugin instance (for log correlation/debugging)
@@ -491,7 +491,7 @@ public partial class FullServiceMappingsEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "orchestrator.full_service_mappings";
+    public override string EventName { get; set; } = "orchestrator.full_service_mappings";
 
     /// <summary>
     /// Complete dictionary of serviceName -&gt; appId mappings
@@ -546,7 +546,7 @@ public partial class SessionConnectedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "session.connected";
+    public override string EventName { get; set; } = "session.connected";
 
     /// <summary>
     /// Session ID that just connected via WebSocket
@@ -606,7 +606,7 @@ public partial class SessionDisconnectedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "session.disconnected";
+    public override string EventName { get; set; } = "session.disconnected";
 
     /// <summary>
     /// Session ID that disconnected
@@ -663,7 +663,7 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EventName { get; set; } = "session.reconnected";
+    public override string EventName { get; set; } = "session.reconnected";
 
     /// <summary>
     /// Session ID that reconnected
