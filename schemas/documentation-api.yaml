@@ -576,33 +576,32 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateDocumentRequest\"\
         ,\n  \"$defs\": {\n    \"UpdateDocumentRequest\": {\n      \"description\": \"Request to update an existing document's
-        fields\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\"\n      ],\n      \"properties\"\
-        : {\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n       \
-        \   \"maxLength\": 50,\n          \"description\": \"Documentation namespace containing the document\"\n        },\n\
-        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Unique identifier of the document to update (null if not changing)\"\n     \
-        \   },\n        \"slug\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"New URL-friendly slug for the document (null to keep unchanged)\"\n        },\n        \"title\": {\n        \
-        \  \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"New display title for the document
-        (null to keep unchanged)\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"New category for the document (null to keep unchanged)\"\
-        \n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"New markdown content for the document (null to keep unchanged)\"\n        },\n        \"summary\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"New text summary
-        for the document (null to keep unchanged)\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"New voice-optimized summary for the document (null
-        to keep unchanged)\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n  \
-        \          \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"New set
-        of tags for the document (null to keep unchanged)\"\n        },\n        \"relatedDocuments\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n      \
-        \    },\n          \"nullable\": true,\n          \"description\": \"New set of related document IDs (null to keep
-        unchanged)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true,\n          \"description\": \"New custom metadata key-value pairs (null to
-        keep unchanged)\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"\
-        enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\"\
-        ,\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n    \
-        \    \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\
-        \n    }\n  }\n}"
+        fields\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\",\n        \"documentId\"\n  \
+        \    ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\"\
+        : \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n          \"description\": \"Documentation namespace containing
+        the document\"\n        },\n        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
+        ,\n          \"description\": \"Unique identifier of the document to update\"\n        },\n        \"slug\": {\n \
+        \         \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"New URL-friendly slug
+        for the document (null to keep unchanged)\"\n        },\n        \"title\": {\n          \"type\": \"string\",\n \
+        \         \"nullable\": true,\n          \"description\": \"New display title for the document (null to keep unchanged)\"\
+        \n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"nullable\":
+        true,\n          \"description\": \"New category for the document (null to keep unchanged)\"\n        },\n       \
+        \ \"content\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"New
+        markdown content for the document (null to keep unchanged)\"\n        },\n        \"summary\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"New text summary for the document (null
+        to keep unchanged)\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"New voice-optimized summary for the document (null to keep unchanged)\"\n  \
+        \      },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
+        \n          },\n          \"nullable\": true,\n          \"description\": \"New set of tags for the document (null
+        to keep unchanged)\"\n        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n          \"items\"\
+        : {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"nullable\": true,\n\
+        \          \"description\": \"New set of related document IDs (null to keep unchanged)\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"New custom metadata key-value pairs (null to keep unchanged)\"\n        }\n      }\n\
+        \    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\"\
+        ,\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n\
+        \        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\
+        \n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateDocumentResponse\"\
         ,\n  \"$defs\": {\n    \"UpdateDocumentResponse\": {\n      \"description\": \"Response confirming document update
         with timestamp\",\n      \"type\": \"object\",\n      \"required\": [\n        \"documentId\",\n        \"updatedAt\"\
@@ -2178,6 +2177,7 @@ components:
       type: object
       required:
       - namespace
+      - documentId
       properties:
         namespace:
           type: string
@@ -2187,8 +2187,7 @@ components:
         documentId:
           type: string
           format: uuid
-          nullable: true
-          description: Unique identifier of the document to update (null if not changing)
+          description: Unique identifier of the document to update
         slug:
           type: string
           nullable: true

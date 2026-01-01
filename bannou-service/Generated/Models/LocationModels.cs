@@ -135,17 +135,19 @@ public partial class GetLocationByCodeRequest
 }
 
 /// <summary>
-/// Request to list locations with optional filtering by realm, type, and deprecation status
+/// Request to list locations within a realm with optional type and deprecation filtering
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListLocationsRequest
 {
 
     /// <summary>
-    /// Filter by realm
+    /// Realm ID to query (required - locations are partitioned by realm)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// Filter by location type

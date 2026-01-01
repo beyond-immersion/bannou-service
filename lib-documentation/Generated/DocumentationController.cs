@@ -2397,7 +2397,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "description": "Request to update an existing document's fields",
       "type": "object",
       "required": [
-        "namespace"
+        "namespace",
+        "documentId"
       ],
       "properties": {
         "namespace": {
@@ -2409,8 +2410,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "documentId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true,
-          "description": "Unique identifier of the document to update (null if not changing)"
+          "description": "Unique identifier of the document to update"
         },
         "slug": {
           "type": "string",

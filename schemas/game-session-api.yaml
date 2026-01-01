@@ -84,10 +84,10 @@ paths:
         \   ],\n          \"description\": \"Role of the player in the game session\"\n        },\n        \"joinedAt\": {\n\
         \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when
         the player joined the session\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n     \
-        \     \"additionalProperties\": true,\n          \"description\": \"Game-specific character data for this player\"\
-        \n        },\n        \"voiceSessionId\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n    \
-        \      \"description\": \"Voice participant session ID (if player has joined voice)\"\n        }\n      }\n    }\n\
-        \  }\n}"
+        \     \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Game-specific character
+        data for this player (null if none provided)\"\n        },\n        \"voiceSessionId\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true,\n          \"description\": \"Voice participant session ID (if player has
+        joined voice)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List available game sessions\",\n  \"description\": \"List available game
         sessions. This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts
         or internal service calls.\\n\",\n  \"tags\": [\n    \"Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
@@ -164,10 +164,10 @@ paths:
         \   ],\n          \"description\": \"Role of the player in the game session\"\n        },\n        \"joinedAt\": {\n\
         \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when
         the player joined the session\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n     \
-        \     \"additionalProperties\": true,\n          \"description\": \"Game-specific character data for this player\"\
-        \n        },\n        \"voiceSessionId\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n    \
-        \      \"description\": \"Voice participant session ID (if player has joined voice)\"\n        }\n      }\n    }\n\
-        \  }\n}"
+        \     \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Game-specific character
+        data for this player (null if none provided)\"\n        },\n        \"voiceSessionId\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true,\n          \"description\": \"Voice participant session ID (if player has
+        joined voice)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Create new game session\",\n  \"description\": \"Create a new game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts or internal
         service calls.\\n\",\n  \"tags\": [\n    \"Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"\
@@ -235,10 +235,10 @@ paths:
         \   ],\n          \"description\": \"Role of the player in the game session\"\n        },\n        \"joinedAt\": {\n\
         \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when
         the player joined the session\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n     \
-        \     \"additionalProperties\": true,\n          \"description\": \"Game-specific character data for this player\"\
-        \n        },\n        \"voiceSessionId\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n    \
-        \      \"description\": \"Voice participant session ID (if player has joined voice)\"\n        }\n      }\n    }\n\
-        \  }\n}"
+        \     \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Game-specific character
+        data for this player (null if none provided)\"\n        },\n        \"voiceSessionId\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true,\n          \"description\": \"Voice participant session ID (if player has
+        joined voice)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get game session details\",\n  \"description\": \"Get details of the current
         game session the user has joined.\",\n  \"tags\": [\n    \"Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
         : \"getGameSession\"\n}"
@@ -715,7 +715,8 @@ components:
         characterData:
           type: object
           additionalProperties: true
-          description: Game-specific character data for this player
+          nullable: true
+          description: Game-specific character data for this player (null if none provided)
         voiceSessionId:
           type: string
           nullable: true

@@ -16019,7 +16019,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.DocumentId">
             <summary>
-            Unique identifier of the document to update (null if not changing)
+            Unique identifier of the document to update
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.Slug">
@@ -18085,7 +18085,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GamePlayer.CharacterData">
             <summary>
-            Game-specific character data for this player
+            Game-specific character data for this player (null if none provided)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GamePlayer.VoiceSessionId">
@@ -18875,12 +18875,12 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Location.ListLocationsRequest">
             <summary>
-            Request to list locations with optional filtering by realm, type, and deprecation status
+            Request to list locations within a realm with optional type and deprecation filtering
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.ListLocationsRequest.RealmId">
             <summary>
-            Filter by realm
+            Realm ID to query (required - locations are partitioned by realm)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.ListLocationsRequest.LocationType">

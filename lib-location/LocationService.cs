@@ -135,14 +135,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Listing locations with filters - RealmId: {RealmId}, LocationType: {LocationType}, IncludeDeprecated: {IncludeDeprecated}",
                 body.RealmId, body.LocationType, body.IncludeDeprecated);
 
-            // RealmId is required - locations are partitioned by realm
-            if (!body.RealmId.HasValue)
-            {
-                _logger.LogWarning("ListLocationsAsync called without required RealmId");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var realmIndexKey = BuildRealmIndexKey(body.RealmId.Value.ToString());
+            var realmIndexKey = BuildRealmIndexKey(body.RealmId.ToString());
             var locationIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
             var allLocations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
 

@@ -688,13 +688,13 @@ public partial class DocumentationService : IDocumentationService
         try
         {
             var namespaceId = body.Namespace;
+            var documentId = body.DocumentId;
 
-            if (!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty)
+            if (documentId == Guid.Empty)
             {
                 _logger.LogWarning("UpdateDocument requires documentId");
                 return (StatusCodes.BadRequest, null);
             }
-            var documentId = body.DocumentId.Value;
 
             // Check if namespace is bound to a repository (403 for manual modifications)
             var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
@@ -845,7 +845,7 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (body.DocumentId == Guid.Empty && string.IsNullOrWhiteSpace(body.Slug))
+            if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
             {
                 _logger.LogWarning("DeleteDocument failed: Either DocumentId or Slug is required");
                 return (StatusCodes.BadRequest, null);
@@ -866,9 +866,9 @@ public partial class DocumentationService : IDocumentationService
             var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
 
             // Resolve document ID from slug if provided
-            if (body.DocumentId != Guid.Empty)
+            if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
             {
-                documentId = body.DocumentId;
+                documentId = body.DocumentId.Value;
             }
             else
             {

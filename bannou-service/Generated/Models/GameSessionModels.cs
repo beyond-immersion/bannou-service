@@ -476,10 +476,10 @@ public partial class GamePlayer
     public System.DateTimeOffset JoinedAt { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific character data for this player
+    /// Game-specific character data for this player (null if none provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
-    public object CharacterData { get; set; } = default!;
+    public object? CharacterData { get; set; } = default!;
 
     /// <summary>
     /// Voice participant session ID (if player has joined voice)

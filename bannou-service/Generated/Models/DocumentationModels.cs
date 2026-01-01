@@ -1045,10 +1045,12 @@ public partial class UpdateDocumentRequest
     public string Namespace { get; set; } = default!;
 
     /// <summary>
-    /// Unique identifier of the document to update (null if not changing)
+    /// Unique identifier of the document to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
-    public System.Guid? DocumentId { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DocumentId { get; set; } = default!;
 
     /// <summary>
     /// New URL-friendly slug for the document (null to keep unchanged)

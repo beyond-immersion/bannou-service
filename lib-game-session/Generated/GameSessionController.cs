@@ -458,7 +458,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         "characterData": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Game-specific character data for this player"
+          "nullable": true,
+          "description": "Game-specific character data for this player (null if none provided)"
         },
         "voiceSessionId": {
           "type": "string",
@@ -694,7 +695,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         "characterData": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Game-specific character data for this player"
+          "nullable": true,
+          "description": "Game-specific character data for this player (null if none provided)"
         },
         "voiceSessionId": {
           "type": "string",
@@ -899,7 +901,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         "characterData": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Game-specific character data for this player"
+          "nullable": true,
+          "description": "Game-specific character data for this player (null if none provided)"
         },
         "voiceSessionId": {
           "type": "string",

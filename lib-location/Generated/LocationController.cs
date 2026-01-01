@@ -985,14 +985,16 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ListLocationsRequest",
   "$defs": {
     "ListLocationsRequest": {
-      "description": "Request to list locations with optional filtering by realm, type, and deprecation status",
+      "description": "Request to list locations within a realm with optional type and deprecation filtering",
       "type": "object",
+      "required": [
+        "realmId"
+      ],
       "properties": {
         "realmId": {
           "type": "string",
           "format": "uuid",
-          "nullable": true,
-          "description": "Filter by realm"
+          "description": "Realm ID to query (required - locations are partitioned by realm)"
         },
         "locationType": {
           "allOf": [

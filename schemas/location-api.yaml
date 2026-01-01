@@ -192,21 +192,21 @@ paths:
                 $ref: '#/components/schemas/LocationListResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListLocationsRequest\"\
-        ,\n  \"$defs\": {\n    \"ListLocationsRequest\": {\n      \"description\": \"Request to list locations with optional
-        filtering by realm, type, and deprecation status\",\n      \"type\": \"object\",\n      \"properties\": {\n      \
-        \  \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Filter by realm\"\n        },\n        \"locationType\": {\n          \"allOf\": [\n\
-        \            {\n              \"$ref\": \"#/$defs/LocationType\"\n            }\n          ],\n          \"nullable\"\
-        : true,\n          \"description\": \"Filter by location type\"\n        },\n        \"includeDeprecated\": {\n  \
-        \        \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to include deprecated
-        locations in the response\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\"\
-        : 1,\n          \"default\": 1,\n          \"description\": \"Page number for pagination (1-indexed)\"\n        },\n\
-        \        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n\
-        \          \"default\": 20,\n          \"description\": \"Number of results per page\"\n        }\n      }\n    },\n\
-        \    \"LocationType\": {\n      \"type\": \"string\",\n      \"description\": \"Type classification for locations\"\
-        ,\n      \"enum\": [\n        \"CONTINENT\",\n        \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n    \
-        \    \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\",\n        \"WILDERNESS\",\n        \"DUNGEON\",\n    \
-        \    \"OTHER\"\n      ]\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"ListLocationsRequest\": {\n      \"description\": \"Request to list locations within a realm
+        with optional type and deprecation filtering\",\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        \n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"Realm ID to query (required - locations are partitioned by realm)\"\n  \
+        \      },\n        \"locationType\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/LocationType\"\
+        \n            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Filter by location type\"\
+        \n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n\
+        \          \"description\": \"Whether to include deprecated locations in the response\"\n        },\n        \"page\"\
+        : {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1,\n          \"description\"\
+        : \"Page number for pagination (1-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"default\": 20,\n          \"description\":
+        \"Number of results per page\"\n        }\n      }\n    },\n    \"LocationType\": {\n      \"type\": \"string\",\n\
+        \      \"description\": \"Type classification for locations\",\n      \"enum\": [\n        \"CONTINENT\",\n      \
+        \  \"REGION\",\n        \"CITY\",\n        \"DISTRICT\",\n        \"BUILDING\",\n        \"ROOM\",\n        \"LANDMARK\"\
+        ,\n        \"WILDERNESS\",\n        \"DUNGEON\",\n        \"OTHER\"\n      ]\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LocationListResponse\"\
         ,\n  \"$defs\": {\n    \"LocationListResponse\": {\n      \"description\": \"Paginated list of locations with metadata
         for navigation\",\n      \"type\": \"object\",\n      \"required\": [\n        \"locations\",\n        \"totalCount\"\
@@ -1322,14 +1322,15 @@ components:
           description: Realm ID to scope the code lookup
 
     ListLocationsRequest:
-      description: Request to list locations with optional filtering by realm, type, and deprecation status
+      description: Request to list locations within a realm with optional type and deprecation filtering
       type: object
+      required:
+      - realmId
       properties:
         realmId:
           type: string
           format: uuid
-          nullable: true
-          description: Filter by realm
+          description: Realm ID to query (required - locations are partitioned by realm)
         locationType:
           allOf:
           - $ref: '#/components/schemas/LocationType'
