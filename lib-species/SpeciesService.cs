@@ -1158,7 +1158,7 @@ public partial class SpeciesService : ISpeciesService
                 IsPlayable = model.IsPlayable
             };
 
-            await _messageBus.PublishAsync("species.created", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("species.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.created event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)
@@ -1197,7 +1197,7 @@ public partial class SpeciesService : ISpeciesService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.PublishAsync("species.updated", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("species.updated", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.updated event for {SpeciesId} with changed fields: {ChangedFields}",
                 model.SpeciesId, string.Join(", ", changedFields));
         }
@@ -1236,7 +1236,7 @@ public partial class SpeciesService : ISpeciesService
                 DeletedReason = deletedReason
             };
 
-            await _messageBus.PublishAsync("species.deleted", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("species.deleted", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.deleted event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)

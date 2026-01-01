@@ -20,40 +20,71 @@ namespace BeyondImmersion.BannouService.Services;
 /// <para>
 /// Uses PublishOptions and SubscriptionOptions types from Generated/Models/MessagingModels.cs
 /// </para>
+/// <para>
+/// All publish methods use the Try* pattern - they never throw exceptions. Failed publishes
+/// are automatically buffered and retried. If the buffer overflows or messages are stuck
+/// too long, the node crashes for restart by the orchestrator.
+/// </para>
 /// </remarks>
 public interface IMessageBus
 {
     /// <summary>
-    /// Publish an event to a topic (routing key).
+    /// Publish an event to a topic (routing key). Never throws.
     /// </summary>
     /// <typeparam name="TEvent">Event type (serialized to JSON via BannouJson)</typeparam>
     /// <param name="topic">Topic/routing key (e.g., "session.connected", "account.deleted")</param>
     /// <param name="eventData">Event payload</param>
     /// <param name="options">Optional publish settings</param>
+    /// <param name="messageId">Optional message ID for correlation (generated if not provided)</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The message ID assigned to this publication</returns>
-    Task<Guid> PublishAsync<TEvent>(
+    /// <returns>True if published or buffered for retry, false on unrecoverable failure</returns>
+    Task<bool> TryPublishAsync<TEvent>(
         string topic,
         TEvent eventData,
         PublishOptions? options = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default)
         where TEvent : class;
 
     /// <summary>
-    /// Publish raw bytes (for binary protocol optimization).
+    /// Publish an event to a topic (routing key). Never throws.
+    /// Convenience overload without messageId parameter.
+    /// </summary>
+    Task<bool> TryPublishAsync<TEvent>(
+        string topic,
+        TEvent eventData,
+        CancellationToken cancellationToken)
+        where TEvent : class
+        => TryPublishAsync(topic, eventData, null, null, cancellationToken);
+
+    /// <summary>
+    /// Publish raw bytes (for binary protocol optimization). Never throws.
     /// </summary>
     /// <param name="topic">Topic/routing key</param>
     /// <param name="payload">Raw bytes to publish</param>
     /// <param name="contentType">MIME type of the payload (e.g., "application/octet-stream")</param>
     /// <param name="options">Optional publish settings</param>
+    /// <param name="messageId">Optional message ID for correlation (generated if not provided)</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The message ID assigned to this publication</returns>
-    Task<Guid> PublishRawAsync(
+    /// <returns>True if published or buffered for retry, false on unrecoverable failure</returns>
+    Task<bool> TryPublishRawAsync(
         string topic,
         ReadOnlyMemory<byte> payload,
         string contentType,
         PublishOptions? options = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Publish raw bytes (for binary protocol optimization). Never throws.
+    /// Convenience overload without messageId parameter.
+    /// </summary>
+    Task<bool> TryPublishRawAsync(
+        string topic,
+        ReadOnlyMemory<byte> payload,
+        string contentType,
+        CancellationToken cancellationToken)
+        => TryPublishRawAsync(topic, payload, contentType, null, null, cancellationToken);
 
     /// <summary>
     /// Publish a service error event. Convenience method replacing IErrorEventEmitter.

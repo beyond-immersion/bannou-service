@@ -175,7 +175,7 @@ public class SubscriptionExpirationService : BackgroundService
                         IsActive = false
                     };
 
-                    await messageBus.PublishAsync(
+                    await messageBus.TryPublishAsync(
                         SUBSCRIPTION_UPDATED_TOPIC,
                         expirationEvent);
 

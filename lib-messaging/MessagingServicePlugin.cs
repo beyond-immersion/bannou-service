@@ -56,6 +56,9 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Register shared connection manager
         services.AddSingleton<RabbitMQConnectionManager>();
 
+        // Register retry buffer for handling transient publish failures
+        services.AddSingleton<MessageRetryBuffer>();
+
         // Register messaging interfaces with direct RabbitMQ implementations
         services.AddSingleton<IMessageBus, RabbitMQMessageBus>();
         services.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();

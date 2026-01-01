@@ -523,7 +523,7 @@ public class SessionServiceTests
         _mockListStore.Setup(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -541,7 +541,7 @@ public class SessionServiceTests
         _mockListStore.Verify(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Should publish event
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
@@ -562,7 +562,7 @@ public class SessionServiceTests
         var sessionIds = new List<string> { "session1", "session2" };
         var reason = SessionInvalidatedEventReason.Account_deleted;
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -573,7 +573,7 @@ public class SessionServiceTests
         await _service.PublishSessionInvalidatedEventAsync(accountId, sessionIds, reason);
 
         // Assert
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
@@ -599,7 +599,7 @@ public class SessionServiceTests
         var authorizations = new List<string> { "auth1" };
         var reason = SessionUpdatedEventReason.Role_changed;
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.updated",
             It.IsAny<SessionUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -610,7 +610,7 @@ public class SessionServiceTests
         await _service.PublishSessionUpdatedEventAsync(accountId, sessionId, roles, authorizations, reason);
 
         // Assert
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.updated",
             It.Is<SessionUpdatedEvent>(e =>
                 e.AccountId == accountId &&

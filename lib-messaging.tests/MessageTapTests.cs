@@ -154,7 +154,7 @@ public class InMemoryMessageTapTests
 
         // Act
         var originalEnvelope = new GenericMessageEnvelope(sourceTopic, new { Test = "Value" });
-        await _messageBus.PublishAsync(sourceTopic, originalEnvelope);
+        await _messageBus.TryPublishAsync(sourceTopic, originalEnvelope);
 
         await Task.WhenAny(receivedEvent.Task, Task.Delay(1000));
 
@@ -197,7 +197,7 @@ public class InMemoryMessageTapTests
         // Act
         var payload = new TestPayload { Message = "Hello", Value = 42 };
         var originalEnvelope = new GenericMessageEnvelope(sourceTopic, payload);
-        await _messageBus.PublishAsync(sourceTopic, originalEnvelope);
+        await _messageBus.TryPublishAsync(sourceTopic, originalEnvelope);
 
         await Task.WhenAny(receivedEvent.Task, Task.Delay(1000));
 
@@ -238,7 +238,7 @@ public class InMemoryMessageTapTests
         });
 
         // Send first message
-        await _messageBus.PublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }));
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }));
         await Task.Delay(100);
 
         Assert.Equal(1, receivedCount);
@@ -248,7 +248,7 @@ public class InMemoryMessageTapTests
         Assert.False(handle.IsActive);
 
         // Send second message
-        await _messageBus.PublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }));
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }));
         await Task.Delay(100);
 
         // Assert - Still only 1
@@ -301,7 +301,7 @@ public class InMemoryMessageTapTests
         var tap2 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "dest2", RoutingKey = "key" });
 
         // Send first message (both receive)
-        await _messageBus.PublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 1 }));
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 1 }));
         await Task.Delay(100);
 
         Assert.Single(received1);
@@ -311,7 +311,7 @@ public class InMemoryMessageTapTests
         await tap1.DisposeAsync();
 
         // Send second message (only tap2 receives)
-        await _messageBus.PublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 2 }));
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 2 }));
         await Task.Delay(100);
 
         // Assert
@@ -349,7 +349,7 @@ public class InMemoryMessageTapTests
         var tap3 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "session", RoutingKey = "client-ghi" });
 
         // Act - Send one message
-        await _messageBus.PublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Event = "test" }));
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Event = "test" }));
         await Task.Delay(100);
 
         // Assert - All three destinations receive
@@ -389,9 +389,9 @@ public class InMemoryMessageTapTests
         var tapC = await _messageTap.CreateTapAsync(sourceC, dest);
 
         // Act - Send from each source
-        await _messageBus.PublishAsync(sourceA, new GenericMessageEnvelope(sourceA, new { Character = "A" }));
-        await _messageBus.PublishAsync(sourceB, new GenericMessageEnvelope(sourceB, new { Character = "B" }));
-        await _messageBus.PublishAsync(sourceC, new GenericMessageEnvelope(sourceC, new { Character = "C" }));
+        await _messageBus.TryPublishAsync(sourceA, new GenericMessageEnvelope(sourceA, new { Character = "A" }));
+        await _messageBus.TryPublishAsync(sourceB, new GenericMessageEnvelope(sourceB, new { Character = "B" }));
+        await _messageBus.TryPublishAsync(sourceC, new GenericMessageEnvelope(sourceC, new { Character = "C" }));
         await Task.Delay(100);
 
         // Assert

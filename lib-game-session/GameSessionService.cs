@@ -261,7 +261,7 @@ public partial class GameSessionService : IGameSessionService
             await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
 
             // Publish event with full model data
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 SESSION_CREATED_TOPIC,
                 new GameSessionCreatedEvent
                 {
@@ -423,7 +423,7 @@ public partial class GameSessionService : IGameSessionService
             await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
 
             // Publish event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 PLAYER_JOINED_TOPIC,
                 new GameSessionPlayerJoinedEvent
                 {
@@ -590,12 +590,55 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.BadRequest, new GameActionResponse
                 {
                     Success = false,
-                    ActionId = Guid.NewGuid()
+                    ActionId = Guid.NewGuid(),
+                    Result = new Dictionary<string, object?> { ["error"] = "Cannot perform action on finished session" }
                 });
             }
 
-            // Create action response
+            // Validate action data is present for mutation actions
+            var actionType = body.ActionType;
+            if (body.ActionData == null && actionType != GameActionRequestActionType.Move)
+            {
+                // Move can have empty data for "continue moving" semantics; other actions need data
+                _logger.LogDebug("No action data provided for action type {ActionType} - proceeding with empty data", actionType);
+            }
+
+            // Create action response - success only after all validations pass
             var actionId = Guid.NewGuid();
+            var actionTimestamp = DateTimeOffset.UtcNow;
+
+            // Publish game action event so other systems can react
+            try
+            {
+                await _messageBus.TryPublishAsync("game-session.action.performed", new
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = actionTimestamp,
+                    SessionId = body.SessionId,
+                    ActionId = actionId,
+                    ActionType = body.ActionType.ToString(),
+                    TargetId = body.TargetId
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to publish game action event for action {ActionId}", actionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "PerformGameAction",
+                    "event_publishing_failed",
+                    ex.Message,
+                    dependency: "messaging",
+                    endpoint: "post:/game-session/action",
+                    cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, new GameActionResponse
+                {
+                    Success = false,
+                    ActionId = actionId,
+                    Result = new Dictionary<string, object?> { ["error"] = "Failed to process action - event publishing failed" }
+                });
+            }
+
             var response = new GameActionResponse
             {
                 Success = true,
@@ -603,9 +646,9 @@ public partial class GameSessionService : IGameSessionService
                 Result = new Dictionary<string, object?>
                 {
                     ["actionType"] = body.ActionType.ToString(),
-                    ["timestamp"] = DateTimeOffset.UtcNow.ToString("O")
+                    ["timestamp"] = actionTimestamp.ToString("O")
                 },
-                NewGameState = body.ActionData
+                NewGameState = body.ActionData ?? new Dictionary<string, object?>()
             };
 
             _logger.LogInformation("Game action {ActionId} performed successfully in session {SessionId}",
@@ -727,7 +770,7 @@ public partial class GameSessionService : IGameSessionService
             await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
 
             // Publish event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
@@ -824,7 +867,7 @@ public partial class GameSessionService : IGameSessionService
             await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
 
             // Publish event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
@@ -1269,8 +1312,7 @@ public partial class GameSessionService : IGameSessionService
             // of direct exchange "bannou-client-events" with proper routing key
             if (_clientEventPublisher == null)
             {
-                _logger.LogWarning("IClientEventPublisher not available - cannot publish shortcut to session {SessionId}", sessionId);
-                return;
+                throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
             }
 
             var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, shortcutEvent);
@@ -1310,8 +1352,7 @@ public partial class GameSessionService : IGameSessionService
             // CRITICAL: Must use IClientEventPublisher for session-specific events (Tenet 6)
             if (_clientEventPublisher == null)
             {
-                _logger.LogWarning("IClientEventPublisher not available - cannot revoke shortcuts for session {SessionId}", sessionId);
-                return;
+                throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
             }
 
             var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, revokeEvent);

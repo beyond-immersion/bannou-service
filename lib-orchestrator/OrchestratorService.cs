@@ -186,7 +186,7 @@ public partial class OrchestratorService : IOrchestratorService
             string pubsubMessage;
             try
             {
-                await _messageBus.PublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
+                await _messageBus.TryPublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
                 {
                     EventName = "orchestrator.health_ping",
                     EventId = Guid.NewGuid(),
@@ -1633,6 +1633,8 @@ public partial class OrchestratorService : IOrchestratorService
                                     }
                                 }
 
+                                var addNodeSucceeded = 0;
+                                var addNodeFailed = 0;
                                 foreach (var serviceName in change.Services)
                                 {
                                     var appId = $"bannou-{serviceName}-{change.NodeName}";
@@ -1646,13 +1648,24 @@ public partial class OrchestratorService : IOrchestratorService
                                     {
                                         // Set service routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
                                         await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
+                                        addNodeSucceeded++;
                                     }
                                     else
                                     {
                                         warnings.Add($"Failed to deploy {serviceName} on {change.NodeName}: {deployResult.Message}");
+                                        addNodeFailed++;
                                     }
                                 }
-                                appliedChange.Success = true;
+                                // Only report success if at least one deployment succeeded AND none failed
+                                appliedChange.Success = addNodeSucceeded > 0 && addNodeFailed == 0;
+                                if (addNodeFailed > 0 && addNodeSucceeded > 0)
+                                {
+                                    appliedChange.Error = $"Partial failure: {addNodeSucceeded} deployed, {addNodeFailed} failed";
+                                }
+                                else if (addNodeFailed > 0)
+                                {
+                                    appliedChange.Error = $"All {addNodeFailed} deployments failed";
+                                }
                             }
                             else
                             {
@@ -1664,6 +1677,8 @@ public partial class OrchestratorService : IOrchestratorService
                             // Remove a node and all its services
                             if (change.Services != null)
                             {
+                                var removeNodeSucceeded = 0;
+                                var removeNodeFailed = 0;
                                 foreach (var serviceName in change.Services)
                                 {
                                     var appId = $"bannou-{serviceName}-{change.NodeName}";
@@ -1676,13 +1691,24 @@ public partial class OrchestratorService : IOrchestratorService
                                     {
                                         // Remove routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
                                         await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
+                                        removeNodeSucceeded++;
                                     }
                                     else
                                     {
                                         warnings.Add($"Failed to teardown {serviceName} on {change.NodeName}: {teardownResult.Message}");
+                                        removeNodeFailed++;
                                     }
                                 }
-                                appliedChange.Success = true;
+                                // Only report success if at least one teardown succeeded AND none failed
+                                appliedChange.Success = removeNodeSucceeded > 0 && removeNodeFailed == 0;
+                                if (removeNodeFailed > 0 && removeNodeSucceeded > 0)
+                                {
+                                    appliedChange.Error = $"Partial failure: {removeNodeSucceeded} removed, {removeNodeFailed} failed";
+                                }
+                                else if (removeNodeFailed > 0)
+                                {
+                                    appliedChange.Error = $"All {removeNodeFailed} teardowns failed";
+                                }
                             }
                             else
                             {
@@ -1694,14 +1720,33 @@ public partial class OrchestratorService : IOrchestratorService
                             // Move service(s) to a different node (update routing)
                             if (change.Services != null && !string.IsNullOrEmpty(change.NodeName))
                             {
+                                var moveSucceeded = 0;
+                                var moveFailed = 0;
                                 foreach (var serviceName in change.Services)
                                 {
                                     var newAppId = $"bannou-{serviceName}-{change.NodeName}";
 
-                                    // Update routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
-                                    await _healthMonitor.SetServiceRoutingAsync(serviceName, newAppId);
+                                    try
+                                    {
+                                        // Update routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                                        await _healthMonitor.SetServiceRoutingAsync(serviceName, newAppId);
+                                        moveSucceeded++;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        warnings.Add($"Failed to move {serviceName} to {change.NodeName}: {ex.Message}");
+                                        moveFailed++;
+                                    }
                                 }
-                                appliedChange.Success = true;
+                                appliedChange.Success = moveSucceeded > 0 && moveFailed == 0;
+                                if (moveFailed > 0 && moveSucceeded > 0)
+                                {
+                                    appliedChange.Error = $"Partial failure: {moveSucceeded} moved, {moveFailed} failed";
+                                }
+                                else if (moveFailed > 0)
+                                {
+                                    appliedChange.Error = $"All {moveFailed} service moves failed";
+                                }
                             }
                             else
                             {
@@ -1713,6 +1758,8 @@ public partial class OrchestratorService : IOrchestratorService
                             // Scale service instances on a node
                             if (change.Services != null)
                             {
+                                var scaleSucceeded = 0;
+                                var scaleFailed = 0;
                                 foreach (var serviceName in change.Services)
                                 {
                                     var appId = !string.IsNullOrEmpty(change.NodeName)
@@ -1724,12 +1771,25 @@ public partial class OrchestratorService : IOrchestratorService
                                         change.Replicas,
                                         cancellationToken);
 
-                                    if (!scaleResult.Success)
+                                    if (scaleResult.Success)
+                                    {
+                                        scaleSucceeded++;
+                                    }
+                                    else
                                     {
                                         warnings.Add($"Failed to scale {serviceName}: {scaleResult.Message}");
+                                        scaleFailed++;
                                     }
                                 }
-                                appliedChange.Success = true;
+                                appliedChange.Success = scaleSucceeded > 0 && scaleFailed == 0;
+                                if (scaleFailed > 0 && scaleSucceeded > 0)
+                                {
+                                    appliedChange.Error = $"Partial failure: {scaleSucceeded} scaled, {scaleFailed} failed";
+                                }
+                                else if (scaleFailed > 0)
+                                {
+                                    appliedChange.Error = $"All {scaleFailed} scale operations failed";
+                                }
                             }
                             else
                             {

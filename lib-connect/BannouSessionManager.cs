@@ -169,7 +169,16 @@ public class BannouSessionManager : ISessionManager
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to update session heartbeat for {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to update session heartbeat for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "UpdateSessionHeartbeat",
+                "state_heartbeat_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - heartbeat failures shouldn't break main functionality
         }
     }
@@ -238,7 +247,16 @@ public class BannouSessionManager : ISessionManager
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove reconnection token");
+            _logger.LogError(ex, "Failed to remove reconnection token");
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "RemoveReconnectionToken",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: null,
+                stack: ex.StackTrace);
             // Don't throw - token cleanup failures shouldn't break main functionality
         }
     }
@@ -364,7 +382,16 @@ public class BannouSessionManager : ISessionManager
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove session data for {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to remove session data for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "RemoveSessionData",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - cleanup failures shouldn't break main functionality
         }
     }
@@ -386,15 +413,24 @@ public class BannouSessionManager : ISessionManager
                 Data = eventData
             };
 
-            await _messageBus.PublishAsync(SESSION_EVENTS_TOPIC, sessionEvent);
+            await _messageBus.TryPublishAsync(SESSION_EVENTS_TOPIC, sessionEvent);
 
             _logger.LogDebug("Published session event {EventType} for session {SessionId}",
                 eventType, sessionId);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish session event {EventType} for {SessionId}",
+            _logger.LogError(ex, "Failed to publish session event {EventType} for {SessionId}",
                 eventType, sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "PublishSessionEvent",
+                "event_publishing_failed",
+                ex.Message,
+                dependency: "messaging",
+                endpoint: null,
+                details: $"eventType={eventType},sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - event publishing failures shouldn't break main functionality
         }
     }

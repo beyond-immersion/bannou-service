@@ -995,6 +995,16 @@ public partial class AuthService : IAuthService
                     return (StatusCodes.Unauthorized, null);
                 }
 
+                // Validate session data integrity - null roles or authorizations indicates data corruption
+                if (sessionData.Roles == null || sessionData.Authorizations == null)
+                {
+                    _logger.LogError(
+                        "Session data corrupted - null Roles or Authorizations. SessionKey: {SessionKey}, AccountId: {AccountId}, RolesNull: {RolesNull}, AuthNull: {AuthNull}",
+                        sessionKey, sessionData.AccountId, sessionData.Roles == null, sessionData.Authorizations == null);
+                    await PublishErrorEventAsync("ValidateToken", "session_data_corrupted", "Session has null Roles or Authorizations - data integrity failure");
+                    return (StatusCodes.Unauthorized, null);
+                }
+
                 _logger.LogDebug("Token validated successfully, AccountId: {AccountId}, SessionKey: {SessionKey}", sessionData.AccountId, sessionKey);
 
                 // Return session information
@@ -1006,8 +1016,8 @@ public partial class AuthService : IAuthService
                     Valid = true,
                     AccountId = sessionData.AccountId,
                     SessionId = Guid.Parse(sessionKey),
-                    Roles = sessionData.Roles ?? new List<string>(),
-                    Authorizations = sessionData.Authorizations ?? new List<string>(),
+                    Roles = sessionData.Roles,
+                    Authorizations = sessionData.Authorizations,
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
                 });
             }
@@ -1283,7 +1293,16 @@ public partial class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove refresh token");
+            _logger.LogError(ex, "Failed to remove refresh token from state store");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "RemoveRefreshToken",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: null,
+                stack: ex.StackTrace);
         }
     }
 
@@ -1333,6 +1352,15 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add reverse index for session ID {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "AddSessionIdReverseIndex",
+                "state_index_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - session creation should succeed even if index update fails
         }
     }
@@ -1351,7 +1379,16 @@ public partial class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove reverse index for session ID {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to remove reverse index for session ID {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "RemoveSessionIdReverseIndex",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - operation should continue even if cleanup fails
         }
     }
@@ -1410,6 +1447,15 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add session to account index, AccountId: {AccountId}, SessionKey: {SessionKey}", accountId, sessionKey);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "AddSessionToAccountIndex",
+                "state_index_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"accountId={accountId},sessionKey={sessionKey}",
+                stack: ex.StackTrace);
             // Don't throw - session creation should succeed even if index update fails
         }
     }
@@ -1453,6 +1499,15 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to remove session {SessionKey} from account index for account {AccountId}", sessionKey, accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "RemoveSessionFromAccountIndex",
+                "state_index_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"accountId={accountId},sessionKey={sessionKey}",
+                stack: ex.StackTrace);
             // Don't throw - logout should succeed even if index update fails
         }
     }
@@ -2320,7 +2375,7 @@ public partial class AuthService : IAuthService
                 DisconnectClients = true
             };
 
-            await _messageBus.PublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
+            await _messageBus.TryPublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
             _logger.LogInformation("Published SessionInvalidatedEvent for account {AccountId}: {SessionCount} sessions, reason: {Reason}",
                 accountId, sessionIds.Count, reason);
         }
@@ -2489,13 +2544,22 @@ public partial class AuthService : IAuthService
                 Reason = reason
             };
 
-            await _messageBus.PublishAsync(SESSION_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(SESSION_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published SessionUpdatedEvent for session {SessionId}, reason: {Reason}",
                 sessionId, reason);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish SessionUpdatedEvent for session {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to publish SessionUpdatedEvent for session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "PublishSessionUpdatedEvent",
+                "event_publishing_failed",
+                ex.Message,
+                dependency: "messaging",
+                endpoint: null,
+                details: $"sessionId={sessionId},reason={reason}",
+                stack: ex.StackTrace);
             // Don't throw - session update succeeded, event publishing failure shouldn't fail the operation
         }
     }

@@ -113,7 +113,12 @@ catch (Exception ex)
 
 ### Error Event Publishing
 
-Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures only. Returns `false` if publishing fails (prevents cascading failures). Replaces legacy `IErrorEventEmitter`.
+Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures only. **This method is ALWAYS safe to call** - both implementations (RabbitMQMessageBus and InMemoryMessageBus) have internal try/catch blocks that prevent exceptions from propagating. Returns `false` if publishing fails (prevents cascading failures). Replaces legacy `IErrorEventEmitter`.
+
+**CRITICAL**: When an operation fails due to an unexpected exception:
+1. Log the error
+2. Call `TryPublishErrorAsync` (safe - won't throw)
+3. Return failure for the ORIGINAL reason (not because error event failed)
 
 **Emit for**:
 - Unexpected exceptions that should never happen in normal operation

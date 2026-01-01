@@ -1490,6 +1490,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ServiceId = testServiceIdGuid,
+                ServiceName = testServiceId, // The string identifier used for permission lookups
                 Version = "1.0.0",
                 AppId = "bannou",
                 Endpoints = new Collection<ServiceEndpoint>
@@ -1516,7 +1517,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             Console.WriteLine($"  Publishing service registration event for {testServiceId} via IMessageBus...");
 
             // Publish the event via IMessageBus
-            await messageBus.PublishAsync("permissions.service-registered", serviceRegistrationEvent);
+            await messageBus.TryPublishAsync("permissions.service-registered", serviceRegistrationEvent);
 
             Console.WriteLine("  Event published via IMessageBus, waiting for processing...");
 
@@ -1671,7 +1672,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session state change event via IMessageBus...");
-            await messageBus.PublishAsync("permissions.session-state-changed", stateChangeEvent);
+            await messageBus.TryPublishAsync("permissions.session-state-changed", stateChangeEvent);
 
             // Step 5: Wait for event processing
             await Task.Delay(500);
@@ -1776,7 +1777,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session.connected event for {testSessionId}...");
-            await messageBus.PublishAsync("session.connected", sessionConnectedEvent);
+            await messageBus.TryPublishAsync("session.connected", sessionConnectedEvent);
 
             // Wait for event to be processed
             await Task.Delay(500);
@@ -1862,7 +1863,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session.connected with roles [user, admin]...");
-            await messageBus.PublishAsync("session.connected", sessionConnectedEvent);
+            await messageBus.TryPublishAsync("session.connected", sessionConnectedEvent);
 
             await Task.Delay(500);
 
@@ -1935,7 +1936,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session.connected for {testSessionId}...");
-            await messageBus.PublishAsync("session.connected", connectEvent);
+            await messageBus.TryPublishAsync("session.connected", connectEvent);
             await Task.Delay(500);
 
             // Verify session is connected (has capabilities)
@@ -1962,7 +1963,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session.disconnected for {testSessionId}...");
-            await messageBus.PublishAsync("session.disconnected", disconnectEvent);
+            await messageBus.TryPublishAsync("session.disconnected", disconnectEvent);
             await Task.Delay(500);
 
             // Step 3: Verify the event handler completed successfully
@@ -2030,7 +2031,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session.connected...");
-            await messageBus.PublishAsync("session.connected", connectEvent);
+            await messageBus.TryPublishAsync("session.connected", connectEvent);
             await Task.Delay(500);
 
             // Capture capabilities before disconnect
@@ -2055,7 +2056,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session.disconnected with reconnectable=true...");
-            await messageBus.PublishAsync("session.disconnected", disconnectEvent);
+            await messageBus.TryPublishAsync("session.disconnected", disconnectEvent);
             await Task.Delay(500);
 
             // Step 4: Verify session data is preserved (can still get capabilities)

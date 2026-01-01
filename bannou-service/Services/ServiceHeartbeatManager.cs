@@ -105,7 +105,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Healthy);
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat,
                 cancellationToken: cancellationToken);
@@ -210,7 +210,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(DetermineOverallStatus());
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat);
 
@@ -268,7 +268,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Shutting_down);
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat,
                 cancellationToken: cancellationToken);

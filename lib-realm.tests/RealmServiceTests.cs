@@ -419,7 +419,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<RealmModel>(), null, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -471,7 +471,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify no event was published (no changes)
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -552,7 +552,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             $"{CODE_INDEX_PREFIX}DELETED", It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm.deleted", It.IsAny<RealmDeletedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -623,7 +623,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.NotNull(response.DeprecatedAt);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -694,7 +694,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Null(response.DeprecatedAt);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

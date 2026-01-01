@@ -356,7 +356,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.Created, status);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "species.created",
             It.IsAny<SpeciesCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -465,7 +465,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "species.updated",
             It.IsAny<SpeciesUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),

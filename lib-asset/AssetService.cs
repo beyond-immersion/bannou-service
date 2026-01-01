@@ -369,7 +369,7 @@ public partial class AssetService : IAssetService
                 assetId, finalKey, requiresProcessing);
 
             // Publish asset.upload.completed event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "asset.upload.completed",
                 new BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent
                 {
@@ -627,7 +627,16 @@ public partial class AssetService : IAssetService
         catch (InvalidOperationException ex) when (ex.Message.Contains("search") || ex.Message.Contains("Search"))
         {
             // Search not available, fall back to index-based search
-            _logger.LogWarning(ex, "Search store not available, falling back to index-based search");
+            _logger.LogError(ex, "Search store not available, falling back to index-based search - infrastructure degraded");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "SearchAssets",
+                "search_infrastructure_degraded",
+                "RedisSearch not available, using fallback search",
+                dependency: "redis_search",
+                endpoint: "post:/assets/search",
+                details: ex.Message,
+                stack: ex.StackTrace);
             return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -788,7 +797,7 @@ public partial class AssetService : IAssetService
                 await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken);
 
                 // Publish job event for processing pool
-                await _messageBus.PublishAsync("asset.bundle.create", job);
+                await _messageBus.TryPublishAsync("asset.bundle.create", job);
 
                 _logger.LogInformation(
                     "CreateBundle: Queued bundle creation job {JobId} for bundle {BundleId}",
@@ -865,7 +874,7 @@ public partial class AssetService : IAssetService
                 bundleStream.Length);
 
             // Publish asset.bundle.created event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "asset.bundle.created",
                 new BeyondImmersion.BannouService.Events.BundleCreatedEvent
                 {
@@ -1409,7 +1418,7 @@ public partial class AssetService : IAssetService
                 ExpiresAt = processorResponse.ExpiresAt
             };
 
-            await _messageBus.PublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
+            await _messageBus.TryPublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
         }
         catch (ApiException ex) when (ex.StatusCode == 429)
         {
@@ -1430,7 +1439,7 @@ public partial class AssetService : IAssetService
                 RetryDelaySeconds = 30
             };
 
-            await _messageBus.PublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+            await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

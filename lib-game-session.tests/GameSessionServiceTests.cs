@@ -117,6 +117,14 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
+    public void Constructor_WithNullHttpContextAccessor_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, null!, _mockEventConsumer.Object));
+    }
+
+    [Fact]
     public void Constructor_WithNullEventConsumer_ShouldThrow()
     {
         // Arrange & Act & Assert
@@ -172,7 +180,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify event published
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "game-session.created",
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),
@@ -526,7 +534,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.True(response.Success);
 
         // Verify event published
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "game-session.player-joined",
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),

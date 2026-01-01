@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Messaging;
 
@@ -116,6 +116,30 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Environment variable: MESSAGING_RETRY_DELAY_MS
     /// </summary>
     public int RetryDelayMs { get; set; } = 5000;
+
+    /// <summary>
+    /// Enable retry buffer for failed event publishes
+    /// Environment variable: MESSAGING_RETRY_BUFFER_ENABLED
+    /// </summary>
+    public bool RetryBufferEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Maximum number of messages in retry buffer before node crash
+    /// Environment variable: MESSAGING_RETRY_BUFFER_MAX_SIZE
+    /// </summary>
+    public int RetryBufferMaxSize { get; set; } = 10000;
+
+    /// <summary>
+    /// Maximum age of buffered messages before node crash (prevents stale events)
+    /// Environment variable: MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS
+    /// </summary>
+    public int RetryBufferMaxAgeSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Interval between retry attempts for buffered messages
+    /// Environment variable: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
+    /// </summary>
+    public int RetryBufferIntervalSeconds { get; set; } = 5;
 
     /// <summary>
     /// Use MassTransit wrapper (true) or direct RabbitMQ.Client (false)

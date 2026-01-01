@@ -97,6 +97,28 @@ x-service-configuration:
       env: MESSAGING_RETRY_DELAY_MS
       default: 5000
 
+    # Retry Buffer Settings (for handling transient publish failures)
+    RetryBufferEnabled:
+      type: boolean
+      description: Enable retry buffer for failed event publishes
+      env: MESSAGING_RETRY_BUFFER_ENABLED
+      default: true
+    RetryBufferMaxSize:
+      type: integer
+      description: Maximum number of messages in retry buffer before node crash
+      env: MESSAGING_RETRY_BUFFER_MAX_SIZE
+      default: 10000
+    RetryBufferMaxAgeSeconds:
+      type: integer
+      description: Maximum age of buffered messages before node crash (prevents stale events)
+      env: MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS
+      default: 300
+    RetryBufferIntervalSeconds:
+      type: integer
+      description: Interval between retry attempts for buffered messages
+      env: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
+      default: 5
+
     # Feature Flags
     UseMassTransit:
       type: boolean

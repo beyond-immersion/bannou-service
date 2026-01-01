@@ -381,7 +381,7 @@ public class Program
             try
             {
                 // Try to publish a test message to verify RabbitMQ connectivity
-                await messageBus.PublishAsync("test-connectivity", new ConnectivityCheckMessage("connectivity-check", DateTime.UtcNow));
+                await messageBus.TryPublishAsync("test-connectivity", new ConnectivityCheckMessage("connectivity-check", DateTime.UtcNow));
                 Console.WriteLine($"✅ RabbitMQ is ready and connected");
                 return true;
             }

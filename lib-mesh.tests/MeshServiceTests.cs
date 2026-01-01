@@ -292,7 +292,7 @@ public class MeshServiceTests
             .ReturnsAsync(true);
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
 
@@ -355,7 +355,7 @@ public class MeshServiceTests
             .ReturnsAsync(true);
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
 
@@ -401,7 +401,7 @@ public class MeshServiceTests
             .ReturnsAsync(true);
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
 

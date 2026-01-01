@@ -53,7 +53,7 @@ public class SubscriptionsServiceTests
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
-        _mockMessageBus.Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
     }
 
@@ -713,7 +713,7 @@ public class SubscriptionsServiceTests
         Assert.Equal(StatusCodes.Created, statusCode);
 
         // Verify event published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "subscription.updated",
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.AccountId == accountId &&
@@ -896,7 +896,7 @@ public class SubscriptionsServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
 
         // Verify event published with Cancelled action via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "subscription.updated",
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.SubscriptionId == subscriptionId &&

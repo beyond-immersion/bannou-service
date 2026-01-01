@@ -95,7 +95,7 @@ public class AuthServiceTests
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
-        _mockMessageBus.Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
 
         // Setup default HttpClient for mock factory
@@ -874,7 +874,7 @@ public class AuthServiceTests
         await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
 
         // Assert - verify session invalidation event was published
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
@@ -912,7 +912,7 @@ public class AuthServiceTests
         await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
 
         // Assert - no event should be published since there were no sessions
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),

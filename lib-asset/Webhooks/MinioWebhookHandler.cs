@@ -147,7 +147,7 @@ public class MinioWebhookHandler
             Timestamp = DateTimeOffset.UtcNow
         };
 
-        await _messageBus.PublishAsync("asset.upload.completed", uploadNotification).ConfigureAwait(false);
+        await _messageBus.TryPublishAsync("asset.upload.completed", uploadNotification).ConfigureAwait(false);
 
         _logger.LogDebug("MinIO webhook: Published upload completion event for {UploadId}", uploadId);
     }

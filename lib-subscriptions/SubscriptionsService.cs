@@ -562,7 +562,7 @@ public partial class SubscriptionsService : ISubscriptionsService
                 : null
         };
 
-        await _messageBus.PublishAsync(SUBSCRIPTION_UPDATED_TOPIC, eventData);
+        await _messageBus.TryPublishAsync(SUBSCRIPTION_UPDATED_TOPIC, eventData);
 
         _logger.LogDebug("Published subscription.updated event for {SubscriptionId} with action {Action}",
             model.SubscriptionId, action);

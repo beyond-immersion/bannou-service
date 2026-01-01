@@ -701,117 +701,95 @@ public partial class CharacterService : ICharacterService
 
     #region Event Publishing
 
+    /// <summary>
+    /// Publishes character created event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
     private async Task PublishCharacterCreatedEventAsync(CharacterModel character)
     {
-        try
+        var eventModel = new CharacterCreatedEvent
         {
-            var eventModel = new CharacterCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = Guid.Parse(character.CharacterId),
-                Name = character.Name,
-                RealmId = Guid.Parse(character.RealmId),
-                SpeciesId = Guid.Parse(character.SpeciesId),
-                BirthDate = character.BirthDate
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = Guid.Parse(character.CharacterId),
+            Name = character.Name,
+            RealmId = Guid.Parse(character.RealmId),
+            SpeciesId = Guid.Parse(character.SpeciesId),
+            BirthDate = character.BirthDate
+        };
 
-            await _messageBus.PublishAsync(CHARACTER_CREATED_TOPIC, eventModel);
-            _logger.LogDebug("Published CharacterCreatedEvent for character: {CharacterId}", character.CharacterId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish CharacterCreatedEvent for character: {CharacterId}", character.CharacterId);
-        }
+        await _messageBus.TryPublishAsync(CHARACTER_CREATED_TOPIC, eventModel);
+        _logger.LogDebug("Published CharacterCreatedEvent for character: {CharacterId}", character.CharacterId);
     }
 
-    private async Task PublishCharacterUpdatedEventAsync(
-        Guid characterId,
-        IEnumerable<string> changedFields)
+    /// <summary>
+    /// Publishes character updated event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
+    private async Task PublishCharacterUpdatedEventAsync(Guid characterId, IEnumerable<string> changedFields)
     {
-        try
+        var eventModel = new CharacterUpdatedEvent
         {
-            var eventModel = new CharacterUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = characterId,
-                ChangedFields = changedFields.ToList()
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = characterId,
+            ChangedFields = changedFields.ToList()
+        };
 
-            await _messageBus.PublishAsync(CHARACTER_UPDATED_TOPIC, eventModel);
-            _logger.LogDebug("Published CharacterUpdatedEvent for character: {CharacterId}", characterId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish CharacterUpdatedEvent for character: {CharacterId}", characterId);
-        }
+        await _messageBus.TryPublishAsync(CHARACTER_UPDATED_TOPIC, eventModel);
+        _logger.LogDebug("Published CharacterUpdatedEvent for character: {CharacterId}", characterId);
     }
 
+    /// <summary>
+    /// Publishes character deleted event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
     private async Task PublishCharacterDeletedEventAsync(CharacterModel character)
     {
-        try
+        var eventModel = new CharacterDeletedEvent
         {
-            var eventModel = new CharacterDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = Guid.Parse(character.CharacterId),
-                RealmId = Guid.Parse(character.RealmId),
-                Name = character.Name
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = Guid.Parse(character.CharacterId),
+            RealmId = Guid.Parse(character.RealmId),
+            Name = character.Name
+        };
 
-            await _messageBus.PublishAsync(CHARACTER_DELETED_TOPIC, eventModel);
-            _logger.LogDebug("Published CharacterDeletedEvent for character: {CharacterId}", character.CharacterId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish CharacterDeletedEvent for character: {CharacterId}", character.CharacterId);
-        }
+        await _messageBus.TryPublishAsync(CHARACTER_DELETED_TOPIC, eventModel);
+        _logger.LogDebug("Published CharacterDeletedEvent for character: {CharacterId}", character.CharacterId);
     }
 
+    /// <summary>
+    /// Publishes character realm joined event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
     private async Task PublishCharacterRealmJoinedEventAsync(Guid characterId, Guid realmId, Guid? previousRealmId)
     {
-        try
+        var eventModel = new CharacterRealmJoinedEvent
         {
-            var eventModel = new CharacterRealmJoinedEvent
-            {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = characterId,
-                RealmId = realmId,
-                PreviousRealmId = previousRealmId
-            };
+            EventId = Guid.NewGuid().ToString(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = characterId,
+            RealmId = realmId,
+            PreviousRealmId = previousRealmId
+        };
 
-            await _messageBus.PublishAsync(CHARACTER_REALM_JOINED_TOPIC, eventModel);
-            _logger.LogDebug("Published CharacterRealmJoinedEvent for character: {CharacterId}", characterId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish CharacterRealmJoinedEvent for character: {CharacterId}", characterId);
-        }
+        await _messageBus.TryPublishAsync(CHARACTER_REALM_JOINED_TOPIC, eventModel);
+        _logger.LogDebug("Published CharacterRealmJoinedEvent for character: {CharacterId}", characterId);
     }
 
+    /// <summary>
+    /// Publishes character realm left event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
     private async Task PublishCharacterRealmLeftEventAsync(Guid characterId, Guid realmId, string reason)
     {
-        try
+        var eventModel = new CharacterRealmLeftEvent
         {
-            var eventModel = new CharacterRealmLeftEvent
-            {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = characterId,
-                RealmId = realmId,
-                Reason = reason
-            };
+            EventId = Guid.NewGuid().ToString(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = characterId,
+            RealmId = realmId,
+            Reason = reason
+        };
 
-            await _messageBus.PublishAsync(CHARACTER_REALM_LEFT_TOPIC, eventModel);
-            _logger.LogDebug("Published CharacterRealmLeftEvent for character: {CharacterId}", characterId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish CharacterRealmLeftEvent for character: {CharacterId}", characterId);
-        }
+        await _messageBus.TryPublishAsync(CHARACTER_REALM_LEFT_TOPIC, eventModel);
+        _logger.LogDebug("Published CharacterRealmLeftEvent for character: {CharacterId}", characterId);
     }
 
     #endregion

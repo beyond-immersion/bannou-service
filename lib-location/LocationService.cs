@@ -1377,7 +1377,7 @@ public partial class LocationService : ILocationService
             UpdatedAt = model.UpdatedAt
         };
 
-        await _messageBus.PublishAsync("location.created", eventData, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("location.created", eventData, cancellationToken: cancellationToken);
     }
 
     private async Task PublishLocationUpdatedEventAsync(LocationModel model, IList<string> changedFields, CancellationToken cancellationToken)
@@ -1403,7 +1403,7 @@ public partial class LocationService : ILocationService
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.PublishAsync("location.updated", eventData, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("location.updated", eventData, cancellationToken: cancellationToken);
     }
 
     private async Task PublishLocationDeletedEventAsync(LocationModel model, CancellationToken cancellationToken)
@@ -1426,7 +1426,7 @@ public partial class LocationService : ILocationService
             Metadata = model.Metadata ?? new object()
         };
 
-        await _messageBus.PublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
     }
 
     #endregion

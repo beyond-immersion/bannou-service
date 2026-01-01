@@ -74,7 +74,7 @@ public class BannouSessionManagerTests
 
         // Default message bus behavior
         _mockMessageBus
-            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
 
         _sessionManager = new BannouSessionManager(
@@ -749,7 +749,7 @@ public class BannouSessionManagerTests
 
         SessionEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, SessionEvent, PublishOptions?, CancellationToken>((t, e, o, ct) => capturedEvent = e)
             .ReturnsAsync(Guid.NewGuid());
 
@@ -774,7 +774,7 @@ public class BannouSessionManagerTests
         await _sessionManager.PublishSessionEventAsync(eventType, sessionId);
 
         // Assert
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<SessionEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -789,7 +789,7 @@ public class BannouSessionManagerTests
         var sessionId = "test-session";
 
         _mockMessageBus
-            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Publish failed"));
 
         // Act - should not throw

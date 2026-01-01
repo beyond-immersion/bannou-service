@@ -46,7 +46,7 @@ public abstract class EventPublisherBase
     {
         try
         {
-            await MessageBus.PublishAsync(topic, eventData);
+            await MessageBus.TryPublishAsync(topic, eventData);
             Logger.LogDebug("Published event to {Topic}: {EventType}", topic, typeof(TEvent).Name);
             return true;
         }

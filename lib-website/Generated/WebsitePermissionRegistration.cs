@@ -364,22 +364,23 @@ public static class WebsitePermissionRegistration
     /// </summary>
     public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
     {
-        try
+        var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
+
+        var success = await messageBus.TryPublishAsync(
+            "permissions.service-registered",
+            registrationEvent);
+
+        if (success)
         {
-            var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
-
-            await messageBus.PublishAsync(
-                "permissions.service-registered",
-                registrationEvent);
-
             logger?.LogInformation(
                 "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
                 ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
         }
-        catch (Exception ex)
+        else
         {
-            logger?.LogError(ex, "Failed to publish service registration event for {ServiceId}", ServiceId);
-            throw;
+            logger?.LogWarning(
+                "Failed to publish service registration event for {ServiceId} (will be retried)",
+                ServiceId);
         }
     }
 

@@ -69,6 +69,7 @@ public partial class PermissionsService : IPermissionsService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
+        ArgumentNullException.ThrowIfNull(eventConsumer);
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
         // Register event handlers via partial class (PermissionsServiceEvents.cs)

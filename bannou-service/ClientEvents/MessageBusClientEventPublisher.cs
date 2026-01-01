@@ -91,7 +91,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
                 ExchangeType = PublishOptionsExchangeType.Direct,
                 RoutingKey = routingKey
             };
-            await _messageBus.PublishAsync(routingKey, eventData, options, cancellationToken);
+            await _messageBus.TryPublishAsync(routingKey, eventData, options, cancellationToken: cancellationToken);
 
             _logger.LogDebug(
                 "Published client event {EventName} to session {SessionId}",
@@ -152,7 +152,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
                         ExchangeType = PublishOptionsExchangeType.Direct,
                         RoutingKey = routingKey
                     };
-                    await _messageBus.PublishAsync(routingKey, eventData, options, cancellationToken);
+                    await _messageBus.TryPublishAsync(routingKey, eventData, options, cancellationToken: cancellationToken);
                     Interlocked.Increment(ref successCount);
 
                     _logger.LogDebug(

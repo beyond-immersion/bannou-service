@@ -301,7 +301,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal(CharacterStatus.Dead, response.Status);
 
         // Verify update event published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -407,7 +407,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify NO update event published (no changes)
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),

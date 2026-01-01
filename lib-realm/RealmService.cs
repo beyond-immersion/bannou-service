@@ -744,7 +744,7 @@ public partial class RealmService : IRealmService
                 IsActive = model.IsActive
             };
 
-            await _messageBus.PublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.created event for {RealmId}", model.RealmId);
         }
         catch (Exception ex)
@@ -778,7 +778,7 @@ public partial class RealmService : IRealmService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.PublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.updated event for {RealmId} with changed fields: {ChangedFields}",
                 model.RealmId, string.Join(", ", changedFields));
         }
@@ -813,7 +813,7 @@ public partial class RealmService : IRealmService
                 DeletedReason = deletedReason
             };
 
-            await _messageBus.PublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.deleted event for {RealmId}", model.RealmId);
         }
         catch (Exception ex)

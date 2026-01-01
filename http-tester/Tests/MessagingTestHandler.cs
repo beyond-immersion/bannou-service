@@ -298,7 +298,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                 Exchange = sourceExchange,
                 ExchangeType = PublishOptionsExchangeType.Fanout
             };
-            await messageBus.PublishAsync(sourceTopic, testEvent, publishOptions);
+            await messageBus.TryPublishAsync(sourceTopic, testEvent, publishOptions);
 
             // Wait for message to be forwarded (with timeout)
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -368,8 +368,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             var publishOptions2 = new PublishOptions { Exchange = sourceExchange2, ExchangeType = PublishOptionsExchangeType.Fanout };
             var event1 = new TapTestMessage("Multi-tap test", "charA", DateTimeOffset.UtcNow);
             var event2 = new TapTestMessage("Multi-tap test", "charB", DateTimeOffset.UtcNow);
-            await messageBus.PublishAsync("events", event1, publishOptions1);
-            await messageBus.PublishAsync("events", event2, publishOptions2);
+            await messageBus.TryPublishAsync("events", event1, publishOptions1);
+            await messageBus.TryPublishAsync("events", event2, publishOptions2);
 
             // Wait for both messages
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -433,7 +433,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             // Publish first message - should be forwarded
             var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
             var event1 = new TapTestMessage("Dispose test", "before_dispose", DateTimeOffset.UtcNow);
-            await messageBus.PublishAsync("events", event1, publishOptions);
+            await messageBus.TryPublishAsync("events", event1, publishOptions);
 
             using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
@@ -460,7 +460,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
 
             // Publish second message - should NOT be forwarded
             var event2 = new TapTestMessage("Dispose test", "after_dispose", DateTimeOffset.UtcNow);
-            await messageBus.PublishAsync("events", event2, publishOptions);
+            await messageBus.TryPublishAsync("events", event2, publishOptions);
 
             // Wait to see if message arrives (it shouldn't)
             await Task.Delay(2000);
@@ -515,7 +515,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             // Publish message to source exchange
             var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
             var testEvent = new TapTestMessage("Metadata test", "metadata-test", DateTimeOffset.UtcNow);
-            await messageBus.PublishAsync(sourceTopic, testEvent, publishOptions);
+            await messageBus.TryPublishAsync(sourceTopic, testEvent, publishOptions);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
@@ -602,7 +602,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             // Publish message to source exchange
             var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
             var testEvent = new TapTestMessage("Direct exchange test", "direct-test", DateTimeOffset.UtcNow);
-            await messageBus.PublishAsync(sourceTopic, testEvent, publishOptions);
+            await messageBus.TryPublishAsync(sourceTopic, testEvent, publishOptions);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try

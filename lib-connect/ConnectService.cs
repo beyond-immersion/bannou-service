@@ -565,7 +565,7 @@ public partial class ConnectService : IConnectService
                     ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
                         ? instanceGuid : (Guid?)null
                 };
-                await _messageBus.PublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
+                await _messageBus.TryPublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
                 _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
 
                 // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
@@ -586,7 +586,7 @@ public partial class ConnectService : IConnectService
                             ["connect_instance_id"] = _instanceId
                         }
                     };
-                    await _messageBus.PublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
+                    await _messageBus.TryPublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
                     _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
                 }
             }
@@ -669,7 +669,7 @@ public partial class ConnectService : IConnectService
                     Reconnectable = !isForcedDisconnect,
                     Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
                 };
-                await _messageBus.PublishAsync("session.disconnected", sessionDisconnectedEvent);
+                await _messageBus.TryPublishAsync("session.disconnected", sessionDisconnectedEvent);
                 _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
                     sessionId, !isForcedDisconnect);
             }
@@ -1389,7 +1389,7 @@ public partial class ConnectService : IConnectService
 
             // Notify permission service that a new service was registered
             // This will trigger permission recompilation for all sessions
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "bannou-permission-recompile",
                 new PermissionRecompileEvent
                 {

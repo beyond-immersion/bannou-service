@@ -124,7 +124,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
                 tapCreatedAt);
 
             // Publish to destination topic
-            await _messageBus.PublishAsync(destinationTopic, tappedEnvelope, null, cancellationToken);
+            await _messageBus.TryPublishAsync(destinationTopic, tappedEnvelope, cancellationToken: cancellationToken);
 
             _logger.LogDebug(
                 "Tap {TapId} forwarded message {EventId} from {SourceTopic} to {DestinationTopic}",

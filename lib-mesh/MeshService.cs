@@ -605,7 +605,7 @@ public partial class MeshService : IMeshService
                 Services = endpoint.Services
             };
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "mesh.endpoint.registered",
                 evt,
                 cancellationToken: cancellationToken);
@@ -636,7 +636,7 @@ public partial class MeshService : IMeshService
                 Reason = reason
             };
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "mesh.endpoint.deregistered",
                 evt,
                 cancellationToken: cancellationToken);

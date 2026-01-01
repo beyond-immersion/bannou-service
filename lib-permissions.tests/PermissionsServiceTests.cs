@@ -96,7 +96,7 @@ public class PermissionsServiceTests
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),
@@ -129,6 +129,62 @@ public class PermissionsServiceTests
         // Arrange & Act & Assert
         var service = CreateService();
         Assert.NotNull(service);
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new PermissionsService(null!, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new PermissionsService(_mockLogger.Object, null!, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, null!, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, null!, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLockProvider_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, null!, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullClientEventPublisher_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, null!, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, null!));
     }
 
     [Fact]

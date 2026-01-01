@@ -21177,29 +21177,48 @@
             <para>
             Uses PublishOptions and SubscriptionOptions types from Generated/Models/MessagingModels.cs
             </para>
+            <para>
+            All publish methods use the Try* pattern - they never throw exceptions. Failed publishes
+            are automatically buffered and retried. If the buffer overflows or messages are stuck
+            too long, the node crashes for restart by the orchestrator.
+            </para>
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.PublishAsync``1(System.String,``0,BeyondImmersion.BannouService.Messaging.PublishOptions,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishAsync``1(System.String,``0,BeyondImmersion.BannouService.Messaging.PublishOptions,System.Nullable{System.Guid},System.Threading.CancellationToken)">
             <summary>
-            Publish an event to a topic (routing key).
+            Publish an event to a topic (routing key). Never throws.
             </summary>
             <typeparam name="TEvent">Event type (serialized to JSON via BannouJson)</typeparam>
             <param name="topic">Topic/routing key (e.g., "session.connected", "account.deleted")</param>
             <param name="eventData">Event payload</param>
             <param name="options">Optional publish settings</param>
+            <param name="messageId">Optional message ID for correlation (generated if not provided)</param>
             <param name="cancellationToken">Cancellation token</param>
-            <returns>The message ID assigned to this publication</returns>
+            <returns>True if published or buffered for retry, false on unrecoverable failure</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.PublishRawAsync(System.String,System.ReadOnlyMemory{System.Byte},System.String,BeyondImmersion.BannouService.Messaging.PublishOptions,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishAsync``1(System.String,``0,System.Threading.CancellationToken)">
             <summary>
-            Publish raw bytes (for binary protocol optimization).
+            Publish an event to a topic (routing key). Never throws.
+            Convenience overload without messageId parameter.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishRawAsync(System.String,System.ReadOnlyMemory{System.Byte},System.String,BeyondImmersion.BannouService.Messaging.PublishOptions,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Publish raw bytes (for binary protocol optimization). Never throws.
             </summary>
             <param name="topic">Topic/routing key</param>
             <param name="payload">Raw bytes to publish</param>
             <param name="contentType">MIME type of the payload (e.g., "application/octet-stream")</param>
             <param name="options">Optional publish settings</param>
+            <param name="messageId">Optional message ID for correlation (generated if not provided)</param>
             <param name="cancellationToken">Cancellation token</param>
-            <returns>The message ID assigned to this publication</returns>
+            <returns>True if published or buffered for retry, false on unrecoverable failure</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishRawAsync(System.String,System.ReadOnlyMemory{System.Byte},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Publish raw bytes (for binary protocol optimization). Never throws.
+            Convenience overload without messageId parameter.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishErrorAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.Threading.CancellationToken)">
             <summary>

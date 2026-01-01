@@ -323,7 +323,7 @@ public class AccountsServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -370,7 +370,7 @@ public class AccountsServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -672,6 +672,30 @@ public class AccountsServiceTests
             null!,
             _mockMessageBus.Object,
             _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AccountsService(
+            _mockLogger.Object,
+            _configuration,
+            _mockStateStoreFactory.Object,
+            null!,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AccountsService(
+            _mockLogger.Object,
+            _configuration,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            null!));
     }
 
     #endregion

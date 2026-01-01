@@ -741,107 +741,84 @@ public partial class RelationshipService : IRelationshipService
     }
 
     /// <summary>
-    /// Publishes a relationship created event to the message bus.
+    /// Publishes a relationship created event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
     private async Task PublishRelationshipCreatedEventAsync(RelationshipModel model, CancellationToken cancellationToken)
     {
-        try
+        var eventModel = new RelationshipCreatedEvent
         {
-            var eventModel = new RelationshipCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipId = Guid.Parse(model.RelationshipId),
-                Entity1Id = Guid.Parse(model.Entity1Id),
-                Entity1Type = model.Entity1Type,
-                Entity2Id = Guid.Parse(model.Entity2Id),
-                Entity2Type = model.Entity2Type,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
-                StartedAt = model.StartedAt,
-                Metadata = model.Metadata ?? new Dictionary<string, object>(),
-                CreatedAt = model.CreatedAt
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt
+        };
 
-            await _messageBus.PublishAsync("relationship.created", eventModel);
-            _logger.LogDebug("Published relationship.created event for {RelationshipId}", model.RelationshipId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship.created event for {RelationshipId}", model.RelationshipId);
-        }
+        await _messageBus.TryPublishAsync("relationship.created", eventModel);
+        _logger.LogDebug("Published relationship.created event for {RelationshipId}", model.RelationshipId);
     }
 
     /// <summary>
-    /// Publishes a relationship updated event to the message bus.
-    /// Event contains current state plus list of changed fields.
+    /// Publishes a relationship updated event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
     private async Task PublishRelationshipUpdatedEventAsync(
         RelationshipModel model,
         IEnumerable<string> changedFields,
         CancellationToken cancellationToken)
     {
-        try
+        var eventModel = new RelationshipUpdatedEvent
         {
-            var eventModel = new RelationshipUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipId = Guid.Parse(model.RelationshipId),
-                Entity1Id = Guid.Parse(model.Entity1Id),
-                Entity1Type = model.Entity1Type,
-                Entity2Id = Guid.Parse(model.Entity2Id),
-                Entity2Type = model.Entity2Type,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
-                StartedAt = model.StartedAt,
-                EndedAt = model.EndedAt ?? default,
-                Metadata = model.Metadata ?? new Dictionary<string, object>(),
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
-                ChangedFields = changedFields.ToList()
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            EndedAt = model.EndedAt ?? default,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
+            ChangedFields = changedFields.ToList()
+        };
 
-            await _messageBus.PublishAsync("relationship.updated", eventModel);
-            _logger.LogDebug("Published relationship.updated event for {RelationshipId}", model.RelationshipId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship.updated event for {RelationshipId}", model.RelationshipId);
-        }
+        await _messageBus.TryPublishAsync("relationship.updated", eventModel);
+        _logger.LogDebug("Published relationship.updated event for {RelationshipId}", model.RelationshipId);
     }
 
     /// <summary>
-    /// Publishes a relationship deleted event to the message bus.
-    /// Used when a relationship is ended or permanently removed.
+    /// Publishes a relationship deleted event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
     private async Task PublishRelationshipDeletedEventAsync(RelationshipModel model, string? deletedReason, CancellationToken cancellationToken)
     {
-        try
+        var eventModel = new RelationshipDeletedEvent
         {
-            var eventModel = new RelationshipDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipId = Guid.Parse(model.RelationshipId),
-                Entity1Id = Guid.Parse(model.Entity1Id),
-                Entity1Type = model.Entity1Type,
-                Entity2Id = Guid.Parse(model.Entity2Id),
-                Entity2Type = model.Entity2Type,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
-                StartedAt = model.StartedAt,
-                EndedAt = model.EndedAt ?? DateTimeOffset.UtcNow,
-                Metadata = model.Metadata ?? new Dictionary<string, object>(),
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
-                DeletedReason = deletedReason
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            EndedAt = model.EndedAt ?? DateTimeOffset.UtcNow,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
+            DeletedReason = deletedReason
+        };
 
-            await _messageBus.PublishAsync("relationship.deleted", eventModel);
-            _logger.LogDebug("Published relationship.deleted event for {RelationshipId}", model.RelationshipId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship.deleted event for {RelationshipId}", model.RelationshipId);
-        }
+        await _messageBus.TryPublishAsync("relationship.deleted", eventModel);
+        _logger.LogDebug("Published relationship.deleted event for {RelationshipId}", model.RelationshipId);
     }
 
     /// <summary>

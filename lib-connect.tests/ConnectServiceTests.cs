@@ -66,6 +66,88 @@ public class ConnectServiceTests
         Assert.Null(exception);
     }
 
+    [Fact]
+    public void Constructor_WithNullAuthClient_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(null!, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMeshClient_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, null!, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, null!, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageSubscriber_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, null!, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullHttpClientFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, null!, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullAppMappingResolver_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, null!, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, null!, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, null!, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, null!));
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyServerSalt_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var configWithoutSalt = new ConnectServiceConfiguration { BinaryProtocolVersion = "2.0", ServerSalt = "" };
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+    }
 
     #endregion
 
@@ -465,7 +547,7 @@ public class ConnectServiceTests
         Assert.Equal(serviceId.ToString(), resultDict["serviceId"].ToString());
 
         // Verify that PublishAsync was called for permission recompilation via IMessageBus
-        _mockMessageBus.Verify(x => x.PublishAsync(
+        _mockMessageBus.Verify(x => x.TryPublishAsync(
             "bannou-permission-recompile",
             It.IsAny<PermissionRecompileEvent>(),
             It.IsAny<PublishOptions?>(),

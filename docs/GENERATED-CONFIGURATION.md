@@ -1,6 +1,6 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-31 19:01:53
+> **Auto-generated**: 2026-01-01 04:43:21
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -187,6 +187,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RABBITMQ_USERNAME` | string | `guest` (insecure) | RabbitMQ username |
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
 | `MESSAGING_REQUEST_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for individual message operations |
+| `MESSAGING_RETRY_BUFFER_ENABLED` | bool | `true` | Enable retry buffer for failed event publishes |
+| `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | int | `5` | Interval between retry attempts for buffered messages |
+| `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `300` | Maximum age of buffered messages before node crash (prevents... |
+| `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `10000` | Maximum number of messages in retry buffer before node crash |
 | `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds |
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
@@ -292,9 +296,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 172
+- **Total properties**: 176
 - **Required (no default)**: 33
-- **Optional (has default)**: 139
+- **Optional (has default)**: 143
 
 ## Environment Variable Naming Convention
 

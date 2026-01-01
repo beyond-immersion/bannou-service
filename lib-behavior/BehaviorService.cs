@@ -252,7 +252,7 @@ public partial class BehaviorService : IBehaviorService
                 UpdatedAt = now,
                 ChangedFields = new List<string> { "bytecode" }
             };
-            await _messageBus.PublishAsync("behavior.updated", updateEvent);
+            await _messageBus.TryPublishAsync("behavior.updated", updateEvent);
             _logger.LogDebug("Published behavior.updated event for {BehaviorId}", behaviorId);
         }
         else
@@ -271,7 +271,7 @@ public partial class BehaviorService : IBehaviorService
                 CreatedAt = now,
                 UpdatedAt = now
             };
-            await _messageBus.PublishAsync("behavior.created", createEvent);
+            await _messageBus.TryPublishAsync("behavior.created", createEvent);
             _logger.LogDebug("Published behavior.created event for {BehaviorId}", behaviorId);
         }
     }
@@ -764,7 +764,7 @@ public partial class BehaviorService : IBehaviorService
             DeletedReason = "Invalidated via API"
         };
 
-        await _messageBus.PublishAsync("behavior.deleted", deleteEvent);
+        await _messageBus.TryPublishAsync("behavior.deleted", deleteEvent);
         _logger.LogDebug("Published behavior.deleted event for {BehaviorId}", metadata.BehaviorId);
     }
 

@@ -29,43 +29,61 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     }
 
     /// <inheritdoc/>
-    public Task<Guid> PublishAsync<TEvent>(
+    public Task<bool> TryPublishAsync<TEvent>(
         string topic,
         TEvent eventData,
         PublishOptions? options = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(eventData);
+        try
+        {
+            ArgumentNullException.ThrowIfNull(topic);
+            ArgumentNullException.ThrowIfNull(eventData);
 
-        var messageId = Guid.NewGuid();
-        _logger.LogDebug(
-            "[InMemory] Published to topic '{Topic}': {EventType} (id: {MessageId})",
-            topic, typeof(TEvent).Name, messageId);
+            var effectiveMessageId = messageId ?? Guid.NewGuid();
+            _logger.LogDebug(
+                "[InMemory] Published to topic '{Topic}': {EventType} (id: {MessageId})",
+                topic, typeof(TEvent).Name, effectiveMessageId);
 
-        // Deliver to local subscribers
-        _ = DeliverToSubscribersAsync(topic, eventData, cancellationToken);
+            // Deliver to local subscribers
+            _ = DeliverToSubscribersAsync(topic, eventData, cancellationToken);
 
-        return Task.FromResult(messageId);
+            return Task.FromResult(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[InMemory] Failed to publish to topic '{Topic}'", topic);
+            return Task.FromResult(false);
+        }
     }
 
     /// <inheritdoc/>
-    public Task<Guid> PublishRawAsync(
+    public Task<bool> TryPublishRawAsync(
         string topic,
         ReadOnlyMemory<byte> payload,
         string contentType,
         PublishOptions? options = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(topic);
+        try
+        {
+            ArgumentNullException.ThrowIfNull(topic);
 
-        var messageId = Guid.NewGuid();
-        _logger.LogDebug(
-            "[InMemory] Published raw to topic '{Topic}': {ByteCount} bytes, {ContentType} (id: {MessageId})",
-            topic, payload.Length, contentType, messageId);
+            var effectiveMessageId = messageId ?? Guid.NewGuid();
+            _logger.LogDebug(
+                "[InMemory] Published raw to topic '{Topic}': {ByteCount} bytes, {ContentType} (id: {MessageId})",
+                topic, payload.Length, contentType, effectiveMessageId);
 
-        return Task.FromResult(messageId);
+            return Task.FromResult(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[InMemory] Failed to publish raw to topic '{Topic}'", topic);
+            return Task.FromResult(false);
+        }
     }
 
     /// <inheritdoc/>

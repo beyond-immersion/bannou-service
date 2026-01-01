@@ -1071,102 +1071,75 @@ public partial class AccountsService : IAccountsService
     }
 
     /// <summary>
-    /// Publish AccountCreatedEvent to RabbitMQ via IMessageBus
+    /// Publish AccountCreatedEvent to RabbitMQ via IMessageBus.
+    /// TryPublishAsync handles buffering, retry, and error logging internally.
     /// </summary>
     private async Task PublishAccountCreatedEventAsync(AccountModel account)
     {
-        try
+        var eventModel = new AccountCreatedEvent
         {
-            var eventModel = new AccountCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                AccountId = Guid.Parse(account.AccountId),
-                Email = account.Email,
-                DisplayName = account.DisplayName ?? string.Empty,
-                EmailVerified = account.IsVerified,
-                Roles = account.Roles ?? [],
-                CreatedAt = account.CreatedAt
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = Guid.Parse(account.AccountId),
+            Email = account.Email,
+            DisplayName = account.DisplayName ?? string.Empty,
+            EmailVerified = account.IsVerified,
+            Roles = account.Roles ?? [],
+            CreatedAt = account.CreatedAt
+        };
 
-            await _messageBus.PublishAsync(ACCOUNT_CREATED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountCreatedEvent for account: {AccountId}", account.AccountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish AccountCreatedEvent for account: {AccountId}", account.AccountId);
-            _ = PublishErrorEventAsync("PublishAccountCreatedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
-            // Don't throw - event publishing failure shouldn't break account creation
-        }
+        await _messageBus.TryPublishAsync(ACCOUNT_CREATED_TOPIC, eventModel);
+        _logger.LogDebug("Published AccountCreatedEvent for account: {AccountId}", account.AccountId);
     }
 
     /// <summary>
     /// Publish AccountUpdatedEvent to RabbitMQ via IMessageBus.
     /// Event contains the current state of the account plus which fields changed.
+    /// TryPublishAsync handles buffering, retry, and error logging internally.
     /// </summary>
     private async Task PublishAccountUpdatedEventAsync(AccountModel account, IEnumerable<string> changedFields)
     {
-        try
+        var eventModel = new AccountUpdatedEvent
         {
-            var eventModel = new AccountUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                AccountId = Guid.Parse(account.AccountId),
-                Email = account.Email,
-                DisplayName = account.DisplayName ?? string.Empty,
-                EmailVerified = account.IsVerified,
-                Roles = account.Roles ?? [],
-                CreatedAt = account.CreatedAt,
-                UpdatedAt = account.UpdatedAt,
-                ChangedFields = changedFields.ToList()
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = Guid.Parse(account.AccountId),
+            Email = account.Email,
+            DisplayName = account.DisplayName ?? string.Empty,
+            EmailVerified = account.IsVerified,
+            Roles = account.Roles ?? [],
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            ChangedFields = changedFields.ToList()
+        };
 
-            await _messageBus.PublishAsync(ACCOUNT_UPDATED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountUpdatedEvent for account: {AccountId}", account.AccountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish AccountUpdatedEvent for account: {AccountId}", account.AccountId);
-            _ = PublishErrorEventAsync("PublishAccountUpdatedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
-            // Don't throw - event publishing failure shouldn't break account update
-        }
+        await _messageBus.TryPublishAsync(ACCOUNT_UPDATED_TOPIC, eventModel);
+        _logger.LogDebug("Published AccountUpdatedEvent for account: {AccountId}", account.AccountId);
     }
 
     /// <summary>
     /// Publish AccountDeletedEvent to RabbitMQ via IMessageBus.
     /// Event contains the final state of the account before deletion.
+    /// TryPublishAsync handles buffering, retry, and error logging internally.
     /// </summary>
     private async Task PublishAccountDeletedEventAsync(AccountModel account, string? deletedReason)
     {
-        try
+        var eventModel = new AccountDeletedEvent
         {
-            var eventModel = new AccountDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                AccountId = Guid.Parse(account.AccountId),
-                Email = account.Email,
-                DisplayName = account.DisplayName ?? string.Empty,
-                EmailVerified = account.IsVerified,
-                Roles = account.Roles ?? [],
-                CreatedAt = account.CreatedAt,
-                UpdatedAt = account.UpdatedAt,
-                DeletedReason = deletedReason
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = Guid.Parse(account.AccountId),
+            Email = account.Email,
+            DisplayName = account.DisplayName ?? string.Empty,
+            EmailVerified = account.IsVerified,
+            Roles = account.Roles ?? [],
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            DeletedReason = deletedReason
+        };
 
-            _logger.LogDebug("Publishing AccountDeletedEvent for account {AccountId} to topic {Topic}",
-                account.AccountId, ACCOUNT_DELETED_TOPIC);
-
-            await _messageBus.PublishAsync(ACCOUNT_DELETED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", account.AccountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account {AccountId}", account.AccountId);
-            _ = PublishErrorEventAsync("PublishAccountDeletedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
-            // Don't throw - event publishing failure shouldn't break account deletion
-        }
+        await _messageBus.TryPublishAsync(ACCOUNT_DELETED_TOPIC, eventModel);
+        _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", account.AccountId);
     }
 
     #region Account Index Management
@@ -1263,9 +1236,15 @@ public partial class AccountsService : IAccountsService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to remove account {AccountId} from index after {MaxRetries} attempts", accountId, maxRetries);
-                _ = PublishErrorEventAsync("RemoveAccountFromIndex", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId, MaxRetries = maxRetries });
-                // Don't throw - index cleanup failure shouldn't break account deletion
-                return;
+                await _messageBus.TryPublishErrorAsync(
+                    "accounts",
+                    "RemoveAccountFromIndex",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "state",
+                    cancellationToken: cancellationToken);
+                // Index cleanup failure must propagate - orphaned index entries are a data integrity issue
+                throw;
             }
         }
     }

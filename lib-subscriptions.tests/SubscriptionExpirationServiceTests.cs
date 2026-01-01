@@ -180,7 +180,7 @@ public class SubscriptionExpirationServiceTests
         await service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None);
 
         // Assert - No events should be published
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),

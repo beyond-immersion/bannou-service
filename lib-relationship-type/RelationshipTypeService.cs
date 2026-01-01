@@ -1145,7 +1145,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId)
             };
 
-            await _messageBus.PublishAsync("relationship-type.created", eventModel);
+            await _messageBus.TryPublishAsync("relationship-type.created", eventModel);
             _logger.LogDebug("Published relationship-type.created event for {TypeId}", model.RelationshipTypeId);
         }
         catch (Exception ex)
@@ -1183,7 +1183,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.PublishAsync("relationship-type.updated", eventModel);
+            await _messageBus.TryPublishAsync("relationship-type.updated", eventModel);
             _logger.LogDebug("Published relationship-type.updated event for {TypeId} with changed fields: {ChangedFields}",
                 model.RelationshipTypeId, string.Join(", ", changedFields));
         }
@@ -1208,7 +1208,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 Code = model.Code
             };
 
-            await _messageBus.PublishAsync("relationship-type.deleted", eventModel);
+            await _messageBus.TryPublishAsync("relationship-type.deleted", eventModel);
             _logger.LogDebug("Published relationship-type.deleted event for {TypeId}", model.RelationshipTypeId);
         }
         catch (Exception ex)

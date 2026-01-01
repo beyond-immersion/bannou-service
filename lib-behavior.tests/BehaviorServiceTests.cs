@@ -66,6 +66,134 @@ public class BehaviorServiceTests
     }
 
     [Fact]
+    public void Constructor_WithNullLogger_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            null!,
+            _mockConfiguration.Object,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object,
+            _compiler,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullConfiguration_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            _mockLogger.Object,
+            null!,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object,
+            _compiler,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            null!,
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object,
+            _compiler,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockMessageBus.Object,
+            null!,
+            _mockGoapPlanner.Object,
+            _compiler,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullGoapPlanner_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            null!,
+            _compiler,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullCompiler_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object,
+            null!,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullAssetClient_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object,
+            _compiler,
+            null!,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullHttpClientFactory_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new BehaviorService(
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object,
+            _compiler,
+            _mockAssetClient.Object,
+            null!,
+            _mockBundleManager.Object));
+    }
+
+    [Fact]
     public void Constructor_WithNullBundleManager_ShouldThrow()
     {
         // Arrange & Act & Assert

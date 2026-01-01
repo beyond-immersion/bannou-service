@@ -83,19 +83,23 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 options.CorrelationId = null;
             }
 
+            // Generate messageId upfront so we can return it to the caller
+            var messageId = Guid.NewGuid();
+
             // Publish via IMessageBus using the envelope
             // API options and interface options use the same generated PublishOptions type
-            var messageId = await _messageBus.PublishAsync(
+            var success = await _messageBus.TryPublishAsync(
                 body.Topic,
                 envelope,
                 options,
+                messageId,
                 cancellationToken);
 
-            _logger.LogDebug("Published event {MessageId} to topic {Topic}", messageId, body.Topic);
+            _logger.LogDebug("Published event {MessageId} to topic {Topic} (success: {Success})", messageId, body.Topic, success);
 
             return (StatusCodes.OK, new PublishEventResponse
             {
-                Success = true,
+                Success = success,
                 MessageId = messageId
             });
         }

@@ -53,7 +53,7 @@ public class InMemoryMessageBusTests
         var eventData = new TestEvent { Message = "Hello" };
 
         // Act
-        var messageId = await _messageBus.PublishAsync(topic, eventData);
+        var messageId = await _messageBus.TryPublishAsync(topic, eventData);
 
         // Assert
         Assert.NotEqual(Guid.Empty, messageId);
@@ -67,7 +67,7 @@ public class InMemoryMessageBusTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.PublishAsync(null!, eventData));
+            _messageBus.TryPublishAsync(null!, eventData));
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
 
         // Allow delivery to complete
         await Task.Delay(50);
@@ -127,7 +127,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
 
         // Allow delivery to complete
         await Task.Delay(50);
@@ -144,7 +144,7 @@ public class InMemoryMessageBusTests
         var eventData = new TestEvent { Message = "Hello" };
 
         // Act
-        var messageId = await _messageBus.PublishAsync(topic, eventData);
+        var messageId = await _messageBus.TryPublishAsync(topic, eventData);
 
         // Assert
         Assert.NotEqual(Guid.Empty, messageId);
@@ -163,7 +163,7 @@ public class InMemoryMessageBusTests
         };
 
         // Act
-        var messageId = await _messageBus.PublishAsync(topic, eventData, options);
+        var messageId = await _messageBus.TryPublishAsync(topic, eventData, options);
 
         // Assert
         Assert.NotEqual(Guid.Empty, messageId);
@@ -189,7 +189,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
 
         // Allow delivery to complete
         await Task.Delay(50);
@@ -399,7 +399,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
 
         // Allow delivery to complete
         await Task.Delay(50);
@@ -427,14 +427,14 @@ public class InMemoryMessageBusTests
         });
 
         // First publish - should receive
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
         await Task.Delay(50);
 
         // Act - Dispose
         await disposable.DisposeAsync();
 
         // Second publish - should NOT receive
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
         await Task.Delay(50);
 
         // Assert
@@ -488,7 +488,7 @@ public class InMemoryMessageBusTests
         });
 
         // First publish - should receive twice
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
         await Task.Delay(50);
         Assert.Equal(2, receivedCount);
 
@@ -496,7 +496,7 @@ public class InMemoryMessageBusTests
         await _messageBus.UnsubscribeAsync(topic);
 
         // Second publish - should NOT receive
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
         await Task.Delay(50);
 
         // Assert
@@ -536,7 +536,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
 
         // Allow delivery to complete
         await Task.Delay(50);
@@ -560,7 +560,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.PublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData);
 
         // Allow delivery to complete
         await Task.Delay(50);
@@ -589,7 +589,7 @@ public class InMemoryMessageBusTests
 
         // Act - Publish from multiple tasks concurrently
         var tasks = Enumerable.Range(0, publishCount)
-            .Select(i => _messageBus.PublishAsync(topic, new TestEvent { Message = $"Message {i}" }))
+            .Select(i => _messageBus.TryPublishAsync(topic, new TestEvent { Message = $"Message {i}" }))
             .ToArray();
 
         await Task.WhenAll(tasks);
@@ -659,7 +659,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.PublishAsync(topic, eventData, null, cts.Token);
+        await _messageBus.TryPublishAsync(topic, eventData, null, cts.Token);
 
         // Allow delivery to complete
         await Task.Delay(50);

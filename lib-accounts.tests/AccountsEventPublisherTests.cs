@@ -68,7 +68,7 @@ public class AccountsEventPublisherTests
         var displayName = "Test User";
         var roles = new List<string> { "user" };
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -80,7 +80,7 @@ public class AccountsEventPublisherTests
 
         // Assert
         Assert.True(result);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.created",
             It.Is<AccountCreatedEvent>(e =>
                 e.AccountId == accountId &&
@@ -98,7 +98,7 @@ public class AccountsEventPublisherTests
         var accountId = Guid.NewGuid();
         var email = "test@example.com";
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -110,7 +110,7 @@ public class AccountsEventPublisherTests
 
         // Assert
         Assert.True(result);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.created",
             It.Is<AccountCreatedEvent>(e =>
                 e.DisplayName == string.Empty &&
@@ -126,7 +126,7 @@ public class AccountsEventPublisherTests
         var accountId = Guid.NewGuid();
         var email = "test@example.com";
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -148,7 +148,7 @@ public class AccountsEventPublisherTests
         var email = "test@example.com";
         AccountCreatedEvent? capturedEvent = null;
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -178,7 +178,7 @@ public class AccountsEventPublisherTests
         var account = CreateTestAccount();
         var changedFields = new List<string> { "DisplayName", "Email" };
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -190,7 +190,7 @@ public class AccountsEventPublisherTests
 
         // Assert
         Assert.True(result);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.updated",
             It.Is<AccountUpdatedEvent>(e =>
                 e.AccountId == account.AccountId &&
@@ -208,7 +208,7 @@ public class AccountsEventPublisherTests
         var changedFields = new List<string> { "DisplayName" };
         AccountUpdatedEvent? capturedEvent = null;
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -237,7 +237,7 @@ public class AccountsEventPublisherTests
         var account = CreateTestAccount();
         var changedFields = new List<string> { "DisplayName" };
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -262,7 +262,7 @@ public class AccountsEventPublisherTests
         var account = CreateTestAccount();
         var deletedReason = "User requested deletion";
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -274,7 +274,7 @@ public class AccountsEventPublisherTests
 
         // Assert
         Assert.True(result);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.deleted",
             It.Is<AccountDeletedEvent>(e =>
                 e.AccountId == account.AccountId &&
@@ -289,7 +289,7 @@ public class AccountsEventPublisherTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -301,7 +301,7 @@ public class AccountsEventPublisherTests
 
         // Assert
         Assert.True(result);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.deleted",
             It.Is<AccountDeletedEvent>(e =>
                 e.AccountId == account.AccountId &&
@@ -317,7 +317,7 @@ public class AccountsEventPublisherTests
         var account = CreateTestAccount();
         AccountDeletedEvent? capturedEvent = null;
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -346,7 +346,7 @@ public class AccountsEventPublisherTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),

@@ -283,7 +283,7 @@ public class OrchestratorServiceTests
 
         // Pub/sub healthy via IMessageBus
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
@@ -311,7 +311,7 @@ public class OrchestratorServiceTests
 
         // Pub/sub failure via IMessageBus
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
@@ -342,7 +342,7 @@ public class OrchestratorServiceTests
 
         // Pub/sub unhealthy via IMessageBus publish failure
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),

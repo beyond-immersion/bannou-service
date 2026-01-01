@@ -251,6 +251,15 @@ public partial class VoiceService : IVoiceService
                         if (roomData == null)
                         {
                             _logger.LogError("Room data disappeared after tier upgrade for room {RoomId}", body.RoomId);
+                            await _messageBus.TryPublishErrorAsync(
+                                "voice",
+                                "JoinVoiceRoom",
+                                "state_consistency_error",
+                                "Room data disappeared after tier upgrade",
+                                dependency: "state",
+                                endpoint: "post:/voice/rooms/join",
+                                details: $"roomId={body.RoomId}",
+                                stack: null);
                             return (StatusCodes.InternalServerError, null);
                         }
                         isScaledTier = true;
@@ -619,8 +628,7 @@ public partial class VoiceService : IVoiceService
     {
         if (_clientEventPublisher == null)
         {
-            _logger.LogDebug("Client event publisher not available, skipping peer_joined notification");
-            return;
+            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
         }
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
@@ -694,8 +702,7 @@ public partial class VoiceService : IVoiceService
     {
         if (_clientEventPublisher == null)
         {
-            _logger.LogDebug("Client event publisher not available, skipping peer_left notification");
-            return;
+            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
         }
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
@@ -735,8 +742,7 @@ public partial class VoiceService : IVoiceService
     {
         if (_clientEventPublisher == null)
         {
-            _logger.LogDebug("Client event publisher not available, skipping peer_updated notification");
-            return;
+            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
         }
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
@@ -780,8 +786,7 @@ public partial class VoiceService : IVoiceService
     {
         if (_clientEventPublisher == null)
         {
-            _logger.LogDebug("Client event publisher not available, skipping room_closed notification");
-            return;
+            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
         }
 
         var sessionIds = participants
@@ -824,8 +829,7 @@ public partial class VoiceService : IVoiceService
     {
         if (_clientEventPublisher == null)
         {
-            _logger.LogDebug("Client event publisher not available, skipping tier_upgrade notification");
-            return;
+            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
         }
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);

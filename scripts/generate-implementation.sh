@@ -240,7 +240,7 @@ try:
             // return (StatusCodes.NoContent, default);
             //
             // For event publishing (lib-messaging):
-            // await _messageBus.PublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
+            // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
         }}
         catch (Exception ex)
         {{

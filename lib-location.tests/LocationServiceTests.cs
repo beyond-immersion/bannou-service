@@ -63,7 +63,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Default message bus behavior
         _mockMessageBus
-            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
 
         // Default realm validation to pass
@@ -511,7 +511,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockLocationStore.Verify(s => s.SaveAsync(
             $"{LOCATION_KEY_PREFIX}{locationId}",
             It.IsAny<LocationService.LocationModel>(), null, It.IsAny<CancellationToken>()), Times.Once);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -557,7 +557,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockLocationStore.Verify(s => s.SaveAsync(
             $"{LOCATION_KEY_PREFIX}{locationId}",
             It.IsAny<LocationService.LocationModel>(), null, It.IsAny<CancellationToken>()), Times.Never);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -592,7 +592,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.True(response.IsDeprecated);
         Assert.Equal("No longer in use", response.DeprecationReason);
 
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -664,7 +664,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.False(response.IsDeprecated);
         Assert.Null(response.DeprecationReason);
 
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

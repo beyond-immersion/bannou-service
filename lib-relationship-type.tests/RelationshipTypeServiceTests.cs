@@ -344,7 +344,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         // Assert
         Assert.Equal(StatusCodes.Created, status);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "relationship-type.created",
             It.IsAny<RelationshipTypeCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
@@ -431,7 +431,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "relationship-type.updated",
             It.IsAny<RelationshipTypeUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
