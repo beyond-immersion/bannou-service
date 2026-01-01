@@ -100,8 +100,9 @@ public class PermissionsServiceTests
             It.IsAny<string>(),
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Setup default behavior for client event publisher
         _mockClientEventPublisher.Setup(x => x.PublishToSessionAsync(

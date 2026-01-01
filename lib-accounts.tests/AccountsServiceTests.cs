@@ -327,6 +327,7 @@ public class AccountsServiceTests
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -374,6 +375,7 @@ public class AccountsServiceTests
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

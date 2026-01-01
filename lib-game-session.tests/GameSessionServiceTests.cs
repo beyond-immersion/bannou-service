@@ -184,6 +184,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             "game-session.created",
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -538,6 +539,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             "game-session.player-joined",
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

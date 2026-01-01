@@ -300,6 +300,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             "relationship.created",
             It.IsAny<RelationshipCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -386,6 +387,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             "relationship.updated",
             It.IsAny<RelationshipUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -494,6 +496,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             "relationship.deleted",
             It.IsAny<RelationshipDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

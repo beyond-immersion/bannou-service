@@ -719,6 +719,7 @@ public class SubscriptionsServiceTests
                 e.AccountId == accountId &&
                 e.Action == SubscriptionUpdatedEventAction.Created),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -902,6 +903,7 @@ public class SubscriptionsServiceTests
                 e.SubscriptionId == subscriptionId &&
                 e.Action == SubscriptionUpdatedEventAction.Cancelled),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

@@ -287,8 +287,9 @@ public class OrchestratorServiceTests
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         var service = CreateService();
 
@@ -315,6 +316,7 @@ public class OrchestratorServiceTests
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Message bus unavailable"));
 
@@ -346,6 +348,7 @@ public class OrchestratorServiceTests
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Message bus unavailable"));
 

@@ -305,6 +305,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -411,6 +412,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 

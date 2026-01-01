@@ -293,8 +293,8 @@ public class MeshServiceTests
 
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new RegisterEndpointRequest
@@ -356,8 +356,8 @@ public class MeshServiceTests
 
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new RegisterEndpointRequest
@@ -402,8 +402,8 @@ public class MeshServiceTests
 
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new DeregisterEndpointRequest

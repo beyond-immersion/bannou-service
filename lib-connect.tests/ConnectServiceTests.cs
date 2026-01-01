@@ -551,6 +551,7 @@ public class ConnectServiceTests
             "bannou-permission-recompile",
             It.IsAny<PermissionRecompileEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

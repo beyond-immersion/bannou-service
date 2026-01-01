@@ -184,6 +184,7 @@ public class SubscriptionExpirationServiceTests
             It.IsAny<string>(),
             It.IsAny<object>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 

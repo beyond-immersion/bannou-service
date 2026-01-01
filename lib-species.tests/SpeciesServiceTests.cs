@@ -360,6 +360,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             "species.created",
             It.IsAny<SpeciesCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -469,6 +470,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             "species.updated",
             It.IsAny<SpeciesUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
