@@ -166,6 +166,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
   "$ref": "#/$defs/PublishEventRequest",
   "$defs": {
     "PublishEventRequest": {
+      "description": "Request to publish an event to a messaging topic",
       "type": "object",
       "required": [
         "topic",
@@ -253,6 +254,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
   "$ref": "#/$defs/PublishEventResponse",
   "$defs": {
     "PublishEventResponse": {
+      "description": "Response confirming event publication with message identifier",
       "type": "object",
       "properties": {
         "success": {
@@ -332,6 +334,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
   "$ref": "#/$defs/CreateSubscriptionRequest",
   "$defs": {
     "CreateSubscriptionRequest": {
+      "description": "Request to create a new subscription to a messaging topic",
       "type": "object",
       "required": [
         "topic",
@@ -399,6 +402,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
   "$ref": "#/$defs/CreateSubscriptionResponse",
   "$defs": {
     "CreateSubscriptionResponse": {
+      "description": "Response containing the created subscription details",
       "type": "object",
       "properties": {
         "subscriptionId": {
@@ -478,6 +482,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
   "$ref": "#/$defs/RemoveSubscriptionRequest",
   "$defs": {
     "RemoveSubscriptionRequest": {
+      "description": "Request to remove an existing subscription",
       "type": "object",
       "required": [
         "subscriptionId"
@@ -500,6 +505,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
   "$ref": "#/$defs/RemoveSubscriptionResponse",
   "$defs": {
     "RemoveSubscriptionResponse": {
+      "description": "Response confirming subscription removal status",
       "type": "object",
       "properties": {
         "success": {
@@ -598,6 +604,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
   "$ref": "#/$defs/ListTopicsResponse",
   "$defs": {
     "ListTopicsResponse": {
+      "description": "Response containing a list of available messaging topics",
       "type": "object",
       "properties": {
         "topics": {
@@ -610,6 +617,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
       }
     },
     "TopicInfo": {
+      "description": "Information about a messaging topic including its name and statistics",
       "type": "object",
       "properties": {
         "name": {

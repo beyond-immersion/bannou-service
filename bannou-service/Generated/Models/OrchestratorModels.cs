@@ -86,6 +86,9 @@ public partial class GetServiceRoutingRequest
 
 }
 
+/// <summary>
+/// Response containing service-to-app-id routing mappings for mesh invocation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceRoutingResponse
 {
@@ -267,6 +270,9 @@ public partial class GetLogsRequest
 
 }
 
+/// <summary>
+/// Request body for restarting a container by its app-id
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContainerRestartRequestBody
 {
@@ -311,6 +317,9 @@ public partial class ContainerRestartRequestBody
 
 }
 
+/// <summary>
+/// Request to retrieve the current status of a specific container
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetContainerStatusRequest
 {
@@ -358,6 +367,9 @@ public partial class GetConfigVersionRequest
 
 }
 
+/// <summary>
+/// Response containing overall infrastructure health status and individual component details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InfrastructureHealthResponse
 {
@@ -395,6 +407,9 @@ public partial class InfrastructureHealthResponse
 
 }
 
+/// <summary>
+/// Health status information for a single infrastructure component (Redis, RabbitMQ, etc.)
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ComponentHealth
 {
@@ -447,6 +462,87 @@ public partial class ComponentHealth
 
 }
 
+/// <summary>
+/// Service capacity metrics from heartbeat monitoring including connection counts and resource usage
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Capacity
+{
+
+    /// <summary>
+    /// Maximum number of connections this service can handle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
+    public int MaxConnections { get; set; } = default!;
+
+    /// <summary>
+    /// Current number of active connections
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
+    public int CurrentConnections { get; set; } = default!;
+
+    /// <summary>
+    /// CPU usage as a percentage (0.0 to 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cpuUsage")]
+    public float CpuUsage { get; set; } = default!;
+
+    /// <summary>
+    /// Memory usage as a percentage (0.0 to 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("memoryUsage")]
+    public float MemoryUsage { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Health check information for a container including last check status and failure tracking
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class HealthChecks
+{
+
+    /// <summary>
+    /// When the last health check was performed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lastCheck")]
+    public System.DateTimeOffset LastCheck { get; set; } = default!;
+
+    /// <summary>
+    /// Result of the last health check
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    public string Status { get; set; } = default!;
+
+    /// <summary>
+    /// Number of consecutive health check failures
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consecutiveFailures")]
+    public int ConsecutiveFailures { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Aggregated health report for all services based on heartbeat monitoring
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceHealthReport
 {
@@ -540,7 +636,7 @@ public partial class ServiceHealthStatus
     public System.DateTimeOffset LastSeen { get; set; } = default!;
 
     /// <summary>
-    /// Service capacity from heartbeat
+    /// Current capacity metrics including load and available slots
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capacity")]
     public Capacity Capacity { get; set; } = default!;
@@ -607,6 +703,9 @@ public partial class TestExecutionRequest
 
 }
 
+/// <summary>
+/// Result of executing a test suite including overall status and individual test outcomes
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TestExecutionResult
 {
@@ -662,6 +761,9 @@ public partial class TestExecutionResult
 
 }
 
+/// <summary>
+/// Outcome of a single test case including pass/fail status and optional error details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TestResult
 {
@@ -709,6 +811,9 @@ public partial class TestResult
 
 }
 
+/// <summary>
+/// Request to restart a specific service with optional configuration updates
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceRestartRequest
 {
@@ -750,6 +855,9 @@ public partial class ServiceRestartRequest
 
 }
 
+/// <summary>
+/// Result of a service restart operation including timing and status information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceRestartResult
 {
@@ -805,6 +913,9 @@ public partial class ServiceRestartResult
 
 }
 
+/// <summary>
+/// Request to evaluate whether a service should be restarted based on health metrics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ShouldRestartServiceRequest
 {
@@ -828,6 +939,9 @@ public partial class ShouldRestartServiceRequest
 
 }
 
+/// <summary>
+/// Recommendation on whether a service should be restarted with supporting rationale
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RestartRecommendation
 {
@@ -910,6 +1024,9 @@ public enum BackendType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Information about a container orchestration backend including availability and capabilities
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BackendInfo
 {
@@ -977,6 +1094,9 @@ public partial class BackendInfo
 
 }
 
+/// <summary>
+/// Response listing all detected container orchestration backends with recommended selection
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BackendsResponse
 {
@@ -1024,6 +1144,9 @@ public partial class BackendsResponse
 
 }
 
+/// <summary>
+/// Predefined deployment configuration defining service topology and environment settings
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeploymentPreset
 {
@@ -1095,6 +1218,9 @@ public partial class DeploymentPreset
 
 }
 
+/// <summary>
+/// Response containing available deployment presets and the currently active preset
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PresetsResponse
 {
@@ -1124,6 +1250,9 @@ public partial class PresetsResponse
 
 }
 
+/// <summary>
+/// Service distribution topology defining which services run on which nodes
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceTopology
 {
@@ -1153,6 +1282,9 @@ public partial class ServiceTopology
 
 }
 
+/// <summary>
+/// A container or pod in the service topology with its assigned services and configuration
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TopologyNode
 {
@@ -1328,7 +1460,7 @@ public partial class IngressConfig
     public IngressConfigType Type { get; set; } = BeyondImmersion.BannouService.Orchestrator.IngressConfigType.Openresty;
 
     /// <summary>
-    /// Port configuration for ingress
+    /// Port configuration for HTTP and HTTPS traffic
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ports")]
     public Ports Ports { get; set; } = default!;
@@ -1338,6 +1470,36 @@ public partial class IngressConfig
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ssl")]
     public bool Ssl { get; set; } = false;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Port configuration for ingress specifying HTTP and HTTPS port numbers
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Ports
+{
+
+    /// <summary>
+    /// HTTP port number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("http")]
+    public int Http { get; set; } = 80;
+
+    /// <summary>
+    /// HTTPS port number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("https")]
+    public int Https { get; set; } = 443;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1416,6 +1578,9 @@ public enum DeploymentMode
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to deploy or update an environment using a preset or custom topology
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeployRequest
 {
@@ -1475,6 +1640,9 @@ public partial class DeployRequest
 
 }
 
+/// <summary>
+/// Result of a deployment operation including status and deployed service information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeployResponse
 {
@@ -1551,6 +1719,9 @@ public partial class DeployResponse
 
 }
 
+/// <summary>
+/// Status information for a single deployed service instance
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeployedService
 {
@@ -1609,6 +1780,9 @@ public partial class DeployedService
 
 }
 
+/// <summary>
+/// Current status of the deployed environment including topology and resource usage
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class EnvironmentStatus
 {
@@ -1687,6 +1861,9 @@ public partial class EnvironmentStatus
 
 }
 
+/// <summary>
+/// System resource utilization metrics including CPU, memory, disk, and network
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ResourceUsage
 {
@@ -1762,6 +1939,9 @@ public enum TeardownMode
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to tear down a deployed environment with options for data preservation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TeardownRequest
 {
@@ -1820,6 +2000,9 @@ public partial class TeardownRequest
 
 }
 
+/// <summary>
+/// Result of an environment teardown including removed resources and any errors
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TeardownResponse
 {
@@ -1911,6 +2094,9 @@ public enum CleanTarget
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to clean up Docker resources such as containers, volumes, and images
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanRequest
 {
@@ -1953,6 +2139,9 @@ public partial class CleanRequest
 
 }
 
+/// <summary>
+/// Result of a cleanup operation including reclaimed space and removed resource counts
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanResponse
 {
@@ -2016,6 +2205,9 @@ public partial class CleanResponse
 
 }
 
+/// <summary>
+/// Response containing log entries from a service or container
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LogsResponse
 {
@@ -2057,6 +2249,9 @@ public partial class LogsResponse
 
 }
 
+/// <summary>
+/// A single log entry with timestamp, stream, and message content
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LogEntry
 {
@@ -2095,6 +2290,9 @@ public partial class LogEntry
 
 }
 
+/// <summary>
+/// Request to apply incremental changes to the current service topology
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TopologyUpdateRequest
 {
@@ -2131,6 +2329,9 @@ public partial class TopologyUpdateRequest
 
 }
 
+/// <summary>
+/// A single topology modification such as adding a node, moving a service, or scaling
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TopologyChange
 {
@@ -2185,6 +2386,9 @@ public partial class TopologyChange
 
 }
 
+/// <summary>
+/// Result of a topology update including applied changes and the new topology state
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TopologyUpdateResponse
 {
@@ -2238,6 +2442,9 @@ public partial class TopologyUpdateResponse
 
 }
 
+/// <summary>
+/// Details of a single topology change that was applied, including success status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AppliedChange
 {
@@ -2279,6 +2486,9 @@ public partial class AppliedChange
 
 }
 
+/// <summary>
+/// Standard error response with code, message, and optional additional details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ErrorResponse
 {
@@ -2571,6 +2781,9 @@ public partial class ContainerRestartRequest
 
 }
 
+/// <summary>
+/// Response after accepting a container restart request with scheduling details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContainerRestartResponse
 {
@@ -2625,6 +2838,9 @@ public partial class ContainerRestartResponse
 
 }
 
+/// <summary>
+/// Current status of a container including health, restart history, and running plugins
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContainerStatus
 {
@@ -2685,7 +2901,7 @@ public partial class ContainerStatus
     public System.Collections.Generic.ICollection<RestartHistoryEntry> RestartHistory { get; set; } = default!;
 
     /// <summary>
-    /// Health check information for the container
+    /// Health check configuration and current health status results
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("healthChecks")]
     public HealthChecks HealthChecks { get; set; } = default!;
@@ -2707,6 +2923,9 @@ public partial class ContainerStatus
 
 }
 
+/// <summary>
+/// Record of a past container restart including reason, timing, and outcome
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RestartHistoryEntry
 {
@@ -2763,6 +2982,9 @@ public partial class RestartHistoryEntry
 
 }
 
+/// <summary>
+/// Request to rollback configuration to the previous version
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConfigRollbackRequest
 {
@@ -2786,6 +3008,9 @@ public partial class ConfigRollbackRequest
 
 }
 
+/// <summary>
+/// Result of a configuration rollback including version changes and affected keys
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConfigRollbackResponse
 {
@@ -2831,6 +3056,9 @@ public partial class ConfigRollbackResponse
 
 }
 
+/// <summary>
+/// Current configuration version information with metadata about available keys
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConfigVersionResponse
 {
@@ -2878,6 +3106,9 @@ public partial class ConfigVersionResponse
 
 }
 
+/// <summary>
+/// Request to acquire a processor instance from a processing pool
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AcquireProcessorRequest
 {
@@ -2919,6 +3150,9 @@ public partial class AcquireProcessorRequest
 
 }
 
+/// <summary>
+/// Response with acquired processor details including lease information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AcquireProcessorResponse
 {
@@ -2966,6 +3200,9 @@ public partial class AcquireProcessorResponse
 
 }
 
+/// <summary>
+/// Response when all processors in a pool are busy with queue position and wait estimate
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PoolBusyResponse
 {
@@ -3007,6 +3244,9 @@ public partial class PoolBusyResponse
 
 }
 
+/// <summary>
+/// Request to release a processor back to the pool after processing completes
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReleaseProcessorRequest
 {
@@ -3042,6 +3282,9 @@ public partial class ReleaseProcessorRequest
 
 }
 
+/// <summary>
+/// Confirmation that a processor was released back to the pool
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReleaseProcessorResponse
 {
@@ -3069,6 +3312,9 @@ public partial class ReleaseProcessorResponse
 
 }
 
+/// <summary>
+/// Request to retrieve status and metrics for a processing pool
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetPoolStatusRequest
 {
@@ -3098,6 +3344,9 @@ public partial class GetPoolStatusRequest
 
 }
 
+/// <summary>
+/// Current status of a processing pool including instance counts and utilization
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PoolStatusResponse
 {
@@ -3217,6 +3466,9 @@ public partial class PoolMetrics
 
 }
 
+/// <summary>
+/// Request to scale a processing pool to a target number of instances
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ScalePoolRequest
 {
@@ -3253,6 +3505,9 @@ public partial class ScalePoolRequest
 
 }
 
+/// <summary>
+/// Result of a pool scaling operation with before and after instance counts
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ScalePoolResponse
 {
@@ -3306,6 +3561,9 @@ public partial class ScalePoolResponse
 
 }
 
+/// <summary>
+/// Request to clean up idle processor instances from a pool
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanupPoolRequest
 {
@@ -3335,6 +3593,9 @@ public partial class CleanupPoolRequest
 
 }
 
+/// <summary>
+/// Result of a pool cleanup operation with removed instance count
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanupPoolResponse
 {
@@ -3413,45 +3674,6 @@ public enum ComponentHealthStatus
 }
 #pragma warning restore CS1591
 
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Capacity
-{
-
-    /// <summary>
-    /// Maximum number of connections this service can handle
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
-    public int MaxConnections { get; set; } = default!;
-
-    /// <summary>
-    /// Current number of active connections
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
-    public int CurrentConnections { get; set; } = default!;
-
-    /// <summary>
-    /// CPU usage as a percentage (0.0 to 1.0)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cpuUsage")]
-    public float CpuUsage { get; set; } = default!;
-
-    /// <summary>
-    /// Memory usage as a percentage (0.0 to 1.0)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("memoryUsage")]
-    public float MemoryUsage { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum TestExecutionRequestTestType
@@ -3508,33 +3730,6 @@ public enum IngressConfigType
 
 }
 #pragma warning restore CS1591
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Ports
-{
-
-    /// <summary>
-    /// HTTP port number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("http")]
-    public int Http { get; set; } = 80;
-
-    /// <summary>
-    /// HTTPS port number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("https")]
-    public int Https { get; set; } = 443;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -3652,39 +3847,6 @@ public enum ContainerStatusStatus
 
 }
 #pragma warning restore CS1591
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class HealthChecks
-{
-
-    /// <summary>
-    /// When the last health check was performed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("lastCheck")]
-    public System.DateTimeOffset LastCheck { get; set; } = default!;
-
-    /// <summary>
-    /// Result of the last health check
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string Status { get; set; } = default!;
-
-    /// <summary>
-    /// Number of consecutive health check failures
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("consecutiveFailures")]
-    public int ConsecutiveFailures { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
 
 
 

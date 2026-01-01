@@ -38,6 +38,9 @@ public partial class ListServicesRequest
 
 }
 
+/// <summary>
+/// Request to retrieve available API methods for a session
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CapabilityRequest
 {
@@ -67,6 +70,9 @@ public partial class CapabilityRequest
 
 }
 
+/// <summary>
+/// Response containing the compiled permissions for a session
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CapabilityResponse
 {
@@ -104,6 +110,9 @@ public partial class CapabilityResponse
 
 }
 
+/// <summary>
+/// Request to validate whether a session has access to a specific API method
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidationRequest
 {
@@ -143,6 +152,9 @@ public partial class ValidationRequest
 
 }
 
+/// <summary>
+/// Response indicating whether access to a specific API method is permitted
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidationResponse
 {
@@ -178,6 +190,9 @@ public partial class ValidationResponse
 
 }
 
+/// <summary>
+/// Complete permission matrix for a service defining state-role-method access rules
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServicePermissionMatrix
 {
@@ -230,6 +245,9 @@ public partial class StatePermissions : System.Collections.Generic.Dictionary<st
 
 }
 
+/// <summary>
+/// Response from registering or updating a service permission matrix
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RegistrationResponse
 {
@@ -283,6 +301,9 @@ public partial class RegistrationResponse
 
 }
 
+/// <summary>
+/// Request to update a session's state for a specific service
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionStateUpdate
 {
@@ -334,6 +355,9 @@ public partial class SessionStateUpdate
 
 }
 
+/// <summary>
+/// Request to update a session's role affecting permissions across all services
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionRoleUpdate
 {
@@ -371,6 +395,9 @@ public partial class SessionRoleUpdate
 
 }
 
+/// <summary>
+/// Request to clear a session's state for a specific service
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ClearSessionStateRequest
 {
@@ -411,6 +438,9 @@ public partial class ClearSessionStateRequest
 
 }
 
+/// <summary>
+/// Response from updating a session's state or role with recompiled permissions
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionUpdateResponse
 {
@@ -464,6 +494,9 @@ public partial class SessionUpdateResponse
 
 }
 
+/// <summary>
+/// Request to retrieve complete information about a session
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionInfoRequest
 {
@@ -487,6 +520,9 @@ public partial class SessionInfoRequest
 
 }
 
+/// <summary>
+/// Complete session information including role, states, and compiled permissions
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionInfo
 {
@@ -552,6 +588,9 @@ public partial class SessionInfo
 
 }
 
+/// <summary>
+/// Response containing list of all services that have registered their permissions
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RegisteredServicesResponse
 {
@@ -583,6 +622,9 @@ public partial class RegisteredServicesResponse
 
 }
 
+/// <summary>
+/// Information about a registered service including its ID, version, and endpoint count
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RegisteredServiceInfo
 {

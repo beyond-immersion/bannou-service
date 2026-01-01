@@ -14,6 +14,9 @@ namespace BeyondImmersion.BannouService.Messaging;
 
 using System = global::System;
 
+/// <summary>
+/// Request to publish an event to a messaging topic
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PublishEventRequest
 {
@@ -119,6 +122,9 @@ public partial class PublishOptions
 
 }
 
+/// <summary>
+/// Response confirming event publication with message identifier
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PublishEventResponse
 {
@@ -146,6 +152,9 @@ public partial class PublishEventResponse
 
 }
 
+/// <summary>
+/// Request to create a new subscription to a messaging topic
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateSubscriptionRequest
 {
@@ -237,6 +246,9 @@ public partial class SubscriptionOptions
 
 }
 
+/// <summary>
+/// Response containing the created subscription details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateSubscriptionResponse
 {
@@ -264,6 +276,9 @@ public partial class CreateSubscriptionResponse
 
 }
 
+/// <summary>
+/// Request to remove an existing subscription
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RemoveSubscriptionRequest
 {
@@ -287,6 +302,9 @@ public partial class RemoveSubscriptionRequest
 
 }
 
+/// <summary>
+/// Response confirming subscription removal status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RemoveSubscriptionResponse
 {
@@ -338,6 +356,9 @@ public partial class ListTopicsRequest
 
 }
 
+/// <summary>
+/// Response containing a list of available messaging topics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListTopicsResponse
 {
@@ -359,6 +380,9 @@ public partial class ListTopicsResponse
 
 }
 
+/// <summary>
+/// Information about a messaging topic including its name and statistics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TopicInfo
 {

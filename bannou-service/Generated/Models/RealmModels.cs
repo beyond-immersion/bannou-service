@@ -14,6 +14,9 @@ namespace BeyondImmersion.BannouService.Realm;
 
 using System = global::System;
 
+/// <summary>
+/// Request to retrieve a specific realm by its unique identifier
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetRealmRequest
 {
@@ -37,6 +40,9 @@ public partial class GetRealmRequest
 
 }
 
+/// <summary>
+/// Request to retrieve a realm by its unique code identifier
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetRealmByCodeRequest
 {
@@ -62,6 +68,9 @@ public partial class GetRealmByCodeRequest
 
 }
 
+/// <summary>
+/// Request to list realms with optional filtering and pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListRealmsRequest
 {
@@ -109,6 +118,9 @@ public partial class ListRealmsRequest
 
 }
 
+/// <summary>
+/// Request to create a new realm with the specified properties
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateRealmRequest
 {
@@ -169,6 +181,9 @@ public partial class CreateRealmRequest
 
 }
 
+/// <summary>
+/// Request to update an existing realm's properties
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateRealmRequest
 {
@@ -225,6 +240,9 @@ public partial class UpdateRealmRequest
 
 }
 
+/// <summary>
+/// Request to permanently delete a realm from the system
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteRealmRequest
 {
@@ -248,6 +266,9 @@ public partial class DeleteRealmRequest
 
 }
 
+/// <summary>
+/// Request to mark a realm as deprecated, preventing new entity creation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeprecateRealmRequest
 {
@@ -278,6 +299,9 @@ public partial class DeprecateRealmRequest
 
 }
 
+/// <summary>
+/// Request to restore a deprecated realm to active status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UndeprecateRealmRequest
 {
@@ -301,6 +325,9 @@ public partial class UndeprecateRealmRequest
 
 }
 
+/// <summary>
+/// Request to check if a realm exists and is available for use
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmExistsRequest
 {
@@ -324,6 +351,9 @@ public partial class RealmExistsRequest
 
 }
 
+/// <summary>
+/// Response indicating whether a realm exists and its active status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmExistsResponse
 {
@@ -357,6 +387,9 @@ public partial class RealmExistsResponse
 
 }
 
+/// <summary>
+/// Request to seed multiple realms from configuration data
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedRealmsRequest
 {
@@ -386,6 +419,9 @@ public partial class SeedRealmsRequest
 
 }
 
+/// <summary>
+/// Realm data used for seeding operations during service initialization
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedRealm
 {
@@ -441,6 +477,9 @@ public partial class SeedRealm
 
 }
 
+/// <summary>
+/// Complete realm information returned from API operations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmResponse
 {
@@ -538,6 +577,9 @@ public partial class RealmResponse
 
 }
 
+/// <summary>
+/// Paginated list of realms with metadata for navigation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmListResponse
 {
@@ -591,6 +633,9 @@ public partial class RealmListResponse
 
 }
 
+/// <summary>
+/// Summary of a realm seeding operation including counts and errors
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedRealmsResponse
 {

@@ -37,20 +37,22 @@ paths:
                 $ref: '#/components/schemas/CapabilityResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CapabilityRequest\"\
-        ,\n  \"$defs\": {\n    \"CapabilityRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
-        \n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"Session ID for lookup in Redis\"\n        },\n        \"serviceIds\": {\n\
-        \          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n        \
-        \  \"description\": \"Optional filter for specific services\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"CapabilityRequest\": {\n      \"description\": \"Request to retrieve available API methods
+        for a session\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\n      ],\n      \"properties\"\
+        : {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Session ID for lookup in Redis\"\n        },\n        \"serviceIds\": {\n          \"type\": \"array\",\n    \
+        \      \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Optional filter
+        for specific services\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CapabilityResponse\"\
-        ,\n  \"$defs\": {\n    \"CapabilityResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
-        ,\n        \"permissions\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"Session ID that was queried\"\n        },\n     \
-        \   \"permissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\"\
-        : \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n          },\n        \
-        \  \"description\": \"Map of ServiceID -> List of available methods\"\n        },\n        \"generatedAt\": {\n  \
-        \        \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When these permissions
-        were compiled\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"CapabilityResponse\": {\n      \"description\": \"Response containing the compiled permissions
+        for a session\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"permissions\"\
+        \n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"Session ID that was queried\"\n        },\n        \"permissions\": {\n\
+        \          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"array\",\n      \
+        \      \"items\": {\n              \"type\": \"string\"\n            }\n          },\n          \"description\": \"\
+        Map of ServiceID -> List of available methods\"\n        },\n        \"generatedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"When these permissions were compiled\"\n   \
+        \     }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get available API methods for session\",\n  \"description\": \"Returns compiled
         list of methods available to this session\",\n  \"tags\": [\n    \"Permission Lookup\"\n  ],\n  \"deprecated\": false,\n\
         \  \"operationId\": \"getCapabilities\"\n}"
@@ -77,19 +79,21 @@ paths:
                 $ref: '#/components/schemas/ValidationResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ValidationRequest\"\
-        ,\n  \"$defs\": {\n    \"ValidationRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
-        ,\n        \"serviceId\",\n        \"method\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID to validate
-        access for\"\n        },\n        \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"\
-        Target service ID\"\n        },\n        \"method\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Method name being accessed\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"ValidationRequest\": {\n      \"description\": \"Request to validate whether a session has
+        access to a specific API method\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n \
+        \       \"serviceId\",\n        \"method\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n        \
+        \  \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID to validate access
+        for\"\n        },\n        \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"Target
+        service ID\"\n        },\n        \"method\": {\n          \"type\": \"string\",\n          \"description\": \"Method
+        name being accessed\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ValidationResponse\"\
-        ,\n  \"$defs\": {\n    \"ValidationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"allowed\"\
-        ,\n        \"sessionId\"\n      ],\n      \"properties\": {\n        \"allowed\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Whether access is permitted\"\n        },\n        \"sessionId\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID that was validated\"\
-        \n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"description\": \"Reason for denial
-        (if applicable)\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"ValidationResponse\": {\n      \"description\": \"Response indicating whether access to a
+        specific API method is permitted\",\n      \"type\": \"object\",\n      \"required\": [\n        \"allowed\",\n  \
+        \      \"sessionId\"\n      ],\n      \"properties\": {\n        \"allowed\": {\n          \"type\": \"boolean\",\n\
+        \          \"description\": \"Whether access is permitted\"\n        },\n        \"sessionId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID that was validated\"\n   \
+        \     },\n        \"reason\": {\n          \"type\": \"string\",\n          \"description\": \"Reason for denial (if
+        applicable)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Validate specific API access for session\",\n  \"description\": \"Fast O(1)
         validation using Redis lookup\",\n  \"tags\": [\n    \"Permission Validation\"\n  ],\n  \"deprecated\": false,\n \
         \ \"operationId\": \"validateApiAccess\"\n}"
@@ -116,24 +120,25 @@ paths:
                 $ref: '#/components/schemas/RegistrationResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ServicePermissionMatrix\"\
-        ,\n  \"$defs\": {\n    \"ServicePermissionMatrix\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
-        \  \"serviceId\",\n        \"permissions\"\n      ],\n      \"properties\": {\n        \"serviceId\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"Unique service identifier\"\n        },\n        \"serviceName\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Human-readable service name\"\n        },\n   \
-        \     \"permissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"$ref\"\
-        : \"#/$defs/StatePermissions\"\n          },\n          \"description\": \"Map of State -> Role -> Methods structure\"\
-        \n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"description\": \"Service API version
-        for change tracking\"\n        }\n      }\n    },\n    \"StatePermissions\": {\n      \"type\": \"object\",\n    \
-        \  \"additionalProperties\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"string\"\
-        \n        }\n      },\n      \"description\": \"Map of Role -> List of Methods for this state\",\n      \"example\"\
-        : {\n        \"user\": [\n          \"ListGameSessions\",\n          \"GetGameSession\"\n        ],\n        \"admin\"\
-        : [\n          \"ListGameSessions\",\n          \"GetGameSession\",\n          \"CreateGameSession\"\n        ]\n\
-        \      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"ServicePermissionMatrix\": {\n      \"description\": \"Complete permission matrix for a service
+        defining state-role-method access rules\",\n      \"type\": \"object\",\n      \"required\": [\n        \"serviceId\"\
+        ,\n        \"permissions\"\n      ],\n      \"properties\": {\n        \"serviceId\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Unique service identifier\"\n        },\n        \"serviceName\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Human-readable service name\"\n        },\n        \"permissions\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"$ref\": \"#/$defs/StatePermissions\"\
+        \n          },\n          \"description\": \"Map of State -> Role -> Methods structure\"\n        },\n        \"version\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Service API version for change tracking\"\n   \
+        \     }\n      }\n    },\n    \"StatePermissions\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"string\"\n        }\n      },\n   \
+        \   \"description\": \"Map of Role -> List of Methods for this state\",\n      \"example\": {\n        \"user\": [\n\
+        \          \"ListGameSessions\",\n          \"GetGameSession\"\n        ],\n        \"admin\": [\n          \"ListGameSessions\"\
+        ,\n          \"GetGameSession\",\n          \"CreateGameSession\"\n        ]\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RegistrationResponse\"\
-        ,\n  \"$defs\": {\n    \"RegistrationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        serviceId\",\n        \"success\",\n        \"affectedSessions\"\n      ],\n      \"properties\": {\n        \"serviceId\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Service ID that was registered\"\n        },\n\
-        \        \"success\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether registration was successful\"\
+        ,\n  \"$defs\": {\n    \"RegistrationResponse\": {\n      \"description\": \"Response from registering or updating
+        a service permission matrix\",\n      \"type\": \"object\",\n      \"required\": [\n        \"serviceId\",\n     \
+        \   \"success\",\n        \"affectedSessions\"\n      ],\n      \"properties\": {\n        \"serviceId\": {\n    \
+        \      \"type\": \"string\",\n          \"description\": \"Service ID that was registered\"\n        },\n        \"\
+        success\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether registration was successful\"\
         \n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"description\": \"Success or error
         message\"\n        },\n        \"registered\": {\n          \"type\": \"boolean\",\n          \"description\": \"\
         Whether registration was successful\"\n        },\n        \"affectedSessions\": {\n          \"type\": \"integer\"\
@@ -168,29 +173,30 @@ paths:
                 $ref: '#/components/schemas/SessionUpdateResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionStateUpdate\"\
-        ,\n  \"$defs\": {\n    \"SessionStateUpdate\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
-        ,\n        \"serviceId\",\n        \"newState\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID to update
-        state for\"\n        },\n        \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"\
-        Service whose state is changing for this session\"\n        },\n        \"newState\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"New state value (lobby, in_game, etc.)\"\n        },\n        \"previousState\": {\n\
-        \          \"type\": \"string\",\n          \"description\": \"Previous state value (null for initial state)\",\n\
-        \          \"nullable\": true\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"\
-        additionalProperties\": true,\n          \"description\": \"Optional context data\"\n        }\n      }\n    }\n \
-        \ }\n}"
+        ,\n  \"$defs\": {\n    \"SessionStateUpdate\": {\n      \"description\": \"Request to update a session's state for
+        a specific service\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"serviceId\"\
+        ,\n        \"newState\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Session ID to update state for\"\n        },\n  \
+        \      \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"Service whose state is changing
+        for this session\"\n        },\n        \"newState\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"New state value (lobby, in_game, etc.)\"\n        },\n        \"previousState\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Previous state value (null for initial state)\",\n          \"nullable\": true\n \
+        \       },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"description\": \"Optional context data\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionUpdateResponse\"\
-        ,\n  \"$defs\": {\n    \"SessionUpdateResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        sessionId\",\n        \"success\",\n        \"permissionsChanged\"\n      ],\n      \"properties\": {\n        \"\
-        sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session
-        ID that was updated\"\n        },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\"\
-        : \"Whether update was successful\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Success or error message\"\n        },\n        \"permissionsChanged\": {\n          \"type\"\
-        : \"boolean\",\n          \"description\": \"Whether compiled permissions actually changed\"\n        },\n       \
-        \ \"newPermissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\"\
-        : \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n          },\n        \
-        \  \"description\": \"Updated ServiceID -> Methods if permissions changed\"\n        },\n        \"updatedAt\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when
-        the session was updated\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"SessionUpdateResponse\": {\n      \"description\": \"Response from updating a session's state
+        or role with recompiled permissions\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
+        ,\n        \"success\",\n        \"permissionsChanged\"\n      ],\n      \"properties\": {\n        \"sessionId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID that
+        was updated\"\n        },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\": \"\
+        Whether update was successful\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"Success or error message\"\n        },\n        \"permissionsChanged\": {\n          \"type\": \"\
+        boolean\",\n          \"description\": \"Whether compiled permissions actually changed\"\n        },\n        \"newPermissions\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"array\",\n  \
+        \          \"items\": {\n              \"type\": \"string\"\n            }\n          },\n          \"description\"\
+        : \"Updated ServiceID -> Methods if permissions changed\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the session was updated\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Update session state for specific service\",\n  \"description\": \"Updates
         SessionID -> ServiceID -> State and recompiles permissions\",\n  \"tags\": [\n    \"Session Management\"\n  ],\n \
         \ \"deprecated\": false,\n  \"operationId\": \"updateSessionState\"\n}"
@@ -217,25 +223,27 @@ paths:
                 $ref: '#/components/schemas/SessionUpdateResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionRoleUpdate\"\
-        ,\n  \"$defs\": {\n    \"SessionRoleUpdate\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
-        ,\n        \"newRole\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"Session ID to update role for\"\n        },\n   \
-        \     \"newRole\": {\n          \"type\": \"string\",\n          \"description\": \"New role (user, admin, etc.)\"\
-        \n        },\n        \"previousRole\": {\n          \"type\": \"string\",\n          \"description\": \"Previous
-        role (null for initial role)\",\n          \"nullable\": true\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"SessionRoleUpdate\": {\n      \"description\": \"Request to update a session's role affecting
+        permissions across all services\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n \
+        \       \"newRole\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"uuid\",\n          \"description\": \"Session ID to update role for\"\n        },\n     \
+        \   \"newRole\": {\n          \"type\": \"string\",\n          \"description\": \"New role (user, admin, etc.)\"\n\
+        \        },\n        \"previousRole\": {\n          \"type\": \"string\",\n          \"description\": \"Previous role
+        (null for initial role)\",\n          \"nullable\": true\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionUpdateResponse\"\
-        ,\n  \"$defs\": {\n    \"SessionUpdateResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        sessionId\",\n        \"success\",\n        \"permissionsChanged\"\n      ],\n      \"properties\": {\n        \"\
-        sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session
-        ID that was updated\"\n        },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\"\
-        : \"Whether update was successful\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Success or error message\"\n        },\n        \"permissionsChanged\": {\n          \"type\"\
-        : \"boolean\",\n          \"description\": \"Whether compiled permissions actually changed\"\n        },\n       \
-        \ \"newPermissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\"\
-        : \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n          },\n        \
-        \  \"description\": \"Updated ServiceID -> Methods if permissions changed\"\n        },\n        \"updatedAt\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when
-        the session was updated\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"SessionUpdateResponse\": {\n      \"description\": \"Response from updating a session's state
+        or role with recompiled permissions\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
+        ,\n        \"success\",\n        \"permissionsChanged\"\n      ],\n      \"properties\": {\n        \"sessionId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID that
+        was updated\"\n        },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\": \"\
+        Whether update was successful\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"Success or error message\"\n        },\n        \"permissionsChanged\": {\n          \"type\": \"\
+        boolean\",\n          \"description\": \"Whether compiled permissions actually changed\"\n        },\n        \"newPermissions\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"array\",\n  \
+        \          \"items\": {\n              \"type\": \"string\"\n            }\n          },\n          \"description\"\
+        : \"Updated ServiceID -> Methods if permissions changed\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the session was updated\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Update session role (affects all services)\",\n  \"description\": \"Updates
         SessionID -> Role and recompiles all service permissions\",\n  \"tags\": [\n    \"Session Management\"\n  ],\n  \"\
         deprecated\": false,\n  \"operationId\": \"updateSessionRole\"\n}"
@@ -265,27 +273,29 @@ paths:
                 $ref: '#/components/schemas/SessionUpdateResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ClearSessionStateRequest\"\
-        ,\n  \"$defs\": {\n    \"ClearSessionStateRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"sessionId\",\n        \"serviceId\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n         \
-        \ \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID to clear state from\"\
-        \n        },\n        \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"Service whose
-        state should be cleared\"\n        },\n        \"states\": {\n          \"type\": \"array\",\n          \"items\"\
-        : {\n            \"type\": \"string\"\n          },\n          \"description\": \"Optional list of state values to
-        match. If provided, only clears if\\ncurrent state matches one of these values. If empty or not provided,\\nclears
-        the state unconditionally.\\n\",\n          \"nullable\": true\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"ClearSessionStateRequest\": {\n      \"description\": \"Request to clear a session's state
+        for a specific service\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"\
+        serviceId\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n      \
+        \    \"format\": \"uuid\",\n          \"description\": \"Session ID to clear state from\"\n        },\n        \"\
+        serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"Service whose state should be cleared\"\
+        \n        },\n        \"states\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
+        : \"string\"\n          },\n          \"description\": \"Optional list of state values to match. If provided, only
+        clears if\\ncurrent state matches one of these values. If empty or not provided,\\nclears the state unconditionally.\\\
+        n\",\n          \"nullable\": true\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionUpdateResponse\"\
-        ,\n  \"$defs\": {\n    \"SessionUpdateResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        sessionId\",\n        \"success\",\n        \"permissionsChanged\"\n      ],\n      \"properties\": {\n        \"\
-        sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session
-        ID that was updated\"\n        },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\"\
-        : \"Whether update was successful\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Success or error message\"\n        },\n        \"permissionsChanged\": {\n          \"type\"\
-        : \"boolean\",\n          \"description\": \"Whether compiled permissions actually changed\"\n        },\n       \
-        \ \"newPermissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\"\
-        : \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n          },\n        \
-        \  \"description\": \"Updated ServiceID -> Methods if permissions changed\"\n        },\n        \"updatedAt\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when
-        the session was updated\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"SessionUpdateResponse\": {\n      \"description\": \"Response from updating a session's state
+        or role with recompiled permissions\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
+        ,\n        \"success\",\n        \"permissionsChanged\"\n      ],\n      \"properties\": {\n        \"sessionId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID that
+        was updated\"\n        },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"description\": \"\
+        Whether update was successful\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"Success or error message\"\n        },\n        \"permissionsChanged\": {\n          \"type\": \"\
+        boolean\",\n          \"description\": \"Whether compiled permissions actually changed\"\n        },\n        \"newPermissions\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"array\",\n  \
+        \          \"items\": {\n              \"type\": \"string\"\n            }\n          },\n          \"description\"\
+        : \"Updated ServiceID -> Methods if permissions changed\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the session was updated\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Clear session state for specific service\",\n  \"description\": \"Removes
         state for a specific service from the session and recompiles permissions.\\nIf states list is provided, only clears
         if current state matches one of the values.\\nIf states list is empty or not provided, clears the state unconditionally.\\\
@@ -314,26 +324,27 @@ paths:
                 $ref: '#/components/schemas/SessionInfo'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionInfoRequest\"\
-        ,\n  \"$defs\": {\n    \"SessionInfoRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
-        \n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"Session ID to retrieve information for\"\n        }\n      }\n    }\n  }\n\
-        }"
+        ,\n  \"$defs\": {\n    \"SessionInfoRequest\": {\n      \"description\": \"Request to retrieve complete information
+        about a session\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\n      ],\n      \"\
+        properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
+        \      \"description\": \"Session ID to retrieve information for\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionInfo\"\
-        ,\n  \"$defs\": {\n    \"SessionInfo\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
-        ,\n        \"role\",\n        \"states\",\n        \"permissions\"\n      ],\n      \"properties\": {\n        \"\
-        sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session
-        ID being queried\"\n        },\n        \"role\": {\n          \"type\": \"string\",\n          \"description\": \"\
-        Current session role\"\n        },\n        \"states\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : {\n            \"type\": \"string\"\n          },\n          \"description\": \"Map of ServiceID -> Current State\"\
-        \n        },\n        \"permissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n\
-        \            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n \
-        \         },\n          \"description\": \"Map of ServiceID -> List of available methods\"\n        },\n        \"\
-        compiledPermissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\"\
-        : \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n          },\n        \
-        \  \"description\": \"Map of ServiceID -> List of available methods\"\n        },\n        \"version\": {\n      \
-        \    \"type\": \"integer\",\n          \"description\": \"Permission version number\"\n        },\n        \"lastUpdated\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When permissions
-        were last recompiled\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"SessionInfo\": {\n      \"description\": \"Complete session information including role, states,
+        and compiled permissions\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"\
+        role\",\n        \"states\",\n        \"permissions\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Session ID being queried\"\
+        \n        },\n        \"role\": {\n          \"type\": \"string\",\n          \"description\": \"Current session role\"\
+        \n        },\n        \"states\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n    \
+        \        \"type\": \"string\"\n          },\n          \"description\": \"Map of ServiceID -> Current State\"\n  \
+        \      },\n        \"permissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n  \
+        \          \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n   \
+        \       },\n          \"description\": \"Map of ServiceID -> List of available methods\"\n        },\n        \"compiledPermissions\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"array\",\n  \
+        \          \"items\": {\n              \"type\": \"string\"\n            }\n          },\n          \"description\"\
+        : \"Map of ServiceID -> List of available methods\"\n        },\n        \"version\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"Permission version number\"\n        },\n        \"lastUpdated\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When permissions were last
+        recompiled\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get complete session information\",\n  \"description\": \"Returns current
         states, role, and compiled permissions\",\n  \"tags\": [\n    \"Session Management\"\n  ],\n  \"deprecated\": false,\n\
         \  \"operationId\": \"getSessionInfo\"\n}"
@@ -374,20 +385,22 @@ paths:
         : {\n          \"type\": \"string\",\n          \"description\": \"Optional filter by service ID prefix\",\n     \
         \     \"nullable\": true\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RegisteredServicesResponse\"\
-        ,\n  \"$defs\": {\n    \"RegisteredServicesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n   \
-        \     \"services\",\n        \"timestamp\"\n      ],\n      \"properties\": {\n        \"services\": {\n         \
-        \ \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RegisteredServiceInfo\"\n        \
-        \  },\n          \"description\": \"List of all registered services\"\n        },\n        \"timestamp\": {\n    \
-        \      \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When this response
-        was generated\"\n        }\n      }\n    },\n    \"RegisteredServiceInfo\": {\n      \"type\": \"object\",\n     \
-        \ \"required\": [\n        \"serviceId\",\n        \"registeredAt\",\n        \"endpointCount\"\n      ],\n      \"\
-        properties\": {\n        \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"Unique service
-        identifier\"\n        },\n        \"serviceName\": {\n          \"type\": \"string\",\n          \"description\":
-        \"Human-readable service name\"\n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"\
-        description\": \"Service API version\"\n        },\n        \"registeredAt\": {\n          \"type\": \"string\",\n\
-        \          \"format\": \"date-time\",\n          \"description\": \"When the service registered its permissions\"\n\
-        \        },\n        \"endpointCount\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of
-        API endpoints registered by this service\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"RegisteredServicesResponse\": {\n      \"description\": \"Response containing list of all
+        services that have registered their permissions\",\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        services\",\n        \"timestamp\"\n      ],\n      \"properties\": {\n        \"services\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RegisteredServiceInfo\"\n          },\n    \
+        \      \"description\": \"List of all registered services\"\n        },\n        \"timestamp\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When this response was generated\"\
+        \n        }\n      }\n    },\n    \"RegisteredServiceInfo\": {\n      \"description\": \"Information about a registered
+        service including its ID, version, and endpoint count\",\n      \"type\": \"object\",\n      \"required\": [\n   \
+        \     \"serviceId\",\n        \"registeredAt\",\n        \"endpointCount\"\n      ],\n      \"properties\": {\n  \
+        \      \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"Unique service identifier\"\
+        \n        },\n        \"serviceName\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        service name\"\n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        Service API version\"\n        },\n        \"registeredAt\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"date-time\",\n          \"description\": \"When the service registered its permissions\"\n        },\n       \
+        \ \"endpointCount\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of API endpoints registered
+        by this service\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List all registered services\",\n  \"description\": \"Returns list of all
         services that have registered their permissions.\\nThis endpoint is used by testers to wait for service readiness
         - a service\\nappearing in this list means it has completed startup and registered its\\nAPI permissions, indicating
@@ -408,6 +421,7 @@ components:
 
     # Core API Request/Response Models
     CapabilityRequest:
+      description: Request to retrieve available API methods for a session
       type: object
       required:
       - sessionId
@@ -423,6 +437,7 @@ components:
           description: Optional filter for specific services
 
     CapabilityResponse:
+      description: Response containing the compiled permissions for a session
       type: object
       required:
       - sessionId
@@ -445,6 +460,7 @@ components:
           description: When these permissions were compiled
 
     ValidationRequest:
+      description: Request to validate whether a session has access to a specific API method
       type: object
       required:
       - sessionId
@@ -463,6 +479,7 @@ components:
           description: Method name being accessed
 
     ValidationResponse:
+      description: Response indicating whether access to a specific API method is permitted
       type: object
       required:
       - allowed
@@ -481,6 +498,7 @@ components:
 
     # Service Management Models
     ServicePermissionMatrix:
+      description: Complete permission matrix for a service defining state-role-method access rules
       type: object
       required:
       - serviceId
@@ -513,6 +531,7 @@ components:
         admin: ["ListGameSessions", "GetGameSession", "CreateGameSession"]
 
     RegistrationResponse:
+      description: Response from registering or updating a service permission matrix
       type: object
       required:
       - serviceId
@@ -541,6 +560,7 @@ components:
 
     # Session Management Models
     SessionStateUpdate:
+      description: Request to update a session's state for a specific service
       type: object
       required:
       - sessionId
@@ -567,6 +587,7 @@ components:
           description: Optional context data
 
     SessionRoleUpdate:
+      description: Request to update a session's role affecting permissions across all services
       type: object
       required:
       - sessionId
@@ -585,6 +606,7 @@ components:
           nullable: true
 
     ClearSessionStateRequest:
+      description: Request to clear a session's state for a specific service
       type: object
       required:
       - sessionId
@@ -608,6 +630,7 @@ components:
           nullable: true
 
     SessionUpdateResponse:
+      description: Response from updating a session's state or role with recompiled permissions
       type: object
       required:
       - sessionId
@@ -641,6 +664,7 @@ components:
 
     # Session Information Models
     SessionInfoRequest:
+      description: Request to retrieve complete information about a session
       type: object
       required:
       - sessionId
@@ -651,6 +675,7 @@ components:
           description: Session ID to retrieve information for
 
     SessionInfo:
+      description: Complete session information including role, states, and compiled permissions
       type: object
       required:
       - sessionId
@@ -694,6 +719,7 @@ components:
 
     # Service Readiness Models
     RegisteredServicesResponse:
+      description: Response containing list of all services that have registered their permissions
       type: object
       required:
       - services
@@ -710,6 +736,7 @@ components:
           description: When this response was generated
 
     RegisteredServiceInfo:
+      description: Information about a registered service including its ID, version, and endpoint count
       type: object
       required:
       - serviceId

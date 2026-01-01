@@ -210,6 +210,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/GetStateRequest",
   "$defs": {
     "GetStateRequest": {
+      "description": "Request to retrieve a single state value by key from a state store",
       "type": "object",
       "required": [
         "storeName",
@@ -236,6 +237,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/GetStateResponse",
   "$defs": {
     "GetStateResponse": {
+      "description": "Response containing a retrieved state value with its metadata and ETag",
       "type": "object",
       "properties": {
         "value": {
@@ -255,6 +257,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "StateMetadata": {
+      "description": "Metadata associated with a state entry including creation time, last update time, and version",
       "type": "object",
       "properties": {
         "createdAt": {
@@ -341,6 +344,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SaveStateRequest",
   "$defs": {
     "SaveStateRequest": {
+      "description": "Request to save a state value to a state store with optional TTL and consistency settings",
       "type": "object",
       "required": [
         "storeName",
@@ -367,6 +371,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "StateOptions": {
+      "description": "Configuration options for state save operations including TTL, consistency level, and optimistic concurrency",
       "type": "object",
       "properties": {
         "ttl": {
@@ -400,6 +405,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SaveStateResponse",
   "$defs": {
     "SaveStateResponse": {
+      "description": "Response from a save operation containing the new ETag and success status",
       "type": "object",
       "properties": {
         "etag": {
@@ -478,6 +484,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/DeleteStateRequest",
   "$defs": {
     "DeleteStateRequest": {
+      "description": "Request to delete a state value by key from a state store",
       "type": "object",
       "required": [
         "storeName",
@@ -504,6 +511,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/DeleteStateResponse",
   "$defs": {
     "DeleteStateResponse": {
+      "description": "Response from a delete operation indicating whether the key was removed",
       "type": "object",
       "properties": {
         "deleted": {
@@ -578,6 +586,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/QueryStateRequest",
   "$defs": {
     "QueryStateRequest": {
+      "description": "Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis backends",
       "type": "object",
       "required": [
         "storeName"
@@ -590,7 +599,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         "filter": {
           "type": "object",
           "nullable": true,
-          "description": "Filter expression. Format depends on backend:\n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
+          "description": "Filter expression. Format depends on backend:\n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\ n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
         },
         "indexName": {
           "type": "string",
@@ -622,6 +631,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SortField": {
+      "description": "Specifies a field and direction for sorting query results",
       "type": "object",
       "properties": {
         "field": {
@@ -649,6 +659,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/QueryStateResponse",
   "$defs": {
     "QueryStateResponse": {
+      "description": "Response containing paginated query results with total count information",
       "type": "object",
       "properties": {
         "results": {
@@ -738,6 +749,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/BulkGetStateRequest",
   "$defs": {
     "BulkGetStateRequest": {
+      "description": "Request to retrieve multiple state values by key in a single operation",
       "type": "object",
       "required": [
         "storeName",
@@ -767,6 +779,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/BulkGetStateResponse",
   "$defs": {
     "BulkGetStateResponse": {
+      "description": "Response containing the results of a bulk get operation for multiple keys",
       "type": "object",
       "properties": {
         "items": {
@@ -779,6 +792,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "BulkStateItem": {
+      "description": "A single item result from a bulk get operation including the key, value, ETag, and found status",
       "type": "object",
       "properties": {
         "key": {
@@ -896,6 +910,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ListStoresResponse",
   "$defs": {
     "ListStoresResponse": {
+      "description": "Response containing the list of configured state stores",
       "type": "object",
       "properties": {
         "stores": {
@@ -908,6 +923,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "StoreInfo": {
+      "description": "Information about a configured state store including its name, backend type, and optional key count",
       "type": "object",
       "properties": {
         "name": {

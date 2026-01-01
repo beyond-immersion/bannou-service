@@ -14,6 +14,9 @@ namespace BeyondImmersion.BannouService.Species;
 
 using System = global::System;
 
+/// <summary>
+/// Request to retrieve a single species by its unique identifier
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetSpeciesRequest
 {
@@ -37,6 +40,9 @@ public partial class GetSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to retrieve a species by its unique code identifier
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetSpeciesByCodeRequest
 {
@@ -62,6 +68,9 @@ public partial class GetSpeciesByCodeRequest
 
 }
 
+/// <summary>
+/// Request to list species with optional filtering and pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListSpeciesRequest
 {
@@ -109,6 +118,9 @@ public partial class ListSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to list species available within a specific realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListSpeciesByRealmRequest
 {
@@ -152,6 +164,9 @@ public partial class ListSpeciesByRealmRequest
 
 }
 
+/// <summary>
+/// Request to create a new species with its attributes and realm associations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateSpeciesRequest
 {
@@ -238,6 +253,9 @@ public partial class CreateSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to update an existing species with partial attribute changes
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateSpeciesRequest
 {
@@ -314,6 +332,9 @@ public partial class UpdateSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to hard-delete a deprecated species with no remaining references
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteSpeciesRequest
 {
@@ -337,6 +358,9 @@ public partial class DeleteSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to soft-delete a species, preventing new character creation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeprecateSpeciesRequest
 {
@@ -367,6 +391,9 @@ public partial class DeprecateSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to restore a deprecated species to active status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UndeprecateSpeciesRequest
 {
@@ -390,6 +417,9 @@ public partial class UndeprecateSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to migrate all characters from a deprecated species to a target species
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeSpeciesRequest
 {
@@ -427,6 +457,9 @@ public partial class MergeSpeciesRequest
 
 }
 
+/// <summary>
+/// Request to make a species available for character creation in a realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AddSpeciesToRealmRequest
 {
@@ -458,6 +491,9 @@ public partial class AddSpeciesToRealmRequest
 
 }
 
+/// <summary>
+/// Request to remove a species from availability in a realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RemoveSpeciesFromRealmRequest
 {
@@ -489,6 +525,9 @@ public partial class RemoveSpeciesFromRealmRequest
 
 }
 
+/// <summary>
+/// Request to bulk-create or update species from a predefined list
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedSpeciesRequest
 {
@@ -518,6 +557,9 @@ public partial class SeedSpeciesRequest
 
 }
 
+/// <summary>
+/// Species definition used in bulk seeding operations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedSpecies
 {
@@ -597,6 +639,9 @@ public partial class SeedSpecies
 
 }
 
+/// <summary>
+/// Complete species data including all attributes and realm associations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SpeciesResponse
 {
@@ -718,6 +763,9 @@ public partial class SpeciesResponse
 
 }
 
+/// <summary>
+/// Paginated list of species with total count for pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SpeciesListResponse
 {
@@ -759,6 +807,9 @@ public partial class SpeciesListResponse
 
 }
 
+/// <summary>
+/// Summary of a bulk species seeding operation with counts and errors
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedSpeciesResponse
 {
@@ -800,6 +851,9 @@ public partial class SeedSpeciesResponse
 
 }
 
+/// <summary>
+/// Result of a species merge operation including migration statistics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeSpeciesResponse
 {

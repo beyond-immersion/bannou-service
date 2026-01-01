@@ -55,6 +55,9 @@ public enum LocationType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to retrieve a location by its unique identifier
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetLocationRequest
 {
@@ -78,6 +81,9 @@ public partial class GetLocationRequest
 
 }
 
+/// <summary>
+/// Request to retrieve a location by its code within a specific realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetLocationByCodeRequest
 {
@@ -111,6 +117,9 @@ public partial class GetLocationByCodeRequest
 
 }
 
+/// <summary>
+/// Request to list locations with optional filtering by realm, type, and deprecation status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListLocationsRequest
 {
@@ -159,6 +168,9 @@ public partial class ListLocationsRequest
 
 }
 
+/// <summary>
+/// Request to list all locations within a specific realm with optional filtering
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListLocationsByRealmRequest
 {
@@ -209,6 +221,9 @@ public partial class ListLocationsByRealmRequest
 
 }
 
+/// <summary>
+/// Request to list all child locations of a specified parent location
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListLocationsByParentRequest
 {
@@ -259,6 +274,9 @@ public partial class ListLocationsByParentRequest
 
 }
 
+/// <summary>
+/// Request to list all top-level locations (without parents) in a realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListRootLocationsRequest
 {
@@ -309,6 +327,9 @@ public partial class ListRootLocationsRequest
 
 }
 
+/// <summary>
+/// Request to retrieve the full ancestry chain of a location up to the root
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetLocationAncestorsRequest
 {
@@ -332,6 +353,9 @@ public partial class GetLocationAncestorsRequest
 
 }
 
+/// <summary>
+/// Request to retrieve all descendants of a location (children, grandchildren, etc.)
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetLocationDescendantsRequest
 {
@@ -389,6 +413,9 @@ public partial class GetLocationDescendantsRequest
 
 }
 
+/// <summary>
+/// Request to create a new location within a realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateLocationRequest
 {
@@ -459,6 +486,9 @@ public partial class CreateLocationRequest
 
 }
 
+/// <summary>
+/// Request to update an existing location's properties
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateLocationRequest
 {
@@ -509,6 +539,9 @@ public partial class UpdateLocationRequest
 
 }
 
+/// <summary>
+/// Request to set or change a location's parent in the hierarchy
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SetLocationParentRequest
 {
@@ -540,6 +573,9 @@ public partial class SetLocationParentRequest
 
 }
 
+/// <summary>
+/// Request to remove a location's parent, making it a root location
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RemoveLocationParentRequest
 {
@@ -563,6 +599,9 @@ public partial class RemoveLocationParentRequest
 
 }
 
+/// <summary>
+/// Request to permanently delete a location from the system
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteLocationRequest
 {
@@ -586,6 +625,9 @@ public partial class DeleteLocationRequest
 
 }
 
+/// <summary>
+/// Request to soft-delete a location by marking it as deprecated
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeprecateLocationRequest
 {
@@ -616,6 +658,9 @@ public partial class DeprecateLocationRequest
 
 }
 
+/// <summary>
+/// Request to restore a deprecated location back to active status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UndeprecateLocationRequest
 {
@@ -639,6 +684,9 @@ public partial class UndeprecateLocationRequest
 
 }
 
+/// <summary>
+/// Request to check if a location exists and is active
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LocationExistsRequest
 {
@@ -662,6 +710,9 @@ public partial class LocationExistsRequest
 
 }
 
+/// <summary>
+/// Response indicating whether a location exists and its active status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LocationExistsResponse
 {
@@ -701,6 +752,9 @@ public partial class LocationExistsResponse
 
 }
 
+/// <summary>
+/// Request to seed multiple locations from configuration data
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedLocationsRequest
 {
@@ -730,6 +784,9 @@ public partial class SeedLocationsRequest
 
 }
 
+/// <summary>
+/// Location data for seeding operations, using codes instead of IDs for references
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedLocation
 {
@@ -796,6 +853,9 @@ public partial class SeedLocation
 
 }
 
+/// <summary>
+/// Complete location data returned from API operations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LocationResponse
 {
@@ -910,6 +970,9 @@ public partial class LocationResponse
 
 }
 
+/// <summary>
+/// Paginated list of locations with metadata for navigation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LocationListResponse
 {
@@ -963,6 +1026,9 @@ public partial class LocationListResponse
 
 }
 
+/// <summary>
+/// Summary of a seed operation including counts of created, updated, and skipped locations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedLocationsResponse
 {

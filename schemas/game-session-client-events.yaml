@@ -92,6 +92,7 @@ components:
           description: ID of the game session
         player:
           $ref: '#/components/schemas/PlayerInfo'
+          description: Information about the player who joined the session
         currentPlayerCount:
           type: integer
           description: Total players in session after join
@@ -373,21 +374,25 @@ components:
           nullable: true
           description: Entity the effect targets
         position:
-          type: object
+          $ref: '#/components/schemas/Position'
+          description: World position for the effect in 3D space coordinates
           nullable: true
-          properties:
-            x:
-              type: number
-              description: X coordinate in world space
-            y:
-              type: number
-              description: Y coordinate in world space
-            z:
-              type: number
-              description: Z coordinate in world space
-          description: World position for the effect
         effectData:
           type: object
           additionalProperties: true
           nullable: true
           description: Effect-specific parameters
+
+    Position:
+      type: object
+      description: 3D world coordinates representing a position in game space
+      properties:
+        x:
+          type: number
+          description: X coordinate in world space
+        y:
+          type: number
+          description: Y coordinate in world space
+        z:
+          type: number
+          description: Z coordinate in world space

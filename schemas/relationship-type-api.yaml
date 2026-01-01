@@ -63,21 +63,23 @@ paths:
           description: Relationship type not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRelationshipTypeRequest\"\
-        ,\n  \"$defs\": {\n    \"GetRelationshipTypeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n   \
-        \     \"relationshipTypeId\"\n      ],\n      \"properties\": {\n        \"relationshipTypeId\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the relationship
-        type\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"GetRelationshipTypeRequest\": {\n      \"description\": \"Request to retrieve a relationship
+        type by its unique identifier\",\n      \"type\": \"object\",\n      \"required\": [\n        \"relationshipTypeId\"\
+        \n      ],\n      \"properties\": {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n        \
+        \  \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the relationship type\"\n        }\n \
+        \     }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
-        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
-        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
-        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
-        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
-        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
-        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship
+        type including hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
+        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
+        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
+        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
+        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -129,22 +131,23 @@ paths:
           description: Relationship type not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRelationshipTypeByCodeRequest\"\
-        ,\n  \"$defs\": {\n    \"GetRelationshipTypeByCodeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
-        \        \"code\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\": \"string\",\n     \
-        \     \"minLength\": 1,\n          \"maxLength\": 50,\n          \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n          \"\
-        description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\", \\\"FRIEND\\\")\"\n   \
-        \     }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"GetRelationshipTypeByCodeRequest\": {\n      \"description\": \"Request to retrieve a relationship
+        type by its unique code string\",\n      \"type\": \"object\",\n      \"required\": [\n        \"code\"\n      ],\n\
+        \      \"properties\": {\n        \"code\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n    \
+        \      \"maxLength\": 50,\n          \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n          \"description\": \"Unique code
+        for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\", \\\"FRIEND\\\")\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
-        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
-        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
-        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
-        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
-        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
-        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship
+        type including hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
+        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
+        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
+        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
+        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -195,30 +198,33 @@ paths:
                 $ref: '#/components/schemas/RelationshipTypeListResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListRelationshipTypesRequest\"\
-        ,\n  \"$defs\": {\n    \"ListRelationshipTypesRequest\": {\n      \"type\": \"object\",\n      \"properties\": {\n\
-        \        \"category\": {\n          \"type\": \"string\",\n          \"description\": \"Filter by category (e.g.,
-        \\\"FAMILY\\\", \\\"SOCIAL\\\", \\\"ECONOMIC\\\")\"\n        },\n        \"includeChildren\": {\n          \"type\"\
-        : \"boolean\",\n          \"default\": true,\n          \"description\": \"Whether to include child types in the response\"\
-        \n        },\n        \"rootsOnly\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n        \
-        \  \"description\": \"Only return types with no parent (root types)\"\n        },\n        \"includeDeprecated\":
-        {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to include
+        ,\n  \"$defs\": {\n    \"ListRelationshipTypesRequest\": {\n      \"description\": \"Request to list relationship
+        types with optional filtering by category, hierarchy, and deprecation status\",\n      \"type\": \"object\",\n   \
+        \   \"properties\": {\n        \"category\": {\n          \"type\": \"string\",\n          \"description\": \"Filter
+        by category (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\", \\\"ECONOMIC\\\")\"\n        },\n        \"includeChildren\": {\n\
+        \          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Whether to include child
+        types in the response\"\n        },\n        \"rootsOnly\": {\n          \"type\": \"boolean\",\n          \"default\"\
+        : false,\n          \"description\": \"Only return types with no parent (root types)\"\n        },\n        \"includeDeprecated\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to include
         deprecated types in the response\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeListResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n \
-        \       \"types\",\n        \"totalCount\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"\
-        type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RelationshipTypeResponse\"\n         \
-        \ },\n          \"description\": \"List of relationship types matching the query\"\n        },\n        \"totalCount\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of relationship types returned\"\n\
-        \        }\n      }\n    },\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\"\
-        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
-        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
-        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
-        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
-        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
-        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
-        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeListResponse\": {\n      \"description\": \"Response containing a list of
+        relationship types with total count\",\n      \"type\": \"object\",\n      \"required\": [\n        \"types\",\n \
+        \       \"totalCount\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"$ref\": \"#/$defs/RelationshipTypeResponse\"\n          },\n          \"description\"\
+        : \"List of relationship types matching the query\"\n        },\n        \"totalCount\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Total number of relationship types returned\"\n        }\n      }\n    },\n\
+        \    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship type including
+        hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
+        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
+        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
+        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
+        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
+        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
+        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -271,27 +277,30 @@ paths:
           description: Parent relationship type not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetChildRelationshipTypesRequest\"\
-        ,\n  \"$defs\": {\n    \"GetChildRelationshipTypesRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
-        \        \"parentTypeId\"\n      ],\n      \"properties\": {\n        \"parentTypeId\": {\n          \"type\": \"\
-        string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the parent relationship type\"\n  \
-        \      },\n        \"recursive\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"\
-        description\": \"Include all descendants, not just direct children\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"GetChildRelationshipTypesRequest\": {\n      \"description\": \"Request to retrieve all child
+        relationship types for a given parent type\",\n      \"type\": \"object\",\n      \"required\": [\n        \"parentTypeId\"\
+        \n      ],\n      \"properties\": {\n        \"parentTypeId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"ID of the parent relationship type\"\n        },\n        \"recursive\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Include all descendants,
+        not just direct children\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeListResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n \
-        \       \"types\",\n        \"totalCount\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"\
-        type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RelationshipTypeResponse\"\n         \
-        \ },\n          \"description\": \"List of relationship types matching the query\"\n        },\n        \"totalCount\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of relationship types returned\"\n\
-        \        }\n      }\n    },\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\"\
-        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
-        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
-        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
-        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
-        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
-        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
-        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeListResponse\": {\n      \"description\": \"Response containing a list of
+        relationship types with total count\",\n      \"type\": \"object\",\n      \"required\": [\n        \"types\",\n \
+        \       \"totalCount\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"$ref\": \"#/$defs/RelationshipTypeResponse\"\n          },\n          \"description\"\
+        : \"List of relationship types matching the query\"\n        },\n        \"totalCount\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Total number of relationship types returned\"\n        }\n      }\n    },\n\
+        \    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship type including
+        hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
+        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
+        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
+        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
+        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
+        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
+        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -347,15 +356,17 @@ paths:
           description: One or both relationship types not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/MatchesHierarchyRequest\"\
-        ,\n  \"$defs\": {\n    \"MatchesHierarchyRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
-        \  \"typeId\",\n        \"ancestorTypeId\"\n      ],\n      \"properties\": {\n        \"typeId\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"The relationship type to check\"\
-        \n        },\n        \"ancestorTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n  \
-        \        \"description\": \"The potential ancestor type\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"MatchesHierarchyRequest\": {\n      \"description\": \"Request to check if a relationship
+        type matches or descends from an ancestor type in the hierarchy\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"typeId\",\n        \"ancestorTypeId\"\n      ],\n      \"properties\": {\n        \"typeId\": {\n \
+        \         \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"The relationship type
+        to check\"\n        },\n        \"ancestorTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
+        ,\n          \"description\": \"The potential ancestor type\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/MatchesHierarchyResponse\"\
-        ,\n  \"$defs\": {\n    \"MatchesHierarchyResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"matches\"\n      ],\n      \"properties\": {\n        \"matches\": {\n          \"type\": \"boolean\",\n   \
-        \       \"description\": \"True if typeId equals or descends from ancestorTypeId\"\n        },\n        \"depth\"\
+        ,\n  \"$defs\": {\n    \"MatchesHierarchyResponse\": {\n      \"description\": \"Response indicating whether a type
+        matches an ancestor in the hierarchy and the depth between them\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"matches\"\n      ],\n      \"properties\": {\n        \"matches\": {\n          \"type\": \"boolean\"\
+        ,\n          \"description\": \"True if typeId equals or descends from ancestorTypeId\"\n        },\n        \"depth\"\
         : {\n          \"type\": \"integer\",\n          \"description\": \"Number of levels between the types (0 if same,
         -1 if no match)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Check if type matches ancestor in hierarchy\",\n  \"description\": \"Checks
@@ -392,26 +403,29 @@ paths:
           description: Relationship type not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetAncestorsRequest\"\
-        ,\n  \"$defs\": {\n    \"GetAncestorsRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        typeId\"\n      ],\n      \"properties\": {\n        \"typeId\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\",\n          \"description\": \"The relationship type to get ancestors for\"\n        }\n      }\n\
-        \    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"GetAncestorsRequest\": {\n      \"description\": \"Request to retrieve all ancestor types
+        in the hierarchy chain from a relationship type up to the root\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"typeId\"\n      ],\n      \"properties\": {\n        \"typeId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"The relationship type to get ancestors for\"\n  \
+        \      }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeListResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n \
-        \       \"types\",\n        \"totalCount\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"\
-        type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RelationshipTypeResponse\"\n         \
-        \ },\n          \"description\": \"List of relationship types matching the query\"\n        },\n        \"totalCount\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Total number of relationship types returned\"\n\
-        \        }\n      }\n    },\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\"\
-        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
-        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
-        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
-        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
-        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
-        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
-        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeListResponse\": {\n      \"description\": \"Response containing a list of
+        relationship types with total count\",\n      \"type\": \"object\",\n      \"required\": [\n        \"types\",\n \
+        \       \"totalCount\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"$ref\": \"#/$defs/RelationshipTypeResponse\"\n          },\n          \"description\"\
+        : \"List of relationship types matching the query\"\n        },\n        \"totalCount\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Total number of relationship types returned\"\n        }\n      }\n    },\n\
+        \    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship type including
+        hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
+        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
+        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
+        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
+        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
+        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
+        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -466,9 +480,10 @@ paths:
           description: Relationship type with this code already exists
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateRelationshipTypeRequest\"\
-        ,\n  \"$defs\": {\n    \"CreateRelationshipTypeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
-        \        \"code\",\n        \"name\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\":
-        \"string\",\n          \"minLength\": 1,\n          \"maxLength\": 50,\n          \"pattern\": \"^[A-Z][A-Z0-9_]*$\"\
+        ,\n  \"$defs\": {\n    \"CreateRelationshipTypeRequest\": {\n      \"description\": \"Request to create a new relationship
+        type with code, name, and optional hierarchy and inverse settings\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"code\",\n        \"name\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\"\
+        : \"string\",\n          \"minLength\": 1,\n          \"maxLength\": 50,\n          \"pattern\": \"^[A-Z][A-Z0-9_]*$\"\
         ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
         \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"maxLength\"\
         : 100,\n          \"description\": \"Display name for the relationship type\"\n        },\n        \"description\"\
@@ -485,16 +500,17 @@ paths:
         \          \"nullable\": true,\n          \"description\": \"Additional metadata for the relationship type\"\n   \
         \     }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
-        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
-        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
-        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
-        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
-        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
-        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship
+        type including hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
+        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
+        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
+        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
+        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -547,11 +563,12 @@ paths:
           description: Invalid update data
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateRelationshipTypeRequest\"\
-        ,\n  \"$defs\": {\n    \"UpdateRelationshipTypeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
-        \        \"relationshipTypeId\"\n      ],\n      \"properties\": {\n        \"relationshipTypeId\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the relationship type to
-        update\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n        \
-        \  \"maxLength\": 100,\n          \"nullable\": true,\n          \"description\": \"Display name for the relationship
+        ,\n  \"$defs\": {\n    \"UpdateRelationshipTypeRequest\": {\n      \"description\": \"Request to update an existing
+        relationship type's properties such as name, description, category, or hierarchy\",\n      \"type\": \"object\",\n\
+        \      \"required\": [\n        \"relationshipTypeId\"\n      ],\n      \"properties\": {\n        \"relationshipTypeId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the relationship
+        type to update\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n\
+        \          \"maxLength\": 100,\n          \"nullable\": true,\n          \"description\": \"Display name for the relationship
         type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n \
         \         \"nullable\": true,\n          \"description\": \"Description of the relationship type\"\n        },\n \
         \       \"category\": {\n          \"type\": \"string\",\n          \"maxLength\": 50,\n          \"nullable\": true,\n\
@@ -564,16 +581,17 @@ paths:
         \      \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n         \
         \ \"description\": \"Additional metadata\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
-        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
-        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
-        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
-        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
-        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
-        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship
+        type including hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
+        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
+        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
+        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
+        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -626,7 +644,8 @@ paths:
           description: Cannot delete - type is in use by relationships or has child types
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteRelationshipTypeRequest\"\
-        ,\n  \"$defs\": {\n    \"DeleteRelationshipTypeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
+        ,\n  \"$defs\": {\n    \"DeleteRelationshipTypeRequest\": {\n      \"description\": \"Request to permanently delete
+        a relationship type (typically after deprecation and merge)\",\n      \"type\": \"object\",\n      \"required\": [\n\
         \        \"relationshipTypeId\"\n      ],\n      \"properties\": {\n        \"relationshipTypeId\": {\n          \"\
         type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the relationship type to
         delete\"\n        }\n      }\n    }\n  }\n}"
@@ -671,23 +690,25 @@ paths:
           description: Relationship type is already deprecated
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeprecateRelationshipTypeRequest\"\
-        ,\n  \"$defs\": {\n    \"DeprecateRelationshipTypeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
-        \        \"relationshipTypeId\"\n      ],\n      \"properties\": {\n        \"relationshipTypeId\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the relationship type to
-        deprecate\"\n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n \
-        \         \"nullable\": true,\n          \"description\": \"Optional reason for deprecation (for audit purposes)\"\
+        ,\n  \"$defs\": {\n    \"DeprecateRelationshipTypeRequest\": {\n      \"description\": \"Request to deprecate a relationship
+        type, preventing its use for new relationships while preserving existing ones\",\n      \"type\": \"object\",\n  \
+        \    \"required\": [\n        \"relationshipTypeId\"\n      ],\n      \"properties\": {\n        \"relationshipTypeId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the relationship
+        type to deprecate\"\n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"maxLength\":
+        500,\n          \"nullable\": true,\n          \"description\": \"Optional reason for deprecation (for audit purposes)\"\
         \n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
-        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
-        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
-        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
-        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
-        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
-        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship
+        type including hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
+        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
+        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
+        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
+        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -746,21 +767,23 @@ paths:
           description: Relationship type is not deprecated
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UndeprecateRelationshipTypeRequest\"\
-        ,\n  \"$defs\": {\n    \"UndeprecateRelationshipTypeRequest\": {\n      \"type\": \"object\",\n      \"required\"\
-        : [\n        \"relationshipTypeId\"\n      ],\n      \"properties\": {\n        \"relationshipTypeId\": {\n      \
-        \    \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the relationship type
-        to restore\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"UndeprecateRelationshipTypeRequest\": {\n      \"description\": \"Request to restore a deprecated
+        relationship type back to active status\",\n      \"type\": \"object\",\n      \"required\": [\n        \"relationshipTypeId\"\
+        \n      ],\n      \"properties\": {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n        \
+        \  \"format\": \"uuid\",\n          \"description\": \"ID of the relationship type to restore\"\n        }\n     \
+        \ }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
-        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n        \"isDeprecated\"\
-        ,\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"\
-        relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
-        \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable display
-        name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
-        \    \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n        },\n\
-        \        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship
+        type including hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"relationshipTypeId\",\n        \"code\",\n        \"name\",\n        \"isBidirectional\",\n       \
+        \ \"isDeprecated\",\n        \"depth\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\"\
+        : {\n        \"relationshipTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
+        \   \"description\": \"Unique identifier of the relationship type\"\n        },\n        \"code\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\
+        \")\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        display name for the relationship type\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"nullable\": true,\n          \"description\": \"Detailed description of the relationship type\"\n   \
+        \     },\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Category for grouping relationship types (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\")\"\n        },\n        \"parentTypeId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"\
         description\": \"ID of the parent type in the hierarchy (null for root types)\"\n        },\n        \"parentTypeCode\"\
@@ -829,17 +852,19 @@ paths:
           description: Cannot merge into a deprecated type
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/MergeRelationshipTypeRequest\"\
-        ,\n  \"$defs\": {\n    \"MergeRelationshipTypeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n \
-        \       \"sourceTypeId\",\n        \"targetTypeId\"\n      ],\n      \"properties\": {\n        \"sourceTypeId\":
-        {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the deprecated
-        type to merge from (must be deprecated)\"\n        },\n        \"targetTypeId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the type to merge into (can be VOID for effective
+        ,\n  \"$defs\": {\n    \"MergeRelationshipTypeRequest\": {\n      \"description\": \"Request to migrate all relationships
+        from a deprecated source type to a target type\",\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        sourceTypeId\",\n        \"targetTypeId\"\n      ],\n      \"properties\": {\n        \"sourceTypeId\": {\n      \
+        \    \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the deprecated type
+        to merge from (must be deprecated)\"\n        },\n        \"targetTypeId\": {\n          \"type\": \"string\",\n \
+        \         \"format\": \"uuid\",\n          \"description\": \"ID of the type to merge into (can be VOID for effective
         deletion)\"\n        },\n        \"deleteAfterMerge\": {\n          \"type\": \"boolean\",\n          \"default\"\
         : false,\n          \"description\": \"If true, hard-delete the source type after successful merge\"\n        }\n\
         \      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/MergeRelationshipTypeResponse\"\
-        ,\n  \"$defs\": {\n    \"MergeRelationshipTypeResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n\
-        \        \"sourceTypeId\",\n        \"targetTypeId\",\n        \"relationshipsMigrated\",\n        \"sourceDeleted\"\
+        ,\n  \"$defs\": {\n    \"MergeRelationshipTypeResponse\": {\n      \"description\": \"Response summarizing the results
+        of a merge operation including the number of relationships migrated\",\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"sourceTypeId\",\n        \"targetTypeId\",\n        \"relationshipsMigrated\",\n        \"sourceDeleted\"\
         \n      ],\n      \"properties\": {\n        \"sourceTypeId\": {\n          \"type\": \"string\",\n          \"format\"\
         : \"uuid\",\n          \"description\": \"ID of the deprecated type that was merged from\"\n        },\n        \"\
         targetTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"\
@@ -884,14 +909,16 @@ paths:
           description: Invalid seed data
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedRelationshipTypesRequest\"\
-        ,\n  \"$defs\": {\n    \"SeedRelationshipTypesRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n \
-        \       \"types\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"type\": \"array\",\n     \
-        \     \"items\": {\n            \"$ref\": \"#/$defs/SeedRelationshipType\"\n          },\n          \"description\"\
-        : \"List of relationship types to seed\"\n        },\n        \"updateExisting\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": false,\n          \"description\": \"Whether to update types that already exist\"\n    \
-        \    }\n      }\n    },\n    \"SeedRelationshipType\": {\n      \"type\": \"object\",\n      \"required\": [\n   \
-        \     \"code\",\n        \"name\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Unique code for the relationship type\"\n        },\n        \"name\": {\n\
+        ,\n  \"$defs\": {\n    \"SeedRelationshipTypesRequest\": {\n      \"description\": \"Request to bulk seed relationship
+        types from configuration, typically used at startup\",\n      \"type\": \"object\",\n      \"required\": [\n     \
+        \   \"types\"\n      ],\n      \"properties\": {\n        \"types\": {\n          \"type\": \"array\",\n         \
+        \ \"items\": {\n            \"$ref\": \"#/$defs/SeedRelationshipType\"\n          },\n          \"description\": \"\
+        List of relationship types to seed\"\n        },\n        \"updateExisting\": {\n          \"type\": \"boolean\",\n\
+        \          \"default\": false,\n          \"description\": \"Whether to update types that already exist\"\n      \
+        \  }\n      }\n    },\n    \"SeedRelationshipType\": {\n      \"description\": \"A relationship type definition used
+        for seeding, with code-based parent and inverse references\",\n      \"type\": \"object\",\n      \"required\": [\n\
+        \        \"code\",\n        \"name\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\":
+        \"string\",\n          \"description\": \"Unique code for the relationship type\"\n        },\n        \"name\": {\n\
         \          \"type\": \"string\",\n          \"description\": \"Display name for the relationship type\"\n        },\n\
         \        \"description\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable description
         of the relationship type\"\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"description\"\
@@ -903,14 +930,16 @@ paths:
         : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Additional
         custom metadata for the relationship type\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedRelationshipTypesResponse\"\
-        ,\n  \"$defs\": {\n    \"SeedRelationshipTypesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n\
-        \        \"created\",\n        \"updated\",\n        \"skipped\",\n        \"errors\"\n      ],\n      \"properties\"\
-        : {\n        \"created\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of new types created\"\
-        \n        },\n        \"updated\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of existing
-        types updated\"\n        },\n        \"skipped\": {\n          \"type\": \"integer\",\n          \"description\":
-        \"Number of types skipped (already exist, updateExisting=false)\"\n        },\n        \"errors\": {\n          \"\
-        type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
-        : \"List of error messages for types that failed to seed\"\n        }\n      }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"SeedRelationshipTypesResponse\": {\n      \"description\": \"Response summarizing the results
+        of a bulk seed operation with counts of created, updated, and skipped types\",\n      \"type\": \"object\",\n    \
+        \  \"required\": [\n        \"created\",\n        \"updated\",\n        \"skipped\",\n        \"errors\"\n      ],\n\
+        \      \"properties\": {\n        \"created\": {\n          \"type\": \"integer\",\n          \"description\": \"\
+        Number of new types created\"\n        },\n        \"updated\": {\n          \"type\": \"integer\",\n          \"\
+        description\": \"Number of existing types updated\"\n        },\n        \"skipped\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"Number of types skipped (already exist, updateExisting=false)\"\n        },\n    \
+        \    \"errors\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n   \
+        \       },\n          \"description\": \"List of error messages for types that failed to seed\"\n        }\n     \
+        \ }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Seed relationship types from configuration\",\n  \"description\": \"Idempotent
         operation to seed relationship types from provided data.\\nCreates types that don't exist, optionally updates existing
         types.\\nTypically called at service startup with YAML-defined types.\\n\",\n  \"tags\": [\n    \"RelationshipType
@@ -919,6 +948,7 @@ components:
   schemas:
     # Request schemas
     GetRelationshipTypeRequest:
+      description: Request to retrieve a relationship type by its unique identifier
       type: object
       required:
       - relationshipTypeId
@@ -929,6 +959,7 @@ components:
           description: Unique identifier of the relationship type
 
     GetRelationshipTypeByCodeRequest:
+      description: Request to retrieve a relationship type by its unique code string
       type: object
       required:
       - code
@@ -941,6 +972,8 @@ components:
           description: Unique code for the relationship type (e.g., "SON", "MOTHER", "FRIEND")
 
     ListRelationshipTypesRequest:
+      description: Request to list relationship types with optional filtering by category, hierarchy, and deprecation 
+        status
       type: object
       properties:
         category:
@@ -960,6 +993,7 @@ components:
           description: Whether to include deprecated types in the response
 
     GetChildRelationshipTypesRequest:
+      description: Request to retrieve all child relationship types for a given parent type
       type: object
       required:
       - parentTypeId
@@ -974,6 +1008,7 @@ components:
           description: Include all descendants, not just direct children
 
     MatchesHierarchyRequest:
+      description: Request to check if a relationship type matches or descends from an ancestor type in the hierarchy
       type: object
       required:
       - typeId
@@ -989,6 +1024,7 @@ components:
           description: The potential ancestor type
 
     GetAncestorsRequest:
+      description: Request to retrieve all ancestor types in the hierarchy chain from a relationship type up to the root
       type: object
       required:
       - typeId
@@ -999,6 +1035,8 @@ components:
           description: The relationship type to get ancestors for
 
     CreateRelationshipTypeRequest:
+      description: Request to create a new relationship type with code, name, and optional hierarchy and inverse 
+        settings
       type: object
       required:
       - code
@@ -1044,6 +1082,8 @@ components:
           description: Additional metadata for the relationship type
 
     UpdateRelationshipTypeRequest:
+      description: Request to update an existing relationship type's properties such as name, description, category, or 
+        hierarchy
       type: object
       required:
       - relationshipTypeId
@@ -1089,6 +1129,7 @@ components:
           description: Additional metadata
 
     DeleteRelationshipTypeRequest:
+      description: Request to permanently delete a relationship type (typically after deprecation and merge)
       type: object
       required:
       - relationshipTypeId
@@ -1099,6 +1140,8 @@ components:
           description: ID of the relationship type to delete
 
     DeprecateRelationshipTypeRequest:
+      description: Request to deprecate a relationship type, preventing its use for new relationships while preserving 
+        existing ones
       type: object
       required:
       - relationshipTypeId
@@ -1114,6 +1157,7 @@ components:
           description: Optional reason for deprecation (for audit purposes)
 
     UndeprecateRelationshipTypeRequest:
+      description: Request to restore a deprecated relationship type back to active status
       type: object
       required:
       - relationshipTypeId
@@ -1124,6 +1168,7 @@ components:
           description: ID of the relationship type to restore
 
     MergeRelationshipTypeRequest:
+      description: Request to migrate all relationships from a deprecated source type to a target type
       type: object
       required:
       - sourceTypeId
@@ -1143,6 +1188,7 @@ components:
           description: If true, hard-delete the source type after successful merge
 
     SeedRelationshipTypesRequest:
+      description: Request to bulk seed relationship types from configuration, typically used at startup
       type: object
       required:
       - types
@@ -1158,6 +1204,7 @@ components:
           description: Whether to update types that already exist
 
     SeedRelationshipType:
+      description: A relationship type definition used for seeding, with code-based parent and inverse references
       type: object
       required:
       - code
@@ -1192,6 +1239,8 @@ components:
 
     # Response schemas
     RelationshipTypeResponse:
+      description: Complete representation of a relationship type including hierarchy, inverse, and deprecation 
+        information
       type: object
       required:
       - relationshipTypeId
@@ -1272,6 +1321,7 @@ components:
           description: Timestamp when the relationship type was last updated
 
     RelationshipTypeListResponse:
+      description: Response containing a list of relationship types with total count
       type: object
       required:
       - types
@@ -1287,6 +1337,7 @@ components:
           description: Total number of relationship types returned
 
     MatchesHierarchyResponse:
+      description: Response indicating whether a type matches an ancestor in the hierarchy and the depth between them
       type: object
       required:
       - matches
@@ -1299,6 +1350,8 @@ components:
           description: Number of levels between the types (0 if same, -1 if no match)
 
     SeedRelationshipTypesResponse:
+      description: Response summarizing the results of a bulk seed operation with counts of created, updated, and 
+        skipped types
       type: object
       required:
       - created
@@ -1322,6 +1375,7 @@ components:
           description: List of error messages for types that failed to seed
 
     MergeRelationshipTypeResponse:
+      description: Response summarizing the results of a merge operation including the number of relationships migrated
       type: object
       required:
       - sourceTypeId

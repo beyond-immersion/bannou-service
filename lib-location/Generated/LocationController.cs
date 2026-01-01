@@ -588,6 +588,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/GetLocationRequest",
   "$defs": {
     "GetLocationRequest": {
+      "description": "Request to retrieve a location by its unique identifier",
       "type": "object",
       "required": [
         "locationId"
@@ -610,6 +611,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -775,6 +777,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/GetLocationByCodeRequest",
   "$defs": {
     "GetLocationByCodeRequest": {
+      "description": "Request to retrieve a location by its code within a specific realm",
       "type": "object",
       "required": [
         "code",
@@ -805,6 +808,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -970,6 +974,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ListLocationsRequest",
   "$defs": {
     "ListLocationsRequest": {
+      "description": "Request to list locations with optional filtering by realm, type, and deprecation status",
       "type": "object",
       "properties": {
         "realmId": {
@@ -1033,6 +1038,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationListResponse",
   "$defs": {
     "LocationListResponse": {
+      "description": "Paginated list of locations with metadata for navigation",
       "type": "object",
       "required": [
         "locations",
@@ -1071,6 +1077,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -1236,6 +1243,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ListLocationsByRealmRequest",
   "$defs": {
     "ListLocationsByRealmRequest": {
+      "description": "Request to list all locations within a specific realm with optional filtering",
       "type": "object",
       "required": [
         "realmId"
@@ -1301,6 +1309,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationListResponse",
   "$defs": {
     "LocationListResponse": {
+      "description": "Paginated list of locations with metadata for navigation",
       "type": "object",
       "required": [
         "locations",
@@ -1339,6 +1348,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -1504,6 +1514,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ListLocationsByParentRequest",
   "$defs": {
     "ListLocationsByParentRequest": {
+      "description": "Request to list all child locations of a specified parent location",
       "type": "object",
       "required": [
         "parentLocationId"
@@ -1569,6 +1580,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationListResponse",
   "$defs": {
     "LocationListResponse": {
+      "description": "Paginated list of locations with metadata for navigation",
       "type": "object",
       "required": [
         "locations",
@@ -1607,6 +1619,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -1772,6 +1785,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ListRootLocationsRequest",
   "$defs": {
     "ListRootLocationsRequest": {
+      "description": "Request to list all top-level locations (without parents) in a realm",
       "type": "object",
       "required": [
         "realmId"
@@ -1837,6 +1851,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationListResponse",
   "$defs": {
     "LocationListResponse": {
+      "description": "Paginated list of locations with metadata for navigation",
       "type": "object",
       "required": [
         "locations",
@@ -1875,6 +1890,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -2040,6 +2056,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/GetLocationAncestorsRequest",
   "$defs": {
     "GetLocationAncestorsRequest": {
+      "description": "Request to retrieve the full ancestry chain of a location up to the root",
       "type": "object",
       "required": [
         "locationId"
@@ -2062,6 +2079,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationListResponse",
   "$defs": {
     "LocationListResponse": {
+      "description": "Paginated list of locations with metadata for navigation",
       "type": "object",
       "required": [
         "locations",
@@ -2100,6 +2118,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -2265,6 +2284,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/GetLocationDescendantsRequest",
   "$defs": {
     "GetLocationDescendantsRequest": {
+      "description": "Request to retrieve all descendants of a location (children, grandchildren, etc.)",
       "type": "object",
       "required": [
         "locationId"
@@ -2337,6 +2357,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationListResponse",
   "$defs": {
     "LocationListResponse": {
+      "description": "Paginated list of locations with metadata for navigation",
       "type": "object",
       "required": [
         "locations",
@@ -2375,6 +2396,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -2540,6 +2562,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/CreateLocationRequest",
   "$defs": {
     "CreateLocationRequest": {
+      "description": "Request to create a new location within a realm",
       "type": "object",
       "required": [
         "code",
@@ -2616,6 +2639,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -2781,6 +2805,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/UpdateLocationRequest",
   "$defs": {
     "UpdateLocationRequest": {
+      "description": "Request to update an existing location's properties",
       "type": "object",
       "required": [
         "locationId"
@@ -2847,6 +2872,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -3012,6 +3038,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/SetLocationParentRequest",
   "$defs": {
     "SetLocationParentRequest": {
+      "description": "Request to set or change a location's parent in the hierarchy",
       "type": "object",
       "required": [
         "locationId",
@@ -3040,6 +3067,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -3205,6 +3233,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/RemoveLocationParentRequest",
   "$defs": {
     "RemoveLocationParentRequest": {
+      "description": "Request to remove a location's parent, making it a root location",
       "type": "object",
       "required": [
         "locationId"
@@ -3227,6 +3256,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -3392,6 +3422,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/DeleteLocationRequest",
   "$defs": {
     "DeleteLocationRequest": {
+      "description": "Request to permanently delete a location from the system",
       "type": "object",
       "required": [
         "locationId"
@@ -3474,6 +3505,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/DeprecateLocationRequest",
   "$defs": {
     "DeprecateLocationRequest": {
+      "description": "Request to soft-delete a location by marking it as deprecated",
       "type": "object",
       "required": [
         "locationId"
@@ -3502,6 +3534,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -3667,6 +3700,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/UndeprecateLocationRequest",
   "$defs": {
     "UndeprecateLocationRequest": {
+      "description": "Request to restore a deprecated location back to active status",
       "type": "object",
       "required": [
         "locationId"
@@ -3689,6 +3723,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationResponse",
   "$defs": {
     "LocationResponse": {
+      "description": "Complete location data returned from API operations",
       "type": "object",
       "required": [
         "locationId",
@@ -3854,6 +3889,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationExistsRequest",
   "$defs": {
     "LocationExistsRequest": {
+      "description": "Request to check if a location exists and is active",
       "type": "object",
       "required": [
         "locationId"
@@ -3876,6 +3912,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/LocationExistsResponse",
   "$defs": {
     "LocationExistsResponse": {
+      "description": "Response indicating whether a location exists and its active status",
       "type": "object",
       "required": [
         "exists",
@@ -3970,6 +4007,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/SeedLocationsRequest",
   "$defs": {
     "SeedLocationsRequest": {
+      "description": "Request to seed multiple locations from configuration data",
       "type": "object",
       "required": [
         "locations"
@@ -3990,6 +4028,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "SeedLocation": {
+      "description": "Location data for seeding operations, using codes instead of IDs for references",
       "type": "object",
       "required": [
         "code",
@@ -4058,6 +4097,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/SeedLocationsResponse",
   "$defs": {
     "SeedLocationsResponse": {
+      "description": "Summary of a seed operation including counts of created, updated, and skipped locations",
       "type": "object",
       "required": [
         "created",

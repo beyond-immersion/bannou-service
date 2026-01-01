@@ -244,6 +244,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/InternalProxyRequest",
   "$defs": {
     "InternalProxyRequest": {
+      "description": "Request to proxy an API call through the Connect service to a target backend service",
       "type": "object",
       "required": [
         "sessionId",
@@ -313,6 +314,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/InternalProxyResponse",
   "$defs": {
     "InternalProxyResponse": {
+      "description": "Response from a proxied API call containing the target service's response data",
       "type": "object",
       "required": [
         "success",
@@ -442,6 +444,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ClientCapabilitiesResponse",
   "$defs": {
     "ClientCapabilitiesResponse": {
+      "description": "Response containing the client's capability manifest with available API endpoints and shortcuts",
       "type": "object",
       "required": [
         "sessionId",
@@ -487,6 +490,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "ClientCapability": {
+      "description": "A single API capability available to the client, mapping a client-salted GUID to a service endpoint",
       "type": "object",
       "required": [
         "guid",
@@ -534,7 +538,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     },
     "ClientShortcut": {
       "type": "object",
-      "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
+      "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\ npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
       "required": [
         "guid",
         "targetService",

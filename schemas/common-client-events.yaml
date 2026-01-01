@@ -279,6 +279,7 @@ components:
           description: Target session for this shortcut.
         shortcut:
           $ref: '#/components/schemas/SessionShortcut'
+          description: The session shortcut definition containing the pre-bound payload and routing information.
         replaceExisting:
           type: boolean
           default: true
@@ -357,6 +358,7 @@ components:
             Connect treats this as opaque bytes - no deserialization or modification.
         metadata:
           $ref: '#/components/schemas/SessionShortcutMetadata'
+          description: Metadata about the shortcut including display name, source service, and lifecycle information.
 
     SessionShortcutMetadata:
       type: object

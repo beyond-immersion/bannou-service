@@ -14,6 +14,9 @@ namespace BeyondImmersion.BannouService.Website;
 
 using System = global::System;
 
+/// <summary>
+/// Health and version status information for the website service
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StatusResponse
 {
@@ -58,6 +61,9 @@ public partial class StatusResponse
 
 }
 
+/// <summary>
+/// Full content and metadata for a CMS-managed page
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PageContent
 {
@@ -149,6 +155,9 @@ public partial class PageContent
 
 }
 
+/// <summary>
+/// Summary metadata for a CMS page without full content
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PageMetadata
 {
@@ -204,6 +213,9 @@ public partial class PageMetadata
 
 }
 
+/// <summary>
+/// Search engine optimization and social media sharing metadata
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SEOMetadata
 {
@@ -249,6 +261,105 @@ public partial class SEOMetadata
 
 }
 
+/// <summary>
+/// Analytics and tracking configuration for website visitor metrics
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Analytics
+{
+
+    /// <summary>
+    /// Google Analytics tracking ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("googleAnalyticsId")]
+    public string? GoogleAnalyticsId { get; set; } = default!;
+
+    /// <summary>
+    /// Configuration for other analytics trackers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("otherTrackers")]
+    public object OtherTrackers { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Custom script injection configuration for adding JavaScript to pages
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomScripts
+{
+
+    /// <summary>
+    /// Custom scripts to inject in the HTML head
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("head")]
+    public string? Head { get; set; } = default!;
+
+    /// <summary>
+    /// Custom scripts to inject at the start of the body
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bodyStart")]
+    public string? BodyStart { get; set; } = default!;
+
+    /// <summary>
+    /// Custom scripts to inject at the end of the body
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bodyEnd")]
+    public string? BodyEnd { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Site logo configuration including image URL and accessibility text
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Logo
+{
+
+    /// <summary>
+    /// URL of the site logo image
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("url")]
+    public System.Uri Url { get; set; } = default!;
+
+    /// <summary>
+    /// Alt text for the logo image
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("alt")]
+    public string Alt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Global website configuration including branding, languages, and integrations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SiteSettings
 {
@@ -314,13 +425,13 @@ public partial class SiteSettings
     public System.Collections.Generic.IDictionary<string, System.Uri> SocialLinks { get; set; } = default!;
 
     /// <summary>
-    /// Analytics and tracking configuration
+    /// Analytics and tracking service configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("analytics")]
     public Analytics Analytics { get; set; } = default!;
 
     /// <summary>
-    /// Custom script injection configuration
+    /// Custom JavaScript scripts to inject into pages
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customScripts")]
     public CustomScripts CustomScripts { get; set; } = default!;
@@ -336,6 +447,9 @@ public partial class SiteSettings
 
 }
 
+/// <summary>
+/// Visual theme configuration including colors, fonts, and navigation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ThemeConfig
 {
@@ -391,7 +505,7 @@ public partial class ThemeConfig
     public string? CustomCSS { get; set; } = default!;
 
     /// <summary>
-    /// Site logo configuration
+    /// Site logo configuration for branding
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("logo")]
     public Logo Logo { get; set; } = default!;
@@ -419,6 +533,9 @@ public partial class ThemeConfig
 
 }
 
+/// <summary>
+/// A navigation menu entry with optional nested children for dropdowns
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class NavigationItem
 {
@@ -469,6 +586,9 @@ public partial class NavigationItem
 
 }
 
+/// <summary>
+/// Paginated list of news items with total count
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class NewsResponse
 {
@@ -504,6 +624,9 @@ public partial class NewsResponse
 
 }
 
+/// <summary>
+/// A single news article or announcement entry
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class NewsItem
 {
@@ -575,6 +698,9 @@ public partial class NewsItem
 
 }
 
+/// <summary>
+/// Aggregated status of all game server realms
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServerStatusResponse
 {
@@ -607,6 +733,9 @@ public partial class ServerStatusResponse
 
 }
 
+/// <summary>
+/// Status and population information for a single game realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmStatus
 {
@@ -668,6 +797,9 @@ public partial class RealmStatus
 
 }
 
+/// <summary>
+/// Collection of available game client downloads by platform
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DownloadsResponse
 {
@@ -691,6 +823,9 @@ public partial class DownloadsResponse
 
 }
 
+/// <summary>
+/// Download details for a specific game client version and platform
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DownloadInfo
 {
@@ -757,6 +892,9 @@ public partial class DownloadInfo
 
 }
 
+/// <summary>
+/// User-submitted contact form data
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContactRequest
 {
@@ -811,6 +949,9 @@ public partial class ContactRequest
 
 }
 
+/// <summary>
+/// Confirmation response after submitting a contact form
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContactResponse
 {
@@ -842,6 +983,9 @@ public partial class ContactResponse
 
 }
 
+/// <summary>
+/// User account information displayed on the website profile page
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AccountProfile
 {
@@ -905,6 +1049,9 @@ public partial class AccountProfile
 
 }
 
+/// <summary>
+/// List of all characters belonging to an account
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CharacterListResponse
 {
@@ -928,6 +1075,9 @@ public partial class CharacterListResponse
 
 }
 
+/// <summary>
+/// Brief overview of a character for display in character lists
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CharacterSummary
 {
@@ -985,6 +1135,9 @@ public partial class CharacterSummary
 
 }
 
+/// <summary>
+/// Current subscription status and plan details for an account
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SubscriptionResponse
 {
@@ -1036,6 +1189,9 @@ public partial class SubscriptionResponse
 
 }
 
+/// <summary>
+/// Standard error response with code and message
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ErrorResponse
 {
@@ -1123,93 +1279,6 @@ public enum PageContentContentType
 
 }
 #pragma warning restore CS1591
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Analytics
-{
-
-    /// <summary>
-    /// Google Analytics tracking ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("googleAnalyticsId")]
-    public string? GoogleAnalyticsId { get; set; } = default!;
-
-    /// <summary>
-    /// Configuration for other analytics trackers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("otherTrackers")]
-    public object OtherTrackers { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CustomScripts
-{
-
-    /// <summary>
-    /// Custom scripts to inject in the HTML head
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("head")]
-    public string? Head { get; set; } = default!;
-
-    /// <summary>
-    /// Custom scripts to inject at the start of the body
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bodyStart")]
-    public string? BodyStart { get; set; } = default!;
-
-    /// <summary>
-    /// Custom scripts to inject at the end of the body
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bodyEnd")]
-    public string? BodyEnd { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Logo
-{
-
-    /// <summary>
-    /// URL of the site logo image
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("url")]
-    public System.Uri Url { get; set; } = default!;
-
-    /// <summary>
-    /// Alt text for the logo image
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("alt")]
-    public string Alt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

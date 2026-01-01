@@ -106,6 +106,9 @@ public partial class LeaveGameSessionRequest
 
 }
 
+/// <summary>
+/// Request to create a new game session with specified settings
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateGameSessionRequest
 {
@@ -162,6 +165,9 @@ public partial class CreateGameSessionRequest
 
 }
 
+/// <summary>
+/// Complete details of a game session including players and settings
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GameSessionResponse
 {
@@ -253,6 +259,9 @@ public partial class GameSessionResponse
 
 }
 
+/// <summary>
+/// Response containing a list of game sessions matching filter criteria
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GameSessionListResponse
 {
@@ -282,6 +291,9 @@ public partial class GameSessionListResponse
 
 }
 
+/// <summary>
+/// Request to join an existing game session as a player
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class JoinGameSessionRequest
 {
@@ -331,6 +343,9 @@ public partial class JoinGameSessionRequest
 
 }
 
+/// <summary>
+/// Response after successfully joining a game session with role and permissions
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class JoinGameSessionResponse
 {
@@ -387,6 +402,9 @@ public partial class JoinGameSessionResponse
 
 }
 
+/// <summary>
+/// Information about a player currently participating in a game session
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GamePlayer
 {
@@ -445,6 +463,9 @@ public partial class GamePlayer
 
 }
 
+/// <summary>
+/// Request to remove a player from a game session (admin only)
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class KickPlayerRequest
 {
@@ -483,6 +504,9 @@ public partial class KickPlayerRequest
 
 }
 
+/// <summary>
+/// Request to send a chat message to players in a game session
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChatMessageRequest
 {
@@ -528,6 +552,9 @@ public partial class ChatMessageRequest
 
 }
 
+/// <summary>
+/// Request to perform a game action such as movement or combat
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GameActionRequest
 {
@@ -572,6 +599,9 @@ public partial class GameActionRequest
 
 }
 
+/// <summary>
+/// Response indicating the result of a game action with any state changes
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GameActionResponse
 {

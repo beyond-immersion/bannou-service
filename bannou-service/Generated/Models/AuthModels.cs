@@ -86,6 +86,9 @@ public partial class TerminateSessionRequest
 
 }
 
+/// <summary>
+/// Request to authenticate a user with email and password credentials
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LoginRequest
 {
@@ -244,6 +247,9 @@ public partial class LoginResponse
 
 }
 
+/// <summary>
+/// Successful authentication response containing tokens and session information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthResponse
 {
@@ -309,6 +315,9 @@ public partial class AuthResponse
 
 }
 
+/// <summary>
+/// Request containing OAuth provider callback data to complete authentication
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class OAuthCallbackRequest
 {
@@ -381,6 +390,9 @@ public partial class SteamVerifyRequest
 
 }
 
+/// <summary>
+/// Request to obtain a new access token using a valid refresh token
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RefreshRequest
 {
@@ -404,6 +416,9 @@ public partial class RefreshRequest
 
 }
 
+/// <summary>
+/// Response from token validation containing validity status and associated account details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateTokenResponse
 {
@@ -461,6 +476,9 @@ public partial class ValidateTokenResponse
 
 }
 
+/// <summary>
+/// Request to logout and invalidate authentication tokens
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LogoutRequest
 {
@@ -482,6 +500,9 @@ public partial class LogoutRequest
 
 }
 
+/// <summary>
+/// Response containing a list of all active sessions for an account
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionsResponse
 {
@@ -505,6 +526,9 @@ public partial class SessionsResponse
 
 }
 
+/// <summary>
+/// Information about an active user session including device and activity details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionInfo
 {
@@ -562,6 +586,9 @@ public partial class SessionInfo
 
 }
 
+/// <summary>
+/// Information about the client device used for authentication or session tracking
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeviceInfo
 {
@@ -602,6 +629,9 @@ public partial class DeviceInfo
 
 }
 
+/// <summary>
+/// Request to initiate a password reset by sending a reset link to the email
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PasswordResetRequest
 {
@@ -625,6 +655,9 @@ public partial class PasswordResetRequest
 
 }
 
+/// <summary>
+/// Request to confirm a password reset using the emailed token and new password
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PasswordResetConfirmRequest
 {
@@ -733,6 +766,9 @@ public enum DeviceInfoDeviceType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// An OAuth provider available for user authentication, including its identifier, display name, and authentication URL
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Providers
 {

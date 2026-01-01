@@ -34,6 +34,9 @@ public enum CharacterStatus
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request payload for creating a new character in the game world
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateCharacterRequest
 {
@@ -89,6 +92,9 @@ public partial class CreateCharacterRequest
 
 }
 
+/// <summary>
+/// Request payload for retrieving a single character by ID
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetCharacterRequest
 {
@@ -112,6 +118,9 @@ public partial class GetCharacterRequest
 
 }
 
+/// <summary>
+/// Request payload for updating an existing character's properties
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateCharacterRequest
 {
@@ -161,6 +170,9 @@ public partial class UpdateCharacterRequest
 
 }
 
+/// <summary>
+/// Request payload for permanently deleting a character
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteCharacterRequest
 {
@@ -184,6 +196,9 @@ public partial class DeleteCharacterRequest
 
 }
 
+/// <summary>
+/// Request payload for listing characters with optional filtering and pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListCharactersRequest
 {
@@ -232,6 +247,9 @@ public partial class ListCharactersRequest
 
 }
 
+/// <summary>
+/// Request payload for retrieving all characters within a specific realm
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetCharactersByRealmRequest
 {
@@ -282,6 +300,9 @@ public partial class GetCharactersByRealmRequest
 
 }
 
+/// <summary>
+/// Complete character data returned from character operations
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CharacterResponse
 {
@@ -366,6 +387,9 @@ public partial class CharacterResponse
 
 }
 
+/// <summary>
+/// Paginated list of characters with metadata for navigation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CharacterListResponse
 {

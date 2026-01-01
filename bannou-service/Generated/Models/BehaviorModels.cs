@@ -66,6 +66,9 @@ public partial class InvalidateCacheRequest
 
 }
 
+/// <summary>
+/// Request to compile an ABML behavior definition into executable behavior trees
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompileBehaviorRequest
 {
@@ -128,6 +131,9 @@ public partial class CompileBehaviorRequest
 
 }
 
+/// <summary>
+/// Request to compile multiple stackable behavior sets with priority-based merging
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BehaviorStackRequest
 {
@@ -163,6 +169,9 @@ public partial class BehaviorStackRequest
 
 }
 
+/// <summary>
+/// Request to validate ABML YAML content against schema and semantic rules
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateAbmlRequest
 {
@@ -192,6 +201,9 @@ public partial class ValidateAbmlRequest
 
 }
 
+/// <summary>
+/// Request to resolve context variable expressions against character and world state
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ResolveContextRequest
 {
@@ -223,6 +235,9 @@ public partial class ResolveContextRequest
 
 }
 
+/// <summary>
+/// Response containing the results of an ABML behavior compilation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompileBehaviorResponse
 {
@@ -294,6 +309,9 @@ public partial class CompileBehaviorResponse
 
 }
 
+/// <summary>
+/// Response containing the results of ABML validation including errors and warnings
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateAbmlResponse
 {
@@ -333,6 +351,9 @@ public partial class ValidateAbmlResponse
 
 }
 
+/// <summary>
+/// Response containing a previously compiled behavior retrieved from cache
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CachedBehaviorResponse
 {
@@ -376,6 +397,9 @@ public partial class CachedBehaviorResponse
 
 }
 
+/// <summary>
+/// Response containing the resolved value of a context variable expression
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ResolveContextResponse
 {
@@ -412,6 +436,9 @@ public partial class ResolveContextResponse
 
 }
 
+/// <summary>
+/// Definition of a behavior set with priority for stackable behavior merging
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BehaviorSetDefinition
 {
@@ -501,7 +528,7 @@ public partial class CharacterContext
     public System.Collections.Generic.IDictionary<string, double> Skills { get; set; } = default!;
 
     /// <summary>
-    /// Character location information
+    /// Current location information for the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("location")]
     public Location Location { get; set; } = default!;
@@ -583,6 +610,9 @@ public partial class ContextSchemaData
 
 }
 
+/// <summary>
+/// Compiled behavior containing behavior tree, context schema, and GOAP integration data
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompiledBehavior
 {
@@ -616,7 +646,7 @@ public partial class CompiledBehavior
     public System.Collections.Generic.ICollection<GoapGoal> GoapGoals { get; set; } = default!;
 
     /// <summary>
-    /// Metadata about behavior execution requirements
+    /// Metadata for behavior execution including performance hints and resource requirements
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("executionMetadata")]
     public ExecutionMetadata ExecutionMetadata { get; set; } = default!;
@@ -632,6 +662,117 @@ public partial class CompiledBehavior
 
 }
 
+/// <summary>
+/// Character location information including current position, region, and 3D coordinates
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Location
+{
+
+    /// <summary>
+    /// Current location name or identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("current")]
+    public string Current { get; set; } = default!;
+
+    /// <summary>
+    /// Region or zone the character is in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("region")]
+    public string Region { get; set; } = default!;
+
+    /// <summary>
+    /// 3D spatial coordinates of the character's position in the game world
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinates")]
+    public Coordinates Coordinates { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// 3D spatial coordinates representing a position in the game world
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Coordinates
+{
+
+    /// <summary>
+    /// X coordinate position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("x")]
+    public double X { get; set; } = default!;
+
+    /// <summary>
+    /// Y coordinate position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("y")]
+    public double Y { get; set; } = default!;
+
+    /// <summary>
+    /// Z coordinate position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("z")]
+    public double Z { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Metadata about behavior execution requirements including timing, resources, and interrupt conditions
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecutionMetadata
+{
+
+    /// <summary>
+    /// Estimated execution time in seconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("estimatedDuration")]
+    public int EstimatedDuration { get; set; } = default!;
+
+    /// <summary>
+    /// Resource requirements for behavior execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceRequirements")]
+    public System.Collections.Generic.IDictionary<string, double> ResourceRequirements { get; set; } = default!;
+
+    /// <summary>
+    /// Conditions that can interrupt behavior execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("interruptConditions")]
+    public System.Collections.Generic.ICollection<string> InterruptConditions { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Goal definition for GOAP planning with conditions and priority
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GoapGoal
 {
@@ -682,6 +823,9 @@ public partial class GoapGoal
 
 }
 
+/// <summary>
+/// Request to generate a GOAP plan to achieve a goal from current world state
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GoapPlanRequest
 {
@@ -733,6 +877,9 @@ public partial class GoapPlanRequest
 
 }
 
+/// <summary>
+/// Response containing the generated GOAP plan or failure information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GoapPlanResponse
 {
@@ -778,6 +925,9 @@ public partial class GoapPlanResponse
 
 }
 
+/// <summary>
+/// Result of GOAP planning containing the ordered sequence of actions to achieve a goal
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GoapPlanResult
 {
@@ -815,6 +965,9 @@ public partial class GoapPlanResult
 
 }
 
+/// <summary>
+/// Single action within a GOAP plan with position and cost information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PlannedActionResponse
 {
@@ -850,6 +1003,9 @@ public partial class PlannedActionResponse
 
 }
 
+/// <summary>
+/// Request to validate an existing GOAP plan against current world state
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateGoapPlanRequest
 {
@@ -893,6 +1049,9 @@ public partial class ValidateGoapPlanRequest
 
 }
 
+/// <summary>
+/// Response indicating whether a GOAP plan is still valid and suggested next action
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateGoapPlanResponse
 {
@@ -944,6 +1103,9 @@ public partial class ValidateGoapPlanResponse
 
 }
 
+/// <summary>
+/// Options controlling the GOAP planning process including depth and timeout limits
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GoapPlanningOptions
 {
@@ -977,6 +1139,9 @@ public partial class GoapPlanningOptions
 
 }
 
+/// <summary>
+/// Options controlling the ABML compilation process including optimizations and caching
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompilationOptions
 {
@@ -1022,6 +1187,9 @@ public partial class CompilationOptions
 
 }
 
+/// <summary>
+/// Detailed validation error with type, location, and message information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidationError
 {
@@ -1072,6 +1240,9 @@ public partial class ValidationError
 
 }
 
+/// <summary>
+/// Error response for ABML operations with detailed error information and context
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AbmlErrorResponse
 {
@@ -1209,72 +1380,6 @@ public enum BehaviorSetDefinitionCategory
 }
 #pragma warning restore CS1591
 
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Location
-{
-
-    /// <summary>
-    /// Current location name or identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("current")]
-    public string Current { get; set; } = default!;
-
-    /// <summary>
-    /// Region or zone the character is in
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("region")]
-    public string Region { get; set; } = default!;
-
-    /// <summary>
-    /// 3D coordinates of the character position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("coordinates")]
-    public Coordinates Coordinates { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ExecutionMetadata
-{
-
-    /// <summary>
-    /// Estimated execution time in seconds
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("estimatedDuration")]
-    public int EstimatedDuration { get; set; } = default!;
-
-    /// <summary>
-    /// Resource requirements for behavior execution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("resourceRequirements")]
-    public System.Collections.Generic.IDictionary<string, double> ResourceRequirements { get; set; } = default!;
-
-    /// <summary>
-    /// Conditions that can interrupt behavior execution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("interruptConditions")]
-    public System.Collections.Generic.ICollection<string> InterruptConditions { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ValidateGoapPlanResponseReason
@@ -1343,39 +1448,6 @@ public enum ValidationErrorType
 
 }
 #pragma warning restore CS1591
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Coordinates
-{
-
-    /// <summary>
-    /// X coordinate position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public double X { get; set; } = default!;
-
-    /// <summary>
-    /// Y coordinate position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public double Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z coordinate position
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public double Z { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
 
 
 

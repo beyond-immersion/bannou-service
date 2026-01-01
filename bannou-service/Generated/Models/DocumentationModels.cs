@@ -145,6 +145,9 @@ public enum SuggestionSource
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to search documentation using natural language queries
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryDocumentationRequest
 {
@@ -219,6 +222,9 @@ public partial class QueryDocumentationRequest
 
 }
 
+/// <summary>
+/// Response containing search results and voice-friendly summaries
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryDocumentationResponse
 {
@@ -282,6 +288,9 @@ public partial class QueryDocumentationResponse
 
 }
 
+/// <summary>
+/// Request to retrieve a specific document by ID or slug
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetDocumentRequest
 {
@@ -345,6 +354,9 @@ public partial class GetDocumentRequest
 
 }
 
+/// <summary>
+/// Response containing the requested document and optional related documents
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetDocumentResponse
 {
@@ -381,6 +393,9 @@ public partial class GetDocumentResponse
 
 }
 
+/// <summary>
+/// Request to search documentation using keyword matching
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SearchDocumentationRequest
 {
@@ -455,6 +470,9 @@ public partial class SearchDocumentationRequest
 
 }
 
+/// <summary>
+/// Response containing keyword search results
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SearchDocumentationResponse
 {
@@ -498,6 +516,9 @@ public partial class SearchDocumentationResponse
 
 }
 
+/// <summary>
+/// Request to list documents with optional filtering and pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListDocumentsRequest
 {
@@ -601,6 +622,9 @@ public partial class ListDocumentsRequest
 
 }
 
+/// <summary>
+/// Response containing a paginated list of documents
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListDocumentsResponse
 {
@@ -656,6 +680,9 @@ public partial class ListDocumentsResponse
 
 }
 
+/// <summary>
+/// Request to get related topic suggestions based on a source
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SuggestRelatedRequest
 {
@@ -715,6 +742,9 @@ public partial class SuggestRelatedRequest
 
 }
 
+/// <summary>
+/// Response containing suggested related topics for conversational flow
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SuggestRelatedResponse
 {
@@ -758,6 +788,9 @@ public partial class SuggestRelatedResponse
 
 }
 
+/// <summary>
+/// A suggested related topic with relevance context
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TopicSuggestion
 {
@@ -808,6 +841,9 @@ public partial class TopicSuggestion
 
 }
 
+/// <summary>
+/// Request to create a new documentation entry
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateDocumentRequest
 {
@@ -901,6 +937,9 @@ public partial class CreateDocumentRequest
 
 }
 
+/// <summary>
+/// Response confirming document creation with assigned identifiers
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateDocumentResponse
 {
@@ -938,6 +977,9 @@ public partial class CreateDocumentResponse
 
 }
 
+/// <summary>
+/// Request to update an existing document's fields
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateDocumentRequest
 {
@@ -1024,6 +1066,9 @@ public partial class UpdateDocumentRequest
 
 }
 
+/// <summary>
+/// Response confirming document update with timestamp
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateDocumentResponse
 {
@@ -1055,6 +1100,9 @@ public partial class UpdateDocumentResponse
 
 }
 
+/// <summary>
+/// Request to soft-delete a document to the trashcan
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteDocumentRequest
 {
@@ -1092,6 +1140,9 @@ public partial class DeleteDocumentRequest
 
 }
 
+/// <summary>
+/// Response confirming document deletion with recovery deadline
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteDocumentResponse
 {
@@ -1131,6 +1182,9 @@ public partial class DeleteDocumentResponse
 
 }
 
+/// <summary>
+/// Request to recover a deleted document from the trashcan
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RecoverDocumentRequest
 {
@@ -1164,6 +1218,9 @@ public partial class RecoverDocumentRequest
 
 }
 
+/// <summary>
+/// Response confirming document recovery with timestamp
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RecoverDocumentResponse
 {
@@ -1195,6 +1252,9 @@ public partial class RecoverDocumentResponse
 
 }
 
+/// <summary>
+/// Request to update multiple documents at once
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkUpdateRequest
 {
@@ -1247,6 +1307,9 @@ public partial class BulkUpdateRequest
 
 }
 
+/// <summary>
+/// Response reporting bulk update results with success and failure details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkUpdateResponse
 {
@@ -1278,6 +1341,9 @@ public partial class BulkUpdateResponse
 
 }
 
+/// <summary>
+/// Request to delete multiple documents at once
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkDeleteRequest
 {
@@ -1311,6 +1377,9 @@ public partial class BulkDeleteRequest
 
 }
 
+/// <summary>
+/// Response reporting bulk deletion results with success and failure details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkDeleteResponse
 {
@@ -1342,6 +1411,9 @@ public partial class BulkDeleteResponse
 
 }
 
+/// <summary>
+/// Details of a single document that failed in a bulk operation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkOperationFailure
 {
@@ -1373,6 +1445,9 @@ public partial class BulkOperationFailure
 
 }
 
+/// <summary>
+/// Request to import multiple documents into a namespace
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ImportDocumentationRequest
 {
@@ -1413,6 +1488,9 @@ public partial class ImportDocumentationRequest
 
 }
 
+/// <summary>
+/// A single document to import with required fields
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ImportDocument
 {
@@ -1485,6 +1563,9 @@ public partial class ImportDocument
 
 }
 
+/// <summary>
+/// Response reporting import results with counts and failure details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ImportDocumentationResponse
 {
@@ -1534,6 +1615,9 @@ public partial class ImportDocumentationResponse
 
 }
 
+/// <summary>
+/// Details of a document that failed to import
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ImportFailure
 {
@@ -1565,6 +1649,9 @@ public partial class ImportFailure
 
 }
 
+/// <summary>
+/// Request to list deleted documents in the trashcan
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListTrashcanRequest
 {
@@ -1602,6 +1689,9 @@ public partial class ListTrashcanRequest
 
 }
 
+/// <summary>
+/// Response containing deleted documents awaiting permanent deletion
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListTrashcanResponse
 {
@@ -1639,6 +1729,9 @@ public partial class ListTrashcanResponse
 
 }
 
+/// <summary>
+/// A deleted document in the trashcan with expiration information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TrashcanItem
 {
@@ -1699,6 +1792,9 @@ public partial class TrashcanItem
 
 }
 
+/// <summary>
+/// Request to permanently delete documents from the trashcan
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PurgeTrashcanRequest
 {
@@ -1730,6 +1826,9 @@ public partial class PurgeTrashcanRequest
 
 }
 
+/// <summary>
+/// Response confirming permanent deletion of trashcan items
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PurgeTrashcanResponse
 {
@@ -1751,6 +1850,9 @@ public partial class PurgeTrashcanResponse
 
 }
 
+/// <summary>
+/// Request to get statistics for a documentation namespace
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetNamespaceStatsRequest
 {
@@ -1776,6 +1878,9 @@ public partial class GetNamespaceStatsRequest
 
 }
 
+/// <summary>
+/// Response containing namespace statistics and document counts
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class NamespaceStatsResponse
 {
@@ -1829,6 +1934,9 @@ public partial class NamespaceStatsResponse
 
 }
 
+/// <summary>
+/// Complete document with all metadata and content
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Document
 {
@@ -1937,6 +2045,9 @@ public partial class Document
 
 }
 
+/// <summary>
+/// Lightweight document representation for listings and references
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DocumentSummary
 {
@@ -2003,6 +2114,9 @@ public partial class DocumentSummary
 
 }
 
+/// <summary>
+/// Search result with relevance scoring and match highlights
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DocumentResult
 {
@@ -2142,6 +2256,9 @@ public enum SyncTrigger
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to bind a Git repository for automatic documentation sync
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BindRepositoryRequest
 {
@@ -2225,6 +2342,9 @@ public partial class BindRepositoryRequest
 
 }
 
+/// <summary>
+/// Response confirming repository binding creation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BindRepositoryResponse
 {
@@ -2283,6 +2403,9 @@ public partial class BindRepositoryResponse
 
 }
 
+/// <summary>
+/// Request to remove a repository binding from a namespace
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UnbindRepositoryRequest
 {
@@ -2314,6 +2437,9 @@ public partial class UnbindRepositoryRequest
 
 }
 
+/// <summary>
+/// Response confirming repository unbinding with cleanup details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UnbindRepositoryResponse
 {
@@ -2343,6 +2469,9 @@ public partial class UnbindRepositoryResponse
 
 }
 
+/// <summary>
+/// Request to trigger a manual repository sync
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SyncRepositoryRequest
 {
@@ -2374,6 +2503,9 @@ public partial class SyncRepositoryRequest
 
 }
 
+/// <summary>
+/// Response containing sync operation results and statistics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SyncRepositoryResponse
 {
@@ -2448,6 +2580,9 @@ public partial class SyncRepositoryResponse
 
 }
 
+/// <summary>
+/// Request to get current repository binding and sync status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RepositoryStatusRequest
 {
@@ -2473,6 +2608,9 @@ public partial class RepositoryStatusRequest
 
 }
 
+/// <summary>
+/// Response containing binding configuration and recent sync information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RepositoryStatusResponse
 {
@@ -2500,6 +2638,9 @@ public partial class RepositoryStatusResponse
 
 }
 
+/// <summary>
+/// Detailed repository binding configuration and status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RepositoryBindingInfo
 {
@@ -2584,6 +2725,9 @@ public partial class RepositoryBindingInfo
 
 }
 
+/// <summary>
+/// Information about a repository sync operation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SyncInfo
 {
@@ -2643,6 +2787,9 @@ public partial class SyncInfo
 
 }
 
+/// <summary>
+/// Request to list all repository bindings with optional filtering
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListRepositoryBindingsRequest
 {
@@ -2679,6 +2826,9 @@ public partial class ListRepositoryBindingsRequest
 
 }
 
+/// <summary>
+/// Response containing a list of repository bindings
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListRepositoryBindingsResponse
 {
@@ -2708,6 +2858,9 @@ public partial class ListRepositoryBindingsResponse
 
 }
 
+/// <summary>
+/// Request to update repository binding configuration
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateRepositoryBindingRequest
 {
@@ -2783,6 +2936,9 @@ public partial class UpdateRepositoryBindingRequest
 
 }
 
+/// <summary>
+/// Response containing the updated binding configuration
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateRepositoryBindingResponse
 {
@@ -2806,6 +2962,9 @@ public partial class UpdateRepositoryBindingResponse
 
 }
 
+/// <summary>
+/// Request to create a point-in-time snapshot of namespace documentation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateArchiveRequest
 {
@@ -2838,6 +2997,9 @@ public partial class CreateArchiveRequest
 
 }
 
+/// <summary>
+/// Response containing the created archive details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateArchiveResponse
 {
@@ -2899,6 +3061,9 @@ public partial class CreateArchiveResponse
 
 }
 
+/// <summary>
+/// Request to list available archives for a namespace
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListArchivesRequest
 {
@@ -2938,6 +3103,9 @@ public partial class ListArchivesRequest
 
 }
 
+/// <summary>
+/// Response containing a paginated list of archives
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListArchivesResponse
 {
@@ -2967,6 +3135,9 @@ public partial class ListArchivesResponse
 
 }
 
+/// <summary>
+/// Archive metadata including size and document count
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ArchiveInfo
 {
@@ -3042,6 +3213,9 @@ public partial class ArchiveInfo
 
 }
 
+/// <summary>
+/// Request to restore documents from an archive
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RestoreArchiveRequest
 {
@@ -3073,6 +3247,9 @@ public partial class RestoreArchiveRequest
 
 }
 
+/// <summary>
+/// Response containing restore operation results
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RestoreArchiveResponse
 {
@@ -3108,6 +3285,9 @@ public partial class RestoreArchiveResponse
 
 }
 
+/// <summary>
+/// Request to permanently delete an archive
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteArchiveRequest
 {
@@ -3131,6 +3311,9 @@ public partial class DeleteArchiveRequest
 
 }
 
+/// <summary>
+/// Response confirming archive deletion
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteArchiveResponse
 {

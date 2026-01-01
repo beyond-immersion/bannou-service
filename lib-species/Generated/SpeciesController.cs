@@ -464,6 +464,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/GetSpeciesRequest",
   "$defs": {
     "GetSpeciesRequest": {
+      "description": "Request to retrieve a single species by its unique identifier",
       "type": "object",
       "required": [
         "speciesId"
@@ -486,6 +487,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -647,6 +649,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/GetSpeciesByCodeRequest",
   "$defs": {
     "GetSpeciesByCodeRequest": {
+      "description": "Request to retrieve a species by its unique code identifier",
       "type": "object",
       "required": [
         "code"
@@ -671,6 +674,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -832,6 +836,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ListSpeciesRequest",
   "$defs": {
     "ListSpeciesRequest": {
+      "description": "Request to list species with optional filtering and pagination",
       "type": "object",
       "properties": {
         "category": {
@@ -874,6 +879,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesListResponse",
   "$defs": {
     "SpeciesListResponse": {
+      "description": "Paginated list of species with total count for pagination",
       "type": "object",
       "required": [
         "species",
@@ -902,6 +908,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -1063,6 +1070,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ListSpeciesByRealmRequest",
   "$defs": {
     "ListSpeciesByRealmRequest": {
+      "description": "Request to list species available within a specific realm",
       "type": "object",
       "required": [
         "realmId"
@@ -1103,6 +1111,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesListResponse",
   "$defs": {
     "SpeciesListResponse": {
+      "description": "Paginated list of species with total count for pagination",
       "type": "object",
       "required": [
         "species",
@@ -1131,6 +1140,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -1292,6 +1302,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/CreateSpeciesRequest",
   "$defs": {
     "CreateSpeciesRequest": {
+      "description": "Request to create a new species with its attributes and realm associations",
       "type": "object",
       "required": [
         "code",
@@ -1372,6 +1383,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -1533,6 +1545,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/UpdateSpeciesRequest",
   "$defs": {
     "UpdateSpeciesRequest": {
+      "description": "Request to update an existing species with partial attribute changes",
       "type": "object",
       "required": [
         "speciesId"
@@ -1603,6 +1616,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -1764,6 +1778,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/DeleteSpeciesRequest",
   "$defs": {
     "DeleteSpeciesRequest": {
+      "description": "Request to hard-delete a deprecated species with no remaining references",
       "type": "object",
       "required": [
         "speciesId"
@@ -1846,6 +1861,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/DeprecateSpeciesRequest",
   "$defs": {
     "DeprecateSpeciesRequest": {
+      "description": "Request to soft-delete a species, preventing new character creation",
       "type": "object",
       "required": [
         "speciesId"
@@ -1874,6 +1890,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -2035,6 +2052,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/UndeprecateSpeciesRequest",
   "$defs": {
     "UndeprecateSpeciesRequest": {
+      "description": "Request to restore a deprecated species to active status",
       "type": "object",
       "required": [
         "speciesId"
@@ -2057,6 +2075,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -2218,6 +2237,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/MergeSpeciesRequest",
   "$defs": {
     "MergeSpeciesRequest": {
+      "description": "Request to migrate all characters from a deprecated species to a target species",
       "type": "object",
       "required": [
         "sourceSpeciesId",
@@ -2251,6 +2271,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/MergeSpeciesResponse",
   "$defs": {
     "MergeSpeciesResponse": {
+      "description": "Result of a species merge operation including migration statistics",
       "type": "object",
       "required": [
         "sourceSpeciesId",
@@ -2345,6 +2366,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/AddSpeciesToRealmRequest",
   "$defs": {
     "AddSpeciesToRealmRequest": {
+      "description": "Request to make a species available for character creation in a realm",
       "type": "object",
       "required": [
         "speciesId",
@@ -2373,6 +2395,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -2534,6 +2557,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RemoveSpeciesFromRealmRequest",
   "$defs": {
     "RemoveSpeciesFromRealmRequest": {
+      "description": "Request to remove a species from availability in a realm",
       "type": "object",
       "required": [
         "speciesId",
@@ -2562,6 +2586,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SpeciesResponse",
   "$defs": {
     "SpeciesResponse": {
+      "description": "Complete species data including all attributes and realm associations",
       "type": "object",
       "required": [
         "speciesId",
@@ -2723,6 +2748,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SeedSpeciesRequest",
   "$defs": {
     "SeedSpeciesRequest": {
+      "description": "Request to bulk-create or update species from a predefined list",
       "type": "object",
       "required": [
         "species"
@@ -2743,6 +2769,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SeedSpecies": {
+      "description": "Species definition used in bulk seeding operations",
       "type": "object",
       "required": [
         "code",
@@ -2807,6 +2834,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SeedSpeciesResponse",
   "$defs": {
     "SeedSpeciesResponse": {
+      "description": "Summary of a bulk species seeding operation with counts and errors",
       "type": "object",
       "required": [
         "created",

@@ -129,6 +129,9 @@ public enum BundleFormat
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to initiate an asset upload and receive a pre-signed URL
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UploadRequest
 {
@@ -172,6 +175,9 @@ public partial class UploadRequest
 
 }
 
+/// <summary>
+/// Response containing pre-signed URL and configuration for uploading an asset
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UploadResponse
 {
@@ -217,6 +223,9 @@ public partial class UploadResponse
 
 }
 
+/// <summary>
+/// Request to finalize an upload and trigger asset processing
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompleteUploadRequest
 {
@@ -246,6 +255,9 @@ public partial class CompleteUploadRequest
 
 }
 
+/// <summary>
+/// Information about a completed part in a multipart upload
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompletedPart
 {
@@ -275,6 +287,9 @@ public partial class CompletedPart
 
 }
 
+/// <summary>
+/// Configuration for multipart uploads of large files
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MultipartConfig
 {
@@ -314,6 +329,9 @@ public partial class MultipartConfig
 
 }
 
+/// <summary>
+/// Upload information for a single part in a multipart upload
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PartUploadInfo
 {
@@ -486,6 +504,9 @@ public partial class AssetMetadata
 
 }
 
+/// <summary>
+/// Request to retrieve asset metadata and download URL
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetAssetRequest
 {
@@ -515,6 +536,9 @@ public partial class GetAssetRequest
 
 }
 
+/// <summary>
+/// Asset metadata combined with a pre-signed download URL
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssetWithDownloadUrl
 {
@@ -578,6 +602,9 @@ public partial class AssetWithDownloadUrl
 
 }
 
+/// <summary>
+/// Request to list all versions of an asset with pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListVersionsRequest
 {
@@ -613,6 +640,9 @@ public partial class ListVersionsRequest
 
 }
 
+/// <summary>
+/// Paginated list of asset versions
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssetVersionList
 {
@@ -658,6 +688,9 @@ public partial class AssetVersionList
 
 }
 
+/// <summary>
+/// Metadata for a specific version of an asset
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssetVersion
 {
@@ -697,6 +730,9 @@ public partial class AssetVersion
 
 }
 
+/// <summary>
+/// Search criteria for filtering assets with pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssetSearchRequest
 {
@@ -754,6 +790,9 @@ public partial class AssetSearchRequest
 
 }
 
+/// <summary>
+/// Paginated results from an asset search query
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssetSearchResult
 {
@@ -793,6 +832,9 @@ public partial class AssetSearchResult
 
 }
 
+/// <summary>
+/// Request to create a new asset bundle from multiple assets
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateBundleRequest
 {
@@ -843,6 +885,9 @@ public partial class CreateBundleRequest
 
 }
 
+/// <summary>
+/// Response with bundle creation status and estimated size
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateBundleResponse
 {
@@ -877,6 +922,9 @@ public partial class CreateBundleResponse
 
 }
 
+/// <summary>
+/// Request to retrieve bundle metadata and download URL
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetBundleRequest
 {
@@ -907,6 +955,9 @@ public partial class GetBundleRequest
 
 }
 
+/// <summary>
+/// Bundle metadata combined with a pre-signed download URL
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BundleWithDownloadUrl
 {
@@ -971,6 +1022,9 @@ public partial class BundleWithDownloadUrl
 
 }
 
+/// <summary>
+/// Request to upload a pre-built asset bundle file
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BundleUploadRequest
 {

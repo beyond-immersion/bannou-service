@@ -362,6 +362,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/GetRealmRequest",
   "$defs": {
     "GetRealmRequest": {
+      "description": "Request to retrieve a specific realm by its unique identifier",
       "type": "object",
       "required": [
         "realmId"
@@ -384,6 +385,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmResponse",
   "$defs": {
     "RealmResponse": {
+      "description": "Complete realm information returned from API operations",
       "type": "object",
       "required": [
         "realmId",
@@ -521,6 +523,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/GetRealmByCodeRequest",
   "$defs": {
     "GetRealmByCodeRequest": {
+      "description": "Request to retrieve a realm by its unique code identifier",
       "type": "object",
       "required": [
         "code"
@@ -545,6 +548,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmResponse",
   "$defs": {
     "RealmResponse": {
+      "description": "Complete realm information returned from API operations",
       "type": "object",
       "required": [
         "realmId",
@@ -682,6 +686,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ListRealmsRequest",
   "$defs": {
     "ListRealmsRequest": {
+      "description": "Request to list realms with optional filtering and pagination",
       "type": "object",
       "properties": {
         "category": {
@@ -724,6 +729,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmListResponse",
   "$defs": {
     "RealmListResponse": {
+      "description": "Paginated list of realms with metadata for navigation",
       "type": "object",
       "required": [
         "realms",
@@ -762,6 +768,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "RealmResponse": {
+      "description": "Complete realm information returned from API operations",
       "type": "object",
       "required": [
         "realmId",
@@ -899,6 +906,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/CreateRealmRequest",
   "$defs": {
     "CreateRealmRequest": {
+      "description": "Request to create a new realm with the specified properties",
       "type": "object",
       "required": [
         "code",
@@ -953,6 +961,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmResponse",
   "$defs": {
     "RealmResponse": {
+      "description": "Complete realm information returned from API operations",
       "type": "object",
       "required": [
         "realmId",
@@ -1090,6 +1099,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/UpdateRealmRequest",
   "$defs": {
     "UpdateRealmRequest": {
+      "description": "Request to update an existing realm's properties",
       "type": "object",
       "required": [
         "realmId"
@@ -1142,6 +1152,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmResponse",
   "$defs": {
     "RealmResponse": {
+      "description": "Complete realm information returned from API operations",
       "type": "object",
       "required": [
         "realmId",
@@ -1279,6 +1290,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/DeleteRealmRequest",
   "$defs": {
     "DeleteRealmRequest": {
+      "description": "Request to permanently delete a realm from the system",
       "type": "object",
       "required": [
         "realmId"
@@ -1361,6 +1373,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/DeprecateRealmRequest",
   "$defs": {
     "DeprecateRealmRequest": {
+      "description": "Request to mark a realm as deprecated, preventing new entity creation",
       "type": "object",
       "required": [
         "realmId"
@@ -1389,6 +1402,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmResponse",
   "$defs": {
     "RealmResponse": {
+      "description": "Complete realm information returned from API operations",
       "type": "object",
       "required": [
         "realmId",
@@ -1526,6 +1540,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/UndeprecateRealmRequest",
   "$defs": {
     "UndeprecateRealmRequest": {
+      "description": "Request to restore a deprecated realm to active status",
       "type": "object",
       "required": [
         "realmId"
@@ -1548,6 +1563,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmResponse",
   "$defs": {
     "RealmResponse": {
+      "description": "Complete realm information returned from API operations",
       "type": "object",
       "required": [
         "realmId",
@@ -1685,6 +1701,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmExistsRequest",
   "$defs": {
     "RealmExistsRequest": {
+      "description": "Request to check if a realm exists and is available for use",
       "type": "object",
       "required": [
         "realmId"
@@ -1707,6 +1724,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RealmExistsResponse",
   "$defs": {
     "RealmExistsResponse": {
+      "description": "Response indicating whether a realm exists and its active status",
       "type": "object",
       "required": [
         "exists",
@@ -1795,6 +1813,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SeedRealmsRequest",
   "$defs": {
     "SeedRealmsRequest": {
+      "description": "Request to seed multiple realms from configuration data",
       "type": "object",
       "required": [
         "realms"
@@ -1815,6 +1834,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SeedRealm": {
+      "description": "Realm data used for seeding operations during service initialization",
       "type": "object",
       "required": [
         "code",
@@ -1862,6 +1882,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SeedRealmsResponse",
   "$defs": {
     "SeedRealmsResponse": {
+      "description": "Summary of a realm seeding operation including counts and errors",
       "type": "object",
       "required": [
         "created",

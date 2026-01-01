@@ -94,6 +94,9 @@ public partial class PlayerJoinedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Information about the player who joined the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("player")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -482,7 +485,7 @@ public partial class VisibleEffect
     public System.Guid? TargetId { get; set; } = default!;
 
     /// <summary>
-    /// World position for the effect
+    /// World position for the effect in 3D space coordinates
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     public Position? Position { get; set; } = default!;
@@ -492,6 +495,42 @@ public partial class VisibleEffect
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectData")]
     public object? EffectData { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// 3D world coordinates representing a position in game space
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Position
+{
+
+    /// <summary>
+    /// X coordinate in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("x")]
+    public double X { get; set; } = default!;
+
+    /// <summary>
+    /// Y coordinate in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("y")]
+    public double Y { get; set; } = default!;
+
+    /// <summary>
+    /// Z coordinate in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("z")]
+    public double Z { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -600,39 +639,6 @@ public enum PlayerInfoRole
 
 }
 #pragma warning restore CS1591
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Position
-{
-
-    /// <summary>
-    /// X coordinate in world space
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public double X { get; set; } = default!;
-
-    /// <summary>
-    /// Y coordinate in world space
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public double Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z coordinate in world space
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public double Z { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
 
 
 

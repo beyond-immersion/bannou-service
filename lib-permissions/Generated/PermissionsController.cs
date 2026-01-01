@@ -318,6 +318,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/CapabilityRequest",
   "$defs": {
     "CapabilityRequest": {
+      "description": "Request to retrieve available API methods for a session",
       "type": "object",
       "required": [
         "sessionId"
@@ -347,6 +348,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/CapabilityResponse",
   "$defs": {
     "CapabilityResponse": {
+      "description": "Response containing the compiled permissions for a session",
       "type": "object",
       "required": [
         "sessionId",
@@ -441,6 +443,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/ValidationRequest",
   "$defs": {
     "ValidationRequest": {
+      "description": "Request to validate whether a session has access to a specific API method",
       "type": "object",
       "required": [
         "sessionId",
@@ -473,6 +476,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/ValidationResponse",
   "$defs": {
     "ValidationResponse": {
+      "description": "Response indicating whether access to a specific API method is permitted",
       "type": "object",
       "required": [
         "allowed",
@@ -560,6 +564,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/ServicePermissionMatrix",
   "$defs": {
     "ServicePermissionMatrix": {
+      "description": "Complete permission matrix for a service defining state-role-method access rules",
       "type": "object",
       "required": [
         "serviceId",
@@ -618,6 +623,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/RegistrationResponse",
   "$defs": {
     "RegistrationResponse": {
+      "description": "Response from registering or updating a service permission matrix",
       "type": "object",
       "required": [
         "serviceId",
@@ -718,6 +724,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/SessionStateUpdate",
   "$defs": {
     "SessionStateUpdate": {
+      "description": "Request to update a session's state for a specific service",
       "type": "object",
       "required": [
         "sessionId",
@@ -760,6 +767,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/SessionUpdateResponse",
   "$defs": {
     "SessionUpdateResponse": {
+      "description": "Response from updating a session's state or role with recompiled permissions",
       "type": "object",
       "required": [
         "sessionId",
@@ -867,6 +875,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/SessionRoleUpdate",
   "$defs": {
     "SessionRoleUpdate": {
+      "description": "Request to update a session's role affecting permissions across all services",
       "type": "object",
       "required": [
         "sessionId",
@@ -899,6 +908,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/SessionUpdateResponse",
   "$defs": {
     "SessionUpdateResponse": {
+      "description": "Response from updating a session's state or role with recompiled permissions",
       "type": "object",
       "required": [
         "sessionId",
@@ -1006,6 +1016,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/ClearSessionStateRequest",
   "$defs": {
     "ClearSessionStateRequest": {
+      "description": "Request to clear a session's state for a specific service",
       "type": "object",
       "required": [
         "sessionId",
@@ -1041,6 +1052,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/SessionUpdateResponse",
   "$defs": {
     "SessionUpdateResponse": {
+      "description": "Response from updating a session's state or role with recompiled permissions",
       "type": "object",
       "required": [
         "sessionId",
@@ -1148,6 +1160,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/SessionInfoRequest",
   "$defs": {
     "SessionInfoRequest": {
+      "description": "Request to retrieve complete information about a session",
       "type": "object",
       "required": [
         "sessionId"
@@ -1170,6 +1183,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/SessionInfo",
   "$defs": {
     "SessionInfo": {
+      "description": "Complete session information including role, states, and compiled permissions",
       "type": "object",
       "required": [
         "sessionId",
@@ -1311,6 +1325,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/RegisteredServicesResponse",
   "$defs": {
     "RegisteredServicesResponse": {
+      "description": "Response containing list of all services that have registered their permissions",
       "type": "object",
       "required": [
         "services",
@@ -1332,6 +1347,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       }
     },
     "RegisteredServiceInfo": {
+      "description": "Information about a registered service including its ID, version, and endpoint count",
       "type": "object",
       "required": [
         "serviceId",

@@ -320,6 +320,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/GameSessionListResponse",
   "$defs": {
     "GameSessionListResponse": {
+      "description": "Response containing a list of game sessions matching filter criteria",
       "type": "object",
       "required": [
         "sessions"
@@ -339,6 +340,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       }
     },
     "GameSessionResponse": {
+      "description": "Complete details of a game session including players and settings",
       "type": "object",
       "required": [
         "sessionId",
@@ -411,6 +413,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       }
     },
     "GamePlayer": {
+      "description": "Information about a player currently participating in a game session",
       "type": "object",
       "required": [
         "accountId",
@@ -519,6 +522,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/CreateGameSessionRequest",
   "$defs": {
     "CreateGameSessionRequest": {
+      "description": "Request to create a new game session with specified settings",
       "type": "object",
       "required": [
         "gameType",
@@ -571,6 +575,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/GameSessionResponse",
   "$defs": {
     "GameSessionResponse": {
+      "description": "Complete details of a game session including players and settings",
       "type": "object",
       "required": [
         "sessionId",
@@ -643,6 +648,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       }
     },
     "GamePlayer": {
+      "description": "Information about a player currently participating in a game session",
       "type": "object",
       "required": [
         "accountId",
@@ -774,6 +780,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/GameSessionResponse",
   "$defs": {
     "GameSessionResponse": {
+      "description": "Complete details of a game session including players and settings",
       "type": "object",
       "required": [
         "sessionId",
@@ -846,6 +853,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       }
     },
     "GamePlayer": {
+      "description": "Information about a player currently participating in a game session",
       "type": "object",
       "required": [
         "accountId",
@@ -954,6 +962,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/JoinGameSessionRequest",
   "$defs": {
     "JoinGameSessionRequest": {
+      "description": "Request to join an existing game session as a player",
       "type": "object",
       "required": [
         "sessionId",
@@ -1015,6 +1024,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/JoinGameSessionResponse",
   "$defs": {
     "JoinGameSessionResponse": {
+      "description": "Response after successfully joining a game session with role and permissions",
       "type": "object",
       "required": [
         "success",
@@ -1060,7 +1070,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     },
     "VoiceConnectionInfo": {
       "type": "object",
-      "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
+      "description": "Minimal voice metadata returned when joining a session.\ n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
       "required": [
         "voiceEnabled"
       ],
@@ -1257,6 +1267,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/KickPlayerRequest",
   "$defs": {
     "KickPlayerRequest": {
+      "description": "Request to remove a player from a game session (admin only)",
       "type": "object",
       "required": [
         "sessionId",
@@ -1350,6 +1361,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/ChatMessageRequest",
   "$defs": {
     "ChatMessageRequest": {
+      "description": "Request to send a chat message to players in a game session",
       "type": "object",
       "required": [
         "sessionId",
@@ -1453,6 +1465,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/GameActionRequest",
   "$defs": {
     "GameActionRequest": {
+      "description": "Request to perform a game action such as movement or combat",
       "type": "object",
       "required": [
         "sessionId",
@@ -1497,6 +1510,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/GameActionResponse",
   "$defs": {
     "GameActionResponse": {
+      "description": "Response indicating the result of a game action with any state changes",
       "type": "object",
       "required": [
         "success",

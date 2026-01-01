@@ -458,6 +458,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/StatusResponse",
   "$defs": {
     "StatusResponse": {
+      "description": "Health and version status information for the website service",
       "type": "object",
       "required": [
         "status",
@@ -560,6 +561,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/PageContent",
   "$defs": {
     "PageContent": {
+      "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
       "required": [
         "slug",
@@ -628,6 +630,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SEOMetadata": {
+      "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
       "properties": {
         "description": {
@@ -730,6 +733,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/NewsResponse",
   "$defs": {
     "NewsResponse": {
+      "description": "Paginated list of news items with total count",
       "type": "object",
       "required": [
         "items",
@@ -754,6 +758,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "NewsItem": {
+      "description": "A single news article or announcement entry",
       "type": "object",
       "required": [
         "id",
@@ -874,6 +879,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ServerStatusResponse",
   "$defs": {
     "ServerStatusResponse": {
+      "description": "Aggregated status of all game server realms",
       "type": "object",
       "required": [
         "realms",
@@ -900,6 +906,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "RealmStatus": {
+      "description": "Status and population information for a single game realm",
       "type": "object",
       "required": [
         "realmId",
@@ -1018,6 +1025,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/DownloadsResponse",
   "$defs": {
     "DownloadsResponse": {
+      "description": "Collection of available game client downloads by platform",
       "type": "object",
       "required": [
         "clients"
@@ -1033,6 +1041,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "DownloadInfo": {
+      "description": "Download details for a specific game client version and platform",
       "type": "object",
       "required": [
         "platform",
@@ -1146,6 +1155,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ContactRequest",
   "$defs": {
     "ContactRequest": {
+      "description": "User-submitted contact form data",
       "type": "object",
       "required": [
         "email",
@@ -1199,6 +1209,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ContactResponse",
   "$defs": {
     "ContactResponse": {
+      "description": "Confirmation response after submitting a contact form",
       "type": "object",
       "required": [
         "ticketId",
@@ -1287,6 +1298,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/AccountProfile",
   "$defs": {
     "AccountProfile": {
+      "description": "User account information displayed on the website profile page",
       "type": "object",
       "required": [
         "accountId",
@@ -1400,6 +1412,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/CharacterListResponse",
   "$defs": {
     "CharacterListResponse": {
+      "description": "List of all characters belonging to an account",
       "type": "object",
       "required": [
         "characters"
@@ -1415,6 +1428,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "CharacterSummary": {
+      "description": "Brief overview of a character for display in character lists",
       "type": "object",
       "required": [
         "characterId",
@@ -1526,6 +1540,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   },
   "$defs": {
     "PageMetadata": {
+      "description": "Summary metadata for a CMS page without full content",
       "type": "object",
       "required": [
         "slug",
@@ -1629,6 +1644,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/PageContent",
   "$defs": {
     "PageContent": {
+      "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
       "required": [
         "slug",
@@ -1697,6 +1713,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SEOMetadata": {
+      "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
       "properties": {
         "description": {
@@ -1739,6 +1756,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/PageContent",
   "$defs": {
     "PageContent": {
+      "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
       "required": [
         "slug",
@@ -1807,6 +1825,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SEOMetadata": {
+      "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
       "properties": {
         "description": {
@@ -1905,6 +1924,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/PageContent",
   "$defs": {
     "PageContent": {
+      "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
       "required": [
         "slug",
@@ -1973,6 +1993,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SEOMetadata": {
+      "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
       "properties": {
         "description": {
@@ -2015,6 +2036,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/PageContent",
   "$defs": {
     "PageContent": {
+      "description": "Full content and metadata for a CMS-managed page",
       "type": "object",
       "required": [
         "slug",
@@ -2083,6 +2105,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SEOMetadata": {
+      "description": "Search engine optimization and social media sharing metadata",
       "type": "object",
       "properties": {
         "description": {
@@ -2249,6 +2272,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SiteSettings",
   "$defs": {
     "SiteSettings": {
+      "description": "Global website configuration including branding, languages, and integrations",
       "type": "object",
       "required": [
         "siteName",
@@ -2306,41 +2330,49 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Map of social media platform names to profile URLs"
         },
         "analytics": {
-          "type": "object",
-          "properties": {
-            "googleAnalyticsId": {
-              "type": "string",
-              "nullable": true,
-              "description": "Google Analytics tracking ID"
-            },
-            "otherTrackers": {
-              "type": "object",
-              "additionalProperties": true,
-              "description": "Configuration for other analytics trackers"
-            }
-          },
-          "description": "Analytics and tracking configuration"
+          "description": "Analytics and tracking service configuration",
+          "$ref": "#/$defs/Analytics"
         },
         "customScripts": {
+          "description": "Custom JavaScript scripts to inject into pages",
+          "$ref": "#/$defs/CustomScripts"
+        }
+      }
+    },
+    "Analytics": {
+      "description": "Analytics and tracking configuration for website visitor metrics",
+      "type": "object",
+      "properties": {
+        "googleAnalyticsId": {
+          "type": "string",
+          "nullable": true,
+          "description": "Google Analytics tracking ID"
+        },
+        "otherTrackers": {
           "type": "object",
-          "properties": {
-            "head": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject in the HTML head"
-            },
-            "bodyStart": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject at the start of the body"
-            },
-            "bodyEnd": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject at the end of the body"
-            }
-          },
-          "description": "Custom script injection configuration"
+          "additionalProperties": true,
+          "description": "Configuration for other analytics trackers"
+        }
+      }
+    },
+    "CustomScripts": {
+      "description": "Custom script injection configuration for adding JavaScript to pages",
+      "type": "object",
+      "properties": {
+        "head": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject in the HTML head"
+        },
+        "bodyStart": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject at the start of the body"
+        },
+        "bodyEnd": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject at the end of the body"
         }
       }
     }
@@ -2410,6 +2442,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SiteSettings",
   "$defs": {
     "SiteSettings": {
+      "description": "Global website configuration including branding, languages, and integrations",
       "type": "object",
       "required": [
         "siteName",
@@ -2467,41 +2500,49 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Map of social media platform names to profile URLs"
         },
         "analytics": {
-          "type": "object",
-          "properties": {
-            "googleAnalyticsId": {
-              "type": "string",
-              "nullable": true,
-              "description": "Google Analytics tracking ID"
-            },
-            "otherTrackers": {
-              "type": "object",
-              "additionalProperties": true,
-              "description": "Configuration for other analytics trackers"
-            }
-          },
-          "description": "Analytics and tracking configuration"
+          "description": "Analytics and tracking service configuration",
+          "$ref": "#/$defs/Analytics"
         },
         "customScripts": {
+          "description": "Custom JavaScript scripts to inject into pages",
+          "$ref": "#/$defs/CustomScripts"
+        }
+      }
+    },
+    "Analytics": {
+      "description": "Analytics and tracking configuration for website visitor metrics",
+      "type": "object",
+      "properties": {
+        "googleAnalyticsId": {
+          "type": "string",
+          "nullable": true,
+          "description": "Google Analytics tracking ID"
+        },
+        "otherTrackers": {
           "type": "object",
-          "properties": {
-            "head": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject in the HTML head"
-            },
-            "bodyStart": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject at the start of the body"
-            },
-            "bodyEnd": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject at the end of the body"
-            }
-          },
-          "description": "Custom script injection configuration"
+          "additionalProperties": true,
+          "description": "Configuration for other analytics trackers"
+        }
+      }
+    },
+    "CustomScripts": {
+      "description": "Custom script injection configuration for adding JavaScript to pages",
+      "type": "object",
+      "properties": {
+        "head": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject in the HTML head"
+        },
+        "bodyStart": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject at the start of the body"
+        },
+        "bodyEnd": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject at the end of the body"
         }
       }
     }
@@ -2515,6 +2556,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SiteSettings",
   "$defs": {
     "SiteSettings": {
+      "description": "Global website configuration including branding, languages, and integrations",
       "type": "object",
       "required": [
         "siteName",
@@ -2572,41 +2614,49 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Map of social media platform names to profile URLs"
         },
         "analytics": {
-          "type": "object",
-          "properties": {
-            "googleAnalyticsId": {
-              "type": "string",
-              "nullable": true,
-              "description": "Google Analytics tracking ID"
-            },
-            "otherTrackers": {
-              "type": "object",
-              "additionalProperties": true,
-              "description": "Configuration for other analytics trackers"
-            }
-          },
-          "description": "Analytics and tracking configuration"
+          "description": "Analytics and tracking service configuration",
+          "$ref": "#/$defs/Analytics"
         },
         "customScripts": {
+          "description": "Custom JavaScript scripts to inject into pages",
+          "$ref": "#/$defs/CustomScripts"
+        }
+      }
+    },
+    "Analytics": {
+      "description": "Analytics and tracking configuration for website visitor metrics",
+      "type": "object",
+      "properties": {
+        "googleAnalyticsId": {
+          "type": "string",
+          "nullable": true,
+          "description": "Google Analytics tracking ID"
+        },
+        "otherTrackers": {
           "type": "object",
-          "properties": {
-            "head": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject in the HTML head"
-            },
-            "bodyStart": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject at the start of the body"
-            },
-            "bodyEnd": {
-              "type": "string",
-              "nullable": true,
-              "description": "Custom scripts to inject at the end of the body"
-            }
-          },
-          "description": "Custom script injection configuration"
+          "additionalProperties": true,
+          "description": "Configuration for other analytics trackers"
+        }
+      }
+    },
+    "CustomScripts": {
+      "description": "Custom script injection configuration for adding JavaScript to pages",
+      "type": "object",
+      "properties": {
+        "head": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject in the HTML head"
+        },
+        "bodyStart": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject at the start of the body"
+        },
+        "bodyEnd": {
+          "type": "string",
+          "nullable": true,
+          "description": "Custom scripts to inject at the end of the body"
         }
       }
     }
@@ -2680,6 +2730,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ThemeConfig",
   "$defs": {
     "ThemeConfig": {
+      "description": "Visual theme configuration including colors, fonts, and navigation",
       "type": "object",
       "required": [
         "themeName",
@@ -2720,19 +2771,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Additional custom CSS styles"
         },
         "logo": {
-          "type": "object",
-          "properties": {
-            "url": {
-              "type": "string",
-              "format": "uri",
-              "description": "URL of the site logo image"
-            },
-            "alt": {
-              "type": "string",
-              "description": "Alt text for the logo image"
-            }
-          },
-          "description": "Site logo configuration"
+          "description": "Site logo configuration for branding",
+          "$ref": "#/$defs/Logo"
         },
         "favicon": {
           "type": "string",
@@ -2749,7 +2789,23 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
         }
       }
     },
+    "Logo": {
+      "description": "Site logo configuration including image URL and accessibility text",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the site logo image"
+        },
+        "alt": {
+          "type": "string",
+          "description": "Alt text for the logo image"
+        }
+      }
+    },
     "NavigationItem": {
+      "description": "A navigation menu entry with optional nested children for dropdowns",
       "type": "object",
       "required": [
         "label",
@@ -2853,6 +2909,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ThemeConfig",
   "$defs": {
     "ThemeConfig": {
+      "description": "Visual theme configuration including colors, fonts, and navigation",
       "type": "object",
       "required": [
         "themeName",
@@ -2893,19 +2950,8 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Additional custom CSS styles"
         },
         "logo": {
-          "type": "object",
-          "properties": {
-            "url": {
-              "type": "string",
-              "format": "uri",
-              "description": "URL of the site logo image"
-            },
-            "alt": {
-              "type": "string",
-              "description": "Alt text for the logo image"
-            }
-          },
-          "description": "Site logo configuration"
+          "description": "Site logo configuration for branding",
+          "$ref": "#/$defs/Logo"
         },
         "favicon": {
           "type": "string",
@@ -2922,7 +2968,23 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
         }
       }
     },
+    "Logo": {
+      "description": "Site logo configuration including image URL and accessibility text",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the site logo image"
+        },
+        "alt": {
+          "type": "string",
+          "description": "Alt text for the logo image"
+        }
+      }
+    },
     "NavigationItem": {
+      "description": "A navigation menu entry with optional nested children for dropdowns",
       "type": "object",
       "required": [
         "label",
@@ -3034,6 +3096,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SubscriptionResponse",
   "$defs": {
     "SubscriptionResponse": {
+      "description": "Current subscription status and plan details for an account",
       "type": "object",
       "required": [
         "status",

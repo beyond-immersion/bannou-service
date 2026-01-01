@@ -318,6 +318,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/CompileBehaviorRequest",
   "$defs": {
     "CompileBehaviorRequest": {
+      "description": "Request to compile an ABML behavior definition into executable behavior trees",
       "type": "object",
       "required": [
         "abmlContent"
@@ -330,12 +331,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "behaviorName": {
           "type": "string",
-          "description": "Optional human-readable name for the behavior.\nIf not provided, extracted from ABML metadata.id or generated from content hash.\n",
+          "description": "Optional human-readable name for the behavior.\ nIf not provided, extracted from ABML metadata.id or generated from content hash.\n",
           "example": "blacksmith_daily_routine"
         },
         "behaviorCategory": {
           "type": "string",
-          "description": "Category for organizing behaviors (e.g., profession, cultural, situational).\ nUsed for filtering and grouping in bundles.\n",
+          "description": "Category for organizing behaviors (e.g., profession, cultural, situational).\nUsed for filtering and grouping in bundles.\n",
           "enum": [
             "base",
             "cultural",
@@ -348,7 +349,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "bundleId": {
           "type": "string",
-          "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\nIf the bundle doesn't exist, it will be created.\n",
+          "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\ nIf the bundle doesn't exist, it will be created.\n",
           "example": "blacksmith-behaviors-v1"
         },
         "characterContext": {
@@ -404,36 +405,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           }
         },
         "location": {
-          "type": "object",
-          "description": "Character location information",
-          "properties": {
-            "current": {
-              "type": "string",
-              "description": "Current location name or identifier"
-            },
-            "region": {
-              "type": "string",
-              "description": "Region or zone the character is in"
-            },
-            "coordinates": {
-              "type": "object",
-              "description": "3D coordinates of the character position",
-              "properties": {
-                "x": {
-                  "type": "number",
-                  "description": "X coordinate position"
-                },
-                "y": {
-                  "type": "number",
-                  "description": "Y coordinate position"
-                },
-                "z": {
-                  "type": "number",
-                  "description": "Z coordinate position"
-                }
-              }
-            }
-          }
+          "$ref": "#/$defs/Location",
+          "description": "Current location information for the character"
         },
         "relationships": {
           "type": "object",
@@ -449,7 +422,44 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         }
       }
     },
+    "Location": {
+      "type": "object",
+      "description": "Character location information including current position, region, and 3D coordinates",
+      "properties": {
+        "current": {
+          "type": "string",
+          "description": "Current location name or identifier"
+        },
+        "region": {
+          "type": "string",
+          "description": "Region or zone the character is in"
+        },
+        "coordinates": {
+          "$ref": "#/$defs/Coordinates",
+          "description": "3D spatial coordinates of the character's position in the game world"
+        }
+      }
+    },
+    "Coordinates": {
+      "type": "object",
+      "description": "3D spatial coordinates representing a position in the game world",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate position"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate position"
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate position"
+        }
+      }
+    },
     "CompilationOptions": {
+      "description": "Options controlling the ABML compilation process including optimizations and caching",
       "type": "object",
       "properties": {
         "enableOptimizations": {
@@ -489,6 +499,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/CompileBehaviorResponse",
   "$defs": {
     "CompileBehaviorResponse": {
+      "description": "Response containing the results of an ABML behavior compilation",
       "type": "object",
       "required": [
         "success",
@@ -539,6 +550,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "CompiledBehavior": {
+      "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
       "type": "object",
       "required": [
         "behaviorTree",
@@ -568,28 +580,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "GOAP goals extracted from the behavior"
         },
         "executionMetadata": {
-          "type": "object",
-          "description": "Metadata about behavior execution requirements",
-          "properties": {
-            "estimatedDuration": {
-              "type": "integer",
-              "description": "Estimated execution time in seconds"
-            },
-            "resourceRequirements": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "Resource requirements for behavior execution"
-            },
-            "interruptConditions": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "Conditions that can interrupt behavior execution"
-            }
-          }
+          "$ref": "#/$defs/ExecutionMetadata",
+          "description": "Metadata for behavior execution including performance hints and resource requirements"
         }
       }
     },
@@ -617,6 +609,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "additionalProperties": true
     },
     "GoapGoal": {
+      "description": "Goal definition for GOAP planning with conditions and priority",
       "type": "object",
       "required": [
         "name",
@@ -656,6 +649,30 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "type": "string"
           },
           "description": "World state conditions required to pursue this goal"
+        }
+      }
+    },
+    "ExecutionMetadata": {
+      "type": "object",
+      "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
+      "properties": {
+        "estimatedDuration": {
+          "type": "integer",
+          "description": "Estimated execution time in seconds"
+        },
+        "resourceRequirements": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Resource requirements for behavior execution"
+        },
+        "interruptConditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Conditions that can interrupt behavior execution"
         }
       }
     }
@@ -725,6 +742,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/BehaviorStackRequest",
   "$defs": {
     "BehaviorStackRequest": {
+      "description": "Request to compile multiple stackable behavior sets with priority-based merging",
       "type": "object",
       "required": [
         "behaviorSets"
@@ -748,6 +766,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "BehaviorSetDefinition": {
+      "description": "Definition of a behavior set with priority for stackable behavior merging",
       "type": "object",
       "required": [
         "id",
@@ -832,36 +851,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           }
         },
         "location": {
-          "type": "object",
-          "description": "Character location information",
-          "properties": {
-            "current": {
-              "type": "string",
-              "description": "Current location name or identifier"
-            },
-            "region": {
-              "type": "string",
-              "description": "Region or zone the character is in"
-            },
-            "coordinates": {
-              "type": "object",
-              "description": "3D coordinates of the character position",
-              "properties": {
-                "x": {
-                  "type": "number",
-                  "description": "X coordinate position"
-                },
-                "y": {
-                  "type": "number",
-                  "description": "Y coordinate position"
-                },
-                "z": {
-                  "type": "number",
-                  "description": "Z coordinate position"
-                }
-              }
-            }
-          }
+          "$ref": "#/$defs/Location",
+          "description": "Current location information for the character"
         },
         "relationships": {
           "type": "object",
@@ -877,7 +868,44 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         }
       }
     },
+    "Location": {
+      "type": "object",
+      "description": "Character location information including current position, region, and 3D coordinates",
+      "properties": {
+        "current": {
+          "type": "string",
+          "description": "Current location name or identifier"
+        },
+        "region": {
+          "type": "string",
+          "description": "Region or zone the character is in"
+        },
+        "coordinates": {
+          "$ref": "#/$defs/Coordinates",
+          "description": "3D spatial coordinates of the character's position in the game world"
+        }
+      }
+    },
+    "Coordinates": {
+      "type": "object",
+      "description": "3D spatial coordinates representing a position in the game world",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate position"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate position"
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate position"
+        }
+      }
+    },
     "CompilationOptions": {
+      "description": "Options controlling the ABML compilation process including optimizations and caching",
       "type": "object",
       "properties": {
         "enableOptimizations": {
@@ -917,6 +945,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/CompileBehaviorResponse",
   "$defs": {
     "CompileBehaviorResponse": {
+      "description": "Response containing the results of an ABML behavior compilation",
       "type": "object",
       "required": [
         "success",
@@ -967,6 +996,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "CompiledBehavior": {
+      "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
       "type": "object",
       "required": [
         "behaviorTree",
@@ -996,28 +1026,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "GOAP goals extracted from the behavior"
         },
         "executionMetadata": {
-          "type": "object",
-          "description": "Metadata about behavior execution requirements",
-          "properties": {
-            "estimatedDuration": {
-              "type": "integer",
-              "description": "Estimated execution time in seconds"
-            },
-            "resourceRequirements": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "Resource requirements for behavior execution"
-            },
-            "interruptConditions": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "Conditions that can interrupt behavior execution"
-            }
-          }
+          "$ref": "#/$defs/ExecutionMetadata",
+          "description": "Metadata for behavior execution including performance hints and resource requirements"
         }
       }
     },
@@ -1045,6 +1055,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "additionalProperties": true
     },
     "GoapGoal": {
+      "description": "Goal definition for GOAP planning with conditions and priority",
       "type": "object",
       "required": [
         "name",
@@ -1084,6 +1095,30 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "type": "string"
           },
           "description": "World state conditions required to pursue this goal"
+        }
+      }
+    },
+    "ExecutionMetadata": {
+      "type": "object",
+      "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
+      "properties": {
+        "estimatedDuration": {
+          "type": "integer",
+          "description": "Estimated execution time in seconds"
+        },
+        "resourceRequirements": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Resource requirements for behavior execution"
+        },
+        "interruptConditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Conditions that can interrupt behavior execution"
         }
       }
     }
@@ -1153,6 +1188,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ValidateAbmlRequest",
   "$defs": {
     "ValidateAbmlRequest": {
+      "description": "Request to validate ABML YAML content against schema and semantic rules",
       "type": "object",
       "required": [
         "abmlContent"
@@ -1179,6 +1215,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ValidateAbmlResponse",
   "$defs": {
     "ValidateAbmlResponse": {
+      "description": "Response containing the results of ABML validation including errors and warnings",
       "type": "object",
       "required": [
         "isValid"
@@ -1209,6 +1246,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "ValidationError": {
+      "description": "Detailed validation error with type, location, and message information",
       "type": "object",
       "required": [
         "type",
@@ -1333,6 +1371,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/CachedBehaviorResponse",
   "$defs": {
     "CachedBehaviorResponse": {
+      "description": "Response containing a previously compiled behavior retrieved from cache",
       "type": "object",
       "required": [
         "behaviorId",
@@ -1359,6 +1398,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "CompiledBehavior": {
+      "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
       "type": "object",
       "required": [
         "behaviorTree",
@@ -1388,28 +1428,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "GOAP goals extracted from the behavior"
         },
         "executionMetadata": {
-          "type": "object",
-          "description": "Metadata about behavior execution requirements",
-          "properties": {
-            "estimatedDuration": {
-              "type": "integer",
-              "description": "Estimated execution time in seconds"
-            },
-            "resourceRequirements": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "Resource requirements for behavior execution"
-            },
-            "interruptConditions": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "Conditions that can interrupt behavior execution"
-            }
-          }
+          "$ref": "#/$defs/ExecutionMetadata",
+          "description": "Metadata for behavior execution including performance hints and resource requirements"
         }
       }
     },
@@ -1437,6 +1457,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "additionalProperties": true
     },
     "GoapGoal": {
+      "description": "Goal definition for GOAP planning with conditions and priority",
       "type": "object",
       "required": [
         "name",
@@ -1476,6 +1497,30 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "type": "string"
           },
           "description": "World state conditions required to pursue this goal"
+        }
+      }
+    },
+    "ExecutionMetadata": {
+      "type": "object",
+      "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
+      "properties": {
+        "estimatedDuration": {
+          "type": "integer",
+          "description": "Estimated execution time in seconds"
+        },
+        "resourceRequirements": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Resource requirements for behavior execution"
+        },
+        "interruptConditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Conditions that can interrupt behavior execution"
         }
       }
     }
@@ -1627,6 +1672,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ResolveContextRequest",
   "$defs": {
     "ResolveContextRequest": {
+      "description": "Request to resolve context variable expressions against character and world state",
       "type": "object",
       "required": [
         "contextExpression",
@@ -1687,36 +1733,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           }
         },
         "location": {
-          "type": "object",
-          "description": "Character location information",
-          "properties": {
-            "current": {
-              "type": "string",
-              "description": "Current location name or identifier"
-            },
-            "region": {
-              "type": "string",
-              "description": "Region or zone the character is in"
-            },
-            "coordinates": {
-              "type": "object",
-              "description": "3D coordinates of the character position",
-              "properties": {
-                "x": {
-                  "type": "number",
-                  "description": "X coordinate position"
-                },
-                "y": {
-                  "type": "number",
-                  "description": "Y coordinate position"
-                },
-                "z": {
-                  "type": "number",
-                  "description": "Z coordinate position"
-                }
-              }
-            }
-          }
+          "$ref": "#/$defs/Location",
+          "description": "Current location information for the character"
         },
         "relationships": {
           "type": "object",
@@ -1731,6 +1749,42 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Relevant world state information"
         }
       }
+    },
+    "Location": {
+      "type": "object",
+      "description": "Character location information including current position, region, and 3D coordinates",
+      "properties": {
+        "current": {
+          "type": "string",
+          "description": "Current location name or identifier"
+        },
+        "region": {
+          "type": "string",
+          "description": "Region or zone the character is in"
+        },
+        "coordinates": {
+          "$ref": "#/$defs/Coordinates",
+          "description": "3D spatial coordinates of the character's position in the game world"
+        }
+      }
+    },
+    "Coordinates": {
+      "type": "object",
+      "description": "3D spatial coordinates representing a position in the game world",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate position"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate position"
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate position"
+        }
+      }
     }
   }
 }
@@ -1742,6 +1796,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ResolveContextResponse",
   "$defs": {
     "ResolveContextResponse": {
+      "description": "Response containing the resolved value of a context variable expression",
       "type": "object",
       "required": [
         "resolvedValue"
@@ -1836,6 +1891,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/GoapPlanRequest",
   "$defs": {
     "GoapPlanRequest": {
+      "description": "Request to generate a GOAP plan to achieve a goal from current world state",
       "type": "object",
       "required": [
         "goal",
@@ -1872,6 +1928,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "GoapGoal": {
+      "description": "Goal definition for GOAP planning with conditions and priority",
       "type": "object",
       "required": [
         "name",
@@ -1915,6 +1972,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "GoapPlanningOptions": {
+      "description": "Options controlling the GOAP planning process including depth and timeout limits",
       "type": "object",
       "properties": {
         "maxDepth": {
@@ -1944,6 +2002,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/GoapPlanResponse",
   "$defs": {
     "GoapPlanResponse": {
+      "description": "Response containing the generated GOAP plan or failure information",
       "type": "object",
       "required": [
         "success"
@@ -1973,6 +2032,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "GoapPlanResult": {
+      "description": "Result of GOAP planning containing the ordered sequence of actions to achieve a goal",
       "type": "object",
       "required": [
         "goalId",
@@ -1999,6 +2059,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "PlannedActionResponse": {
+      "description": "Single action within a GOAP plan with position and cost information",
       "type": "object",
       "required": [
         "actionId",
@@ -2087,6 +2148,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ValidateGoapPlanRequest",
   "$defs": {
     "ValidateGoapPlanRequest": {
+      "description": "Request to validate an existing GOAP plan against current world state",
       "type": "object",
       "required": [
         "plan",
@@ -2117,6 +2179,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "GoapPlanResult": {
+      "description": "Result of GOAP planning containing the ordered sequence of actions to achieve a goal",
       "type": "object",
       "required": [
         "goalId",
@@ -2143,6 +2206,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "PlannedActionResponse": {
+      "description": "Single action within a GOAP plan with position and cost information",
       "type": "object",
       "required": [
         "actionId",
@@ -2166,6 +2230,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       }
     },
     "GoapGoal": {
+      "description": "Goal definition for GOAP planning with conditions and priority",
       "type": "object",
       "required": [
         "name",
@@ -2218,6 +2283,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
   "$ref": "#/$defs/ValidateGoapPlanResponse",
   "$defs": {
     "ValidateGoapPlanResponse": {
+      "description": "Response indicating whether a GOAP plan is still valid and suggested next action",
       "type": "object",
       "required": [
         "isValid",

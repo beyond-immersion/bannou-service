@@ -889,6 +889,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/QueryDocumentationRequest",
   "$defs": {
     "QueryDocumentationRequest": {
+      "description": "Request to search documentation using natural language queries",
       "type": "object",
       "required": [
         "namespace",
@@ -971,6 +972,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/QueryDocumentationResponse",
   "$defs": {
     "QueryDocumentationResponse": {
+      "description": "Response containing search results and voice-friendly summaries",
       "type": "object",
       "required": [
         "namespace",
@@ -1015,6 +1017,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "DocumentResult": {
+      "description": "Search result with relevance scoring and match highlights",
       "type": "object",
       "required": [
         "documentId",
@@ -1148,6 +1151,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/GetDocumentRequest",
   "$defs": {
     "GetDocumentRequest": {
+      "description": "Request to retrieve a specific document by ID or slug",
       "type": "object",
       "required": [
         "namespace"
@@ -1210,6 +1214,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/GetDocumentResponse",
   "$defs": {
     "GetDocumentResponse": {
+      "description": "Response containing the requested document and optional related documents",
       "type": "object",
       "required": [
         "document"
@@ -1238,6 +1243,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "Document": {
+      "description": "Complete document with all metadata and content",
       "type": "object",
       "required": [
         "documentId",
@@ -1331,6 +1337,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "description": "Fixed categories for type-safe filtering"
     },
     "DocumentSummary": {
+      "description": "Lightweight document representation for listings and references",
       "type": "object",
       "required": [
         "documentId",
@@ -1439,6 +1446,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/SearchDocumentationRequest",
   "$defs": {
     "SearchDocumentationRequest": {
+      "description": "Request to search documentation using keyword matching",
       "type": "object",
       "required": [
         "namespace",
@@ -1533,6 +1541,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/SearchDocumentationResponse",
   "$defs": {
     "SearchDocumentationResponse": {
+      "description": "Response containing keyword search results",
       "type": "object",
       "required": [
         "namespace",
@@ -1561,6 +1570,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "DocumentResult": {
+      "description": "Search result with relevance scoring and match highlights",
       "type": "object",
       "required": [
         "documentId",
@@ -1694,6 +1704,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListDocumentsRequest",
   "$defs": {
     "ListDocumentsRequest": {
+      "description": "Request to list documents with optional filtering and pagination",
       "type": "object",
       "required": [
         "namespace"
@@ -1814,6 +1825,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListDocumentsResponse",
   "$defs": {
     "ListDocumentsResponse": {
+      "description": "Response containing a paginated list of documents",
       "type": "object",
       "required": [
         "namespace",
@@ -1850,6 +1862,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "DocumentSummary": {
+      "description": "Lightweight document representation for listings and references",
       "type": "object",
       "required": [
         "documentId",
@@ -1974,6 +1987,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/SuggestRelatedRequest",
   "$defs": {
     "SuggestRelatedRequest": {
+      "description": "Request to get related topic suggestions based on a source",
       "type": "object",
       "required": [
         "namespace",
@@ -2033,6 +2047,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/SuggestRelatedResponse",
   "$defs": {
     "SuggestRelatedResponse": {
+      "description": "Response containing suggested related topics for conversational flow",
       "type": "object",
       "required": [
         "namespace",
@@ -2061,6 +2076,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "TopicSuggestion": {
+      "description": "A suggested related topic with relevance context",
       "type": "object",
       "required": [
         "documentId",
@@ -2172,6 +2188,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/CreateDocumentRequest",
   "$defs": {
     "CreateDocumentRequest": {
+      "description": "Request to create a new documentation entry",
       "type": "object",
       "required": [
         "namespace",
@@ -2264,6 +2281,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/CreateDocumentResponse",
   "$defs": {
     "CreateDocumentResponse": {
+      "description": "Response confirming document creation with assigned identifiers",
       "type": "object",
       "required": [
         "documentId",
@@ -2352,6 +2370,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/UpdateDocumentRequest",
   "$defs": {
     "UpdateDocumentRequest": {
+      "description": "Request to update an existing document's fields",
       "type": "object",
       "required": [
         "namespace"
@@ -2440,6 +2459,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/UpdateDocumentResponse",
   "$defs": {
     "UpdateDocumentResponse": {
+      "description": "Response confirming document update with timestamp",
       "type": "object",
       "required": [
         "documentId",
@@ -2524,6 +2544,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/DeleteDocumentRequest",
   "$defs": {
     "DeleteDocumentRequest": {
+      "description": "Request to soft-delete a document to the trashcan",
       "type": "object",
       "required": [
         "namespace"
@@ -2556,6 +2577,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/DeleteDocumentResponse",
   "$defs": {
     "DeleteDocumentResponse": {
+      "description": "Response confirming document deletion with recovery deadline",
       "type": "object",
       "required": [
         "documentId",
@@ -2646,6 +2668,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/RecoverDocumentRequest",
   "$defs": {
     "RecoverDocumentRequest": {
+      "description": "Request to recover a deleted document from the trashcan",
       "type": "object",
       "required": [
         "namespace",
@@ -2675,6 +2698,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/RecoverDocumentResponse",
   "$defs": {
     "RecoverDocumentResponse": {
+      "description": "Response confirming document recovery with timestamp",
       "type": "object",
       "required": [
         "documentId",
@@ -2759,6 +2783,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/BulkUpdateRequest",
   "$defs": {
     "BulkUpdateRequest": {
+      "description": "Request to update multiple documents at once",
       "type": "object",
       "required": [
         "namespace",
@@ -2825,6 +2850,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/BulkUpdateResponse",
   "$defs": {
     "BulkUpdateResponse": {
+      "description": "Response reporting bulk update results with success and failure details",
       "type": "object",
       "required": [
         "succeeded",
@@ -2849,6 +2875,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "BulkOperationFailure": {
+      "description": "Details of a single document that failed in a bulk operation",
       "type": "object",
       "required": [
         "documentId",
@@ -2932,6 +2959,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/BulkDeleteRequest",
   "$defs": {
     "BulkDeleteRequest": {
+      "description": "Request to delete multiple documents at once",
       "type": "object",
       "required": [
         "namespace",
@@ -2964,6 +2992,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/BulkDeleteResponse",
   "$defs": {
     "BulkDeleteResponse": {
+      "description": "Response reporting bulk deletion results with success and failure details",
       "type": "object",
       "required": [
         "succeeded",
@@ -2988,6 +3017,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "BulkOperationFailure": {
+      "description": "Details of a single document that failed in a bulk operation",
       "type": "object",
       "required": [
         "documentId",
@@ -3071,6 +3101,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ImportDocumentationRequest",
   "$defs": {
     "ImportDocumentationRequest": {
+      "description": "Request to import multiple documents into a namespace",
       "type": "object",
       "required": [
         "namespace",
@@ -3103,6 +3134,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "ImportDocument": {
+      "description": "A single document to import with required fields",
       "type": "object",
       "required": [
         "slug",
@@ -3175,6 +3207,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ImportDocumentationResponse",
   "$defs": {
     "ImportDocumentationResponse": {
+      "description": "Response reporting import results with counts and failure details",
       "type": "object",
       "required": [
         "namespace",
@@ -3210,6 +3243,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "ImportFailure": {
+      "description": "Details of a document that failed to import",
       "type": "object",
       "required": [
         "slug",
@@ -3292,6 +3326,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListTrashcanRequest",
   "$defs": {
     "ListTrashcanRequest": {
+      "description": "Request to list deleted documents in the trashcan",
       "type": "object",
       "required": [
         "namespace"
@@ -3325,6 +3360,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListTrashcanResponse",
   "$defs": {
     "ListTrashcanResponse": {
+      "description": "Response containing deleted documents awaiting permanent deletion",
       "type": "object",
       "required": [
         "namespace",
@@ -3349,6 +3385,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "TrashcanItem": {
+      "description": "A deleted document in the trashcan with expiration information",
       "type": "object",
       "required": [
         "documentId",
@@ -3468,6 +3505,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/PurgeTrashcanRequest",
   "$defs": {
     "PurgeTrashcanRequest": {
+      "description": "Request to permanently delete documents from the trashcan",
       "type": "object",
       "required": [
         "namespace"
@@ -3499,6 +3537,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/PurgeTrashcanResponse",
   "$defs": {
     "PurgeTrashcanResponse": {
+      "description": "Response confirming permanent deletion of trashcan items",
       "type": "object",
       "required": [
         "purgedCount"
@@ -3576,6 +3615,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/GetNamespaceStatsRequest",
   "$defs": {
     "GetNamespaceStatsRequest": {
+      "description": "Request to get statistics for a documentation namespace",
       "type": "object",
       "required": [
         "namespace"
@@ -3599,6 +3639,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/NamespaceStatsResponse",
   "$defs": {
     "NamespaceStatsResponse": {
+      "description": "Response containing namespace statistics and document counts",
       "type": "object",
       "required": [
         "namespace",
@@ -3701,6 +3742,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/BindRepositoryRequest",
   "$defs": {
     "BindRepositoryRequest": {
+      "description": "Request to bind a Git repository for automatic documentation sync",
       "type": "object",
       "required": [
         "namespace",
@@ -3800,6 +3842,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/BindRepositoryResponse",
   "$defs": {
     "BindRepositoryResponse": {
+      "description": "Response confirming repository binding creation",
       "type": "object",
       "required": [
         "bindingId",
@@ -3912,6 +3955,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/UnbindRepositoryRequest",
   "$defs": {
     "UnbindRepositoryRequest": {
+      "description": "Request to remove a repository binding from a namespace",
       "type": "object",
       "required": [
         "namespace"
@@ -3940,6 +3984,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/UnbindRepositoryResponse",
   "$defs": {
     "UnbindRepositoryResponse": {
+      "description": "Response confirming repository unbinding with cleanup details",
       "type": "object",
       "required": [
         "namespace",
@@ -4022,6 +4067,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/SyncRepositoryRequest",
   "$defs": {
     "SyncRepositoryRequest": {
+      "description": "Request to trigger a manual repository sync",
       "type": "object",
       "required": [
         "namespace"
@@ -4050,6 +4096,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/SyncRepositoryResponse",
   "$defs": {
     "SyncRepositoryResponse": {
+      "description": "Response containing sync operation results and statistics",
       "type": "object",
       "required": [
         "syncId",
@@ -4171,6 +4218,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/RepositoryStatusRequest",
   "$defs": {
     "RepositoryStatusRequest": {
+      "description": "Request to get current repository binding and sync status",
       "type": "object",
       "required": [
         "namespace"
@@ -4194,6 +4242,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/RepositoryStatusResponse",
   "$defs": {
     "RepositoryStatusResponse": {
+      "description": "Response containing binding configuration and recent sync information",
       "type": "object",
       "properties": {
         "binding": {
@@ -4207,6 +4256,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "RepositoryBindingInfo": {
+      "description": "Detailed repository binding configuration and status",
       "type": "object",
       "required": [
         "bindingId",
@@ -4272,6 +4322,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "description": "Status of a repository binding"
     },
     "SyncInfo": {
+      "description": "Information about a repository sync operation",
       "type": "object",
       "properties": {
         "syncId": {
@@ -4390,6 +4441,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListRepositoryBindingsRequest",
   "$defs": {
     "ListRepositoryBindingsRequest": {
+      "description": "Request to list all repository bindings with optional filtering",
       "type": "object",
       "properties": {
         "status": {
@@ -4432,6 +4484,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListRepositoryBindingsResponse",
   "$defs": {
     "ListRepositoryBindingsResponse": {
+      "description": "Response containing a list of repository bindings",
       "type": "object",
       "required": [
         "bindings",
@@ -4452,6 +4505,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "RepositoryBindingInfo": {
+      "description": "Detailed repository binding configuration and status",
       "type": "object",
       "required": [
         "bindingId",
@@ -4582,6 +4636,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/UpdateRepositoryBindingRequest",
   "$defs": {
     "UpdateRepositoryBindingRequest": {
+      "description": "Request to update repository binding configuration",
       "type": "object",
       "required": [
         "namespace"
@@ -4664,6 +4719,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/UpdateRepositoryBindingResponse",
   "$defs": {
     "UpdateRepositoryBindingResponse": {
+      "description": "Response containing the updated binding configuration",
       "type": "object",
       "required": [
         "binding"
@@ -4676,6 +4732,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "RepositoryBindingInfo": {
+      "description": "Detailed repository binding configuration and status",
       "type": "object",
       "required": [
         "bindingId",
@@ -4806,6 +4863,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/CreateArchiveRequest",
   "$defs": {
     "CreateArchiveRequest": {
+      "description": "Request to create a point-in-time snapshot of namespace documentation",
       "type": "object",
       "required": [
         "namespace"
@@ -4834,6 +4892,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/CreateArchiveResponse",
   "$defs": {
     "CreateArchiveResponse": {
+      "description": "Response containing the created archive details",
       "type": "object",
       "required": [
         "archiveId",
@@ -4940,6 +4999,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListArchivesRequest",
   "$defs": {
     "ListArchivesRequest": {
+      "description": "Request to list available archives for a namespace",
       "type": "object",
       "required": [
         "namespace"
@@ -4976,6 +5036,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/ListArchivesResponse",
   "$defs": {
     "ListArchivesResponse": {
+      "description": "Response containing a paginated list of archives",
       "type": "object",
       "required": [
         "archives",
@@ -4996,6 +5057,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       }
     },
     "ArchiveInfo": {
+      "description": "Archive metadata including size and document count",
       "type": "object",
       "required": [
         "archiveId",
@@ -5112,6 +5174,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/RestoreArchiveRequest",
   "$defs": {
     "RestoreArchiveRequest": {
+      "description": "Request to restore documents from an archive",
       "type": "object",
       "required": [
         "archiveId"
@@ -5140,6 +5203,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/RestoreArchiveResponse",
   "$defs": {
     "RestoreArchiveResponse": {
+      "description": "Response containing restore operation results",
       "type": "object",
       "required": [
         "namespace",
@@ -5226,6 +5290,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/DeleteArchiveRequest",
   "$defs": {
     "DeleteArchiveRequest": {
+      "description": "Request to permanently delete an archive",
       "type": "object",
       "required": [
         "archiveId"
@@ -5248,6 +5313,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
   "$ref": "#/$defs/DeleteArchiveResponse",
   "$defs": {
     "DeleteArchiveResponse": {
+      "description": "Response confirming archive deletion",
       "type": "object",
       "required": [
         "deleted"

@@ -990,6 +990,11 @@
             List of session IDs that were invalidated
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.Reason">
+            <summary>
+            The reason why the session(s) were invalidated
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.DisconnectClients">
             <summary>
             Whether Connect service should disconnect WebSocket clients
@@ -1025,6 +1030,11 @@
         <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Authorizations">
             <summary>
             Current authorization strings (e.g., ["arcadia:authorized"])
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Reason">
+            <summary>
+            The reason why the session was updated
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.SessionUpdatedEventReason">
@@ -4120,6 +4130,11 @@
             Target session for this shortcut.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Shortcut">
+            <summary>
+            The session shortcut definition containing the pre-bound payload and routing information.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.ReplaceExisting">
             <summary>
             If true and a shortcut with the same routeGuid exists, replace it.
@@ -4193,6 +4208,11 @@
             Pre-serialized JSON payload passed unchanged to the target service.
             <br/>Connect treats this as opaque bytes - no deserialization or modification.
             <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Metadata">
+            <summary>
+            Metadata about the shortcut including display name, source service, and lifecycle information.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata">
@@ -5149,6 +5169,11 @@
             Include additional metadata about each capability
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse">
+            <summary>
+            Response containing the client's capability manifest with available API endpoints and shortcuts
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.SessionId">
             <summary>
             Session ID this capability manifest belongs to
@@ -5180,6 +5205,11 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.ExpiresAt">
             <summary>
             When these capabilities expire and need refresh
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.ClientCapability">
+            <summary>
+            A single API capability available to the client, mapping a client-salted GUID to a service endpoint
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Guid">
@@ -5267,6 +5297,11 @@
             When this shortcut expires (if time-limited).
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.InternalProxyRequest">
+            <summary>
+            Request to proxy an API call through the Connect service to a target backend service
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.SessionId">
             <summary>
             WebSocket session ID making the request
@@ -5305,6 +5340,11 @@
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.QueryParameters">
             <summary>
             Query string parameters for the endpoint
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.InternalProxyResponse">
+            <summary>
+            Response from a proxied API call containing the target service's response data
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyResponse.Success">
@@ -5349,6 +5389,11 @@
             Connection state data returned for connection service requests.
             <br/>Currently a placeholder for future connection metadata.
             <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.ConnectErrorResponse">
+            <summary>
+            Error response returned when WebSocket connection establishment fails
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.Error">
@@ -5966,6 +6011,11 @@
             Account ID of the player leaving. Provided by shortcut system or authenticated caller.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest">
+            <summary>
+            Request to create a new game session with specified settings
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.GameType">
             <summary>
             Type of game for this session (arcadia or generic)
@@ -5994,6 +6044,11 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.GameSettings">
             <summary>
             Game-specific configuration settings
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionResponse">
+            <summary>
+            Complete details of a game session including players and settings
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.SessionId">
@@ -6051,6 +6106,11 @@
             Game-specific configuration settings
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionListResponse">
+            <summary>
+            Response containing a list of game sessions matching filter criteria
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionListResponse.Sessions">
             <summary>
             List of game sessions matching the filter criteria
@@ -6059,6 +6119,11 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionListResponse.TotalCount">
             <summary>
             Total number of sessions matching the filter (for pagination)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest">
+            <summary>
+            Request to join an existing game session as a player
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.SessionId">
@@ -6084,6 +6149,11 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.VoiceEndpoint">
             <summary>
             Client's SIP endpoint for voice communication (optional)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse">
+            <summary>
+            Response after successfully joining a game session with role and permissions
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.Success">
@@ -6116,6 +6186,11 @@
             Voice connection info (if voice is enabled for this session)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GamePlayer">
+            <summary>
+            Information about a player currently participating in a game session
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GamePlayer.AccountId">
             <summary>
             Unique identifier for the player's account
@@ -6146,6 +6221,11 @@
             Voice participant session ID (if player has joined voice)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.KickPlayerRequest">
+            <summary>
+            Request to remove a player from a game session (admin only)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.KickPlayerRequest.SessionId">
             <summary>
             ID of the game session
@@ -6159,6 +6239,11 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.KickPlayerRequest.Reason">
             <summary>
             Reason for kicking the player
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.ChatMessageRequest">
+            <summary>
+            Request to send a chat message to players in a game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.ChatMessageRequest.SessionId">
@@ -6181,6 +6266,11 @@
             For whisper messages
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameActionRequest">
+            <summary>
+            Request to perform a game action such as movement or combat
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionRequest.SessionId">
             <summary>
             ID of the game session
@@ -6199,6 +6289,11 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionRequest.TargetId">
             <summary>
             Target of the action (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.GameActionResponse">
+            <summary>
+            Response indicating the result of a game action with any state changes
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionResponse.Success">
@@ -6639,14 +6734,29 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.GetRelationshipTypeRequest">
+            <summary>
+            Request to retrieve a relationship type by its unique identifier
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.GetRelationshipTypeRequest.RelationshipTypeId">
             <summary>
             Unique identifier of the relationship type
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.GetRelationshipTypeByCodeRequest">
+            <summary>
+            Request to retrieve a relationship type by its unique code string
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.GetRelationshipTypeByCodeRequest.Code">
             <summary>
             Unique code for the relationship type (e.g., "SON", "MOTHER", "FRIEND")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.ListRelationshipTypesRequest">
+            <summary>
+            Request to list relationship types with optional filtering by category, hierarchy, and deprecation status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.ListRelationshipTypesRequest.Category">
@@ -6669,6 +6779,11 @@
             Whether to include deprecated types in the response
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.GetChildRelationshipTypesRequest">
+            <summary>
+            Request to retrieve all child relationship types for a given parent type
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.GetChildRelationshipTypesRequest.ParentTypeId">
             <summary>
             ID of the parent relationship type
@@ -6677,6 +6792,11 @@
         <member name="P:BeyondImmersion.BannouService.RelationshipType.GetChildRelationshipTypesRequest.Recursive">
             <summary>
             Include all descendants, not just direct children
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.MatchesHierarchyRequest">
+            <summary>
+            Request to check if a relationship type matches or descends from an ancestor type in the hierarchy
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MatchesHierarchyRequest.TypeId">
@@ -6689,9 +6809,19 @@
             The potential ancestor type
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.GetAncestorsRequest">
+            <summary>
+            Request to retrieve all ancestor types in the hierarchy chain from a relationship type up to the root
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.GetAncestorsRequest.TypeId">
             <summary>
             The relationship type to get ancestors for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.CreateRelationshipTypeRequest">
+            <summary>
+            Request to create a new relationship type with code, name, and optional hierarchy and inverse settings
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.CreateRelationshipTypeRequest.Code">
@@ -6734,6 +6864,11 @@
             Additional metadata for the relationship type
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.UpdateRelationshipTypeRequest">
+            <summary>
+            Request to update an existing relationship type's properties such as name, description, category, or hierarchy
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.UpdateRelationshipTypeRequest.RelationshipTypeId">
             <summary>
             ID of the relationship type to update
@@ -6774,9 +6909,19 @@
             Additional metadata
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.DeleteRelationshipTypeRequest">
+            <summary>
+            Request to permanently delete a relationship type (typically after deprecation and merge)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.DeleteRelationshipTypeRequest.RelationshipTypeId">
             <summary>
             ID of the relationship type to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.DeprecateRelationshipTypeRequest">
+            <summary>
+            Request to deprecate a relationship type, preventing its use for new relationships while preserving existing ones
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.DeprecateRelationshipTypeRequest.RelationshipTypeId">
@@ -6789,9 +6934,19 @@
             Optional reason for deprecation (for audit purposes)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.UndeprecateRelationshipTypeRequest">
+            <summary>
+            Request to restore a deprecated relationship type back to active status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.UndeprecateRelationshipTypeRequest.RelationshipTypeId">
             <summary>
             ID of the relationship type to restore
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeRequest">
+            <summary>
+            Request to migrate all relationships from a deprecated source type to a target type
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeRequest.SourceTypeId">
@@ -6809,6 +6964,11 @@
             If true, hard-delete the source type after successful merge
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipTypesRequest">
+            <summary>
+            Request to bulk seed relationship types from configuration, typically used at startup
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipTypesRequest.Types">
             <summary>
             List of relationship types to seed
@@ -6817,6 +6977,11 @@
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipTypesRequest.UpdateExisting">
             <summary>
             Whether to update types that already exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType">
+            <summary>
+            A relationship type definition used for seeding, with code-based parent and inverse references
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.Code">
@@ -6857,6 +7022,11 @@
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.Metadata">
             <summary>
             Additional custom metadata for the relationship type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeResponse">
+            <summary>
+            Complete representation of a relationship type including hierarchy, inverse, and deprecation information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeResponse.RelationshipTypeId">
@@ -6944,6 +7114,11 @@
             Timestamp when the relationship type was last updated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeListResponse">
+            <summary>
+            Response containing a list of relationship types with total count
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeListResponse.Types">
             <summary>
             List of relationship types matching the query
@@ -6954,6 +7129,11 @@
             Total number of relationship types returned
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.MatchesHierarchyResponse">
+            <summary>
+            Response indicating whether a type matches an ancestor in the hierarchy and the depth between them
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MatchesHierarchyResponse.Matches">
             <summary>
             True if typeId equals or descends from ancestorTypeId
@@ -6962,6 +7142,11 @@
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MatchesHierarchyResponse.Depth">
             <summary>
             Number of levels between the types (0 if same, -1 if no match)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipTypesResponse">
+            <summary>
+            Response summarizing the results of a bulk seed operation with counts of created, updated, and skipped types
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipTypesResponse.Created">
@@ -6982,6 +7167,11 @@
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipTypesResponse.Errors">
             <summary>
             List of error messages for types that failed to seed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse">
+            <summary>
+            Response summarizing the results of a merge operation including the number of relationships migrated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse.SourceTypeId">
@@ -7693,6 +7883,11 @@
             Source type for generating related topic suggestions
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest">
+            <summary>
+            Request to search documentation using natural language queries
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest.Namespace">
             <summary>
             Documentation namespace to search within
@@ -7733,6 +7928,11 @@
             Minimum relevance score threshold for results
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.QueryDocumentationResponse">
+            <summary>
+            Response containing search results and voice-friendly summaries
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.QueryDocumentationResponse.Namespace">
             <summary>
             The namespace that was searched
@@ -7766,6 +7966,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.QueryDocumentationResponse.NoResultsMessage">
             <summary>
             User-friendly message when no results found
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.GetDocumentRequest">
+            <summary>
+            Request to retrieve a specific document by ID or slug
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.GetDocumentRequest.Namespace">
@@ -7803,6 +8008,11 @@
             Whether to render markdown content as HTML
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.GetDocumentResponse">
+            <summary>
+            Response containing the requested document and optional related documents
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.GetDocumentResponse.Document">
             <summary>
             The requested document
@@ -7816,6 +8026,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.GetDocumentResponse.ContentFormat">
             <summary>
             Format of the content field in the response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SearchDocumentationRequest">
+            <summary>
+            Request to search documentation using keyword matching
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SearchDocumentationRequest.Namespace">
@@ -7858,6 +8073,11 @@
             Whether to include full document content in results
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SearchDocumentationResponse">
+            <summary>
+            Response containing keyword search results
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SearchDocumentationResponse.Namespace">
             <summary>
             The namespace that was searched
@@ -7876,6 +8096,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.SearchDocumentationResponse.SearchTerm">
             <summary>
             The original search term
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListDocumentsRequest">
+            <summary>
+            Request to list documents with optional filtering and pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListDocumentsRequest.Namespace">
@@ -7943,6 +8168,11 @@
             Sort order direction
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListDocumentsResponse">
+            <summary>
+            Response containing a paginated list of documents
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListDocumentsResponse.Namespace">
             <summary>
             The namespace that was listed
@@ -7971,6 +8201,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.ListDocumentsResponse.TotalPages">
             <summary>
             Total number of pages available
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SuggestRelatedRequest">
+            <summary>
+            Request to get related topic suggestions based on a source
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SuggestRelatedRequest.Namespace">
@@ -8003,6 +8238,11 @@
             Exclude documents viewed in current session
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SuggestRelatedResponse">
+            <summary>
+            Response containing suggested related topics for conversational flow
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SuggestRelatedResponse.Namespace">
             <summary>
             The namespace suggestions are from
@@ -8021,6 +8261,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.SuggestRelatedResponse.SessionInfluenced">
             <summary>
             Whether suggestions were influenced by session history
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.TopicSuggestion">
+            <summary>
+            A suggested related topic with relevance context
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.TopicSuggestion.DocumentId">
@@ -8046,6 +8291,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.TopicSuggestion.RelevanceReason">
             <summary>
             Explanation of why this document is relevant
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest">
+            <summary>
+            Request to create a new documentation entry
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.Namespace">
@@ -8098,6 +8348,11 @@
             Custom metadata key-value pairs
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.CreateDocumentResponse">
+            <summary>
+            Response confirming document creation with assigned identifiers
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentResponse.DocumentId">
             <summary>
             Unique identifier of the created document
@@ -8111,6 +8366,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentResponse.CreatedAt">
             <summary>
             Timestamp when the document was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest">
+            <summary>
+            Request to update an existing document's fields
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.Namespace">
@@ -8168,6 +8428,11 @@
             New custom metadata key-value pairs
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.UpdateDocumentResponse">
+            <summary>
+            Response confirming document update with timestamp
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentResponse.DocumentId">
             <summary>
             Unique identifier of the updated document
@@ -8176,6 +8441,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentResponse.UpdatedAt">
             <summary>
             Timestamp when the document was updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.DeleteDocumentRequest">
+            <summary>
+            Request to soft-delete a document to the trashcan
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.DeleteDocumentRequest.Namespace">
@@ -8193,6 +8463,11 @@
             URL-friendly slug of the document to delete
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.DeleteDocumentResponse">
+            <summary>
+            Response confirming document deletion with recovery deadline
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.DeleteDocumentResponse.DocumentId">
             <summary>
             Unique identifier of the deleted document
@@ -8208,6 +8483,11 @@
             Deadline for recovering the document from trashcan
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RecoverDocumentRequest">
+            <summary>
+            Request to recover a deleted document from the trashcan
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.RecoverDocumentRequest.Namespace">
             <summary>
             Documentation namespace containing the trashcan
@@ -8218,6 +8498,11 @@
             Unique identifier of the document to recover
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RecoverDocumentResponse">
+            <summary>
+            Response confirming document recovery with timestamp
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.RecoverDocumentResponse.DocumentId">
             <summary>
             Unique identifier of the recovered document
@@ -8226,6 +8511,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.RecoverDocumentResponse.RecoveredAt">
             <summary>
             Timestamp when the document was recovered
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BulkUpdateRequest">
+            <summary>
+            Request to update multiple documents at once
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkUpdateRequest.Namespace">
@@ -8253,6 +8543,11 @@
             Tags to remove from all documents
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BulkUpdateResponse">
+            <summary>
+            Response reporting bulk update results with success and failure details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkUpdateResponse.Succeeded">
             <summary>
             IDs of documents successfully updated
@@ -8261,6 +8556,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkUpdateResponse.Failed">
             <summary>
             Details of documents that failed to update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BulkDeleteRequest">
+            <summary>
+            Request to delete multiple documents at once
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkDeleteRequest.Namespace">
@@ -8273,6 +8573,11 @@
             List of document IDs to delete
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BulkDeleteResponse">
+            <summary>
+            Response reporting bulk deletion results with success and failure details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkDeleteResponse.Succeeded">
             <summary>
             IDs of documents successfully deleted
@@ -8283,6 +8588,11 @@
             Details of documents that failed to delete
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BulkOperationFailure">
+            <summary>
+            Details of a single document that failed in a bulk operation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkOperationFailure.DocumentId">
             <summary>
             ID of the document that failed
@@ -8291,6 +8601,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkOperationFailure.Error">
             <summary>
             Error message explaining the failure
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ImportDocumentationRequest">
+            <summary>
+            Request to import multiple documents into a namespace
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocumentationRequest.Namespace">
@@ -8306,6 +8621,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocumentationRequest.OnConflict">
             <summary>
             How to handle documents with existing slugs
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ImportDocument">
+            <summary>
+            A single document to import with required fields
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocument.Slug">
@@ -8348,6 +8668,11 @@
             Custom metadata key-value pairs
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ImportDocumentationResponse">
+            <summary>
+            Response reporting import results with counts and failure details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocumentationResponse.Namespace">
             <summary>
             The namespace documents were imported into
@@ -8373,6 +8698,11 @@
             Details of documents that failed to import
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ImportFailure">
+            <summary>
+            Details of a document that failed to import
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportFailure.Slug">
             <summary>
             Slug of the document that failed to import
@@ -8381,6 +8711,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportFailure.Error">
             <summary>
             Error message explaining the failure
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListTrashcanRequest">
+            <summary>
+            Request to list deleted documents in the trashcan
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListTrashcanRequest.Namespace">
@@ -8398,6 +8733,11 @@
             Number of items per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListTrashcanResponse">
+            <summary>
+            Response containing deleted documents awaiting permanent deletion
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListTrashcanResponse.Namespace">
             <summary>
             The namespace the trashcan belongs to
@@ -8411,6 +8751,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.ListTrashcanResponse.TotalCount">
             <summary>
             Total number of items in trashcan
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.TrashcanItem">
+            <summary>
+            A deleted document in the trashcan with expiration information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.TrashcanItem.DocumentId">
@@ -8443,6 +8788,11 @@
             Timestamp when the document will be permanently deleted
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.PurgeTrashcanRequest">
+            <summary>
+            Request to permanently delete documents from the trashcan
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.PurgeTrashcanRequest.Namespace">
             <summary>
             Documentation namespace to purge trashcan from
@@ -8453,14 +8803,29 @@
             If empty, purges all trashcan items
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.PurgeTrashcanResponse">
+            <summary>
+            Response confirming permanent deletion of trashcan items
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.PurgeTrashcanResponse.PurgedCount">
             <summary>
             Number of documents permanently deleted
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.GetNamespaceStatsRequest">
+            <summary>
+            Request to get statistics for a documentation namespace
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.GetNamespaceStatsRequest.Namespace">
             <summary>
             Documentation namespace to get statistics for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.NamespaceStatsResponse">
+            <summary>
+            Response containing namespace statistics and document counts
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.NamespaceStatsResponse.Namespace">
@@ -8491,6 +8856,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.NamespaceStatsResponse.LastUpdated">
             <summary>
             Timestamp of most recent document update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.Document">
+            <summary>
+            Complete document with all metadata and content
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.Document.DocumentId">
@@ -8558,6 +8928,11 @@
             Timestamp when the document was last updated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.DocumentSummary">
+            <summary>
+            Lightweight document representation for listings and references
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.DocumentSummary.DocumentId">
             <summary>
             Unique identifier of the document
@@ -8591,6 +8966,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.DocumentSummary.Tags">
             <summary>
             Tags associated with the document
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.DocumentResult">
+            <summary>
+            Search result with relevance scoring and match highlights
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.DocumentResult.DocumentId">
@@ -8653,6 +9033,11 @@
             What triggered the sync operation
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest">
+            <summary>
+            Request to bind a Git repository for automatic documentation sync
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.Namespace">
             <summary>
             Documentation namespace to bind
@@ -8703,6 +9088,11 @@
             Create archive after each sync
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BindRepositoryResponse">
+            <summary>
+            Response confirming repository binding creation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryResponse.BindingId">
             <summary>
             Unique identifier of the repository binding
@@ -8733,6 +9123,11 @@
             Timestamp when the binding was created
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.UnbindRepositoryRequest">
+            <summary>
+            Request to remove a repository binding from a namespace
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UnbindRepositoryRequest.Namespace">
             <summary>
             Documentation namespace to unbind
@@ -8741,6 +9136,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.UnbindRepositoryRequest.DeleteDocuments">
             <summary>
             Also delete all documents from the namespace
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.UnbindRepositoryResponse">
+            <summary>
+            Response confirming repository unbinding with cleanup details
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UnbindRepositoryResponse.Namespace">
@@ -8753,6 +9153,11 @@
             Number of documents deleted (0 if deleteDocuments was false)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SyncRepositoryRequest">
+            <summary>
+            Request to trigger a manual repository sync
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncRepositoryRequest.Namespace">
             <summary>
             Documentation namespace to sync
@@ -8761,6 +9166,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncRepositoryRequest.Force">
             <summary>
             Force full re-sync even if commit hash unchanged
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SyncRepositoryResponse">
+            <summary>
+            Response containing sync operation results and statistics
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncRepositoryResponse.SyncId">
@@ -8808,9 +9218,19 @@
             Error message if sync failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RepositoryStatusRequest">
+            <summary>
+            Request to get current repository binding and sync status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.RepositoryStatusRequest.Namespace">
             <summary>
             Documentation namespace to get status for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RepositoryStatusResponse">
+            <summary>
+            Response containing binding configuration and recent sync information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.RepositoryStatusResponse.Binding">
@@ -8821,6 +9241,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.RepositoryStatusResponse.LastSync">
             <summary>
             Information about the most recent sync
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RepositoryBindingInfo">
+            <summary>
+            Detailed repository binding configuration and status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.RepositoryBindingInfo.BindingId">
@@ -8873,6 +9298,11 @@
             ID of the user who created the binding
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SyncInfo">
+            <summary>
+            Information about a repository sync operation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncInfo.SyncId">
             <summary>
             Unique identifier of the sync operation
@@ -8908,6 +9338,11 @@
             Total documents processed in sync
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListRepositoryBindingsRequest">
+            <summary>
+            Request to list all repository bindings with optional filtering
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListRepositoryBindingsRequest.Status">
             <summary>
             Filter by binding status
@@ -8923,6 +9358,11 @@
             Number of bindings to skip
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListRepositoryBindingsResponse">
+            <summary>
+            Response containing a list of repository bindings
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListRepositoryBindingsResponse.Bindings">
             <summary>
             List of repository bindings
@@ -8931,6 +9371,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.ListRepositoryBindingsResponse.Total">
             <summary>
             Total number of bindings matching filter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest">
+            <summary>
+            Request to update repository binding configuration
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest.Namespace">
@@ -8978,9 +9423,19 @@
             Enable or disable archiving after each sync
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingResponse">
+            <summary>
+            Response containing the updated binding configuration
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingResponse.Binding">
             <summary>
             Updated binding configuration
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.CreateArchiveRequest">
+            <summary>
+            Request to create a point-in-time snapshot of namespace documentation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveRequest.Namespace">
@@ -8991,6 +9446,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveRequest.Description">
             <summary>
             Optional description for the archive
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.CreateArchiveResponse">
+            <summary>
+            Response containing the created archive details
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveResponse.ArchiveId">
@@ -9028,6 +9488,11 @@
             Git commit hash if namespace is bound
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListArchivesRequest">
+            <summary>
+            Request to list available archives for a namespace
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListArchivesRequest.Namespace">
             <summary>
             Documentation namespace to list archives for
@@ -9043,6 +9508,11 @@
             Number of archives to skip
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ListArchivesResponse">
+            <summary>
+            Response containing a paginated list of archives
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListArchivesResponse.Archives">
             <summary>
             List of archives for the namespace
@@ -9051,6 +9521,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.ListArchivesResponse.Total">
             <summary>
             Total number of archives
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.ArchiveInfo">
+            <summary>
+            Archive metadata including size and document count
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ArchiveInfo.ArchiveId">
@@ -9098,6 +9573,11 @@
             ID of the user who created the archive
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RestoreArchiveRequest">
+            <summary>
+            Request to restore documents from an archive
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.RestoreArchiveRequest.ArchiveId">
             <summary>
             Unique identifier of the archive to restore
@@ -9106,6 +9586,11 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.RestoreArchiveRequest.TargetNamespace">
             <summary>
             If not provided, restores to original namespace
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RestoreArchiveResponse">
+            <summary>
+            Response containing restore operation results
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.RestoreArchiveResponse.Namespace">
@@ -9123,9 +9608,19 @@
             Number of existing documents deleted before restore
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.DeleteArchiveRequest">
+            <summary>
+            Request to permanently delete an archive
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.DeleteArchiveRequest.ArchiveId">
             <summary>
             Unique identifier of the archive to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.DeleteArchiveResponse">
+            <summary>
+            Response confirming archive deletion
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.DeleteArchiveResponse.Deleted">
@@ -9399,6 +9894,11 @@
             Unique identifier for the cached behavior to invalidate
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest">
+            <summary>
+            Request to compile an ABML behavior definition into executable behavior trees
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.AbmlContent">
             <summary>
             Raw ABML YAML content to compile
@@ -9437,6 +9937,11 @@
             Options controlling the compilation process
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest">
+            <summary>
+            Request to compile multiple stackable behavior sets with priority-based merging
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.BehaviorSets">
             <summary>
             Array of behavior sets to compile together
@@ -9452,6 +9957,11 @@
             Options controlling the compilation process
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest">
+            <summary>
+            Request to validate ABML YAML content against schema and semantic rules
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.AbmlContent">
             <summary>
             Raw ABML YAML content to validate
@@ -9462,6 +9972,11 @@
             Enable strict validation mode with enhanced checking
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextRequest">
+            <summary>
+            Request to resolve context variable expressions against character and world state
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.ContextExpression">
             <summary>
             Context variable expression to resolve
@@ -9470,6 +9985,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.CharacterContext">
             <summary>
             Character context providing values for variable resolution
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse">
+            <summary>
+            Response containing the results of an ABML behavior compilation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Success">
@@ -9517,6 +10037,11 @@
             Non-fatal warnings during compilation
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse">
+            <summary>
+            Response containing the results of ABML validation including errors and warnings
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.IsValid">
             <summary>
             Whether the ABML definition is valid
@@ -9535,6 +10060,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.SchemaVersion">
             <summary>
             ABML schema version used for validation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse">
+            <summary>
+            Response containing a previously compiled behavior retrieved from cache
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.BehaviorId">
@@ -9557,6 +10087,11 @@
             Whether this was a cache hit or miss
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextResponse">
+            <summary>
+            Response containing the resolved value of a context variable expression
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedValue">
             <summary>
             The resolved value of the context expression
@@ -9570,6 +10105,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ContextVariablesUsed">
             <summary>
             List of context variables referenced in the expression
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition">
+            <summary>
+            Definition of a behavior set with priority for stackable behavior merging
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Id">
@@ -9629,7 +10169,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Location">
             <summary>
-            Character location information
+            Current location information for the character
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Relationships">
@@ -9667,6 +10207,11 @@
             Schema defining required context variables for behavior execution
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompiledBehavior">
+            <summary>
+            Compiled behavior containing behavior tree, context schema, and GOAP integration data
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.BehaviorTree">
             <summary>
             Compiled behavior tree data with bytecode or download reference
@@ -9689,7 +10234,72 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ExecutionMetadata">
             <summary>
-            Metadata about behavior execution requirements
+            Metadata for behavior execution including performance hints and resource requirements
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.Location">
+            <summary>
+            Character location information including current position, region, and 3D coordinates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Current">
+            <summary>
+            Current location name or identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Region">
+            <summary>
+            Region or zone the character is in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Coordinates">
+            <summary>
+            3D spatial coordinates of the character's position in the game world
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.Coordinates">
+            <summary>
+            3D spatial coordinates representing a position in the game world
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.X">
+            <summary>
+            X coordinate position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Y">
+            <summary>
+            Y coordinate position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Z">
+            <summary>
+            Z coordinate position
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ExecutionMetadata">
+            <summary>
+            Metadata about behavior execution requirements including timing, resources, and interrupt conditions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.EstimatedDuration">
+            <summary>
+            Estimated execution time in seconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.ResourceRequirements">
+            <summary>
+            Resource requirements for behavior execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.InterruptConditions">
+            <summary>
+            Conditions that can interrupt behavior execution
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapGoal">
+            <summary>
+            Goal definition for GOAP planning with conditions and priority
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Name">
@@ -9717,6 +10327,11 @@
             World state conditions required to pursue this goal
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanRequest">
+            <summary>
+            Request to generate a GOAP plan to achieve a goal from current world state
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.AgentId">
             <summary>
             Unique identifier for the agent requesting the plan
@@ -9740,6 +10355,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Options">
             <summary>
             Options controlling the planning process
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResponse">
+            <summary>
+            Response containing the generated GOAP plan or failure information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Success">
@@ -9767,6 +10387,11 @@
             Reason for planning failure if unsuccessful
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResult">
+            <summary>
+            Result of GOAP planning containing the ordered sequence of actions to achieve a goal
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.GoalId">
             <summary>
             ID of the goal this plan achieves
@@ -9782,6 +10407,11 @@
             Total cost of all actions in the plan
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.PlannedActionResponse">
+            <summary>
+            Single action within a GOAP plan with position and cost information
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.ActionId">
             <summary>
             ID of the action (flow name)
@@ -9795,6 +10425,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Cost">
             <summary>
             Cost of this action
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest">
+            <summary>
+            Request to validate an existing GOAP plan against current world state
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.Plan">
@@ -9815,6 +10450,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.ActiveGoals">
             <summary>
             All active goals for priority checking
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse">
+            <summary>
+            Response indicating whether a GOAP plan is still valid and suggested next action
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.IsValid">
@@ -9842,6 +10482,11 @@
             Additional details about the validation result
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions">
+            <summary>
+            Options controlling the GOAP planning process including depth and timeout limits
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.MaxDepth">
             <summary>
             Maximum plan depth (number of actions)
@@ -9855,6 +10500,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.TimeoutMs">
             <summary>
             Planning timeout in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompilationOptions">
+            <summary>
+            Options controlling the ABML compilation process including optimizations and caching
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.EnableOptimizations">
@@ -9882,6 +10532,11 @@
             Generate GOAP goals from behaviors
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidationError">
+            <summary>
+            Detailed validation error with type, location, and message information
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Type">
             <summary>
             Type of validation error
@@ -9905,6 +10560,11 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.YamlPath">
             <summary>
             YAML path to the problematic element
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse">
+            <summary>
+            Error response for ABML operations with detailed error information and context
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Error">
@@ -9945,51 +10605,6 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.RequestId">
             <summary>
             Unique identifier for the failed request
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Current">
-            <summary>
-            Current location name or identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Region">
-            <summary>
-            Region or zone the character is in
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Coordinates">
-            <summary>
-            3D coordinates of the character position
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.EstimatedDuration">
-            <summary>
-            Estimated execution time in seconds
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.ResourceRequirements">
-            <summary>
-            Resource requirements for behavior execution
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.InterruptConditions">
-            <summary>
-            Conditions that can interrupt behavior execution
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.X">
-            <summary>
-            X coordinate position
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Y">
-            <summary>
-            Y coordinate position
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Z">
-            <summary>
-            Z coordinate position
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Website.IWebsiteClient.GetStatusAsync(System.Threading.CancellationToken)">
@@ -10326,6 +10941,11 @@
             <returns>Subscription information retrieved</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.StatusResponse">
+            <summary>
+            Health and version status information for the website service
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.StatusResponse.Status">
             <summary>
             Current health status of the website service
@@ -10344,6 +10964,11 @@
         <member name="P:BeyondImmersion.BannouService.Website.StatusResponse.MaintenanceMessage">
             <summary>
             Message displayed during maintenance mode
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.PageContent">
+            <summary>
+            Full content and metadata for a CMS-managed page
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.PageContent.Slug">
@@ -10401,6 +11026,11 @@
             Search engine optimization settings for the page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.PageMetadata">
+            <summary>
+            Summary metadata for a CMS page without full content
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.PageMetadata.Slug">
             <summary>
             URL-friendly identifier for the page
@@ -10431,6 +11061,11 @@
             Name or identifier of the page author
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.SEOMetadata">
+            <summary>
+            Search engine optimization and social media sharing metadata
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.SEOMetadata.Description">
             <summary>
             Meta description for search engines
@@ -10454,6 +11089,61 @@
         <member name="P:BeyondImmersion.BannouService.Website.SEOMetadata.OgImage">
             <summary>
             Open Graph image URL for social media sharing
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.Analytics">
+            <summary>
+            Analytics and tracking configuration for website visitor metrics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.Analytics.GoogleAnalyticsId">
+            <summary>
+            Google Analytics tracking ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.Analytics.OtherTrackers">
+            <summary>
+            Configuration for other analytics trackers
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.CustomScripts">
+            <summary>
+            Custom script injection configuration for adding JavaScript to pages
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.CustomScripts.Head">
+            <summary>
+            Custom scripts to inject in the HTML head
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.CustomScripts.BodyStart">
+            <summary>
+            Custom scripts to inject at the start of the body
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.CustomScripts.BodyEnd">
+            <summary>
+            Custom scripts to inject at the end of the body
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.Logo">
+            <summary>
+            Site logo configuration including image URL and accessibility text
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.Logo.Url">
+            <summary>
+            URL of the site logo image
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.Logo.Alt">
+            <summary>
+            Alt text for the logo image
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.SiteSettings">
+            <summary>
+            Global website configuration including branding, languages, and integrations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.SiteSettings.SiteName">
@@ -10503,12 +11193,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.SiteSettings.Analytics">
             <summary>
-            Analytics and tracking configuration
+            Analytics and tracking service configuration
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.SiteSettings.CustomScripts">
             <summary>
-            Custom script injection configuration
+            Custom JavaScript scripts to inject into pages
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.ThemeConfig">
+            <summary>
+            Visual theme configuration including colors, fonts, and navigation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.ThemeConfig.ThemeName">
@@ -10548,7 +11243,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.ThemeConfig.Logo">
             <summary>
-            Site logo configuration
+            Site logo configuration for branding
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.ThemeConfig.Favicon">
@@ -10559,6 +11254,11 @@
         <member name="P:BeyondImmersion.BannouService.Website.ThemeConfig.Navigation">
             <summary>
             Main navigation menu items
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.NavigationItem">
+            <summary>
+            A navigation menu entry with optional nested children for dropdowns
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.NavigationItem.Label">
@@ -10586,6 +11286,11 @@
             Nested child navigation items for dropdowns
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.NewsResponse">
+            <summary>
+            Paginated list of news items with total count
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.NewsResponse.Items">
             <summary>
             List of news items for the current page
@@ -10599,6 +11304,11 @@
         <member name="P:BeyondImmersion.BannouService.Website.NewsResponse.HasMore">
             <summary>
             Whether more news items are available beyond this page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.NewsItem">
+            <summary>
+            A single news article or announcement entry
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.NewsItem.Id">
@@ -10641,6 +11351,11 @@
             URL of the featured image for the news item
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.ServerStatusResponse">
+            <summary>
+            Aggregated status of all game server realms
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.ServerStatusResponse.GlobalStatus">
             <summary>
             Overall status across all game realms
@@ -10649,6 +11364,11 @@
         <member name="P:BeyondImmersion.BannouService.Website.ServerStatusResponse.Realms">
             <summary>
             Status information for each game realm
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.RealmStatus">
+            <summary>
+            Status and population information for a single game realm
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.RealmStatus.RealmId">
@@ -10681,9 +11401,19 @@
             Latency in milliseconds
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.DownloadsResponse">
+            <summary>
+            Collection of available game client downloads by platform
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.DownloadsResponse.Clients">
             <summary>
             Available game client downloads
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.DownloadInfo">
+            <summary>
+            Download details for a specific game client version and platform
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.DownloadInfo.Platform">
@@ -10721,6 +11451,11 @@
             Minimum system requirements for the client
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.ContactRequest">
+            <summary>
+            User-submitted contact form data
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.ContactRequest.Email">
             <summary>
             Sender email address for replies
@@ -10746,6 +11481,11 @@
             Category to route the contact request
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.ContactResponse">
+            <summary>
+            Confirmation response after submitting a contact form
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.ContactResponse.TicketId">
             <summary>
             Unique identifier for the created support ticket
@@ -10754,6 +11494,11 @@
         <member name="P:BeyondImmersion.BannouService.Website.ContactResponse.Message">
             <summary>
             Confirmation message displayed to the user
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.AccountProfile">
+            <summary>
+            User account information displayed on the website profile page
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.AccountProfile.AccountId">
@@ -10791,9 +11536,19 @@
             Number of character slots currently in use
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.CharacterListResponse">
+            <summary>
+            List of all characters belonging to an account
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.CharacterListResponse.Characters">
             <summary>
             List of characters owned by the account
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Website.CharacterSummary">
+            <summary>
+            Brief overview of a character for display in character lists
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Website.CharacterSummary.CharacterId">
@@ -10826,6 +11581,11 @@
             Date and time of last gameplay session
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.SubscriptionResponse">
+            <summary>
+            Current subscription status and plan details for an account
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.SubscriptionResponse.Status">
             <summary>
             Current state of the subscription
@@ -10851,6 +11611,11 @@
             List of benefits included in the subscription
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Website.ErrorResponse">
+            <summary>
+            Standard error response with code and message
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Website.ErrorResponse.Error">
             <summary>
             Error code identifying the type of error
@@ -10864,41 +11629,6 @@
         <member name="P:BeyondImmersion.BannouService.Website.ErrorResponse.Details">
             <summary>
             Additional error details or context
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.Analytics.GoogleAnalyticsId">
-            <summary>
-            Google Analytics tracking ID
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.Analytics.OtherTrackers">
-            <summary>
-            Configuration for other analytics trackers
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CustomScripts.Head">
-            <summary>
-            Custom scripts to inject in the HTML head
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CustomScripts.BodyStart">
-            <summary>
-            Custom scripts to inject at the start of the body
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.CustomScripts.BodyEnd">
-            <summary>
-            Custom scripts to inject at the end of the body
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.Logo.Url">
-            <summary>
-            URL of the site logo image
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Website.Logo.Alt">
-            <summary>
-            Alt text for the logo image
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Mesh.IMeshClient.GetEndpointsAsync(BeyondImmersion.BannouService.Mesh.GetEndpointsRequest,System.Threading.CancellationToken)">
@@ -11708,6 +12438,11 @@
             <returns>List of stores</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.GetStateRequest">
+            <summary>
+            Request to retrieve a single state value by key from a state store
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.GetStateRequest.StoreName">
             <summary>
             Name of the state store
@@ -11716,6 +12451,11 @@
         <member name="P:BeyondImmersion.BannouService.State.GetStateRequest.Key">
             <summary>
             Key to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.GetStateResponse">
+            <summary>
+            Response containing a retrieved state value with its metadata and ETag
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.GetStateResponse.Value">
@@ -11731,6 +12471,11 @@
         <member name="P:BeyondImmersion.BannouService.State.GetStateResponse.Metadata">
             <summary>
             Metadata about the state entry including timestamps and version
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.SaveStateRequest">
+            <summary>
+            Request to save a state value to a state store with optional TTL and consistency settings
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.SaveStateRequest.StoreName">
@@ -11753,6 +12498,11 @@
             Optional settings for the save operation including TTL and consistency
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.SaveStateResponse">
+            <summary>
+            Response from a save operation containing the new ETag and success status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.SaveStateResponse.Etag">
             <summary>
             New ETag after save
@@ -11761,6 +12511,11 @@
         <member name="P:BeyondImmersion.BannouService.State.SaveStateResponse.Success">
             <summary>
             Whether the save succeeded
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.DeleteStateRequest">
+            <summary>
+            Request to delete a state value by key from a state store
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.DeleteStateRequest.StoreName">
@@ -11773,9 +12528,19 @@
             Key to delete
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.DeleteStateResponse">
+            <summary>
+            Response from a delete operation indicating whether the key was removed
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.DeleteStateResponse.Deleted">
             <summary>
             Whether the key was deleted (false if not found)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.StateOptions">
+            <summary>
+            Configuration options for state save operations including TTL, consistency level, and optimistic concurrency
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.StateOptions.Ttl">
@@ -11793,6 +12558,11 @@
             Optimistic concurrency check - save fails if ETag mismatch
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.StateMetadata">
+            <summary>
+            Metadata associated with a state entry including creation time, last update time, and version
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.StateMetadata.CreatedAt">
             <summary>
             When the state was created
@@ -11806,6 +12576,11 @@
         <member name="P:BeyondImmersion.BannouService.State.StateMetadata.Version">
             <summary>
             Version number for optimistic concurrency
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.QueryStateRequest">
+            <summary>
+            Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis backends
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.StoreName">
@@ -11865,6 +12640,11 @@
             Items per page (max 1000)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.SortField">
+            <summary>
+            Specifies a field and direction for sorting query results
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.SortField.Field">
             <summary>
             Field name to sort by (JSON path for MySQL, field name for Redis)
@@ -11900,6 +12680,11 @@
             Comparison operator for query conditions
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.QueryStateResponse">
+            <summary>
+            Response containing paginated query results with total count information
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateResponse.Results">
             <summary>
             Query results
@@ -11920,6 +12705,11 @@
             Items per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkGetStateRequest">
+            <summary>
+            Request to retrieve multiple state values by key in a single operation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.BulkGetStateRequest.StoreName">
             <summary>
             Name of the state store
@@ -11930,9 +12720,19 @@
             Keys to retrieve
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkGetStateResponse">
+            <summary>
+            Response containing the results of a bulk get operation for multiple keys
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.BulkGetStateResponse.Items">
             <summary>
             Results for each key
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.BulkStateItem">
+            <summary>
+            A single item result from a bulk get operation including the key, value, ETag, and found status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.BulkStateItem.Key">
@@ -11970,9 +12770,19 @@
             Include key counts (may be slow for large stores)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.State.ListStoresResponse">
+            <summary>
+            Response containing the list of configured state stores
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.State.ListStoresResponse.Stores">
             <summary>
             List of configured stores
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.StoreInfo">
+            <summary>
+            Information about a configured state store including its name, backend type, and optional key count
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.StoreInfo.Name">
@@ -13349,6 +14159,11 @@
             Optional filter by service ID prefix
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.CapabilityRequest">
+            <summary>
+            Request to retrieve available API methods for a session
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.CapabilityRequest.SessionId">
             <summary>
             Session ID for lookup in Redis
@@ -13357,6 +14172,11 @@
         <member name="P:BeyondImmersion.BannouService.Permissions.CapabilityRequest.ServiceIds">
             <summary>
             Optional filter for specific services
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.CapabilityResponse">
+            <summary>
+            Response containing the compiled permissions for a session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.CapabilityResponse.SessionId">
@@ -13374,6 +14194,11 @@
             When these permissions were compiled
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.ValidationRequest">
+            <summary>
+            Request to validate whether a session has access to a specific API method
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ValidationRequest.SessionId">
             <summary>
             Session ID to validate access for
@@ -13389,6 +14214,11 @@
             Method name being accessed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.ValidationResponse">
+            <summary>
+            Response indicating whether access to a specific API method is permitted
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ValidationResponse.Allowed">
             <summary>
             Whether access is permitted
@@ -13402,6 +14232,11 @@
         <member name="P:BeyondImmersion.BannouService.Permissions.ValidationResponse.Reason">
             <summary>
             Reason for denial (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.ServicePermissionMatrix">
+            <summary>
+            Complete permission matrix for a service defining state-role-method access rules
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ServicePermissionMatrix.ServiceId">
@@ -13427,6 +14262,11 @@
         <member name="T:BeyondImmersion.BannouService.Permissions.StatePermissions">
             <summary>
             Map of Role -&gt; List of Methods for this state
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.RegistrationResponse">
+            <summary>
+            Response from registering or updating a service permission matrix
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.RegistrationResponse.ServiceId">
@@ -13459,6 +14299,11 @@
             Timestamp when permissions were recompiled
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.SessionStateUpdate">
+            <summary>
+            Request to update a session's state for a specific service
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionStateUpdate.SessionId">
             <summary>
             Session ID to update state for
@@ -13484,6 +14329,11 @@
             Optional context data
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.SessionRoleUpdate">
+            <summary>
+            Request to update a session's role affecting permissions across all services
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionRoleUpdate.SessionId">
             <summary>
             Session ID to update role for
@@ -13497,6 +14347,11 @@
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionRoleUpdate.PreviousRole">
             <summary>
             Previous role (null for initial role)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest">
+            <summary>
+            Request to clear a session's state for a specific service
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest.SessionId">
@@ -13515,6 +14370,11 @@
             <br/>current state matches one of these values. If empty or not provided,
             <br/>clears the state unconditionally.
             <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.SessionUpdateResponse">
+            <summary>
+            Response from updating a session's state or role with recompiled permissions
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionUpdateResponse.SessionId">
@@ -13547,9 +14407,19 @@
             Timestamp when the session was updated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.SessionInfoRequest">
+            <summary>
+            Request to retrieve complete information about a session
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionInfoRequest.SessionId">
             <summary>
             Session ID to retrieve information for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.SessionInfo">
+            <summary>
+            Complete session information including role, states, and compiled permissions
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionInfo.SessionId">
@@ -13587,6 +14457,11 @@
             When permissions were last recompiled
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.RegisteredServicesResponse">
+            <summary>
+            Response containing list of all services that have registered their permissions
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.RegisteredServicesResponse.Services">
             <summary>
             List of all registered services
@@ -13595,6 +14470,11 @@
         <member name="P:BeyondImmersion.BannouService.Permissions.RegisteredServicesResponse.Timestamp">
             <summary>
             When this response was generated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Permissions.RegisteredServiceInfo">
+            <summary>
+            Information about a registered service including its ID, version, and endpoint count
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.RegisteredServiceInfo.ServiceId">
@@ -13857,6 +14737,11 @@
             <br/>
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.CreateRelationshipRequest">
+            <summary>
+            Request to create a new relationship between two entities
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.CreateRelationshipRequest.Entity1Id">
             <summary>
             ID of the first entity in the relationship
@@ -13892,9 +14777,19 @@
             Type-specific relationship data (JSON)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.GetRelationshipRequest">
+            <summary>
+            Request to retrieve a specific relationship by its ID
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.GetRelationshipRequest.RelationshipId">
             <summary>
             ID of the relationship to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.ListRelationshipsByEntityRequest">
+            <summary>
+            Request to list all relationships for a specific entity with optional filters
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.ListRelationshipsByEntityRequest.EntityId">
@@ -13932,6 +14827,11 @@
             Number of results per page (max 100)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.GetRelationshipsBetweenRequest">
+            <summary>
+            Request to get all relationships between two specific entities
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.GetRelationshipsBetweenRequest.Entity1Id">
             <summary>
             ID of the first entity to check relationships for
@@ -13960,6 +14860,11 @@
         <member name="P:BeyondImmersion.BannouService.Relationship.GetRelationshipsBetweenRequest.IncludeEnded">
             <summary>
             Include relationships that have ended
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.ListRelationshipsByTypeRequest">
+            <summary>
+            Request to list all relationships of a specific relationship type
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.ListRelationshipsByTypeRequest.RelationshipTypeId">
@@ -13992,6 +14897,11 @@
             Number of results per page (max 100)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.UpdateRelationshipRequest">
+            <summary>
+            Request to update the metadata or type of an existing relationship
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.UpdateRelationshipRequest.RelationshipId">
             <summary>
             ID of the relationship to update
@@ -14007,6 +14917,11 @@
             Updated type-specific relationship data
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.EndRelationshipRequest">
+            <summary>
+            Request to end an existing relationship with an optional timestamp and reason
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.EndRelationshipRequest.RelationshipId">
             <summary>
             ID of the relationship to end
@@ -14020,6 +14935,11 @@
         <member name="P:BeyondImmersion.BannouService.Relationship.EndRelationshipRequest.Reason">
             <summary>
             Optional reason for ending the relationship
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.RelationshipResponse">
+            <summary>
+            Complete details of a relationship between two entities
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipResponse.RelationshipId">
@@ -14075,6 +14995,11 @@
         <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipResponse.UpdatedAt">
             <summary>
             System timestamp when the relationship record was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Relationship.RelationshipListResponse">
+            <summary>
+            Paginated list of relationships with metadata for navigation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipListResponse.Relationships">
@@ -14913,6 +15838,11 @@
             Optional filter by service name prefix
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse">
+            <summary>
+            Response containing service-to-app-id routing mappings for mesh invocation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.Mappings">
             <summary>
             Map of service names to Bannou app-id routing destinations.
@@ -15005,6 +15935,11 @@
             Stream logs in real-time (WebSocket upgrade)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody">
+            <summary>
+            Request body for restarting a container by its app-id
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.AppName">
             <summary>
             Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
@@ -15025,6 +15960,11 @@
             Seconds to allow graceful shutdown before force-kill
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.GetContainerStatusRequest">
+            <summary>
+            Request to retrieve the current status of a specific container
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.GetContainerStatusRequest.AppName">
             <summary>
             Container's app-id for mesh routing
@@ -15040,6 +15980,11 @@
             Include list of configuration key prefixes
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.InfrastructureHealthResponse">
+            <summary>
+            Response containing overall infrastructure health status and individual component details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.InfrastructureHealthResponse.Healthy">
             <summary>
             Overall infrastructure health status
@@ -15053,6 +15998,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.InfrastructureHealthResponse.Components">
             <summary>
             Individual component health status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ComponentHealth">
+            <summary>
+            Health status information for a single infrastructure component (Redis, RabbitMQ, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ComponentHealth.Name">
@@ -15078,6 +16028,56 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ComponentHealth.Metrics">
             <summary>
             Component-specific metrics (e.g., ping time)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.Capacity">
+            <summary>
+            Service capacity metrics from heartbeat monitoring including connection counts and resource usage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.MaxConnections">
+            <summary>
+            Maximum number of connections this service can handle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.CurrentConnections">
+            <summary>
+            Current number of active connections
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.CpuUsage">
+            <summary>
+            CPU usage as a percentage (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.MemoryUsage">
+            <summary>
+            Memory usage as a percentage (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.HealthChecks">
+            <summary>
+            Health check information for a container including last check status and failure tracking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.HealthChecks.LastCheck">
+            <summary>
+            When the last health check was performed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.HealthChecks.Status">
+            <summary>
+            Result of the last health check
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.HealthChecks.ConsecutiveFailures">
+            <summary>
+            Number of consecutive health check failures
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport">
+            <summary>
+            Aggregated health report for all services based on heartbeat monitoring
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthReport.Timestamp">
@@ -15134,7 +16134,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Capacity">
             <summary>
-            Service capacity from heartbeat
+            Current capacity metrics including load and available slots
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Metadata">
@@ -15167,6 +16167,11 @@
             Test timeout in seconds (default 300)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult">
+            <summary>
+            Result of executing a test suite including overall status and individual test outcomes
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Success">
             <summary>
             Overall test success status
@@ -15197,6 +16202,11 @@
             Error message if test execution failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestResult">
+            <summary>
+            Outcome of a single test case including pass/fail status and optional error details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Name">
             <summary>
             Test name
@@ -15222,6 +16232,11 @@
             Stack trace if test failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRestartRequest">
+            <summary>
+            Request to restart a specific service with optional configuration updates
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRestartRequest.ServiceName">
             <summary>
             Name of service to restart
@@ -15240,6 +16255,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRestartRequest.Timeout">
             <summary>
             Timeout for service to become healthy (seconds, default 120)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRestartResult">
+            <summary>
+            Result of a service restart operation including timing and status information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRestartResult.Success">
@@ -15272,9 +16292,19 @@
             Restart result message
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ShouldRestartServiceRequest">
+            <summary>
+            Request to evaluate whether a service should be restarted based on health metrics
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ShouldRestartServiceRequest.ServiceName">
             <summary>
             Name of service to evaluate
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.RestartRecommendation">
+            <summary>
+            Recommendation on whether a service should be restarted with supporting rationale
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.RestartRecommendation.ShouldRestart">
@@ -15312,6 +16342,11 @@
             Container orchestration backend type.
             <br/>Priority order: kubernetes &gt; portainer &gt; swarm &gt; compose
             <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.BackendInfo">
+            <summary>
+            Information about a container orchestration backend including availability and capabilities
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.BackendInfo.Type">
@@ -15356,6 +16391,11 @@
             Error message if detection failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.BackendsResponse">
+            <summary>
+            Response listing all detected container orchestration backends with recommended selection
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.BackendsResponse.Timestamp">
             <summary>
             When detection was performed
@@ -15374,6 +16414,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.BackendsResponse.ActiveBackend">
             <summary>
             Currently active backend (if environment deployed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.DeploymentPreset">
+            <summary>
+            Predefined deployment configuration defining service topology and environment settings
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeploymentPreset.Name">
@@ -15416,6 +16461,11 @@
             Path to preset configuration file
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.PresetsResponse">
+            <summary>
+            Response containing available deployment presets and the currently active preset
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.PresetsResponse.Presets">
             <summary>
             Available deployment presets
@@ -15426,6 +16476,11 @@
             Currently active preset name (if any)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceTopology">
+            <summary>
+            Service distribution topology defining which services run on which nodes
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceTopology.Nodes">
             <summary>
             Container/pod definitions with service assignments
@@ -15434,6 +16489,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceTopology.Infrastructure">
             <summary>
             Infrastructure service configuration
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TopologyNode">
+            <summary>
+            A container or pod in the service topology with its assigned services and configuration
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.Name">
@@ -15546,12 +16606,27 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.IngressConfig.Ports">
             <summary>
-            Port configuration for ingress
+            Port configuration for HTTP and HTTPS traffic
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.IngressConfig.Ssl">
             <summary>
             Whether SSL/TLS is enabled
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.Ports">
+            <summary>
+            Port configuration for ingress specifying HTTP and HTTPS port numbers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.Ports.Http">
+            <summary>
+            HTTP port number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.Ports.Https">
+            <summary>
+            HTTPS port number
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ResourceLimits">
@@ -15588,6 +16663,11 @@
             <br/>
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.DeployRequest">
+            <summary>
+            Request to deploy or update an environment using a preset or custom topology
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployRequest.Preset">
             <summary>
             Preset name to deploy (mutually exclusive with topology)
@@ -15621,6 +16701,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployRequest.WaitForHealthy">
             <summary>
             Wait for all services to report healthy
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.DeployResponse">
+            <summary>
+            Result of a deployment operation including status and deployed service information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployResponse.Success">
@@ -15668,6 +16753,11 @@
             Human-readable deployment summary
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.DeployedService">
+            <summary>
+            Status information for a single deployed service instance
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployedService.Name">
             <summary>
             Service name
@@ -15696,6 +16786,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployedService.Endpoints">
             <summary>
             Exposed endpoints
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.EnvironmentStatus">
+            <summary>
+            Current status of the deployed environment including topology and resource usage
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.EnvironmentStatus.Deployed">
@@ -15748,6 +16843,11 @@
             Time since deployment
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ResourceUsage">
+            <summary>
+            System resource utilization metrics including CPU, memory, disk, and network
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ResourceUsage.CpuPercent">
             <summary>
             Total CPU usage percentage
@@ -15787,6 +16887,11 @@
             <br/>
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TeardownRequest">
+            <summary>
+            Request to tear down a deployed environment with options for data preservation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownRequest.DryRun">
             <summary>
             When true, simulates teardown without actually stopping or removing containers.
@@ -15821,6 +16926,11 @@
             <br/>Docker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -
             <br/>this will destroy all data and require a full re-deployment.
             <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TeardownResponse">
+            <summary>
+            Result of an environment teardown including removed resources and any errors
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Success">
@@ -15868,6 +16978,11 @@
             Type of resource to clean
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.CleanRequest">
+            <summary>
+            Request to clean up Docker resources such as containers, volumes, and images
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanRequest.Targets">
             <summary>
             Resources to clean (or "all")
@@ -15886,6 +17001,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanRequest.LabelFilter">
             <summary>
             Only clean resources matching labels
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.CleanResponse">
+            <summary>
+            Result of a cleanup operation including reclaimed space and removed resource counts
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanResponse.Success">
@@ -15928,6 +17048,11 @@
             Human-readable cleanup summary
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.LogsResponse">
+            <summary>
+            Response containing log entries from a service or container
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.LogsResponse.Service">
             <summary>
             Service name (if queried by service)
@@ -15948,6 +17073,11 @@
             Whether output was truncated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.LogEntry">
+            <summary>
+            A single log entry with timestamp, stream, and message content
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.LogEntry.Timestamp">
             <summary>
             When this log entry was recorded
@@ -15963,6 +17093,11 @@
             Log message content
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateRequest">
+            <summary>
+            Request to apply incremental changes to the current service topology
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateRequest.Changes">
             <summary>
             List of topology changes to apply
@@ -15976,6 +17111,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateRequest.Timeout">
             <summary>
             Timeout for topology update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TopologyChange">
+            <summary>
+            A single topology modification such as adding a node, moving a service, or scaling
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyChange.Action">
@@ -16008,6 +17148,11 @@
             Full node config (for add-node action)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse">
+            <summary>
+            Result of a topology update including applied changes and the new topology state
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse.Success">
             <summary>
             Whether all topology changes were applied successfully
@@ -16038,6 +17183,11 @@
             Human-readable update summary
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.AppliedChange">
+            <summary>
+            Details of a single topology change that was applied, including success status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AppliedChange.Action">
             <summary>
             Type of topology change that was applied
@@ -16056,6 +17206,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AppliedChange.Error">
             <summary>
             Error message if failed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ErrorResponse">
+            <summary>
+            Standard error response with code, message, and optional additional details
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ErrorResponse.Error">
@@ -16216,6 +17371,11 @@
             Seconds to allow graceful shutdown before force-kill
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse">
+            <summary>
+            Response after accepting a container restart request with scheduling details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse.Accepted">
             <summary>
             Whether the restart request was accepted
@@ -16244,6 +17404,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse.Message">
             <summary>
             Additional information
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ContainerStatus">
+            <summary>
+            Current status of a container including health, restart history, and running plugins
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.AppName">
@@ -16288,12 +17453,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.HealthChecks">
             <summary>
-            Health check information for the container
+            Health check configuration and current health status results
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.Labels">
             <summary>
             Container labels for metadata and management
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry">
+            <summary>
+            Record of a past container restart including reason, timing, and outcome
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry.Timestamp">
@@ -16326,9 +17496,19 @@
             Error message if restart failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackRequest">
+            <summary>
+            Request to rollback configuration to the previous version
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackRequest.Reason">
             <summary>
             Why rollback is needed (for auditing)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackResponse">
+            <summary>
+            Result of a configuration rollback including version changes and affected keys
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackResponse.Success">
@@ -16356,6 +17536,11 @@
             Human-readable rollback summary
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ConfigVersionResponse">
+            <summary>
+            Current configuration version information with metadata about available keys
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigVersionResponse.Version">
             <summary>
             Current configuration version number
@@ -16381,6 +17566,11 @@
             Configuration key prefixes present (e.g., "auth", "database")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorRequest">
+            <summary>
+            Request to acquire a processor instance from a processing pool
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorRequest.PoolType">
             <summary>
             Type of processing pool (e.g., "asset-processor", "texture-processor")
@@ -16399,6 +17589,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorRequest.Metadata">
             <summary>
             Optional metadata about the processing job
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse">
+            <summary>
+            Response with acquired processor details including lease information
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.ProcessorId">
@@ -16421,6 +17616,11 @@
             When the lease expires (must release before this)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse">
+            <summary>
+            Response when all processors in a pool are busy with queue position and wait estimate
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.PoolType">
             <summary>
             Pool type that is busy
@@ -16441,6 +17641,11 @@
             Human-readable status message
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorRequest">
+            <summary>
+            Request to release a processor back to the pool after processing completes
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorRequest.LeaseId">
             <summary>
             The lease ID returned from AcquireProcessor
@@ -16456,6 +17661,11 @@
             Optional processing metrics (duration, items processed, etc.)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorResponse">
+            <summary>
+            Confirmation that a processor was released back to the pool
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorResponse.Released">
             <summary>
             Whether the processor was successfully released
@@ -16466,6 +17676,11 @@
             ID of the released processor
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest">
+            <summary>
+            Request to retrieve status and metrics for a processing pool
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest.PoolType">
             <summary>
             Type of processing pool to query
@@ -16474,6 +17689,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest.IncludeMetrics">
             <summary>
             Include recent processing metrics
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse">
+            <summary>
+            Current status of a processing pool including instance counts and utilization
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.PoolType">
@@ -16551,6 +17771,11 @@
             When the pool was last scaled
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ScalePoolRequest">
+            <summary>
+            Request to scale a processing pool to a target number of instances
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolRequest.PoolType">
             <summary>
             Type of processing pool to scale
@@ -16564,6 +17789,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolRequest.Force">
             <summary>
             Force scale even if it would interrupt processing
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse">
+            <summary>
+            Result of a pool scaling operation with before and after instance counts
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.PoolType">
@@ -16596,6 +17826,11 @@
             Status message
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.CleanupPoolRequest">
+            <summary>
+            Request to clean up idle processor instances from a pool
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolRequest.PoolType">
             <summary>
             Type of processing pool to cleanup
@@ -16604,6 +17839,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolRequest.PreserveMinimum">
             <summary>
             Keep at least minInstances running
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse">
+            <summary>
+            Result of a pool cleanup operation with removed instance count
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.PoolType">
@@ -16624,51 +17864,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.Message">
             <summary>
             Status message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.MaxConnections">
-            <summary>
-            Maximum number of connections this service can handle
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.CurrentConnections">
-            <summary>
-            Current number of active connections
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.CpuUsage">
-            <summary>
-            CPU usage as a percentage (0.0 to 1.0)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.Capacity.MemoryUsage">
-            <summary>
-            Memory usage as a percentage (0.0 to 1.0)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.Ports.Http">
-            <summary>
-            HTTP port number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.Ports.Https">
-            <summary>
-            HTTPS port number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.HealthChecks.LastCheck">
-            <summary>
-            When the last health check was performed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.HealthChecks.Status">
-            <summary>
-            Result of the last health check
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.HealthChecks.ConsecutiveFailures">
-            <summary>
-            Number of consecutive health check failures
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Messaging.IMessagingClient.PublishEventAsync(BeyondImmersion.BannouService.Messaging.PublishEventRequest,System.Threading.CancellationToken)">
@@ -16789,6 +17984,11 @@
             <returns>List of topics</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.PublishEventRequest">
+            <summary>
+            Request to publish an event to a messaging topic
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventRequest.Topic">
             <summary>
             Topic/routing key for the event
@@ -16849,6 +18049,11 @@
             Custom headers to include with the message
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.PublishEventResponse">
+            <summary>
+            Response confirming event publication with message identifier
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventResponse.Success">
             <summary>
             Indicates whether the event was published successfully
@@ -16857,6 +18062,11 @@
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventResponse.MessageId">
             <summary>
             Unique identifier assigned to the published message
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.CreateSubscriptionRequest">
+            <summary>
+            Request to create a new subscription to a messaging topic
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.CreateSubscriptionRequest.Topic">
@@ -16909,6 +18119,11 @@
             Name of the consumer group for load balancing
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.CreateSubscriptionResponse">
+            <summary>
+            Response containing the created subscription details
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.CreateSubscriptionResponse.SubscriptionId">
             <summary>
             Unique identifier for the created subscription
@@ -16919,9 +18134,19 @@
             Name of the RabbitMQ queue created for this subscription
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionRequest">
+            <summary>
+            Request to remove an existing subscription
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionRequest.SubscriptionId">
             <summary>
             Unique identifier of the subscription to remove
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionResponse">
+            <summary>
+            Response confirming subscription removal status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionResponse.Success">
@@ -16944,9 +18169,19 @@
             Include topics with no messages
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.ListTopicsResponse">
+            <summary>
+            Response containing a list of available messaging topics
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.ListTopicsResponse.Topics">
             <summary>
             List of topics matching the filter criteria
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.TopicInfo">
+            <summary>
+            Information about a messaging topic including its name and statistics
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.TopicInfo.Name">
@@ -17271,6 +18506,11 @@
             ID of the session to terminate
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.LoginRequest">
+            <summary>
+            Request to authenticate a user with email and password credentials
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.LoginRequest.Email">
             <summary>
             Email address for authentication
@@ -17346,6 +18586,11 @@
             Refresh token for obtaining new access tokens
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.AuthResponse">
+            <summary>
+            Successful authentication response containing tokens and session information
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.AuthResponse.AccountId">
             <summary>
             Unique identifier for the authenticated account
@@ -17379,6 +18624,11 @@
         <member name="P:BeyondImmersion.BannouService.Auth.AuthResponse.RequiresTwoFactor">
             <summary>
             Whether the user needs to complete two-factor authentication
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.OAuthCallbackRequest">
+            <summary>
+            Request containing OAuth provider callback data to complete authentication
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.OAuthCallbackRequest.Code">
@@ -17416,9 +18666,19 @@
             Information about the client device
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.RefreshRequest">
+            <summary>
+            Request to obtain a new access token using a valid refresh token
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.RefreshRequest.RefreshToken">
             <summary>
             Refresh token issued during authentication to obtain a new access token
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.ValidateTokenResponse">
+            <summary>
+            Response from token validation containing validity status and associated account details
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.ValidateTokenResponse.Valid">
@@ -17453,14 +18713,29 @@
             Seconds until expiration
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.LogoutRequest">
+            <summary>
+            Request to logout and invalidate authentication tokens
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.LogoutRequest.AllSessions">
             <summary>
             Logout from all sessions/devices
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.SessionsResponse">
+            <summary>
+            Response containing a list of all active sessions for an account
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.SessionsResponse.Sessions">
             <summary>
             List of active sessions for the account
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.SessionInfo">
+            <summary>
+            Information about an active user session including device and activity details
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.SessionInfo.SessionId">
@@ -17493,6 +18768,11 @@
             Geographic location derived from the IP address
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.DeviceInfo">
+            <summary>
+            Information about the client device used for authentication or session tracking
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.DeviceInfo.DeviceType">
             <summary>
             Category of the device
@@ -17513,9 +18793,19 @@
             Version of the client application
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.PasswordResetRequest">
+            <summary>
+            Request to initiate a password reset by sending a reset link to the email
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.PasswordResetRequest.Email">
             <summary>
             Email address associated with the account to reset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.PasswordResetConfirmRequest">
+            <summary>
+            Request to confirm a password reset using the emailed token and new password
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.PasswordResetConfirmRequest.Token">
@@ -17551,6 +18841,11 @@
         <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
             <summary>
             The preferred Connect service instance ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.Providers">
+            <summary>
+            An OAuth provider available for user authentication, including its identifier, display name, and authentication URL
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.Providers.Name">
@@ -17723,6 +19018,11 @@
             Character lifecycle status
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CreateCharacterRequest">
+            <summary>
+            Request payload for creating a new character in the game world
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Character.CreateCharacterRequest.Name">
             <summary>
             Character name
@@ -17748,9 +19048,19 @@
             Initial lifecycle status for the character
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Character.GetCharacterRequest">
+            <summary>
+            Request payload for retrieving a single character by ID
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Character.GetCharacterRequest.CharacterId">
             <summary>
             ID of the character to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.UpdateCharacterRequest">
+            <summary>
+            Request payload for updating an existing character's properties
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Character.UpdateCharacterRequest.CharacterId">
@@ -17778,9 +19088,19 @@
             In-game death timestamp (sets status to dead)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Character.DeleteCharacterRequest">
+            <summary>
+            Request payload for permanently deleting a character
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Character.DeleteCharacterRequest.CharacterId">
             <summary>
             ID of the character to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.ListCharactersRequest">
+            <summary>
+            Request payload for listing characters with optional filtering and pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Character.ListCharactersRequest.RealmId">
@@ -17808,6 +19128,11 @@
             Number of results per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Character.GetCharactersByRealmRequest">
+            <summary>
+            Request payload for retrieving all characters within a specific realm
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Character.GetCharactersByRealmRequest.RealmId">
             <summary>
             Realm ID to query (uses partition key for efficiency)
@@ -17831,6 +19156,11 @@
         <member name="P:BeyondImmersion.BannouService.Character.GetCharactersByRealmRequest.PageSize">
             <summary>
             Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CharacterResponse">
+            <summary>
+            Complete character data returned from character operations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Character.CharacterResponse.CharacterId">
@@ -17876,6 +19206,11 @@
         <member name="P:BeyondImmersion.BannouService.Character.CharacterResponse.UpdatedAt">
             <summary>
             Real-world last update timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CharacterListResponse">
+            <summary>
+            Paginated list of characters with metadata for navigation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Character.CharacterListResponse.Characters">
@@ -18547,6 +19882,11 @@
             Bundle file format
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.UploadRequest">
+            <summary>
+            Request to initiate an asset upload and receive a pre-signed URL
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Filename">
             <summary>
             Original filename with extension
@@ -18565,6 +19905,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Metadata">
             <summary>
             Optional metadata for asset categorization
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.UploadResponse">
+            <summary>
+            Response containing pre-signed URL and configuration for uploading an asset
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.UploadId">
@@ -18587,6 +19932,11 @@
             Configuration for multipart uploads if file size requires it
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CompleteUploadRequest">
+            <summary>
+            Request to finalize an upload and trigger asset processing
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.UploadId">
             <summary>
             Upload session ID from requestUpload
@@ -18597,6 +19947,11 @@
             For multipart uploads - ETags of completed parts
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CompletedPart">
+            <summary>
+            Information about a completed part in a multipart upload
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.PartNumber">
             <summary>
             Part number (1-based)
@@ -18605,6 +19960,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.Etag">
             <summary>
             ETag returned from part upload
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.MultipartConfig">
+            <summary>
+            Configuration for multipart uploads of large files
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.Required">
@@ -18625,6 +19985,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.UploadUrls">
             <summary>
             Pre-signed URLs for each part of the multipart upload
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.PartUploadInfo">
+            <summary>
+            Upload information for a single part in a multipart upload
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.PartNumber">
@@ -18732,6 +20097,11 @@
             Timestamp when the asset was last updated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetAssetRequest">
+            <summary>
+            Request to retrieve asset metadata and download URL
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.AssetId">
             <summary>
             Asset identifier
@@ -18740,6 +20110,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.Version">
             <summary>
             Version ID or 'latest'
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl">
+            <summary>
+            Asset metadata combined with a pre-signed download URL
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.AssetId">
@@ -18782,6 +20157,11 @@
             Complete asset metadata
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ListVersionsRequest">
+            <summary>
+            Request to list all versions of an asset with pagination
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.AssetId">
             <summary>
             Asset identifier to list versions for
@@ -18795,6 +20175,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.Offset">
             <summary>
             Number of versions to skip for pagination
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetVersionList">
+            <summary>
+            Paginated list of asset versions
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.AssetId">
@@ -18822,6 +20207,11 @@
             Number of versions skipped
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetVersion">
+            <summary>
+            Metadata for a specific version of an asset
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.VersionId">
             <summary>
             Unique version identifier
@@ -18840,6 +20230,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.IsArchived">
             <summary>
             Whether this version is in cold storage
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetSearchRequest">
+            <summary>
+            Search criteria for filtering assets with pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Tags">
@@ -18872,6 +20267,11 @@
             Number of results to skip for pagination
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetSearchResult">
+            <summary>
+            Paginated results from an asset search query
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Assets">
             <summary>
             List of matching assets
@@ -18890,6 +20290,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Offset">
             <summary>
             Number of results skipped
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CreateBundleRequest">
+            <summary>
+            Request to create a new asset bundle from multiple assets
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.BundleId">
@@ -18917,6 +20322,11 @@
             Custom metadata for the bundle
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CreateBundleResponse">
+            <summary>
+            Response with bundle creation status and estimated size
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.BundleId">
             <summary>
             Unique bundle identifier
@@ -18932,6 +20342,11 @@
             Estimated bundle size in bytes
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetBundleRequest">
+            <summary>
+            Request to retrieve bundle metadata and download URL
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.BundleId">
             <summary>
             Bundle identifier to retrieve
@@ -18940,6 +20355,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.Format">
             <summary>
             Desired download format (bannou or zip)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl">
+            <summary>
+            Bundle metadata combined with a pre-signed download URL
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.BundleId">
@@ -18980,6 +20400,11 @@
         <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.FromCache">
             <summary>
             True if ZIP format was served from conversion cache
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleUploadRequest">
+            <summary>
+            Request to upload a pre-built asset bundle file
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Filename">
@@ -20037,9 +21462,19 @@
             Type classification for locations
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.GetLocationRequest">
+            <summary>
+            Request to retrieve a location by its unique identifier
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.GetLocationRequest.LocationId">
             <summary>
             Unique identifier of the location
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.GetLocationByCodeRequest">
+            <summary>
+            Request to retrieve a location by its code within a specific realm
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.GetLocationByCodeRequest.Code">
@@ -20050,6 +21485,11 @@
         <member name="P:BeyondImmersion.BannouService.Location.GetLocationByCodeRequest.RealmId">
             <summary>
             Realm ID to scope the code lookup
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.ListLocationsRequest">
+            <summary>
+            Request to list locations with optional filtering by realm, type, and deprecation status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.ListLocationsRequest.RealmId">
@@ -20077,6 +21517,11 @@
             Number of results per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.ListLocationsByRealmRequest">
+            <summary>
+            Request to list all locations within a specific realm with optional filtering
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.ListLocationsByRealmRequest.RealmId">
             <summary>
             Realm ID to query
@@ -20100,6 +21545,11 @@
         <member name="P:BeyondImmersion.BannouService.Location.ListLocationsByRealmRequest.PageSize">
             <summary>
             Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.ListLocationsByParentRequest">
+            <summary>
+            Request to list all child locations of a specified parent location
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.ListLocationsByParentRequest.ParentLocationId">
@@ -20127,6 +21577,11 @@
             Number of results per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.ListRootLocationsRequest">
+            <summary>
+            Request to list all top-level locations (without parents) in a realm
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.ListRootLocationsRequest.RealmId">
             <summary>
             Realm ID to get root locations for
@@ -20152,9 +21607,19 @@
             Number of results per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.GetLocationAncestorsRequest">
+            <summary>
+            Request to retrieve the full ancestry chain of a location up to the root
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.GetLocationAncestorsRequest.LocationId">
             <summary>
             The location to get ancestors for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.GetLocationDescendantsRequest">
+            <summary>
+            Request to retrieve all descendants of a location (children, grandchildren, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.GetLocationDescendantsRequest.LocationId">
@@ -20185,6 +21650,11 @@
         <member name="P:BeyondImmersion.BannouService.Location.GetLocationDescendantsRequest.PageSize">
             <summary>
             Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.CreateLocationRequest">
+            <summary>
+            Request to create a new location within a realm
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.CreateLocationRequest.Code">
@@ -20222,6 +21692,11 @@
             Additional metadata for the location (JSON)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.UpdateLocationRequest">
+            <summary>
+            Request to update an existing location's properties
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.UpdateLocationRequest.LocationId">
             <summary>
             ID of the location to update
@@ -20247,6 +21722,11 @@
             Additional metadata
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.SetLocationParentRequest">
+            <summary>
+            Request to set or change a location's parent in the hierarchy
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.SetLocationParentRequest.LocationId">
             <summary>
             ID of the location to update
@@ -20257,14 +21737,29 @@
             ID of the new parent location (must be in same realm)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.RemoveLocationParentRequest">
+            <summary>
+            Request to remove a location's parent, making it a root location
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.RemoveLocationParentRequest.LocationId">
             <summary>
             ID of the location to make a root location
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.DeleteLocationRequest">
+            <summary>
+            Request to permanently delete a location from the system
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.DeleteLocationRequest.LocationId">
             <summary>
             ID of the location to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.DeprecateLocationRequest">
+            <summary>
+            Request to soft-delete a location by marking it as deprecated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.DeprecateLocationRequest.LocationId">
@@ -20277,14 +21772,29 @@
             Optional reason for deprecation (for audit purposes)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.UndeprecateLocationRequest">
+            <summary>
+            Request to restore a deprecated location back to active status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.UndeprecateLocationRequest.LocationId">
             <summary>
             ID of the location to restore
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.LocationExistsRequest">
+            <summary>
+            Request to check if a location exists and is active
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.LocationExistsRequest.LocationId">
             <summary>
             ID of the location to validate
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.LocationExistsResponse">
+            <summary>
+            Response indicating whether a location exists and its active status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.LocationExistsResponse.Exists">
@@ -20307,6 +21817,11 @@
             The realm ID if location found
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.SeedLocationsRequest">
+            <summary>
+            Request to seed multiple locations from configuration data
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.SeedLocationsRequest.Locations">
             <summary>
             List of locations to seed (processed in dependency order)
@@ -20315,6 +21830,11 @@
         <member name="P:BeyondImmersion.BannouService.Location.SeedLocationsRequest.UpdateExisting">
             <summary>
             Whether to update locations that already exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.SeedLocation">
+            <summary>
+            Location data for seeding operations, using codes instead of IDs for references
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.SeedLocation.Code">
@@ -20350,6 +21870,11 @@
         <member name="P:BeyondImmersion.BannouService.Location.SeedLocation.Metadata">
             <summary>
             Additional metadata for the location (JSON)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.LocationResponse">
+            <summary>
+            Complete location data returned from API operations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.LocationResponse.LocationId">
@@ -20422,6 +21947,11 @@
             Timestamp when the location was last updated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Location.LocationListResponse">
+            <summary>
+            Paginated list of locations with metadata for navigation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Location.LocationListResponse.Locations">
             <summary>
             List of locations matching the query
@@ -20450,6 +21980,11 @@
         <member name="P:BeyondImmersion.BannouService.Location.LocationListResponse.HasPreviousPage">
             <summary>
             Whether there are pages before the current page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Location.SeedLocationsResponse">
+            <summary>
+            Summary of a seed operation including counts of created, updated, and skipped locations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Location.SeedLocationsResponse.Created">
@@ -20834,14 +22369,29 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.GetSpeciesRequest">
+            <summary>
+            Request to retrieve a single species by its unique identifier
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.GetSpeciesRequest.SpeciesId">
             <summary>
             Unique identifier of the species
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.GetSpeciesByCodeRequest">
+            <summary>
+            Request to retrieve a species by its unique code identifier
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.GetSpeciesByCodeRequest.Code">
             <summary>
             Unique code for the species (e.g., "HUMAN", "ELF", "DWARF")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.ListSpeciesRequest">
+            <summary>
+            Request to list species with optional filtering and pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.ListSpeciesRequest.Category">
@@ -20869,6 +22419,11 @@
             Number of items per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.ListSpeciesByRealmRequest">
+            <summary>
+            Request to list species available within a specific realm
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.ListSpeciesByRealmRequest.RealmId">
             <summary>
             ID of the realm to filter by
@@ -20887,6 +22442,11 @@
         <member name="P:BeyondImmersion.BannouService.Species.ListSpeciesByRealmRequest.PageSize">
             <summary>
             Number of items per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.CreateSpeciesRequest">
+            <summary>
+            Request to create a new species with its attributes and realm associations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.CreateSpeciesRequest.Code">
@@ -20939,6 +22499,11 @@
             Additional metadata for the species
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.UpdateSpeciesRequest">
+            <summary>
+            Request to update an existing species with partial attribute changes
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.UpdateSpeciesRequest.SpeciesId">
             <summary>
             ID of the species to update
@@ -20984,9 +22549,19 @@
             Additional metadata
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.DeleteSpeciesRequest">
+            <summary>
+            Request to hard-delete a deprecated species with no remaining references
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.DeleteSpeciesRequest.SpeciesId">
             <summary>
             ID of the species to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.DeprecateSpeciesRequest">
+            <summary>
+            Request to soft-delete a species, preventing new character creation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.DeprecateSpeciesRequest.SpeciesId">
@@ -20999,9 +22574,19 @@
             Optional reason for deprecation (for audit purposes)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.UndeprecateSpeciesRequest">
+            <summary>
+            Request to restore a deprecated species to active status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.UndeprecateSpeciesRequest.SpeciesId">
             <summary>
             ID of the species to restore
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.MergeSpeciesRequest">
+            <summary>
+            Request to migrate all characters from a deprecated species to a target species
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.MergeSpeciesRequest.SourceSpeciesId">
@@ -21019,6 +22604,11 @@
             If true, hard-delete the source species after successful merge
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.AddSpeciesToRealmRequest">
+            <summary>
+            Request to make a species available for character creation in a realm
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.AddSpeciesToRealmRequest.SpeciesId">
             <summary>
             ID of the species
@@ -21027,6 +22617,11 @@
         <member name="P:BeyondImmersion.BannouService.Species.AddSpeciesToRealmRequest.RealmId">
             <summary>
             ID of the realm to add the species to
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.RemoveSpeciesFromRealmRequest">
+            <summary>
+            Request to remove a species from availability in a realm
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.RemoveSpeciesFromRealmRequest.SpeciesId">
@@ -21039,6 +22634,11 @@
             ID of the realm to remove the species from
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.SeedSpeciesRequest">
+            <summary>
+            Request to bulk-create or update species from a predefined list
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.SeedSpeciesRequest.Species">
             <summary>
             List of species to seed
@@ -21047,6 +22647,11 @@
         <member name="P:BeyondImmersion.BannouService.Species.SeedSpeciesRequest.UpdateExisting">
             <summary>
             Whether to update species that already exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.SeedSpecies">
+            <summary>
+            Species definition used in bulk seeding operations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.SeedSpecies.Code">
@@ -21097,6 +22702,11 @@
         <member name="P:BeyondImmersion.BannouService.Species.SeedSpecies.Metadata">
             <summary>
             Additional metadata for the species
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.SpeciesResponse">
+            <summary>
+            Complete species data including all attributes and realm associations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.SpeciesResponse.SpeciesId">
@@ -21179,6 +22789,11 @@
             Timestamp when the species was last updated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.SpeciesListResponse">
+            <summary>
+            Paginated list of species with total count for pagination
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.SpeciesListResponse.Species">
             <summary>
             List of species matching the query
@@ -21199,6 +22814,11 @@
             Number of items per page
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Species.SeedSpeciesResponse">
+            <summary>
+            Summary of a bulk species seeding operation with counts and errors
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Species.SeedSpeciesResponse.Created">
             <summary>
             Number of new species created
@@ -21217,6 +22837,11 @@
         <member name="P:BeyondImmersion.BannouService.Species.SeedSpeciesResponse.Errors">
             <summary>
             List of error messages for species that failed to seed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Species.MergeSpeciesResponse">
+            <summary>
+            Result of a species merge operation including migration statistics
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.MergeSpeciesResponse.SourceSpeciesId">
@@ -21517,14 +23142,29 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.GetRealmRequest">
+            <summary>
+            Request to retrieve a specific realm by its unique identifier
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.GetRealmRequest.RealmId">
             <summary>
             Unique identifier of the realm
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.GetRealmByCodeRequest">
+            <summary>
+            Request to retrieve a realm by its unique code identifier
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.GetRealmByCodeRequest.Code">
             <summary>
             Unique code for the realm (e.g., "OMEGA", "ARCADIA", "FANTASIA")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.ListRealmsRequest">
+            <summary>
+            Request to list realms with optional filtering and pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.ListRealmsRequest.Category">
@@ -21550,6 +23190,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.ListRealmsRequest.PageSize">
             <summary>
             Number of realms to return per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.CreateRealmRequest">
+            <summary>
+            Request to create a new realm with the specified properties
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.CreateRealmRequest.Code">
@@ -21582,6 +23227,11 @@
             Additional metadata for the realm (JSON)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.UpdateRealmRequest">
+            <summary>
+            Request to update an existing realm's properties
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.UpdateRealmRequest.RealmId">
             <summary>
             ID of the realm to update
@@ -21612,9 +23262,19 @@
             Additional metadata
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.DeleteRealmRequest">
+            <summary>
+            Request to permanently delete a realm from the system
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.DeleteRealmRequest.RealmId">
             <summary>
             ID of the realm to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.DeprecateRealmRequest">
+            <summary>
+            Request to mark a realm as deprecated, preventing new entity creation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.DeprecateRealmRequest.RealmId">
@@ -21627,14 +23287,29 @@
             Optional reason for deprecation (for audit purposes)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.UndeprecateRealmRequest">
+            <summary>
+            Request to restore a deprecated realm to active status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.UndeprecateRealmRequest.RealmId">
             <summary>
             ID of the realm to restore
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmExistsRequest">
+            <summary>
+            Request to check if a realm exists and is available for use
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmExistsRequest.RealmId">
             <summary>
             ID of the realm to validate
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmExistsResponse">
+            <summary>
+            Response indicating whether a realm exists and its active status
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmExistsResponse.Exists">
@@ -21652,6 +23327,11 @@
             The realm ID if found
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.SeedRealmsRequest">
+            <summary>
+            Request to seed multiple realms from configuration data
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealmsRequest.Realms">
             <summary>
             List of realms to seed
@@ -21660,6 +23340,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealmsRequest.UpdateExisting">
             <summary>
             Whether to update realms that already exist
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.SeedRealm">
+            <summary>
+            Realm data used for seeding operations during service initialization
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealm.Code">
@@ -21690,6 +23375,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealm.Metadata">
             <summary>
             Additional custom metadata for the realm (JSON)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmResponse">
+            <summary>
+            Complete realm information returned from API operations
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmResponse.RealmId">
@@ -21752,6 +23442,11 @@
             Timestamp when the realm was last updated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.RealmListResponse">
+            <summary>
+            Paginated list of realms with metadata for navigation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.RealmListResponse.Realms">
             <summary>
             List of realms matching the query criteria
@@ -21780,6 +23475,11 @@
         <member name="P:BeyondImmersion.BannouService.Realm.RealmListResponse.HasPreviousPage">
             <summary>
             Whether there are realms available on the previous page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Realm.SeedRealmsResponse">
+            <summary>
+            Summary of a realm seeding operation including counts and errors
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealmsResponse.Created">
@@ -24709,6 +26409,11 @@
             ID of the game session
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Player">
+            <summary>
+            Information about the player who joined the session
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.CurrentPlayerCount">
             <summary>
             Total players in session after join
@@ -24965,12 +26670,17 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Position">
             <summary>
-            World position for the effect
+            World position for the effect in 3D space coordinates
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.EffectData">
             <summary>
             Effect-specific parameters
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.Position">
+            <summary>
+            3D world coordinates representing a position in game space
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.Position.X">

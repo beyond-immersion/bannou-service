@@ -44,6 +44,9 @@ public partial class GetClientCapabilitiesRequest
 
 }
 
+/// <summary>
+/// Response containing the client's capability manifest with available API endpoints and shortcuts
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ClientCapabilitiesResponse
 {
@@ -104,6 +107,9 @@ public partial class ClientCapabilitiesResponse
 
 }
 
+/// <summary>
+/// A single API capability available to the client, mapping a client-salted GUID to a service endpoint
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ClientCapability
 {
@@ -249,6 +255,9 @@ public partial class ClientShortcut
 
 }
 
+/// <summary>
+/// Request to proxy an API call through the Connect service to a target backend service
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InternalProxyRequest
 {
@@ -321,6 +330,9 @@ public partial class InternalProxyRequest
 
 }
 
+/// <summary>
+/// Response from a proxied API call containing the target service's response data
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InternalProxyResponse
 {
@@ -394,6 +406,9 @@ public partial class ConnectionData
 
 }
 
+/// <summary>
+/// Error response returned when WebSocket connection establishment fails
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConnectErrorResponse
 {

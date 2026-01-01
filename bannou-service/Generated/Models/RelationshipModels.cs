@@ -62,6 +62,9 @@ public enum EntityType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to create a new relationship between two entities
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateRelationshipRequest
 {
@@ -133,6 +136,9 @@ public partial class CreateRelationshipRequest
 
 }
 
+/// <summary>
+/// Request to retrieve a specific relationship by its ID
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetRelationshipRequest
 {
@@ -156,6 +162,9 @@ public partial class GetRelationshipRequest
 
 }
 
+/// <summary>
+/// Request to list all relationships for a specific entity with optional filters
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListRelationshipsByEntityRequest
 {
@@ -221,6 +230,9 @@ public partial class ListRelationshipsByEntityRequest
 
 }
 
+/// <summary>
+/// Request to get all relationships between two specific entities
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetRelationshipsBetweenRequest
 {
@@ -282,6 +294,9 @@ public partial class GetRelationshipsBetweenRequest
 
 }
 
+/// <summary>
+/// Request to list all relationships of a specific relationship type
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListRelationshipsByTypeRequest
 {
@@ -339,6 +354,9 @@ public partial class ListRelationshipsByTypeRequest
 
 }
 
+/// <summary>
+/// Request to update the metadata or type of an existing relationship
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateRelationshipRequest
 {
@@ -374,6 +392,9 @@ public partial class UpdateRelationshipRequest
 
 }
 
+/// <summary>
+/// Request to end an existing relationship with an optional timestamp and reason
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class EndRelationshipRequest
 {
@@ -410,6 +431,9 @@ public partial class EndRelationshipRequest
 
 }
 
+/// <summary>
+/// Complete details of a relationship between two entities
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RelationshipResponse
 {
@@ -509,6 +533,9 @@ public partial class RelationshipResponse
 
 }
 
+/// <summary>
+/// Paginated list of relationships with metadata for navigation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RelationshipListResponse
 {

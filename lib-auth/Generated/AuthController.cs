@@ -398,6 +398,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/LoginRequest",
   "$defs": {
     "LoginRequest": {
+      "description": "Request to authenticate a user with email and password credentials",
       "type": "object",
       "required": [
         "email",
@@ -426,6 +427,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "DeviceInfo": {
+      "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
       "properties": {
         "deviceType": {
@@ -464,6 +466,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/AuthResponse",
   "$defs": {
     "AuthResponse": {
+      "description": "Successful authentication response containing tokens and session information",
       "type": "object",
       "required": [
         "accountId",
@@ -770,6 +773,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/OAuthCallbackRequest",
   "$defs": {
     "OAuthCallbackRequest": {
+      "description": "Request containing OAuth provider callback data to complete authentication",
       "type": "object",
       "required": [
         "code"
@@ -791,6 +795,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "DeviceInfo": {
+      "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
       "properties": {
         "deviceType": {
@@ -829,6 +834,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/AuthResponse",
   "$defs": {
     "AuthResponse": {
+      "description": "Successful authentication response containing tokens and session information",
       "type": "object",
       "required": [
         "accountId",
@@ -958,6 +964,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "DeviceInfo": {
+      "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
       "properties": {
         "deviceType": {
@@ -996,6 +1003,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/AuthResponse",
   "$defs": {
     "AuthResponse": {
+      "description": "Successful authentication response containing tokens and session information",
       "type": "object",
       "required": [
         "accountId",
@@ -1107,6 +1115,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/RefreshRequest",
   "$defs": {
     "RefreshRequest": {
+      "description": "Request to obtain a new access token using a valid refresh token",
       "type": "object",
       "required": [
         "refreshToken"
@@ -1128,6 +1137,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/AuthResponse",
   "$defs": {
     "AuthResponse": {
+      "description": "Successful authentication response containing tokens and session information",
       "type": "object",
       "required": [
         "accountId",
@@ -1243,6 +1253,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/ValidateTokenResponse",
   "$defs": {
     "ValidateTokenResponse": {
+      "description": "Response from token validation containing validity status and associated account details",
       "type": "object",
       "required": [
         "valid",
@@ -1350,6 +1361,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/LogoutRequest",
   "$defs": {
     "LogoutRequest": {
+      "description": "Request to logout and invalidate authentication tokens",
       "type": "object",
       "properties": {
         "allSessions": {
@@ -1433,6 +1445,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/SessionsResponse",
   "$defs": {
     "SessionsResponse": {
+      "description": "Response containing a list of all active sessions for an account",
       "type": "object",
       "required": [
         "sessions"
@@ -1448,6 +1461,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "SessionInfo": {
+      "description": "Information about an active user session including device and activity details",
       "type": "object",
       "required": [
         "sessionId",
@@ -1486,6 +1500,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       }
     },
     "DeviceInfo": {
+      "description": "Information about the client device used for authentication or session tracking",
       "type": "object",
       "properties": {
         "deviceType": {
@@ -1663,6 +1678,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/PasswordResetRequest",
   "$defs": {
     "PasswordResetRequest": {
+      "description": "Request to initiate a password reset by sending a reset link to the email",
       "type": "object",
       "required": [
         "email"
@@ -1745,6 +1761,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$ref": "#/$defs/PasswordResetConfirmRequest",
   "$defs": {
     "PasswordResetConfirmRequest": {
+      "description": "Request to confirm a password reset using the emailed token and new password",
       "type": "object",
       "required": [
         "token",

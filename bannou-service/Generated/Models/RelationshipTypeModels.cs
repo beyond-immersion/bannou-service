@@ -14,6 +14,9 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 
 using System = global::System;
 
+/// <summary>
+/// Request to retrieve a relationship type by its unique identifier
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetRelationshipTypeRequest
 {
@@ -37,6 +40,9 @@ public partial class GetRelationshipTypeRequest
 
 }
 
+/// <summary>
+/// Request to retrieve a relationship type by its unique code string
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetRelationshipTypeByCodeRequest
 {
@@ -62,6 +68,9 @@ public partial class GetRelationshipTypeByCodeRequest
 
 }
 
+/// <summary>
+/// Request to list relationship types with optional filtering by category, hierarchy, and deprecation status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListRelationshipTypesRequest
 {
@@ -101,6 +110,9 @@ public partial class ListRelationshipTypesRequest
 
 }
 
+/// <summary>
+/// Request to retrieve all child relationship types for a given parent type
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetChildRelationshipTypesRequest
 {
@@ -130,6 +142,9 @@ public partial class GetChildRelationshipTypesRequest
 
 }
 
+/// <summary>
+/// Request to check if a relationship type matches or descends from an ancestor type in the hierarchy
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MatchesHierarchyRequest
 {
@@ -161,6 +176,9 @@ public partial class MatchesHierarchyRequest
 
 }
 
+/// <summary>
+/// Request to retrieve all ancestor types in the hierarchy chain from a relationship type up to the root
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetAncestorsRequest
 {
@@ -184,6 +202,9 @@ public partial class GetAncestorsRequest
 
 }
 
+/// <summary>
+/// Request to create a new relationship type with code, name, and optional hierarchy and inverse settings
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateRelationshipTypeRequest
 {
@@ -257,6 +278,9 @@ public partial class CreateRelationshipTypeRequest
 
 }
 
+/// <summary>
+/// Request to update an existing relationship type's properties such as name, description, category, or hierarchy
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateRelationshipTypeRequest
 {
@@ -326,6 +350,9 @@ public partial class UpdateRelationshipTypeRequest
 
 }
 
+/// <summary>
+/// Request to permanently delete a relationship type (typically after deprecation and merge)
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteRelationshipTypeRequest
 {
@@ -349,6 +376,9 @@ public partial class DeleteRelationshipTypeRequest
 
 }
 
+/// <summary>
+/// Request to deprecate a relationship type, preventing its use for new relationships while preserving existing ones
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeprecateRelationshipTypeRequest
 {
@@ -379,6 +409,9 @@ public partial class DeprecateRelationshipTypeRequest
 
 }
 
+/// <summary>
+/// Request to restore a deprecated relationship type back to active status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UndeprecateRelationshipTypeRequest
 {
@@ -402,6 +435,9 @@ public partial class UndeprecateRelationshipTypeRequest
 
 }
 
+/// <summary>
+/// Request to migrate all relationships from a deprecated source type to a target type
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeRelationshipTypeRequest
 {
@@ -439,6 +475,9 @@ public partial class MergeRelationshipTypeRequest
 
 }
 
+/// <summary>
+/// Request to bulk seed relationship types from configuration, typically used at startup
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedRelationshipTypesRequest
 {
@@ -468,6 +507,9 @@ public partial class SeedRelationshipTypesRequest
 
 }
 
+/// <summary>
+/// A relationship type definition used for seeding, with code-based parent and inverse references
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedRelationshipType
 {
@@ -535,6 +577,9 @@ public partial class SeedRelationshipType
 
 }
 
+/// <summary>
+/// Complete representation of a relationship type including hierarchy, inverse, and deprecation information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RelationshipTypeResponse
 {
@@ -662,6 +707,9 @@ public partial class RelationshipTypeResponse
 
 }
 
+/// <summary>
+/// Response containing a list of relationship types with total count
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RelationshipTypeListResponse
 {
@@ -691,6 +739,9 @@ public partial class RelationshipTypeListResponse
 
 }
 
+/// <summary>
+/// Response indicating whether a type matches an ancestor in the hierarchy and the depth between them
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MatchesHierarchyResponse
 {
@@ -718,6 +769,9 @@ public partial class MatchesHierarchyResponse
 
 }
 
+/// <summary>
+/// Response summarizing the results of a bulk seed operation with counts of created, updated, and skipped types
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedRelationshipTypesResponse
 {
@@ -759,6 +813,9 @@ public partial class SeedRelationshipTypesResponse
 
 }
 
+/// <summary>
+/// Response summarizing the results of a merge operation including the number of relationships migrated
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeRelationshipTypeResponse
 {

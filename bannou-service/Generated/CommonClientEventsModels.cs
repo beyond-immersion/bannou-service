@@ -325,6 +325,9 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// The session shortcut definition containing the pre-bound payload and routing information.
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("shortcut")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -430,6 +433,9 @@ public partial class SessionShortcut
     [System.Text.Json.Serialization.JsonRequired]
     public string BoundPayload { get; set; } = default!;
 
+    /// <summary>
+    /// Metadata about the shortcut including display name, source service, and lifecycle information.
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]

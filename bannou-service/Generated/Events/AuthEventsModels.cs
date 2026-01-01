@@ -32,6 +32,9 @@ public partial class SessionInvalidatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> SessionIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
+    /// <summary>
+    /// The reason why the session(s) were invalidated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -113,6 +116,9 @@ public partial class SessionUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Authorizations { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
+    /// <summary>
+    /// The reason why the session was updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

@@ -70,6 +70,7 @@ components:
           description: List of session IDs that were invalidated
         reason:
           $ref: '#/components/schemas/SessionInvalidatedEventReason'
+          description: The reason why the session(s) were invalidated
         disconnectClients:
           type: boolean
           default: true
@@ -114,6 +115,7 @@ components:
           description: Current authorization strings (e.g., ["arcadia:authorized"])
         reason:
           $ref: '#/components/schemas/SessionUpdatedEventReason'
+          description: The reason why the session was updated
 
     SessionUpdatedEventReason:
       type: string

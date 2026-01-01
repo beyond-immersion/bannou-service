@@ -955,6 +955,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/InfrastructureHealthResponse",
   "$defs": {
     "InfrastructureHealthResponse": {
+      "description": "Response containing overall infrastructure health status and individual component details",
       "type": "object",
       "required": [
         "healthy",
@@ -981,6 +982,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "ComponentHealth": {
+      "description": "Health status information for a single infrastructure component (Redis, RabbitMQ, etc.)",
       "type": "object",
       "required": [
         "name",
@@ -1101,6 +1103,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ServiceHealthReport",
   "$defs": {
     "ServiceHealthReport": {
+      "description": "Aggregated health report for all services based on heartbeat monitoring",
       "type": "object",
       "required": [
         "timestamp",
@@ -1168,33 +1171,37 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "Last heartbeat timestamp"
         },
         "capacity": {
-          "type": "object",
-          "description": "Service capacity from heartbeat",
-          "properties": {
-            "maxConnections": {
-              "type": "integer",
-              "description": "Maximum number of connections this service can handle"
-            },
-            "currentConnections": {
-              "type": "integer",
-              "description": "Current number of active connections"
-            },
-            "cpuUsage": {
-              "type": "number",
-              "format": "float",
-              "description": "CPU usage as a percentage (0.0 to 1.0)"
-            },
-            "memoryUsage": {
-              "type": "number",
-              "format": "float",
-              "description": "Memory usage as a percentage (0.0 to 1.0)"
-            }
-          }
+          "description": "Current capacity metrics including load and available slots",
+          "$ref": "#/$defs/Capacity"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
           "description": "Additional service metadata"
+        }
+      }
+    },
+    "Capacity": {
+      "type": "object",
+      "description": "Service capacity metrics from heartbeat monitoring including connection counts and resource usage",
+      "properties": {
+        "maxConnections": {
+          "type": "integer",
+          "description": "Maximum number of connections this service can handle"
+        },
+        "currentConnections": {
+          "type": "integer",
+          "description": "Current number of active connections"
+        },
+        "cpuUsage": {
+          "type": "number",
+          "format": "float",
+          "description": "CPU usage as a percentage (0.0 to 1.0)"
+        },
+        "memoryUsage": {
+          "type": "number",
+          "format": "float",
+          "description": "Memory usage as a percentage (0.0 to 1.0)"
         }
       }
     }
@@ -1262,6 +1269,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ServiceRestartRequest",
   "$defs": {
     "ServiceRestartRequest": {
+      "description": "Request to restart a specific service with optional configuration updates",
       "type": "object",
       "required": [
         "serviceName"
@@ -1298,6 +1306,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ServiceRestartResult",
   "$defs": {
     "ServiceRestartResult": {
+      "description": "Result of a service restart operation including timing and status information",
       "type": "object",
       "required": [
         "success",
@@ -1395,6 +1404,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ShouldRestartServiceRequest",
   "$defs": {
     "ShouldRestartServiceRequest": {
+      "description": "Request to evaluate whether a service should be restarted based on health metrics",
       "type": "object",
       "required": [
         "serviceName"
@@ -1416,6 +1426,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/RestartRecommendation",
   "$defs": {
     "RestartRecommendation": {
+      "description": "Recommendation on whether a service should be restarted with supporting rationale",
       "type": "object",
       "required": [
         "shouldRestart",
@@ -1535,6 +1546,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/BackendsResponse",
   "$defs": {
     "BackendsResponse": {
+      "description": "Response listing all detected container orchestration backends with recommended selection",
       "type": "object",
       "required": [
         "timestamp",
@@ -1565,6 +1577,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "BackendInfo": {
+      "description": "Information about a container orchestration backend including availability and capabilities",
       "type": "object",
       "required": [
         "type",
@@ -1705,6 +1718,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/PresetsResponse",
   "$defs": {
     "PresetsResponse": {
+      "description": "Response containing available deployment presets and the currently active preset",
       "type": "object",
       "required": [
         "presets"
@@ -1724,6 +1738,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "DeploymentPreset": {
+      "description": "Predefined deployment configuration defining service topology and environment settings",
       "type": "object",
       "required": [
         "name",
@@ -1778,6 +1793,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "ServiceTopology": {
+      "description": "Service distribution topology defining which services run on which nodes",
       "type": "object",
       "required": [
         "nodes"
@@ -1797,6 +1813,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "TopologyNode": {
+      "description": "A container or pod in the service topology with its assigned services and configuration",
       "type": "object",
       "required": [
         "name",
@@ -1939,25 +1956,29 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "Type of ingress/reverse proxy to use"
         },
         "ports": {
-          "type": "object",
-          "description": "Port configuration for ingress",
-          "properties": {
-            "http": {
-              "type": "integer",
-              "default": 80,
-              "description": "HTTP port number"
-            },
-            "https": {
-              "type": "integer",
-              "default": 443,
-              "description": "HTTPS port number"
-            }
-          }
+          "description": "Port configuration for HTTP and HTTPS traffic",
+          "$ref": "#/$defs/Ports"
         },
         "ssl": {
           "type": "boolean",
           "default": false,
           "description": "Whether SSL/TLS is enabled"
+        }
+      }
+    },
+    "Ports": {
+      "type": "object",
+      "description": "Port configuration for ingress specifying HTTP and HTTPS port numbers",
+      "properties": {
+        "http": {
+          "type": "integer",
+          "default": 80,
+          "description": "HTTP port number"
+        },
+        "https": {
+          "type": "integer",
+          "default": 443,
+          "description": "HTTPS port number"
         }
       }
     },
@@ -2035,6 +2056,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/DeployRequest",
   "$defs": {
     "DeployRequest": {
+      "description": "Request to deploy or update an environment using a preset or custom topology",
       "type": "object",
       "properties": {
         "preset": {
@@ -2074,6 +2096,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "ServiceTopology": {
+      "description": "Service distribution topology defining which services run on which nodes",
       "type": "object",
       "required": [
         "nodes"
@@ -2093,6 +2116,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "TopologyNode": {
+      "description": "A container or pod in the service topology with its assigned services and configuration",
       "type": "object",
       "required": [
         "name",
@@ -2108,7 +2132,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "items": {
             "type": "string"
           },
-          "description": "Services enabled on this node.\ nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
         },
         "replicas": {
           "type": "integer",
@@ -2235,25 +2259,29 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "Type of ingress/reverse proxy to use"
         },
         "ports": {
-          "type": "object",
-          "description": "Port configuration for ingress",
-          "properties": {
-            "http": {
-              "type": "integer",
-              "default": 80,
-              "description": "HTTP port number"
-            },
-            "https": {
-              "type": "integer",
-              "default": 443,
-              "description": "HTTPS port number"
-            }
-          }
+          "description": "Port configuration for HTTP and HTTPS traffic",
+          "$ref": "#/$defs/Ports"
         },
         "ssl": {
           "type": "boolean",
           "default": false,
           "description": "Whether SSL/TLS is enabled"
+        }
+      }
+    },
+    "Ports": {
+      "type": "object",
+      "description": "Port configuration for ingress specifying HTTP and HTTPS port numbers",
+      "properties": {
+        "http": {
+          "type": "integer",
+          "default": 80,
+          "description": "HTTP port number"
+        },
+        "https": {
+          "type": "integer",
+          "default": 443,
+          "description": "HTTPS port number"
         }
       }
     },
@@ -2265,7 +2293,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "swarm",
         "compose"
       ],
-      "description": "Container orchestration backend type.\ nPriority order: kubernetes > portainer > swarm > compose\n"
+      "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
     },
     "DeploymentMode": {
       "type": "string",
@@ -2286,6 +2314,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/DeployResponse",
   "$defs": {
     "DeployResponse": {
+      "description": "Result of a deployment operation including status and deployed service information",
       "type": "object",
       "required": [
         "success",
@@ -2349,6 +2378,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
     },
     "ServiceTopology": {
+      "description": "Service distribution topology defining which services run on which nodes",
       "type": "object",
       "required": [
         "nodes"
@@ -2368,6 +2398,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "TopologyNode": {
+      "description": "A container or pod in the service topology with its assigned services and configuration",
       "type": "object",
       "required": [
         "name",
@@ -2383,7 +2414,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "items": {
             "type": "string"
           },
-          "description": "Services enabled on this node.\ nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
         },
         "replicas": {
           "type": "integer",
@@ -2510,20 +2541,8 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "Type of ingress/reverse proxy to use"
         },
         "ports": {
-          "type": "object",
-          "description": "Port configuration for ingress",
-          "properties": {
-            "http": {
-              "type": "integer",
-              "default": 80,
-              "description": "HTTP port number"
-            },
-            "https": {
-              "type": "integer",
-              "default": 443,
-              "description": "HTTPS port number"
-            }
-          }
+          "description": "Port configuration for HTTP and HTTPS traffic",
+          "$ref": "#/$defs/Ports"
         },
         "ssl": {
           "type": "boolean",
@@ -2532,7 +2551,24 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         }
       }
     },
+    "Ports": {
+      "type": "object",
+      "description": "Port configuration for ingress specifying HTTP and HTTPS port numbers",
+      "properties": {
+        "http": {
+          "type": "integer",
+          "default": 80,
+          "description": "HTTP port number"
+        },
+        "https": {
+          "type": "integer",
+          "default": 443,
+          "description": "HTTPS port number"
+        }
+      }
+    },
     "DeployedService": {
+      "description": "Status information for a single deployed service instance",
       "type": "object",
       "required": [
         "name",
@@ -2660,6 +2696,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ServiceRoutingResponse",
   "$defs": {
     "ServiceRoutingResponse": {
+      "description": "Response containing service-to-app-id routing mappings for mesh invocation",
       "type": "object",
       "required": [
         "mappings",
@@ -2780,6 +2817,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/EnvironmentStatus",
   "$defs": {
     "EnvironmentStatus": {
+      "description": "Current status of the deployed environment including topology and resource usage",
       "type": "object",
       "required": [
         "deployed",
@@ -2843,6 +2881,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
     },
     "ServiceTopology": {
+      "description": "Service distribution topology defining which services run on which nodes",
       "type": "object",
       "required": [
         "nodes"
@@ -2862,6 +2901,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "TopologyNode": {
+      "description": "A container or pod in the service topology with its assigned services and configuration",
       "type": "object",
       "required": [
         "name",
@@ -2877,7 +2917,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "items": {
             "type": "string"
           },
-          "description": "Services enabled on this node.\ nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
         },
         "replicas": {
           "type": "integer",
@@ -3004,20 +3044,8 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "Type of ingress/reverse proxy to use"
         },
         "ports": {
-          "type": "object",
-          "description": "Port configuration for ingress",
-          "properties": {
-            "http": {
-              "type": "integer",
-              "default": 80,
-              "description": "HTTP port number"
-            },
-            "https": {
-              "type": "integer",
-              "default": 443,
-              "description": "HTTPS port number"
-            }
-          }
+          "description": "Port configuration for HTTP and HTTPS traffic",
+          "$ref": "#/$defs/Ports"
         },
         "ssl": {
           "type": "boolean",
@@ -3026,7 +3054,24 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         }
       }
     },
+    "Ports": {
+      "type": "object",
+      "description": "Port configuration for ingress specifying HTTP and HTTPS port numbers",
+      "properties": {
+        "http": {
+          "type": "integer",
+          "default": 80,
+          "description": "HTTP port number"
+        },
+        "https": {
+          "type": "integer",
+          "default": 443,
+          "description": "HTTPS port number"
+        }
+      }
+    },
     "DeployedService": {
+      "description": "Status information for a single deployed service instance",
       "type": "object",
       "required": [
         "name",
@@ -3071,6 +3116,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "InfrastructureHealthResponse": {
+      "description": "Response containing overall infrastructure health status and individual component details",
       "type": "object",
       "required": [
         "healthy",
@@ -3097,6 +3143,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "ComponentHealth": {
+      "description": "Health status information for a single infrastructure component (Redis, RabbitMQ, etc.)",
       "type": "object",
       "required": [
         "name",
@@ -3134,6 +3181,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "ResourceUsage": {
+      "description": "System resource utilization metrics including CPU, memory, disk, and network",
       "type": "object",
       "properties": {
         "cpuPercent": {
@@ -3230,6 +3278,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/TeardownRequest",
   "$defs": {
     "TeardownRequest": {
+      "description": "Request to tear down a deployed environment with options for data preservation",
       "type": "object",
       "properties": {
         "dryRun": {
@@ -3283,6 +3332,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/TeardownResponse",
   "$defs": {
     "TeardownResponse": {
+      "description": "Result of an environment teardown including removed resources and any errors",
       "type": "object",
       "required": [
         "success",
@@ -3402,6 +3452,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/CleanRequest",
   "$defs": {
     "CleanRequest": {
+      "description": "Request to clean up Docker resources such as containers, volumes, and images",
       "type": "object",
       "required": [
         "targets"
@@ -3453,6 +3504,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/CleanResponse",
   "$defs": {
     "CleanResponse": {
+      "description": "Result of a cleanup operation including reclaimed space and removed resource counts",
       "type": "object",
       "required": [
         "success"
@@ -3604,6 +3656,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/LogsResponse",
   "$defs": {
     "LogsResponse": {
+      "description": "Response containing log entries from a service or container",
       "type": "object",
       "required": [
         "logs"
@@ -3631,6 +3684,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "LogEntry": {
+      "description": "A single log entry with timestamp, stream, and message content",
       "type": "object",
       "required": [
         "timestamp",
@@ -3720,6 +3774,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/TopologyUpdateRequest",
   "$defs": {
     "TopologyUpdateRequest": {
+      "description": "Request to apply incremental changes to the current service topology",
       "type": "object",
       "required": [
         "changes"
@@ -3745,6 +3800,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "TopologyChange": {
+      "description": "A single topology modification such as adding a node, moving a service, or scaling",
       "type": "object",
       "required": [
         "action"
@@ -3790,6 +3846,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "TopologyNode": {
+      "description": "A container or pod in the service topology with its assigned services and configuration",
       "type": "object",
       "required": [
         "name",
@@ -3805,7 +3862,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "items": {
             "type": "string"
           },
-          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+          "description": "Services enabled on this node.\ nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
         },
         "replicas": {
           "type": "integer",
@@ -3875,6 +3932,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/TopologyUpdateResponse",
   "$defs": {
     "TopologyUpdateResponse": {
+      "description": "Result of a topology update including applied changes and the new topology state",
       "type": "object",
       "required": [
         "success",
@@ -3914,6 +3972,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "AppliedChange": {
+      "description": "Details of a single topology change that was applied, including success status",
       "type": "object",
       "required": [
         "action",
@@ -3939,6 +3998,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "ServiceTopology": {
+      "description": "Service distribution topology defining which services run on which nodes",
       "type": "object",
       "required": [
         "nodes"
@@ -3958,6 +4018,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "TopologyNode": {
+      "description": "A container or pod in the service topology with its assigned services and configuration",
       "type": "object",
       "required": [
         "name",
@@ -3973,7 +4034,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "items": {
             "type": "string"
           },
-          "description": "Services enabled on this node.\ nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
         },
         "replicas": {
           "type": "integer",
@@ -4100,25 +4161,29 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "Type of ingress/reverse proxy to use"
         },
         "ports": {
-          "type": "object",
-          "description": "Port configuration for ingress",
-          "properties": {
-            "http": {
-              "type": "integer",
-              "default": 80,
-              "description": "HTTP port number"
-            },
-            "https": {
-              "type": "integer",
-              "default": 443,
-              "description": "HTTPS port number"
-            }
-          }
+          "description": "Port configuration for HTTP and HTTPS traffic",
+          "$ref": "#/$defs/Ports"
         },
         "ssl": {
           "type": "boolean",
           "default": false,
           "description": "Whether SSL/TLS is enabled"
+        }
+      }
+    },
+    "Ports": {
+      "type": "object",
+      "description": "Port configuration for ingress specifying HTTP and HTTPS port numbers",
+      "properties": {
+        "http": {
+          "type": "integer",
+          "default": 80,
+          "description": "HTTP port number"
+        },
+        "https": {
+          "type": "integer",
+          "default": 443,
+          "description": "HTTPS port number"
         }
       }
     }
@@ -4186,6 +4251,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ContainerRestartRequestBody",
   "$defs": {
     "ContainerRestartRequestBody": {
+      "description": "Request body for restarting a container by its app-id",
       "type": "object",
       "required": [
         "appName",
@@ -4231,6 +4297,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ContainerRestartResponse",
   "$defs": {
     "ContainerRestartResponse": {
+      "description": "Response after accepting a container restart request with scheduling details",
       "type": "object",
       "required": [
         "accepted",
@@ -4332,6 +4399,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/GetContainerStatusRequest",
   "$defs": {
     "GetContainerStatusRequest": {
+      "description": "Request to retrieve the current status of a specific container",
       "type": "object",
       "required": [
         "appName"
@@ -4353,6 +4421,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ContainerStatus",
   "$defs": {
     "ContainerStatus": {
+      "description": "Current status of a container including health, restart history, and running plugins",
       "type": "object",
       "required": [
         "appName",
@@ -4408,23 +4477,8 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "description": "Recent restart history"
         },
         "healthChecks": {
-          "type": "object",
-          "description": "Health check information for the container",
-          "properties": {
-            "lastCheck": {
-              "type": "string",
-              "format": "date-time",
-              "description": "When the last health check was performed"
-            },
-            "status": {
-              "type": "string",
-              "description": "Result of the last health check"
-            },
-            "consecutiveFailures": {
-              "type": "integer",
-              "description": "Number of consecutive health check failures"
-            }
-          }
+          "description": "Health check configuration and current health status results",
+          "$ref": "#/$defs/HealthChecks"
         },
         "labels": {
           "type": "object",
@@ -4436,6 +4490,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "RestartHistoryEntry": {
+      "description": "Record of a past container restart including reason, timing, and outcome",
       "type": "object",
       "required": [
         "timestamp",
@@ -4476,7 +4531,26 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "immediate",
         "force"
       ],
-      "description": "Restart urgency level:\ n- graceful: Rolling update, wait for healthy before cycling next instance\n- immediate: Rolling update but don't wait for connection drain\n- force: Kill all instances simultaneously (causes downtime)\n"
+      "description": "Restart urgency level:\n- graceful: Rolling update, wait for healthy before cycling next instance\n- immediate: Rolling update but don't wait for connection drain\n- force: Kill all instances simultaneously (causes downtime)\n"
+    },
+    "HealthChecks": {
+      "type": "object",
+      "description": "Health check information for a container including last check status and failure tracking",
+      "properties": {
+        "lastCheck": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the last health check was performed"
+        },
+        "status": {
+          "type": "string",
+          "description": "Result of the last health check"
+        },
+        "consecutiveFailures": {
+          "type": "integer",
+          "description": "Number of consecutive health check failures"
+        }
+      }
     }
   }
 }
@@ -4542,6 +4616,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ConfigRollbackRequest",
   "$defs": {
     "ConfigRollbackRequest": {
+      "description": "Request to rollback configuration to the previous version",
       "type": "object",
       "required": [
         "reason"
@@ -4564,6 +4639,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ConfigRollbackResponse",
   "$defs": {
     "ConfigRollbackResponse": {
+      "description": "Result of a configuration rollback including version changes and affected keys",
       "type": "object",
       "required": [
         "success",
@@ -4680,6 +4756,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ConfigVersionResponse",
   "$defs": {
     "ConfigVersionResponse": {
+      "description": "Current configuration version information with metadata about available keys",
       "type": "object",
       "required": [
         "version",
@@ -4776,6 +4853,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/AcquireProcessorRequest",
   "$defs": {
     "AcquireProcessorRequest": {
+      "description": "Request to acquire a processor instance from a processing pool",
       "type": "object",
       "required": [
         "poolType"
@@ -4812,6 +4890,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/AcquireProcessorResponse",
   "$defs": {
     "AcquireProcessorResponse": {
+      "description": "Response with acquired processor details including lease information",
       "type": "object",
       "required": [
         "processorId",
@@ -4904,6 +4983,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ReleaseProcessorRequest",
   "$defs": {
     "ReleaseProcessorRequest": {
+      "description": "Request to release a processor back to the pool after processing completes",
       "type": "object",
       "required": [
         "leaseId"
@@ -4936,6 +5016,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ReleaseProcessorResponse",
   "$defs": {
     "ReleaseProcessorResponse": {
+      "description": "Confirmation that a processor was released back to the pool",
       "type": "object",
       "required": [
         "released"
@@ -5015,6 +5096,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/GetPoolStatusRequest",
   "$defs": {
     "GetPoolStatusRequest": {
+      "description": "Request to retrieve status and metrics for a processing pool",
       "type": "object",
       "required": [
         "poolType"
@@ -5041,6 +5123,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/PoolStatusResponse",
   "$defs": {
     "PoolStatusResponse": {
+      "description": "Current status of a processing pool including instance counts and utilization",
       "type": "object",
       "required": [
         "poolType",
@@ -5181,6 +5264,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ScalePoolRequest",
   "$defs": {
     "ScalePoolRequest": {
+      "description": "Request to scale a processing pool to a target number of instances",
       "type": "object",
       "required": [
         "poolType",
@@ -5213,6 +5297,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ScalePoolResponse",
   "$defs": {
     "ScalePoolResponse": {
+      "description": "Result of a pool scaling operation with before and after instance counts",
       "type": "object",
       "required": [
         "poolType",
@@ -5310,6 +5395,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/CleanupPoolRequest",
   "$defs": {
     "CleanupPoolRequest": {
+      "description": "Request to clean up idle processor instances from a pool",
       "type": "object",
       "required": [
         "poolType"
@@ -5336,6 +5422,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/CleanupPoolResponse",
   "$defs": {
     "CleanupPoolResponse": {
+      "description": "Result of a pool cleanup operation with removed instance count",
       "type": "object",
       "required": [
         "poolType",

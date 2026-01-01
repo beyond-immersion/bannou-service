@@ -286,6 +286,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/CreateRelationshipRequest",
   "$defs": {
     "CreateRelationshipRequest": {
+      "description": "Request to create a new relationship between two entities",
       "type": "object",
       "required": [
         "entity1Id",
@@ -357,6 +358,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/RelationshipResponse",
   "$defs": {
     "RelationshipResponse": {
+      "description": "Complete details of a relationship between two entities",
       "type": "object",
       "required": [
         "relationshipId",
@@ -440,7 +442,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -508,6 +510,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/GetRelationshipRequest",
   "$defs": {
     "GetRelationshipRequest": {
+      "description": "Request to retrieve a specific relationship by its ID",
       "type": "object",
       "required": [
         "relationshipId"
@@ -530,6 +533,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/RelationshipResponse",
   "$defs": {
     "RelationshipResponse": {
+      "description": "Complete details of a relationship between two entities",
       "type": "object",
       "required": [
         "relationshipId",
@@ -613,7 +617,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -681,6 +685,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ListRelationshipsByEntityRequest",
   "$defs": {
     "ListRelationshipsByEntityRequest": {
+      "description": "Request to list all relationships for a specific entity with optional filters",
       "type": "object",
       "required": [
         "entityId",
@@ -740,7 +745,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\ n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\ n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -752,6 +757,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/RelationshipListResponse",
   "$defs": {
     "RelationshipListResponse": {
+      "description": "Paginated list of relationships with metadata for navigation",
       "type": "object",
       "required": [
         "relationships",
@@ -790,6 +796,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "RelationshipResponse": {
+      "description": "Complete details of a relationship between two entities",
       "type": "object",
       "required": [
         "relationshipId",
@@ -873,7 +880,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -941,6 +948,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/GetRelationshipsBetweenRequest",
   "$defs": {
     "GetRelationshipsBetweenRequest": {
+      "description": "Request to get all relationships between two specific entities",
       "type": "object",
       "required": [
         "entity1Id",
@@ -1005,6 +1013,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/RelationshipListResponse",
   "$defs": {
     "RelationshipListResponse": {
+      "description": "Paginated list of relationships with metadata for navigation",
       "type": "object",
       "required": [
         "relationships",
@@ -1043,6 +1052,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "RelationshipResponse": {
+      "description": "Complete details of a relationship between two entities",
       "type": "object",
       "required": [
         "relationshipId",
@@ -1126,7 +1136,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -1194,6 +1204,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/ListRelationshipsByTypeRequest",
   "$defs": {
     "ListRelationshipsByTypeRequest": {
+      "description": "Request to list all relationships of a specific relationship type",
       "type": "object",
       "required": [
         "relationshipTypeId"
@@ -1259,6 +1270,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/RelationshipListResponse",
   "$defs": {
     "RelationshipListResponse": {
+      "description": "Paginated list of relationships with metadata for navigation",
       "type": "object",
       "required": [
         "relationships",
@@ -1297,6 +1309,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
       }
     },
     "RelationshipResponse": {
+      "description": "Complete details of a relationship between two entities",
       "type": "object",
       "required": [
         "relationshipId",
@@ -1380,7 +1393,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -1448,6 +1461,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/UpdateRelationshipRequest",
   "$defs": {
     "UpdateRelationshipRequest": {
+      "description": "Request to update the metadata or type of an existing relationship",
       "type": "object",
       "required": [
         "relationshipId"
@@ -1482,6 +1496,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/RelationshipResponse",
   "$defs": {
     "RelationshipResponse": {
+      "description": "Complete details of a relationship between two entities",
       "type": "object",
       "required": [
         "relationshipId",
@@ -1565,7 +1580,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         "REALM",
         "OTHER"
       ],
-      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\ n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\n- ITEM: Physical objects, artifacts, etc.\ n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
+      "description": "Type of entity in a relationship.\n- CHARACTER: Player-controlled characters\n- NPC: Non-player characters\n- MONSTER: Hostile or neutral creatures\ n- ITEM: Physical objects, artifacts, etc.\n- LOCATION: Places, regions, buildings\n- ORGANIZATION: Guilds, companies, groups\n- FACTION: Political or social factions\n- REALM: Game realms/worlds\n- OTHER: Catch-all for future entity types\n"
     }
   }
 }
@@ -1633,6 +1648,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
   "$ref": "#/$defs/EndRelationshipRequest",
   "$defs": {
     "EndRelationshipRequest": {
+      "description": "Request to end an existing relationship with an optional timestamp and reason",
       "type": "object",
       "required": [
         "relationshipId"

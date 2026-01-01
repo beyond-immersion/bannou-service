@@ -14,6 +14,9 @@ namespace BeyondImmersion.BannouService.State;
 
 using System = global::System;
 
+/// <summary>
+/// Request to retrieve a single state value by key from a state store
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetStateRequest
 {
@@ -45,6 +48,9 @@ public partial class GetStateRequest
 
 }
 
+/// <summary>
+/// Response containing a retrieved state value with its metadata and ETag
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetStateResponse
 {
@@ -78,6 +84,9 @@ public partial class GetStateResponse
 
 }
 
+/// <summary>
+/// Request to save a state value to a state store with optional TTL and consistency settings
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveStateRequest
 {
@@ -123,6 +132,9 @@ public partial class SaveStateRequest
 
 }
 
+/// <summary>
+/// Response from a save operation containing the new ETag and success status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveStateResponse
 {
@@ -150,6 +162,9 @@ public partial class SaveStateResponse
 
 }
 
+/// <summary>
+/// Request to delete a state value by key from a state store
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteStateRequest
 {
@@ -181,6 +196,9 @@ public partial class DeleteStateRequest
 
 }
 
+/// <summary>
+/// Response from a delete operation indicating whether the key was removed
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteStateResponse
 {
@@ -202,6 +220,9 @@ public partial class DeleteStateResponse
 
 }
 
+/// <summary>
+/// Configuration options for state save operations including TTL, consistency level, and optimistic concurrency
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StateOptions
 {
@@ -236,6 +257,9 @@ public partial class StateOptions
 
 }
 
+/// <summary>
+/// Metadata associated with a state entry including creation time, last update time, and version
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StateMetadata
 {
@@ -269,6 +293,9 @@ public partial class StateMetadata
 
 }
 
+/// <summary>
+/// Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis backends
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryStateRequest
 {
@@ -350,6 +377,9 @@ public partial class QueryStateRequest
 
 }
 
+/// <summary>
+/// Specifies a field and direction for sorting query results
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SortField
 {
@@ -467,6 +497,9 @@ public enum QueryOperator
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Response containing paginated query results with total count information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryStateResponse
 {
@@ -506,6 +539,9 @@ public partial class QueryStateResponse
 
 }
 
+/// <summary>
+/// Request to retrieve multiple state values by key in a single operation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkGetStateRequest
 {
@@ -537,6 +573,9 @@ public partial class BulkGetStateRequest
 
 }
 
+/// <summary>
+/// Response containing the results of a bulk get operation for multiple keys
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkGetStateResponse
 {
@@ -558,6 +597,9 @@ public partial class BulkGetStateResponse
 
 }
 
+/// <summary>
+/// A single item result from a bulk get operation including the key, value, ETag, and found status
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkStateItem
 {
@@ -628,6 +670,9 @@ public partial class ListStoresRequest
 
 }
 
+/// <summary>
+/// Response containing the list of configured state stores
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListStoresResponse
 {
@@ -649,6 +694,9 @@ public partial class ListStoresResponse
 
 }
 
+/// <summary>
+/// Information about a configured state store including its name, backend type, and optional key count
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StoreInfo
 {
