@@ -13,6 +13,24 @@ namespace BeyondImmersion.BannouService.Services;
 /// any API calls that desire to create/modify inventory
 /// data in the game.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>TENET T6 - Service Implementation Pattern:</b> All service implementations
+/// MUST be declared as <c>partial class</c> to support the following code-split pattern:
+/// </para>
+/// <list type="bullet">
+///   <item><c>{Service}Service.cs</c> - Main business logic (manual)</item>
+///   <item><c>{Service}ServiceEvents.cs</c> - Event consumer registrations (generated from x-subscribes-to)</item>
+///   <item><c>Generated/{Service}PermissionRegistration.cs</c> - Permission registrations (generated from x-permissions)</item>
+/// </list>
+/// <para>
+/// Services MUST also use the <see cref="Attributes.BannouServiceAttribute"/> for discovery and
+/// inject dependencies via constructor following the standardized pattern.
+/// </para>
+/// <para>
+/// See: docs/reference/tenets/FOUNDATION.md (T6: Service Implementation Pattern)
+/// </para>
+/// </remarks>
 public interface IBannouService
 {
     private static (Type, Type, BannouServiceAttribute)[]? _services;

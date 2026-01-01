@@ -4039,7 +4039,7 @@
             The Connect service subscribes to these topics and forwards events to the appropriate WebSocket.
             </para>
             <para>
-            All events must have a valid event_name that exists in the ClientEventWhitelist.
+            All events must have a valid eventName that exists in the ClientEventWhitelist.
             Events with invalid names will be rejected by the publisher.
             </para>
             </remarks>
@@ -5184,9 +5184,18 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.StatusCodes">
             <summary>
-            An enumeration of possible API response codes
-            returned by this service.
+            An enumeration of possible API response codes returned by this service.
             </summary>
+            <remarks>
+            <para>
+            <b>IMPORTANT:</b> Use this enum (<c>BeyondImmersion.BannouService.StatusCodes</c>),
+            NOT <c>Microsoft.AspNetCore.Http.StatusCodes</c> which is a static class with int constants.
+            </para>
+            <para>
+            All service methods return <c>(StatusCodes, TResponse?)</c> tuples.
+            See TENETS.md T8: Return Pattern for usage requirements.
+            </para>
+            </remarks>
         </member>
         <member name="F:BeyondImmersion.BannouService.StatusCodes.OK">
             <summary>
@@ -32618,6 +32627,22 @@
             This is the shared version - all services should use this for consistency.
             Server salt should come from service configuration (Tenet 21).
             </summary>
+            <remarks>
+            <para>
+            <b>WARNING - MULTI-INSTANCE SAFETY (T9):</b> The <see cref="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServerSalt"/> method
+            generates cryptographically random values. In a multi-instance deployment, each instance
+            would generate different salts, causing client GUIDs to differ across instances.
+            </para>
+            <para>
+            <b>CORRECT USAGE:</b> Server salt MUST be configured externally (e.g., via environment
+            variables or service configuration) and shared across all instances. Never call
+            <see cref="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServerSalt"/> at runtime in production - use it only for initial
+            salt generation during deployment setup.
+            </para>
+            <para>
+            See TENETS.md T9: Multi-Instance Safety for distributed state requirements.
+            </para>
+            </remarks>
         </member>
         <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServiceGuid(System.String,System.String,System.String,System.String)">
             <summary>
@@ -32777,6 +32802,24 @@
              any API calls that desire to create/modify inventory
              data in the game.
              </summary>
+             <remarks>
+             <para>
+             <b>TENET T6 - Service Implementation Pattern:</b> All service implementations
+             MUST be declared as <c>partial class</c> to support the following code-split pattern:
+             </para>
+             <list type="bullet">
+               <item><c>{Service}Service.cs</c> - Main business logic (manual)</item>
+               <item><c>{Service}ServiceEvents.cs</c> - Event consumer registrations (generated from x-subscribes-to)</item>
+               <item><c>Generated/{Service}PermissionRegistration.cs</c> - Permission registrations (generated from x-permissions)</item>
+             </list>
+             <para>
+             Services MUST also use the <see cref="T:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute"/> for discovery and
+             inject dependencies via constructor following the standardized pattern.
+             </para>
+             <para>
+             See: docs/reference/tenets/FOUNDATION.md (T6: Service Implementation Pattern)
+             </para>
+             </remarks>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.IBannouService.InstanceId">
             <summary>
@@ -33288,10 +33331,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IMessageBus">
             <summary>
-            Native RabbitMQ message publishing via MassTransit.
-            Provides direct RabbitMQ access for event-driven communication.
+            Native RabbitMQ message publishing via MassTransit for SERVICE-TO-SERVICE events.
+            Provides direct RabbitMQ access for event-driven communication between Bannou services.
             </summary>
             <remarks>
+            <para>
+            <b>WARNING - CLIENT EVENTS:</b> This interface is for service-to-service events ONLY.
+            To push events to WebSocket clients, use <see cref="T:BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher"/> instead.
+            Using IMessageBus for client events will silently fail - events go to the wrong exchange.
+            See TENETS.md T17: Client Event Schema Pattern.
+            </para>
+            <para>
+            <b>WARNING - TYPED EVENTS ONLY:</b> The TEvent type parameter must be a typed event class
+            defined in a schema. Anonymous objects (<c>new { ... }</c>) are FORBIDDEN and will throw
+            <c>System.ArgumentException: Message types must not be anonymous types</c> at runtime.
+            See TENETS.md T5: Event-Driven Architecture.
+            </para>
             <para>
             This interface provides the abstraction layer over the messaging backend (MassTransit/RabbitMQ).
             Services should depend on this interface rather than concrete implementations.

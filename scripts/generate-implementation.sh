@@ -60,8 +60,22 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// Implementation of the $SERVICE_PASCAL service.
 /// This class contains the business logic for all $SERVICE_PASCAL operations.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>TENET T6 - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
+/// Generated code (event handlers, permissions) is placed in companion partial classes.
+/// </para>
+/// <para>
+/// Standard structure:
+/// <list type="bullet">
+///   <item>${SERVICE_PASCAL}Service.cs (this file) - Business logic</item>
+///   <item>${SERVICE_PASCAL}ServiceEvents.cs - Event consumer handlers (generated)</item>
+///   <item>Generated/${SERVICE_PASCAL}PermissionRegistration.cs - Permission registration (generated)</item>
+/// </list>
+/// </para>
+/// </remarks>
 [BannouService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped)]
-public class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
+public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;

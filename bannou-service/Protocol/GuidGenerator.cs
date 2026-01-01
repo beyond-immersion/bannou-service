@@ -10,6 +10,22 @@ namespace BeyondImmersion.BannouService.Protocol;
 /// This is the shared version - all services should use this for consistency.
 /// Server salt should come from service configuration (Tenet 21).
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>WARNING - MULTI-INSTANCE SAFETY (T9):</b> The <see cref="GenerateServerSalt"/> method
+/// generates cryptographically random values. In a multi-instance deployment, each instance
+/// would generate different salts, causing client GUIDs to differ across instances.
+/// </para>
+/// <para>
+/// <b>CORRECT USAGE:</b> Server salt MUST be configured externally (e.g., via environment
+/// variables or service configuration) and shared across all instances. Never call
+/// <see cref="GenerateServerSalt"/> at runtime in production - use it only for initial
+/// salt generation during deployment setup.
+/// </para>
+/// <para>
+/// See TENETS.md T9: Multi-Instance Safety for distributed state requirements.
+/// </para>
+/// </remarks>
 public static class GuidGenerator
 {
     /// <summary>

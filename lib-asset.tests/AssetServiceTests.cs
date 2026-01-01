@@ -393,6 +393,300 @@ public class AssetServiceTests
 
     #endregion
 
+    #region CompleteUploadAsync Tests
+
+    [Fact]
+    public async Task CompleteUploadAsync_WhenSessionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CompleteUploadRequest
+        {
+            UploadId = Guid.NewGuid()
+        };
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UploadSession?)null);
+
+        // Act
+        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CompleteUploadAsync_WhenSessionExpired_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var uploadId = Guid.NewGuid();
+        var request = new CompleteUploadRequest { UploadId = uploadId };
+
+        var expiredSession = new UploadSession
+        {
+            UploadId = uploadId,
+            Filename = "test.png",
+            Size = 1024,
+            ContentType = "image/png",
+            StorageKey = $"temp/{uploadId:N}/test.png",
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1) // Already expired
+        };
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expiredSession);
+
+        // Act
+        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CompleteUploadAsync_WithMultipartAndInvalidPartCount_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var uploadId = Guid.NewGuid();
+        var request = new CompleteUploadRequest
+        {
+            UploadId = uploadId,
+            Parts = new List<CompletedPart> { new CompletedPart { PartNumber = 1, Etag = "etag1" } }
+        };
+
+        var session = new UploadSession
+        {
+            UploadId = uploadId,
+            Filename = "large.glb",
+            Size = 100 * 1024 * 1024,
+            ContentType = "model/gltf-binary",
+            StorageKey = $"temp/{uploadId:N}/large.glb",
+            IsMultipart = true,
+            PartCount = 5, // Expects 5 parts
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        // Act
+        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CompleteUploadAsync_WhenFileNotInTempLocation_ShouldReturnNotFound()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var uploadId = Guid.NewGuid();
+        var request = new CompleteUploadRequest { UploadId = uploadId };
+
+        var session = new UploadSession
+        {
+            UploadId = uploadId,
+            Filename = "test.png",
+            Size = 1024,
+            ContentType = "image/png",
+            StorageKey = $"temp/{uploadId:N}/test.png",
+            IsMultipart = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        _mockStorageProvider
+            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CompleteUploadAsync_WithValidSingleUpload_ShouldReturnCreatedWithAssetMetadata()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        _configuration.LargeFileThresholdMb = 100;
+        var service = CreateService();
+        var uploadId = Guid.NewGuid();
+        var request = new CompleteUploadRequest { UploadId = uploadId };
+
+        var session = new UploadSession
+        {
+            UploadId = uploadId,
+            Filename = "test.png",
+            Size = 1024,
+            ContentType = "image/png",
+            StorageKey = $"temp/{uploadId:N}/test.png",
+            IsMultipart = false,
+            Metadata = new AssetMetadataInput
+            {
+                AssetType = AssetType.Texture,
+                Realm = Realm.Arcadia,
+                Tags = new List<string> { "test" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        _mockStorageProvider
+            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        _mockStorageProvider
+            .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new StorageModels.ObjectMetadata("abc123etag", 1024, "image/png", DateTime.UtcNow, new Dictionary<string, string>()));
+
+        _mockStorageProvider
+            .Setup(s => s.CopyObjectAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "assets/texture/image-abc123etag.png", null, 1024));
+
+        _mockStorageProvider
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Setup for indexing (mock GetWithETagAsync)
+        _mockIndexStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Act
+        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Created, status);
+        Assert.NotNull(result);
+        Assert.Equal("test.png", result.Filename);
+        Assert.Equal("image/png", result.ContentType);
+        Assert.Equal(AssetType.Texture, result.AssetType);
+    }
+
+    [Fact]
+    public async Task CompleteUploadAsync_WithValidMultipartUpload_ShouldCompleteMultipartAndReturnCreated()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        _configuration.LargeFileThresholdMb = 100;
+        var service = CreateService();
+        var uploadId = Guid.NewGuid();
+        var request = new CompleteUploadRequest
+        {
+            UploadId = uploadId,
+            Parts = new List<CompletedPart>
+            {
+                new CompletedPart { PartNumber = 1, Etag = "etag1" },
+                new CompletedPart { PartNumber = 2, Etag = "etag2" }
+            }
+        };
+
+        var session = new UploadSession
+        {
+            UploadId = uploadId,
+            Filename = "model.glb",
+            Size = 50 * 1024 * 1024,
+            ContentType = "model/gltf-binary",
+            StorageKey = $"temp/{uploadId:N}/model.glb",
+            IsMultipart = true,
+            PartCount = 2,
+            Metadata = new AssetMetadataInput { AssetType = AssetType.Model },
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        _mockStorageProvider
+            .Setup(s => s.CompleteMultipartUploadAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<List<StorageModels.StorageCompletedPart>>()))
+            .Returns(Task.CompletedTask);
+
+        _mockStorageProvider
+            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        _mockStorageProvider
+            .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new StorageModels.ObjectMetadata("multipart-etag", 50 * 1024 * 1024, "model/gltf-binary", DateTime.UtcNow, new Dictionary<string, string>()));
+
+        _mockStorageProvider
+            .Setup(s => s.CopyObjectAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "assets/model/model-multipartetag.glb", null, 50 * 1024 * 1024));
+
+        _mockStorageProvider
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockIndexStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Act
+        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Created, status);
+        Assert.NotNull(result);
+
+        // Verify multipart completion was called
+        _mockStorageProvider.Verify(
+            s => s.CompleteMultipartUploadAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.Is<List<StorageModels.StorageCompletedPart>>(p => p.Count == 2)),
+            Times.Once);
+    }
+
+    #endregion
+
     #region GetAssetAsync Tests
 
     [Fact]
