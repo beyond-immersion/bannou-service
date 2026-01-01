@@ -265,7 +265,6 @@ public partial class TestingService : ITestingService
 
             var testEvent = new SystemNotificationEvent
             {
-                EventName = SystemNotificationEventEventName.System_notification,
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 NotificationType = SystemNotificationEventNotificationType.Info,

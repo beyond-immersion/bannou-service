@@ -247,7 +247,6 @@ public sealed class AssetProcessingWorker : BackgroundService
                 var completionEvent = new AssetProcessingCompleteEvent
                 {
                     EventId = Guid.NewGuid(),
-                    EventName = AssetProcessingCompleteEventEventName.Asset_processing_complete,
                     AssetId = job.AssetId,
                     Success = true,
                     Outputs = result.ProcessedStorageKey != null
@@ -270,7 +269,6 @@ public sealed class AssetProcessingWorker : BackgroundService
                 var failureEvent = new AssetProcessingFailedEvent
                 {
                     EventId = Guid.NewGuid(),
-                    EventName = AssetProcessingFailedEventEventName.Asset_processing_failed,
                     AssetId = job.AssetId,
                     ErrorMessage = result.ErrorMessage ?? "Unknown error",
                     ErrorCode = MapErrorCode(result.ErrorCode),
@@ -320,7 +318,6 @@ public sealed class AssetProcessingWorker : BackgroundService
             var failureEvent = new AssetProcessingFailedEvent
             {
                 EventId = Guid.NewGuid(),
-                EventName = AssetProcessingFailedEventEventName.Asset_processing_failed,
                 AssetId = job.AssetId,
                 ErrorMessage = errorMessage,
                 ErrorCode = ProcessingErrorCode.PROCESSING_FAILED,

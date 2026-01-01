@@ -895,7 +895,6 @@ public partial class GameSessionService : IGameSessionService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                EventName = ChatMessageReceivedEventEventName.Game_session_chat_received,
                 SessionId = body.SessionId,
                 MessageId = Guid.NewGuid(),
                 SenderId = senderId,
@@ -1243,7 +1242,6 @@ public partial class GameSessionService : IGameSessionService
             var shortcutEvent = new ShortcutPublishedEvent
             {
                 EventId = Guid.NewGuid(),
-                EventName = ShortcutPublishedEventEventName.Session_shortcut_published,
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = Guid.Parse(sessionId),
                 Shortcut = new SessionShortcut
@@ -1302,7 +1300,6 @@ public partial class GameSessionService : IGameSessionService
             var revokeEvent = new ShortcutRevokedEvent
             {
                 EventId = Guid.NewGuid(),
-                EventName = ShortcutRevokedEventEventName.Session_shortcut_revoked,
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = Guid.Parse(sessionId),
                 RevokeByService = "game-session",

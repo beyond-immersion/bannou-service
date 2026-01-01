@@ -565,7 +565,6 @@ public partial class VoiceService : IVoiceService
             // The Peer describes who sent the update (the answering peer)
             var peerUpdatedEvent = new VoicePeerUpdatedEvent
             {
-                EventName = VoicePeerUpdatedEventEventName.Voice_peer_updated,
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = body.RoomId,
@@ -665,7 +664,6 @@ public partial class VoiceService : IVoiceService
 
         var peerJoinedEvent = new VoicePeerJoinedEvent
         {
-            EventName = VoicePeerJoinedEventEventName.Voice_peer_joined,
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = roomId,
@@ -713,7 +711,6 @@ public partial class VoiceService : IVoiceService
 
         var peerLeftEvent = new VoicePeerLeftEvent
         {
-            EventName = VoicePeerLeftEventEventName.Voice_peer_left,
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = roomId,
@@ -755,7 +752,6 @@ public partial class VoiceService : IVoiceService
 
         var peerUpdatedEvent = new VoicePeerUpdatedEvent
         {
-            EventName = VoicePeerUpdatedEventEventName.Voice_peer_updated,
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = roomId,
@@ -807,7 +803,6 @@ public partial class VoiceService : IVoiceService
 
         var roomClosedEvent = new VoiceRoomClosedEvent
         {
-            EventName = VoiceRoomClosedEventEventName.Voice_room_closed,
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = roomId,
@@ -863,7 +858,6 @@ public partial class VoiceService : IVoiceService
 
             var tierUpgradeEvent = new VoiceTierUpgradeEvent
             {
-                EventName = VoiceTierUpgradeEventEventName.Voice_tier_upgrade,
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = roomId,

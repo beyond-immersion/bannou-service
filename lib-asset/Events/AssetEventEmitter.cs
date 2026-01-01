@@ -42,7 +42,6 @@ public class AssetEventEmitter : IAssetEventEmitter
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            EventName = AssetUploadCompleteEventEventName.Asset_upload_complete,
             UploadId = uploadId,
             Success = success,
             AssetId = assetId,
@@ -74,7 +73,6 @@ public class AssetEventEmitter : IAssetEventEmitter
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            EventName = AssetProcessingCompleteEventEventName.Asset_processing_complete,
             AssetId = assetId,
             Success = success,
             ProcessingType = processingType,
@@ -104,7 +102,6 @@ public class AssetEventEmitter : IAssetEventEmitter
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            EventName = AssetProcessingFailedEventEventName.Asset_processing_failed,
             AssetId = assetId,
             ErrorCode = errorCode,
             ErrorMessage = errorMessage,
@@ -134,7 +131,6 @@ public class AssetEventEmitter : IAssetEventEmitter
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            EventName = BundleValidationCompleteEventEventName.Asset_bundle_validation_complete,
             UploadId = uploadId,
             Success = success,
             BundleId = bundleId,
@@ -161,7 +157,6 @@ public class AssetEventEmitter : IAssetEventEmitter
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            EventName = BundleValidationFailedEventEventName.Asset_bundle_validation_failed,
             UploadId = uploadId,
             Errors = errors
         };
@@ -189,7 +184,6 @@ public class AssetEventEmitter : IAssetEventEmitter
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            EventName = BundleCreationCompleteEventEventName.Asset_bundle_creation_complete,
             BundleId = bundleId,
             Success = success,
             DownloadUrl = downloadUrl,
@@ -221,7 +215,6 @@ public class AssetEventEmitter : IAssetEventEmitter
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            EventName = AssetReadyEventEventName.Asset_ready,
             AssetId = assetId,
             VersionId = versionId,
             ContentHash = contentHash,

@@ -1018,7 +1018,6 @@ public partial class PermissionsService : IPermissionsService
             // Create SessionCapabilitiesEvent with actual permissions data
             var capabilitiesEvent = new SessionCapabilitiesEvent
             {
-                EventName = SessionCapabilitiesEventEventName.Permissions_session_capabilities,
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = Guid.Parse(sessionId),
