@@ -125,9 +125,14 @@ public partial class RelationshipService : IRelationshipService
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
-            foreach (var (_, model) in bulkResults)
+            foreach (var (key, model) in bulkResults)
             {
-                if (model != null) relationships.Add(model);
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
+                relationships.Add(model);
             }
 
             // Apply filters
@@ -219,9 +224,13 @@ public partial class RelationshipService : IRelationshipService
             var relationships = new List<RelationshipModel>();
             var entity2IdStr = body.Entity2Id.ToString();
 
-            foreach (var (_, model) in bulkResults)
+            foreach (var (key, model) in bulkResults)
             {
-                if (model == null) continue;
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
 
                 // Filter to only include relationships with entity2
                 if (model.Entity1Id == entity2IdStr || model.Entity2Id == entity2IdStr)
@@ -297,9 +306,14 @@ public partial class RelationshipService : IRelationshipService
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
-            foreach (var (_, model) in bulkResults)
+            foreach (var (key, model) in bulkResults)
             {
-                if (model != null) relationships.Add(model);
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
+                relationships.Add(model);
             }
 
             // Apply filters

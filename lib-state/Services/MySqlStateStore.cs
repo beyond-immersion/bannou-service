@@ -264,10 +264,21 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
-        var values = entries
-            .Select(e => BannouJson.Deserialize<TValue>(e.ValueJson))
-            .Where(v => v != null)
-            .Cast<TValue>()
+        var deserializedValues = new List<TValue>();
+        foreach (var entry in entries)
+        {
+            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+            if (value == null)
+            {
+                _logger.LogError(
+                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                    entry.Key, _storeName);
+                continue;
+            }
+            deserializedValues.Add(value);
+        }
+
+        var values = deserializedValues
             .AsQueryable()
             .Where(predicate)
             .ToList();
@@ -296,11 +307,21 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
-        var query = entries
-            .Select(e => BannouJson.Deserialize<TValue>(e.ValueJson))
-            .Where(v => v != null)
-            .Cast<TValue>()
-            .AsQueryable();
+        var deserializedValues = new List<TValue>();
+        foreach (var entry in entries)
+        {
+            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+            if (value == null)
+            {
+                _logger.LogError(
+                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                    entry.Key, _storeName);
+                continue;
+            }
+            deserializedValues.Add(value);
+        }
+
+        var query = deserializedValues.AsQueryable();
 
         // Apply filter
         if (predicate != null)
@@ -353,10 +374,21 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
-        var count = entries
-            .Select(e => BannouJson.Deserialize<TValue>(e.ValueJson))
-            .Where(v => v != null)
-            .Cast<TValue>()
+        var deserializedValues = new List<TValue>();
+        foreach (var entry in entries)
+        {
+            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+            if (value == null)
+            {
+                _logger.LogError(
+                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                    entry.Key, _storeName);
+                continue;
+            }
+            deserializedValues.Add(value);
+        }
+
+        var count = deserializedValues
             .AsQueryable()
             .Where(predicate)
             .LongCount();
