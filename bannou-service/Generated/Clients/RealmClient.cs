@@ -15,10 +15,15 @@ namespace BeyondImmersion.BannouService.Realm;
 
 using System = global::System;
 
+/// <summary>
+/// Client interface for the Realm service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial interface IRealmClient
 {
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get realm by ID
@@ -27,6 +32,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmResponse> GetRealmAsync(GetRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get realm by code
@@ -38,6 +44,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmResponse> GetRealmByCodeAsync(GetRealmByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List all realms
@@ -49,6 +56,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmListResponse> ListRealmsAsync(ListRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create new realm
@@ -57,6 +65,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmResponse> CreateRealmAsync(CreateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update realm
@@ -65,6 +74,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmResponse> UpdateRealmAsync(UpdateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Delete realm
@@ -79,6 +89,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task DeleteRealmAsync(DeleteRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Deprecate a realm
@@ -94,6 +105,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmResponse> DeprecateRealmAsync(DeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restore a deprecated realm
@@ -106,6 +118,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmResponse> UndeprecateRealmAsync(UndeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check if realm exists and is active
@@ -118,6 +131,7 @@ public partial interface IRealmClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RealmExistsResponse> RealmExistsAsync(RealmExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Seed realms from configuration
@@ -132,6 +146,10 @@ public partial interface IRealmClient
     System.Threading.Tasks.Task<SeedRealmsResponse> SeedRealmsAsync(SeedRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
+/// <summary>
+/// Client implementation for the Realm service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<RealmClient>
 {
@@ -153,6 +171,12 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
     /// </summary>
     public string ServiceName => _serviceName;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RealmClient"/> class.
+    /// </summary>
+    /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+    /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public RealmClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<RealmClient>? logger = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
@@ -161,6 +185,9 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         Initialize();
     }
 
+    /// <summary>
+    /// Gets the JSON serializer settings used for request and response serialization.
+    /// </summary>
     protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _jsonOptions; } }
 
     partial void Initialize();
@@ -255,6 +282,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
 
     #endregion
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get realm by ID
@@ -340,6 +368,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get realm by code
@@ -428,6 +457,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List all realms
@@ -510,6 +540,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create new realm
@@ -601,6 +632,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update realm
@@ -692,6 +724,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Delete realm
@@ -783,6 +816,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Deprecate a realm
@@ -881,6 +915,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restore a deprecated realm
@@ -976,6 +1011,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check if realm exists and is active
@@ -1059,6 +1095,7 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Seed realms from configuration
@@ -1149,16 +1186,31 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         }
     }
 
+    /// <summary>
+    /// Represents the result of deserializing an HTTP response into an object.
+    /// </summary>
+    /// <typeparam name="T">The type of the deserialized response object.</typeparam>
     protected struct ObjectResponseResult<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectResponseResult{T}"/> struct.
+        /// </summary>
+        /// <param name="responseObject">The deserialized response object.</param>
+        /// <param name="responseText">The raw response text.</param>
         public ObjectResponseResult(T responseObject, string responseText)
         {
             this.Object = responseObject;
             this.Text = responseText;
         }
 
+        /// <summary>
+        /// Gets the deserialized response object.
+        /// </summary>
         public T Object { get; }
 
+        /// <summary>
+        /// Gets the raw response text.
+        /// </summary>
         public string Text { get; }
     }
 
@@ -1182,8 +1234,20 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
 #endif
     }
 
-    public bool ReadResponseAsString { get; set; }
+    /// <summary>
+        /// Gets or sets a value indicating whether to read the response as a string before deserialization.
+        /// When true, the response is read as text first; when false, it's streamed directly.
+        /// </summary>
+        public bool ReadResponseAsString { get; set; }
 
+        /// <summary>
+        /// Reads and deserializes an HTTP response into the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+        /// <param name="response">The HTTP response message to read.</param>
+        /// <param name="headers">The response headers.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The deserialized response object and raw text.</returns>
         protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
             if (response == null || response.Content == null)

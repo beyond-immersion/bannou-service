@@ -15,10 +15,15 @@ namespace BeyondImmersion.BannouService.Location;
 
 using System = global::System;
 
+/// <summary>
+/// Client interface for the Location service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial interface ILocationClient
 {
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get location by ID
@@ -27,6 +32,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> GetLocationAsync(GetLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get location by code and realm
@@ -38,6 +44,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> GetLocationByCodeAsync(GetLocationByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List locations with filtering
@@ -49,6 +56,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationListResponse> ListLocationsAsync(ListLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List all locations in a realm (primary query pattern)
@@ -62,6 +70,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationListResponse> ListLocationsByRealmAsync(ListLocationsByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get child locations for a parent location
@@ -74,6 +83,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationListResponse> ListLocationsByParentAsync(ListLocationsByParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get root locations in a realm
@@ -86,6 +96,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationListResponse> ListRootLocationsAsync(ListRootLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get all ancestors of a location
@@ -99,6 +110,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationListResponse> GetLocationAncestorsAsync(GetLocationAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get all descendants of a location
@@ -112,6 +124,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationListResponse> GetLocationDescendantsAsync(GetLocationDescendantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create new location
@@ -120,6 +133,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> CreateLocationAsync(CreateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update location
@@ -128,6 +142,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> UpdateLocationAsync(UpdateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Set or change the parent of a location
@@ -143,6 +158,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> SetLocationParentAsync(SetLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Remove parent from a location (make it a root location)
@@ -155,6 +171,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> RemoveLocationParentAsync(RemoveLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Delete location
@@ -170,6 +187,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task DeleteLocationAsync(DeleteLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Deprecate a location
@@ -185,6 +203,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> DeprecateLocationAsync(DeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restore a deprecated location
@@ -197,6 +216,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationResponse> UndeprecateLocationAsync(UndeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check if location exists and is active
@@ -209,6 +229,7 @@ public partial interface ILocationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LocationExistsResponse> LocationExistsAsync(LocationExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Seed locations from configuration
@@ -224,6 +245,10 @@ public partial interface ILocationClient
     System.Threading.Tasks.Task<SeedLocationsResponse> SeedLocationsAsync(SeedLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
+/// <summary>
+/// Client implementation for the Location service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LocationClient : ILocationClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<LocationClient>
 {
@@ -245,6 +270,12 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
     /// </summary>
     public string ServiceName => _serviceName;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LocationClient"/> class.
+    /// </summary>
+    /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+    /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public LocationClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<LocationClient>? logger = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
@@ -253,6 +284,9 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         Initialize();
     }
 
+    /// <summary>
+    /// Gets the JSON serializer settings used for request and response serialization.
+    /// </summary>
     protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _jsonOptions; } }
 
     partial void Initialize();
@@ -347,6 +381,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
 
     #endregion
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get location by ID
@@ -432,6 +467,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get location by code and realm
@@ -520,6 +556,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List locations with filtering
@@ -602,6 +639,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List all locations in a realm (primary query pattern)
@@ -686,6 +724,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get child locations for a parent location
@@ -775,6 +814,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get root locations in a realm
@@ -858,6 +898,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get all ancestors of a location
@@ -948,6 +989,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get all descendants of a location
@@ -1038,6 +1080,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create new location
@@ -1129,6 +1172,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update location
@@ -1220,6 +1264,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Set or change the parent of a location
@@ -1318,6 +1363,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Remove parent from a location (make it a root location)
@@ -1407,6 +1453,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Delete location
@@ -1499,6 +1546,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Deprecate a location
@@ -1597,6 +1645,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restore a deprecated location
@@ -1692,6 +1741,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check if location exists and is active
@@ -1775,6 +1825,7 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Seed locations from configuration
@@ -1866,16 +1917,31 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         }
     }
 
+    /// <summary>
+    /// Represents the result of deserializing an HTTP response into an object.
+    /// </summary>
+    /// <typeparam name="T">The type of the deserialized response object.</typeparam>
     protected struct ObjectResponseResult<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectResponseResult{T}"/> struct.
+        /// </summary>
+        /// <param name="responseObject">The deserialized response object.</param>
+        /// <param name="responseText">The raw response text.</param>
         public ObjectResponseResult(T responseObject, string responseText)
         {
             this.Object = responseObject;
             this.Text = responseText;
         }
 
+        /// <summary>
+        /// Gets the deserialized response object.
+        /// </summary>
         public T Object { get; }
 
+        /// <summary>
+        /// Gets the raw response text.
+        /// </summary>
         public string Text { get; }
     }
 
@@ -1899,8 +1965,20 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
 #endif
     }
 
-    public bool ReadResponseAsString { get; set; }
+    /// <summary>
+        /// Gets or sets a value indicating whether to read the response as a string before deserialization.
+        /// When true, the response is read as text first; when false, it's streamed directly.
+        /// </summary>
+        public bool ReadResponseAsString { get; set; }
 
+        /// <summary>
+        /// Reads and deserializes an HTTP response into the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+        /// <param name="response">The HTTP response message to read.</param>
+        /// <param name="headers">The response headers.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The deserialized response object and raw text.</returns>
         protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
             if (response == null || response.Content == null)

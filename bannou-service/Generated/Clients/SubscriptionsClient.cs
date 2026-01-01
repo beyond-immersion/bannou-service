@@ -15,10 +15,15 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 
 using System = global::System;
 
+/// <summary>
+/// Client interface for the Subscriptions service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial interface ISubscriptionsClient
 {
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get subscriptions for an account
@@ -30,6 +35,7 @@ public partial interface ISubscriptionsClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionListResponse> GetAccountSubscriptionsAsync(GetAccountSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current (active, non-expired) subscriptions
@@ -42,6 +48,7 @@ public partial interface ISubscriptionsClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CurrentSubscriptionsResponse> GetCurrentSubscriptionsAsync(GetCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get a specific subscription by ID
@@ -50,6 +57,7 @@ public partial interface ISubscriptionsClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> GetSubscriptionAsync(GetSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create a new subscription
@@ -61,6 +69,7 @@ public partial interface ISubscriptionsClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> CreateSubscriptionAsync(CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update a subscription
@@ -72,6 +81,7 @@ public partial interface ISubscriptionsClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> UpdateSubscriptionAsync(UpdateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Cancel a subscription
@@ -84,6 +94,7 @@ public partial interface ISubscriptionsClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> CancelSubscriptionAsync(CancelSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Renew or extend a subscription
@@ -96,6 +107,10 @@ public partial interface ISubscriptionsClient
     System.Threading.Tasks.Task<SubscriptionInfo> RenewSubscriptionAsync(RenewSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
+/// <summary>
+/// Client implementation for the Subscriptions service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<SubscriptionsClient>
 {
@@ -117,6 +132,12 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
     /// </summary>
     public string ServiceName => _serviceName;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubscriptionsClient"/> class.
+    /// </summary>
+    /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+    /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public SubscriptionsClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<SubscriptionsClient>? logger = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
@@ -125,6 +146,9 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         Initialize();
     }
 
+    /// <summary>
+    /// Gets the JSON serializer settings used for request and response serialization.
+    /// </summary>
     protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _jsonOptions; } }
 
     partial void Initialize();
@@ -219,6 +243,7 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
 
     #endregion
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get subscriptions for an account
@@ -301,6 +326,7 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current (active, non-expired) subscriptions
@@ -384,6 +410,7 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get a specific subscription by ID
@@ -469,6 +496,7 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create a new subscription
@@ -569,6 +597,7 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update a subscription
@@ -657,6 +686,7 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Cancel a subscription
@@ -752,6 +782,7 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Renew or extend a subscription
@@ -840,16 +871,31 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
         }
     }
 
+    /// <summary>
+    /// Represents the result of deserializing an HTTP response into an object.
+    /// </summary>
+    /// <typeparam name="T">The type of the deserialized response object.</typeparam>
     protected struct ObjectResponseResult<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectResponseResult{T}"/> struct.
+        /// </summary>
+        /// <param name="responseObject">The deserialized response object.</param>
+        /// <param name="responseText">The raw response text.</param>
         public ObjectResponseResult(T responseObject, string responseText)
         {
             this.Object = responseObject;
             this.Text = responseText;
         }
 
+        /// <summary>
+        /// Gets the deserialized response object.
+        /// </summary>
         public T Object { get; }
 
+        /// <summary>
+        /// Gets the raw response text.
+        /// </summary>
         public string Text { get; }
     }
 
@@ -873,8 +919,20 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
 #endif
     }
 
-    public bool ReadResponseAsString { get; set; }
+    /// <summary>
+        /// Gets or sets a value indicating whether to read the response as a string before deserialization.
+        /// When true, the response is read as text first; when false, it's streamed directly.
+        /// </summary>
+        public bool ReadResponseAsString { get; set; }
 
+        /// <summary>
+        /// Reads and deserializes an HTTP response into the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+        /// <param name="response">The HTTP response message to read.</param>
+        /// <param name="headers">The response headers.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The deserialized response object and raw text.</returns>
         protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
             if (response == null || response.Content == null)

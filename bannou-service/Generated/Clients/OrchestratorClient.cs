@@ -15,10 +15,15 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 
 using System = global::System;
 
+/// <summary>
+/// Client interface for the Orchestrator service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial interface IOrchestratorClient
 {
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check infrastructure component health
@@ -33,6 +38,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<InfrastructureHealthResponse> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get health status of all services
@@ -45,6 +51,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ServiceHealthReport> GetServicesHealthAsync(ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restart service with optional configuration
@@ -59,6 +66,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ServiceRestartResult> RestartServiceAsync(ServiceRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check if service needs restart
@@ -76,6 +84,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RestartRecommendation> ShouldRestartServiceAsync(ShouldRestartServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Detect available container orchestration backends
@@ -100,6 +109,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<BackendsResponse> GetBackendsAsync(ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List available deployment presets
@@ -120,6 +130,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PresetsResponse> GetPresetsAsync(ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Deploy or update an environment
@@ -147,6 +158,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<DeployResponse> DeployAsync(DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current service-to-app-id routing mappings
@@ -167,6 +179,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ServiceRoutingResponse> GetServiceRoutingAsync(GetServiceRoutingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current environment status
@@ -183,6 +196,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<EnvironmentStatus> GetStatusAsync(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Tear down the current environment
@@ -200,6 +214,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<TeardownResponse> TeardownAsync(TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Clean up unused resources
@@ -221,6 +236,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CleanResponse> CleanAsync(CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get service/container logs
@@ -233,6 +249,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<LogsResponse> GetLogsAsync(GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update service topology without full redeploy
@@ -251,6 +268,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<TopologyUpdateResponse> UpdateTopologyAsync(TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Request container restart (self-service pattern)
@@ -275,6 +293,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ContainerRestartResponse> RequestContainerRestartAsync(ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get container health and restart history
@@ -287,6 +306,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ContainerStatus> GetContainerStatusAsync(GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Rollback to previous configuration
@@ -303,6 +323,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ConfigRollbackResponse> RollbackConfigurationAsync(ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current configuration version and metadata
@@ -315,6 +336,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ConfigVersionResponse> GetConfigVersionAsync(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Acquire a processor from a pool
@@ -328,6 +350,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AcquireProcessorResponse> AcquireProcessorAsync(AcquireProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Release a processor back to the pool
@@ -340,6 +363,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ReleaseProcessorResponse> ReleaseProcessorAsync(ReleaseProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get processing pool status
@@ -355,6 +379,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PoolStatusResponse> GetPoolStatusAsync(GetPoolStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Scale a processing pool
@@ -368,6 +393,7 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ScalePoolResponse> ScalePoolAsync(ScalePoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Cleanup idle processing pool instances
@@ -381,6 +407,10 @@ public partial interface IOrchestratorClient
     System.Threading.Tasks.Task<CleanupPoolResponse> CleanupPoolAsync(CleanupPoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
+/// <summary>
+/// Client implementation for the Orchestrator service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<OrchestratorClient>
 {
@@ -402,6 +432,12 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// </summary>
     public string ServiceName => _serviceName;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OrchestratorClient"/> class.
+    /// </summary>
+    /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+    /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public OrchestratorClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<OrchestratorClient>? logger = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
@@ -410,6 +446,9 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         Initialize();
     }
 
+    /// <summary>
+    /// Gets the JSON serializer settings used for request and response serialization.
+    /// </summary>
     protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _jsonOptions; } }
 
     partial void Initialize();
@@ -504,6 +543,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
 
     #endregion
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check infrastructure component health
@@ -589,6 +629,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get health status of all services
@@ -672,6 +713,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restart service with optional configuration
@@ -769,6 +811,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Check if service needs restart
@@ -857,6 +900,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Detect available container orchestration backends
@@ -952,6 +996,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List available deployment presets
@@ -1043,6 +1088,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Deploy or update an environment
@@ -1171,6 +1217,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current service-to-app-id routing mappings
@@ -1262,6 +1309,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current environment status
@@ -1349,6 +1397,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Tear down the current environment
@@ -1447,6 +1496,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Clean up unused resources
@@ -1549,6 +1599,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get service/container logs
@@ -1644,6 +1695,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update service topology without full redeploy
@@ -1751,6 +1803,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Request container restart (self-service pattern)
@@ -1858,6 +1911,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get container health and restart history
@@ -1947,6 +2001,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Rollback to previous configuration
@@ -2046,6 +2101,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get current configuration version and metadata
@@ -2129,6 +2185,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Acquire a processor from a pool
@@ -2223,6 +2280,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Release a processor back to the pool
@@ -2312,6 +2370,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get processing pool status
@@ -2398,6 +2457,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Scale a processing pool
@@ -2488,6 +2548,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Cleanup idle processing pool instances
@@ -2571,16 +2632,31 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
         }
     }
 
+    /// <summary>
+    /// Represents the result of deserializing an HTTP response into an object.
+    /// </summary>
+    /// <typeparam name="T">The type of the deserialized response object.</typeparam>
     protected struct ObjectResponseResult<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectResponseResult{T}"/> struct.
+        /// </summary>
+        /// <param name="responseObject">The deserialized response object.</param>
+        /// <param name="responseText">The raw response text.</param>
         public ObjectResponseResult(T responseObject, string responseText)
         {
             this.Object = responseObject;
             this.Text = responseText;
         }
 
+        /// <summary>
+        /// Gets the deserialized response object.
+        /// </summary>
         public T Object { get; }
 
+        /// <summary>
+        /// Gets the raw response text.
+        /// </summary>
         public string Text { get; }
     }
 
@@ -2604,8 +2680,20 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
 #endif
     }
 
-    public bool ReadResponseAsString { get; set; }
+    /// <summary>
+        /// Gets or sets a value indicating whether to read the response as a string before deserialization.
+        /// When true, the response is read as text first; when false, it's streamed directly.
+        /// </summary>
+        public bool ReadResponseAsString { get; set; }
 
+        /// <summary>
+        /// Reads and deserializes an HTTP response into the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+        /// <param name="response">The HTTP response message to read.</param>
+        /// <param name="headers">The response headers.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The deserialized response object and raw text.</returns>
         protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
             if (response == null || response.Content == null)

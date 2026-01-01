@@ -15,6 +15,10 @@ namespace BeyondImmersion.BannouService.Documentation;
 
 using System = global::System;
 
+/// <summary>
+/// Client interface for the Documentation service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial interface IDocumentationClient
 {
@@ -34,6 +38,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task ViewDocumentBySlugAsync(string slug, string? ns = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Natural language documentation search
@@ -46,6 +51,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<QueryDocumentationResponse> QueryDocumentationAsync(QueryDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get specific document by ID or slug
@@ -58,6 +64,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<GetDocumentResponse> GetDocumentAsync(GetDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Full-text keyword search
@@ -70,6 +77,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SearchDocumentationResponse> SearchDocumentationAsync(SearchDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List documents by category
@@ -82,6 +90,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ListDocumentsResponse> ListDocumentsAsync(ListDocumentsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get related topics and follow-up suggestions
@@ -94,6 +103,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SuggestRelatedResponse> SuggestRelatedTopicsAsync(SuggestRelatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create new documentation entry
@@ -102,6 +112,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CreateDocumentResponse> CreateDocumentAsync(CreateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update existing documentation entry
@@ -110,6 +121,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<UpdateDocumentResponse> UpdateDocumentAsync(UpdateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Soft-delete documentation entry to trashcan
@@ -122,6 +134,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<DeleteDocumentResponse> DeleteDocumentAsync(DeleteDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Recover document from trashcan
@@ -134,6 +147,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RecoverDocumentResponse> RecoverDocumentAsync(RecoverDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bulk update document metadata
@@ -146,6 +160,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<BulkUpdateResponse> BulkUpdateDocumentsAsync(BulkUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bulk soft-delete documents to trashcan
@@ -158,6 +173,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<BulkDeleteResponse> BulkDeleteDocumentsAsync(BulkDeleteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bulk import documentation from structured source
@@ -170,6 +186,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ImportDocumentationResponse> ImportDocumentationAsync(ImportDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List documents in the trashcan
@@ -182,6 +199,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ListTrashcanResponse> ListTrashcanAsync(ListTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Permanently delete trashcan items
@@ -194,6 +212,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PurgeTrashcanResponse> PurgeTrashcanAsync(PurgeTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get namespace documentation statistics
@@ -206,6 +225,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<NamespaceStatsResponse> GetNamespaceStatsAsync(GetNamespaceStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bind a git repository to a documentation namespace
@@ -219,6 +239,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<BindRepositoryResponse> BindRepositoryAsync(BindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Remove repository binding from namespace
@@ -231,6 +252,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<UnbindRepositoryResponse> UnbindRepositoryAsync(UnbindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Manually trigger repository sync
@@ -243,6 +265,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SyncRepositoryResponse> SyncRepositoryAsync(SyncRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get repository binding status
@@ -254,6 +277,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RepositoryStatusResponse> GetRepositoryStatusAsync(RepositoryStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List all repository bindings
@@ -265,6 +289,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ListRepositoryBindingsResponse> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update repository binding configuration
@@ -276,6 +301,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<UpdateRepositoryBindingResponse> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create documentation archive
@@ -288,6 +314,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CreateArchiveResponse> CreateDocumentationArchiveAsync(CreateArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List documentation archives
@@ -299,6 +326,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ListArchivesResponse> ListDocumentationArchivesAsync(ListArchivesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restore documentation from archive
@@ -311,6 +339,7 @@ public partial interface IDocumentationClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RestoreArchiveResponse> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Delete documentation archive
@@ -323,6 +352,10 @@ public partial interface IDocumentationClient
     System.Threading.Tasks.Task<DeleteArchiveResponse> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
+/// <summary>
+/// Client implementation for the Documentation service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DocumentationClient : IDocumentationClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<DocumentationClient>
 {
@@ -344,6 +377,12 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
     /// </summary>
     public string ServiceName => _serviceName;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DocumentationClient"/> class.
+    /// </summary>
+    /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+    /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public DocumentationClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<DocumentationClient>? logger = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
@@ -352,6 +391,9 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         Initialize();
     }
 
+    /// <summary>
+    /// Gets the JSON serializer settings used for request and response serialization.
+    /// </summary>
     protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _jsonOptions; } }
 
     partial void Initialize();
@@ -535,6 +577,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Natural language documentation search
@@ -630,6 +673,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get specific document by ID or slug
@@ -719,6 +763,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Full-text keyword search
@@ -802,6 +847,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List documents by category
@@ -885,6 +931,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get related topics and follow-up suggestions
@@ -968,6 +1015,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create new documentation entry
@@ -1053,6 +1101,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update existing documentation entry
@@ -1138,6 +1187,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Soft-delete documentation entry to trashcan
@@ -1227,6 +1277,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Recover document from trashcan
@@ -1322,6 +1373,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bulk update document metadata
@@ -1405,6 +1457,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bulk soft-delete documents to trashcan
@@ -1488,6 +1541,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bulk import documentation from structured source
@@ -1571,6 +1625,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List documents in the trashcan
@@ -1654,6 +1709,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Permanently delete trashcan items
@@ -1737,6 +1793,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get namespace documentation statistics
@@ -1820,6 +1877,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Bind a git repository to a documentation namespace
@@ -1916,6 +1974,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Remove repository binding from namespace
@@ -2005,6 +2064,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Manually trigger repository sync
@@ -2100,6 +2160,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Get repository binding status
@@ -2188,6 +2249,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List all repository bindings
@@ -2270,6 +2332,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Update repository binding configuration
@@ -2358,6 +2421,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Create documentation archive
@@ -2447,6 +2511,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// List documentation archives
@@ -2529,6 +2594,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Restore documentation from archive
@@ -2618,6 +2684,7 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Delete documentation archive
@@ -2706,16 +2773,31 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
         }
     }
 
+    /// <summary>
+    /// Represents the result of deserializing an HTTP response into an object.
+    /// </summary>
+    /// <typeparam name="T">The type of the deserialized response object.</typeparam>
     protected struct ObjectResponseResult<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectResponseResult{T}"/> struct.
+        /// </summary>
+        /// <param name="responseObject">The deserialized response object.</param>
+        /// <param name="responseText">The raw response text.</param>
         public ObjectResponseResult(T responseObject, string responseText)
         {
             this.Object = responseObject;
             this.Text = responseText;
         }
 
+        /// <summary>
+        /// Gets the deserialized response object.
+        /// </summary>
         public T Object { get; }
 
+        /// <summary>
+        /// Gets the raw response text.
+        /// </summary>
         public string Text { get; }
     }
 
@@ -2739,8 +2821,20 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
 #endif
     }
 
-    public bool ReadResponseAsString { get; set; }
+    /// <summary>
+        /// Gets or sets a value indicating whether to read the response as a string before deserialization.
+        /// When true, the response is read as text first; when false, it's streamed directly.
+        /// </summary>
+        public bool ReadResponseAsString { get; set; }
 
+        /// <summary>
+        /// Reads and deserializes an HTTP response into the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+        /// <param name="response">The HTTP response message to read.</param>
+        /// <param name="headers">The response headers.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The deserialized response object and raw text.</returns>
         protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
             if (response == null || response.Content == null)

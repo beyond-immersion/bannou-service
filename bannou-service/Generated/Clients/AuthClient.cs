@@ -15,10 +15,15 @@ namespace BeyondImmersion.BannouService.Auth;
 
 using System = global::System;
 
+/// <summary>
+/// Client interface for the Auth service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial interface IAuthClient
 {
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Login with email/password
@@ -27,6 +32,7 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthResponse> LoginAsync(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Register new user account
@@ -35,6 +41,9 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RegisterResponse> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="provider">The provider parameter.</param>
+    /// <param name="redirectUri">The redirectUri parameter.</param>
+    /// <param name="state">The state parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Initialize OAuth2 flow (browser redirect)
@@ -49,6 +58,8 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task InitOAuthAsync(Provider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="provider">The provider parameter.</param>
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Complete OAuth2 flow (browser redirect callback)
@@ -64,6 +75,7 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Verify Steam Session Ticket
@@ -77,6 +89,7 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthResponse> VerifySteamAuthAsync(SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Refresh access token
@@ -93,6 +106,7 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ValidateTokenResponse> ValidateTokenAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Logout and invalidate tokens
@@ -109,6 +123,7 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SessionsResponse> GetSessionsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Terminate specific session
@@ -117,6 +132,7 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task TerminateSessionAsync(TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Request password reset
@@ -125,6 +141,7 @@ public partial interface IAuthClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task RequestPasswordResetAsync(PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Confirm password reset with token
@@ -134,6 +151,10 @@ public partial interface IAuthClient
     System.Threading.Tasks.Task ConfirmPasswordResetAsync(PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
+/// <summary>
+/// Client implementation for the Auth service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<AuthClient>
 {
@@ -155,6 +176,12 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
     /// </summary>
     public string ServiceName => _serviceName;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthClient"/> class.
+    /// </summary>
+    /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+    /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public AuthClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<AuthClient>? logger = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
@@ -163,6 +190,9 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         Initialize();
     }
 
+    /// <summary>
+    /// Gets the JSON serializer settings used for request and response serialization.
+    /// </summary>
     protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _jsonOptions; } }
 
     partial void Initialize();
@@ -257,6 +287,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
 
     #endregion
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Login with email/password
@@ -348,6 +379,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Register new user account
@@ -439,6 +471,9 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="provider">The provider parameter.</param>
+    /// <param name="redirectUri">The redirectUri parameter.</param>
+    /// <param name="state">The state parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Initialize OAuth2 flow (browser redirect)
@@ -532,6 +567,8 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="provider">The provider parameter.</param>
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Complete OAuth2 flow (browser redirect callback)
@@ -621,6 +658,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Verify Steam Session Ticket
@@ -717,6 +755,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Refresh access token
@@ -881,6 +920,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Logout and invalidate tokens
@@ -1024,6 +1064,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Terminate specific session
@@ -1103,6 +1144,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Request password reset
@@ -1176,6 +1218,7 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
     /// Confirm password reset with token
@@ -1249,16 +1292,31 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         }
     }
 
+    /// <summary>
+    /// Represents the result of deserializing an HTTP response into an object.
+    /// </summary>
+    /// <typeparam name="T">The type of the deserialized response object.</typeparam>
     protected struct ObjectResponseResult<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectResponseResult{T}"/> struct.
+        /// </summary>
+        /// <param name="responseObject">The deserialized response object.</param>
+        /// <param name="responseText">The raw response text.</param>
         public ObjectResponseResult(T responseObject, string responseText)
         {
             this.Object = responseObject;
             this.Text = responseText;
         }
 
+        /// <summary>
+        /// Gets the deserialized response object.
+        /// </summary>
         public T Object { get; }
 
+        /// <summary>
+        /// Gets the raw response text.
+        /// </summary>
         public string Text { get; }
     }
 
@@ -1282,8 +1340,20 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
 #endif
     }
 
-    public bool ReadResponseAsString { get; set; }
+    /// <summary>
+        /// Gets or sets a value indicating whether to read the response as a string before deserialization.
+        /// When true, the response is read as text first; when false, it's streamed directly.
+        /// </summary>
+        public bool ReadResponseAsString { get; set; }
 
+        /// <summary>
+        /// Reads and deserializes an HTTP response into the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+        /// <param name="response">The HTTP response message to read.</param>
+        /// <param name="headers">The response headers.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The deserialized response object and raw text.</returns>
         protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
             if (response == null || response.Content == null)
