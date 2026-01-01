@@ -170,6 +170,9 @@ public class Program
             // Register shared connection manager
             serviceCollection.AddSingleton<RabbitMQConnectionManager>();
 
+            // Register retry buffer for handling transient publish failures
+            serviceCollection.AddSingleton<MessageRetryBuffer>();
+
             // Register IMessageBus for event publishing
             serviceCollection.AddSingleton<IMessageBus, RabbitMQMessageBus>();
 
