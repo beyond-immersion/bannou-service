@@ -283,7 +283,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     messageReceived.TrySetResult(true);
                     await Task.CompletedTask;
                 },
-                exchange: destination.Exchange);
+                exchange: destination.Exchange,
+                exchangeType: SubscriptionExchangeType.Fanout);
 
             // Create tap from character's event exchange to session's destination
             await using var tapHandle = await messageTap.CreateTapAsync(
@@ -291,12 +292,12 @@ public class MessagingTestHandler : BaseHttpTestHandler
                 destination,
                 sourceExchange);  // Explicit source exchange
 
-            // Publish message to the character's event exchange (fanout)
+            // Publish message to the character's event exchange (topic - tap creates source as topic)
             var testEvent = new TapTestMessage("Tap forward test", "forward-test", DateTimeOffset.UtcNow);
             var publishOptions = new PublishOptions
             {
                 Exchange = sourceExchange,
-                ExchangeType = PublishOptionsExchangeType.Fanout
+                ExchangeType = PublishOptionsExchangeType.Topic
             };
             await messageBus.TryPublishAsync(sourceTopic, testEvent, publishOptions);
 
@@ -357,15 +358,16 @@ public class MessagingTestHandler : BaseHttpTestHandler
                         messagesReceived.TrySetResult(true);
                     await Task.CompletedTask;
                 },
-                exchange: destination.Exchange);
+                exchange: destination.Exchange,
+                exchangeType: SubscriptionExchangeType.Fanout);
 
             // Create taps from both character exchanges to session destination
             await using var tap1 = await messageTap.CreateTapAsync("events", destination, sourceExchange1);
             await using var tap2 = await messageTap.CreateTapAsync("events", destination, sourceExchange2);
 
-            // Publish to both character exchanges
-            var publishOptions1 = new PublishOptions { Exchange = sourceExchange1, ExchangeType = PublishOptionsExchangeType.Fanout };
-            var publishOptions2 = new PublishOptions { Exchange = sourceExchange2, ExchangeType = PublishOptionsExchangeType.Fanout };
+            // Publish to both character exchanges (topic - tap creates source as topic)
+            var publishOptions1 = new PublishOptions { Exchange = sourceExchange1, ExchangeType = PublishOptionsExchangeType.Topic };
+            var publishOptions2 = new PublishOptions { Exchange = sourceExchange2, ExchangeType = PublishOptionsExchangeType.Topic };
             var event1 = new TapTestMessage("Multi-tap test", "charA", DateTimeOffset.UtcNow);
             var event2 = new TapTestMessage("Multi-tap test", "charB", DateTimeOffset.UtcNow);
             await messageBus.TryPublishAsync("events", event1, publishOptions1);
@@ -424,14 +426,15 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     firstMessageReceived.TrySetResult(true);
                     await Task.CompletedTask;
                 },
-                exchange: destination.Exchange);
+                exchange: destination.Exchange,
+                exchangeType: SubscriptionExchangeType.Fanout);
 
             // Create tap with explicit source exchange
             var tapHandle = await messageTap.CreateTapAsync("events", destination, sourceExchange);
             var tapId = tapHandle.TapId;
 
-            // Publish first message - should be forwarded
-            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
+            // Publish first message - should be forwarded (topic - tap creates source as topic)
+            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Topic };
             var event1 = new TapTestMessage("Dispose test", "before_dispose", DateTimeOffset.UtcNow);
             await messageBus.TryPublishAsync("events", event1, publishOptions);
 
@@ -506,14 +509,15 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     messageReceived.TrySetResult(true);
                     await Task.CompletedTask;
                 },
-                exchange: destination.Exchange);
+                exchange: destination.Exchange,
+                exchangeType: SubscriptionExchangeType.Fanout);
 
             var beforeCreate = DateTimeOffset.UtcNow;
 
             await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination, sourceExchange);
 
-            // Publish message to source exchange
-            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
+            // Publish message to source exchange (topic - tap creates source as topic)
+            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Topic };
             var testEvent = new TapTestMessage("Metadata test", "metadata-test", DateTimeOffset.UtcNow);
             await messageBus.TryPublishAsync(sourceTopic, testEvent, publishOptions);
 
@@ -599,8 +603,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
 
             await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination, sourceExchange);
 
-            // Publish message to source exchange
-            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
+            // Publish message to source exchange (topic - tap creates source as topic)
+            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Topic };
             var testEvent = new TapTestMessage("Direct exchange test", "direct-test", DateTimeOffset.UtcNow);
             await messageBus.TryPublishAsync(sourceTopic, testEvent, publishOptions);
 
