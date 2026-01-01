@@ -300,7 +300,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
                 CorrelationId = correlationId
             };
 
-            return await TryPublishAsync(SERVICE_ERROR_TOPIC, errorEvent, null, null, cancellationToken);
+            return await TryPublishAsync(SERVICE_ERROR_TOPIC, errorEvent, null, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {

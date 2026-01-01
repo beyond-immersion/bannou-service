@@ -53,32 +53,36 @@ public class InMemoryMessageBusTests
         var eventData = new TestEvent { Message = "Hello" };
 
         // Act
-        var messageId = await _messageBus.TryPublishAsync(topic, eventData);
+        var result = await _messageBus.TryPublishAsync(topic, eventData);
 
         // Assert
-        Assert.NotEqual(Guid.Empty, messageId);
+        Assert.True(result);
     }
 
     [Fact]
-    public async Task PublishAsync_WithNullTopic_ThrowsArgumentNullException()
+    public async Task TryPublishAsync_WithNullTopic_ReturnsFalse()
     {
         // Arrange
         var eventData = new TestEvent { Message = "Hello" };
 
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.TryPublishAsync(null!, eventData));
+        // Act
+        var result = await _messageBus.TryPublishAsync(null!, eventData);
+
+        // Assert - TryPublishAsync never throws, returns false on error
+        Assert.False(result);
     }
 
     [Fact]
-    public async Task PublishAsync_WithNullEventData_ThrowsArgumentNullException()
+    public async Task TryPublishAsync_WithNullEventData_ReturnsFalse()
     {
         // Arrange
         var topic = "test.topic";
 
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.PublishAsync<TestEvent>(topic, null!));
+        // Act
+        var result = await _messageBus.TryPublishAsync<TestEvent>(topic, null!);
+
+        // Assert - TryPublishAsync never throws, returns false on error
+        Assert.False(result);
     }
 
     [Fact]
@@ -137,21 +141,21 @@ public class InMemoryMessageBusTests
     }
 
     [Fact]
-    public async Task PublishAsync_NoSubscribers_CompletesWithoutError()
+    public async Task TryPublishAsync_NoSubscribers_CompletesWithoutError()
     {
         // Arrange
         var topic = "test.topic";
         var eventData = new TestEvent { Message = "Hello" };
 
         // Act
-        var messageId = await _messageBus.TryPublishAsync(topic, eventData);
+        var result = await _messageBus.TryPublishAsync(topic, eventData);
 
         // Assert
-        Assert.NotEqual(Guid.Empty, messageId);
+        Assert.True(result);
     }
 
     [Fact]
-    public async Task PublishAsync_WithOptions_CompletesSuccessfully()
+    public async Task TryPublishAsync_WithOptions_CompletesSuccessfully()
     {
         // Arrange
         var topic = "test.topic";
@@ -163,10 +167,10 @@ public class InMemoryMessageBusTests
         };
 
         // Act
-        var messageId = await _messageBus.TryPublishAsync(topic, eventData, options);
+        var result = await _messageBus.TryPublishAsync(topic, eventData, options);
 
         // Assert
-        Assert.NotEqual(Guid.Empty, messageId);
+        Assert.True(result);
     }
 
     [Fact]
@@ -200,10 +204,10 @@ public class InMemoryMessageBusTests
 
     #endregion
 
-    #region PublishRawAsync Tests
+    #region TryPublishRawAsync Tests
 
     [Fact]
-    public async Task PublishRawAsync_WithValidParameters_ReturnsMessageId()
+    public async Task TryPublishRawAsync_WithValidParameters_ReturnsTrue()
     {
         // Arrange
         var topic = "test.topic";
@@ -211,26 +215,28 @@ public class InMemoryMessageBusTests
         var contentType = "application/octet-stream";
 
         // Act
-        var messageId = await _messageBus.PublishRawAsync(topic, payload, contentType);
+        var result = await _messageBus.TryPublishRawAsync(topic, payload, contentType);
 
         // Assert
-        Assert.NotEqual(Guid.Empty, messageId);
+        Assert.True(result);
     }
 
     [Fact]
-    public async Task PublishRawAsync_WithNullTopic_ThrowsArgumentNullException()
+    public async Task TryPublishRawAsync_WithNullTopic_ReturnsFalse()
     {
         // Arrange
         var payload = new byte[] { 1, 2, 3 };
         var contentType = "application/octet-stream";
 
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.PublishRawAsync(null!, payload, contentType));
+        // Act
+        var result = await _messageBus.TryPublishRawAsync(null!, payload, contentType);
+
+        // Assert - TryPublishRawAsync never throws, returns false on error
+        Assert.False(result);
     }
 
     [Fact]
-    public async Task PublishRawAsync_WithEmptyPayload_CompletesSuccessfully()
+    public async Task TryPublishRawAsync_WithEmptyPayload_CompletesSuccessfully()
     {
         // Arrange
         var topic = "test.topic";
@@ -238,10 +244,10 @@ public class InMemoryMessageBusTests
         var contentType = "application/octet-stream";
 
         // Act
-        var messageId = await _messageBus.PublishRawAsync(topic, payload, contentType);
+        var result = await _messageBus.TryPublishRawAsync(topic, payload, contentType);
 
         // Assert
-        Assert.NotEqual(Guid.Empty, messageId);
+        Assert.True(result);
     }
 
     #endregion
@@ -659,7 +665,7 @@ public class InMemoryMessageBusTests
         });
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData, null, cts.Token);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: cts.Token);
 
         // Allow delivery to complete
         await Task.Delay(50);

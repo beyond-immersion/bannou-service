@@ -72,8 +72,9 @@ public class AccountsEventPublisherTests
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         var result = await _publisher.PublishAccountCreatedAsync(accountId, email, displayName, roles);
@@ -88,6 +89,7 @@ public class AccountsEventPublisherTests
                 e.DisplayName == displayName &&
                 e.Roles.SequenceEqual(roles)),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -102,8 +104,9 @@ public class AccountsEventPublisherTests
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         var result = await _publisher.PublishAccountCreatedAsync(accountId, email, null, null);
@@ -116,6 +119,7 @@ public class AccountsEventPublisherTests
                 e.DisplayName == string.Empty &&
                 e.Roles.Count == 0),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -130,6 +134,7 @@ public class AccountsEventPublisherTests
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Publish failed"));
 
@@ -152,12 +157,13 @@ public class AccountsEventPublisherTests
             "account.created",
             It.IsAny<AccountCreatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .Callback<string, AccountCreatedEvent, PublishOptions?, CancellationToken>((t, e, o, c) =>
+            .Callback<string, AccountCreatedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, o, g, c) =>
             {
                 capturedEvent = e;
             })
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _publisher.PublishAccountCreatedAsync(accountId, email);
@@ -182,8 +188,9 @@ public class AccountsEventPublisherTests
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         var result = await _publisher.PublishAccountUpdatedAsync(account, changedFields);
@@ -197,6 +204,7 @@ public class AccountsEventPublisherTests
                 e.Email == account.Email &&
                 e.ChangedFields.SequenceEqual(changedFields)),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -212,12 +220,13 @@ public class AccountsEventPublisherTests
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .Callback<string, AccountUpdatedEvent, PublishOptions?, CancellationToken>((t, e, o, c) =>
+            .Callback<string, AccountUpdatedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, o, g, c) =>
             {
                 capturedEvent = e;
             })
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _publisher.PublishAccountUpdatedAsync(account, changedFields);
@@ -241,6 +250,7 @@ public class AccountsEventPublisherTests
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Publish failed"));
 
@@ -266,8 +276,9 @@ public class AccountsEventPublisherTests
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         var result = await _publisher.PublishAccountDeletedAsync(account, deletedReason);
@@ -280,6 +291,7 @@ public class AccountsEventPublisherTests
                 e.AccountId == account.AccountId &&
                 e.DeletedReason == deletedReason),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -293,8 +305,9 @@ public class AccountsEventPublisherTests
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         var result = await _publisher.PublishAccountDeletedAsync(account, null);
@@ -307,6 +320,7 @@ public class AccountsEventPublisherTests
                 e.AccountId == account.AccountId &&
                 e.DeletedReason == null),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -321,12 +335,13 @@ public class AccountsEventPublisherTests
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .Callback<string, AccountDeletedEvent, PublishOptions?, CancellationToken>((t, e, o, c) =>
+            .Callback<string, AccountDeletedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, o, g, c) =>
             {
                 capturedEvent = e;
             })
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _publisher.PublishAccountDeletedAsync(account);
@@ -350,6 +365,7 @@ public class AccountsEventPublisherTests
             "account.deleted",
             It.IsAny<AccountDeletedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Publish failed"));
 

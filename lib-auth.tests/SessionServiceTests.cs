@@ -527,8 +527,9 @@ public class SessionServiceTests
             It.IsAny<string>(),
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _service.InvalidateAllSessionsForAccountAsync(accountId);
@@ -547,6 +548,7 @@ public class SessionServiceTests
                 e.AccountId == accountId &&
                 e.SessionIds.Count == 2),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -566,8 +568,9 @@ public class SessionServiceTests
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _service.PublishSessionInvalidatedEventAsync(accountId, sessionIds, reason);
@@ -581,6 +584,7 @@ public class SessionServiceTests
                 e.Reason == reason &&
                 e.DisconnectClients == true),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -603,8 +607,9 @@ public class SessionServiceTests
             "session.updated",
             It.IsAny<SessionUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _service.PublishSessionUpdatedEventAsync(accountId, sessionId, roles, authorizations, reason);
@@ -619,6 +624,7 @@ public class SessionServiceTests
                 e.Authorizations.SequenceEqual(authorizations) &&
                 e.Reason == reason),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

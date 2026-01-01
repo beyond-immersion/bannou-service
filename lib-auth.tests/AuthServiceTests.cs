@@ -95,8 +95,8 @@ public class AuthServiceTests
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
-        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Setup default HttpClient for mock factory
         var mockHttpClient = new HttpClient();
@@ -881,6 +881,7 @@ public class AuthServiceTests
                 e.Reason == SessionInvalidatedEventReason.Account_deleted &&
                 e.DisconnectClients == true),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -916,6 +917,7 @@ public class AuthServiceTests
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Never);
     }

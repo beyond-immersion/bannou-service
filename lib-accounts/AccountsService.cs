@@ -99,6 +99,7 @@ public partial class AccountsService : IAccountsService
                     .ToList();
 
                 var pagedAccounts = new List<AccountResponse>();
+                var skippedCount = 0;
                 foreach (var accountId in pageAccountIds)
                 {
                     var account = await LoadAccountResponseAsync(accountId, cancellationToken);
@@ -106,6 +107,16 @@ public partial class AccountsService : IAccountsService
                     {
                         pagedAccounts.Add(account);
                     }
+                    else
+                    {
+                        skippedCount++;
+                        _logger.LogWarning("Account {AccountId} in index but failed to load - possible data inconsistency", accountId);
+                    }
+                }
+
+                if (skippedCount > 0)
+                {
+                    _logger.LogWarning("Skipped {SkippedCount} accounts that failed to load on page {Page}", skippedCount, page);
                 }
 
                 var response = new AccountListResponse
@@ -135,7 +146,11 @@ public partial class AccountsService : IAccountsService
                 foreach (var accountId in batchIds)
                 {
                     var account = await LoadAccountResponseAsync(accountId, cancellationToken);
-                    if (account == null) continue;
+                    if (account == null)
+                    {
+                        _logger.LogWarning("Account {AccountId} in index but failed to load - possible data inconsistency", accountId);
+                        continue;
+                    }
 
                     // Apply filters
                     if (!string.IsNullOrWhiteSpace(emailFilter) &&

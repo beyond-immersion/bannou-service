@@ -126,7 +126,6 @@ public class MessagingServiceTests
     public async Task PublishEventAsync_WithValidRequest_ReturnsOkWithMessageId()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
             Topic = "test.topic",
@@ -138,8 +137,9 @@ public class MessagingServiceTests
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedMessageId);
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
@@ -148,14 +148,13 @@ public class MessagingServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
-        Assert.Equal(expectedMessageId, response.MessageId);
+        Assert.NotEqual(Guid.Empty, response.MessageId);
     }
 
     [Fact]
     public async Task PublishEventAsync_WithOptions_PassesOptionsToMessageBus()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var correlationId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
@@ -176,9 +175,10 @@ public class MessagingServiceTests
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
-            .ReturnsAsync(expectedMessageId);
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, o, g, ct) => capturedOptions = o)
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
@@ -207,6 +207,7 @@ public class MessagingServiceTests
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("RabbitMQ connection failed"));
 
@@ -238,7 +239,6 @@ public class MessagingServiceTests
     public async Task PublishEventAsync_WithNullOptions_PassesNullToMessageBus()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
             Topic = "test.topic",
@@ -252,9 +252,10 @@ public class MessagingServiceTests
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
-            .ReturnsAsync(expectedMessageId);
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, o, g, ct) => capturedOptions = o)
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
@@ -268,7 +269,6 @@ public class MessagingServiceTests
     public async Task PublishEventAsync_WithEmptyCorrelationId_DoesNotPassCorrelationId()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
             Topic = "test.topic",
@@ -285,9 +285,10 @@ public class MessagingServiceTests
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
-            .ReturnsAsync(expectedMessageId);
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, o, g, ct) => capturedOptions = o)
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);

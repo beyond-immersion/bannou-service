@@ -74,8 +74,8 @@ public class BannouSessionManagerTests
 
         // Default message bus behavior
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _sessionManager = new BannouSessionManager(
             _mockStateStoreFactory.Object,
@@ -749,9 +749,9 @@ public class BannouSessionManagerTests
 
         SessionEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, SessionEvent, PublishOptions?, CancellationToken>((t, e, o, ct) => capturedEvent = e)
-            .ReturnsAsync(Guid.NewGuid());
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SessionEvent, PublishOptions?, Guid?, CancellationToken>((t, e, o, g, ct) => capturedEvent = e)
+            .ReturnsAsync(true);
 
         // Act
         await _sessionManager.PublishSessionEventAsync(eventType, sessionId, eventData);
@@ -778,6 +778,7 @@ public class BannouSessionManagerTests
             It.IsAny<string>(),
             It.IsAny<SessionEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -789,7 +790,7 @@ public class BannouSessionManagerTests
         var sessionId = "test-session";
 
         _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Publish failed"));
 
         // Act - should not throw

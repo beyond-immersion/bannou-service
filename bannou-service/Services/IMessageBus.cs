@@ -55,7 +55,7 @@ public interface IMessageBus
         TEvent eventData,
         CancellationToken cancellationToken)
         where TEvent : class
-        => TryPublishAsync(topic, eventData, null, null, cancellationToken);
+        => TryPublishAsync(topic, eventData, null, cancellationToken: cancellationToken);
 
     /// <summary>
     /// Publish raw bytes (for binary protocol optimization). Never throws.

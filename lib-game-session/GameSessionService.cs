@@ -153,7 +153,11 @@ public partial class GameSessionService : IGameSessionService
             foreach (var sessionId in sessionIds)
             {
                 var session = await LoadSessionAsync(sessionId, cancellationToken);
-                if (session == null) continue;
+                if (session == null)
+                {
+                    _logger.LogWarning("Session {SessionId} in index but failed to load - possible data inconsistency", sessionId);
+                    continue;
+                }
 
                 // Apply game type filter if provided (non-default value)
                 // Since enums default to first value (Arcadia=0), we can't distinguish "not set" from "arcadia"
@@ -509,8 +513,16 @@ public partial class GameSessionService : IGameSessionService
 
                     if (voiceResponse.Success)
                     {
+                        // Store the voice session ID in the player for cleanup on leave
+                        player.VoiceSessionId = voiceSessionId;
+
+                        // Save updated session with VoiceSessionId so leave can properly clean up
+                        // This must succeed BEFORE we tell the client voice is ready
+                        await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
+
                         // Event-only pattern: Only return minimal voice metadata
                         // Peers are delivered via VoicePeerJoinedEvent to avoid race conditions
+                        // Only populate voice info AFTER save succeeds - if save fails, voice isn't properly set up
                         response.Voice = new VoiceConnectionInfo
                         {
                             VoiceEnabled = true,
@@ -519,12 +531,6 @@ public partial class GameSessionService : IGameSessionService
                             Codec = MapVoiceCodecToConnectionInfoCodec(voiceResponse.Codec),
                             StunServers = voiceResponse.StunServers?.ToList() ?? new List<string>()
                         };
-
-                        // Store the voice session ID in the player for cleanup on leave
-                        player.VoiceSessionId = voiceSessionId;
-
-                        // Save updated session with VoiceSessionId so leave can properly clean up
-                        await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
 
                         _logger.LogInformation("Player {AccountId} joined voice room {VoiceRoomId}",
                             accountId, model.VoiceRoomId);
@@ -538,6 +544,7 @@ public partial class GameSessionService : IGameSessionService
                 catch (Exception ex)
                 {
                     // Voice join failure is non-fatal - player can still participate in session
+                    // Don't set response.Voice - client should retry voice join separately if needed
                     _logger.LogWarning(ex, "Failed to join voice room for player {AccountId} in session {SessionId}",
                         accountId, sessionId);
                 }
@@ -608,36 +615,16 @@ public partial class GameSessionService : IGameSessionService
             var actionTimestamp = DateTimeOffset.UtcNow;
 
             // Publish game action event so other systems can react
-            try
+            // TryPublishAsync handles buffering, retry, and error logging internally
+            await _messageBus.TryPublishAsync("game-session.action.performed", new
             {
-                await _messageBus.TryPublishAsync("game-session.action.performed", new
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = actionTimestamp,
-                    SessionId = body.SessionId,
-                    ActionId = actionId,
-                    ActionType = body.ActionType.ToString(),
-                    TargetId = body.TargetId
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to publish game action event for action {ActionId}", actionId);
-                await _messageBus.TryPublishErrorAsync(
-                    "game-session",
-                    "PerformGameAction",
-                    "event_publishing_failed",
-                    ex.Message,
-                    dependency: "messaging",
-                    endpoint: "post:/game-session/action",
-                    cancellationToken: cancellationToken);
-                return (StatusCodes.InternalServerError, new GameActionResponse
-                {
-                    Success = false,
-                    ActionId = actionId,
-                    Result = new Dictionary<string, object?> { ["error"] = "Failed to process action - event publishing failed" }
-                });
-            }
+                EventId = Guid.NewGuid(),
+                Timestamp = actionTimestamp,
+                SessionId = body.SessionId,
+                ActionId = actionId,
+                ActionType = body.ActionType.ToString(),
+                TargetId = body.TargetId
+            });
 
             var response = new GameActionResponse
             {
