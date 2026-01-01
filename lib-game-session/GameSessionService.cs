@@ -1005,6 +1005,14 @@ public partial class GameSessionService : IGameSessionService
                 var sentCount = await _clientEventPublisher.PublishToSessionsAsync(targetSessionIds, chatEvent, cancellationToken);
                 _logger.LogDebug("Chat message sent to {SentCount}/{TotalCount} sessions in game session {SessionId}",
                     sentCount, targetSessionIds.Count, sessionId);
+
+                // Warn if we had recipients but couldn't deliver to any of them
+                if (sentCount == 0 && targetSessionIds.Count > 0)
+                {
+                    _logger.LogWarning(
+                        "Chat message in session {SessionId} had {RecipientCount} target sessions but 0 delivered - possible pubsub issue",
+                        sessionId, targetSessionIds.Count);
+                }
             }
 
             return StatusCodes.OK;

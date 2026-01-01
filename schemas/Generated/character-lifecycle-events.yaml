@@ -24,8 +24,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - character.created
+          default: character.created
           description: 'Event type identifier: character.created'
         characterId: &id001
           type: string
@@ -67,8 +66,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - character.updated
+          default: character.updated
           description: 'Event type identifier: character.updated'
         characterId: *id001
         name: *id002
@@ -100,8 +98,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - character.deleted
+          default: character.deleted
           description: 'Event type identifier: character.deleted'
         characterId: *id001
         name: *id002

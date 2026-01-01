@@ -1,8 +1,8 @@
 # Behavior Plugin V2 - GOAP Planning & ABML Runtime
 
-> **Status**: PHASES 1-3 COMPLETE (ABML Runtime, GOAP Integration, Multi-Channel)
+> **Status**: PHASES 1-3 COMPLETE, PHASE 4 PARTIAL (Cognition handlers implemented, orchestration pending)
 > **Created**: 2024-12-28
-> **Updated**: 2025-12-30 (GOAP Integration complete)
+> **Updated**: 2026-01-01 (Phase 4 partial implementation verified)
 > **Related Documents**:
 > - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
 > - [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
@@ -10,10 +10,11 @@
 > - [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Actor infrastructure
 
 **Implementation Status**:
-- **Phase 1 (ABML Runtime)**: COMPLETE - 414 tests passing. See [ABML Guide](../guides/ABML.md).
+- **Phase 1 (ABML Runtime)**: COMPLETE - 585 tests passing. See [ABML Guide](../guides/ABML.md).
 - **Phase 2 (GOAP)**: COMPLETE - See [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md). Full A* planner, metadata caching, API endpoints.
 - **Phase 3 (Multi-Channel)**: COMPLETE - Sync points, barriers, deadlock detection.
-- **Phase 4-5**: PLANNED (Cognition Pipeline, Actor Integration)
+- **Phase 4 (Cognition)**: PARTIAL - Handlers implemented (FilterAttention, AssessSignificance, EvaluateGoalImpact, QueryMemory, StoreMemory, TriggerGoapReplan). Pipeline orchestration pending.
+- **Phase 5 (Actor Integration)**: PLANNED - Requires lib-actor infrastructure (see [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md)).
 
 **Bannou-Specific Constraints**: See [ABML Guide Appendix A](../guides/ABML.md#appendix-a-bannou-implementation-requirements) for mandatory infrastructure patterns.
 
@@ -1818,7 +1819,7 @@ components:
 
 **Goal**: Parse, compile, and execute basic ABML documents.
 
-**Status**: COMPLETE - 414 tests passing. See [ABML Guide](../guides/ABML.md) for full documentation.
+**Status**: COMPLETE - 585 tests passing. See [ABML Guide](../guides/ABML.md) for full documentation.
 
 - [x] ABML Parser (YamlDotNet-based)
   - [x] Document structure validation
@@ -1841,7 +1842,7 @@ components:
   - [x] Multi-channel execution with sync points
   - [x] Deadlock detection
 
-**Tests**: 414 unit tests covering parser, expression evaluator, executor, channels, and error handling.
+**Tests**: 585 unit tests covering parser, expression evaluator, executor, channels, and error handling.
 
 ### Phase 2: GOAP Integration - COMPLETE ✅
 
@@ -1909,31 +1910,42 @@ components:
 
 **Tests**: 15+ multi-channel tests covering sync points, barriers, and deadlock detection; 31 document loader tests covering import resolution, circular detection, namespaced flow execution, context-relative resolution, goto across imports, relative paths, variable scope isolation, and file system loading.
 
-### Phase 4: Cognition Pipeline
+### Phase 4: Cognition Pipeline - PARTIAL
 
 **Goal**: Perception processing and goal formation.
 
-- [ ] Attention System
-  - [ ] Priority-based filtering
-  - [ ] Budget allocation
-  - [ ] Capacity limiting
+**Status**: PARTIAL - Individual handlers implemented in `lib-behavior/Handlers/`. Pipeline orchestration and integration tests pending.
 
-- [ ] Memory Integration
-  - [ ] Memory service client
-  - [ ] Context enrichment
-  - [ ] Recognition patterns
+**Implemented Components** (`lib-behavior/Handlers/` and `lib-behavior/Cognition/`):
+- [x] Attention System
+  - [x] `FilterAttentionHandler.cs` - Priority-based filtering
+  - [x] `AttentionBudget`, `AttentionWeights` types in `CognitionTypes.cs`
+  - [ ] Full budget allocation integration
 
-- [ ] Significance Assessment
-  - [ ] Emotional impact scoring
-  - [ ] Goal relevance
-  - [ ] Relationship weighting
+- [x] Memory Integration
+  - [x] `QueryMemoryHandler.cs` - Memory retrieval
+  - [x] `StoreMemoryHandler.cs` - Memory persistence
+  - [x] `IMemoryStore` interface + `ActorLocalMemoryStore` implementation
+  - [ ] Context enrichment patterns
 
-- [ ] Intention Formation
-  - [ ] Goal update logic
-  - [ ] Replan triggering
-  - [ ] Urgency assessment
+- [x] Significance Assessment
+  - [x] `AssessSignificanceHandler.cs` - Significance scoring
+  - [x] `SignificanceWeights`, `SignificanceScore` types
+  - [ ] Full emotional impact integration
 
-**Tests**: End-to-end cognition with mock memory service.
+- [x] Intention Formation
+  - [x] `EvaluateGoalImpactHandler.cs` - Goal impact assessment
+  - [x] `TriggerGoapReplanHandler.cs` - Replan triggering
+  - [x] `GoalImpactResult` type
+  - [ ] Urgency assessment integration
+
+**Pending**:
+- [ ] `CognitionPipeline` orchestrator class (chains handlers together)
+- [ ] `PerceptionEvent` type definition
+- [ ] End-to-end integration tests
+- [ ] BehaviorService API endpoints for cognition
+
+**Tests**: Handler unit tests exist. End-to-end cognition tests pending.
 
 ### Phase 5: Actor Integration
 

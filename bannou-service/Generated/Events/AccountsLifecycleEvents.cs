@@ -38,8 +38,7 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AccountCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "account.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -82,8 +81,7 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AccountUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "account.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -133,8 +131,7 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AccountDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "account.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -168,33 +165,6 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AccountCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account.created")]
-    Account_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AccountUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account.updated")]
-    Account_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AccountDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account.deleted")]
-    Account_deleted = 0,
 
 }
 

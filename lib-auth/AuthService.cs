@@ -1149,6 +1149,14 @@ public partial class AuthService : IAuthService
             throw;
         }
 
+        // Validate account data integrity before creating session
+        if (account.Roles == null || account.Roles.Count == 0)
+        {
+            _logger.LogWarning(
+                "Account {AccountId} has null or empty Roles - possible data integrity issue. Session will have limited permissions.",
+                account.AccountId);
+        }
+
         // Store session data in Redis with opaque key
         var sessionData = new SessionDataModel
         {

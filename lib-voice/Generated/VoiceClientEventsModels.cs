@@ -231,19 +231,17 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// Previous tier
+    /// Previous tier (always p2p for upgrade events)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousTier")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceTierUpgradeEventPreviousTier PreviousTier { get; set; } = default!;
+    public string PreviousTier { get; set; } = "p2p";
 
     /// <summary>
-    /// New tier after upgrade
+    /// New tier after upgrade (always scaled for upgrade events)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newTier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceTierUpgradeEventNewTier NewTier { get; set; } = default!;
+    public string NewTier { get; set; } = "scaled";
 
     /// <summary>
     /// RTP server URI to connect to
@@ -422,24 +420,6 @@ public enum VoiceRoomStateEventCodec
 
     [System.Runtime.Serialization.EnumMember(Value = @"g722")]
     G722 = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceTierUpgradeEventPreviousTier
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
-    P2p = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceTierUpgradeEventNewTier
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
-    Scaled = 0,
 
 }
 

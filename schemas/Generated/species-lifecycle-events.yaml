@@ -26,8 +26,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - species.created
+          default: species.created
           description: 'Event type identifier: species.created'
         speciesId: &id001
           type: string
@@ -88,8 +87,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - species.updated
+          default: species.updated
           description: 'Event type identifier: species.updated'
         speciesId: *id001
         code: *id002
@@ -131,8 +129,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - species.deleted
+          default: species.deleted
           description: 'Event type identifier: species.deleted'
         speciesId: *id001
         code: *id002

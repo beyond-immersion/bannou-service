@@ -202,12 +202,12 @@ components:
           description: Voice room ID
         previousTier:
           type: string
-          enum: [p2p]
-          description: Previous tier
+          default: p2p
+          description: Previous tier (always p2p for upgrade events)
         newTier:
           type: string
-          enum: [scaled]
-          description: New tier after upgrade
+          default: scaled
+          description: New tier after upgrade (always scaled for upgrade events)
         rtpServerUri:
           type: string
           description: RTP server URI to connect to

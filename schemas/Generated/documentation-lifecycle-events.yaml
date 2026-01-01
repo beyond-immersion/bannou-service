@@ -26,8 +26,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - document.created
+          default: document.created
           description: 'Event type identifier: document.created'
         documentId: &id001
           type: string
@@ -70,8 +69,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - document.updated
+          default: document.updated
           description: 'Event type identifier: document.updated'
         documentId: *id001
         namespace: *id002
@@ -105,8 +103,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - document.deleted
+          default: document.deleted
           description: 'Event type identifier: document.deleted'
         documentId: *id001
         namespace: *id002

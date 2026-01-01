@@ -649,6 +649,14 @@ public partial class AccountsService : IAccountsService
             var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE);
             var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
 
+            // Validate ExternalId - required for OAuth linking and provider index
+            if (string.IsNullOrEmpty(body.ExternalId))
+            {
+                _logger.LogWarning("OAuth link attempt with empty ExternalId for account {AccountId}, provider {Provider}",
+                    accountId, body.Provider);
+                return (StatusCodes.BadRequest, null);
+            }
+
             // Check if this provider is already linked
             var existingMethod = authMethods.FirstOrDefault(m =>
                 m.Provider.ToString() == body.Provider.ToString() && m.ExternalId == body.ExternalId);
@@ -664,7 +672,7 @@ public partial class AccountsService : IAccountsService
             {
                 MethodId = methodId,
                 Provider = MapOAuthProviderToAuthProvider(body.Provider),
-                ExternalId = body.ExternalId ?? string.Empty,
+                ExternalId = body.ExternalId,
                 LinkedAt = DateTimeOffset.UtcNow
             };
 
@@ -687,8 +695,8 @@ public partial class AccountsService : IAccountsService
             var response = new AuthMethodResponse
             {
                 MethodId = methodId,
-                Provider = body.Provider, // Both are OAuthProvider now
-                ExternalId = body.ExternalId ?? string.Empty,
+                Provider = body.Provider,
+                ExternalId = body.ExternalId, // Already validated non-empty above
                 LinkedAt = DateTimeOffset.UtcNow
             };
 

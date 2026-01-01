@@ -38,8 +38,7 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CharacterCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "character.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -84,8 +83,7 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CharacterUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "character.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -137,8 +135,7 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CharacterDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "character.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -174,33 +171,6 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CharacterCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character.created")]
-    Character_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CharacterUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character.updated")]
-    Character_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CharacterDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character.deleted")]
-    Character_deleted = 0,
 
 }
 

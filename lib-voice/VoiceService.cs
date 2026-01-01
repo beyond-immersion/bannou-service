@@ -865,8 +865,8 @@ public partial class VoiceService : IVoiceService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = roomId,
-                PreviousTier = VoiceTierUpgradeEventPreviousTier.P2p,
-                NewTier = VoiceTierUpgradeEventNewTier.Scaled,
+                PreviousTier = "p2p",
+                NewTier = "scaled",
                 RtpServerUri = rtpServerUri,
                 SipCredentials = clientCredentials,
                 MigrationDeadlineMs = _configuration.TierUpgradeMigrationDeadlineMs

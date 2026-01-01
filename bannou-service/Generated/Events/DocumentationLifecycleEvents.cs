@@ -38,8 +38,7 @@ public partial class DocumentCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "document.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -86,8 +85,7 @@ public partial class DocumentUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "document.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -141,8 +139,7 @@ public partial class DocumentDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "document.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -180,33 +177,6 @@ public partial class DocumentDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DocumentCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"document.created")]
-    Document_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DocumentUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"document.updated")]
-    Document_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DocumentDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"document.deleted")]
-    Document_deleted = 0,
 
 }
 

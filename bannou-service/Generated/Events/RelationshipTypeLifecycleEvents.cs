@@ -38,8 +38,7 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RelationshipTypeCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "relationship-type.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -111,8 +110,7 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RelationshipTypeUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "relationship-type.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -191,8 +189,7 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RelationshipTypeDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "relationship-type.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -255,33 +252,6 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RelationshipTypeCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"relationship-type.created")]
-    RelationshipType_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RelationshipTypeUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"relationship-type.updated")]
-    RelationshipType_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RelationshipTypeDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"relationship-type.deleted")]
-    RelationshipType_deleted = 0,
 
 }
 

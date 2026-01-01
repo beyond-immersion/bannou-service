@@ -26,8 +26,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - realm.created
+          default: realm.created
           description: 'Event type identifier: realm.created'
         realmId: &id001
           type: string
@@ -78,8 +77,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - realm.updated
+          default: realm.updated
           description: 'Event type identifier: realm.updated'
         realmId: *id001
         code: *id002
@@ -117,8 +115,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - realm.deleted
+          default: realm.deleted
           description: 'Event type identifier: realm.deleted'
         realmId: *id001
         code: *id002

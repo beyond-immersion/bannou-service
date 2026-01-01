@@ -146,7 +146,7 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
         props = {
             'eventName': {
                 'type': 'string',
-                'enum': [topic],
+                'default': topic,
                 'description': f'Event type identifier: {topic}'
             },
             **model_props

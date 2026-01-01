@@ -28,8 +28,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - location.created
+          default: location.created
           description: 'Event type identifier: location.created'
         locationId: &id001
           type: string
@@ -88,8 +87,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - location.updated
+          default: location.updated
           description: 'Event type identifier: location.updated'
         locationId: *id001
         realmId: *id002
@@ -131,8 +129,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - location.deleted
+          default: location.deleted
           description: 'Event type identifier: location.deleted'
         locationId: *id001
         realmId: *id002

@@ -38,8 +38,7 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "realm.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -96,8 +95,7 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "realm.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -161,8 +159,7 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RealmDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "realm.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -210,33 +207,6 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"realm.created")]
-    Realm_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"realm.updated")]
-    Realm_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"realm.deleted")]
-    Realm_deleted = 0,
 
 }
 

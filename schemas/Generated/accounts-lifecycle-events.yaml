@@ -23,8 +23,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - account.created
+          default: account.created
           description: 'Event type identifier: account.created'
         accountId: &id001
           type: string
@@ -65,8 +64,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - account.updated
+          default: account.updated
           description: 'Event type identifier: account.updated'
         accountId: *id001
         email: *id002
@@ -97,8 +95,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - account.deleted
+          default: account.deleted
           description: 'Event type identifier: account.deleted'
         accountId: *id001
         email: *id002

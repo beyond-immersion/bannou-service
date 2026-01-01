@@ -1,8 +1,17 @@
 # ABML Local Runtime & Behavior Compilation
 
-> **Status**: PLANNING DOCUMENT
+> **Status**: PHASES 1-2 COMPLETE, PHASE 5 COMPLETE (Core runtime implemented)
 > **Created**: 2025-12-29
+> **Updated**: 2026-01-01 (Implementation status verified)
 > **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
+
+**Implementation Status**:
+- **Phase 1 (Bytecode Foundation)**: COMPLETE - `BehaviorModelInterpreter` (509 lines), `BehaviorOpcode` (40+ opcodes), binary format
+- **Phase 2 (Full Compilation)**: COMPLETE - `BehaviorCompiler`, `BytecodeEmitter`, `BytecodeOptimizer`, `SemanticAnalyzer`
+- **Phase 3 (Distribution)**: PENDING - Model sync service not yet implemented
+- **Phase 4 (Client Integration)**: PARTIAL - `BehaviorModelCache` exists, Stride integration pending
+- **Phase 5 (Intent Channels)**: COMPLETE - `IntentMerger`, `IntentChannels`, `ContributionTrace` in sdk-sources/
+- **Phase 6-8**: PENDING
 
 ---
 
@@ -2794,16 +2803,16 @@ public async Task<QueryCombatOptionsResponse> HandleQueryCombatOptions(
 
 ## 8. Implementation Phases
 
-| Phase | Goal | Key Deliverables |
-|-------|------|------------------|
-| **1. Bytecode Foundation** | Basic compilation working | Bytecode format, `BehaviorModelInterpreter`, test harness |
-| **2. Full Compilation** | Complete ABML → bytecode | Semantic analyzer, IR builder, optimization passes |
-| **3. Distribution** | Models flow to clients | lib-state storage, `/behavior/models/sync`, delta sync |
-| **4. Client Integration** | Stride executes models | `BehaviorModelCache`, `BehaviorEvaluationSystem`, variant selection |
-| **5. Intent Channels** | Multi-model coordination | Channel definitions, `IntentMerger`, urgency-based resolution |
-| **6. Agent Integration** | Cloud agents use models | `/behavior/agent/query-combat-options`, Event Brain integration |
-| **7. Training System** | Characters learn styles | Proficiency tracking, model tier unlocking, trainer NPCs |
-| **8. Polish** | Production-ready | Benchmarks, memory pooling, hot reload, debug tooling |
+| Phase | Status | Goal | Key Deliverables |
+|-------|--------|------|------------------|
+| **1. Bytecode Foundation** | ✅ COMPLETE | Basic compilation working | `BehaviorOpcode` (40+ opcodes), `BehaviorModelInterpreter` (509 lines), `BehaviorModel` binary format |
+| **2. Full Compilation** | ✅ COMPLETE | Complete ABML → bytecode | `BehaviorCompiler`, `SemanticAnalyzer`, `BytecodeEmitter`, `BytecodeOptimizer` in lib-behavior/Compiler/ |
+| **3. Distribution** | ⏳ PENDING | Models flow to clients | lib-state storage, `/behavior/models/sync`, delta sync |
+| **4. Client Integration** | 🔶 PARTIAL | Stride executes models | `BehaviorModelCache` (exists), `BehaviorEvaluationSystem` (pending), variant selection (pending) |
+| **5. Intent Channels** | ✅ COMPLETE | Multi-model coordination | `IntentChannels`, `IntentMerger`, `ContributionTrace`, `BehaviorOutput` in sdk-sources/Behavior/Intent/ |
+| **6. Agent Integration** | ⏳ PENDING | Cloud agents use models | `/behavior/agent/query-combat-options`, Event Brain integration |
+| **7. Training System** | ⏳ PENDING | Characters learn styles | Proficiency tracking, model tier unlocking, trainer NPCs |
+| **8. Polish** | ⏳ PENDING | Production-ready | Benchmarks, memory pooling, hot reload, debug tooling |
 
 ---
 
@@ -2851,7 +2860,7 @@ public async Task<QueryCombatOptionsResponse> HandleQueryCombatOptions(
 
 ---
 
-*Document Status: PLANNING - Informing behavior plugin development priorities*
+*Document Status: PARTIAL IMPLEMENTATION - Core runtime complete (Phases 1, 2, 5). Distribution and game integration pending (Phases 3, 4, 6-8).*
 
 ## Related Documents
 

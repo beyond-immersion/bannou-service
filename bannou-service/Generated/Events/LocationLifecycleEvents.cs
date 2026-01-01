@@ -38,8 +38,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LocationCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "location.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -104,8 +103,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LocationUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "location.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -177,8 +175,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LocationDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "location.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -234,33 +231,6 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum LocationCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"location.created")]
-    Location_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum LocationUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"location.updated")]
-    Location_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum LocationDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"location.deleted")]
-    Location_deleted = 0,
 
 }
 

@@ -38,8 +38,7 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SpeciesCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "species.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -108,8 +107,7 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SpeciesUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "species.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -185,8 +183,7 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SpeciesDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "species.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -246,33 +243,6 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SpeciesCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"species.created")]
-    Species_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SpeciesUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"species.updated")]
-    Species_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SpeciesDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"species.deleted")]
-    Species_deleted = 0,
 
 }
 

@@ -22,8 +22,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - behavior.created
+          default: behavior.created
           description: 'Event type identifier: behavior.created'
         behaviorId: &id001
           type: string
@@ -62,8 +61,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - behavior.updated
+          default: behavior.updated
           description: 'Event type identifier: behavior.updated'
         behaviorId: *id001
         name: *id002
@@ -94,8 +92,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - behavior.deleted
+          default: behavior.deleted
           description: 'Event type identifier: behavior.deleted'
         behaviorId: *id001
         name: *id002

@@ -38,8 +38,7 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameSessionCreatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game-session.created";
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -86,8 +85,7 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameSessionUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game-session.updated";
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -141,8 +139,7 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameSessionDeletedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game-session.deleted";
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -180,33 +177,6 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameSessionCreatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game-session.created")]
-    GameSession_created = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameSessionUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game-session.updated")]
-    GameSession_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameSessionDeletedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game-session.deleted")]
-    GameSession_deleted = 0,
 
 }
 

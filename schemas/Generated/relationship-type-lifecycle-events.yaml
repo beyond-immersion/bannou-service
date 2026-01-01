@@ -27,8 +27,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - relationship-type.created
+          default: relationship-type.created
           description: 'Event type identifier: relationship-type.created'
         relationshipTypeId: &id001
           type: string
@@ -92,8 +91,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - relationship-type.updated
+          default: relationship-type.updated
           description: 'Event type identifier: relationship-type.updated'
         relationshipTypeId: *id001
         code: *id002
@@ -137,8 +135,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - relationship-type.deleted
+          default: relationship-type.deleted
           description: 'Event type identifier: relationship-type.deleted'
         relationshipTypeId: *id001
         code: *id002

@@ -23,8 +23,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - game-session.created
+          default: game-session.created
           description: 'Event type identifier: game-session.created'
         sessionId: &id001
           type: string
@@ -64,8 +63,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - game-session.updated
+          default: game-session.updated
           description: 'Event type identifier: game-session.updated'
         sessionId: *id001
         gameType: *id002
@@ -97,8 +95,7 @@ components:
       properties:
         eventName:
           type: string
-          enum:
-          - game-session.deleted
+          default: game-session.deleted
           description: 'Event type identifier: game-session.deleted'
         sessionId: *id001
         gameType: *id002

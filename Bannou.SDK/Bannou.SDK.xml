@@ -18885,12 +18885,12 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.PreviousTier">
             <summary>
-            Previous tier
+            Previous tier (always p2p for upgrade events)
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.NewTier">
             <summary>
-            New tier after upgrade
+            New tier after upgrade (always scaled for upgrade events)
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.RtpServerUri">
