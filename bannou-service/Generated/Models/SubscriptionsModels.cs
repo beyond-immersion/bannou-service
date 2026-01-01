@@ -41,6 +41,7 @@ public partial class GetAccountSubscriptionsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
@@ -78,6 +79,7 @@ public partial class GetCurrentSubscriptionsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -103,6 +105,7 @@ public partial class GetSubscriptionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -128,6 +131,7 @@ public partial class CreateSubscriptionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
@@ -135,6 +139,7 @@ public partial class CreateSubscriptionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -178,6 +183,7 @@ public partial class UpdateSubscriptionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
     /// <summary>
@@ -215,6 +221,7 @@ public partial class CancelSubscriptionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
     /// <summary>
@@ -247,6 +254,7 @@ public partial class RenewSubscriptionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
     /// <summary>
@@ -284,6 +292,7 @@ public partial class SubscriptionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
     /// <summary>
@@ -291,6 +300,7 @@ public partial class SubscriptionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
@@ -298,6 +308,7 @@ public partial class SubscriptionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -305,6 +316,7 @@ public partial class SubscriptionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string StubName { get; set; } = default!;
 
     /// <summary>
@@ -318,6 +330,7 @@ public partial class SubscriptionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startDate")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartDate { get; set; } = default!;
 
     /// <summary>
@@ -349,6 +362,7 @@ public partial class SubscriptionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
@@ -380,6 +394,7 @@ public partial class CurrentSubscriptionsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
@@ -387,6 +402,7 @@ public partial class CurrentSubscriptionsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Authorizations { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
@@ -415,6 +431,7 @@ public partial class SubscriptionListResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("subscriptions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SubscriptionInfo> Subscriptions { get; set; } = new System.Collections.ObjectModel.Collection<SubscriptionInfo>();
 
     /// <summary>

@@ -40,6 +40,7 @@ public partial class MeshEndpointRegisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
@@ -47,6 +48,7 @@ public partial class MeshEndpointRegisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -54,6 +56,7 @@ public partial class MeshEndpointRegisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("host")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Host { get; set; } = default!;
 
     /// <summary>
@@ -84,6 +87,7 @@ public partial class MeshEndpointDeregisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
@@ -91,6 +95,7 @@ public partial class MeshEndpointDeregisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -98,6 +103,7 @@ public partial class MeshEndpointDeregisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public MeshEndpointDeregisteredEventReason Reason { get; set; } = default!;
 

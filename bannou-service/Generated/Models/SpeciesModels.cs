@@ -38,6 +38,7 @@ public partial class GetSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -60,6 +61,7 @@ public partial class GetSpeciesByCodeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
@@ -125,6 +127,7 @@ public partial class ListSpeciesByRealmRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
@@ -161,6 +164,7 @@ public partial class CreateSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
@@ -170,6 +174,7 @@ public partial class CreateSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
@@ -245,6 +250,7 @@ public partial class UpdateSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
@@ -320,6 +326,7 @@ public partial class DeleteSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -342,6 +349,7 @@ public partial class DeprecateSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
@@ -371,6 +379,7 @@ public partial class UndeprecateSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -393,6 +402,7 @@ public partial class MergeSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceSpeciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SourceSpeciesId { get; set; } = default!;
 
     /// <summary>
@@ -400,6 +410,7 @@ public partial class MergeSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSpeciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetSpeciesId { get; set; } = default!;
 
     /// <summary>
@@ -428,6 +439,7 @@ public partial class AddSpeciesToRealmRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
@@ -435,6 +447,7 @@ public partial class AddSpeciesToRealmRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -457,6 +470,7 @@ public partial class RemoveSpeciesFromRealmRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
@@ -464,6 +478,7 @@ public partial class RemoveSpeciesFromRealmRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -486,6 +501,7 @@ public partial class SeedSpeciesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("species")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SeedSpecies> Species { get; set; } = new System.Collections.ObjectModel.Collection<SeedSpecies>();
 
     /// <summary>
@@ -514,6 +530,7 @@ public partial class SeedSpecies
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -521,6 +538,7 @@ public partial class SeedSpecies
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -579,14 +597,17 @@ public partial class SpeciesResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("description")]
@@ -636,10 +657,12 @@ public partial class SpeciesResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -659,6 +682,7 @@ public partial class SpeciesListResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("species")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SpeciesResponse> Species { get; set; } = new System.Collections.ObjectModel.Collection<SpeciesResponse>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
@@ -708,6 +732,7 @@ public partial class SeedSpeciesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Errors { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -730,6 +755,7 @@ public partial class MergeSpeciesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceSpeciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SourceSpeciesId { get; set; } = default!;
 
     /// <summary>
@@ -737,6 +763,7 @@ public partial class MergeSpeciesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSpeciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetSpeciesId { get; set; } = default!;
 
     /// <summary>

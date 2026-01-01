@@ -38,6 +38,7 @@ public partial class PublishEventRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topic")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Topic { get; set; } = default!;
 
     /// <summary>
@@ -45,6 +46,7 @@ public partial class PublishEventRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public object Payload { get; set; } = new object();
 
     [System.Text.Json.Serialization.JsonPropertyName("options")]
@@ -156,6 +158,7 @@ public partial class CreateSubscriptionRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("topic")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Topic { get; set; } = default!;
 
     /// <summary>
@@ -163,6 +166,7 @@ public partial class CreateSubscriptionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("callbackUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri CallbackUrl { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("options")]
@@ -260,6 +264,7 @@ public partial class RemoveSubscriptionRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;

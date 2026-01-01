@@ -125,6 +125,7 @@ public partial class GetAccountRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -150,6 +151,7 @@ public partial class DeleteAccountRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -175,6 +177,7 @@ public partial class GetAccountByEmailRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -200,6 +203,7 @@ public partial class GetAuthMethodsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -225,6 +229,7 @@ public partial class RemoveAuthMethodRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
@@ -232,6 +237,7 @@ public partial class RemoveAuthMethodRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("methodId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MethodId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -257,6 +263,7 @@ public partial class GetAccountByProviderRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OAuthProvider Provider { get; set; } = default!;
 
@@ -265,6 +272,7 @@ public partial class GetAccountByProviderRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ExternalId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -284,6 +292,7 @@ public partial class CreateAccountRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
     /// <summary>
@@ -325,6 +334,7 @@ public partial class UpdateAccountRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
@@ -357,6 +367,7 @@ public partial class UpdateProfileRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
@@ -386,6 +397,7 @@ public partial class UpdatePasswordRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
@@ -393,6 +405,7 @@ public partial class UpdatePasswordRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PasswordHash { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -415,6 +428,7 @@ public partial class UpdateVerificationRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
@@ -440,10 +454,12 @@ public partial class AddAuthMethodRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OAuthProvider Provider { get; set; } = default!;
 
@@ -470,10 +486,12 @@ public partial class AccountResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
@@ -487,6 +505,7 @@ public partial class AccountResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
@@ -497,6 +516,7 @@ public partial class AccountResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
@@ -525,6 +545,7 @@ public partial class AuthMethodInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AuthProvider Provider { get; set; } = default!;
 
@@ -536,6 +557,7 @@ public partial class AuthMethodInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LinkedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -555,10 +577,12 @@ public partial class AuthMethodResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("methodId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MethodId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OAuthProvider Provider { get; set; } = default!;
 
@@ -570,6 +594,7 @@ public partial class AuthMethodResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LinkedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -589,6 +614,7 @@ public partial class AuthMethodsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.ObjectModel.Collection<AuthMethodInfo>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -608,6 +634,7 @@ public partial class AccountListResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("accounts")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<AccountResponse> Accounts { get; set; } = new System.Collections.ObjectModel.Collection<AccountResponse>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]

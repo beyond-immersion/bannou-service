@@ -38,6 +38,7 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
@@ -45,6 +46,7 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -58,6 +60,7 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filename")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Filename { get; set; } = default!;
 
     /// <summary>
@@ -71,6 +74,7 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
@@ -101,6 +105,7 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -108,6 +113,7 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
@@ -115,6 +121,7 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -128,6 +135,7 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bucket")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Bucket { get; set; } = default!;
 
     /// <summary>
@@ -135,6 +143,7 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -148,6 +157,7 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentHash { get; set; } = default!;
 
     /// <summary>
@@ -170,10 +180,12 @@ public partial class AssetProcessingQueuedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("processingType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ProcessingTypeEnum ProcessingType { get; set; } = default!;
 
@@ -209,10 +221,12 @@ public partial class AssetProcessingCompletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("processingType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ProcessingTypeEnum ProcessingType { get; set; } = default!;
 
@@ -251,6 +265,7 @@ public partial class AssetReadyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -264,6 +279,7 @@ public partial class AssetReadyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bucket")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Bucket { get; set; } = default!;
 
     /// <summary>
@@ -271,6 +287,7 @@ public partial class AssetReadyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -278,6 +295,7 @@ public partial class AssetReadyEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentHash { get; set; } = default!;
 
     /// <summary>
@@ -314,6 +332,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -321,6 +340,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Version { get; set; } = default!;
 
     /// <summary>
@@ -328,6 +348,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bucket")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Bucket { get; set; } = default!;
 
     /// <summary>
@@ -335,6 +356,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Key { get; set; } = default!;
 
     /// <summary>

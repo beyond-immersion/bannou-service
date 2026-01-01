@@ -47,6 +47,8 @@ echo -e "${YELLOW}📄 Generating CommonEvents models...${NC}"
     "/templateDirectory:../templates/nswag"
 
 if [ $? -eq 0 ]; then
+    # Post-process: Add [JsonRequired] after each [Required] attribute
+    sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$TARGET_DIR/CommonEventsModels.cs"
     echo -e "${GREEN}✅ Common event models generated successfully${NC}"
     echo -e "   📁 Output: $TARGET_DIR/CommonEventsModels.cs"
     echo -e "   📦 Namespace: BeyondImmersion.BannouService.Events"

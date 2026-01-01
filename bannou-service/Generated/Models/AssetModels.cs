@@ -143,6 +143,7 @@ public partial class UploadRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filename")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Filename { get; set; } = default!;
 
     /// <summary>
@@ -156,6 +157,7 @@ public partial class UploadRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
@@ -181,6 +183,7 @@ public partial class UploadResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
@@ -188,6 +191,7 @@ public partial class UploadResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri UploadUrl { get; set; } = default!;
 
     /// <summary>
@@ -195,6 +199,7 @@ public partial class UploadResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("multipart")]
@@ -220,6 +225,7 @@ public partial class CompleteUploadRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
@@ -254,6 +260,7 @@ public partial class CompletedPart
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Etag { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -318,6 +325,7 @@ public partial class PartUploadInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri UploadUrl { get; set; } = default!;
 
     /// <summary>
@@ -459,6 +467,7 @@ public partial class GetAssetRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -529,6 +538,7 @@ public partial class ListVersionsRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
@@ -617,11 +627,13 @@ public partial class AssetSearchRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AssetType AssetType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public Realm Realm { get; set; } = default!;
 
@@ -684,6 +696,7 @@ public partial class CreateBundleRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -697,6 +710,7 @@ public partial class CreateBundleRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     [System.Text.Json.Serialization.JsonPropertyName("compression")]
@@ -757,6 +771,7 @@ public partial class GetBundleRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BundleId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("format")]
@@ -826,6 +841,7 @@ public partial class BundleUploadRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filename")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Filename { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("size")]

@@ -68,6 +68,7 @@ public partial class ClientCapabilitiesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -75,6 +76,7 @@ public partial class ClientCapabilitiesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capabilities")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ClientCapability> Capabilities { get; set; } = new System.Collections.ObjectModel.Collection<ClientCapability>();
 
     /// <summary>
@@ -97,6 +99,7 @@ public partial class ClientCapabilitiesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset GeneratedAt { get; set; } = default!;
 
     /// <summary>
@@ -125,6 +128,7 @@ public partial class ClientCapability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("guid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Guid { get; set; } = default!;
 
     /// <summary>
@@ -132,6 +136,7 @@ public partial class ClientCapability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("service")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Service { get; set; } = default!;
 
     /// <summary>
@@ -139,6 +144,7 @@ public partial class ClientCapability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Endpoint { get; set; } = default!;
 
     /// <summary>
@@ -146,6 +152,7 @@ public partial class ClientCapability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("method")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ClientCapabilityMethod Method { get; set; } = default!;
 
@@ -189,6 +196,7 @@ public partial class ClientShortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("guid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Guid { get; set; } = default!;
 
     /// <summary>
@@ -196,6 +204,7 @@ public partial class ClientShortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetService")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string TargetService { get; set; } = default!;
 
     /// <summary>
@@ -203,6 +212,7 @@ public partial class ClientShortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetEndpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string TargetEndpoint { get; set; } = default!;
 
     /// <summary>
@@ -210,6 +220,7 @@ public partial class ClientShortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -262,6 +273,7 @@ public partial class InternalProxyRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -269,6 +281,7 @@ public partial class InternalProxyRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetService")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string TargetService { get; set; } = default!;
 
     /// <summary>
@@ -276,6 +289,7 @@ public partial class InternalProxyRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetEndpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string TargetEndpoint { get; set; } = default!;
 
     /// <summary>
@@ -283,6 +297,7 @@ public partial class InternalProxyRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("method")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public InternalProxyRequestMethod Method { get; set; } = default!;
 
@@ -403,6 +418,7 @@ public partial class ConnectErrorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ConnectErrorResponseError Error { get; set; } = default!;
 
@@ -411,6 +427,7 @@ public partial class ConnectErrorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     /// <summary>
@@ -509,6 +526,7 @@ public partial class ServiceRequestMessage
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
@@ -522,6 +540,7 @@ public partial class ServiceRequestMessage
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public byte[] Payload { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -571,6 +590,7 @@ public partial class ServiceResponseMessage
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
@@ -663,6 +683,7 @@ public partial class SessionCapabilityUpdateEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -720,10 +741,12 @@ public partial class AuthEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("eventType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AuthEventType EventType { get; set; } = default!;
 
@@ -732,6 +755,7 @@ public partial class AuthEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -792,6 +816,7 @@ public partial class ClientMessageEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clientId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ClientId { get; set; } = default!;
 
     /// <summary>
@@ -805,6 +830,7 @@ public partial class ClientMessageEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
@@ -818,6 +844,7 @@ public partial class ClientMessageEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public byte[] Payload { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("flags")]
@@ -861,6 +888,7 @@ public partial class ClientRPCEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clientId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ClientId { get; set; } = default!;
 
     /// <summary>
@@ -874,6 +902,7 @@ public partial class ClientRPCEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
@@ -887,6 +916,7 @@ public partial class ClientRPCEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public byte[] Payload { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("flags")]
@@ -904,6 +934,7 @@ public partial class ClientRPCEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("responseChannel")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ResponseChannel { get; set; } = default!;
 
     /// <summary>
@@ -943,6 +974,7 @@ public partial class PermissionRecompileEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
     /// <summary>
@@ -950,6 +982,7 @@ public partial class PermissionRecompileEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -957,6 +990,7 @@ public partial class PermissionRecompileEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public PermissionRecompileEventReason Reason { get; set; } = default!;
 

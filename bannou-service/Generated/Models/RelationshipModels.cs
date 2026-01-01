@@ -84,10 +84,12 @@ public partial class CreateRelationshipRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity1Type { get; set; } = default!;
 
@@ -96,10 +98,12 @@ public partial class CreateRelationshipRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity2Type { get; set; } = default!;
 
@@ -108,6 +112,7 @@ public partial class CreateRelationshipRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     /// <summary>
@@ -115,6 +120,7 @@ public partial class CreateRelationshipRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
     /// <summary>
@@ -143,6 +149,7 @@ public partial class GetRelationshipRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -165,10 +172,12 @@ public partial class ListRelationshipsByEntityRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType EntityType { get; set; } = default!;
 
@@ -216,19 +225,23 @@ public partial class GetRelationshipsBetweenRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity1Type { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity2Type { get; set; } = default!;
 
@@ -264,6 +277,7 @@ public partial class ListRelationshipsByTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     /// <summary>
@@ -311,6 +325,7 @@ public partial class UpdateRelationshipRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
     /// <summary>
@@ -345,6 +360,7 @@ public partial class EndRelationshipRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
     /// <summary>
@@ -377,32 +393,39 @@ public partial class RelationshipResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity1Type { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType Entity2Type { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
@@ -416,6 +439,7 @@ public partial class RelationshipResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
@@ -438,6 +462,7 @@ public partial class RelationshipListResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("relationships")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RelationshipResponse> Relationships { get; set; } = new System.Collections.ObjectModel.Collection<RelationshipResponse>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]

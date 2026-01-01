@@ -42,6 +42,7 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "asset.upload.complete";
 
     /// <summary>
@@ -49,6 +50,7 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
@@ -101,6 +103,7 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "asset.processing.complete";
 
     /// <summary>
@@ -108,6 +111,7 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -151,6 +155,7 @@ public partial class AssetProcessingFailedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "asset.processing.failed";
 
     /// <summary>
@@ -158,6 +163,7 @@ public partial class AssetProcessingFailedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
@@ -198,6 +204,7 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "asset.bundle.validation.complete";
 
     /// <summary>
@@ -205,6 +212,7 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
@@ -249,6 +257,7 @@ public partial class BundleValidationFailedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "asset.bundle.validation.failed";
 
     /// <summary>
@@ -256,10 +265,12 @@ public partial class BundleValidationFailedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ValidationError> Errors { get; set; } = new System.Collections.ObjectModel.Collection<ValidationError>();
 
 }
@@ -277,6 +288,7 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "asset.bundle.creation.complete";
 
     /// <summary>
@@ -284,6 +296,7 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -338,6 +351,7 @@ public partial class AssetReadyEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "asset.ready";
 
     /// <summary>
@@ -345,6 +359,7 @@ public partial class AssetReadyEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -535,6 +550,7 @@ public partial class ValidationError
 
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ValidationErrorCode Code { get; set; } = default!;
 
@@ -543,6 +559,7 @@ public partial class ValidationError
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     /// <summary>

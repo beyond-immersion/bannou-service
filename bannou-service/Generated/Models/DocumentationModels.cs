@@ -150,6 +150,7 @@ public partial class QueryDocumentationRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -159,6 +160,7 @@ public partial class QueryDocumentationRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("query")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 3)]
     public string Query { get; set; } = default!;
 
@@ -204,14 +206,17 @@ public partial class QueryDocumentationResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("query")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Query { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("results")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<DocumentResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<DocumentResult>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalResults")]
@@ -246,6 +251,7 @@ public partial class GetDocumentRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -287,6 +293,7 @@ public partial class GetDocumentResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("document")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public Document Document { get; set; } = new Document();
 
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
@@ -313,12 +320,14 @@ public partial class SearchDocumentationRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("searchTerm")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 2)]
     public string SearchTerm { get; set; } = default!;
 
@@ -361,10 +370,12 @@ public partial class SearchDocumentationResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("results")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<DocumentResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<DocumentResult>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalResults")]
@@ -390,6 +401,7 @@ public partial class ListDocumentsRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -453,10 +465,12 @@ public partial class ListDocumentsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documents")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<DocumentSummary> Documents { get; set; } = new System.Collections.ObjectModel.Collection<DocumentSummary>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
@@ -488,12 +502,14 @@ public partial class SuggestRelatedRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("suggestionSource")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SuggestionSource SuggestionSource { get; set; } = default!;
 
@@ -527,10 +543,12 @@ public partial class SuggestRelatedResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("suggestions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TopicSuggestion> Suggestions { get; set; } = new System.Collections.ObjectModel.Collection<TopicSuggestion>();
 
     [System.Text.Json.Serialization.JsonPropertyName("voicePrompt")]
@@ -556,6 +574,7 @@ public partial class TopicSuggestion
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
@@ -563,6 +582,7 @@ public partial class TopicSuggestion
 
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
@@ -589,23 +609,27 @@ public partial class CreateDocumentRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Slug { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string Title { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
@@ -614,6 +638,7 @@ public partial class CreateDocumentRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Content { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
@@ -650,10 +675,12 @@ public partial class CreateDocumentResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -676,6 +703,7 @@ public partial class UpdateDocumentRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -728,10 +756,12 @@ public partial class UpdateDocumentResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -751,6 +781,7 @@ public partial class DeleteDocumentRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -778,14 +809,17 @@ public partial class DeleteDocumentResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset DeletedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("recoverableUntil")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset RecoverableUntil { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -805,12 +839,14 @@ public partial class RecoverDocumentRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -830,10 +866,12 @@ public partial class RecoverDocumentResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("recoveredAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset RecoveredAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -853,12 +891,14 @@ public partial class BulkUpdateRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentIds")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> DocumentIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
@@ -888,10 +928,12 @@ public partial class BulkUpdateResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("succeeded")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> Succeeded { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     [System.Text.Json.Serialization.JsonPropertyName("failed")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<BulkOperationFailure> Failed { get; set; } = new System.Collections.ObjectModel.Collection<BulkOperationFailure>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -911,12 +953,14 @@ public partial class BulkDeleteRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentIds")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> DocumentIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -936,10 +980,12 @@ public partial class BulkDeleteResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("succeeded")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<System.Guid> Succeeded { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     [System.Text.Json.Serialization.JsonPropertyName("failed")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<BulkOperationFailure> Failed { get; set; } = new System.Collections.ObjectModel.Collection<BulkOperationFailure>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -959,10 +1005,12 @@ public partial class BulkOperationFailure
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Error { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -982,12 +1030,14 @@ public partial class ImportDocumentationRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documents")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ImportDocument> Documents { get; set; } = new System.Collections.ObjectModel.Collection<ImportDocument>();
 
     [System.Text.Json.Serialization.JsonPropertyName("onConflict")]
@@ -1011,19 +1061,23 @@ public partial class ImportDocument
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("content")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Content { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
@@ -1055,6 +1109,7 @@ public partial class ImportDocumentationResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("created")]
@@ -1068,6 +1123,7 @@ public partial class ImportDocumentationResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("failed")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ImportFailure> Failed { get; set; } = new System.Collections.ObjectModel.Collection<ImportFailure>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -1087,10 +1143,12 @@ public partial class ImportFailure
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Error { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -1110,6 +1168,7 @@ public partial class ListTrashcanRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1137,10 +1196,12 @@ public partial class ListTrashcanResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("items")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TrashcanItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<TrashcanItem>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
@@ -1163,6 +1224,7 @@ public partial class TrashcanItem
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
@@ -1170,6 +1232,7 @@ public partial class TrashcanItem
 
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
@@ -1178,10 +1241,12 @@ public partial class TrashcanItem
 
     [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset DeletedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -1201,6 +1266,7 @@ public partial class PurgeTrashcanRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1246,6 +1312,7 @@ public partial class GetNamespaceStatsRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1267,6 +1334,7 @@ public partial class NamespaceStatsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
@@ -1301,22 +1369,27 @@ public partial class Document
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
@@ -1340,10 +1413,12 @@ public partial class Document
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -1363,18 +1438,22 @@ public partial class DocumentSummary
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentCategory Category { get; set; } = default!;
 
@@ -1404,14 +1483,17 @@ public partial class DocumentResult
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("category")]
@@ -1510,6 +1592,7 @@ public partial class BindRepositoryRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1519,6 +1602,7 @@ public partial class BindRepositoryRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("repositoryUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string RepositoryUrl { get; set; } = default!;
 
     /// <summary>
@@ -1585,10 +1669,12 @@ public partial class BindRepositoryResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("repositoryUrl")]
@@ -1599,6 +1685,7 @@ public partial class BindRepositoryResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BindingStatus Status { get; set; } = default!;
 
@@ -1622,6 +1709,7 @@ public partial class UnbindRepositoryRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1649,6 +1737,7 @@ public partial class UnbindRepositoryResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     /// <summary>
@@ -1674,6 +1763,7 @@ public partial class SyncRepositoryRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1701,10 +1791,12 @@ public partial class SyncRepositoryResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("syncId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SyncId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SyncStatus Status { get; set; } = default!;
 
@@ -1746,6 +1838,7 @@ public partial class RepositoryStatusRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1788,14 +1881,17 @@ public partial class RepositoryBindingInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("repositoryUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string RepositoryUrl { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("branch")]
@@ -1803,6 +1899,7 @@ public partial class RepositoryBindingInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BindingStatus Status { get; set; } = default!;
 
@@ -1903,6 +2000,7 @@ public partial class ListRepositoryBindingsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("bindings")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RepositoryBindingInfo> Bindings { get; set; } = new System.Collections.ObjectModel.Collection<RepositoryBindingInfo>();
 
     [System.Text.Json.Serialization.JsonPropertyName("total")]
@@ -1925,6 +2023,7 @@ public partial class UpdateRepositoryBindingRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -1972,6 +2071,7 @@ public partial class UpdateRepositoryBindingResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("binding")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public RepositoryBindingInfo Binding { get; set; } = new RepositoryBindingInfo();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -1991,6 +2091,7 @@ public partial class CreateArchiveRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -2019,10 +2120,12 @@ public partial class CreateArchiveResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     /// <summary>
@@ -2063,6 +2166,7 @@ public partial class ListArchivesRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string Namespace { get; set; } = default!;
@@ -2092,6 +2196,7 @@ public partial class ListArchivesResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("archives")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ArchiveInfo> Archives { get; set; } = new System.Collections.ObjectModel.Collection<ArchiveInfo>();
 
     [System.Text.Json.Serialization.JsonPropertyName("total")]
@@ -2114,10 +2219,12 @@ public partial class ArchiveInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("bundleAssetId")]
@@ -2137,6 +2244,7 @@ public partial class ArchiveInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
@@ -2159,6 +2267,7 @@ public partial class RestoreArchiveRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
 
     /// <summary>
@@ -2186,6 +2295,7 @@ public partial class RestoreArchiveResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentsRestored")]
@@ -2211,6 +2321,7 @@ public partial class DeleteArchiveRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;

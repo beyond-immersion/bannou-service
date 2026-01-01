@@ -60,6 +60,12 @@ echo -e "${YELLOW}🔄 Running NSwag model generation...${NC}"
 
 # Check if generation succeeded
 if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
+    # Post-process: Add [JsonRequired] after each [Required] attribute
+    # NSwag generates [System.ComponentModel.DataAnnotations.Required] which is ignored by System.Text.Json
+    # We add [System.Text.Json.Serialization.JsonRequired] which IS enforced during deserialization
+    echo -e "${YELLOW}🔄 Post-processing: Adding [JsonRequired] attributes...${NC}"
+    sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$OUTPUT_FILE"
+
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
 else
@@ -95,6 +101,10 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         "/templateDirectory:../templates/nswag"
 
     if [ $? -eq 0 ] && [ -f "$LIFECYCLE_OUTPUT_FILE" ]; then
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding [JsonRequired] attributes...${NC}"
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$LIFECYCLE_OUTPUT_FILE"
+
         LIFECYCLE_FILE_SIZE=$(wc -l < "$LIFECYCLE_OUTPUT_FILE" 2>/dev/null || echo "0")
         echo -e "${GREEN}✅ Generated lifecycle event models ($LIFECYCLE_FILE_SIZE lines)${NC}"
     else

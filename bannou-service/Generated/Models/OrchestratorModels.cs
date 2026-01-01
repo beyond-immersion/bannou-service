@@ -112,6 +112,7 @@ public partial class ServiceRoutingResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mappings")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
@@ -119,6 +120,7 @@ public partial class ServiceRoutingResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string DefaultAppId { get; set; } = "bannou";
 
     /// <summary>
@@ -126,6 +128,7 @@ public partial class ServiceRoutingResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset GeneratedAt { get; set; } = default!;
 
     /// <summary>
@@ -288,6 +291,7 @@ public partial class ContainerRestartRequestBody
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppName { get; set; } = default!;
 
     /// <summary>
@@ -295,6 +299,7 @@ public partial class ContainerRestartRequestBody
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
@@ -327,6 +332,7 @@ public partial class GetContainerStatusRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppName { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -379,6 +385,7 @@ public partial class InfrastructureHealthResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -386,6 +393,7 @@ public partial class InfrastructureHealthResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("components")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ComponentHealth> Components { get; set; } = new System.Collections.ObjectModel.Collection<ComponentHealth>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -408,6 +416,7 @@ public partial class ComponentHealth
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -415,6 +424,7 @@ public partial class ComponentHealth
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ComponentHealthStatus Status { get; set; } = default!;
 
@@ -423,6 +433,7 @@ public partial class ComponentHealth
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastSeen")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LastSeen { get; set; } = default!;
 
     /// <summary>
@@ -457,6 +468,7 @@ public partial class ServiceHealthReport
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -476,6 +488,7 @@ public partial class ServiceHealthReport
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("healthyServices")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ServiceHealthStatus> HealthyServices { get; set; } = new System.Collections.ObjectModel.Collection<ServiceHealthStatus>();
 
     /// <summary>
@@ -483,6 +496,7 @@ public partial class ServiceHealthReport
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("unhealthyServices")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ServiceHealthStatus> UnhealthyServices { get; set; } = new System.Collections.ObjectModel.Collection<ServiceHealthStatus>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -510,6 +524,7 @@ public partial class ServiceHealthStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -517,6 +532,7 @@ public partial class ServiceHealthStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -524,6 +540,7 @@ public partial class ServiceHealthStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Status { get; set; } = default!;
 
     /// <summary>
@@ -531,6 +548,7 @@ public partial class ServiceHealthStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastSeen")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LastSeen { get; set; } = default!;
 
     /// <summary>
@@ -565,6 +583,7 @@ public partial class TestExecutionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("testType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TestExecutionRequestTestType TestType { get; set; } = default!;
 
@@ -612,6 +631,7 @@ public partial class TestExecutionResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("testType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string TestType { get; set; } = default!;
 
     /// <summary>
@@ -619,6 +639,7 @@ public partial class TestExecutionResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Duration { get; set; } = default!;
 
     /// <summary>
@@ -659,6 +680,7 @@ public partial class TestResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -705,6 +727,7 @@ public partial class ServiceRestartRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
@@ -751,6 +774,7 @@ public partial class ServiceRestartResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
@@ -758,6 +782,7 @@ public partial class ServiceRestartResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Duration { get; set; } = default!;
 
     /// <summary>
@@ -798,6 +823,7 @@ public partial class ShouldRestartServiceRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -826,6 +852,7 @@ public partial class RestartRecommendation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
@@ -833,6 +860,7 @@ public partial class RestartRecommendation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentStatus")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string CurrentStatus { get; set; } = default!;
 
     /// <summary>
@@ -852,6 +880,7 @@ public partial class RestartRecommendation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -894,6 +923,7 @@ public partial class BackendInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BackendType Type { get; set; } = default!;
 
@@ -960,6 +990,7 @@ public partial class BackendsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -967,10 +998,12 @@ public partial class BackendsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backends")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<BackendInfo> Backends { get; set; } = new System.Collections.ObjectModel.Collection<BackendInfo>();
 
     [System.Text.Json.Serialization.JsonPropertyName("recommended")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BackendType Recommended { get; set; } = default!;
 
@@ -1001,6 +1034,7 @@ public partial class DeploymentPreset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -1008,6 +1042,7 @@ public partial class DeploymentPreset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Description { get; set; } = default!;
 
     /// <summary>
@@ -1019,6 +1054,7 @@ public partial class DeploymentPreset
 
     [System.Text.Json.Serialization.JsonPropertyName("topology")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public ServiceTopology Topology { get; set; } = new ServiceTopology();
 
     /// <summary>
@@ -1066,6 +1102,7 @@ public partial class PresetsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("presets")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<DeploymentPreset> Presets { get; set; } = new System.Collections.ObjectModel.Collection<DeploymentPreset>();
 
     /// <summary>
@@ -1094,6 +1131,7 @@ public partial class ServiceTopology
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodes")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TopologyNode> Nodes { get; set; } = new System.Collections.ObjectModel.Collection<TopologyNode>();
 
     /// <summary>
@@ -1122,6 +1160,7 @@ public partial class TopologyNode
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -1132,6 +1171,7 @@ public partial class TopologyNode
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Services { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
@@ -1395,10 +1435,12 @@ public partial class DeployResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string DeploymentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("backend")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BackendType Backend { get; set; } = default!;
 
@@ -1413,6 +1455,7 @@ public partial class DeployResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Duration { get; set; } = default!;
 
     /// <summary>
@@ -1459,10 +1502,12 @@ public partial class DeployedService
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeployedServiceStatus Status { get; set; } = default!;
 
@@ -1471,6 +1516,7 @@ public partial class DeployedService
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("node")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Node { get; set; } = default!;
 
     /// <summary>
@@ -1514,6 +1560,7 @@ public partial class EnvironmentStatus
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -1710,6 +1757,7 @@ public partial class TeardownResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Duration { get; set; } = default!;
 
     /// <summary>
@@ -1790,6 +1838,7 @@ public partial class CleanRequest
     [System.Text.Json.Serialization.JsonPropertyName("targets")]
     // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<CleanTarget> Targets { get; set; } = new System.Collections.ObjectModel.Collection<CleanTarget>();
 
     /// <summary>
@@ -1881,6 +1930,7 @@ public partial class LogsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("logs")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<LogEntry> Logs { get; set; } = new System.Collections.ObjectModel.Collection<LogEntry>();
 
     /// <summary>
@@ -1906,6 +1956,7 @@ public partial class LogEntry
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("stream")]
@@ -1914,6 +1965,7 @@ public partial class LogEntry
 
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -1936,6 +1988,7 @@ public partial class TopologyUpdateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changes")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<TopologyChange> Changes { get; set; } = new System.Collections.ObjectModel.Collection<TopologyChange>();
 
     [System.Text.Json.Serialization.JsonPropertyName("mode")]
@@ -1968,6 +2021,7 @@ public partial class TopologyChange
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TopologyChangeAction Action { get; set; } = default!;
 
@@ -2021,6 +2075,7 @@ public partial class TopologyUpdateResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("appliedChanges")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<AppliedChange> AppliedChanges { get; set; } = new System.Collections.ObjectModel.Collection<AppliedChange>();
 
     /// <summary>
@@ -2055,6 +2110,7 @@ public partial class AppliedChange
 
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Action { get; set; } = default!;
 
     /// <summary>
@@ -2092,6 +2148,7 @@ public partial class ErrorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Error { get; set; } = default!;
 
     /// <summary>
@@ -2099,6 +2156,7 @@ public partial class ErrorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     /// <summary>
@@ -2129,19 +2187,23 @@ public partial class DeploymentEvent
 
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeploymentEventAction Action { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string DeploymentId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("preset")]
@@ -2185,14 +2247,17 @@ public partial class ServiceRestartEvent
 
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("forced")]
@@ -2228,10 +2293,12 @@ public partial class ConfigurationChangedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -2251,6 +2318,7 @@ public partial class ConfigurationChangedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changedKeys")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedKeys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -2295,6 +2363,7 @@ public partial class ContainerRestartRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
@@ -2333,6 +2402,7 @@ public partial class ContainerRestartResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppName { get; set; } = default!;
 
     /// <summary>
@@ -2380,15 +2450,18 @@ public partial class ContainerStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ContainerStatusStatus Status { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -2447,10 +2520,12 @@ public partial class RestartHistoryEntry
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
@@ -2492,6 +2567,7 @@ public partial class ConfigRollbackRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -2559,6 +2635,7 @@ public partial class ConfigVersionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
@@ -2599,6 +2676,7 @@ public partial class AcquireProcessorRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -2639,6 +2717,7 @@ public partial class AcquireProcessorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("processorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ProcessorId { get; set; } = default!;
 
     /// <summary>
@@ -2646,6 +2725,7 @@ public partial class AcquireProcessorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -2653,6 +2733,7 @@ public partial class AcquireProcessorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("leaseId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid LeaseId { get; set; } = default!;
 
     /// <summary>
@@ -2660,6 +2741,7 @@ public partial class AcquireProcessorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -2682,6 +2764,7 @@ public partial class PoolBusyResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -2722,6 +2805,7 @@ public partial class ReleaseProcessorRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("leaseId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid LeaseId { get; set; } = default!;
 
     /// <summary>
@@ -2783,6 +2867,7 @@ public partial class GetPoolStatusRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -2811,6 +2896,7 @@ public partial class PoolStatusResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -2923,6 +3009,7 @@ public partial class ScalePoolRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -2958,6 +3045,7 @@ public partial class ScalePoolResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -3010,6 +3098,7 @@ public partial class CleanupPoolRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>
@@ -3038,6 +3127,7 @@ public partial class CleanupPoolResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PoolType { get; set; } = default!;
 
     /// <summary>

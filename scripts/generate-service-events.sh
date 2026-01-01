@@ -73,6 +73,8 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
         "/templateDirectory:../templates/nswag" 2>&1
 
     if [ $? -eq 0 ]; then
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$OUTPUT_FILE"
         echo -e "${GREEN}  Generated: $OUTPUT_FILE${NC}"
         GENERATED_COUNT=$((GENERATED_COUNT + 1))
     else

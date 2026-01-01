@@ -59,6 +59,7 @@ public partial class InitOAuthResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorizationUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri AuthorizationUrl { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -84,6 +85,7 @@ public partial class TerminateSessionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -103,10 +105,12 @@ public partial class LoginRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("password")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Password { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("rememberMe")]
@@ -138,6 +142,7 @@ public partial class RegisterRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("username")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 3)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-zA-Z0-9_]+$")]
     public string Username { get; set; } = default!;
@@ -147,6 +152,7 @@ public partial class RegisterRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("password")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 8)]
     public string Password { get; set; } = default!;
 
@@ -179,6 +185,7 @@ public partial class RegisterResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accessToken")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AccessToken { get; set; } = default!;
 
     /// <summary>
@@ -192,6 +199,7 @@ public partial class RegisterResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("connectUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri ConnectUrl { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -217,6 +225,7 @@ public partial class LoginResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accessToken")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AccessToken { get; set; } = default!;
 
     /// <summary>
@@ -242,14 +251,17 @@ public partial class AuthResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("accessToken")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AccessToken { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("refreshToken")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string RefreshToken { get; set; } = default!;
 
     /// <summary>
@@ -263,6 +275,7 @@ public partial class AuthResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("connectUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri ConnectUrl { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
@@ -288,6 +301,7 @@ public partial class OAuthCallbackRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("state")]
@@ -324,6 +338,7 @@ public partial class SteamVerifyRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ticket")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Ticket { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
@@ -346,6 +361,7 @@ public partial class RefreshRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("refreshToken")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string RefreshToken { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -368,6 +384,7 @@ public partial class ValidateTokenResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
@@ -375,6 +392,7 @@ public partial class ValidateTokenResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
@@ -432,6 +450,7 @@ public partial class SessionsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("sessions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SessionInfo> Sessions { get; set; } = new System.Collections.ObjectModel.Collection<SessionInfo>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -451,6 +470,7 @@ public partial class SessionInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
@@ -458,10 +478,12 @@ public partial class SessionInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("lastActive")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LastActive { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
@@ -515,6 +537,7 @@ public partial class PasswordResetRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -534,10 +557,12 @@ public partial class PasswordResetConfirmRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("token")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Token { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("newPassword")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 8)]
     public string NewPassword { get; set; } = default!;
 
@@ -561,6 +586,7 @@ public partial class OAuthProvidersResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("providers")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<Providers> Providers { get; set; } = new System.Collections.ObjectModel.Collection<Providers>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;

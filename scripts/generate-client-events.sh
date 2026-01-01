@@ -46,6 +46,8 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
         "/templateDirectory:../templates/nswag"
 
     if [ $? -eq 0 ]; then
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$TARGET_DIR/CommonClientEventsModels.cs"
         echo -e "${GREEN}✅ Common client events generated${NC}"
         echo -e "   📁 Output: $TARGET_DIR/CommonClientEventsModels.cs"
         GENERATED_EVENTS+=("BaseClientEvent")
@@ -119,6 +121,9 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
         # This is needed because the generated classes inherit from BaseClientEvent
         output_file="$TARGET_DIR/${pascal_case}ClientEventsModels.cs"
         sed -i 's/namespace BeyondImmersion\.Bannou\.'${pascal_case}'\.ClientEvents;/using BeyondImmersion.BannouService.ClientEvents;\n\nnamespace BeyondImmersion.Bannou.'${pascal_case}'.ClientEvents;/' "$output_file"
+
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$output_file"
 
         echo -e "${GREEN}  ✅ $pascal_case client events generated${NC}"
         echo -e "     📁 Output: $TARGET_DIR/${pascal_case}ClientEventsModels.cs"

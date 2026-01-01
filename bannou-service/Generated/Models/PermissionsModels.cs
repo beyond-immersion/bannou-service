@@ -62,6 +62,7 @@ public partial class CapabilityRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -87,6 +88,7 @@ public partial class CapabilityResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -94,6 +96,7 @@ public partial class CapabilityResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
     /// <summary>
@@ -119,6 +122,7 @@ public partial class ValidationRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -126,6 +130,7 @@ public partial class ValidationRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -133,6 +138,7 @@ public partial class ValidationRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("method")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Method { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -158,6 +164,7 @@ public partial class ValidationResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -186,6 +193,7 @@ public partial class ServicePermissionMatrix
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -199,6 +207,7 @@ public partial class ServicePermissionMatrix
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, StatePermissions> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, StatePermissions>();
 
     /// <summary>
@@ -233,6 +242,7 @@ public partial class RegistrationResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -279,6 +289,7 @@ public partial class SessionStateUpdate
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -286,6 +297,7 @@ public partial class SessionStateUpdate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -293,6 +305,7 @@ public partial class SessionStateUpdate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newState")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NewState { get; set; } = default!;
 
     /// <summary>
@@ -324,6 +337,7 @@ public partial class SessionRoleUpdate
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -331,6 +345,7 @@ public partial class SessionRoleUpdate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newRole")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NewRole { get; set; } = default!;
 
     /// <summary>
@@ -359,6 +374,7 @@ public partial class ClearSessionStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -366,6 +382,7 @@ public partial class ClearSessionStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -394,6 +411,7 @@ public partial class SessionUpdateResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -440,6 +458,7 @@ public partial class SessionInfoRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -459,6 +478,7 @@ public partial class SessionInfo
 
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -466,6 +486,7 @@ public partial class SessionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Role { get; set; } = default!;
 
     /// <summary>
@@ -473,6 +494,7 @@ public partial class SessionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("states")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, string> States { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
@@ -480,6 +502,7 @@ public partial class SessionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
     /// <summary>
@@ -520,6 +543,7 @@ public partial class RegisteredServicesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RegisteredServiceInfo> Services { get; set; } = new System.Collections.ObjectModel.Collection<RegisteredServiceInfo>();
 
     /// <summary>
@@ -527,6 +551,7 @@ public partial class RegisteredServicesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -549,6 +574,7 @@ public partial class RegisteredServiceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -568,6 +594,7 @@ public partial class RegisteredServiceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset RegisteredAt { get; set; } = default!;
 
     /// <summary>

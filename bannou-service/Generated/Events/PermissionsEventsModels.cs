@@ -40,6 +40,7 @@ public partial class PermissionCapabilityUpdate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -53,6 +54,7 @@ public partial class PermissionCapabilityUpdate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updateType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public PermissionCapabilityUpdateUpdateType UpdateType { get; set; } = default!;
 
@@ -125,6 +127,7 @@ public partial class SessionStateChangeEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -132,6 +135,7 @@ public partial class SessionStateChangeEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -145,6 +149,7 @@ public partial class SessionStateChangeEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newState")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NewState { get; set; } = default!;
 
     /// <summary>

@@ -42,6 +42,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "voice.room_state";
 
     /// <summary>
@@ -49,6 +50,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -62,6 +64,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public VoiceRoomStateEventTier Tier { get; set; } = default!;
 
@@ -77,6 +80,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peers")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<VoicePeerInfo> Peers { get; set; } = new System.Collections.ObjectModel.Collection<VoicePeerInfo>();
 
     /// <summary>
@@ -107,6 +111,7 @@ public partial class VoicePeerJoinedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "voice.peer_joined";
 
     /// <summary>
@@ -114,6 +119,7 @@ public partial class VoicePeerJoinedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -121,6 +127,7 @@ public partial class VoicePeerJoinedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peer")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public VoicePeerInfo Peer { get; set; } = new VoicePeerInfo();
 
     /// <summary>
@@ -144,6 +151,7 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "voice.peer_left";
 
     /// <summary>
@@ -151,6 +159,7 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -158,6 +167,7 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PeerSessionId { get; set; } = default!;
 
     /// <summary>
@@ -188,6 +198,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "voice.peer_updated";
 
     /// <summary>
@@ -195,6 +206,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -202,6 +214,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peer")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public VoicePeerInfo Peer { get; set; } = new VoicePeerInfo();
 
 }
@@ -221,6 +234,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "voice.tier_upgrade";
 
     /// <summary>
@@ -228,6 +242,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -241,6 +256,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newTier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string NewTier { get; set; } = "scaled";
 
     /// <summary>
@@ -248,6 +264,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rtpServerUri")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string RtpServerUri { get; set; } = default!;
 
     /// <summary>
@@ -255,6 +272,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sipCredentials")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public SipCredentials SipCredentials { get; set; } = new SipCredentials();
 
     /// <summary>
@@ -279,6 +297,7 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EventName { get; set; } = "voice.room_closed";
 
     /// <summary>
@@ -286,6 +305,7 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -293,6 +313,7 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public VoiceRoomClosedEventReason Reason { get; set; } = default!;
 
@@ -310,6 +331,7 @@ public partial class VoicePeerInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string PeerSessionId { get; set; } = default!;
 
     /// <summary>
@@ -323,6 +345,7 @@ public partial class VoicePeerInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SdpOffer { get; set; } = default!;
 
     /// <summary>
@@ -363,6 +386,7 @@ public partial class SipCredentials
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("username")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Username { get; set; } = default!;
 
     /// <summary>
@@ -370,6 +394,7 @@ public partial class SipCredentials
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("password")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Password { get; set; } = default!;
 
     /// <summary>
@@ -377,6 +402,7 @@ public partial class SipCredentials
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Domain { get; set; } = default!;
 
     /// <summary>

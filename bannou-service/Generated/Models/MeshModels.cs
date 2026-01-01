@@ -41,6 +41,7 @@ public partial class MeshEndpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
@@ -48,6 +49,7 @@ public partial class MeshEndpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -55,6 +57,7 @@ public partial class MeshEndpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("host")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Host { get; set; } = default!;
 
     /// <summary>
@@ -65,6 +68,7 @@ public partial class MeshEndpoint
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EndpointStatus Status { get; set; } = default!;
 
@@ -169,6 +173,7 @@ public partial class GetEndpointsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -203,10 +208,12 @@ public partial class GetEndpointsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("endpoints")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<MeshEndpoint> Endpoints { get; set; } = new System.Collections.ObjectModel.Collection<MeshEndpoint>();
 
     /// <summary>
@@ -269,10 +276,12 @@ public partial class ListEndpointsResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("endpoints")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<MeshEndpoint> Endpoints { get; set; } = new System.Collections.ObjectModel.Collection<MeshEndpoint>();
 
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public EndpointSummary Summary { get; set; } = new EndpointSummary();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -331,6 +340,7 @@ public partial class RegisterEndpointRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
@@ -338,6 +348,7 @@ public partial class RegisterEndpointRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -345,6 +356,7 @@ public partial class RegisterEndpointRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("host")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Host { get; set; } = default!;
 
     /// <summary>
@@ -394,6 +406,7 @@ public partial class RegisterEndpointResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public MeshEndpoint Endpoint { get; set; } = new MeshEndpoint();
 
     /// <summary>
@@ -425,6 +438,7 @@ public partial class DeregisterEndpointRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -447,6 +461,7 @@ public partial class HeartbeatRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
@@ -527,6 +542,7 @@ public partial class GetRouteRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
     /// <summary>
@@ -559,6 +575,7 @@ public partial class GetRouteResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public MeshEndpoint Endpoint { get; set; } = new MeshEndpoint();
 
     /// <summary>
@@ -614,6 +631,7 @@ public partial class GetMappingsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mappings")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
@@ -672,11 +690,13 @@ public partial class MeshHealthResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EndpointStatus Status { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public EndpointSummary Summary { get; set; } = new EndpointSummary();
 
     /// <summary>

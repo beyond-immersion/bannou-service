@@ -38,6 +38,7 @@ public partial class GetRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -60,6 +61,7 @@ public partial class GetRelationshipTypeByCodeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
@@ -123,6 +125,7 @@ public partial class GetChildRelationshipTypesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ParentTypeId { get; set; } = default!;
 
     /// <summary>
@@ -151,6 +154,7 @@ public partial class MatchesHierarchyRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("typeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TypeId { get; set; } = default!;
 
     /// <summary>
@@ -158,6 +162,7 @@ public partial class MatchesHierarchyRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ancestorTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AncestorTypeId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -180,6 +185,7 @@ public partial class GetAncestorsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("typeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TypeId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -202,6 +208,7 @@ public partial class CreateRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
@@ -211,6 +218,7 @@ public partial class CreateRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
@@ -273,6 +281,7 @@ public partial class UpdateRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     /// <summary>
@@ -341,6 +350,7 @@ public partial class DeleteRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -363,6 +373,7 @@ public partial class DeprecateRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     /// <summary>
@@ -392,6 +403,7 @@ public partial class UndeprecateRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -414,6 +426,7 @@ public partial class MergeRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SourceTypeId { get; set; } = default!;
 
     /// <summary>
@@ -421,6 +434,7 @@ public partial class MergeRelationshipTypeRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetTypeId { get; set; } = default!;
 
     /// <summary>
@@ -449,6 +463,7 @@ public partial class SeedRelationshipTypesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("types")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SeedRelationshipType> Types { get; set; } = new System.Collections.ObjectModel.Collection<SeedRelationshipType>();
 
     /// <summary>
@@ -477,6 +492,7 @@ public partial class SeedRelationshipType
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -484,6 +500,7 @@ public partial class SeedRelationshipType
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -533,14 +550,17 @@ public partial class RelationshipTypeResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("description")]
@@ -596,10 +616,12 @@ public partial class RelationshipTypeResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -619,6 +641,7 @@ public partial class RelationshipTypeListResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("types")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RelationshipTypeResponse> Types { get; set; } = new System.Collections.ObjectModel.Collection<RelationshipTypeResponse>();
 
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
@@ -689,6 +712,7 @@ public partial class SeedRelationshipTypesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Errors { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -711,6 +735,7 @@ public partial class MergeRelationshipTypeResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SourceTypeId { get; set; } = default!;
 
     /// <summary>
@@ -718,6 +743,7 @@ public partial class MergeRelationshipTypeResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetTypeId { get; set; } = default!;
 
     /// <summary>

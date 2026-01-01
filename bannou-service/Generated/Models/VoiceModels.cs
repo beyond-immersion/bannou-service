@@ -77,6 +77,7 @@ public partial class CreateVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -123,6 +124,7 @@ public partial class GetVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -148,6 +150,7 @@ public partial class JoinVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -155,6 +158,7 @@ public partial class JoinVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -162,6 +166,7 @@ public partial class JoinVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sipEndpoint")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public SipEndpoint SipEndpoint { get; set; } = new SipEndpoint();
 
     /// <summary>
@@ -194,6 +199,7 @@ public partial class LeaveVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -201,6 +207,7 @@ public partial class LeaveVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -226,6 +233,7 @@ public partial class DeleteVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -257,6 +265,7 @@ public partial class PeerHeartbeatRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -264,6 +273,7 @@ public partial class PeerHeartbeatRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -291,6 +301,7 @@ public partial class AnswerPeerRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -298,6 +309,7 @@ public partial class AnswerPeerRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("senderSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SenderSessionId { get; set; } = default!;
 
     /// <summary>
@@ -305,6 +317,7 @@ public partial class AnswerPeerRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string TargetSessionId { get; set; } = default!;
 
     /// <summary>
@@ -312,6 +325,7 @@ public partial class AnswerPeerRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sdpAnswer")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SdpAnswer { get; set; } = default!;
 
     /// <summary>
@@ -343,6 +357,7 @@ public partial class VoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -350,6 +365,7 @@ public partial class VoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -357,6 +373,7 @@ public partial class VoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public VoiceTier Tier { get; set; } = default!;
 
@@ -390,6 +407,7 @@ public partial class VoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
@@ -427,6 +445,7 @@ public partial class JoinVoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
@@ -434,6 +453,7 @@ public partial class JoinVoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public VoiceTier Tier { get; set; } = default!;
 
@@ -491,6 +511,7 @@ public partial class SipEndpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SdpOffer { get; set; } = default!;
 
     /// <summary>
@@ -534,6 +555,7 @@ public partial class VoiceParticipant
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -547,6 +569,7 @@ public partial class VoiceParticipant
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("joinedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset JoinedAt { get; set; } = default!;
 
     /// <summary>
@@ -578,6 +601,7 @@ public partial class VoicePeer
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
@@ -591,6 +615,7 @@ public partial class VoicePeer
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sipEndpoint")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public SipEndpoint SipEndpoint { get; set; } = new SipEndpoint();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;

@@ -41,6 +41,7 @@ public partial class GetCachedBehaviorRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -66,6 +67,7 @@ public partial class InvalidateCacheRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -88,6 +90,7 @@ public partial class CompileBehaviorRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("abmlContent")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AbmlContent { get; set; } = default!;
 
     /// <summary>
@@ -143,6 +146,7 @@ public partial class BehaviorStackRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorSets")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<BehaviorSetDefinition> BehaviorSets { get; set; } = new System.Collections.ObjectModel.Collection<BehaviorSetDefinition>();
 
     [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
@@ -171,6 +175,7 @@ public partial class ValidateAbmlRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("abmlContent")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AbmlContent { get; set; } = default!;
 
     /// <summary>
@@ -199,10 +204,12 @@ public partial class ResolveContextRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contextExpression")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContextExpression { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public CharacterContext CharacterContext { get; set; } = new CharacterContext();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -231,6 +238,7 @@ public partial class CompileBehaviorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
     /// <summary>
@@ -331,10 +339,12 @@ public partial class CachedBehaviorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("compiledBehavior")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public CompiledBehavior CompiledBehavior { get; set; } = new CompiledBehavior();
 
     /// <summary>
@@ -369,6 +379,7 @@ public partial class ResolveContextResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resolvedValue")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public object ResolvedValue { get; set; } = default!;
 
     /// <summary>
@@ -404,6 +415,7 @@ public partial class BehaviorSetDefinition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Id { get; set; } = default!;
 
     /// <summary>
@@ -425,6 +437,7 @@ public partial class BehaviorSetDefinition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("abmlContent")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AbmlContent { get; set; } = default!;
 
     /// <summary>
@@ -564,10 +577,12 @@ public partial class CompiledBehavior
 
     [System.Text.Json.Serialization.JsonPropertyName("behaviorTree")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public BehaviorTreeData BehaviorTree { get; set; } = new BehaviorTreeData();
 
     [System.Text.Json.Serialization.JsonPropertyName("contextSchema")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public ContextSchemaData ContextSchema { get; set; } = new ContextSchemaData();
 
     /// <summary>
@@ -605,6 +620,7 @@ public partial class GoapGoal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -618,6 +634,7 @@ public partial class GoapGoal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conditions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, string> Conditions { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
@@ -656,6 +673,7 @@ public partial class GoapPlanRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("goal")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public GoapGoal Goal { get; set; } = new GoapGoal();
 
     /// <summary>
@@ -663,6 +681,7 @@ public partial class GoapPlanRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("worldState")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public object WorldState { get; set; } = new object();
 
     /// <summary>
@@ -670,6 +689,7 @@ public partial class GoapPlanRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("options")]
@@ -737,6 +757,7 @@ public partial class GoapPlanResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("goalId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string GoalId { get; set; } = default!;
 
     /// <summary>
@@ -744,6 +765,7 @@ public partial class GoapPlanResult
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<PlannedActionResponse> Actions { get; set; } = new System.Collections.ObjectModel.Collection<PlannedActionResponse>();
 
     /// <summary>
@@ -772,6 +794,7 @@ public partial class PlannedActionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActionId { get; set; } = default!;
 
     /// <summary>
@@ -803,6 +826,7 @@ public partial class ValidateGoapPlanRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("plan")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public GoapPlanResult Plan { get; set; } = new GoapPlanResult();
 
     /// <summary>
@@ -816,6 +840,7 @@ public partial class ValidateGoapPlanRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("worldState")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public object WorldState { get; set; } = new object();
 
     /// <summary>
@@ -850,6 +875,7 @@ public partial class ValidateGoapPlanResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ValidateGoapPlanResponseReason Reason { get; set; } = default!;
 
@@ -858,6 +884,7 @@ public partial class ValidateGoapPlanResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("suggestedAction")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ValidateGoapPlanResponseSuggestedAction SuggestedAction { get; set; } = default!;
 
@@ -971,6 +998,7 @@ public partial class ValidationError
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ValidationErrorType Type { get; set; } = default!;
 
@@ -979,6 +1007,7 @@ public partial class ValidationError
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     /// <summary>
@@ -1019,6 +1048,7 @@ public partial class AbmlErrorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Error { get; set; } = default!;
 
     /// <summary>

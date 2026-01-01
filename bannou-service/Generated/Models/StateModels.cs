@@ -38,6 +38,7 @@ public partial class GetStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -45,6 +46,7 @@ public partial class GetStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Key { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -97,6 +99,7 @@ public partial class SaveStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -104,6 +107,7 @@ public partial class SaveStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -111,6 +115,7 @@ public partial class SaveStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("value")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public object Value { get; set; } = new object();
 
     [System.Text.Json.Serialization.JsonPropertyName("options")]
@@ -163,6 +168,7 @@ public partial class DeleteStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -170,6 +176,7 @@ public partial class DeleteStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Key { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -280,6 +287,7 @@ public partial class QueryStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -391,6 +399,7 @@ public partial class QueryCondition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("path")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Path { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("operator")]
@@ -510,6 +519,7 @@ public partial class BulkGetStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -517,6 +527,7 @@ public partial class BulkGetStateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("keys")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Keys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;

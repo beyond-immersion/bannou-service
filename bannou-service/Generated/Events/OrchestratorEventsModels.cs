@@ -40,6 +40,7 @@ public partial class OrchestratorHealthPingEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OrchestratorHealthPingEventStatus Status { get; set; } = BeyondImmersion.BannouService.Events.OrchestratorHealthPingEventStatus.Ok;
 

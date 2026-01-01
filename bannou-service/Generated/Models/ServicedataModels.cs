@@ -95,6 +95,7 @@ public partial class CreateServiceRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 2)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
     public string StubName { get; set; } = default!;
@@ -104,6 +105,7 @@ public partial class CreateServiceRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string DisplayName { get; set; } = default!;
 
@@ -143,6 +145,7 @@ public partial class UpdateServiceRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -188,6 +191,7 @@ public partial class DeleteServiceRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -213,6 +217,7 @@ public partial class ServiceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -220,6 +225,7 @@ public partial class ServiceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string StubName { get; set; } = default!;
 
     /// <summary>
@@ -227,6 +233,7 @@ public partial class ServiceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -246,6 +253,7 @@ public partial class ServiceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
@@ -274,6 +282,7 @@ public partial class ListServicesResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("services")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ServiceInfo> Services { get; set; } = new System.Collections.ObjectModel.Collection<ServiceInfo>();
 
     /// <summary>

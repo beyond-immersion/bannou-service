@@ -47,6 +47,7 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -54,6 +55,7 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("availableApis")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ClientCapabilityEntry> AvailableApis { get; set; } = new System.Collections.ObjectModel.Collection<ClientCapabilityEntry>();
 
     /// <summary>
@@ -82,6 +84,7 @@ public partial class ClientCapabilityEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -89,6 +92,7 @@ public partial class ClientCapabilityEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
@@ -96,6 +100,7 @@ public partial class ClientCapabilityEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("method")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ClientCapabilityEntryMethod Method { get; set; } = default!;
 
@@ -104,6 +109,7 @@ public partial class ClientCapabilityEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("path")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Path { get; set; } = default!;
 
     /// <summary>
@@ -111,6 +117,7 @@ public partial class ClientCapabilityEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpointKey")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string EndpointKey { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -167,6 +174,7 @@ public partial class DisconnectNotificationEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
 
 }
@@ -191,6 +199,7 @@ public partial class SystemErrorEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ErrorCode { get; set; } = default!;
 
     /// <summary>
@@ -198,6 +207,7 @@ public partial class SystemErrorEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     /// <summary>
@@ -235,6 +245,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -242,6 +253,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
     /// <summary>
@@ -272,6 +284,7 @@ public partial class SystemNotificationEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("notificationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SystemNotificationEventNotificationType NotificationType { get; set; } = default!;
 
@@ -280,6 +293,7 @@ public partial class SystemNotificationEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     /// <summary>
@@ -323,10 +337,12 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("shortcut")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public SessionShortcut Shortcut { get; set; } = new SessionShortcut();
 
     /// <summary>
@@ -361,6 +377,7 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
@@ -405,6 +422,7 @@ public partial class SessionShortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("routeGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RouteGuid { get; set; } = default!;
 
     /// <summary>
@@ -414,6 +432,7 @@ public partial class SessionShortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetGuid { get; set; } = default!;
 
     /// <summary>
@@ -423,10 +442,12 @@ public partial class SessionShortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("boundPayload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BoundPayload { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public SessionShortcutMetadata Metadata { get; set; } = new SessionShortcutMetadata();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
@@ -455,6 +476,7 @@ public partial class SessionShortcutMetadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
@@ -470,6 +492,7 @@ public partial class SessionShortcutMetadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceService")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string SourceService { get; set; } = default!;
 
     /// <summary>
@@ -495,6 +518,7 @@ public partial class SessionShortcutMetadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
