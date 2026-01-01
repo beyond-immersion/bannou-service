@@ -32,34 +32,45 @@ components:
         relationshipId: &id001
           type: string
           format: uuid
+          description: "Unique identifier for the relationship"
         entity1Id: &id002
           type: string
           format: uuid
+          description: "Unique identifier of the first entity in the relationship"
         entity1Type: &id003
           type: string
+          description: "Type classification of the first entity (e.g., character, account, npc)"
         entity2Id: &id004
           type: string
           format: uuid
+          description: "Unique identifier of the second entity in the relationship"
         entity2Type: &id005
           type: string
+          description: "Type classification of the second entity (e.g., character, account, npc)"
         relationshipTypeId: &id006
           type: string
           format: uuid
+          description: "Reference to the relationship type definition"
         startedAt: &id007
           type: string
           format: date-time
+          description: "Timestamp when the relationship began"
         endedAt: &id008
           type: string
           format: date-time
+          description: "Timestamp when the relationship ended, if applicable"
         metadata: &id009
           type: object
           additionalProperties: true
+          description: "Additional custom key-value data associated with the relationship"
         createdAt: &id010
           type: string
           format: date-time
+          description: "Timestamp when the relationship record was created"
         updatedAt: &id011
           type: string
           format: date-time
+          description: "Timestamp when the relationship record was last updated"
     RelationshipUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

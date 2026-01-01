@@ -62,6 +62,9 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long? Size { get; set; } = default!;
 
+    /// <summary>
+    /// Error code indicating the type of upload failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public UploadErrorCode? ErrorCode { get; set; } = default!;
@@ -105,6 +108,9 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
+    /// <summary>
+    /// Type of processing that was performed on the asset
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("processingType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ProcessingType? ProcessingType { get; set; } = default!;
@@ -115,6 +121,9 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("outputs")]
     public System.Collections.Generic.ICollection<ProcessingOutput>? Outputs { get; set; } = default!;
 
+    /// <summary>
+    /// Error code indicating the type of processing failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ProcessingErrorCode? ErrorCode { get; set; } = default!;
@@ -151,6 +160,9 @@ public partial class AssetProcessingFailedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Error code indicating the type of processing failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ProcessingErrorCode? ErrorCode { get; set; } = default!;
@@ -224,6 +236,9 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("duplicatesSkipped")]
     public int? DuplicatesSkipped { get; set; } = default!;
 
+    /// <summary>
+    /// Non-fatal warnings encountered during validation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("warnings")]
     public System.Collections.Generic.ICollection<ValidationWarning>? Warnings { get; set; } = default!;
 
@@ -253,6 +268,9 @@ public partial class BundleValidationFailedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid UploadId { get; set; } = default!;
 
+    /// <summary>
+    /// List of validation errors that caused the failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -382,6 +400,7 @@ public partial class AssetReadyEvent : BaseClientEvent
 /// <summary>
 /// Error codes for upload failures
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum UploadErrorCode
 {
@@ -402,10 +421,12 @@ public enum UploadErrorCode
     TIMEOUT = 4,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Type of processing performed
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ProcessingType
 {
@@ -429,10 +450,12 @@ public enum ProcessingType
     Behavior_compile = 5,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Error codes for processing failures
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ProcessingErrorCode
 {
@@ -453,6 +476,7 @@ public enum ProcessingErrorCode
     PROCESSOR_UNAVAILABLE = 4,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Information about a generated derivative asset
@@ -533,6 +557,9 @@ public partial class ValidationWarning
 public partial class ValidationError
 {
 
+    /// <summary>
+    /// Error code identifying the type of validation failure
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -567,6 +594,7 @@ public partial class ValidationError
 /// <summary>
 /// Error codes for bundle validation failures
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ValidationErrorCode
 {
@@ -596,6 +624,7 @@ public enum ValidationErrorCode
     MISSING_DEPENDENCY = 7,
 
 }
+#pragma warning restore CS1591
 
 
 

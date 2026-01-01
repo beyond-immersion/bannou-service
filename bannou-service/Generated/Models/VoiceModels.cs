@@ -20,6 +20,7 @@ using System = global::System;
 /// <br/>- scaled: RTP server-mediated communication (unlimited participants)
 /// <br/>
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceTier
 {
@@ -31,10 +32,12 @@ public enum VoiceTier
     Scaled = 1,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Audio codec for voice communication
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceCodec
 {
@@ -49,6 +52,7 @@ public enum VoiceCodec
     G722 = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Request to create a voice room for a game session

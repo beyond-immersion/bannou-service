@@ -181,7 +181,8 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
           "description": "Event payload (any JSON)"
         },
         "options": {
-          "$ref": "#/$defs/PublishOptions"
+          "$ref": "#/$defs/PublishOptions",
+          "description": "Optional publishing configuration for message delivery"
         }
       }
     },
@@ -347,7 +348,8 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
           "description": "HTTP endpoint to receive events"
         },
         "options": {
-          "$ref": "#/$defs/SubscriptionOptions"
+          "$ref": "#/$defs/SubscriptionOptions",
+          "description": "Optional subscription configuration for queue behavior"
         }
       }
     },

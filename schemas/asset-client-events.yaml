@@ -66,6 +66,7 @@ components:
           description: File size in bytes
         errorCode:
           $ref: '#/components/schemas/UploadErrorCode'
+          description: Error code indicating the type of upload failure
         errorMessage:
           type: string
           nullable: true
@@ -102,6 +103,7 @@ components:
           description: Whether processing completed successfully
         processingType:
           $ref: '#/components/schemas/ProcessingType'
+          description: Type of processing that was performed on the asset
         outputs:
           type: array
           nullable: true
@@ -110,6 +112,7 @@ components:
             $ref: '#/components/schemas/ProcessingOutput'
         errorCode:
           $ref: '#/components/schemas/ProcessingErrorCode'
+          description: Error code indicating the type of processing failure
         errorMessage:
           type: string
           nullable: true
@@ -138,6 +141,7 @@ components:
           description: ID of the asset that failed processing
         errorCode:
           $ref: '#/components/schemas/ProcessingErrorCode'
+          description: Error code indicating the type of processing failure
         errorMessage:
           type: string
           nullable: true
@@ -196,6 +200,7 @@ components:
         warnings:
           type: array
           nullable: true
+          description: Non-fatal warnings encountered during validation
           items:
             $ref: '#/components/schemas/ValidationWarning'
 
@@ -223,6 +228,7 @@ components:
           description: Correlates with the bundle upload request
         errors:
           type: array
+          description: List of validation errors that caused the failure
           items:
             $ref: '#/components/schemas/ValidationError'
 
@@ -398,6 +404,7 @@ components:
       properties:
         code:
           $ref: '#/components/schemas/ValidationErrorCode'
+          description: Error code identifying the type of validation failure
         message:
           type: string
           description: Error message

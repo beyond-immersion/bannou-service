@@ -17,6 +17,7 @@ using System = global::System;
 /// <summary>
 /// Type classification for assets
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum AssetType
 {
@@ -43,10 +44,12 @@ public enum AssetType
     Other = 6,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Game realm the asset belongs to
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum Realm
 {
@@ -64,10 +67,12 @@ public enum Realm
     Shared = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Asset processing pipeline status
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ProcessingStatus
 {
@@ -85,10 +90,12 @@ public enum ProcessingStatus
     Failed = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Compression algorithm for bundles
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CompressionType
 {
@@ -103,10 +110,12 @@ public enum CompressionType
     None = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Bundle file format
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum BundleFormat
 {
@@ -118,6 +127,7 @@ public enum BundleFormat
     Zip = 1,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UploadRequest
@@ -1032,6 +1042,7 @@ public partial class BundleManifestPreview
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CreateBundleResponseStatus
 {
@@ -1049,6 +1060,7 @@ public enum CreateBundleResponseStatus
     Failed = 3,
 
 }
+#pragma warning restore CS1591
 
 
 

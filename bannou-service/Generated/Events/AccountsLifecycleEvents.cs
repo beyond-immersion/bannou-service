@@ -26,33 +26,57 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "account.created";
 
+    /// <summary>
+    /// Unique identifier for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// Email address associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
+    /// <summary>
+    /// User-chosen display name for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the email address has been verified
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = default!;
 
+    /// <summary>
+    /// List of roles assigned to the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Additional metadata associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
@@ -73,33 +97,57 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "account.updated";
 
+    /// <summary>
+    /// Unique identifier for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// Email address associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
+    /// <summary>
+    /// User-chosen display name for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the email address has been verified
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = default!;
 
+    /// <summary>
+    /// List of roles assigned to the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Additional metadata associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
@@ -128,33 +176,57 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "account.deleted";
 
+    /// <summary>
+    /// Unique identifier for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
 
+    /// <summary>
+    /// Email address associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
+    /// <summary>
+    /// User-chosen display name for the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the email address has been verified
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = default!;
 
+    /// <summary>
+    /// List of roles assigned to the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the account was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Additional metadata associated with the account
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 

@@ -260,6 +260,12 @@ Suppressing warnings hides real issues until they manifest as runtime bugs. The 
 - CS8618, CS8625 - NSwag uses `= default!` pattern we can't control
 - Configure in `.editorconfig` for `**/Generated/*.cs` paths only
 
+**Enum Member Documentation (Generated Code Only)**:
+- CS1591 - OpenAPI schemas cannot document individual enum members (only the enum type itself)
+- Suppression is added automatically via post-processing in generation scripts
+- The pragma `#pragma warning disable CS1591` wraps each enum declaration with matching restore
+- This is NOT manual suppression - it's scripted as part of the generation pipeline
+
 **Intentional Obsolete Testing**:
 - CS0618 - When testing obsolete API detection, must use obsolete members
 - Suppress with scoped `#pragma warning disable/restore`

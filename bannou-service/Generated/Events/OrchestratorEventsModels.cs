@@ -31,6 +31,7 @@ public partial class OrchestratorHealthPingEvent : BaseServiceEvent
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum OrchestratorHealthPingEventStatus
 {
@@ -45,6 +46,7 @@ public enum OrchestratorHealthPingEventStatus
     Checking = 2,
 
 }
+#pragma warning restore CS1591
 
 
 

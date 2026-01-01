@@ -28,24 +28,33 @@ components:
         sessionId: &id001
           type: string
           format: uuid
+          description: "Unique identifier for the game session"
         gameType: &id002
           type: string
+          description: "Type of game being played in this session"
         sessionName: &id003
           type: string
+          description: "Human-readable name for the session"
         status: &id004
           type: string
+          description: "Current status of the game session (e.g., waiting, active, completed)"
         maxPlayers: &id005
           type: integer
+          description: "Maximum number of players allowed in the session"
         currentPlayers: &id006
           type: integer
+          description: "Current number of players in the session"
         isPrivate: &id007
           type: boolean
+          description: "Whether the session is private (invite-only)"
         owner: &id008
           type: string
           format: uuid
+          description: "Account ID of the session owner"
         createdAt: &id009
           type: string
           format: date-time
+          description: "Timestamp when the session was created"
     GameSessionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

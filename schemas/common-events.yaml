@@ -177,6 +177,7 @@ components:
           description: Status of each service/plugin hosted by this instance
         capacity:
           nullable: true
+          description: Capacity and load information for this instance
           allOf:
             - $ref: '#/components/schemas/InstanceCapacity'
         issues:

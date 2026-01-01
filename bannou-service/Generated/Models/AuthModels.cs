@@ -17,6 +17,7 @@ using System = global::System;
 /// <summary>
 /// OAuth provider type
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum Provider
 {
@@ -31,6 +32,7 @@ public enum Provider
     Twitch = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Response containing the OAuth authorization URL for redirect
@@ -711,6 +713,7 @@ public partial class RoutingPreferenceResponse
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DeviceInfoDeviceType
 {
@@ -728,6 +731,7 @@ public enum DeviceInfoDeviceType
     Console = 3,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Providers

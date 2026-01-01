@@ -17,6 +17,7 @@ using System = global::System;
 /// <summary>
 /// Fixed categories for type-safe filtering
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DocumentCategory
 {
@@ -52,6 +53,7 @@ public enum DocumentCategory
     Other = 9,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// How deep to traverse related document links:
@@ -60,6 +62,7 @@ public enum DocumentCategory
 /// <br/>- extended: Related documents + their related documents (depth 2)
 /// <br/>
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum RelatedDepth
 {
@@ -74,10 +77,12 @@ public enum RelatedDepth
     Extended = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Fields that can be searched within documents
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SearchField
 {
@@ -95,10 +100,12 @@ public enum SearchField
     Summary = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Fields available for sorting document lists
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListSortField
 {
@@ -113,10 +120,12 @@ public enum ListSortField
     Title = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Source type for generating related topic suggestions
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SuggestionSource
 {
@@ -134,6 +143,7 @@ public enum SuggestionSource
     Category = 3,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryDocumentationRequest
@@ -2072,6 +2082,7 @@ public partial class DocumentResult
 /// <summary>
 /// Status of a repository binding
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum BindingStatus
 {
@@ -2092,10 +2103,12 @@ public enum BindingStatus
     Disabled = 4,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Result status of a sync operation
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SyncStatus
 {
@@ -2110,10 +2123,12 @@ public enum SyncStatus
     Failed = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// What triggered the sync operation
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SyncTrigger
 {
@@ -2125,6 +2140,7 @@ public enum SyncTrigger
     Scheduled = 1,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BindRepositoryRequest
@@ -3136,6 +3152,7 @@ public partial class DeleteArchiveResponse
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum GetDocumentResponseContentFormat
 {
@@ -3150,7 +3167,9 @@ public enum GetDocumentResponseContentFormat
     None = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SearchDocumentationRequestSortBy
 {
@@ -3165,7 +3184,9 @@ public enum SearchDocumentationRequestSortBy
     Alphabetical = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListDocumentsRequestTagsMatch
 {
@@ -3177,7 +3198,9 @@ public enum ListDocumentsRequestTagsMatch
     Any = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListDocumentsRequestSortOrder
 {
@@ -3189,7 +3212,9 @@ public enum ListDocumentsRequestSortOrder
     Desc = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ImportDocumentationRequestOnConflict
 {
@@ -3204,6 +3229,7 @@ public enum ImportDocumentationRequestOnConflict
     Fail = 2,
 
 }
+#pragma warning restore CS1591
 
 
 

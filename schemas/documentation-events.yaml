@@ -55,30 +55,38 @@ x-lifecycle:
         format: uuid
         primary: true
         required: true
+        description: Unique identifier for the document
       namespace:
         type: string
         required: true
+        description: The namespace this document belongs to
       slug:
         type: string
         required: true
+        description: URL-friendly identifier for the document within its namespace
       title:
         type: string
         required: true
+        description: Human-readable title of the document
       category:
         type: string
         required: true
+        description: Category classification for the document
       tags:
         type: array
         items:
           type: string
+        description: List of tags for categorization and search
       createdAt:
         type: string
         format: date-time
         required: true
+        description: Timestamp when the document was created
       updatedAt:
         type: string
         format: date-time
         required: true
+        description: Timestamp when the document was last updated
     # Fields excluded from events (content too large for pub/sub)
     sensitive:
       - content
@@ -107,23 +115,30 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: Timestamp when the query was executed
         namespace:
           type: string
+          description: The namespace that was queried
         query:
           type: string
+          description: The natural language query string submitted by the user
         sessionId:
           type: string
           format: uuid
           nullable: true
+          description: Optional session identifier for tracking query context
         resultCount:
           type: integer
+          description: Number of documents returned in the query results
         topResultId:
           type: string
           format: uuid
           nullable: true
+          description: Document ID of the highest-ranked result, if any
         relevanceScore:
           type: number
           nullable: true
+          description: Relevance score of the top result, if applicable
 
     DocumentationSearchedEvent:
       type: object
@@ -140,16 +155,21 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: Timestamp when the search was executed
         namespace:
           type: string
+          description: The namespace that was searched
         searchTerm:
           type: string
+          description: The keyword search term submitted by the user
         sessionId:
           type: string
           format: uuid
           nullable: true
+          description: Optional session identifier for tracking search context
         resultCount:
           type: integer
+          description: Number of documents returned in the search results
 
     # Repository binding events
     DocumentationBindingCreatedEvent:
@@ -168,15 +188,20 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: Timestamp when the binding was created
         namespace:
           type: string
+          description: The namespace the repository is bound to
         bindingId:
           type: string
           format: uuid
+          description: Unique identifier for the repository binding
         repositoryUrl:
           type: string
+          description: URL of the Git repository being bound
         branch:
           type: string
+          description: Git branch to sync documentation from
 
     DocumentationBindingRemovedEvent:
       type: object
@@ -193,13 +218,17 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: Timestamp when the binding was removed
         namespace:
           type: string
+          description: The namespace the repository was bound to
         bindingId:
           type: string
           format: uuid
+          description: Unique identifier of the removed binding
         documentsDeleted:
           type: integer
+          description: Number of documents deleted as a result of removing the binding
 
     # Sync events
     DocumentationSyncStartedEvent:
@@ -219,19 +248,24 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: Timestamp when the sync operation started
         namespace:
           type: string
+          description: The namespace being synced
         bindingId:
           type: string
           format: uuid
+          description: Identifier of the repository binding being synced
         syncId:
           type: string
           format: uuid
+          description: Unique identifier for this sync operation
         triggeredBy:
           type: string
           enum:
             - manual
             - scheduled
+          description: How the sync was triggered (manual user action or scheduled job)
 
     DocumentationSyncCompletedEvent:
       type: object
@@ -250,33 +284,44 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: Timestamp when the sync operation completed
         namespace:
           type: string
+          description: The namespace that was synced
         bindingId:
           type: string
           format: uuid
+          description: Identifier of the repository binding that was synced
         syncId:
           type: string
           format: uuid
+          description: Unique identifier for this sync operation
         status:
           type: string
           enum:
             - success
             - partial
             - failed
+          description: Final status of the sync operation
         commitHash:
           type: string
+          description: Git commit hash that was synced
         documentsCreated:
           type: integer
+          description: Number of new documents created during sync
         documentsUpdated:
           type: integer
+          description: Number of existing documents updated during sync
         documentsDeleted:
           type: integer
+          description: Number of documents deleted during sync
         durationMs:
           type: integer
+          description: Duration of the sync operation in milliseconds
         errorMessage:
           type: string
           nullable: true
+          description: Error message if the sync failed or partially failed
 
     # Archive events
     DocumentationArchiveCreatedEvent:
@@ -294,18 +339,25 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: Timestamp when the archive was created
         namespace:
           type: string
+          description: The namespace the archive was created for
         archiveId:
           type: string
           format: uuid
+          description: Unique identifier for the archive
         bundleAssetId:
           type: string
           format: uuid
+          description: Asset ID of the archive bundle in the asset storage system
         documentCount:
           type: integer
+          description: Number of documents included in the archive
         sizeBytes:
           type: integer
+          description: Total size of the archive in bytes
         commitHash:
           type: string
           nullable: true
+          description: Git commit hash the archive was created from, if applicable

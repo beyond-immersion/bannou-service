@@ -145,6 +145,7 @@ public partial class SessionStateChangeEvent : BaseServiceEvent
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum PermissionCapabilityUpdateUpdateType
 {
@@ -156,7 +157,9 @@ public enum PermissionCapabilityUpdateUpdateType
     Delta = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum PermissionCapabilityUpdateReason
 {
@@ -177,6 +180,7 @@ public enum PermissionCapabilityUpdateReason
     Manual_refresh = 4,
 
 }
+#pragma warning restore CS1591
 
 
 

@@ -26,62 +26,113 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "relationship-type.created";
 
+    /// <summary>
+    /// Unique identifier for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Machine-readable code for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable display name for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category grouping for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the parent relationship type for hierarchical relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
     public System.Guid ParentTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Code of the parent relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
     public string ParentTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the inverse relationship type for asymmetric relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeId")]
     public System.Guid InverseTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Code of the inverse relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
     public string InverseTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the relationship applies equally in both directions
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
     public bool IsBidirectional { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this relationship type is deprecated and should not be used for new relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the relationship type was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Hierarchy depth level from the root relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depth")]
     public int Depth { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -104,62 +155,113 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "relationship-type.updated";
 
+    /// <summary>
+    /// Unique identifier for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Machine-readable code for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable display name for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category grouping for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the parent relationship type for hierarchical relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
     public System.Guid ParentTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Code of the parent relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
     public string ParentTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the inverse relationship type for asymmetric relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeId")]
     public System.Guid InverseTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Code of the inverse relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
     public string InverseTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the relationship applies equally in both directions
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
     public bool IsBidirectional { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this relationship type is deprecated and should not be used for new relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the relationship type was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Hierarchy depth level from the root relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depth")]
     public int Depth { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -190,62 +292,113 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "relationship-type.deleted";
 
+    /// <summary>
+    /// Unique identifier for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Machine-readable code for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable display name for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category grouping for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the parent relationship type for hierarchical relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
     public System.Guid ParentTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Code of the parent relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
     public string ParentTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the inverse relationship type for asymmetric relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeId")]
     public System.Guid InverseTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Code of the inverse relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
     public string InverseTypeCode { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the relationship applies equally in both directions
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
     public bool IsBidirectional { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this relationship type is deprecated and should not be used for new relationships
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the relationship type was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Hierarchy depth level from the root relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depth")]
     public int Depth { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the relationship type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship type was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

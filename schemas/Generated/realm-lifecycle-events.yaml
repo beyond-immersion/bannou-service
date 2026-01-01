@@ -31,32 +31,44 @@ components:
         realmId: &id001
           type: string
           format: uuid
+          description: "Unique identifier for the realm"
         code: &id002
           type: string
+          description: "Short code identifier for the realm used in URLs and references"
         name: &id003
           type: string
+          description: "Display name of the realm"
         description: &id004
           type: string
+          description: "Detailed description of the realm and its purpose"
         category: &id005
           type: string
+          description: "Category classification for organizing realms"
         isActive: &id006
           type: boolean
+          description: "Whether the realm is currently active and accessible"
         isDeprecated: &id007
           type: boolean
+          description: "Whether the realm has been marked as deprecated"
         deprecatedAt: &id008
           type: string
           format: date-time
+          description: "Timestamp when the realm was deprecated"
         deprecationReason: &id009
           type: string
+          description: "Explanation for why the realm was deprecated"
         metadata: &id010
           type: object
           additionalProperties: true
+          description: "Additional custom key-value data associated with the realm"
         createdAt: &id011
           type: string
           format: date-time
+          description: "Timestamp when the realm was created"
         updatedAt: &id012
           type: string
           format: date-time
+          description: "Timestamp when the realm was last updated"
     RealmUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

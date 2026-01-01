@@ -26,59 +26,107 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "species.created";
 
+    /// <summary>
+    /// Unique identifier for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// Machine-readable code for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable display name for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the species characteristics and lore
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category grouping for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether players can create characters of this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
     public bool IsPlayable { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this species is deprecated and should not be used for new characters
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the species was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Average lifespan in years for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
     public int BaseLifespan { get; set; } = default!;
 
+    /// <summary>
+    /// Age at which members of this species reach maturity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
     public int MaturityAge { get; set; } = default!;
 
+    /// <summary>
+    /// Modifiers applied to character traits for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object TraitModifiers { get; set; } = default!;
 
+    /// <summary>
+    /// IDs of realms where this species can exist
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -101,59 +149,107 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "species.updated";
 
+    /// <summary>
+    /// Unique identifier for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// Machine-readable code for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable display name for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the species characteristics and lore
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category grouping for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether players can create characters of this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
     public bool IsPlayable { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this species is deprecated and should not be used for new characters
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the species was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Average lifespan in years for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
     public int BaseLifespan { get; set; } = default!;
 
+    /// <summary>
+    /// Age at which members of this species reach maturity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
     public int MaturityAge { get; set; } = default!;
 
+    /// <summary>
+    /// Modifiers applied to character traits for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object TraitModifiers { get; set; } = default!;
 
+    /// <summary>
+    /// IDs of realms where this species can exist
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -184,59 +280,107 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "species.deleted";
 
+    /// <summary>
+    /// Unique identifier for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// Machine-readable code for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable display name for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the species characteristics and lore
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category grouping for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether players can create characters of this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
     public bool IsPlayable { get; set; } = default!;
 
+    /// <summary>
+    /// Whether this species is deprecated and should not be used for new characters
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the species was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Average lifespan in years for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
     public int BaseLifespan { get; set; } = default!;
 
+    /// <summary>
+    /// Age at which members of this species reach maturity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
     public int MaturityAge { get; set; } = default!;
 
+    /// <summary>
+    /// Modifiers applied to character traits for this species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object TraitModifiers { get; set; } = default!;
 
+    /// <summary>
+    /// IDs of realms where this species can exist
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom metadata for the species
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the species was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

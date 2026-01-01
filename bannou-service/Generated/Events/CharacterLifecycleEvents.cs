@@ -26,37 +26,61 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "character.created";
 
+    /// <summary>
+    /// Unique identifier for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the realm the character belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the species this character is
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// In-game birth date of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
     public System.DateTimeOffset BirthDate { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the character (e.g., active, inactive, deceased)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the character was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the character was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
@@ -77,37 +101,61 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "character.updated";
 
+    /// <summary>
+    /// Unique identifier for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the realm the character belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the species this character is
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// In-game birth date of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
     public System.DateTimeOffset BirthDate { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the character (e.g., active, inactive, deceased)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the character was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the character was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
@@ -136,37 +184,61 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "character.deleted";
 
+    /// <summary>
+    /// Unique identifier for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the realm the character belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the species this character is
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SpeciesId { get; set; } = default!;
 
+    /// <summary>
+    /// In-game birth date of the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
     public System.DateTimeOffset BirthDate { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the character (e.g., active, inactive, deceased)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the character was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the character was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 

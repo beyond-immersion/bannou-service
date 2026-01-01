@@ -49,6 +49,7 @@ public partial class SessionInvalidatedEvent : BaseServiceEvent
 /// <summary>
 /// Reason for session invalidation
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SessionInvalidatedEventReason
 {
@@ -69,6 +70,7 @@ public enum SessionInvalidatedEventReason
     Session_expired = 4,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Published when a session's roles or authorizations change.
@@ -122,6 +124,7 @@ public partial class SessionUpdatedEvent : BaseServiceEvent
 /// <summary>
 /// Reason for session update
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SessionUpdatedEventReason
 {
@@ -136,6 +139,7 @@ public enum SessionUpdatedEventReason
     Subscription_changed = 2,
 
 }
+#pragma warning restore CS1591
 
 
 

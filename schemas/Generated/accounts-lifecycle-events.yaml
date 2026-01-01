@@ -28,25 +28,33 @@ components:
         accountId: &id001
           type: string
           format: uuid
+          description: "Unique identifier for the account"
         email: &id002
           type: string
           format: email
+          description: "Email address associated with the account"
         displayName: &id003
           type: string
+          description: "User-chosen display name for the account"
         emailVerified: &id004
           type: boolean
+          description: "Whether the email address has been verified"
         roles: &id005
           type: array
           items: {type: string}
+          description: "List of roles assigned to the account"
         createdAt: &id006
           type: string
           format: date-time
+          description: "Timestamp when the account was created"
         updatedAt: &id007
           type: string
           format: date-time
+          description: "Timestamp when the account was last updated"
         metadata: &id008
           type: object
           additionalProperties: true
+          description: "Additional metadata associated with the account"
     AccountUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

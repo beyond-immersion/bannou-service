@@ -33,38 +33,52 @@ components:
         locationId: &id001
           type: string
           format: uuid
+          description: "Unique identifier for the location"
         realmId: &id002
           type: string
           format: uuid
+          description: "ID of the realm this location belongs to"
         code: &id003
           type: string
+          description: "Unique code identifier for the location within its realm"
         name: &id004
           type: string
+          description: "Human-readable name of the location"
         description: &id005
           type: string
+          description: "Detailed description of the location"
         locationType: &id006
           type: string
+          description: "Type classification of the location (e.g., room, area, zone)"
         parentLocationId: &id007
           type: string
           format: uuid
+          description: "ID of the parent location for hierarchical structures"
         depth: &id008
           type: integer
+          description: "Depth level in the location hierarchy (0 for root locations)"
         isDeprecated: &id009
           type: boolean
+          description: "Whether this location has been marked as deprecated"
         deprecatedAt: &id010
           type: string
           format: date-time
+          description: "Timestamp when the location was deprecated"
         deprecationReason: &id011
           type: string
+          description: "Explanation for why the location was deprecated"
         metadata: &id012
           type: object
           additionalProperties: true
+          description: "Additional custom metadata associated with the location"
         createdAt: &id013
           type: string
           format: date-time
+          description: "Timestamp when the location was created"
         updatedAt: &id014
           type: string
           format: date-time
+          description: "Timestamp when the location was last updated"
     LocationUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

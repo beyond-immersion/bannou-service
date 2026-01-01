@@ -26,36 +26,63 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "game-session.created";
 
+    /// <summary>
+    /// Unique identifier for the game session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of game being played in this session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameType { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable name for the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     public string SessionName { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the game session (e.g., waiting, active, completed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of players allowed in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
     public int MaxPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Current number of players in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
     public int CurrentPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the session is private (invite-only)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = default!;
 
+    /// <summary>
+    /// Account ID of the session owner
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid Owner { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the session was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -78,36 +105,63 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "game-session.updated";
 
+    /// <summary>
+    /// Unique identifier for the game session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of game being played in this session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameType { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable name for the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     public string SessionName { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the game session (e.g., waiting, active, completed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of players allowed in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
     public int MaxPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Current number of players in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
     public int CurrentPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the session is private (invite-only)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = default!;
 
+    /// <summary>
+    /// Account ID of the session owner
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid Owner { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the session was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -138,36 +192,63 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "game-session.deleted";
 
+    /// <summary>
+    /// Unique identifier for the game session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of game being played in this session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameType { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable name for the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     public string SessionName { get; set; } = default!;
 
+    /// <summary>
+    /// Current status of the game session (e.g., waiting, active, completed)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of players allowed in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
     public int MaxPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Current number of players in the session
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
     public int CurrentPlayers { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the session is private (invite-only)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = default!;
 
+    /// <summary>
+    /// Account ID of the session owner
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid Owner { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the session was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

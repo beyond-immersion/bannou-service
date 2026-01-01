@@ -31,24 +31,32 @@ components:
         documentId: &id001
           type: string
           format: uuid
+          description: Unique identifier for the document
         namespace: &id002
           type: string
+          description: The namespace this document belongs to
         slug: &id003
           type: string
+          description: URL-friendly identifier for the document within its namespace
         title: &id004
           type: string
+          description: Human-readable title of the document
         category: &id005
           type: string
+          description: Category classification for the document
         tags: &id006
           type: array
           items:
             type: string
+          description: List of tags for categorization and search
         createdAt: &id007
           type: string
           format: date-time
+          description: Timestamp when the document was created
         updatedAt: &id008
           type: string
           format: date-time
+          description: Timestamp when the document was last updated
     DocumentUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

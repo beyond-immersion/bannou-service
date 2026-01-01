@@ -26,30 +26,51 @@ public partial class DocumentationQueriedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the query was executed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace that was queried
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// The natural language query string submitted by the user
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("query")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Query { get; set; } = default!;
 
+    /// <summary>
+    /// Optional session identifier for tracking query context
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid? SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents returned in the query results
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resultCount")]
     public int ResultCount { get; set; } = default!;
 
+    /// <summary>
+    /// Document ID of the highest-ranked result, if any
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topResultId")]
     public System.Guid? TopResultId { get; set; } = default!;
 
+    /// <summary>
+    /// Relevance score of the top result, if applicable
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relevanceScore")]
     public double? RelevanceScore { get; set; } = default!;
 
@@ -79,24 +100,39 @@ public partial class DocumentationSearchedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the search was executed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace that was searched
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// The keyword search term submitted by the user
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("searchTerm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string SearchTerm { get; set; } = default!;
 
+    /// <summary>
+    /// Optional session identifier for tracking search context
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid? SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents returned in the search results
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resultCount")]
     public int ResultCount { get; set; } = default!;
 
@@ -126,26 +162,41 @@ public partial class DocumentationBindingCreatedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the binding was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace the repository is bound to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier for the repository binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
+    /// <summary>
+    /// URL of the Git repository being bound
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("repositoryUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string RepositoryUrl { get; set; } = default!;
 
+    /// <summary>
+    /// Git branch to sync documentation from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("branch")]
     public string Branch { get; set; } = default!;
 
@@ -175,21 +226,33 @@ public partial class DocumentationBindingRemovedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the binding was removed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace the repository was bound to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the removed binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents deleted as a result of removing the binding
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsDeleted")]
     public int DocumentsDeleted { get; set; } = default!;
 
@@ -219,26 +282,41 @@ public partial class DocumentationSyncStartedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the sync operation started
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace being synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the repository binding being synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier for this sync operation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SyncId { get; set; } = default!;
 
+    /// <summary>
+    /// How the sync was triggered (manual user action or scheduled job)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("triggeredBy")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -271,47 +349,80 @@ public partial class DocumentationSyncCompletedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the sync operation completed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace that was synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the repository binding that was synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid BindingId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier for this sync operation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SyncId { get; set; } = default!;
 
+    /// <summary>
+    /// Final status of the sync operation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DocumentationSyncCompletedEventStatus Status { get; set; } = default!;
 
+    /// <summary>
+    /// Git commit hash that was synced
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
     public string CommitHash { get; set; } = default!;
 
+    /// <summary>
+    /// Number of new documents created during sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsCreated")]
     public int DocumentsCreated { get; set; } = default!;
 
+    /// <summary>
+    /// Number of existing documents updated during sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsUpdated")]
     public int DocumentsUpdated { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents deleted during sync
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsDeleted")]
     public int DocumentsDeleted { get; set; } = default!;
 
+    /// <summary>
+    /// Duration of the sync operation in milliseconds
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
     public int DurationMs { get; set; } = default!;
 
+    /// <summary>
+    /// Error message if the sync failed or partially failed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
     public string? ErrorMessage { get; set; } = default!;
 
@@ -341,30 +452,51 @@ public partial class DocumentationArchiveCreatedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string EventId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the archive was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace the archive was created for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier for the archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
 
+    /// <summary>
+    /// Asset ID of the archive bundle in the asset storage system
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleAssetId")]
     public System.Guid BundleAssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Number of documents included in the archive
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
     public int DocumentCount { get; set; } = default!;
 
+    /// <summary>
+    /// Total size of the archive in bytes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
     public int SizeBytes { get; set; } = default!;
 
+    /// <summary>
+    /// Git commit hash the archive was created from, if applicable
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
     public string? CommitHash { get; set; } = default!;
 
@@ -379,6 +511,7 @@ public partial class DocumentationArchiveCreatedEvent
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DocumentationSyncStartedEventTriggeredBy
 {
@@ -390,7 +523,9 @@ public enum DocumentationSyncStartedEventTriggeredBy
     Scheduled = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DocumentationSyncCompletedEventStatus
 {
@@ -405,6 +540,7 @@ public enum DocumentationSyncCompletedEventStatus
     Failed = 2,
 
 }
+#pragma warning restore CS1591
 
 
 

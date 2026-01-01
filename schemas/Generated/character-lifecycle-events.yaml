@@ -29,25 +29,33 @@ components:
         characterId: &id001
           type: string
           format: uuid
+          description: Unique identifier for the character
         name: &id002
           type: string
+          description: Display name of the character
         realmId: &id003
           type: string
           format: uuid
+          description: Identifier of the realm the character belongs to
         speciesId: &id004
           type: string
           format: uuid
+          description: Identifier of the species this character is
         birthDate: &id005
           type: string
           format: date-time
+          description: In-game birth date of the character
         status: &id006
           type: string
+          description: Current status of the character (e.g., active, inactive, deceased)
         createdAt: &id007
           type: string
           format: date-time
+          description: Timestamp when the character was created
         updatedAt: &id008
           type: string
           format: date-time
+          description: Timestamp when the character was last updated
     CharacterUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

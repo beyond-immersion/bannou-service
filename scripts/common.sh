@@ -183,3 +183,60 @@ get_repo_root() {
     local script_dir=$(get_script_dir)
     echo "$(cd "$script_dir/.." && pwd)"
 }
+
+# -----------------------------------------------------------------------------
+# Post-Processing Functions
+# -----------------------------------------------------------------------------
+
+# Wrap enum declarations with CS1591 pragma suppressions
+# OpenAPI cannot document individual enum members, only the enum type itself.
+# This function adds #pragma warning disable/restore CS1591 around enums.
+# Usage: postprocess_enum_suppressions "$OUTPUT_FILE"
+postprocess_enum_suppressions() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        log_error "File not found for enum suppression post-processing: $file"
+        return 1
+    fi
+
+    # Use awk to wrap enums with pragma suppressions
+    # Pattern: [GeneratedCode...] followed by "public enum" on next line
+    awk '
+    BEGIN { in_enum = 0; prev_line = ""; has_prev = 0 }
+    {
+        if (has_prev) {
+            if (/^public enum /) {
+                # Previous line was GeneratedCode, this is enum - wrap it
+                print "#pragma warning disable CS1591 // Enum members cannot have XML documentation"
+                print prev_line
+                in_enum = 1
+            } else {
+                # Previous line was GeneratedCode but not followed by enum
+                print prev_line
+            }
+            has_prev = 0
+        }
+
+        if (/^\[System\.CodeDom\.Compiler\.GeneratedCode/) {
+            # Store this line and check next line
+            prev_line = $0
+            has_prev = 1
+            next
+        }
+
+        if (in_enum && /^}$/) {
+            # End of enum
+            print $0
+            print "#pragma warning restore CS1591"
+            in_enum = 0
+            next
+        }
+
+        print $0
+    }
+    END {
+        # Handle case where file ends with GeneratedCode line (unlikely but safe)
+        if (has_prev) print prev_line
+    }
+    ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+}

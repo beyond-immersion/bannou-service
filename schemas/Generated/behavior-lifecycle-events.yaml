@@ -26,25 +26,34 @@ components:
           description: 'Event type identifier: behavior.created'
         behaviorId: &id001
           type: string
+          description: "Unique identifier for the behavior"
         name: &id002
           type: string
+          description: "Human-readable name of the behavior"
         category: &id003
           type: string
+          description: "Category classification for the behavior"
         bundleId: &id004
           type: string
+          description: "Identifier of the bundle this behavior belongs to"
         assetId: &id005
           type: string
+          description: "Identifier of the asset associated with this behavior"
         bytecodeSize: &id006
           type: integer
           format: int32
+          description: "Size of the compiled bytecode in bytes"
         schemaVersion: &id007
           type: string
+          description: "Version of the schema used for this behavior"
         createdAt: &id008
           type: string
           format: date-time
+          description: "Timestamp when the behavior was created"
         updatedAt: &id009
           type: string
           format: date-time
+          description: "Timestamp when the behavior was last updated"
     BehaviorUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

@@ -23,14 +23,42 @@ info:
 x-lifecycle:
   Character:
     model:
-      characterId: { type: string, format: uuid, primary: true, required: true }
-      name: { type: string, required: true }
-      realmId: { type: string, format: uuid, required: true }
-      speciesId: { type: string, format: uuid, required: true }
-      birthDate: { type: string, format: date-time }
-      status: { type: string }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time }
+      characterId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+        description: Unique identifier for the character
+      name:
+        type: string
+        required: true
+        description: Display name of the character
+      realmId:
+        type: string
+        format: uuid
+        required: true
+        description: Identifier of the realm the character belongs to
+      speciesId:
+        type: string
+        format: uuid
+        required: true
+        description: Identifier of the species this character is
+      birthDate:
+        type: string
+        format: date-time
+        description: In-game birth date of the character
+      status:
+        type: string
+        description: Current status of the character (e.g., active, inactive, deceased)
+      createdAt:
+        type: string
+        format: date-time
+        required: true
+        description: Timestamp when the character was created
+      updatedAt:
+        type: string
+        format: date-time
+        description: Timestamp when the character was last updated
 
 paths: {}  # Events don't have HTTP paths
 

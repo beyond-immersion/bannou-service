@@ -1137,6 +1137,7 @@ public partial class AbmlErrorResponse
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CompileBehaviorRequestBehaviorCategory
 {
@@ -1160,7 +1161,9 @@ public enum CompileBehaviorRequestBehaviorCategory
     Ambient = 5,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ResolveContextResponseResolvedType
 {
@@ -1181,7 +1184,9 @@ public enum ResolveContextResponseResolvedType
     Array = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum BehaviorSetDefinitionCategory
 {
@@ -1202,6 +1207,7 @@ public enum BehaviorSetDefinitionCategory
     Situational = 4,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Location
@@ -1269,6 +1275,7 @@ public partial class ExecutionMetadata
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ValidateGoapPlanResponseReason
 {
@@ -1295,7 +1302,9 @@ public enum ValidateGoapPlanResponseReason
     SuboptimalPlan = 6,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ValidateGoapPlanResponseSuggestedAction
 {
@@ -1310,7 +1319,9 @@ public enum ValidateGoapPlanResponseSuggestedAction
     Abort = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ValidationErrorType
 {
@@ -1331,6 +1342,7 @@ public enum ValidationErrorType
     Service_dependency = 4,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Coordinates

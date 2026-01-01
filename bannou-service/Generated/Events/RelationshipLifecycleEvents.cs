@@ -26,52 +26,85 @@ public partial class RelationshipCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "relationship.created";
 
+    /// <summary>
+    /// Unique identifier for the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the first entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification of the first entity (e.g., character, account, npc)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Entity1Type { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the second entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification of the second entity (e.g., character, account, npc)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Entity2Type { get; set; } = default!;
 
+    /// <summary>
+    /// Reference to the relationship type definition
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship began
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship ended, if applicable
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
     public System.DateTimeOffset EndedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom key-value data associated with the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship record was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship record was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
@@ -92,52 +125,85 @@ public partial class RelationshipUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "relationship.updated";
 
+    /// <summary>
+    /// Unique identifier for the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the first entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification of the first entity (e.g., character, account, npc)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Entity1Type { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the second entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification of the second entity (e.g., character, account, npc)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Entity2Type { get; set; } = default!;
 
+    /// <summary>
+    /// Reference to the relationship type definition
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship began
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship ended, if applicable
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
     public System.DateTimeOffset EndedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom key-value data associated with the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship record was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship record was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
@@ -166,52 +232,85 @@ public partial class RelationshipDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "relationship.deleted";
 
+    /// <summary>
+    /// Unique identifier for the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipId { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the first entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity1Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification of the first entity (e.g., character, account, npc)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Entity1Type { get; set; } = default!;
 
+    /// <summary>
+    /// Unique identifier of the second entity in the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid Entity2Id { get; set; } = default!;
 
+    /// <summary>
+    /// Type classification of the second entity (e.g., character, account, npc)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Entity2Type { get; set; } = default!;
 
+    /// <summary>
+    /// Reference to the relationship type definition
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RelationshipTypeId { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship began
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship ended, if applicable
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
     public System.DateTimeOffset EndedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom key-value data associated with the relationship
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship record was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the relationship record was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 

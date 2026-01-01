@@ -504,6 +504,7 @@ public partial class VisibleEffect
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SessionStateChangedEventPreviousState
 {
@@ -521,7 +522,9 @@ public enum SessionStateChangedEventPreviousState
     Finished = 3,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SessionStateChangedEventNewState
 {
@@ -539,7 +542,9 @@ public enum SessionStateChangedEventNewState
     Finished = 3,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ChatMessageReceivedEventMessageType
 {
@@ -554,7 +559,9 @@ public enum ChatMessageReceivedEventMessageType
     System = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum GameActionResultEventActionType
 {
@@ -575,7 +582,9 @@ public enum GameActionResultEventActionType
     Use_item = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum PlayerInfoRole
 {
@@ -590,17 +599,27 @@ public enum PlayerInfoRole
     Moderator = 2,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Position
 {
 
+    /// <summary>
+    /// X coordinate in world space
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("x")]
     public double X { get; set; } = default!;
 
+    /// <summary>
+    /// Y coordinate in world space
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("y")]
     public double Y { get; set; } = default!;
 
+    /// <summary>
+    /// Z coordinate in world space
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("z")]
     public double Z { get; set; } = default!;
 

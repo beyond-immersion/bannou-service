@@ -538,6 +538,7 @@ public partial class SessionShortcutMetadata
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ClientCapabilityEntryMethod
 {
@@ -549,7 +550,9 @@ public enum ClientCapabilityEntryMethod
     POST = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SystemNotificationEventNotificationType
 {
@@ -567,6 +570,7 @@ public enum SystemNotificationEventNotificationType
     Announcement = 3,
 
 }
+#pragma warning restore CS1591
 
 
 

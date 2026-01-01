@@ -34,6 +34,9 @@ public partial class PublishEventRequest
     [System.Text.Json.Serialization.JsonRequired]
     public object Payload { get; set; } = new object();
 
+    /// <summary>
+    /// Optional publishing configuration for message delivery
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("options")]
     public PublishOptions Options { get; set; } = default!;
 
@@ -163,6 +166,9 @@ public partial class CreateSubscriptionRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Uri CallbackUrl { get; set; } = default!;
 
+    /// <summary>
+    /// Optional subscription configuration for queue behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("options")]
     public SubscriptionOptions Options { get; set; } = default!;
 
@@ -386,6 +392,7 @@ public partial class TopicInfo
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum PublishOptionsExchangeType
 {
@@ -400,6 +407,7 @@ public enum PublishOptionsExchangeType
     Topic = 2,
 
 }
+#pragma warning restore CS1591
 
 
 

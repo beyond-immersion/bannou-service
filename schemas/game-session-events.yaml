@@ -48,15 +48,15 @@ info:
 x-lifecycle:
   GameSession:
     model:
-      sessionId: { type: string, format: uuid, primary: true, required: true }
-      gameType: { type: string, required: true }
-      sessionName: { type: string }
-      status: { type: string, required: true }
-      maxPlayers: { type: integer }
-      currentPlayers: { type: integer }
-      isPrivate: { type: boolean }
-      owner: { type: string, format: uuid }
-      createdAt: { type: string, format: date-time, required: true }
+      sessionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the game session" }
+      gameType: { type: string, required: true, description: "Type of game being played in this session" }
+      sessionName: { type: string, description: "Human-readable name for the session" }
+      status: { type: string, required: true, description: "Current status of the game session (e.g., waiting, active, completed)" }
+      maxPlayers: { type: integer, description: "Maximum number of players allowed in the session" }
+      currentPlayers: { type: integer, description: "Current number of players in the session" }
+      isPrivate: { type: boolean, description: "Whether the session is private (invite-only)" }
+      owner: { type: string, format: uuid, description: "Account ID of the session owner" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the session was created" }
 
 paths: {}  # Events don't have HTTP paths
 

@@ -23,14 +23,14 @@ info:
 x-lifecycle:
   Account:
     model:
-      accountId: { type: string, format: uuid, primary: true, required: true }
-      email: { type: string, format: email, required: true }
-      displayName: { type: string }
-      emailVerified: { type: boolean, required: true }
-      roles: { type: array, items: { type: string } }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time }
-      metadata: { type: object, additionalProperties: true }
+      accountId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the account" }
+      email: { type: string, format: email, required: true, description: "Email address associated with the account" }
+      displayName: { type: string, description: "User-chosen display name for the account" }
+      emailVerified: { type: boolean, required: true, description: "Whether the email address has been verified" }
+      roles: { type: array, items: { type: string }, description: "List of roles assigned to the account" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the account was created" }
+      updatedAt: { type: string, format: date-time, description: "Timestamp when the account was last updated" }
+      metadata: { type: object, additionalProperties: true, description: "Additional metadata associated with the account" }
     sensitive: [passwordHash]
 
 paths: {}  # Events don't have HTTP paths

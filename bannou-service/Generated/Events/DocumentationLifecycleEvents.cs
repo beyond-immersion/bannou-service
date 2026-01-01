@@ -26,39 +26,63 @@ public partial class DocumentCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "document.created";
 
+    /// <summary>
+    /// Unique identifier for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace this document belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly identifier for the document within its namespace
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// List of tags for categorization and search
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -81,39 +105,63 @@ public partial class DocumentUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "document.updated";
 
+    /// <summary>
+    /// Unique identifier for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace this document belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly identifier for the document within its namespace
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// List of tags for categorization and search
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -144,39 +192,63 @@ public partial class DocumentDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "document.deleted";
 
+    /// <summary>
+    /// Unique identifier for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid DocumentId { get; set; } = default!;
 
+    /// <summary>
+    /// The namespace this document belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Namespace { get; set; } = default!;
 
+    /// <summary>
+    /// URL-friendly identifier for the document within its namespace
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Slug { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable title of the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Title { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for the document
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// List of tags for categorization and search
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the document was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

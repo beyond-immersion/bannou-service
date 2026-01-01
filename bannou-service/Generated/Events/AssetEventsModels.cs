@@ -62,10 +62,16 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string ContentType { get; set; } = default!;
 
+    /// <summary>
+    /// Category of asset being uploaded
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AssetTypeEnum? AssetType { get; set; } = default!;
 
+    /// <summary>
+    /// Game realm the asset belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RealmEnum? Realm { get; set; } = default!;
@@ -168,6 +174,9 @@ public partial class AssetProcessingQueuedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of processing to be performed on the asset
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("processingType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -209,6 +218,9 @@ public partial class AssetProcessingCompletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of processing that was performed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("processingType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -227,6 +239,9 @@ public partial class AssetProcessingCompletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
     public string? ErrorMessage { get; set; } = default!;
 
+    /// <summary>
+    /// Generated derivative assets from processing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("outputs")]
     public System.Collections.Generic.ICollection<ProcessingOutput>? Outputs { get; set; } = default!;
 
@@ -295,10 +310,16 @@ public partial class AssetReadyEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
     public string ContentType { get; set; } = default!;
 
+    /// <summary>
+    /// Category of the asset
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AssetTypeEnum? AssetType { get; set; } = default!;
 
+    /// <summary>
+    /// Game realm the asset belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RealmEnum? Realm { get; set; } = default!;
@@ -356,6 +377,9 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
     public int AssetCount { get; set; } = default!;
 
+    /// <summary>
+    /// Compression algorithm used for the bundle
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compression")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CompressionTypeEnum? Compression { get; set; } = default!;
@@ -368,6 +392,10 @@ public partial class BundleCreatedEvent : BaseServiceEvent
 
 }
 
+/// <summary>
+/// Category of asset in the system
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum AssetTypeEnum
 {
@@ -394,7 +422,12 @@ public enum AssetTypeEnum
     Other = 6,
 
 }
+#pragma warning restore CS1591
 
+/// <summary>
+/// Game realm the asset is associated with
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum RealmEnum
 {
@@ -412,10 +445,12 @@ public enum RealmEnum
     Shared = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Type of processing being performed
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ProcessingTypeEnum
 {
@@ -439,7 +474,12 @@ public enum ProcessingTypeEnum
     Behavior_compile = 5,
 
 }
+#pragma warning restore CS1591
 
+/// <summary>
+/// Compression algorithm used for bundle packaging
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CompressionTypeEnum
 {
@@ -454,6 +494,7 @@ public enum CompressionTypeEnum
     None = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Information about a generated derivative asset

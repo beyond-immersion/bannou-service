@@ -420,6 +420,7 @@ public partial class QueryCondition
 /// <summary>
 /// Comparison operator for query conditions
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum QueryOperator
 {
@@ -464,6 +465,7 @@ public enum QueryOperator
     FullText = 12,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryStateResponse
@@ -681,6 +683,7 @@ public partial class StoreInfo
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum StateOptionsConsistency
 {
@@ -692,7 +695,9 @@ public enum StateOptionsConsistency
     Eventual = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SortFieldOrder
 {
@@ -704,7 +709,9 @@ public enum SortFieldOrder
     Desc = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListStoresRequestBackendFilter
 {
@@ -716,7 +723,9 @@ public enum ListStoresRequestBackendFilter
     Mysql = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum StoreInfoBackend
 {
@@ -728,6 +737,7 @@ public enum StoreInfoBackend
     Mysql = 1,
 
 }
+#pragma warning restore CS1591
 
 
 

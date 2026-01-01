@@ -32,44 +32,61 @@ components:
         relationshipTypeId: &id001
           type: string
           format: uuid
+          description: "Unique identifier for the relationship type"
         code: &id002
           type: string
+          description: "Machine-readable code for the relationship type"
         name: &id003
           type: string
+          description: "Human-readable display name for the relationship type"
         description: &id004
           type: string
+          description: "Detailed description of the relationship type"
         category: &id005
           type: string
+          description: "Category grouping for the relationship type"
         parentTypeId: &id006
           type: string
           format: uuid
+          description: "ID of the parent relationship type for hierarchical relationships"
         parentTypeCode: &id007
           type: string
+          description: "Code of the parent relationship type"
         inverseTypeId: &id008
           type: string
           format: uuid
+          description: "ID of the inverse relationship type for asymmetric relationships"
         inverseTypeCode: &id009
           type: string
+          description: "Code of the inverse relationship type"
         isBidirectional: &id010
           type: boolean
+          description: "Whether the relationship applies equally in both directions"
         isDeprecated: &id011
           type: boolean
+          description: "Whether this relationship type is deprecated and should not be used for new relationships"
         deprecatedAt: &id012
           type: string
           format: date-time
+          description: "Timestamp when the relationship type was deprecated"
         deprecationReason: &id013
           type: string
+          description: "Explanation for why the relationship type was deprecated"
         depth: &id014
           type: integer
+          description: "Hierarchy depth level from the root relationship type"
         metadata: &id015
           type: object
           additionalProperties: true
+          description: "Additional custom metadata for the relationship type"
         createdAt: &id016
           type: string
           format: date-time
+          description: "Timestamp when the relationship type was created"
         updatedAt: &id017
           type: string
           format: date-time
+          description: "Timestamp when the relationship type was last updated"
     RelationshipTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

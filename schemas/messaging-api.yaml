@@ -43,24 +43,25 @@ paths:
         topic\",\n        \"payload\"\n      ],\n      \"properties\": {\n        \"topic\": {\n          \"type\": \"string\"\
         ,\n          \"description\": \"Topic/routing key for the event\"\n        },\n        \"payload\": {\n          \"\
         type\": \"object\",\n          \"description\": \"Event payload (any JSON)\"\n        },\n        \"options\": {\n\
-        \          \"$ref\": \"#/$defs/PublishOptions\"\n        }\n      }\n    },\n    \"PublishOptions\": {\n      \"type\"\
-        : \"object\",\n      \"description\": \"Options for publishing messages to RabbitMQ\",\n      \"properties\": {\n\
-        \        \"exchange\": {\n          \"type\": \"string\",\n          \"default\": \"bannou\",\n          \"description\"\
-        : \"Exchange name for routing\"\n        },\n        \"routingKey\": {\n          \"type\": \"string\",\n        \
-        \  \"nullable\": true,\n          \"description\": \"Routing key for direct/topic exchanges (ignored for fanout exchanges)\"\
-        \n        },\n        \"exchangeType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"\
-        fanout\",\n            \"direct\",\n            \"topic\"\n          ],\n          \"default\": \"fanout\",\n    \
-        \      \"nullable\": true,\n          \"description\": \"Exchange type - determines how messages are routed\"\n  \
-        \      },\n        \"persistent\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"\
-        description\": \"Whether the message should be persisted to disk\"\n        },\n        \"priority\": {\n        \
-        \  \"type\": \"integer\",\n          \"minimum\": 0,\n          \"maximum\": 9,\n          \"default\": 0,\n     \
-        \     \"description\": \"Message priority (0-9)\"\n        },\n        \"correlationId\": {\n          \"type\": \"\
-        string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Correlation
-        ID for request/response patterns\"\n        },\n        \"expiration\": {\n          \"type\": \"string\",\n     \
-        \     \"format\": \"duration\",\n          \"nullable\": true,\n          \"description\": \"Message expiration time
-        (ISO 8601 duration format)\"\n        },\n        \"headers\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true,\n          \"description\": \"Custom headers to include with the message\"\n\
-        \        }\n      }\n    }\n  }\n}"
+        \          \"$ref\": \"#/$defs/PublishOptions\",\n          \"description\": \"Optional publishing configuration for
+        message delivery\"\n        }\n      }\n    },\n    \"PublishOptions\": {\n      \"type\": \"object\",\n      \"description\"\
+        : \"Options for publishing messages to RabbitMQ\",\n      \"properties\": {\n        \"exchange\": {\n          \"\
+        type\": \"string\",\n          \"default\": \"bannou\",\n          \"description\": \"Exchange name for routing\"\n\
+        \        },\n        \"routingKey\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n         \
+        \ \"description\": \"Routing key for direct/topic exchanges (ignored for fanout exchanges)\"\n        },\n       \
+        \ \"exchangeType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"fanout\",\n         \
+        \   \"direct\",\n            \"topic\"\n          ],\n          \"default\": \"fanout\",\n          \"nullable\":
+        true,\n          \"description\": \"Exchange type - determines how messages are routed\"\n        },\n        \"persistent\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Whether the message
+        should be persisted to disk\"\n        },\n        \"priority\": {\n          \"type\": \"integer\",\n          \"\
+        minimum\": 0,\n          \"maximum\": 9,\n          \"default\": 0,\n          \"description\": \"Message priority
+        (0-9)\"\n        },\n        \"correlationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"Correlation ID for request/response patterns\"\n  \
+        \      },\n        \"expiration\": {\n          \"type\": \"string\",\n          \"format\": \"duration\",\n     \
+        \     \"nullable\": true,\n          \"description\": \"Message expiration time (ISO 8601 duration format)\"\n   \
+        \     },\n        \"headers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n   \
+        \       \"nullable\": true,\n          \"description\": \"Custom headers to include with the message\"\n        }\n\
+        \      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PublishEventResponse\"\
         ,\n  \"$defs\": {\n    \"PublishEventResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n       \
         \ \"success\": {\n          \"type\": \"boolean\",\n          \"description\": \"Indicates whether the event was published
@@ -96,18 +97,19 @@ paths:
         : \"string\",\n          \"description\": \"Topic pattern to subscribe to for receiving events\"\n        },\n   \
         \     \"callbackUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\"\
         : \"HTTP endpoint to receive events\"\n        },\n        \"options\": {\n          \"$ref\": \"#/$defs/SubscriptionOptions\"\
-        \n        }\n      }\n    },\n    \"SubscriptionOptions\": {\n      \"type\": \"object\",\n      \"description\":
-        \"Options for subscribing to RabbitMQ topics\",\n      \"properties\": {\n        \"durable\": {\n          \"type\"\
-        : \"boolean\",\n          \"default\": true,\n          \"description\": \"Whether the queue should survive broker
-        restarts\"\n        },\n        \"exclusive\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n\
-        \          \"description\": \"Whether only this connection can consume from the queue\"\n        },\n        \"autoAck\"\
-        : {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether messages
-        should be auto-acknowledged\"\n        },\n        \"prefetchCount\": {\n          \"type\": \"integer\",\n      \
-        \    \"default\": 10,\n          \"description\": \"Number of messages to prefetch\"\n        },\n        \"useDeadLetter\"\
-        : {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Whether to use dead
-        letter exchange for failed messages\"\n        },\n        \"consumerGroup\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Name of the consumer group for load balancing\"\n   \
-        \     }\n      }\n    }\n  }\n}"
+        ,\n          \"description\": \"Optional subscription configuration for queue behavior\"\n        }\n      }\n   \
+        \ },\n    \"SubscriptionOptions\": {\n      \"type\": \"object\",\n      \"description\": \"Options for subscribing
+        to RabbitMQ topics\",\n      \"properties\": {\n        \"durable\": {\n          \"type\": \"boolean\",\n       \
+        \   \"default\": true,\n          \"description\": \"Whether the queue should survive broker restarts\"\n        },\n\
+        \        \"exclusive\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\"\
+        : \"Whether only this connection can consume from the queue\"\n        },\n        \"autoAck\": {\n          \"type\"\
+        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether messages should be auto-acknowledged\"\
+        \n        },\n        \"prefetchCount\": {\n          \"type\": \"integer\",\n          \"default\": 10,\n       \
+        \   \"description\": \"Number of messages to prefetch\"\n        },\n        \"useDeadLetter\": {\n          \"type\"\
+        : \"boolean\",\n          \"default\": true,\n          \"description\": \"Whether to use dead letter exchange for
+        failed messages\"\n        },\n        \"consumerGroup\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Name of the consumer group for load balancing\"\n        }\n      }\n    }\n\
+        \  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateSubscriptionResponse\"\
         ,\n  \"$defs\": {\n    \"CreateSubscriptionResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n \
         \       \"subscriptionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
@@ -203,6 +205,7 @@ components:
           description: Event payload (any JSON)
         options:
           $ref: '#/components/schemas/PublishOptions'
+          description: Optional publishing configuration for message delivery
 
     PublishOptions:
       type: object
@@ -274,6 +277,7 @@ components:
           description: HTTP endpoint to receive events
         options:
           $ref: '#/components/schemas/SubscriptionOptions'
+          description: Optional subscription configuration for queue behavior
 
     SubscriptionOptions:
       type: object

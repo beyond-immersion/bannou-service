@@ -23,22 +23,22 @@ info:
 x-lifecycle:
   Species:
     model:
-      speciesId: { type: string, format: uuid, primary: true, required: true }
-      code: { type: string, required: true }
-      name: { type: string, required: true }
-      description: { type: string }
-      category: { type: string }
-      isPlayable: { type: boolean, required: true }
-      isDeprecated: { type: boolean, required: true }
-      deprecatedAt: { type: string, format: date-time }
-      deprecationReason: { type: string }
-      baseLifespan: { type: integer }
-      maturityAge: { type: integer }
-      traitModifiers: { type: object, additionalProperties: true }
-      realmIds: { type: array, items: { type: string, format: uuid } }
-      metadata: { type: object, additionalProperties: true }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time, required: true }
+      speciesId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the species" }
+      code: { type: string, required: true, description: "Machine-readable code for the species" }
+      name: { type: string, required: true, description: "Human-readable display name for the species" }
+      description: { type: string, description: "Detailed description of the species characteristics and lore" }
+      category: { type: string, description: "Category grouping for the species" }
+      isPlayable: { type: boolean, required: true, description: "Whether players can create characters of this species" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this species is deprecated and should not be used for new characters" }
+      deprecatedAt: { type: string, format: date-time, description: "Timestamp when the species was deprecated" }
+      deprecationReason: { type: string, description: "Explanation for why the species was deprecated" }
+      baseLifespan: { type: integer, description: "Average lifespan in years for this species" }
+      maturityAge: { type: integer, description: "Age at which members of this species reach maturity" }
+      traitModifiers: { type: object, additionalProperties: true, description: "Modifiers applied to character traits for this species" }
+      realmIds: { type: array, items: { type: string, format: uuid }, description: "IDs of realms where this species can exist" }
+      metadata: { type: object, additionalProperties: true, description: "Additional custom metadata for the species" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was created" }
+      updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 

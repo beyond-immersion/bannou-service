@@ -23,20 +23,20 @@ info:
 x-lifecycle:
   Location:
     model:
-      locationId: { type: string, format: uuid, primary: true, required: true }
-      realmId: { type: string, format: uuid, required: true }
-      code: { type: string, required: true }
-      name: { type: string, required: true }
-      description: { type: string }
-      locationType: { type: string, required: true }
-      parentLocationId: { type: string, format: uuid }
-      depth: { type: integer, required: true }
-      isDeprecated: { type: boolean, required: true }
-      deprecatedAt: { type: string, format: date-time }
-      deprecationReason: { type: string }
-      metadata: { type: object, additionalProperties: true }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time, required: true }
+      locationId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the location" }
+      realmId: { type: string, format: uuid, required: true, description: "ID of the realm this location belongs to" }
+      code: { type: string, required: true, description: "Unique code identifier for the location within its realm" }
+      name: { type: string, required: true, description: "Human-readable name of the location" }
+      description: { type: string, description: "Detailed description of the location" }
+      locationType: { type: string, required: true, description: "Type classification of the location (e.g., room, area, zone)" }
+      parentLocationId: { type: string, format: uuid, description: "ID of the parent location for hierarchical structures" }
+      depth: { type: integer, required: true, description: "Depth level in the location hierarchy (0 for root locations)" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this location has been marked as deprecated" }
+      deprecatedAt: { type: string, format: date-time, description: "Timestamp when the location was deprecated" }
+      deprecationReason: { type: string, description: "Explanation for why the location was deprecated" }
+      metadata: { type: object, additionalProperties: true, description: "Additional custom metadata associated with the location" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was created" }
+      updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 

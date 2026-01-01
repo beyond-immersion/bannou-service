@@ -23,17 +23,17 @@ info:
 x-lifecycle:
   Relationship:
     model:
-      relationshipId: { type: string, format: uuid, primary: true, required: true }
-      entity1Id: { type: string, format: uuid, required: true }
-      entity1Type: { type: string, required: true }
-      entity2Id: { type: string, format: uuid, required: true }
-      entity2Type: { type: string, required: true }
-      relationshipTypeId: { type: string, format: uuid, required: true }
-      startedAt: { type: string, format: date-time, required: true }
-      endedAt: { type: string, format: date-time }
-      metadata: { type: object, additionalProperties: true }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time }
+      relationshipId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship" }
+      entity1Id: { type: string, format: uuid, required: true, description: "Unique identifier of the first entity in the relationship" }
+      entity1Type: { type: string, required: true, description: "Type classification of the first entity (e.g., character, account, npc)" }
+      entity2Id: { type: string, format: uuid, required: true, description: "Unique identifier of the second entity in the relationship" }
+      entity2Type: { type: string, required: true, description: "Type classification of the second entity (e.g., character, account, npc)" }
+      relationshipTypeId: { type: string, format: uuid, required: true, description: "Reference to the relationship type definition" }
+      startedAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship began" }
+      endedAt: { type: string, format: date-time, description: "Timestamp when the relationship ended, if applicable" }
+      metadata: { type: object, additionalProperties: true, description: "Additional custom key-value data associated with the relationship" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship record was created" }
+      updatedAt: { type: string, format: date-time, description: "Timestamp when the relationship record was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 

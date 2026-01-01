@@ -433,6 +433,7 @@ public partial class ConnectErrorResponse
 /// <br/>- 72 (ShortcutRevoked): Session shortcut was explicitly revoked
 /// <br/>
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ResponseCodes
 {
@@ -472,6 +473,7 @@ public enum ResponseCodes
     ShortcutRevoked = 72,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Structure of a service request message in the enhanced 31-byte binary protocol.
@@ -778,6 +780,7 @@ public partial class AuthEvent
 /// <summary>
 /// Type of authentication event that occurred
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum AuthEventType
 {
@@ -795,6 +798,7 @@ public enum AuthEventType
     PermissionChange = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Event for server-to-client push messaging.
@@ -1017,6 +1021,7 @@ public partial class PermissionRecompileEvent
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum Connection
 {
@@ -1025,7 +1030,9 @@ public enum Connection
     Upgrade = 0,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum Upgrade
 {
@@ -1034,7 +1041,9 @@ public enum Upgrade
     Websocket = 0,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum Connection2
 {
@@ -1043,7 +1052,9 @@ public enum Connection2
     Upgrade = 0,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum Upgrade2
 {
@@ -1052,7 +1063,9 @@ public enum Upgrade2
     Websocket = 0,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ClientCapabilityMethod
 {
@@ -1073,7 +1086,9 @@ public enum ClientCapabilityMethod
     PATCH = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum InternalProxyRequestMethod
 {
@@ -1094,7 +1109,9 @@ public enum InternalProxyRequestMethod
     PATCH = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ConnectErrorResponseError
 {
@@ -1109,7 +1126,9 @@ public enum ConnectErrorResponseError
     InternalServerError = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ConnectErrorResponseStatusCode
 {
@@ -1121,7 +1140,9 @@ public enum ConnectErrorResponseStatusCode
     _500 = 500,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum PermissionRecompileEventReason
 {
@@ -1139,6 +1160,7 @@ public enum PermissionRecompileEventReason
     Manual_trigger = 3,
 
 }
+#pragma warning restore CS1591
 
 
 

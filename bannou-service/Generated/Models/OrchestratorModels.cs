@@ -890,6 +890,7 @@ public partial class RestartRecommendation
 /// <br/>Priority order: kubernetes &gt; portainer &gt; swarm &gt; compose
 /// <br/>
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum BackendType
 {
@@ -907,6 +908,7 @@ public enum BackendType
     Compose = 3,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BackendInfo
@@ -1397,6 +1399,7 @@ public partial class ResourceLimits
 /// <br/>- clean: Tear down and rebuild
 /// <br/>
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DeploymentMode
 {
@@ -1411,6 +1414,7 @@ public enum DeploymentMode
     Clean = 2,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeployRequest
@@ -1741,6 +1745,7 @@ public partial class ResourceUsage
 /// <br/>- preserve-data: Keep volumes/networks, remove containers
 /// <br/>
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum TeardownMode
 {
@@ -1755,6 +1760,7 @@ public enum TeardownMode
     PreserveData = 2,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TeardownRequest
@@ -1882,6 +1888,7 @@ public partial class TeardownResponse
 /// <summary>
 /// Type of resource to clean
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CleanTarget
 {
@@ -1902,6 +1909,7 @@ public enum CleanTarget
     All = 4,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanRequest
@@ -2507,6 +2515,7 @@ public partial class ConfigurationChangedEvent
 /// <br/>- force: Kill all instances simultaneously (causes downtime)
 /// <br/>
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum RestartPriority
 {
@@ -2521,6 +2530,7 @@ public enum RestartPriority
     Force = 2,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Request to restart a container
@@ -3366,6 +3376,7 @@ public partial class CleanupPoolResponse
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListPresetsRequestCategory
 {
@@ -3383,7 +3394,9 @@ public enum ListPresetsRequestCategory
     Custom = 3,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ComponentHealthStatus
 {
@@ -3398,6 +3411,7 @@ public enum ComponentHealthStatus
     Unavailable = 2,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Capacity
@@ -3438,6 +3452,7 @@ public partial class Capacity
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum TestExecutionRequestTestType
 {
@@ -3452,7 +3467,9 @@ public enum TestExecutionRequestTestType
     Edge = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DeploymentPresetCategory
 {
@@ -3470,7 +3487,9 @@ public enum DeploymentPresetCategory
     Custom = 3,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum IngressConfigType
 {
@@ -3488,6 +3507,7 @@ public enum IngressConfigType
     None = 3,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Ports
@@ -3516,6 +3536,7 @@ public partial class Ports
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DeployedServiceStatus
 {
@@ -3536,7 +3557,9 @@ public enum DeployedServiceStatus
     Stopped = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum LogEntryStream
 {
@@ -3548,7 +3571,9 @@ public enum LogEntryStream
     Stderr = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum TopologyChangeAction
 {
@@ -3569,7 +3594,9 @@ public enum TopologyChangeAction
     UpdateEnv = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DeploymentEventAction
 {
@@ -3587,7 +3614,9 @@ public enum DeploymentEventAction
     TopologyChanged = 3,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ContainerRestartResponseRestartStrategy
 {
@@ -3599,7 +3628,9 @@ public enum ContainerRestartResponseRestartStrategy
     Simultaneous = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ContainerStatusStatus
 {
@@ -3620,6 +3651,7 @@ public enum ContainerStatusStatus
     Unhealthy = 4,
 
 }
+#pragma warning restore CS1591
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class HealthChecks

@@ -229,6 +229,9 @@ public partial class ServiceHeartbeatEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ServiceStatus> Services { get; set; } = new System.Collections.ObjectModel.Collection<ServiceStatus>();
 
+    /// <summary>
+    /// Capacity and load information for this instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capacity")]
     public InstanceCapacity? Capacity { get; set; } = default!;
 
@@ -692,6 +695,7 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceEndpointMethod
 {
@@ -712,7 +716,9 @@ public enum ServiceEndpointMethod
     PATCH = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceHeartbeatEventStatus
 {
@@ -733,7 +739,9 @@ public enum ServiceHeartbeatEventStatus
     Unavailable = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceStatusStatus
 {
@@ -748,7 +756,9 @@ public enum ServiceStatusStatus
     Unavailable = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceErrorEventSeverity
 {
@@ -766,6 +776,7 @@ public enum ServiceErrorEventSeverity
     Critical = 3,
 
 }
+#pragma warning restore CS1591
 
 
 

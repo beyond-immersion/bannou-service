@@ -51,6 +51,8 @@ if [ $? -eq 0 ]; then
     sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$TARGET_DIR/CommonEventsModels.cs"
     # Post-process: Fix EventName shadowing - add 'override' keyword
     sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$TARGET_DIR/CommonEventsModels.cs"
+    # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
+    postprocess_enum_suppressions "$TARGET_DIR/CommonEventsModels.cs"
     echo -e "${GREEN}✅ Common event models generated successfully${NC}"
     echo -e "   📁 Output: $TARGET_DIR/CommonEventsModels.cs"
     echo -e "   📦 Namespace: BeyondImmersion.BannouService.Events"

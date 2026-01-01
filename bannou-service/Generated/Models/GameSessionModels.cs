@@ -700,6 +700,7 @@ public partial class VoiceConnectionInfo
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListGameSessionsRequestGameType
 {
@@ -711,7 +712,9 @@ public enum ListGameSessionsRequestGameType
     Generic = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListGameSessionsRequestStatus
 {
@@ -726,7 +729,9 @@ public enum ListGameSessionsRequestStatus
     Full = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CreateGameSessionRequestGameType
 {
@@ -738,7 +743,9 @@ public enum CreateGameSessionRequestGameType
     Generic = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum GameSessionResponseGameType
 {
@@ -750,7 +757,9 @@ public enum GameSessionResponseGameType
     Generic = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum GameSessionResponseStatus
 {
@@ -768,7 +777,9 @@ public enum GameSessionResponseStatus
     Finished = 3,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum JoinGameSessionResponsePlayerRole
 {
@@ -783,7 +794,9 @@ public enum JoinGameSessionResponsePlayerRole
     Moderator = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum GamePlayerRole
 {
@@ -798,7 +811,9 @@ public enum GamePlayerRole
     Moderator = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ChatMessageRequestMessageType
 {
@@ -813,7 +828,9 @@ public enum ChatMessageRequestMessageType
     System = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum GameActionRequestActionType
 {
@@ -834,7 +851,9 @@ public enum GameActionRequestActionType
     Use_item = 4,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceConnectionInfoTier
 {
@@ -846,7 +865,9 @@ public enum VoiceConnectionInfoTier
     Scaled = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceConnectionInfoCodec
 {
@@ -861,6 +882,7 @@ public enum VoiceConnectionInfoCodec
     G722 = 2,
 
 }
+#pragma warning restore CS1591
 
 
 

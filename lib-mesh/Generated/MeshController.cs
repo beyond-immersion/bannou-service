@@ -412,7 +412,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Service port (typically 80)"
         },
         "status": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Current health status of the endpoint"
         },
         "loadPercent": {
           "type": "number",
@@ -605,7 +606,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Service port (typically 80)"
         },
         "status": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Current health status of the endpoint"
         },
         "loadPercent": {
           "type": "number",
@@ -850,7 +852,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Service port (typically 80)"
         },
         "status": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Current health status of the endpoint"
         },
         "loadPercent": {
           "type": "number",
@@ -1271,7 +1274,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Service port (typically 80)"
         },
         "status": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Current health status of the endpoint"
         },
         "loadPercent": {
           "type": "number",
@@ -1615,7 +1619,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Service port (typically 80)"
         },
         "status": {
-          "$ref": "#/$defs/EndpointStatus"
+          "$ref": "#/$defs/EndpointStatus",
+          "description": "Current health status of the endpoint"
         },
         "loadPercent": {
           "type": "number",

@@ -26,36 +26,63 @@ public partial class BehaviorCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "behavior.created";
 
+    /// <summary>
+    /// Unique identifier for the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable name of the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the bundle this behavior belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     public string BundleId { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the asset associated with this behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     public string AssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Size of the compiled bytecode in bytes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
     public int BytecodeSize { get; set; } = default!;
 
+    /// <summary>
+    /// Version of the schema used for this behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
     public string SchemaVersion { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the behavior was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the behavior was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
@@ -76,36 +103,63 @@ public partial class BehaviorUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "behavior.updated";
 
+    /// <summary>
+    /// Unique identifier for the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable name of the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the bundle this behavior belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     public string BundleId { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the asset associated with this behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     public string AssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Size of the compiled bytecode in bytes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
     public int BytecodeSize { get; set; } = default!;
 
+    /// <summary>
+    /// Version of the schema used for this behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
     public string SchemaVersion { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the behavior was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the behavior was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
@@ -134,36 +188,63 @@ public partial class BehaviorDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "behavior.deleted";
 
+    /// <summary>
+    /// Unique identifier for the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorId { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable name of the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for the behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the bundle this behavior belongs to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     public string BundleId { get; set; } = default!;
 
+    /// <summary>
+    /// Identifier of the asset associated with this behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     public string AssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Size of the compiled bytecode in bytes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
     public int BytecodeSize { get; set; } = default!;
 
+    /// <summary>
+    /// Version of the schema used for this behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
     public string SchemaVersion { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the behavior was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the behavior was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 

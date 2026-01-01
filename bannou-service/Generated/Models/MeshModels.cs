@@ -51,6 +51,9 @@ public partial class MeshEndpoint
     [System.Text.Json.Serialization.JsonPropertyName("port")]
     public int Port { get; set; } = default!;
 
+    /// <summary>
+    /// Current health status of the endpoint
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -107,6 +110,7 @@ public partial class MeshEndpoint
 /// <summary>
 /// Health status of an endpoint
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum EndpointStatus
 {
@@ -124,10 +128,12 @@ public enum EndpointStatus
     ShuttingDown = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Load balancing algorithm
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum LoadBalancerAlgorithm
 {
@@ -145,6 +151,7 @@ public enum LoadBalancerAlgorithm
     Random = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
 /// Request to get endpoints for a service

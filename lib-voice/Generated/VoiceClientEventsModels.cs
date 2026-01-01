@@ -407,6 +407,7 @@ public partial class SipCredentials
 
 }
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceRoomStateEventTier
 {
@@ -418,7 +419,9 @@ public enum VoiceRoomStateEventTier
     Scaled = 1,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceRoomStateEventCodec
 {
@@ -433,7 +436,9 @@ public enum VoiceRoomStateEventCodec
     G722 = 2,
 
 }
+#pragma warning restore CS1591
 
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceRoomClosedEventReason
 {
@@ -448,6 +453,7 @@ public enum VoiceRoomClosedEventReason
     Error = 2,
 
 }
+#pragma warning restore CS1591
 
 
 

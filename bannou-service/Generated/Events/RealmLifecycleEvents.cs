@@ -26,47 +26,83 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "realm.created";
 
+    /// <summary>
+    /// Unique identifier for the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Short code identifier for the realm used in URLs and references
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the realm and its purpose
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for organizing realms
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm is currently active and accessible
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm has been marked as deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the realm was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom key-value data associated with the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -89,47 +125,83 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "realm.updated";
 
+    /// <summary>
+    /// Unique identifier for the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Short code identifier for the realm used in URLs and references
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the realm and its purpose
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for organizing realms
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm is currently active and accessible
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm has been marked as deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the realm was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom key-value data associated with the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -160,47 +232,83 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "realm.deleted";
 
+    /// <summary>
+    /// Unique identifier for the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RealmId { get; set; } = default!;
 
+    /// <summary>
+    /// Short code identifier for the realm used in URLs and references
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
+    /// <summary>
+    /// Display name of the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
+    /// <summary>
+    /// Detailed description of the realm and its purpose
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string Description { get; set; } = default!;
 
+    /// <summary>
+    /// Category classification for organizing realms
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm is currently active and accessible
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm has been marked as deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Explanation for why the realm was deprecated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string DeprecationReason { get; set; } = default!;
 
+    /// <summary>
+    /// Additional custom key-value data associated with the realm
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Timestamp when the realm was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

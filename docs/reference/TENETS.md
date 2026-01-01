@@ -67,7 +67,7 @@ Tenets are organized into three categories based on when they're needed:
 | **T12** | Test Integrity | Never weaken tests to pass; failing test = fix implementation |
 | **T16** | Naming Conventions | Consistent patterns for methods, models, events, topics |
 | **T19** | XML Documentation | All public APIs documented with summary, params, returns |
-| **T22** | Warning Suppression | Forbidden except Moq/NSwag exceptions; fix warnings, don't hide them |
+| **T22** | Warning Suppression | Forbidden except Moq/NSwag/enum exceptions; fix warnings, don't hide them |
 
 ---
 
@@ -103,6 +103,7 @@ Tenets are organized into three categories based on when they're needed:
 | `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
 | Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
 | Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
+| Manual CS1591 suppression for enums | T22 | Use generation scripts (auto-added) |
 
 ---
 

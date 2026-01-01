@@ -378,10 +378,13 @@ components:
           properties:
             x:
               type: number
+              description: X coordinate in world space
             y:
               type: number
+              description: Y coordinate in world space
             z:
               type: number
+              description: Z coordinate in world space
           description: World position for the effect
         effectData:
           type: object
