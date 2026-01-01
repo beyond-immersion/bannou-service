@@ -698,13 +698,13 @@ public partial class ServiceHealthStatus
     /// Current capacity metrics including load and available slots
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capacity")]
-    public Capacity Capacity { get; set; } = default!;
+    public Capacity? Capacity { get; set; } = default!;
 
     /// <summary>
-    /// Additional service metadata
+    /// Additional service metadata (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -3328,10 +3328,10 @@ public partial class AcquireProcessorRequest
     public int TimeoutSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Optional metadata about the processing job
+    /// Optional metadata about the processing job (null if not needed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

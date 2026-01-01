@@ -993,16 +993,19 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         },
         "password": {
           "type": "string",
-          "description": "Password for private sessions"
+          "nullable": true,
+          "description": "Password for private sessions (null for public sessions)"
         },
         "characterData": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Game-specific character data"
+          "nullable": true,
+          "description": "Game-specific character data (null if no character data)"
         },
         "voiceEndpoint": {
           "$ref": "#/$defs/VoiceSipEndpoint",
-          "description": "Client's SIP endpoint for voice communication (optional)"
+          "nullable": true,
+          "description": "Client's SIP endpoint for voice communication (null if not using voice)"
         }
       }
     },

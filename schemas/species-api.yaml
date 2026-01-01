@@ -911,18 +911,21 @@ paths:
         \      \"required\": [\n        \"code\",\n        \"name\"\n      ],\n      \"properties\": {\n        \"code\":
         {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the species\"\n        },\n     \
         \   \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display name\"\n        },\n      \
-        \  \"description\": {\n          \"type\": \"string\",\n          \"description\": \"Description of the species\"\n\
-        \        },\n        \"category\": {\n          \"type\": \"string\",\n          \"description\": \"Category for grouping\"\
+        \  \"description\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\":
+        \"Description of the species (null if not provided)\"\n        },\n        \"category\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping (null if not categorized)\"\
         \n        },\n        \"isPlayable\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n        \
         \  \"description\": \"Whether players can create characters of this species\"\n        },\n        \"baseLifespan\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Base lifespan in game years\"\n        },\n  \
-        \      \"maturityAge\": {\n          \"type\": \"integer\",\n          \"description\": \"Age at maturity\"\n    \
-        \    },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
-        \          \"description\": \"Base trait modifiers for this species\"\n        },\n        \"realmCodes\": {\n   \
-        \       \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"\
-        description\": \"Codes of realms where this species is available (resolved during seeding)\"\n        },\n       \
-        \ \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\"\
-        : \"Additional metadata for the species\"\n        }\n      }\n    }\n  }\n}"
+        : {\n          \"type\": \"integer\",\n          \"nullable\": true,\n          \"description\": \"Base lifespan in
+        game years (null for default)\"\n        },\n        \"maturityAge\": {\n          \"type\": \"integer\",\n      \
+        \    \"nullable\": true,\n          \"description\": \"Age at maturity (null for default)\"\n        },\n        \"\
+        traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
+        : true,\n          \"description\": \"Base trait modifiers for this species (null if none)\"\n        },\n       \
+        \ \"realmCodes\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n  \
+        \        },\n          \"nullable\": true,\n          \"description\": \"Codes of realms where this species is available
+        (null to skip realm assignment)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n        \
+        \  \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Additional metadata
+        for the species (null if none)\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedSpeciesResponse\"\
         ,\n  \"$defs\": {\n    \"SeedSpeciesResponse\": {\n      \"description\": \"Summary of a bulk species seeding operation
         with counts and errors\",\n      \"type\": \"object\",\n      \"required\": [\n        \"created\",\n        \"updated\"\
@@ -1250,33 +1253,40 @@ components:
           description: Display name
         description:
           type: string
-          description: Description of the species
+          nullable: true
+          description: Description of the species (null if not provided)
         category:
           type: string
-          description: Category for grouping
+          nullable: true
+          description: Category for grouping (null if not categorized)
         isPlayable:
           type: boolean
           default: true
           description: Whether players can create characters of this species
         baseLifespan:
           type: integer
-          description: Base lifespan in game years
+          nullable: true
+          description: Base lifespan in game years (null for default)
         maturityAge:
           type: integer
-          description: Age at maturity
+          nullable: true
+          description: Age at maturity (null for default)
         traitModifiers:
           type: object
           additionalProperties: true
-          description: Base trait modifiers for this species
+          nullable: true
+          description: Base trait modifiers for this species (null if none)
         realmCodes:
           type: array
           items:
             type: string
-          description: Codes of realms where this species is available (resolved during seeding)
+          nullable: true
+          description: Codes of realms where this species is available (null to skip realm assignment)
         metadata:
           type: object
           additionalProperties: true
-          description: Additional metadata for the species
+          nullable: true
+          description: Additional metadata for the species (null if none)
 
     # Response schemas
     SpeciesResponse:

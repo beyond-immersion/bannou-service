@@ -344,22 +344,22 @@ public partial class JoinGameSessionRequest
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Password for private sessions
+    /// Password for private sessions (null for public sessions)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("password")]
-    public string Password { get; set; } = default!;
+    public string? Password { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific character data
+    /// Game-specific character data (null if no character data)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
-    public object CharacterData { get; set; } = default!;
+    public object? CharacterData { get; set; } = default!;
 
     /// <summary>
-    /// Client's SIP endpoint for voice communication (optional)
+    /// Client's SIP endpoint for voice communication (null if not using voice)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceEndpoint")]
-    public VoiceSipEndpoint VoiceEndpoint { get; set; } = default!;
+    public VoiceSipEndpoint? VoiceEndpoint { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

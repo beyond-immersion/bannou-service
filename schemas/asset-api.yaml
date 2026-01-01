@@ -351,19 +351,20 @@ paths:
         ,\n  \"$defs\": {\n    \"AssetSearchRequest\": {\n      \"description\": \"Search criteria for filtering assets with
         pagination\",\n      \"type\": \"object\",\n      \"required\": [\n        \"assetType\",\n        \"realm\"\n   \
         \   ],\n      \"properties\": {\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n   \
-        \         \"type\": \"string\"\n          },\n          \"description\": \"Filter by tags (assets must have all specified
-        tags)\"\n        },\n        \"assetType\": {\n          \"$ref\": \"#/$defs/AssetType\",\n          \"description\"\
-        : \"Filter by asset type\"\n        },\n        \"realm\": {\n          \"$ref\": \"#/$defs/Realm\",\n          \"\
-        description\": \"Filter by game realm\"\n        },\n        \"contentType\": {\n          \"type\": \"string\",\n\
-        \          \"description\": \"MIME content type filter\"\n        },\n        \"limit\": {\n          \"type\": \"\
-        integer\",\n          \"default\": 50,\n          \"description\": \"Maximum number of results to return\"\n     \
-        \   },\n        \"offset\": {\n          \"type\": \"integer\",\n          \"default\": 0,\n          \"description\"\
-        : \"Number of results to skip for pagination\"\n        }\n      }\n    },\n    \"AssetType\": {\n      \"type\":
-        \"string\",\n      \"enum\": [\n        \"texture\",\n        \"model\",\n        \"audio\",\n        \"behavior\"\
-        ,\n        \"bundle\",\n        \"prefab\",\n        \"other\"\n      ],\n      \"description\": \"Type classification
-        for assets\"\n    },\n    \"Realm\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"omega\",\n     \
-        \   \"arcadia\",\n        \"fantasia\",\n        \"shared\"\n      ],\n      \"description\": \"Game realm the asset
-        belongs to\"\n    }\n  }\n}"
+        \         \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"Filter by
+        tags (assets must have all specified tags) (null to skip tag filtering)\"\n        },\n        \"assetType\": {\n\
+        \          \"$ref\": \"#/$defs/AssetType\",\n          \"description\": \"Filter by asset type\"\n        },\n   \
+        \     \"realm\": {\n          \"$ref\": \"#/$defs/Realm\",\n          \"description\": \"Filter by game realm\"\n\
+        \        },\n        \"contentType\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n        \
+        \  \"description\": \"MIME content type filter (null to skip content type filtering)\"\n        },\n        \"limit\"\
+        : {\n          \"type\": \"integer\",\n          \"default\": 50,\n          \"description\": \"Maximum number of
+        results to return\"\n        },\n        \"offset\": {\n          \"type\": \"integer\",\n          \"default\": 0,\n\
+        \          \"description\": \"Number of results to skip for pagination\"\n        }\n      }\n    },\n    \"AssetType\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"texture\",\n        \"model\",\n        \"audio\",\n\
+        \        \"behavior\",\n        \"bundle\",\n        \"prefab\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Type classification for assets\"\n    },\n    \"Realm\": {\n      \"type\": \"string\",\n      \"enum\": [\n \
+        \       \"omega\",\n        \"arcadia\",\n        \"fantasia\",\n        \"shared\"\n      ],\n      \"description\"\
+        : \"Game realm the asset belongs to\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetSearchResult\"\
         ,\n  \"$defs\": {\n    \"AssetSearchResult\": {\n      \"description\": \"Paginated results from an asset search query\"\
         ,\n      \"type\": \"object\",\n      \"properties\": {\n        \"assets\": {\n          \"type\": \"array\",\n \
@@ -947,7 +948,8 @@ components:
           type: array
           items:
             type: string
-          description: Filter by tags (assets must have all specified tags)
+          nullable: true
+          description: Filter by tags (assets must have all specified tags) (null to skip tag filtering)
         assetType:
           $ref: '#/components/schemas/AssetType'
           description: Filter by asset type
@@ -956,7 +958,8 @@ components:
           description: Filter by game realm
         contentType:
           type: string
-          description: MIME content type filter
+          nullable: true
+          description: MIME content type filter (null to skip content type filtering)
         limit:
           type: integer
           default: 50

@@ -323,30 +323,30 @@ public partial class GetDocumentRequest
     public string Namespace { get; set; } = default!;
 
     /// <summary>
-    /// Unique identifier of the document to retrieve
+    /// Unique identifier of the document to retrieve (null if using slug)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
-    public System.Guid DocumentId { get; set; } = default!;
+    public System.Guid? DocumentId { get; set; } = default!;
 
     /// <summary>
-    /// URL-friendly slug of the document to retrieve
+    /// URL-friendly slug of the document to retrieve (null if using documentId)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
-    public string Slug { get; set; } = default!;
+    public string? Slug { get; set; } = default!;
 
     /// <summary>
-    /// Optional session ID for tracking document views
+    /// Optional session ID for tracking document views (null if not tracking)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    public System.Guid SessionId { get; set; } = default!;
+    public System.Guid? SessionId { get; set; } = default!;
 
     /// <summary>
-    /// How deep to fetch related documents
+    /// How deep to fetch related documents (null for no related documents)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("includeRelated")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RelatedDepth IncludeRelated { get; set; } = default!;
+    public RelatedDepth? IncludeRelated { get; set; } = default!;
 
     /// <summary>
     /// Whether to include full document content
@@ -443,17 +443,17 @@ public partial class SearchDocumentationRequest
     public string SearchTerm { get; set; } = default!;
 
     /// <summary>
-    /// Optional session ID for tracking searches
+    /// Optional session ID for tracking searches (null if not tracking)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    public System.Guid SessionId { get; set; } = default!;
+    public System.Guid? SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Filter results to a specific category
+    /// Filter results to a specific category (null for all categories)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentCategory Category { get; set; } = default!;
+    public DocumentCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of results to return
@@ -463,11 +463,11 @@ public partial class SearchDocumentationRequest
     public int MaxResults { get; set; } = 10;
 
     /// <summary>
-    /// Fields to search within
+    /// Fields to search within (null for default fields)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("searchIn")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<SearchField> SearchIn { get; set; } = default!;
+    public System.Collections.Generic.ICollection<SearchField>? SearchIn { get; set; } = default!;
 
     /// <summary>
     /// How to sort the search results
@@ -1045,35 +1045,35 @@ public partial class UpdateDocumentRequest
     public string Namespace { get; set; } = default!;
 
     /// <summary>
-    /// Unique identifier of the document to update
+    /// Unique identifier of the document to update (null if not changing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
-    public System.Guid DocumentId { get; set; } = default!;
+    public System.Guid? DocumentId { get; set; } = default!;
 
     /// <summary>
-    /// New URL-friendly slug for the document
+    /// New URL-friendly slug for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
-    public string Slug { get; set; } = default!;
+    public string? Slug { get; set; } = default!;
 
     /// <summary>
-    /// New display title for the document
+    /// New display title for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
-    public string Title { get; set; } = default!;
+    public string? Title { get; set; } = default!;
 
     /// <summary>
-    /// New category for the document
+    /// New category for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentCategory Category { get; set; } = default!;
+    public DocumentCategory? Category { get; set; } = default!;
 
     /// <summary>
-    /// New markdown content for the document
+    /// New markdown content for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
-    public string Content { get; set; } = default!;
+    public string? Content { get; set; } = default!;
 
     /// <summary>
     /// New text summary for the document (null to keep unchanged)
@@ -1174,16 +1174,16 @@ public partial class DeleteDocumentRequest
     public string Namespace { get; set; } = default!;
 
     /// <summary>
-    /// Unique identifier of the document to delete
+    /// Unique identifier of the document to delete (null if using slug)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
-    public System.Guid DocumentId { get; set; } = default!;
+    public System.Guid? DocumentId { get; set; } = default!;
 
     /// <summary>
-    /// URL-friendly slug of the document to delete
+    /// URL-friendly slug of the document to delete (null if using documentId)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
-    public string Slug { get; set; } = default!;
+    public string? Slug { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

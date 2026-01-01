@@ -264,7 +264,7 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (body.DocumentId == Guid.Empty && string.IsNullOrWhiteSpace(body.Slug))
+            if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
             {
                 _logger.LogWarning("GetDocument failed: Either DocumentId or Slug is required");
                 return (StatusCodes.BadRequest, null);
@@ -276,9 +276,9 @@ public partial class DocumentationService : IDocumentationService
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
 
             // Resolve document ID from slug if provided
-            if (body.DocumentId != Guid.Empty)
+            if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
             {
-                documentId = body.DocumentId;
+                documentId = body.DocumentId.Value;
             }
             else
             {
@@ -333,12 +333,13 @@ public partial class DocumentationService : IDocumentationService
             };
 
             // Include related documents if requested
-            if (body.IncludeRelated != RelatedDepth.None && storedDoc.RelatedDocuments.Count > 0)
+            var includeRelated = body.IncludeRelated ?? RelatedDepth.None;
+            if (includeRelated != RelatedDepth.None && storedDoc.RelatedDocuments.Count > 0)
             {
                 response.RelatedDocuments = await GetRelatedDocumentSummariesAsync(
                     namespaceId,
                     storedDoc.RelatedDocuments,
-                    body.IncludeRelated,
+                    includeRelated,
                     cancellationToken);
             }
 
@@ -687,13 +688,13 @@ public partial class DocumentationService : IDocumentationService
         try
         {
             var namespaceId = body.Namespace;
-            var documentId = body.DocumentId;
 
-            if (documentId == Guid.Empty)
+            if (!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty)
             {
                 _logger.LogWarning("UpdateDocument requires documentId");
                 return (StatusCodes.BadRequest, null);
             }
+            var documentId = body.DocumentId.Value;
 
             // Check if namespace is bound to a repository (403 for manual modifications)
             var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
@@ -740,9 +741,9 @@ public partial class DocumentationService : IDocumentationService
                 changedFields.Add("title");
             }
 
-            if (body.Category != default && body.Category.ToString() != storedDoc.Category)
+            if (body.Category.HasValue && body.Category.Value.ToString() != storedDoc.Category)
             {
-                storedDoc.Category = body.Category.ToString();
+                storedDoc.Category = body.Category.Value.ToString();
                 changedFields.Add("category");
             }
 

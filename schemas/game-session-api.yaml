@@ -281,16 +281,17 @@ paths:
         : \"uuid\",\n          \"description\": \"ID of the game session to join\"\n        },\n        \"accountId\": {\n\
         \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Account ID of the
         player joining. Provided by shortcut system or authenticated caller.\"\n        },\n        \"password\": {\n    \
-        \      \"type\": \"string\",\n          \"description\": \"Password for private sessions\"\n        },\n        \"\
-        characterData\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\"\
-        : \"Game-specific character data\"\n        },\n        \"voiceEndpoint\": {\n          \"$ref\": \"#/$defs/VoiceSipEndpoint\"\
-        ,\n          \"description\": \"Client's SIP endpoint for voice communication (optional)\"\n        }\n      }\n \
-        \   },\n    \"VoiceSipEndpoint\": {\n      \"type\": \"object\",\n      \"description\": \"Client's SIP/WebRTC endpoint
-        for voice communication\",\n      \"required\": [\n        \"sdpOffer\"\n      ],\n      \"properties\": {\n     \
-        \   \"sdpOffer\": {\n          \"type\": \"string\",\n          \"description\": \"SDP offer for WebRTC negotiation\"\
-        \n        },\n        \"iceCandidates\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\"\n          },\n          \"description\": \"ICE candidates for NAT traversal\"\n        }\n   \
-        \   }\n    }\n  }\n}"
+        \      \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Password for private sessions
+        (null for public sessions)\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n        \
+        \  \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Game-specific character
+        data (null if no character data)\"\n        },\n        \"voiceEndpoint\": {\n          \"$ref\": \"#/$defs/VoiceSipEndpoint\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"Client's SIP endpoint for voice communication (null
+        if not using voice)\"\n        }\n      }\n    },\n    \"VoiceSipEndpoint\": {\n      \"type\": \"object\",\n    \
+        \  \"description\": \"Client's SIP/WebRTC endpoint for voice communication\",\n      \"required\": [\n        \"sdpOffer\"\
+        \n      ],\n      \"properties\": {\n        \"sdpOffer\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"SDP offer for WebRTC negotiation\"\n        },\n        \"iceCandidates\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"ICE candidates
+        for NAT traversal\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinGameSessionResponse\"\
         ,\n  \"$defs\": {\n    \"JoinGameSessionResponse\": {\n      \"description\": \"Response after successfully joining
         a game session with role and permissions\",\n      \"type\": \"object\",\n      \"required\": [\n        \"success\"\
@@ -644,14 +645,17 @@ components:
           description: Account ID of the player joining. Provided by shortcut system or authenticated caller.
         password:
           type: string
-          description: Password for private sessions
+          nullable: true
+          description: Password for private sessions (null for public sessions)
         characterData:
           type: object
           additionalProperties: true
-          description: Game-specific character data
+          nullable: true
+          description: Game-specific character data (null if no character data)
         voiceEndpoint:
           $ref: '#/components/schemas/VoiceSipEndpoint'
-          description: Client's SIP endpoint for voice communication (optional)
+          nullable: true
+          description: Client's SIP endpoint for voice communication (null if not using voice)
 
     JoinGameSessionResponse:
       description: Response after successfully joining a game session with role and permissions

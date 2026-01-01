@@ -181,12 +181,14 @@ paths:
         by ID or slug\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\"\n      ],\n      \"properties\"\
         : {\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n       \
         \   \"maxLength\": 50,\n          \"description\": \"Documentation namespace containing the document\"\n        },\n\
-        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the document to retrieve\"\n        },\n        \"slug\": {\n          \"type\": \"string\"\
-        ,\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"description\": \"URL-friendly slug of the document to retrieve\"\
+        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Unique identifier of the document to retrieve (null if using slug)\"\n     \
+        \   },\n        \"slug\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n         \
+        \ \"nullable\": true,\n          \"description\": \"URL-friendly slug of the document to retrieve (null if using documentId)\"\
         \n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
-        \   \"description\": \"Optional session ID for tracking document views\"\n        },\n        \"includeRelated\":
-        {\n          \"$ref\": \"#/$defs/RelatedDepth\",\n          \"description\": \"How deep to fetch related documents\"\
+        \   \"nullable\": true,\n          \"description\": \"Optional session ID for tracking document views (null if not
+        tracking)\"\n        },\n        \"includeRelated\": {\n          \"$ref\": \"#/$defs/RelatedDepth\",\n          \"\
+        nullable\": true,\n          \"description\": \"How deep to fetch related documents (null for no related documents)\"\
         \n        },\n        \"includeContent\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n   \
         \       \"description\": \"Whether to include full document content\"\n        },\n        \"renderHtml\": {\n   \
         \       \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to render markdown
@@ -278,23 +280,25 @@ paths:
         \     \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n          \"description\": \"Documentation namespace
         to search within\"\n        },\n        \"searchTerm\": {\n          \"type\": \"string\",\n          \"minLength\"\
         : 2,\n          \"maxLength\": 200,\n          \"description\": \"Keyword or phrase to search for\"\n        },\n\
-        \        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Optional session ID for tracking searches\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
-        ,\n          \"description\": \"Filter results to a specific category\"\n        },\n        \"maxResults\": {\n \
-        \         \"type\": \"integer\",\n          \"default\": 10,\n          \"minimum\": 1,\n          \"maximum\": 50,\n\
-        \          \"description\": \"Maximum number of results to return\"\n        },\n        \"searchIn\": {\n       \
-        \   \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SearchField\"\n          },\n  \
-        \        \"description\": \"Fields to search within\"\n        },\n        \"sortBy\": {\n          \"type\": \"string\"\
-        ,\n          \"enum\": [\n            \"relevance\",\n            \"recency\",\n            \"alphabetical\"\n   \
-        \       ],\n          \"default\": \"relevance\",\n          \"description\": \"How to sort the search results\"\n\
-        \        },\n        \"includeContent\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n    \
-        \      \"description\": \"Whether to include full document content in results\"\n        }\n      }\n    },\n    \"\
-        DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\"\
-        ,\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n    \
-        \    \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
-        : \"Fixed categories for type-safe filtering\"\n    },\n    \"SearchField\": {\n      \"type\": \"string\",\n    \
-        \  \"enum\": [\n        \"title\",\n        \"content\",\n        \"tags\",\n        \"summary\"\n      ],\n     \
-        \ \"description\": \"Fields that can be searched within documents\"\n    }\n  }\n}"
+        \        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Optional session ID for tracking searches (null if not tracking)\"\n       \
+        \ },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"nullable\": true,\n\
+        \          \"description\": \"Filter results to a specific category (null for all categories)\"\n        },\n    \
+        \    \"maxResults\": {\n          \"type\": \"integer\",\n          \"default\": 10,\n          \"minimum\": 1,\n\
+        \          \"maximum\": 50,\n          \"description\": \"Maximum number of results to return\"\n        },\n    \
+        \    \"searchIn\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SearchField\"\
+        \n          },\n          \"nullable\": true,\n          \"description\": \"Fields to search within (null for default
+        fields)\"\n        },\n        \"sortBy\": {\n          \"type\": \"string\",\n          \"enum\": [\n           \
+        \ \"relevance\",\n            \"recency\",\n            \"alphabetical\"\n          ],\n          \"default\": \"\
+        relevance\",\n          \"description\": \"How to sort the search results\"\n        },\n        \"includeContent\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to include
+        full document content in results\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\"\
+        ,\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n      \
+        \  \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\"\
+        ,\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\
+        \n    },\n    \"SearchField\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"title\",\n        \"content\"\
+        ,\n        \"tags\",\n        \"summary\"\n      ],\n      \"description\": \"Fields that can be searched within documents\"\
+        \n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SearchDocumentationResponse\"\
         ,\n  \"$defs\": {\n    \"SearchDocumentationResponse\": {\n      \"description\": \"Response containing keyword search
         results\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\",\n        \"results\"\n    \
@@ -575,27 +579,30 @@ paths:
         fields\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\"\n      ],\n      \"properties\"\
         : {\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n       \
         \   \"maxLength\": 50,\n          \"description\": \"Documentation namespace containing the document\"\n        },\n\
-        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the document to update\"\n        },\n        \"slug\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"New URL-friendly slug for the document\"\n        },\n        \"title\": {\n     \
-        \     \"type\": \"string\",\n          \"description\": \"New display title for the document\"\n        },\n     \
-        \   \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"description\": \"New category
-        for the document\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"New markdown content for the document\"\n        },\n        \"summary\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"New text summary for the document (null to keep unchanged)\"\
-        \n        },\n        \"voiceSummary\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"New voice-optimized summary for the document (null to keep unchanged)\"\n        },\n    \
-        \    \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n     \
-        \     },\n          \"nullable\": true,\n          \"description\": \"New set of tags for the document (null to keep
-        unchanged)\"\n        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n          \"items\": {\n\
-        \            \"type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"nullable\": true,\n\
-        \          \"description\": \"New set of related document IDs (null to keep unchanged)\"\n        },\n        \"metadata\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
-        \         \"description\": \"New custom metadata key-value pairs (null to keep unchanged)\"\n        }\n      }\n\
-        \    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\"\
-        ,\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n\
-        \        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\
-        \n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Unique identifier of the document to update (null if not changing)\"\n     \
+        \   },\n        \"slug\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        : \"New URL-friendly slug for the document (null to keep unchanged)\"\n        },\n        \"title\": {\n        \
+        \  \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"New display title for the document
+        (null to keep unchanged)\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"New category for the document (null to keep unchanged)\"\
+        \n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
+        description\": \"New markdown content for the document (null to keep unchanged)\"\n        },\n        \"summary\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"New text summary
+        for the document (null to keep unchanged)\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"New voice-optimized summary for the document (null
+        to keep unchanged)\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n  \
+        \          \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"New set
+        of tags for the document (null to keep unchanged)\"\n        },\n        \"relatedDocuments\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n      \
+        \    },\n          \"nullable\": true,\n          \"description\": \"New set of related document IDs (null to keep
+        unchanged)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true,\n          \"description\": \"New custom metadata key-value pairs (null to
+        keep unchanged)\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"\
+        enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\"\
+        ,\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n    \
+        \    \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\
+        \n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateDocumentResponse\"\
         ,\n  \"$defs\": {\n    \"UpdateDocumentResponse\": {\n      \"description\": \"Response confirming document update
         with timestamp\",\n      \"type\": \"object\",\n      \"required\": [\n        \"documentId\",\n        \"updatedAt\"\
@@ -638,9 +645,10 @@ paths:
         the trashcan\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\"\n      ],\n      \"properties\"\
         : {\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n       \
         \   \"maxLength\": 50,\n          \"description\": \"Documentation namespace containing the document\"\n        },\n\
-        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Unique identifier of the document to delete\"\n        },\n        \"slug\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"URL-friendly slug of the document to delete\"\n        }\n      }\n    }\n  }\n}"
+        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Unique identifier of the document to delete (null if using slug)\"\n       \
+        \ },\n        \"slug\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        : \"URL-friendly slug of the document to delete (null if using documentId)\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteDocumentResponse\"\
         ,\n  \"$defs\": {\n    \"DeleteDocumentResponse\": {\n      \"description\": \"Response confirming document deletion
         with recovery deadline\",\n      \"type\": \"object\",\n      \"required\": [\n        \"documentId\",\n        \"\
@@ -1787,18 +1795,22 @@ components:
         documentId:
           type: string
           format: uuid
-          description: Unique identifier of the document to retrieve
+          nullable: true
+          description: Unique identifier of the document to retrieve (null if using slug)
         slug:
           type: string
           pattern: '^[a-z0-9-]+$'
-          description: URL-friendly slug of the document to retrieve
+          nullable: true
+          description: URL-friendly slug of the document to retrieve (null if using documentId)
         sessionId:
           type: string
           format: uuid
-          description: Optional session ID for tracking document views
+          nullable: true
+          description: Optional session ID for tracking document views (null if not tracking)
         includeRelated:
           $ref: '#/components/schemas/RelatedDepth'
-          description: How deep to fetch related documents
+          nullable: true
+          description: How deep to fetch related documents (null for no related documents)
         includeContent:
           type: boolean
           default: false
@@ -1851,10 +1863,12 @@ components:
         sessionId:
           type: string
           format: uuid
-          description: Optional session ID for tracking searches
+          nullable: true
+          description: Optional session ID for tracking searches (null if not tracking)
         category:
           $ref: '#/components/schemas/DocumentCategory'
-          description: Filter results to a specific category
+          nullable: true
+          description: Filter results to a specific category (null for all categories)
         maxResults:
           type: integer
           default: 10
@@ -1865,7 +1879,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SearchField'
-          description: Fields to search within
+          nullable: true
+          description: Fields to search within (null for default fields)
         sortBy:
           type: string
           enum:
@@ -2172,19 +2187,24 @@ components:
         documentId:
           type: string
           format: uuid
-          description: Unique identifier of the document to update
+          nullable: true
+          description: Unique identifier of the document to update (null if not changing)
         slug:
           type: string
-          description: New URL-friendly slug for the document
+          nullable: true
+          description: New URL-friendly slug for the document (null to keep unchanged)
         title:
           type: string
-          description: New display title for the document
+          nullable: true
+          description: New display title for the document (null to keep unchanged)
         category:
           $ref: '#/components/schemas/DocumentCategory'
-          description: New category for the document
+          nullable: true
+          description: New category for the document (null to keep unchanged)
         content:
           type: string
-          description: New markdown content for the document
+          nullable: true
+          description: New markdown content for the document (null to keep unchanged)
         summary:
           type: string
           nullable: true
@@ -2242,10 +2262,12 @@ components:
         documentId:
           type: string
           format: uuid
-          description: Unique identifier of the document to delete
+          nullable: true
+          description: Unique identifier of the document to delete (null if using slug)
         slug:
           type: string
-          description: URL-friendly slug of the document to delete
+          nullable: true
+          description: URL-friendly slug of the document to delete (null if using documentId)
 
     DeleteDocumentResponse:
       description: Response confirming document deletion with recovery deadline

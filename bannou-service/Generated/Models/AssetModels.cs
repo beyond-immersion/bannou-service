@@ -788,10 +788,10 @@ public partial class AssetSearchRequest
 {
 
     /// <summary>
-    /// Filter by tags (assets must have all specified tags)
+    /// Filter by tags (assets must have all specified tags) (null to skip tag filtering)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
     /// Filter by asset type
@@ -812,10 +812,10 @@ public partial class AssetSearchRequest
     public Realm Realm { get; set; } = default!;
 
     /// <summary>
-    /// MIME content type filter
+    /// MIME content type filter (null to skip content type filtering)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
-    public string ContentType { get; set; } = default!;
+    public string? ContentType { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of results to return

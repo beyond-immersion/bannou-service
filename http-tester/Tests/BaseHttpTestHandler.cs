@@ -126,7 +126,7 @@ public abstract class BaseHttpTestHandler : IServiceTestHandler
     /// <returns>A unique string identifier</returns>
     protected static string GenerateTestId(string prefix = "test")
     {
-        return $"{prefix}_{DateTime.Now.Ticks}";
+        return $"{prefix}-{DateTime.Now.Ticks}";
     }
 
     /// <summary>

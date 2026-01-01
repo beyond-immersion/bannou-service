@@ -631,16 +631,16 @@ public partial class SeedSpecies
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Description of the species
+    /// Description of the species (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Category for grouping
+    /// Category for grouping (null if not categorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether players can create characters of this species
@@ -649,34 +649,34 @@ public partial class SeedSpecies
     public bool IsPlayable { get; set; } = true;
 
     /// <summary>
-    /// Base lifespan in game years
+    /// Base lifespan in game years (null for default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
-    public int BaseLifespan { get; set; } = default!;
+    public int? BaseLifespan { get; set; } = default!;
 
     /// <summary>
-    /// Age at maturity
+    /// Age at maturity (null for default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
-    public int MaturityAge { get; set; } = default!;
+    public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Base trait modifiers for this species
+    /// Base trait modifiers for this species (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
-    public object TraitModifiers { get; set; } = default!;
+    public object? TraitModifiers { get; set; } = default!;
 
     /// <summary>
-    /// Codes of realms where this species is available (resolved during seeding)
+    /// Codes of realms where this species is available (null to skip realm assignment)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmCodes")]
-    public System.Collections.Generic.ICollection<string> RealmCodes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RealmCodes { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the species
+    /// Additional metadata for the species (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

@@ -265,17 +265,17 @@ public partial class ListEndpointsRequest
 {
 
     /// <summary>
-    /// Filter endpoints by health status
+    /// Filter endpoints by health status (null for all statuses)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statusFilter")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EndpointStatus StatusFilter { get; set; } = default!;
+    public EndpointStatus? StatusFilter { get; set; } = default!;
 
     /// <summary>
-    /// Optional filter by app-id prefix
+    /// Optional filter by app-id prefix (null for all app IDs)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appIdFilter")]
-    public string AppIdFilter { get; set; } = default!;
+    public string? AppIdFilter { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -696,10 +696,10 @@ public partial class GetMappingsRequest
 {
 
     /// <summary>
-    /// Optional filter by service name prefix
+    /// Optional filter by service name prefix (null for all services)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceNameFilter")]
-    public string ServiceNameFilter { get; set; } = default!;
+    public string? ServiceNameFilter { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

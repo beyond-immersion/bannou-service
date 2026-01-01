@@ -1177,21 +1177,25 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "documentId": {
           "type": "string",
           "format": "uuid",
-          "description": "Unique identifier of the document to retrieve"
+          "nullable": true,
+          "description": "Unique identifier of the document to retrieve (null if using slug)"
         },
         "slug": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "description": "URL-friendly slug of the document to retrieve"
+          "nullable": true,
+          "description": "URL-friendly slug of the document to retrieve (null if using documentId)"
         },
         "sessionId": {
           "type": "string",
           "format": "uuid",
-          "description": "Optional session ID for tracking document views"
+          "nullable": true,
+          "description": "Optional session ID for tracking document views (null if not tracking)"
         },
         "includeRelated": {
           "$ref": "#/$defs/RelatedDepth",
-          "description": "How deep to fetch related documents"
+          "nullable": true,
+          "description": "How deep to fetch related documents (null for no related documents)"
         },
         "includeContent": {
           "type": "boolean",
@@ -1479,11 +1483,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "sessionId": {
           "type": "string",
           "format": "uuid",
-          "description": "Optional session ID for tracking searches"
+          "nullable": true,
+          "description": "Optional session ID for tracking searches (null if not tracking)"
         },
         "category": {
           "$ref": "#/$defs/DocumentCategory",
-          "description": "Filter results to a specific category"
+          "nullable": true,
+          "description": "Filter results to a specific category (null for all categories)"
         },
         "maxResults": {
           "type": "integer",
@@ -1497,7 +1503,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "items": {
             "$ref": "#/$defs/SearchField"
           },
-          "description": "Fields to search within"
+          "nullable": true,
+          "description": "Fields to search within (null for default fields)"
         },
         "sortBy": {
           "type": "string",
@@ -2402,23 +2409,28 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "documentId": {
           "type": "string",
           "format": "uuid",
-          "description": "Unique identifier of the document to update"
+          "nullable": true,
+          "description": "Unique identifier of the document to update (null if not changing)"
         },
         "slug": {
           "type": "string",
-          "description": "New URL-friendly slug for the document"
+          "nullable": true,
+          "description": "New URL-friendly slug for the document (null to keep unchanged)"
         },
         "title": {
           "type": "string",
-          "description": "New display title for the document"
+          "nullable": true,
+          "description": "New display title for the document (null to keep unchanged)"
         },
         "category": {
           "$ref": "#/$defs/DocumentCategory",
-          "description": "New category for the document"
+          "nullable": true,
+          "description": "New category for the document (null to keep unchanged)"
         },
         "content": {
           "type": "string",
-          "description": "New markdown content for the document"
+          "nullable": true,
+          "description": "New markdown content for the document (null to keep unchanged)"
         },
         "summary": {
           "type": "string",
@@ -2581,11 +2593,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "documentId": {
           "type": "string",
           "format": "uuid",
-          "description": "Unique identifier of the document to delete"
+          "nullable": true,
+          "description": "Unique identifier of the document to delete (null if using slug)"
         },
         "slug": {
           "type": "string",
-          "description": "URL-friendly slug of the document to delete"
+          "nullable": true,
+          "description": "URL-friendly slug of the document to delete (null if using documentId)"
         }
       }
     }

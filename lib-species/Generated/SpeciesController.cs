@@ -2798,11 +2798,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "description": {
           "type": "string",
-          "description": "Description of the species"
+          "nullable": true,
+          "description": "Description of the species (null if not provided)"
         },
         "category": {
           "type": "string",
-          "description": "Category for grouping"
+          "nullable": true,
+          "description": "Category for grouping (null if not categorized)"
         },
         "isPlayable": {
           "type": "boolean",
@@ -2811,28 +2813,33 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "baseLifespan": {
           "type": "integer",
-          "description": "Base lifespan in game years"
+          "nullable": true,
+          "description": "Base lifespan in game years (null for default)"
         },
         "maturityAge": {
           "type": "integer",
-          "description": "Age at maturity"
+          "nullable": true,
+          "description": "Age at maturity (null for default)"
         },
         "traitModifiers": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Base trait modifiers for this species"
+          "nullable": true,
+          "description": "Base trait modifiers for this species (null if none)"
         },
         "realmCodes": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Codes of realms where this species is available (resolved during seeding)"
+          "nullable": true,
+          "description": "Codes of realms where this species is available (null to skip realm assignment)"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Additional metadata for the species"
+          "nullable": true,
+          "description": "Additional metadata for the species (null if none)"
         }
       }
     }

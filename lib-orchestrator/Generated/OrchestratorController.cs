@@ -1183,12 +1183,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "capacity": {
           "description": "Current capacity metrics including load and available slots",
-          "$ref": "#/$defs/Capacity"
+          "$ref": "#/$defs/Capacity",
+          "nullable": true
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Additional service metadata"
+          "nullable": true,
+          "description": "Additional service metadata (null if not provided)"
         }
       }
     },
@@ -4887,7 +4889,8 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Optional metadata about the processing job"
+          "nullable": true,
+          "description": "Optional metadata about the processing job (null if not needed)"
         }
       }
     }

@@ -140,16 +140,17 @@ paths:
         \      \"description\": \"Service status from heartbeat\"\n        },\n        \"lastSeen\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat timestamp\"\n   \
         \     },\n        \"capacity\": {\n          \"description\": \"Current capacity metrics including load and available
-        slots\",\n          \"$ref\": \"#/$defs/Capacity\"\n        },\n        \"metadata\": {\n          \"type\": \"object\"\
-        ,\n          \"additionalProperties\": true,\n          \"description\": \"Additional service metadata\"\n       \
-        \ }\n      }\n    },\n    \"Capacity\": {\n      \"type\": \"object\",\n      \"description\": \"Service capacity
-        metrics from heartbeat monitoring including connection counts and resource usage\",\n      \"properties\": {\n   \
-        \     \"maxConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum number of connections
-        this service can handle\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n     \
-        \     \"description\": \"Current number of active connections\"\n        },\n        \"cpuUsage\": {\n          \"\
-        type\": \"number\",\n          \"format\": \"float\",\n          \"description\": \"CPU usage as a percentage (0.0
-        to 1.0)\"\n        },\n        \"memoryUsage\": {\n          \"type\": \"number\",\n          \"format\": \"float\"\
-        ,\n          \"description\": \"Memory usage as a percentage (0.0 to 1.0)\"\n        }\n      }\n    }\n  }\n}"
+        slots\",\n          \"$ref\": \"#/$defs/Capacity\",\n          \"nullable\": true\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"Additional service metadata (null if not provided)\"\n        }\n      }\n    },\n  \
+        \  \"Capacity\": {\n      \"type\": \"object\",\n      \"description\": \"Service capacity metrics from heartbeat
+        monitoring including connection counts and resource usage\",\n      \"properties\": {\n        \"maxConnections\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Maximum number of connections this service can
+        handle\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Current number of active connections\"\n        },\n        \"cpuUsage\": {\n          \"type\": \"number\",\n\
+        \          \"format\": \"float\",\n          \"description\": \"CPU usage as a percentage (0.0 to 1.0)\"\n       \
+        \ },\n        \"memoryUsage\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n          \"\
+        description\": \"Memory usage as a percentage (0.0 to 1.0)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get health status of all services\",\n  \"description\": \"Retrieves health
         information from all services via Redis heartbeat monitoring.\\nUses existing ServiceHeartbeatEvent schema from common-events.yaml.\\\
         n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"GetServicesHealth\"\n}"
@@ -1564,8 +1565,9 @@ paths:
         : {\n          \"type\": \"integer\",\n          \"default\": 0,\n          \"description\": \"Request priority (higher
         = more urgent)\"\n        },\n        \"timeoutSeconds\": {\n          \"type\": \"integer\",\n          \"default\"\
         : 300,\n          \"description\": \"How long the lease is valid for\"\n        },\n        \"metadata\": {\n    \
-        \      \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Optional metadata
-        about the processing job\"\n        }\n      }\n    }\n  }\n}"
+        \      \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n         \
+        \ \"description\": \"Optional metadata about the processing job (null if not needed)\"\n        }\n      }\n    }\n\
+        \  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AcquireProcessorResponse\"\
         ,\n  \"$defs\": {\n    \"AcquireProcessorResponse\": {\n      \"description\": \"Response with acquired processor
         details including lease information\",\n      \"type\": \"object\",\n      \"required\": [\n        \"processorId\"\
@@ -2080,10 +2082,12 @@ components:
         capacity:
           description: Current capacity metrics including load and available slots
           $ref: '#/components/schemas/Capacity'
+          nullable: true
         metadata:
           type: object
           additionalProperties: true
-          description: Additional service metadata
+          nullable: true
+          description: Additional service metadata (null if not provided)
 
     TestExecutionRequest:
       type: object
@@ -3337,7 +3341,8 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Optional metadata about the processing job
+          nullable: true
+          description: Optional metadata about the processing job (null if not needed)
 
     AcquireProcessorResponse:
       description: Response with acquired processor details including lease information

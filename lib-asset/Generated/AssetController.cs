@@ -1160,7 +1160,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "items": {
             "type": "string"
           },
-          "description": "Filter by tags (assets must have all specified tags)"
+          "nullable": true,
+          "description": "Filter by tags (assets must have all specified tags) (null to skip tag filtering)"
         },
         "assetType": {
           "$ref": "#/$defs/AssetType",
@@ -1172,7 +1173,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "contentType": {
           "type": "string",
-          "description": "MIME content type filter"
+          "nullable": true,
+          "description": "MIME content type filter (null to skip content type filtering)"
         },
         "limit": {
           "type": "integer",

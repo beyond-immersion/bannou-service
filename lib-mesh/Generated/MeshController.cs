@@ -540,11 +540,13 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "statusFilter": {
           "$ref": "#/$defs/EndpointStatus",
-          "description": "Filter endpoints by health status"
+          "nullable": true,
+          "description": "Filter endpoints by health status (null for all statuses)"
         },
         "appIdFilter": {
           "type": "string",
-          "description": "Optional filter by app-id prefix"
+          "nullable": true,
+          "description": "Optional filter by app-id prefix (null for all app IDs)"
         }
       }
     },
@@ -1402,7 +1404,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "serviceNameFilter": {
           "type": "string",
-          "description": "Optional filter by service name prefix"
+          "nullable": true,
+          "description": "Optional filter by service name prefix (null for all services)"
         }
       }
     }
