@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -38,15 +39,20 @@ public partial class ActorService
         try
         {
             // Find actors using this behavior
-            var templateStore = _stateStoreFactory.Create<ActorTemplateData>(TEMPLATE_STORE);
-            var allTemplates = await templateStore.GetAllAsync(CancellationToken.None);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
 
-            foreach (var (key, template) in allTemplates)
+            // Get all template IDs from index
+            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, CancellationToken.None) ?? new List<string>();
+
+            if (allIds.Count == 0)
+                return;
+
+            // Load all templates
+            var allTemplates = await templateStore.GetBulkAsync(allIds, CancellationToken.None);
+
+            foreach (var template in allTemplates.Values)
             {
-                // Skip category: prefixed keys
-                if (!Guid.TryParse(key, out _))
-                    continue;
-
                 // Check if template uses this behavior
                 if (string.Equals(template.BehaviorRef, evt.AssetId, StringComparison.OrdinalIgnoreCase) ||
                     template.BehaviorRef.Contains(evt.BehaviorId, StringComparison.OrdinalIgnoreCase))

@@ -375,7 +375,7 @@ public class ActorState
     /// <summary>
     /// Gets pending memory changes for publishing.
     /// </summary>
-    public IReadOnlyList<MemoryUpdate>? GetPendingMemoryChanges()
+    public List<MemoryUpdate>? GetPendingMemoryChanges()
     {
         lock (_lock)
         {

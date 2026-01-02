@@ -10,6 +10,7 @@ This document provides a compact reference of all Bannou services and their API 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
 | [Accounts](#accounts) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
+| [Actor](#actor) | 1.0.0 | 10 | Distributed actor management and execution for NPC brains, e... |
 | [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
@@ -74,6 +75,31 @@ Internal account management service (CRUD operations only, never exposed to inte
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/accounts/profile/update` | Update account profile | user |
+
+---
+
+## Actor {#actor}
+
+**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml`
+
+Distributed actor management and execution for NPC brains, event coordinators,
+and other long-running behavior loops. Actors output behavioral state (feelings,
+goals, memories) to characters - NOT ...
+
+### Other
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/actor/get` | Get actor instance (instantiate-on-access if template allows) | user |
+| `POST` | `/actor/inject-perception` | Inject a perception event into an actor's queue (testing) | developer |
+| `POST` | `/actor/list` | List actors with optional filters | user |
+| `POST` | `/actor/spawn` | Spawn a new actor from a template | developer |
+| `POST` | `/actor/stop` | Stop a running actor | developer |
+| `POST` | `/actor/template/create` | Create an actor template (category definition) | developer |
+| `POST` | `/actor/template/delete` | Delete an actor template | developer |
+| `POST` | `/actor/template/get` | Get an actor template by ID or category | user |
+| `POST` | `/actor/template/list` | List all actor templates | user |
+| `POST` | `/actor/template/update` | Update an actor template | developer |
 
 ---
 
@@ -759,8 +785,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 22
-- **Total endpoints**: 229
+- **Total services**: 23
+- **Total endpoints**: 239
 
 ---
 

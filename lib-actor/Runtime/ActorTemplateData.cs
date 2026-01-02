@@ -66,7 +66,7 @@ public class ActorTemplateData
             Category = Category,
             BehaviorRef = BehaviorRef,
             Configuration = Configuration,
-            AutoSpawn = AutoSpawn?.ToConfig(),
+            AutoSpawn = AutoSpawn?.ToConfig() ?? new AutoSpawnConfig { Enabled = false },
             TickIntervalMs = TickIntervalMs,
             AutoSaveIntervalSeconds = AutoSaveIntervalSeconds,
             MaxInstancesPerNode = MaxInstancesPerNode,

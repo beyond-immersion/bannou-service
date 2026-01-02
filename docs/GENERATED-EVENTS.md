@@ -12,6 +12,7 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` | Base schema for all service-to-service events. |
+| `CharacterStateUpdateEvent` | Custom | `character-state-update` | Published by Actor service when an actor updates a... |
 | `FullServiceMappingsEvent` | Custom | `full-service-mappings` | Published periodically by Orchestrator as the auth... |
 | `ServiceErrorEvent` | Error | `service.error` | Structured error event for unexpected service fail... |
 | `ServiceHeartbeatEvent` | Health | `service.heartbeat` | Published periodically by each bannou instance to ... |
@@ -19,6 +20,14 @@ This document lists all events defined in Bannou's event schemas.
 | `SessionConnectedEvent` | Session | `session.connected` | Published by Connect service when a WebSocket conn... |
 | `SessionDisconnectedEvent` | Session | `session.disconnected` | Published by Connect service when a WebSocket conn... |
 | `SessionReconnectedEvent` | Session | `session-reconnected` | Published by Connect service when a WebSocket sess... |
+
+### Actor
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ActorCompletedEvent` | Custom | `actor-completed` | Published when an actor completes execution (self-... |
+| `ActorStatusChangedEvent` | Custom | `actor-status-changed` | Published when an actor's status changes. |
+| `PoolNodeHeartbeatEvent` | Health | `pool-node.heartbeat` | Periodic heartbeat from pool nodes to control plan... |
 
 ### Asset
 

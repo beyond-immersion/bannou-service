@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -7,6 +6,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-actor.tests")]
 
@@ -43,6 +43,7 @@ public partial class ActorService : IActorService
 
     private const string TEMPLATE_STORE = "actor-templates";
     private const string INSTANCE_STORE = "actor-instances";
+    private const string ALL_TEMPLATES_KEY = "_all_template_ids";
 
     /// <summary>
     /// Creates a new instance of the ActorService.
@@ -99,7 +100,7 @@ public partial class ActorService : IActorService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var templateStore = _stateStoreFactory.Create<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
             var templateId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
@@ -130,8 +131,17 @@ public partial class ActorService : IActorService
             };
 
             // Save to state store (by ID and by category for lookup)
-            await templateStore.SaveAsync(templateId.ToString(), template, cancellationToken);
-            await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken);
+            await templateStore.SaveAsync(templateId.ToString(), template, cancellationToken: cancellationToken);
+            await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
+
+            // Add to template index
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+            if (!allIds.Contains(templateId.ToString()))
+            {
+                allIds.Add(templateId.ToString());
+                await indexStore.SaveAsync(ALL_TEMPLATES_KEY, allIds, cancellationToken: cancellationToken);
+            }
 
             // Publish created event
             var evt = new ActorTemplateCreatedEvent
@@ -176,7 +186,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.Create<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
             ActorTemplateData? template = null;
 
             if (body.TemplateId.HasValue)
@@ -224,24 +234,34 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.Create<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
 
-            // Get all templates (filter out category: prefixed keys)
-            var allTemplates = await templateStore.GetAllAsync(cancellationToken);
-            var templates = allTemplates
-                .Where(kvp => Guid.TryParse(kvp.Key, out _))
-                .Select(kvp => kvp.Value)
+            // Get all template IDs from index
+            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+
+            if (allIds.Count == 0)
+            {
+                return (StatusCodes.OK, new ListActorTemplatesResponse
+                {
+                    Templates = new List<ActorTemplateResponse>(),
+                    Total = 0
+                });
+            }
+
+            // Load templates by IDs
+            var templatesDict = await templateStore.GetBulkAsync(allIds, cancellationToken);
+            var templates = templatesDict.Values
                 .OrderBy(t => t.CreatedAt)
                 .Skip(body.Offset)
                 .Take(body.Limit)
+                .Select(t => t.ToResponse())
                 .ToList();
-
-            var total = allTemplates.Count(kvp => Guid.TryParse(kvp.Key, out _));
 
             return (StatusCodes.OK, new ListActorTemplatesResponse
             {
-                Templates = templates.Select(t => t.ToResponse()).ToList(),
-                Total = total
+                Templates = templates,
+                Total = templatesDict.Count
             });
         }
         catch (Exception ex)
@@ -269,7 +289,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.Create<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
@@ -314,8 +334,8 @@ public partial class ActorService : IActorService
             existing.UpdatedAt = now;
 
             // Save updates
-            await templateStore.SaveAsync(body.TemplateId.ToString(), existing, cancellationToken);
-            await templateStore.SaveAsync($"category:{existing.Category}", existing, cancellationToken);
+            await templateStore.SaveAsync(body.TemplateId.ToString(), existing, cancellationToken: cancellationToken);
+            await templateStore.SaveAsync($"category:{existing.Category}", existing, cancellationToken: cancellationToken);
 
             // Publish updated event
             var evt = new ActorTemplateUpdatedEvent
@@ -361,7 +381,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.Create<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
@@ -394,6 +414,14 @@ public partial class ActorService : IActorService
             // Delete from state store
             await templateStore.DeleteAsync(body.TemplateId.ToString(), cancellationToken);
             await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
+
+            // Remove from template index
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
+            if (allIds.Remove(body.TemplateId.ToString()))
+            {
+                await indexStore.SaveAsync(ALL_TEMPLATES_KEY, allIds, cancellationToken: cancellationToken);
+            }
 
             // Publish deleted event
             var evt = new ActorTemplateDeletedEvent
@@ -447,7 +475,7 @@ public partial class ActorService : IActorService
         try
         {
             // Get template
-            var templateStore = _stateStoreFactory.Create<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
             var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (template == null)

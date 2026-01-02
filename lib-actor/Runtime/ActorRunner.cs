@@ -1,9 +1,9 @@
-using System.Diagnostics;
-using System.Threading.Channels;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Threading.Channels;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
@@ -118,7 +118,7 @@ public class ActorRunner : IActorRunner
     }
 
     /// <inheritdoc/>
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    public Task StartAsync(CancellationToken cancellationToken = default)
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(ActorRunner));
@@ -126,7 +126,7 @@ public class ActorRunner : IActorRunner
         if (Status != ActorStatus.Pending && Status != ActorStatus.Stopped)
         {
             _logger.LogWarning("Actor {ActorId} cannot start from status {Status}", ActorId, Status);
-            return;
+            return Task.CompletedTask;
         }
 
         Status = ActorStatus.Starting;
@@ -144,6 +144,8 @@ public class ActorRunner : IActorRunner
 
         Status = ActorStatus.Running;
         _logger.LogInformation("Actor {ActorId} started successfully", ActorId);
+
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>

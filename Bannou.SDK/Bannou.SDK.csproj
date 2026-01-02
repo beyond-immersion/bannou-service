@@ -57,6 +57,7 @@
       <Compile Include="../bannou-service/Generated/Clients/SubscriptionsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/PermissionsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/RelationshipClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/ActorClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/ConnectClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/OrchestratorClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/MessagingClient.cs" />
@@ -80,6 +81,7 @@
       <Compile Include="../bannou-service/Generated/Models/ServicedataModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/BehaviorModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/CharacterModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/ActorModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/ConnectModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/AccountsModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/AuthModels.cs" />
@@ -110,6 +112,7 @@
       <Compile Include="../bannou-service/Generated/Events/GameSessionEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/LocationEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/CharacterEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/ActorEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/AccountsLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/SpeciesLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/DocumentationLifecycleEvents.cs" />
@@ -118,6 +121,7 @@
       <Compile Include="../bannou-service/Generated/Events/SpeciesEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/OrchestratorEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/StateEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/ActorLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/AccountsEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />

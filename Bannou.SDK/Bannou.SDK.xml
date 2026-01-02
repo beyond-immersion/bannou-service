@@ -2759,6 +2759,145 @@
             Reason for leaving/being kicked (if applicable)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent">
+            <summary>
+            Periodic heartbeat from pool nodes to control plane.
+            <br/>Used for health monitoring and load balancing decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent.NodeId">
+            <summary>
+            Unique identifier for this pool node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent.AppId">
+            <summary>
+            Pool node's app-id for direct routing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent.CurrentLoad">
+            <summary>
+            Number of actors currently running
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent.Capacity">
+            <summary>
+            Maximum actors this node can run
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent.ActorSummary">
+            <summary>
+            Map of actorId to status for sync verification
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorStatusChangedEvent">
+            <summary>
+            Published when an actor's status changes.
+            <br/>Used to keep control plane registry in sync with pool node state.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorStatusChangedEvent.Reason">
+            <summary>
+            Human-readable reason for status change
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorCompletedEvent">
+            <summary>
+            Published when an actor completes execution (self-terminate or external stop).
+            <br/>Includes final statistics and exit reason.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorCompletedEvent.ExitMessage">
+            <summary>
+            Additional context about the exit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorCompletedEvent.LoopIterations">
+            <summary>
+            Total behavior loop iterations before exit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorCompletedEvent.CharacterId">
+            <summary>
+            Associated character ID (for NPC brains)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SpawnActorCommand">
+            <summary>
+            Command sent from control plane to pool node to spawn an actor.
+            <br/>Published to topic: actor.node.{poolAppId}.spawn
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpawnActorCommand.BehaviorRef">
+            <summary>
+            Asset reference to fetch behavior from lib-assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpawnActorCommand.Configuration">
+            <summary>
+            Merged configuration (template + overrides)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpawnActorCommand.InitialState">
+            <summary>
+            Initial state for the actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpawnActorCommand.TickIntervalMs">
+            <summary>
+            Behavior loop interval in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpawnActorCommand.AutoSaveIntervalSeconds">
+            <summary>
+            State persistence interval (0 to disable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpawnActorCommand.CharacterId">
+            <summary>
+            Character ID for NPC brain actors
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.StopActorCommand">
+            <summary>
+            Command sent from control plane to pool node to stop an actor.
+            <br/>Published to topic: actor.node.{poolAppId}.stop
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.StopActorCommand.Graceful">
+            <summary>
+            If true, allows current tick to complete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SendMessageCommand">
+            <summary>
+            Command to deliver a message to an actor's message queue.
+            <br/>Published to topic: actor.node.{poolAppId}.message
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SendMessageCommand.MessageType">
+            <summary>
+            Message type identifier (behavior decides handling)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ReloadBehaviorCommand">
+            <summary>
+            Command to reload behavior for an actor (hot-reload support).
+            <br/>Published to topic: actor.node.{poolAppId}.reload-behavior
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ReloadBehaviorCommand.NewBehaviorRef">
+            <summary>
+            New asset reference to fetch
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.AccountCreatedEvent">
             <summary>
             Published to account.created when a account is created
@@ -3425,6 +3564,86 @@
             Current health status
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateCreatedEvent">
+            <summary>
+            Published to actor-template.created when a actortemplate is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorTemplateCreatedEvent.EventName">
+            <summary>
+            Event type identifier: actor-template.created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateUpdatedEvent">
+            <summary>
+            Published to actor-template.updated when a actortemplate is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorTemplateUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: actor-template.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorTemplateUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateDeletedEvent">
+            <summary>
+            Published to actor-template.deleted when a actortemplate is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorTemplateDeletedEvent.EventName">
+            <summary>
+            Event type identifier: actor-template.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorTemplateDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorInstanceCreatedEvent">
+            <summary>
+            Published to actor-instance.created when a actorinstance is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceCreatedEvent.EventName">
+            <summary>
+            Event type identifier: actor-instance.created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorInstanceUpdatedEvent">
+            <summary>
+            Published to actor-instance.updated when a actorinstance is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: actor-instance.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorInstanceDeletedEvent">
+            <summary>
+            Published to actor-instance.deleted when a actorinstance is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceDeletedEvent.EventName">
+            <summary>
+            Event type identifier: actor-instance.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent">
             <summary>
             Published by any service during startup to register its API endpoints
@@ -3894,6 +4113,147 @@
         <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.ReconnectionContext">
             <summary>
             Optional context from the reconnection (client info, etc.)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterStateUpdateEvent">
+            <summary>
+            Published by Actor service when an actor updates a character's behavioral state.
+            <br/>Game servers subscribe to receive state updates for characters they manage.
+            <br/>
+            <br/>This is NOT physics data (position, velocity) - that's Game Server territory.
+            <br/>This is intent/emotional/goal state that the character's behavior stack reads as input.
+            <br/>
+            <br/>Note: Game servers have no knowledge of actors - they only see character state.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterStateUpdateEvent.EventName">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterStateUpdateEvent.CharacterId">
+            <summary>
+            Character this update applies to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterStateUpdateEvent.ActorId">
+            <summary>
+            Actor that produced this update (opaque to Game Server)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterStateUpdateEvent.Memories">
+            <summary>
+            Memory updates (add/remove/modify)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.FeelingState">
+            <summary>
+            Emotional state values (0.0 - 1.0 intensity).
+            <br/>The character's behavior stack reads these as inputs to influence decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.FeelingState.Angry">
+            <summary>
+            Anger intensity (0 = calm, 1 = furious)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.FeelingState.Fearful">
+            <summary>
+            Fear intensity (0 = brave, 1 = terrified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.FeelingState.Happy">
+            <summary>
+            Happiness intensity (0 = neutral, 1 = joyful)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.FeelingState.Sad">
+            <summary>
+            Sadness intensity (0 = content, 1 = devastated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.FeelingState.Alert">
+            <summary>
+            Alertness intensity (0 = relaxed, 1 = hypervigilant)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.FeelingState.Custom">
+            <summary>
+            Additional custom emotional states (game-specific)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GoalState">
+            <summary>
+            Goal state for the character.
+            <br/>Primary goal drives major decisions, secondary goals run in background.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoalState.PrimaryGoal">
+            <summary>
+            Current primary goal (e.g., "find_shelter", "confront_enemy")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoalState.GoalParameters">
+            <summary>
+            Parameters for the primary goal (e.g., target entity, location)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoalState.SecondaryGoals">
+            <summary>
+            Secondary/background goals
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MemoryUpdate">
+            <summary>
+            A single memory update operation (add, remove, or modify).
+            <br/>Memories affect character behavior through recall during cognition.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MemoryUpdate.Operation">
+            <summary>
+            Memory operation type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MemoryUpdate.MemoryKey">
+            <summary>
+            Memory identifier (e.g., "betrayed_by", "friend_of", "witnessed_event")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MemoryUpdate.MemoryValue">
+            <summary>
+            Memory value (entity ID, context, intensity, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MemoryUpdate.ExpiresAt">
+            <summary>
+            When this memory expires (if temporary)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorCompositionChange">
+            <summary>
+            Changes to the character's behavior composition.
+            <br/>RARE - only happens during learning/growth events.
+            <br/>The character's behavior stack is self-sufficient; these changes add new capabilities.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompositionChange.Added">
+            <summary>
+            Behavior IDs added to composition (e.g., learned skills)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompositionChange.Removed">
+            <summary>
+            Behavior IDs removed from composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompositionChange.Reason">
+            <summary>
+            Why this change happened (for debugging/logging)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent">
@@ -18173,6 +18533,526 @@
         <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipListResponse.HasPreviousPage">
             <summary>
             Whether there are results on the previous page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.IActorClient">
+            <summary>
+            Client interface for the Actor service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.CreateActorTemplateAsync(BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create an actor template (category definition)
+            </summary>
+            <returns>Template created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.GetActorTemplateAsync(BeyondImmersion.BannouService.Actor.GetActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get an actor template by ID or category
+            </summary>
+            <returns>Template retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.ListActorTemplatesAsync(BeyondImmersion.BannouService.Actor.ListActorTemplatesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all actor templates
+            </summary>
+            <returns>Templates listed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.UpdateActorTemplateAsync(BeyondImmersion.BannouService.Actor.UpdateActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update an actor template
+            </summary>
+            <returns>Template updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.DeleteActorTemplateAsync(BeyondImmersion.BannouService.Actor.DeleteActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete an actor template
+            </summary>
+            <returns>Template deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.SpawnActorAsync(BeyondImmersion.BannouService.Actor.SpawnActorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Spawn a new actor from a template
+            </summary>
+            <returns>Actor spawned successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.GetActorAsync(BeyondImmersion.BannouService.Actor.GetActorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get actor instance (instantiate-on-access if template allows)
+            </summary>
+            <remarks>
+            If the actor exists, returns its current state.
+            <br/>If the actor doesn't exist but a matching template has auto-spawn enabled,
+            <br/>instantiates the actor and returns it.
+            </remarks>
+            <returns>Actor retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.StopActorAsync(BeyondImmersion.BannouService.Actor.StopActorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Stop a running actor
+            </summary>
+            <returns>Actor stopped successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.ListActorsAsync(BeyondImmersion.BannouService.Actor.ListActorsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List actors with optional filters
+            </summary>
+            <returns>Actors listed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.InjectPerceptionAsync(BeyondImmersion.BannouService.Actor.InjectPerceptionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Inject a perception event into an actor's queue (testing)
+            </summary>
+            <remarks>
+            Injects a perception event directly into the actor's perception queue
+            <br/>for testing purposes. Useful for testing actor behavior without a
+            <br/>full game server setup.
+            </remarks>
+            <returns>Perception injected successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ActorClient">
+            <summary>
+            Client implementation for the Actor service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Actor.ActorClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Actor.ActorClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Actor.ActorClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Actor.ActorClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Actor.ActorClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.CreateActorTemplateAsync(BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create an actor template (category definition)
+            </summary>
+            <returns>Template created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.GetActorTemplateAsync(BeyondImmersion.BannouService.Actor.GetActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get an actor template by ID or category
+            </summary>
+            <returns>Template retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.ListActorTemplatesAsync(BeyondImmersion.BannouService.Actor.ListActorTemplatesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all actor templates
+            </summary>
+            <returns>Templates listed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.UpdateActorTemplateAsync(BeyondImmersion.BannouService.Actor.UpdateActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update an actor template
+            </summary>
+            <returns>Template updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.DeleteActorTemplateAsync(BeyondImmersion.BannouService.Actor.DeleteActorTemplateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete an actor template
+            </summary>
+            <returns>Template deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.SpawnActorAsync(BeyondImmersion.BannouService.Actor.SpawnActorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Spawn a new actor from a template
+            </summary>
+            <returns>Actor spawned successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.GetActorAsync(BeyondImmersion.BannouService.Actor.GetActorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get actor instance (instantiate-on-access if template allows)
+            </summary>
+            <remarks>
+            If the actor exists, returns its current state.
+            <br/>If the actor doesn't exist but a matching template has auto-spawn enabled,
+            <br/>instantiates the actor and returns it.
+            </remarks>
+            <returns>Actor retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.StopActorAsync(BeyondImmersion.BannouService.Actor.StopActorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Stop a running actor
+            </summary>
+            <returns>Actor stopped successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.ListActorsAsync(BeyondImmersion.BannouService.Actor.ListActorsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List actors with optional filters
+            </summary>
+            <returns>Actors listed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.InjectPerceptionAsync(BeyondImmersion.BannouService.Actor.InjectPerceptionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Inject a perception event into an actor's queue (testing)
+            </summary>
+            <remarks>
+            Injects a perception event directly into the actor's perception queue
+            <br/>for testing purposes. Useful for testing actor behavior without a
+            <br/>full game server setup.
+            </remarks>
+            <returns>Perception injected successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ActorClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Actor.ActorClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest.Category">
+            <summary>
+            Category identifier (e.g., "npc-brain", "world-admin", "cron-cleanup")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest.BehaviorRef">
+            <summary>
+            Reference to behavior in lib-assets (e.g., "asset://behaviors/npc-brain-v1")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest.Configuration">
+            <summary>
+            Default configuration passed to behavior execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest.TickIntervalMs">
+            <summary>
+            Milliseconds between behavior loop iterations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest.AutoSaveIntervalSeconds">
+            <summary>
+            Seconds between automatic state saves (0 to disable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.CreateActorTemplateRequest.MaxInstancesPerNode">
+            <summary>
+            Maximum actors of this category per pool node
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.AutoSpawnConfig">
+            <summary>
+            Configuration for instantiate-on-access behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.AutoSpawnConfig.Enabled">
+            <summary>
+            If true, accessing a non-existent actor creates it
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.AutoSpawnConfig.IdPattern">
+            <summary>
+            Regex pattern for actor IDs that trigger auto-spawn.
+            <br/>Examples: "npc-.*" matches "npc-grok", "npc-merchant-123"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.AutoSpawnConfig.MaxInstances">
+            <summary>
+            Maximum auto-spawned instances (0 = unlimited)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorTemplateResponse.TemplateId">
+            <summary>
+            Unique template identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorTemplateResponse.Category">
+            <summary>
+            Category identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorTemplateResponse.BehaviorRef">
+            <summary>
+            Reference to behavior in lib-assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.GetActorTemplateRequest.TemplateId">
+            <summary>
+            Template ID to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.GetActorTemplateRequest.Category">
+            <summary>
+            Or retrieve by category name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.UpdateActorTemplateRequest.BehaviorRef">
+            <summary>
+            New behavior reference (triggers behavior.updated subscription)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.DeleteActorTemplateRequest.ForceStopActors">
+            <summary>
+            If true, stops all running actors using this template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpawnActorRequest.TemplateId">
+            <summary>
+            Template to instantiate from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpawnActorRequest.ActorId">
+            <summary>
+            Optional custom actor ID (auto-generated if not provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpawnActorRequest.ConfigurationOverrides">
+            <summary>
+            Override template defaults
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpawnActorRequest.InitialState">
+            <summary>
+            Initial state passed to behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpawnActorRequest.CharacterId">
+            <summary>
+            Optional character ID for NPC brain actors
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.GetActorRequest.ActorId">
+            <summary>
+            Actor ID to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorInstanceResponse.ActorId">
+            <summary>
+            Unique actor identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorInstanceResponse.NodeId">
+            <summary>
+            Pool node running this actor (null in bannou mode)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorInstanceResponse.NodeAppId">
+            <summary>
+            Pool node's app-id for direct messaging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ActorInstanceResponse.CharacterId">
+            <summary>
+            Associated character ID (for NPC brains)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ActorStatus">
+            <summary>
+            Current actor lifecycle state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StopActorRequest.Graceful">
+            <summary>
+            If true, allows behavior to complete current iteration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ListActorsRequest.Category">
+            <summary>
+            Filter by category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ListActorsRequest.NodeId">
+            <summary>
+            Filter by pool node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ListActorsRequest.CharacterId">
+            <summary>
+            Filter by associated character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.InjectPerceptionRequest.ActorId">
+            <summary>
+            Target actor to inject perception into
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.PerceptionType">
+            <summary>
+            Perception type (visual, auditory, tactile, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.SourceId">
+            <summary>
+            ID of the entity causing this perception
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.SourceType">
+            <summary>
+            Type of source (character, npc, object, environment)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.Data">
+            <summary>
+            Perception-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.Urgency">
+            <summary>
+            How urgent this perception is (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.InjectPerceptionResponse.Queued">
+            <summary>
+            Whether the perception was successfully queued
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.InjectPerceptionResponse.QueueDepth">
+            <summary>
+            Current depth of the perception queue
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient">
