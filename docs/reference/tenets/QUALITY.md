@@ -261,10 +261,10 @@ Suppressing warnings hides real issues until they manifest as runtime bugs. The 
 - Configure in `.editorconfig` for `**/Generated/*.cs` paths only
 
 **Enum Member Documentation (Generated Code Only)**:
-- CS1591 - OpenAPI schemas cannot document individual enum members (only the enum type itself)
-- Suppression is added automatically via post-processing in generation scripts
+- CS1591 warnings for enum members are automatically suppressed via post-processing in generation scripts
 - The pragma `#pragma warning disable CS1591` wraps each enum declaration with matching restore
 - This is NOT manual suppression - it's scripted as part of the generation pipeline
+- **Important**: This exception applies ONLY to enum members. All other CS1591 warnings (from schema properties, classes, methods, etc.) MUST be fixed by adding `description` fields to the OpenAPI schema - see T1
 
 **Intentional Obsolete Testing**:
 - CS0618 - When testing obsolete API detection, must use obsolete members
