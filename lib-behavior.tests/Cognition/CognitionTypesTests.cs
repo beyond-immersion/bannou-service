@@ -11,23 +11,43 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Cognition;
 /// <summary>
 /// Tests for cognition pipeline types.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <strong>Test-Implementation Coupling:</strong> Several tests in this class verify default values
+/// and behavior that are defined by <see cref="CognitionConstants"/>. If those constant values change,
+/// the corresponding tests must be updated to match. Specifically:
+/// </para>
+/// <list type="bullet">
+/// <item><c>AttentionWeights_DefaultValues_AreCorrect</c> - coupled to Default*Weight constants</item>
+/// <item><c>SignificanceWeights_DefaultValues_AreCorrect</c> - coupled to Default*Weight constants</item>
+/// <item><c>UrgencyBasedPlanningOptions_FromUrgency_MapsCorrectly</c> - coupled to urgency thresholds and planning parameters</item>
+/// </list>
+/// <para>
+/// The InlineData values for urgency tests use threshold boundaries (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+/// that correspond to the urgency bands: Low (&lt;0.3), Medium (0.3-0.7), High (&gt;=0.7).
+/// </para>
+/// </remarks>
 public class CognitionTypesTests
 {
     #region AttentionWeights Tests
 
+    /// <summary>
+    /// Verifies AttentionWeights defaults match <see cref="CognitionConstants"/>.
+    /// ThreatFastTrack defaults to true (fight-or-flight is typical NPC behavior).
+    /// </summary>
     [Fact]
     public void AttentionWeights_DefaultValues_AreCorrect()
     {
         // Arrange & Act
         var weights = new AttentionWeights();
 
-        // Assert
-        Assert.Equal(10.0f, weights.ThreatWeight);
-        Assert.Equal(5.0f, weights.NoveltyWeight);
-        Assert.Equal(3.0f, weights.SocialWeight);
-        Assert.Equal(1.0f, weights.RoutineWeight);
-        Assert.False(weights.ThreatFastTrack);
-        Assert.Equal(0.8f, weights.ThreatFastTrackThreshold);
+        // Assert - values should match CognitionConstants.Default* values
+        Assert.Equal(CognitionConstants.DefaultThreatWeight, weights.ThreatWeight);
+        Assert.Equal(CognitionConstants.DefaultNoveltyWeight, weights.NoveltyWeight);
+        Assert.Equal(CognitionConstants.DefaultSocialWeight, weights.SocialWeight);
+        Assert.Equal(CognitionConstants.DefaultRoutineWeight, weights.RoutineWeight);
+        Assert.True(weights.ThreatFastTrack); // Default true: fight-or-flight is typical
+        Assert.Equal(CognitionConstants.DefaultThreatFastTrackThreshold, weights.ThreatFastTrackThreshold);
     }
 
     [Theory]
@@ -109,17 +129,20 @@ public class CognitionTypesTests
 
     #region SignificanceWeights Tests
 
+    /// <summary>
+    /// Verifies SignificanceWeights defaults match <see cref="CognitionConstants"/>.
+    /// </summary>
     [Fact]
     public void SignificanceWeights_DefaultValues_AreCorrect()
     {
         // Arrange & Act
         var weights = new SignificanceWeights();
 
-        // Assert
-        Assert.Equal(0.4f, weights.EmotionalWeight);
-        Assert.Equal(0.4f, weights.GoalRelevanceWeight);
-        Assert.Equal(0.2f, weights.RelationshipWeight);
-        Assert.Equal(0.7f, weights.StorageThreshold);
+        // Assert - values should match CognitionConstants.Default* values
+        Assert.Equal(CognitionConstants.DefaultEmotionalWeight, weights.EmotionalWeight);
+        Assert.Equal(CognitionConstants.DefaultGoalRelevanceWeight, weights.GoalRelevanceWeight);
+        Assert.Equal(CognitionConstants.DefaultRelationshipWeight, weights.RelationshipWeight);
+        Assert.Equal(CognitionConstants.DefaultStorageThreshold, weights.StorageThreshold);
     }
 
     [Theory]
@@ -208,13 +231,28 @@ public class CognitionTypesTests
 
     #region UrgencyBasedPlanningOptions Tests
 
+    /// <summary>
+    /// Verifies urgency-to-planning mapping uses correct thresholds from <see cref="CognitionConstants"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>Urgency bands (see <see cref="CognitionConstants"/>):</para>
+    /// <list type="bullet">
+    /// <item>Low (&lt;0.3): Full deliberation - MaxDepth=10, TimeoutMs=100, MaxNodes=1000</item>
+    /// <item>Medium (0.3-0.7): Quick decision - MaxDepth=6, TimeoutMs=50, MaxNodes=500</item>
+    /// <item>High (&gt;=0.7): Immediate reaction - MaxDepth=3, TimeoutMs=20, MaxNodes=200</item>
+    /// </list>
+    /// <para>
+    /// <strong>IMPORTANT:</strong> The InlineData values are coupled to <see cref="CognitionConstants"/>.
+    /// If threshold or parameter constants change, these test cases must be updated.
+    /// </para>
+    /// </remarks>
     [Theory]
-    [InlineData(0.0f, 10, 100, 1000)]  // Low urgency
-    [InlineData(0.2f, 10, 100, 1000)]  // Low urgency
-    [InlineData(0.4f, 6, 50, 500)]     // Medium urgency
-    [InlineData(0.6f, 6, 50, 500)]     // Medium urgency
-    [InlineData(0.8f, 3, 20, 200)]     // High urgency
-    [InlineData(1.0f, 3, 20, 200)]     // High urgency
+    [InlineData(0.0f, 10, 100, 1000)]  // Low urgency: below LowUrgencyThreshold (0.3)
+    [InlineData(0.2f, 10, 100, 1000)]  // Low urgency: below LowUrgencyThreshold (0.3)
+    [InlineData(0.4f, 6, 50, 500)]     // Medium urgency: >= 0.3, < 0.7
+    [InlineData(0.6f, 6, 50, 500)]     // Medium urgency: >= 0.3, < 0.7
+    [InlineData(0.8f, 3, 20, 200)]     // High urgency: >= HighUrgencyThreshold (0.7)
+    [InlineData(1.0f, 3, 20, 200)]     // High urgency: >= HighUrgencyThreshold (0.7)
     public void UrgencyBasedPlanningOptions_FromUrgency_MapsCorrectly(
         float urgency, int expectedMaxDepth, int expectedTimeoutMs, int expectedMaxNodes)
     {
@@ -225,6 +263,34 @@ public class CognitionTypesTests
         Assert.Equal(expectedMaxDepth, options.MaxDepth);
         Assert.Equal(expectedTimeoutMs, options.TimeoutMs);
         Assert.Equal(expectedMaxNodes, options.MaxNodes);
+    }
+
+    /// <summary>
+    /// Verifies urgency threshold boundaries are applied correctly.
+    /// This test uses the actual constants to verify edge cases.
+    /// </summary>
+    [Fact]
+    public void UrgencyBasedPlanningOptions_ThresholdBoundaries_ApplyCorrectly()
+    {
+        // Just below low threshold - should be low urgency
+        var justBelowLow = UrgencyBasedPlanningOptions.FromUrgency(
+            CognitionConstants.LowUrgencyThreshold - 0.01f);
+        Assert.Equal(CognitionConstants.LowUrgencyMaxDepth, justBelowLow.MaxDepth);
+
+        // At low threshold - should be medium urgency
+        var atLowThreshold = UrgencyBasedPlanningOptions.FromUrgency(
+            CognitionConstants.LowUrgencyThreshold);
+        Assert.Equal(CognitionConstants.MediumUrgencyMaxDepth, atLowThreshold.MaxDepth);
+
+        // Just below high threshold - should still be medium urgency
+        var justBelowHigh = UrgencyBasedPlanningOptions.FromUrgency(
+            CognitionConstants.HighUrgencyThreshold - 0.01f);
+        Assert.Equal(CognitionConstants.MediumUrgencyMaxDepth, justBelowHigh.MaxDepth);
+
+        // At high threshold - should be high urgency
+        var atHighThreshold = UrgencyBasedPlanningOptions.FromUrgency(
+            CognitionConstants.HighUrgencyThreshold);
+        Assert.Equal(CognitionConstants.HighUrgencyMaxDepth, atHighThreshold.MaxDepth);
     }
 
     #endregion

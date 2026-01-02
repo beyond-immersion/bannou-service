@@ -412,7 +412,63 @@ flows:
     - call: execute_plan_step
 ```
 
-### 2.3 Project Dependencies
+### 2.3 Cognition Implementation Notes
+
+#### 2.3.1 MVP Memory Relevance (Keyword Matching)
+
+The current memory store implementation uses **keyword-based relevance matching**, not semantic embeddings. This is an MVP approach with known limitations:
+
+**How it works** (see `ActorLocalMemoryStore.ComputeRelevanceScore`):
+- **Category match**: If memory category matches perception category (weight: 0.3)
+- **Content overlap**: Ratio of shared keywords between perception and memory content (weight: 0.4)
+- **Metadata overlap**: Ratio of shared keys between perception data and memory metadata (weight: 0.2)
+- **Recency bonus**: Memories <1 hour old get a boost (weight: 0.1)
+- **Significance bonus**: Higher significance memories score higher (weight: 0.1)
+
+**Limitations:**
+- No semantic understanding - "enemy" and "adversary" don't match unless both words appear
+- Simple tokenization (split on punctuation, filter words <4 chars)
+- Can produce false positives (word appears in unrelated context)
+- Requires explicit keyword overlap for relevance
+
+**Future migration path:**
+The `IMemoryStore` interface is designed for future replacement with a dedicated Memory service using embeddings. The interface methods (`FindRelevantAsync`, `StoreExperienceAsync`) can work with semantic similarity without changing callers.
+
+#### 2.3.2 Cognition Constants
+
+All magic numbers in the cognition pipeline are centralized in `CognitionConstants` (see `lib-behavior/Cognition/CognitionTypes.cs`):
+
+**Urgency Thresholds:**
+- `LowUrgencyThreshold` (0.3): Below this → full deliberation
+- `HighUrgencyThreshold` (0.7): At or above this → immediate reaction
+
+**Planning Parameters (per urgency band):**
+| Urgency | MaxDepth | TimeoutMs | MaxNodes |
+|---------|----------|-----------|----------|
+| Low (<0.3) | 10 | 100 | 1000 |
+| Medium (0.3-0.7) | 6 | 50 | 500 |
+| High (≥0.7) | 3 | 20 | 200 |
+
+**Attention Weights:**
+- `DefaultThreatWeight` (10.0): Priority for threat perceptions
+- `DefaultNoveltyWeight` (5.0): Priority for novel perceptions
+- `DefaultSocialWeight` (3.0): Priority for social perceptions
+- `DefaultRoutineWeight` (1.0): Priority for routine perceptions
+- `DefaultThreatFastTrackThreshold` (0.8): Urgency above this bypasses normal pipeline
+
+**ThreatFastTrack default is `true`** - fight-or-flight is typical NPC behavior. Set to `false` for characters that should remain calm under pressure (strategists, leaders who need to form memories during threats).
+
+**Memory Relevance Weights:**
+- `MemoryCategoryMatchWeight` (0.3)
+- `MemoryContentOverlapWeight` (0.4)
+- `MemoryMetadataOverlapWeight` (0.2)
+- `MemoryRecencyBonusWeight` (0.1)
+- `MemorySignificanceBonusWeight` (0.1)
+- `MemoryMinimumRelevanceThreshold` (0.1): Memories must score at least this to be returned
+
+**Test coupling note:** Unit tests that verify threshold behavior reference these constants. If constant values change, test expectations must be updated to match.
+
+### 2.4 Project Dependencies
 
 Pool nodes need access to behavior execution infrastructure:
 

@@ -75,13 +75,14 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         var perceptionKeywords = ExtractKeywords(perceptions);
 
         // Score each memory by keyword overlap and recency
+        // Filter by minimum threshold to avoid weakly-related memories
         var scoredMemories = allMemories
             .Select(memory => new
             {
                 Memory = memory,
                 Score = ComputeRelevanceScore(memory, perceptionKeywords)
             })
-            .Where(x => x.Score > 0)
+            .Where(x => x.Score >= CognitionConstants.MemoryMinimumRelevanceThreshold)
             .OrderByDescending(x => x.Score)
             .Take(limit)
             .ToList();
@@ -386,14 +387,30 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     /// <summary>
     /// Computes relevance score for a memory based on keyword overlap and recency.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is an MVP implementation using keyword matching. Future versions may use
+    /// embeddings via a dedicated Memory service for semantic similarity.
+    /// </para>
+    /// <para>
+    /// Score components (see <see cref="CognitionConstants"/> for weights):
+    /// <list type="bullet">
+    /// <item>Category match: If memory category matches any perception keyword</item>
+    /// <item>Content overlap: Ratio of shared keywords between perception and memory content</item>
+    /// <item>Metadata overlap: Ratio of shared keys between perception data and memory metadata</item>
+    /// <item>Recency bonus: Memories less than 1 hour old get a recency boost</item>
+    /// <item>Significance bonus: Higher significance memories score higher</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
     private static float ComputeRelevanceScore(Memory memory, HashSet<string> keywords)
     {
         var score = 0f;
 
-        // Category match (high weight)
+        // Category match
         if (keywords.Contains(memory.Category))
         {
-            score += 0.3f;
+            score += CognitionConstants.MemoryCategoryMatchWeight;
         }
 
         // Content keyword overlap
@@ -407,7 +424,8 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             var overlap = keywords.Count(k => memoryWords.Contains(k));
             if (memoryWords.Count > 0)
             {
-                score += 0.4f * (overlap / (float)Math.Max(keywords.Count, memoryWords.Count));
+                score += CognitionConstants.MemoryContentOverlapWeight *
+                    (overlap / (float)Math.Max(keywords.Count, memoryWords.Count));
             }
         }
 
@@ -415,18 +433,19 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         var metadataKeyOverlap = keywords.Count(k => memory.Metadata.ContainsKey(k));
         if (memory.Metadata.Count > 0)
         {
-            score += 0.2f * (metadataKeyOverlap / (float)Math.Max(keywords.Count, memory.Metadata.Count));
+            score += CognitionConstants.MemoryMetadataOverlapWeight *
+                (metadataKeyOverlap / (float)Math.Max(keywords.Count, memory.Metadata.Count));
         }
 
         // Recency bonus (memories from last hour get boost)
         var ageHours = (DateTimeOffset.UtcNow - memory.Timestamp).TotalHours;
         if (ageHours < 1)
         {
-            score += 0.1f * (1f - (float)ageHours);
+            score += CognitionConstants.MemoryRecencyBonusWeight * (1f - (float)ageHours);
         }
 
         // Significance bonus
-        score += 0.1f * memory.Significance;
+        score += CognitionConstants.MemorySignificanceBonusWeight * memory.Significance;
 
         return score;
     }

@@ -449,6 +449,130 @@ public class GoapPlannerTests
         Assert.Null(plan);
     }
 
+    /// <summary>
+    /// Verifies that planner respects TimeoutMs option.
+    /// The planner should abort and return null when timeout is exceeded.
+    /// </summary>
+    /// <remarks>
+    /// This test creates a scenario requiring many iterations and sets a very short timeout.
+    /// The timeout value (1ms) is intentionally minimal to guarantee the planner cannot complete.
+    /// </remarks>
+    [Fact]
+    public async Task PlanAsync_TimeoutReached_ReturnsNull()
+    {
+        // Arrange: Goal requiring many iterations that cannot complete in 1ms
+        var currentState = new WorldState()
+            .SetNumeric("level", 1);
+
+        var goal = InternalGoapGoal.FromMetadata(
+            "reach_high_level",
+            100,
+            new Dictionary<string, string> { { "level", ">= 10000" } });
+
+        var actions = new List<GoapAction>
+        {
+            GoapAction.FromMetadata(
+                "level_up",
+                new Dictionary<string, string>(),
+                new Dictionary<string, string> { { "level", "+1" } },
+                cost: 1.0f)
+        };
+
+        var options = new PlanningOptions
+        {
+            TimeoutMs = 1, // 1ms timeout - impossible to complete
+            MaxDepth = 20000, // Allow enough depth that timeout is the limiting factor
+            MaxNodesExpanded = 100000 // Allow enough nodes that timeout is the limiting factor
+        };
+
+        // Act
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+
+        // Assert: Should return null due to timeout, not find a plan
+        Assert.Null(plan);
+    }
+
+    /// <summary>
+    /// Verifies that a reachable goal with adequate timeout succeeds.
+    /// This contrasts with the timeout test to ensure timeout is the cause of failure.
+    /// </summary>
+    [Fact]
+    public async Task PlanAsync_AdequateTimeout_FindsPlan()
+    {
+        // Arrange: Goal requiring few iterations that will complete quickly
+        var currentState = new WorldState()
+            .SetNumeric("level", 1);
+
+        var goal = InternalGoapGoal.FromMetadata(
+            "reach_level_5",
+            100,
+            new Dictionary<string, string> { { "level", ">= 5" } });
+
+        var actions = new List<GoapAction>
+        {
+            GoapAction.FromMetadata(
+                "level_up",
+                new Dictionary<string, string>(),
+                new Dictionary<string, string> { { "level", "+1" } },
+                cost: 1.0f)
+        };
+
+        var options = new PlanningOptions
+        {
+            TimeoutMs = 10000, // 10 seconds - plenty of time
+            MaxDepth = 100,
+            MaxNodesExpanded = 1000
+        };
+
+        // Act
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+
+        // Assert: Should find a 4-action plan (1 → 5 requires 4 level-ups)
+        Assert.NotNull(plan);
+        Assert.Equal(4, plan.Actions.Count);
+    }
+
+    /// <summary>
+    /// Verifies timeout test against CognitionConstants high-urgency timeout.
+    /// High urgency uses 20ms timeout - verify a complex problem aborts within that window.
+    /// </summary>
+    /// <remarks>
+    /// This test uses the actual high-urgency timeout value from CognitionConstants
+    /// to verify realistic timeout behavior. A 10000-step problem cannot complete in 20ms.
+    /// </remarks>
+    [Fact]
+    public async Task PlanAsync_HighUrgencyTimeout_AbortsLargeProblem()
+    {
+        // Arrange: Problem that cannot be solved in high-urgency timeframe
+        var currentState = new WorldState()
+            .SetNumeric("level", 1);
+
+        var goal = InternalGoapGoal.FromMetadata(
+            "reach_extremely_high_level",
+            100,
+            new Dictionary<string, string> { { "level", ">= 10000" } });
+
+        var actions = new List<GoapAction>
+        {
+            GoapAction.FromMetadata(
+                "level_up",
+                new Dictionary<string, string>(),
+                new Dictionary<string, string> { { "level", "+1" } },
+                cost: 1.0f)
+        };
+
+        // Use actual high-urgency planning options from CognitionConstants
+        var options = BeyondImmersion.Bannou.Behavior.Cognition.UrgencyBasedPlanningOptions
+            .FromUrgency(0.9f) // High urgency
+            .ToPlanningOptions();
+
+        // Act
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+
+        // Assert: Should return null - cannot solve 10000-step problem in 20ms with depth 3
+        Assert.Null(plan);
+    }
+
     [Fact]
     public async Task PlanAsync_TracksStatistics()
     {

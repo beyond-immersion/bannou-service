@@ -6,6 +6,149 @@
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 
 /// <summary>
+/// Constants for the cognition pipeline.
+/// Tests that validate specific thresholds should reference these constants
+/// to stay synchronized with implementation changes.
+/// </summary>
+public static class CognitionConstants
+{
+    #region Urgency Thresholds
+
+    /// <summary>
+    /// Urgency threshold below which planning uses low-urgency parameters (full deliberation).
+    /// Urgency in range [0, LowUrgencyThreshold) → low urgency.
+    /// </summary>
+    public const float LowUrgencyThreshold = 0.3f;
+
+    /// <summary>
+    /// Urgency threshold below which planning uses medium-urgency parameters (quick decision).
+    /// Urgency in range [LowUrgencyThreshold, HighUrgencyThreshold) → medium urgency.
+    /// </summary>
+    public const float HighUrgencyThreshold = 0.7f;
+
+    #endregion
+
+    #region Planning Parameters - Low Urgency (Full Deliberation)
+
+    /// <summary>Maximum search depth for low-urgency planning.</summary>
+    public const int LowUrgencyMaxDepth = 10;
+
+    /// <summary>Timeout in milliseconds for low-urgency planning.</summary>
+    public const int LowUrgencyTimeoutMs = 100;
+
+    /// <summary>Maximum nodes to expand for low-urgency planning.</summary>
+    public const int LowUrgencyMaxNodes = 1000;
+
+    #endregion
+
+    #region Planning Parameters - Medium Urgency (Quick Decision)
+
+    /// <summary>Maximum search depth for medium-urgency planning.</summary>
+    public const int MediumUrgencyMaxDepth = 6;
+
+    /// <summary>Timeout in milliseconds for medium-urgency planning.</summary>
+    public const int MediumUrgencyTimeoutMs = 50;
+
+    /// <summary>Maximum nodes to expand for medium-urgency planning.</summary>
+    public const int MediumUrgencyMaxNodes = 500;
+
+    #endregion
+
+    #region Planning Parameters - High Urgency (Immediate Reaction)
+
+    /// <summary>Maximum search depth for high-urgency planning.</summary>
+    public const int HighUrgencyMaxDepth = 3;
+
+    /// <summary>Timeout in milliseconds for high-urgency planning.</summary>
+    public const int HighUrgencyTimeoutMs = 20;
+
+    /// <summary>Maximum nodes to expand for high-urgency planning.</summary>
+    public const int HighUrgencyMaxNodes = 200;
+
+    #endregion
+
+    #region Attention Weights Defaults
+
+    /// <summary>Default priority multiplier for threat perceptions.</summary>
+    public const float DefaultThreatWeight = 10.0f;
+
+    /// <summary>Default priority multiplier for novel perceptions.</summary>
+    public const float DefaultNoveltyWeight = 5.0f;
+
+    /// <summary>Default priority multiplier for social perceptions.</summary>
+    public const float DefaultSocialWeight = 3.0f;
+
+    /// <summary>Default priority multiplier for routine perceptions.</summary>
+    public const float DefaultRoutineWeight = 1.0f;
+
+    /// <summary>Default urgency threshold for threat fast-track.</summary>
+    public const float DefaultThreatFastTrackThreshold = 0.8f;
+
+    #endregion
+
+    #region Significance Weights Defaults
+
+    /// <summary>Default weight for emotional impact in significance scoring.</summary>
+    public const float DefaultEmotionalWeight = 0.4f;
+
+    /// <summary>Default weight for goal relevance in significance scoring.</summary>
+    public const float DefaultGoalRelevanceWeight = 0.4f;
+
+    /// <summary>Default weight for relationship factor in significance scoring.</summary>
+    public const float DefaultRelationshipWeight = 0.2f;
+
+    /// <summary>Default threshold for storing memories based on significance.</summary>
+    public const float DefaultStorageThreshold = 0.7f;
+
+    #endregion
+
+    #region Memory Relevance Scoring
+
+    /// <summary>
+    /// Weight for category match in memory relevance scoring.
+    /// A memory with matching category gets this added to its score.
+    /// </summary>
+    public const float MemoryCategoryMatchWeight = 0.3f;
+
+    /// <summary>
+    /// Weight for content keyword overlap in memory relevance scoring.
+    /// Score contribution = this weight * (overlap count / max word count).
+    /// </summary>
+    public const float MemoryContentOverlapWeight = 0.4f;
+
+    /// <summary>
+    /// Weight for metadata key overlap in memory relevance scoring.
+    /// Score contribution = this weight * (overlap count / max key count).
+    /// </summary>
+    public const float MemoryMetadataOverlapWeight = 0.2f;
+
+    /// <summary>
+    /// Maximum recency bonus for memories less than 1 hour old.
+    /// Score contribution = this weight * (1 - hours_old) for memories &lt; 1 hour.
+    /// </summary>
+    public const float MemoryRecencyBonusWeight = 0.1f;
+
+    /// <summary>
+    /// Weight for memory significance bonus.
+    /// Score contribution = this weight * memory.Significance.
+    /// </summary>
+    public const float MemorySignificanceBonusWeight = 0.1f;
+
+    /// <summary>
+    /// Minimum relevance score for a memory to be considered relevant.
+    /// Memories with scores below this threshold are filtered out.
+    /// </summary>
+    /// <remarks>
+    /// Setting this above 0 prevents weakly-related memories from being returned.
+    /// A value of 0.1 requires at least some meaningful connection (e.g., a category
+    /// match alone would score 0.3, a single word overlap might score ~0.04).
+    /// </remarks>
+    public const float MemoryMinimumRelevanceThreshold = 0.1f;
+
+    #endregion
+}
+
+/// <summary>
 /// Attention budget based on agent state.
 /// Controls how many perceptions can be processed per tick.
 /// </summary>
@@ -37,34 +180,51 @@ public sealed class AttentionWeights
     /// <summary>
     /// Priority multiplier for threat perceptions.
     /// </summary>
-    public float ThreatWeight { get; init; } = 10.0f;
+    public float ThreatWeight { get; init; } = CognitionConstants.DefaultThreatWeight;
 
     /// <summary>
     /// Priority multiplier for novel/new perceptions.
     /// </summary>
-    public float NoveltyWeight { get; init; } = 5.0f;
+    public float NoveltyWeight { get; init; } = CognitionConstants.DefaultNoveltyWeight;
 
     /// <summary>
     /// Priority multiplier for social perceptions.
     /// </summary>
-    public float SocialWeight { get; init; } = 3.0f;
+    public float SocialWeight { get; init; } = CognitionConstants.DefaultSocialWeight;
 
     /// <summary>
     /// Priority multiplier for routine perceptions.
     /// </summary>
-    public float RoutineWeight { get; init; } = 1.0f;
+    public float RoutineWeight { get; init; } = CognitionConstants.DefaultRoutineWeight;
 
     /// <summary>
     /// Whether high-urgency threats should bypass the normal pipeline
-    /// and go directly to intention formation.
+    /// and go directly to intention formation (fight-or-flight response).
     /// </summary>
-    public bool ThreatFastTrack { get; init; } = false;
+    /// <remarks>
+    /// <para>
+    /// When enabled, threat perceptions with urgency above <see cref="ThreatFastTrackThreshold"/>
+    /// skip the normal cognition pipeline (significance assessment, memory formation) and
+    /// go directly to Stage 5 (intention formation). This models the biological fight-or-flight
+    /// response where immediate threats trigger instinctive reactions.
+    /// </para>
+    /// <para>
+    /// IMPORTANT: Fast-tracked perceptions do NOT form memories through the normal process.
+    /// If memory formation is important for a character type (e.g., strategists, leaders),
+    /// set this to false to ensure full cognition processing.
+    /// </para>
+    /// <para>
+    /// Defaults to true because immediate threat response is the typical NPC behavior.
+    /// Set to false for characters that should remain calm under pressure.
+    /// </para>
+    /// </remarks>
+    public bool ThreatFastTrack { get; init; } = true;
 
     /// <summary>
     /// Urgency threshold for threat fast-track (0-1).
     /// Perceptions with urgency above this value skip to Stage 5.
     /// </summary>
-    public float ThreatFastTrackThreshold { get; init; } = 0.8f;
+    public float ThreatFastTrackThreshold { get; init; } = CognitionConstants.DefaultThreatFastTrackThreshold;
 
     /// <summary>
     /// Dynamic adjustments based on agent state.
@@ -100,23 +260,23 @@ public sealed class SignificanceWeights
     /// <summary>
     /// Weight for emotional impact factor.
     /// </summary>
-    public float EmotionalWeight { get; init; } = 0.4f;
+    public float EmotionalWeight { get; init; } = CognitionConstants.DefaultEmotionalWeight;
 
     /// <summary>
     /// Weight for goal relevance factor.
     /// </summary>
-    public float GoalRelevanceWeight { get; init; } = 0.4f;
+    public float GoalRelevanceWeight { get; init; } = CognitionConstants.DefaultGoalRelevanceWeight;
 
     /// <summary>
     /// Weight for relationship factor.
     /// </summary>
-    public float RelationshipWeight { get; init; } = 0.2f;
+    public float RelationshipWeight { get; init; } = CognitionConstants.DefaultRelationshipWeight;
 
     /// <summary>
     /// Threshold for storing memories (0-1).
     /// Perceptions with significance above this are stored.
     /// </summary>
-    public float StorageThreshold { get; init; } = 0.7f;
+    public float StorageThreshold { get; init; } = CognitionConstants.DefaultStorageThreshold;
 
     /// <summary>
     /// Computes the weighted average significance score.
@@ -227,36 +387,45 @@ public sealed class UrgencyBasedPlanningOptions
     /// </summary>
     /// <param name="urgency">Urgency level (0-1).</param>
     /// <returns>Planning options appropriate for the urgency level.</returns>
+    /// <remarks>
+    /// Urgency bands:
+    /// <list type="bullet">
+    /// <item>Low (0 to &lt;0.3): Full deliberation - deeper search, longer timeout</item>
+    /// <item>Medium (0.3 to &lt;0.7): Quick decision - moderate constraints</item>
+    /// <item>High (0.7 to 1.0): Immediate reaction - shallow search, short timeout</item>
+    /// </list>
+    /// See <see cref="CognitionConstants"/> for threshold and parameter values.
+    /// </remarks>
     public static UrgencyBasedPlanningOptions FromUrgency(float urgency)
     {
-        // Low urgency (0-0.3): Full deliberation
-        if (urgency < 0.3f)
+        // Low urgency: Full deliberation
+        if (urgency < CognitionConstants.LowUrgencyThreshold)
         {
             return new UrgencyBasedPlanningOptions
             {
-                MaxDepth = 10,
-                TimeoutMs = 100,
-                MaxNodes = 1000
+                MaxDepth = CognitionConstants.LowUrgencyMaxDepth,
+                TimeoutMs = CognitionConstants.LowUrgencyTimeoutMs,
+                MaxNodes = CognitionConstants.LowUrgencyMaxNodes
             };
         }
 
-        // Medium urgency (0.3-0.7): Quick decision
-        if (urgency < 0.7f)
+        // Medium urgency: Quick decision
+        if (urgency < CognitionConstants.HighUrgencyThreshold)
         {
             return new UrgencyBasedPlanningOptions
             {
-                MaxDepth = 6,
-                TimeoutMs = 50,
-                MaxNodes = 500
+                MaxDepth = CognitionConstants.MediumUrgencyMaxDepth,
+                TimeoutMs = CognitionConstants.MediumUrgencyTimeoutMs,
+                MaxNodes = CognitionConstants.MediumUrgencyMaxNodes
             };
         }
 
-        // High urgency (0.7-1.0): Immediate reaction
+        // High urgency: Immediate reaction
         return new UrgencyBasedPlanningOptions
         {
-            MaxDepth = 3,
-            TimeoutMs = 20,
-            MaxNodes = 200
+            MaxDepth = CognitionConstants.HighUrgencyMaxDepth,
+            TimeoutMs = CognitionConstants.HighUrgencyTimeoutMs,
+            MaxNodes = CognitionConstants.HighUrgencyMaxNodes
         };
     }
 

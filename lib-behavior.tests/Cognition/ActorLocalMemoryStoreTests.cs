@@ -14,8 +14,29 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Cognition;
 
 /// <summary>
 /// Unit tests for ActorLocalMemoryStore.
-/// MVP uses keyword-based relevance matching (not embeddings).
 /// </summary>
+/// <remarks>
+/// <para>
+/// <strong>MVP Implementation Note:</strong> This memory store uses keyword-based relevance
+/// matching (not semantic embeddings). See <see cref="CognitionConstants"/> for scoring weights:
+/// <list type="bullet">
+/// <item>Category match: <see cref="CognitionConstants.MemoryCategoryMatchWeight"/></item>
+/// <item>Content overlap: <see cref="CognitionConstants.MemoryContentOverlapWeight"/></item>
+/// <item>Metadata overlap: <see cref="CognitionConstants.MemoryMetadataOverlapWeight"/></item>
+/// <item>Recency bonus: <see cref="CognitionConstants.MemoryRecencyBonusWeight"/></item>
+/// <item>Significance bonus: <see cref="CognitionConstants.MemorySignificanceBonusWeight"/></item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>Test-Implementation Coupling:</strong> Tests that verify relevance scoring behavior
+/// are coupled to the weight values in <see cref="CognitionConstants"/>. If those constants change,
+/// tests may need adjustment to verify the new expected behavior.
+/// </para>
+/// <para>
+/// Memories must score at least <see cref="CognitionConstants.MemoryMinimumRelevanceThreshold"/>
+/// to be considered relevant. This prevents weakly-related memories from being returned.
+/// </para>
+/// </remarks>
 public class ActorLocalMemoryStoreTests
 {
     private readonly Mock<IStateStoreFactory> _mockFactory;
@@ -152,22 +173,32 @@ public class ActorLocalMemoryStoreTests
         Assert.Equal(memoryId, result[0].Id);
     }
 
+    /// <summary>
+    /// Verifies that memories with no relevance to perceptions are filtered out.
+    /// Memory must score below <see cref="CognitionConstants.MemoryMinimumRelevanceThreshold"/>.
+    /// </summary>
     [Fact]
     public async Task FindRelevantAsync_NoMatch_ReturnsEmptyList()
     {
         var entityId = "entity-1";
         var memoryId = "mem-1";
 
-        // Use an old memory with zero significance to ensure recency/significance bonuses don't cause a match
+        // Create a memory that has zero relevance to the perception:
+        // - Different category (social vs threat)
+        // - No content keyword overlap ("Met a friend" vs "Danger ahead")
+        // - Empty metadata (no key overlap)
+        // - Old (>1 hour, no recency bonus)
+        // - Zero significance (no significance bonus)
+        // Total score: 0, which is below MemoryMinimumRelevanceThreshold (0.1)
         var memory = new Memory
         {
             Id = memoryId,
             EntityId = entityId,
             Category = "social",
             Content = "Met a friend",
-            Significance = 0f,  // Zero significance bonus
-            Timestamp = DateTimeOffset.UtcNow.AddHours(-24),  // Old, no recency bonus
-            Metadata = new Dictionary<string, object>()  // Empty metadata, no key overlap
+            Significance = 0f,
+            Timestamp = DateTimeOffset.UtcNow.AddHours(-24),
+            Metadata = new Dictionary<string, object>()
         };
 
         SetupMemoryIndex(entityId, [memoryId]);
@@ -181,7 +212,6 @@ public class ActorLocalMemoryStoreTests
         var result = await _memoryStore.FindRelevantAsync(
             entityId, perceptions, 10, CancellationToken.None);
 
-        // No match because categories differ, content doesn't match, and old/low-significance memory
         Assert.Empty(result);
     }
 

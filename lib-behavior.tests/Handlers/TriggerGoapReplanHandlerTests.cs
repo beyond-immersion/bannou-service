@@ -18,6 +18,22 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Handlers;
 /// Unit tests for TriggerGoapReplanHandler.
 /// The handler invokes IGoapPlanner when goal, actions, and world state are provided.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <strong>Test-Implementation Coupling:</strong> The urgency mapping tests
+/// (<c>ExecuteAsync_Urgency_MapsToCorrectPlanningOptions</c>) use InlineData values
+/// that are coupled to <see cref="CognitionConstants"/>. If urgency thresholds or
+/// planning parameters change, the test data must be updated to match.
+/// </para>
+/// <para>
+/// Urgency bands (see <see cref="CognitionConstants"/>):
+/// <list type="bullet">
+/// <item>Low (&lt;0.3): MaxDepth=10, TimeoutMs=100, MaxNodes=1000</item>
+/// <item>Medium (0.3-0.7): MaxDepth=6, TimeoutMs=50, MaxNodes=500</item>
+/// <item>High (&gt;=0.7): MaxDepth=3, TimeoutMs=20, MaxNodes=200</item>
+/// </list>
+/// </para>
+/// </remarks>
 public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
 {
     private readonly Mock<IGoapPlanner> _mockPlanner;
