@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Abml.Documents;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
@@ -69,6 +71,29 @@ public class ActorRunnerTests
 
         var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
         var executorMock = new Mock<IDocumentExecutor>();
+
+        // Set up behavior cache to return a valid document with a main flow
+        var document = new AbmlDocument
+        {
+            Version = "2.0",
+            Metadata = new DocumentMetadata { Id = "test-behavior" },
+            Flows = new Dictionary<string, Flow>
+            {
+                ["main"] = new Flow { Name = "main", Actions = [] }
+            }
+        };
+        behaviorCacheMock.Setup(c => c.GetOrLoadAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(document);
+
+        // Set up executor to return success
+        executorMock.Setup(e => e.ExecuteAsync(
+                It.IsAny<AbmlDocument>(),
+                It.IsAny<string>(),
+                It.IsAny<IVariableScope>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ExecutionResult.Success());
 
         var loggerMock = new Mock<ILogger<ActorRunner>>();
 
