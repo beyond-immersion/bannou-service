@@ -1743,7 +1743,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Bundle file size in bytes"
         },
         "manifestPreview": {
-          "$ref": "#/$defs/BundleManifestPreview",
+          "allOf": [
+            {
+              "$ref": "#/$defs/BundleManifestPreview"
+            }
+          ],
+          "nullable": true,
           "description": "Optional preview of bundle manifest for validation"
         }
       }

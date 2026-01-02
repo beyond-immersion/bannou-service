@@ -277,10 +277,7 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
             var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
 
             if (response.Presets == null || response.Presets.Count == 0)
-            {
-                // No presets is acceptable in some configurations
-                return TestResult.Successful("No presets configured (acceptable in development)");
-            }
+                return TestResult.Failed("No presets configured - test environment requires presets in provisioning/orchestrator/presets/");
 
             foreach (var preset in response.Presets)
             {
@@ -553,8 +550,21 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
 
             if (versionInfo.HasPreviousConfig)
             {
-                // There is previous config, skip this test
-                return TestResult.Successful("Previous config exists, skipping no-history rollback test");
+                // Previous config exists - test rollback success instead
+                var rollbackRequest = new ConfigRollbackRequest
+                {
+                    Reason = "test-rollback-with-history"
+                };
+
+                try
+                {
+                    var rollbackResponse = await orchestratorClient.RollbackConfigurationAsync(rollbackRequest);
+                    return TestResult.Successful($"Rollback succeeded (previous config existed): version {rollbackResponse.Version}");
+                }
+                catch (ApiException ex)
+                {
+                    return TestResult.Failed($"Rollback failed unexpectedly when previous config exists: {ex.StatusCode}");
+                }
             }
 
             // Try to rollback when no previous config exists
@@ -649,31 +659,30 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test deploy with an unavailable backend fails appropriately.
     /// The orchestrator should NOT silently fall back - it should fail or explicitly report the fallback.
+    /// Uses Portainer which is typically not configured in test environments.
     /// </summary>
     private static Task<TestResult> TestDeployWithInvalidBackend(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
-            // First check what backends are available
+            // Check if Portainer backend is available (typically not in test environment)
             var backends = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
+            var portainerBackend = backends.Backends?.FirstOrDefault(b => b.Type == BackendType.Portainer);
 
-            // Find a backend that's NOT available
-            var unavailableBackend = backends.Backends?
-                .FirstOrDefault(b => !b.Available);
-
-            if (unavailableBackend == null)
+            if (portainerBackend?.Available == true)
             {
-                // All backends are available - skip this test
-                return TestResult.Successful("All backends available, skipping unavailable backend test");
+                // Portainer is available - verify backend list returns valid data instead
+                var availableCount = backends.Backends?.Count(b => b.Available) ?? 0;
+                return TestResult.Successful($"Portainer backend available (unexpected in test env), verified {availableCount} backends returned");
             }
 
-            // Try to deploy with an unavailable backend - this SHOULD fail
+            // Try to deploy with Portainer backend - this SHOULD fail
             try
             {
                 var deployRequest = new DeployRequest
                 {
-                    Backend = unavailableBackend.Type,
+                    Backend = BackendType.Portainer,
                     Mode = DeploymentMode.Force,
                     WaitForHealthy = false,
                     Timeout = 10,

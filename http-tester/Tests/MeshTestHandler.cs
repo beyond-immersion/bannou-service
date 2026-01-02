@@ -76,20 +76,15 @@ public class MeshTestHandler : BaseHttpTestHandler
             var meshClient = GetServiceClient<IMeshClient>();
 
             var request = new GetEndpointsRequest { AppId = "bannou" };
+            var response = await meshClient.GetEndpointsAsync(request);
 
-            try
-            {
-                var response = await meshClient.GetEndpointsAsync(request);
+            if (response == null)
+                return TestResult.Failed("GetEndpoints returned null");
 
-                if (response == null)
-                    return TestResult.Failed("GetEndpoints returned null");
+            if (response.TotalCount == 0)
+                return TestResult.Failed("GetEndpoints returned 0 endpoints for bannou - mesh not registering endpoints");
 
-                return TestResult.Successful($"GetEndpoints for bannou: {response.HealthyCount}/{response.TotalCount} healthy endpoints");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("GetEndpoints returned 404 (no bannou endpoints registered yet - expected during test startup)");
-            }
+            return TestResult.Successful($"GetEndpoints for bannou: {response.HealthyCount}/{response.TotalCount} healthy endpoints");
         }, "Get endpoints for bannou");
 
     private static Task<TestResult> TestGetEndpointsNonExistent(ITestClient client, string[] args) =>
@@ -180,22 +175,17 @@ public class MeshTestHandler : BaseHttpTestHandler
             var meshClient = GetServiceClient<IMeshClient>();
 
             var request = new GetRouteRequest { AppId = "bannou" };
+            var response = await meshClient.GetRouteAsync(request);
 
-            try
-            {
-                var response = await meshClient.GetRouteAsync(request);
+            if (response == null)
+                return TestResult.Failed("GetRoute returned null");
 
-                if (response == null)
-                    return TestResult.Failed("GetRoute returned null");
+            var endpoint = response.Endpoint;
+            if (endpoint == null)
+                return TestResult.Failed("GetRoute returned no endpoint for bannou - mesh not functioning");
 
-                var endpoint = response.Endpoint;
-                return TestResult.Successful($"GetRoute: selected {endpoint?.Host}:{endpoint?.Port} " +
-                    $"(status: {endpoint?.Status}, load: {endpoint?.LoadPercent}%)");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("GetRoute returned 404 (no healthy endpoints available - expected during test startup)");
-            }
+            return TestResult.Successful($"GetRoute: selected {endpoint.Host}:{endpoint.Port} " +
+                $"(status: {endpoint.Status}, load: {endpoint.LoadPercent}%)");
         }, "Get optimal route");
 
     private static Task<TestResult> TestGetRouteNoEndpoints(ITestClient client, string[] args) =>

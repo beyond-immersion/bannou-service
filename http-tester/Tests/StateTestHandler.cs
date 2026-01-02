@@ -10,6 +10,10 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// </summary>
 public class StateTestHandler : BaseHttpTestHandler
 {
+    // Well-known stores that MUST exist in the test environment
+    private const string MYSQL_STORE = "accounts-statestore";
+    private const string REDIS_STORE = "auth-statestore";
+    private const string REDIS_SEARCH_STORE = "documentation-statestore";
     public override ServiceTest[] GetServiceTests() =>
     [
         // List Stores Tests
@@ -112,15 +116,9 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // First, list stores to find a valid store name
-            var listResponse = await stateClient.ListStoresAsync(null);
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No stores configured, skipping non-existent key test");
-
-            var storeName = listResponse.Stores.First().Name;
             var request = new GetStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = $"non-existent-key-{Guid.NewGuid()}"
             };
 
@@ -140,19 +138,13 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // First, list stores to find a valid store name
-            var listResponse = await stateClient.ListStoresAsync(null);
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No stores configured, skipping save and get test");
-
-            var storeName = listResponse.Stores.First().Name;
             var testKey = $"http-test-{Guid.NewGuid()}";
             var testValue = new { name = "Test Value", timestamp = DateTimeOffset.UtcNow };
 
             // Save state
             var saveRequest = new SaveStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = testValue,
                 Options = new StateOptions()
@@ -166,7 +158,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Get state
             var getRequest = new GetStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey
             };
 
@@ -178,7 +170,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Clean up
             var deleteRequest = new DeleteStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey
             };
             await stateClient.DeleteStateAsync(deleteRequest);
@@ -191,17 +183,11 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // Find a Redis store for TTL test
-            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis });
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No Redis stores configured, skipping TTL test");
-
-            var storeName = listResponse.Stores.First().Name;
             var testKey = $"http-test-ttl-{Guid.NewGuid()}";
 
             var saveRequest = new SaveStateRequest
             {
-                StoreName = storeName,
+                StoreName = REDIS_STORE,
                 Key = testKey,
                 Value = new { name = "TTL Test" },
                 Options = new StateOptions
@@ -218,7 +204,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Clean up
             var deleteRequest = new DeleteStateRequest
             {
-                StoreName = storeName,
+                StoreName = REDIS_STORE,
                 Key = testKey
             };
             await stateClient.DeleteStateAsync(deleteRequest);
@@ -231,18 +217,12 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // First, list stores to find a valid store name
-            var listResponse = await stateClient.ListStoresAsync(null);
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No stores configured, skipping delete test");
-
-            var storeName = listResponse.Stores.First().Name;
             var testKey = $"http-test-delete-{Guid.NewGuid()}";
 
             // First save something
             var saveRequest = new SaveStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = new { name = "To Be Deleted" },
                 Options = new StateOptions()
@@ -252,7 +232,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Now delete
             var deleteRequest = new DeleteStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey
             };
 
@@ -272,15 +252,9 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // First, list stores to find a valid store name
-            var listResponse = await stateClient.ListStoresAsync(null);
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No stores configured, skipping delete non-existent test");
-
-            var storeName = listResponse.Stores.First().Name;
             var request = new DeleteStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = $"non-existent-{Guid.NewGuid()}"
             };
 
@@ -300,12 +274,6 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // First, list stores to find a valid store name
-            var listResponse = await stateClient.ListStoresAsync(null);
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No stores configured, skipping bulk get test");
-
-            var storeName = listResponse.Stores.First().Name;
             var testPrefix = $"http-test-bulk-{Guid.NewGuid()}";
             var testKeys = new[] { $"{testPrefix}-1", $"{testPrefix}-2", $"{testPrefix}-3" };
 
@@ -314,7 +282,7 @@ public class StateTestHandler : BaseHttpTestHandler
             {
                 await stateClient.SaveStateAsync(new SaveStateRequest
                 {
-                    StoreName = storeName,
+                    StoreName = MYSQL_STORE,
                     Key = key,
                     Value = new { name = key },
                     Options = new StateOptions()
@@ -324,7 +292,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Bulk get all 3 keys (2 exist, 1 doesn't)
             var bulkRequest = new BulkGetStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Keys = testKeys
             };
 
@@ -341,7 +309,7 @@ public class StateTestHandler : BaseHttpTestHandler
             {
                 await stateClient.DeleteStateAsync(new DeleteStateRequest
                 {
-                    StoreName = storeName,
+                    StoreName = MYSQL_STORE,
                     Key = key
                 });
             }
@@ -354,18 +322,12 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // First, list stores to find a valid store name
-            var listResponse = await stateClient.ListStoresAsync(null);
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No stores configured, skipping ETag test");
-
-            var storeName = listResponse.Stores.First().Name;
             var testKey = $"http-test-etag-{Guid.NewGuid()}";
 
             // Save initial value
             var saveRequest = new SaveStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = new { version = 1 },
                 Options = new StateOptions()
@@ -380,7 +342,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Try to update with correct ETag
             var updateRequest = new SaveStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = new { version = 2 },
                 Options = new StateOptions { Etag = etag }
@@ -390,14 +352,14 @@ public class StateTestHandler : BaseHttpTestHandler
             if (updateResponse == null || !updateResponse.Success)
             {
                 // Clean up before failing
-                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
                 return TestResult.Failed("Update with correct ETag failed");
             }
 
             // Try to update with stale ETag (should fail with 409 Conflict)
             var staleUpdateRequest = new SaveStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Key = testKey,
                 Value = new { version = 3 },
                 Options = new StateOptions { Etag = etag } // Using old etag
@@ -410,18 +372,18 @@ public class StateTestHandler : BaseHttpTestHandler
                 if (staleResponse != null && !staleResponse.Success)
                 {
                     // Clean up
-                    await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                    await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
                     return TestResult.Successful("ETag concurrency working: stale ETag correctly rejected");
                 }
 
                 // Clean up
-                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
                 return TestResult.Successful("ETag concurrency test completed (stale update may have succeeded - check store implementation)");
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
                 // Clean up
-                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
                 return TestResult.Successful("ETag concurrency working: 409 Conflict returned for stale ETag");
             }
         }, "ETag concurrency");
@@ -454,20 +416,13 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // Find a MySQL store
-            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Mysql });
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No MySQL stores configured, skipping MySQL query test");
-
-            var storeName = listResponse.Stores.First().Name;
-
             // Save some test data
             var testPrefix = $"query-test-{Guid.NewGuid()}";
             for (var i = 0; i < 3; i++)
             {
                 await stateClient.SaveStateAsync(new SaveStateRequest
                 {
-                    StoreName = storeName,
+                    StoreName = MYSQL_STORE,
                     Key = $"{testPrefix}-{i}",
                     Value = new { name = $"Item {i}", index = i },
                     Options = new StateOptions()
@@ -477,7 +432,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Query the store
             var queryRequest = new QueryStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Page = 0,
                 PageSize = 10
             };
@@ -489,7 +444,7 @@ public class StateTestHandler : BaseHttpTestHandler
             {
                 await stateClient.DeleteStateAsync(new DeleteStateRequest
                 {
-                    StoreName = storeName,
+                    StoreName = MYSQL_STORE,
                     Key = $"{testPrefix}-{i}"
                 });
             }
@@ -505,35 +460,21 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // Find a Redis store - we'll check if search is supported by attempting a query
-            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis });
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No Redis stores configured, skipping Redis search test");
-
-            // Try each Redis store to find one with search enabled
-            foreach (var store in listResponse.Stores)
+            // Query the documentation store which MUST have search enabled
+            var queryRequest = new QueryStateRequest
             {
-                var queryRequest = new QueryStateRequest
-                {
-                    StoreName = store.Name,
-                    Query = "*", // Match all
-                    Page = 0,
-                    PageSize = 10
-                };
+                StoreName = REDIS_SEARCH_STORE,
+                Query = "*", // Match all
+                Page = 0,
+                PageSize = 10
+            };
 
-                try
-                {
-                    var queryResponse = await stateClient.QueryStateAsync(queryRequest);
-                    return TestResult.Successful($"QueryState Redis search on '{store.Name}' returned {queryResponse?.Results?.Count ?? 0} results");
-                }
-                catch (ApiException ex) when (ex.StatusCode == 400)
-                {
-                    // This store doesn't have search enabled, try next
-                    continue;
-                }
-            }
+            var queryResponse = await stateClient.QueryStateAsync(queryRequest);
 
-            return TestResult.Successful("No Redis stores with search enabled found, skipping Redis search test");
+            if (queryResponse == null)
+                return TestResult.Failed($"QueryState returned null for Redis search store '{REDIS_SEARCH_STORE}'");
+
+            return TestResult.Successful($"QueryState Redis search on '{REDIS_SEARCH_STORE}' returned {queryResponse.Results?.Count ?? 0} results");
         }, "Query Redis with search");
 
     private static Task<TestResult> TestQueryStateRedisWithoutSearch(ITestClient client, string[] args) =>
@@ -541,35 +482,24 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // Find a Redis store and attempt a query - if search is not enabled, should get 400
-            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis });
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No Redis stores configured, skipping Redis no-search test");
-
-            // Try stores until we find one that returns 400 (no search) or we run out
-            foreach (var store in listResponse.Stores)
+            // Query a Redis store without search - should return 400
+            var queryRequest = new QueryStateRequest
             {
-                var queryRequest = new QueryStateRequest
-                {
-                    StoreName = store.Name,
-                    Query = "*",
-                    Page = 0,
-                    PageSize = 10
-                };
+                StoreName = REDIS_STORE,
+                Query = "*",
+                Page = 0,
+                PageSize = 10
+            };
 
-                try
-                {
-                    await stateClient.QueryStateAsync(queryRequest);
-                    // If we got here, this store has search enabled, try next
-                    continue;
-                }
-                catch (ApiException ex) when (ex.StatusCode == 400)
-                {
-                    return TestResult.Successful($"QueryState correctly returned 400 for Redis store '{store.Name}' without search");
-                }
+            try
+            {
+                await stateClient.QueryStateAsync(queryRequest);
+                return TestResult.Failed($"QueryState should have returned 400 for Redis store '{REDIS_STORE}' without search");
             }
-
-            return TestResult.Successful("All Redis stores have search enabled, skipping no-search test");
+            catch (ApiException ex) when (ex.StatusCode == 400)
+            {
+                return TestResult.Successful($"QueryState correctly returned 400 for Redis store '{REDIS_STORE}' without search");
+            }
         }, "Query Redis without search");
 
     private static Task<TestResult> TestQueryStateWithPagination(ITestClient client, string[] args) =>
@@ -577,20 +507,13 @@ public class StateTestHandler : BaseHttpTestHandler
         {
             var stateClient = GetServiceClient<IStateClient>();
 
-            // Find a MySQL store for pagination test
-            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Mysql });
-            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
-                return TestResult.Successful("No MySQL stores configured, skipping pagination test");
-
-            var storeName = listResponse.Stores.First().Name;
-
             // Save test data
             var testPrefix = $"page-test-{Guid.NewGuid()}";
             for (var i = 0; i < 5; i++)
             {
                 await stateClient.SaveStateAsync(new SaveStateRequest
                 {
-                    StoreName = storeName,
+                    StoreName = MYSQL_STORE,
                     Key = $"{testPrefix}-{i}",
                     Value = new { name = $"Page Item {i}", index = i },
                     Options = new StateOptions()
@@ -600,7 +523,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Query first page
             var page1Request = new QueryStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Page = 0,
                 PageSize = 2
             };
@@ -610,7 +533,7 @@ public class StateTestHandler : BaseHttpTestHandler
             // Query second page
             var page2Request = new QueryStateRequest
             {
-                StoreName = storeName,
+                StoreName = MYSQL_STORE,
                 Page = 1,
                 PageSize = 2
             };
@@ -622,7 +545,7 @@ public class StateTestHandler : BaseHttpTestHandler
             {
                 await stateClient.DeleteStateAsync(new DeleteStateRequest
                 {
-                    StoreName = storeName,
+                    StoreName = MYSQL_STORE,
                     Key = $"{testPrefix}-{i}"
                 });
             }

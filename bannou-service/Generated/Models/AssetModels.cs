@@ -893,7 +893,7 @@ public partial class BundleUploadRequest
     /// Optional preview of bundle manifest for validation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("manifestPreview")]
-    public BundleManifestPreview ManifestPreview { get; set; } = default!;
+    public BundleManifestPreview? ManifestPreview { get; set; } = default!;
 
 }
 

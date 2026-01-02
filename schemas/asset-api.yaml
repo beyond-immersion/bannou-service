@@ -552,14 +552,15 @@ paths:
         ,\n        \"size\"\n      ],\n      \"properties\": {\n        \"filename\": {\n          \"type\": \"string\",\n\
         \          \"description\": \"Must end with .bannou or .zip\"\n        },\n        \"size\": {\n          \"type\"\
         : \"integer\",\n          \"format\": \"int64\",\n          \"description\": \"Bundle file size in bytes\"\n     \
-        \   },\n        \"manifestPreview\": {\n          \"$ref\": \"#/$defs/BundleManifestPreview\",\n          \"description\"\
-        : \"Optional preview of bundle manifest for validation\"\n        }\n      }\n    },\n    \"BundleManifestPreview\"\
-        : {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"description\": \"Preview of bundle
-        manifest for validation\",\n      \"properties\": {\n        \"bundleId\": {\n          \"type\": \"string\",\n  \
-        \        \"description\": \"Bundle identifier from the manifest\"\n        },\n        \"version\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Bundle version from the manifest\"\n        },\n        \"assetCount\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Number of assets declared in the manifest\"\n\
-        \        }\n      }\n    }\n  }\n}"
+        \   },\n        \"manifestPreview\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/BundleManifestPreview\"\
+        \n            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Optional preview of bundle
+        manifest for validation\"\n        }\n      }\n    },\n    \"BundleManifestPreview\": {\n      \"type\": \"object\"\
+        ,\n      \"additionalProperties\": false,\n      \"description\": \"Preview of bundle manifest for validation\",\n\
+        \      \"properties\": {\n        \"bundleId\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        Bundle identifier from the manifest\"\n        },\n        \"version\": {\n          \"type\": \"string\",\n     \
+        \     \"description\": \"Bundle version from the manifest\"\n        },\n        \"assetCount\": {\n          \"type\"\
+        : \"integer\",\n          \"description\": \"Number of assets declared in the manifest\"\n        }\n      }\n   \
+        \ }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UploadResponse\"\
         ,\n  \"$defs\": {\n    \"UploadResponse\": {\n      \"description\": \"Response containing pre-signed URL and configuration
         for uploading an asset\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
@@ -1139,7 +1140,9 @@ components:
           format: int64
           description: Bundle file size in bytes
         manifestPreview:
-          $ref: '#/components/schemas/BundleManifestPreview'
+          allOf:
+          - $ref: '#/components/schemas/BundleManifestPreview'
+          nullable: true
           description: Optional preview of bundle manifest for validation
 
     BundleManifestPreview:
