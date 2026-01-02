@@ -2,7 +2,7 @@
 
 > **Status**: PLANNING
 > **Created**: 2026-01-01
-> **Updated**: 2026-01-02 (Clarified execution model, perception routing, Game Server relationship)
+> **Updated**: 2026-01-02 (ConnectionMode implementation complete - internal/relayed/external modes with broadcast)
 > **Related Documents**:
 > - [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior compilation and GOAP planning
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Bytecode compilation and client execution
@@ -2278,18 +2278,34 @@ Tests/ConnectNeighborRoutingEdgeTests.cs
 - ✅ Edge tests in `edge-tester/Tests/PeerRoutingTestHandler.cs` - Full WebSocket peer routing tests
 - ✅ HTTP tests in `http-tester/Tests/PeerRoutingTestHandler.cs` - Pain point documentation
 
-**Pain Points Identified (for Internal Connect):**
-1. Current `/connect` requires JWT with user claims - internal services need service token auth
-2. Capability manifest is always sent - internal services don't need API GUIDs
-3. No HTTP endpoint exposes peerGuid - only WebSocket CapabilityManifestEvent has it
-4. Voice service uses `sessionId` for P2P - should migrate to `peerGuid` for consistency
+**Pain Points Resolved (ConnectionMode Implementation - 2026-01-02):**
 
-**Future: Internal Connect Endpoint:**
-A `/connect/internal` or `?mode=internal` endpoint would:
-- Accept X-Service-Token header or internal network trust
-- Skip capability manifest generation
-- Return only: `{ sessionId, peerGuid }`
-- Support same peer routing as external Connect
+The Connect service now supports three connection modes via `CONNECT_CONNECTION_MODE` environment variable:
+
+| Mode | Auth | Capability Manifest | Broadcast | Use Case |
+|------|------|---------------------|-----------|----------|
+| `external` (default) | JWT required | Full manifest sent | **BLOCKED** (returns code 40) | Player clients |
+| `relayed` | JWT required | Full manifest sent | Allowed | P2P games through edge |
+| `internal` | Configurable | Skipped | Allowed | Actors, game servers |
+
+**Internal Mode Authentication (`CONNECT_INTERNAL_AUTH_MODE`):**
+- `service-token` (default): Validates `X-Service-Token` header against `CONNECT_INTERNAL_SERVICE_TOKEN`
+- `network-trust`: No authentication required (for isolated internal networks)
+
+**Broadcast Routing:**
+- Uses `AppConstants.BROADCAST_GUID` (`FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF`)
+- Message must have Client flag (0x20) set
+- External mode returns `ResponseCodes.BroadcastNotAllowed` (40)
+- Relayed/Internal modes fan-out to all connected peers (excluding sender)
+
+**Internal Mode Response:**
+Instead of capability manifest, internal connections receive minimal JSON:
+```json
+{ "sessionId": "...", "peerGuid": "..." }
+```
+
+**Remaining Migration:**
+Voice service uses `sessionId` for P2P - should migrate to `peerGuid` for consistency
 
 **Voice Migration Note:**
 `lib-voice/Services/P2PCoordinator.cs` uses `VoicePeer.SessionId` and `peerSessionId` fields.
@@ -2349,12 +2365,15 @@ public enum BroadcastScope : byte
 - [ ] Test "bannou" mode end-to-end
 
 **Phase 2b: Internal Connect Transport (Production Scale)**
-- [ ] Verify/complete Connect neighbor routing (see §9.4.4 prerequisites)
-- [ ] Add http-tester neighbor routing tests
-- [ ] Add edge-tester neighbor routing tests
-- [ ] Add Connect broadcast capability (BroadcastScope.AllConnected)
-- [ ] Add StateUpdateTransport configuration option
-- [ ] Implement internal Connect transport for state updates
+- [x] Verify/complete Connect neighbor routing (see §9.4.4 prerequisites)
+- [x] Add http-tester neighbor routing tests
+- [x] Add edge-tester neighbor routing tests
+- [x] Add Connect broadcast capability (BroadcastScope.AllConnected) - via BROADCAST_GUID
+- [x] Implement ConnectionMode (external/relayed/internal) configuration
+- [x] Implement Internal mode authentication (service-token/network-trust)
+- [x] Implement Internal mode minimal response (skip capability manifest)
+- [ ] Add StateUpdateTransport configuration option (lib-actor)
+- [ ] Implement internal Connect transport for state updates (lib-actor)
 - [ ] Implement connection TTL for region transitions
 - [ ] Test dual-transport switching (messaging ↔ internal-connect)
 
@@ -2385,4 +2404,4 @@ public enum BroadcastScope : byte
 
 ---
 
-*Last Updated: 2026-01-01*
+*Last Updated: 2026-01-02*

@@ -559,7 +559,7 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
                 try
                 {
                     var rollbackResponse = await orchestratorClient.RollbackConfigurationAsync(rollbackRequest);
-                    return TestResult.Successful($"Rollback succeeded (previous config existed): version {rollbackResponse.Version}");
+                    return TestResult.Successful($"Rollback succeeded (previous config existed): {rollbackResponse.PreviousVersion} -> {rollbackResponse.CurrentVersion}");
                 }
                 catch (ApiException ex)
                 {
@@ -706,29 +706,29 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
                 {
                     // This is the expected behavior - deploy should fail for unavailable backend
                     return TestResult.Successful(
-                        $"Deploy correctly failed for unavailable backend {unavailableBackend.Type}: {response.Message}");
+                        $"Deploy correctly failed for unavailable backend Portainer: {response.Message}");
                 }
 
                 // Deploy succeeded when it shouldn't have
                 // Check if it actually used a different backend (which would be a bug - silent fallback)
                 var postStatus = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
-                if (postStatus.Backend != unavailableBackend.Type)
+                if (postStatus.Backend != BackendType.Portainer)
                 {
                     // Silent fallback happened - this is bad behavior we should report
                     return TestResult.Failed(
-                        $"Deploy silently fell back from {unavailableBackend.Type} to {postStatus.Backend}. " +
+                        $"Deploy silently fell back from Portainer to {postStatus.Backend}. " +
                         $"Orchestrator should either fail or explicitly report fallback in response.");
                 }
 
                 // If we get here, the backend somehow became available or the deploy was a no-op
                 return TestResult.Failed(
-                    $"Deploy succeeded for supposedly unavailable backend {unavailableBackend.Type}. " +
+                    $"Deploy succeeded for supposedly unavailable backend Portainer. " +
                     $"This may indicate the backend detection is incorrect.");
             }
             catch (ApiException ex) when (ex.StatusCode == 409 || ex.StatusCode == 400 || ex.StatusCode == 503)
             {
-                return TestResult.Successful($"Deploy correctly returned {ex.StatusCode} for unavailable backend {unavailableBackend.Type}");
+                return TestResult.Successful($"Deploy correctly returned {ex.StatusCode} for unavailable backend Portainer");
             }
         }, "Deploy with invalid backend");
 
