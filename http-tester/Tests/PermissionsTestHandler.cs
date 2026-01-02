@@ -1068,15 +1068,16 @@ public class PermissionsTestHandler : BaseHttpTestHandler
                 NewState = "ready"
             });
 
-            // Verify both states are set
+            // Verify states are set (2 service states + 1 role state = 3 total)
             var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
             {
                 SessionId = testSessionId
             });
 
-            if (sessionInfo.States == null || sessionInfo.States.Count != 2)
+            // States include: role=user, service1=active, service2=ready
+            if (sessionInfo.States == null || sessionInfo.States.Count != 3)
             {
-                return TestResult.Failed($"Expected 2 states, got {sessionInfo.States?.Count ?? 0}");
+                return TestResult.Failed($"Expected 3 states (2 service + 1 role), got {sessionInfo.States?.Count ?? 0}");
             }
 
             // Clear ALL states by omitting ServiceId
