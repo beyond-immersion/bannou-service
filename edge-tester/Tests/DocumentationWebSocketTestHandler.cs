@@ -179,6 +179,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             slug = uniqueSlug,
                             title = "Get Test Document",
+                            category = "GettingStarted",
                             content = "Content for get test."
                         },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
@@ -268,6 +269,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             slug = uniqueSlug,
                             title = "Original Title",
+                            category = "GettingStarted",
                             content = "Original content."
                         },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
@@ -374,6 +376,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             slug = uniqueSlug,
                             title = "Delete Test Document",
+                            category = "GettingStarted",
                             content = "Content for delete test."
                         },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
@@ -464,6 +467,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             slug = "api-reference-doc",
                             title = "API Reference Guide",
+                            category = "ApiReference",
                             content = "Complete API reference documentation for all endpoints."
                         },
                         timeout: TimeSpan.FromSeconds(5));
@@ -544,6 +548,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             slug = "auth-guide",
                             title = "Authentication Guide",
+                            category = "GettingStarted",
                             content = "How to authenticate using OAuth2 providers."
                         },
                         timeout: TimeSpan.FromSeconds(5));
@@ -624,6 +629,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             slug = uniqueSlug,
                             title = "Recover Test Document",
+                            category = "GettingStarted",
                             content = "Content for recover test."
                         },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
@@ -1030,6 +1036,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             slug = uniqueSlug,
                             title = "Slug Test Document",
+                            category = "GettingStarted",
                             content = "Content for slug test."
                         },
                         timeout: TimeSpan.FromSeconds(5));
@@ -1304,6 +1311,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                                 @namespace = testNamespace,
                                 slug = $"bulk-update-{i}",
                                 title = $"Bulk Update Document {i}",
+                                category = "GettingStarted",
                                 content = $"Original content {i}."
                             },
                             timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
@@ -1394,6 +1402,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                                 @namespace = testNamespace,
                                 slug = $"bulk-delete-{i}",
                                 title = $"Bulk Delete Document {i}",
+                                category = "GettingStarted",
                                 content = $"Content {i}."
                             },
                             timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();

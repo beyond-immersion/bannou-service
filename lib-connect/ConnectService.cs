@@ -1628,7 +1628,8 @@ public partial class ConnectService : IConnectService
 
             // Unwrap MassTransit envelope - MassTransit wraps messages with metadata,
             // and the actual event data is in the "message" property
-            if (root.TryGetProperty("message", out var messageElement))
+            if (root.TryGetProperty("message", out var messageElement) &&
+                messageElement.ValueKind == JsonValueKind.Object)
             {
                 root = messageElement;
             }
