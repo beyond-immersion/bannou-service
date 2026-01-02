@@ -235,7 +235,10 @@ flows:
             - log: { message: ""iteration"" }
 ";
 
-        var result = _compiler.CompileYaml(yaml);
+        // Use a deterministic ModelId to avoid flaky tests - the output binary includes the
+        // model ID bytes, and random GUIDs might coincidentally contain the Trace opcode (0xF1)
+        var options = new CompilationOptions { ModelId = Guid.Empty };
+        var result = _compiler.CompileYaml(yaml, options);
 
         // Output diagnostic info if test fails
         if (!result.Success)

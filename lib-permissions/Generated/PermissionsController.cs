@@ -1040,12 +1040,11 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
   "$ref": "#/$defs/ClearSessionStateRequest",
   "$defs": {
     "ClearSessionStateRequest": {
-      "description": "Request to clear a session's state for a specific service",
+      "description": "Request to clear a session's state for a specific service or all services",
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "sessionId",
-        "serviceId"
+        "sessionId"
       ],
       "properties": {
         "sessionId": {
@@ -1055,14 +1054,15 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         },
         "serviceId": {
           "type": "string",
-          "description": "Service whose state should be cleared"
+          "nullable": true,
+          "description": "Service whose state should be cleared (null to clear all services)"
         },
         "states": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Optional list of state values to match. If provided, only clears if\ncurrent state matches one of these values. If empty or not provided,\ nclears the state unconditionally.\n",
+          "description": "Optional list of state values to match. If provided, only clears if\ncurrent state matches one of these values. If empty or not provided,\nclears the state unconditionally.\n",
           "nullable": true
         }
       }

@@ -42,6 +42,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         new ServiceTest(TestClearSessionStateWithMatchingFilter, "ClearSessionStateMatchingFilter", "Permissions", "Test clearing session state when filter matches"),
         new ServiceTest(TestClearSessionStateWithNonMatchingFilter, "ClearSessionStateNonMatchingFilter", "Permissions", "Test clearing session state when filter doesn't match"),
         new ServiceTest(TestClearSessionStateNonExistent, "ClearSessionStateNonExistent", "Permissions", "Test clearing state for service with no state set"),
+        new ServiceTest(TestClearAllSessionStates, "ClearAllSessionStates", "Permissions", "Test clearing all session states by omitting ServiceId"),
 
         // Session Info Tests
         new ServiceTest(TestGetSessionInfo, "GetSessionInfo", "Permissions", "Test getting complete session information"),
@@ -1005,6 +1006,109 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"Clearing non-existent state handled gracefully: {clearResponse.Message}");
         }, "Clear non-existent state");
+
+    /// <summary>
+    /// Test clearing all session states by omitting ServiceId.
+    /// When ServiceId is null, all states for the session should be cleared.
+    /// </summary>
+    private static Task<TestResult> TestClearAllSessionStates(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
+        {
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
+            var testSessionId = Guid.NewGuid();
+            var testServiceId1 = Guid.NewGuid().ToString();
+            var testServiceId2 = Guid.NewGuid().ToString();
+
+            // Register two services
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId1,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    ["active"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/api/service1" }
+                    }
+                }
+            });
+
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId2,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    ["ready"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/api/service2" }
+                    }
+                }
+            });
+
+            // Register session with role
+            await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+            {
+                SessionId = testSessionId,
+                NewRole = "user"
+            });
+
+            // Set state for both services
+            await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId1,
+                NewState = "active"
+            });
+
+            await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId2,
+                NewState = "ready"
+            });
+
+            // Verify both states are set
+            var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (sessionInfo.States == null || sessionInfo.States.Count != 2)
+            {
+                return TestResult.Failed($"Expected 2 states, got {sessionInfo.States?.Count ?? 0}");
+            }
+
+            // Clear ALL states by omitting ServiceId
+            var clearResponse = await permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+            {
+                SessionId = testSessionId
+                // ServiceId is null - should clear all states
+            });
+
+            if (!clearResponse.Success)
+            {
+                return TestResult.Failed($"Clear all states failed: {clearResponse.Message}");
+            }
+
+            if (!clearResponse.PermissionsChanged)
+            {
+                return TestResult.Failed("Permissions should have changed when clearing states");
+            }
+
+            // Verify all states were cleared
+            var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (updatedInfo.States != null && updatedInfo.States.Count > 0)
+            {
+                return TestResult.Failed($"Expected 0 states after clear all, got {updatedInfo.States.Count}");
+            }
+
+            return TestResult.Successful($"All states cleared successfully: {clearResponse.Message}");
+        }, "Clear all session states");
 
     /// <summary>
     /// Test getting complete session information.

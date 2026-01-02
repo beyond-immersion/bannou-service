@@ -423,21 +423,7 @@ public partial class GameSessionService : IGameSessionService
                 model.Status = GameSessionResponseStatus.Active;
             }
 
-            // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
-
-            // Publish event
-            await _messageBus.TryPublishAsync(
-                PLAYER_JOINED_TOPIC,
-                new GameSessionPlayerJoinedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = Guid.Parse(sessionId),
-                    AccountId = accountId
-                });
-
-            // Set game-session:in_game state to enable leave/chat/action endpoints (Tenet 10)
+            // Set game-session:in_game state BEFORE saving - if this fails, we haven't committed anything
             var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
             if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
             {
@@ -453,14 +439,33 @@ public partial class GameSessionService : IGameSessionService
                 }
                 catch (Exception ex)
                 {
-                    // Log but don't fail - the join succeeded, state is secondary
-                    _logger.LogWarning(ex, "Failed to set game-session:in_game state for session {SessionId}", clientSessionId);
+                    _logger.LogError(ex, "Failed to set game-session:in_game state for session {SessionId}, aborting join", clientSessionId);
+                    return (StatusCodes.InternalServerError, new JoinGameSessionResponse
+                    {
+                        Success = false,
+                        SessionId = Guid.Parse(sessionId),
+                        PlayerRole = JoinGameSessionResponsePlayerRole.Player
+                    });
                 }
             }
             else if (_permissionsClient == null)
             {
                 _logger.LogDebug("Permissions client not available, game-session:in_game state not set");
             }
+
+            // Save updated session (permissions already set, safe to commit)
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
+
+            // Publish event
+            await _messageBus.TryPublishAsync(
+                PLAYER_JOINED_TOPIC,
+                new GameSessionPlayerJoinedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = accountId
+                });
 
             // Build response
             var response = new JoinGameSessionResponse
@@ -690,10 +695,31 @@ public partial class GameSessionService : IGameSessionService
                 return StatusCodes.NotFound;
             }
 
+            // Clear game-session:in_game state FIRST before modifying data
+            // If this fails, abort the leave - player stays in session with permissions
+            var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
+            {
+                try
+                {
+                    await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+                    {
+                        SessionId = Guid.Parse(clientSessionId),
+                        ServiceId = "game-session"
+                    }, cancellationToken);
+                    _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to clear game-session:in_game state for session {SessionId}, aborting leave", clientSessionId);
+                    return StatusCodes.InternalServerError;
+                }
+            }
+
             model.Players.Remove(leavingPlayer);
             model.CurrentPlayers = model.Players.Count;
 
-            // Leave voice room if voice is enabled and player has a voice session
+            // Leave voice room if voice is enabled and player has a voice session (best effort - has TTL)
             if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
                 && !string.IsNullOrEmpty(leavingPlayer.VoiceSessionId))
             {
@@ -767,26 +793,6 @@ public partial class GameSessionService : IGameSessionService
                     AccountId = leavingPlayer.AccountId,
                     Kicked = false
                 });
-
-            // Clear game-session:in_game state to remove leave/chat/action endpoint access (Tenet 10)
-            var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
-            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
-            {
-                try
-                {
-                    await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
-                    {
-                        SessionId = Guid.Parse(clientSessionId),
-                        ServiceId = "game-session"
-                    }, cancellationToken);
-                    _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
-                }
-                catch (Exception ex)
-                {
-                    // Log but don't fail - the leave succeeded, state cleanup is secondary
-                    _logger.LogWarning(ex, "Failed to clear game-session:in_game state for session {SessionId}", clientSessionId);
-                }
-            }
 
             _logger.LogInformation("Player left game session {SessionId}", sessionId);
 

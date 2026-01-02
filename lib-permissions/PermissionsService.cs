@@ -666,7 +666,42 @@ public partial class PermissionsService : IPermissionsService
             var statesStore = _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE);
             var sessionStates = await statesStore.GetAsync(statesKey, cancellationToken);
 
-            if (sessionStates == null || !sessionStates.ContainsKey(body.ServiceId))
+            // If no states exist, nothing to clear
+            if (sessionStates == null || sessionStates.Count == 0)
+            {
+                _logger.LogInformation("No states to clear for session {SessionId}", body.SessionId);
+
+                return (StatusCodes.OK, new SessionUpdateResponse
+                {
+                    SessionId = body.SessionId,
+                    Success = true,
+                    PermissionsChanged = false,
+                    Message = "No states were set for this session"
+                });
+            }
+
+            // If serviceId is null, clear ALL states for the session
+            if (string.IsNullOrEmpty(body.ServiceId))
+            {
+                var stateCount = sessionStates.Count;
+                _logger.LogInformation("Clearing all {StateCount} states for session {SessionId}",
+                    stateCount, body.SessionId);
+
+                sessionStates.Clear();
+                await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+                await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared_all");
+
+                return (StatusCodes.OK, new SessionUpdateResponse
+                {
+                    SessionId = body.SessionId,
+                    Success = true,
+                    PermissionsChanged = true,
+                    Message = $"Cleared all {stateCount} states for session"
+                });
+            }
+
+            // Clear specific service state
+            if (!sessionStates.ContainsKey(body.ServiceId))
             {
                 _logger.LogInformation("No state to clear for session {SessionId}, service {ServiceId}",
                     body.SessionId, body.ServiceId);

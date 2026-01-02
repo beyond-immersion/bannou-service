@@ -326,7 +326,7 @@ public partial class SessionRoleUpdate
 }
 
 /// <summary>
-/// Request to clear a session's state for a specific service
+/// Request to clear a session's state for a specific service or all services
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ClearSessionStateRequest
@@ -341,12 +341,10 @@ public partial class ClearSessionStateRequest
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Service whose state should be cleared
+    /// Service whose state should be cleared (null to clear all services)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceId { get; set; } = default!;
+    public string? ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Optional list of state values to match. If provided, only clears if

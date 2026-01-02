@@ -18952,17 +18952,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatRequest.Status">
             <summary>
-            Current health status of the endpoint (null to keep previous)
+            Current health status of the endpoint (null defaults to Healthy)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatRequest.LoadPercent">
             <summary>
-            Current load 0-100 (null to keep previous)
+            Current load 0-100 (null defaults to 0)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatRequest.CurrentConnections">
             <summary>
-            Current active connections (null to keep previous)
+            Current active connections (null defaults to 0)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatRequest.Issues">
@@ -22975,7 +22975,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest">
             <summary>
-            Request to clear a session's state for a specific service
+            Request to clear a session's state for a specific service or all services
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest.SessionId">
@@ -22985,7 +22985,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest.ServiceId">
             <summary>
-            Service whose state should be cleared
+            Service whose state should be cleared (null to clear all services)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest.States">

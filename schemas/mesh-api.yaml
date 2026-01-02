@@ -322,14 +322,14 @@ paths:
         \          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the instance sending the heartbeat\"\
         \n        },\n        \"status\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/EndpointStatus\"\
         \n            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Current health status of
-        the endpoint (null to keep previous)\"\n        },\n        \"loadPercent\": {\n          \"type\": \"number\",\n\
-        \          \"format\": \"float\",\n          \"nullable\": true,\n          \"description\": \"Current load 0-100
-        (null to keep previous)\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n     \
-        \     \"nullable\": true,\n          \"description\": \"Current active connections (null to keep previous)\"\n   \
-        \     },\n        \"issues\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"\
-        string\"\n          },\n          \"nullable\": true,\n          \"description\": \"List of non-critical issues (null
-        if none)\"\n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\"\
-        : \"Health status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\"\
+        the endpoint (null defaults to Healthy)\"\n        },\n        \"loadPercent\": {\n          \"type\": \"number\"\
+        ,\n          \"format\": \"float\",\n          \"nullable\": true,\n          \"description\": \"Current load 0-100
+        (null defaults to 0)\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n        \
+        \  \"nullable\": true,\n          \"description\": \"Current active connections (null defaults to 0)\"\n        },\n\
+        \        \"issues\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n\
+        \          },\n          \"nullable\": true,\n          \"description\": \"List of non-critical issues (null if none)\"\
+        \n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Health
+        status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\"\
         ,\n        \"ShuttingDown\"\n      ]\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/HeartbeatResponse\"\
         ,\n  \"$defs\": {\n    \"HeartbeatResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response after
@@ -798,16 +798,16 @@ components:
           allOf:
           - $ref: '#/components/schemas/EndpointStatus'
           nullable: true
-          description: Current health status of the endpoint (null to keep previous)
+          description: Current health status of the endpoint (null defaults to Healthy)
         loadPercent:
           type: number
           format: float
           nullable: true
-          description: Current load 0-100 (null to keep previous)
+          description: Current load 0-100 (null defaults to 0)
         currentConnections:
           type: integer
           nullable: true
-          description: Current active connections (null to keep previous)
+          description: Current active connections (null defaults to 0)
         issues:
           type: array
           items:

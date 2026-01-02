@@ -426,20 +426,20 @@ public partial class HeartbeatRequest
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Current health status of the endpoint (null to keep previous)
+    /// Current health status of the endpoint (null defaults to Healthy)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EndpointStatus? Status { get; set; } = default!;
 
     /// <summary>
-    /// Current load 0-100 (null to keep previous)
+    /// Current load 0-100 (null defaults to 0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loadPercent")]
     public float? LoadPercent { get; set; } = default!;
 
     /// <summary>
-    /// Current active connections (null to keep previous)
+    /// Current active connections (null defaults to 0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
     public int? CurrentConnections { get; set; } = default!;

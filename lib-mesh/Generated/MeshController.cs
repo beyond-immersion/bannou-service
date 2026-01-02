@@ -1093,18 +1093,18 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
           ],
           "nullable": true,
-          "description": "Current health status of the endpoint (null to keep previous)"
+          "description": "Current health status of the endpoint (null defaults to Healthy)"
         },
         "loadPercent": {
           "type": "number",
           "format": "float",
           "nullable": true,
-          "description": "Current load 0-100 (null to keep previous)"
+          "description": "Current load 0-100 (null defaults to 0)"
         },
         "currentConnections": {
           "type": "integer",
           "nullable": true,
-          "description": "Current active connections (null to keep previous)"
+          "description": "Current active connections (null defaults to 0)"
         },
         "issues": {
           "type": "array",
