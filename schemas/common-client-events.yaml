@@ -82,6 +82,16 @@ components:
           type: string
           nullable: true
           description: Reason for manifest update (e.g., "initial_connection", "capabilities_updated", "role_changed")
+        peerGuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Unique GUID for peer-to-peer routing on this Connect node.
+            Other connections on the same Connect node can route messages directly
+            to this connection using this GUID with the Client flag (0x20).
+            Enables zero-copy message forwarding between Game Servers, Actor Pool Nodes, and clients.
+            Note: Only valid while connected to the same Connect instance.
 
     ClientCapabilityEntry:
       type: object

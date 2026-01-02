@@ -412,6 +412,14 @@ components:
           format: uuid
           nullable: true
           description: Connect service instance handling this connection (for debugging)
+        peerGuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Unique GUID for peer-to-peer routing. Other connections on the same Connect node
+            can route messages directly to this connection using this GUID with the Client flag.
+            Enables zero-copy message forwarding between Game Servers, Actor Pool Nodes, and clients.
         clientInfo:
           type: object
           nullable: true
@@ -508,6 +516,14 @@ components:
           format: date-time
           nullable: true
           description: When the previous connection was lost
+        peerGuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            New peer GUID for this reconnected session. Note: This is a NEW GUID -
+            peer GUIDs do not persist across reconnections. Peers must be notified
+            of the new GUID to continue peer-to-peer routing.
         reconnectionContext:
           type: object
           additionalProperties: true

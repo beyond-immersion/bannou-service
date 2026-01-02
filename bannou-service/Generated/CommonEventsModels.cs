@@ -546,6 +546,15 @@ public partial class SessionConnectedEvent : BaseServiceEvent
     public System.Guid? ConnectInstanceId { get; set; } = default!;
 
     /// <summary>
+    /// Unique GUID for peer-to-peer routing. Other connections on the same Connect node
+    /// <br/>can route messages directly to this connection using this GUID with the Client flag.
+    /// <br/>Enables zero-copy message forwarding between Game Servers, Actor Pool Nodes, and clients.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("peerGuid")]
+    public System.Guid? PeerGuid { get; set; } = default!;
+
+    /// <summary>
     /// Optional client metadata (version, platform, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clientInfo")]
@@ -661,6 +670,15 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousDisconnectAt")]
     public System.DateTimeOffset? PreviousDisconnectAt { get; set; } = default!;
+
+    /// <summary>
+    /// New peer GUID for this reconnected session. Note: This is a NEW GUID -
+    /// <br/>peer GUIDs do not persist across reconnections. Peers must be notified
+    /// <br/>of the new GUID to continue peer-to-peer routing.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("peerGuid")]
+    public System.Guid? PeerGuid { get; set; } = default!;
 
     /// <summary>
     /// Optional context from the reconnection (client info, etc.)

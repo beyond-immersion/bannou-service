@@ -574,13 +574,16 @@ public partial class ConnectService : IConnectService
                     Roles = userRoles?.ToList(),
                     Authorizations = authorizations?.ToList(),
                     ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
-                        ? instanceGuid : (Guid?)null
+                        ? instanceGuid : (Guid?)null,
+                    PeerGuid = connectionState.PeerGuid
                 };
                 await _messageBus.TryPublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
-                _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
+                _logger.LogInformation("Published session.connected event for session {SessionId} with PeerGuid {PeerGuid}",
+                    sessionId, connectionState.PeerGuid);
 
                 // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
                 // Shortcuts don't survive reconnection - services must re-evaluate and re-publish them
+                // Note: PeerGuid is a NEW GUID for this connection - peers must be notified of the change
                 if (isReconnection)
                 {
                     var sessionReconnectedEvent = new SessionReconnectedEvent
@@ -592,13 +595,15 @@ public partial class ConnectService : IConnectService
                         Roles = userRoles?.ToList(),
                         Authorizations = authorizations?.ToList(),
                         PreviousDisconnectAt = connectionState.DisconnectedAt,
+                        PeerGuid = connectionState.PeerGuid,
                         ReconnectionContext = new Dictionary<string, object>
                         {
                             ["connect_instance_id"] = _instanceId
                         }
                     };
                     await _messageBus.TryPublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
-                    _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
+                    _logger.LogInformation("Published session.reconnected event for session {SessionId} with new PeerGuid {PeerGuid} - services should re-publish shortcuts",
+                        sessionId, connectionState.PeerGuid);
                 }
             }
             catch (Exception ex)
@@ -1192,7 +1197,9 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Routes a message to another WebSocket client (client-to-client communication).
+    /// Routes a message to another WebSocket client (peer-to-peer communication).
+    /// Uses the ServiceGuid from the message header to look up the target peer's connection.
+    /// The payload is forwarded zero-copy without deserialization.
     /// </summary>
     private async Task RouteToClientAsync(
         BinaryMessage message,
@@ -1202,33 +1209,51 @@ public partial class ConnectService : IConnectService
     {
         try
         {
-            var targetSessionId = routeInfo.TargetId;
-            if (string.IsNullOrEmpty(targetSessionId))
+            // For peer-to-peer routing, the ServiceGuid in the message header is the target peer's GUID
+            var targetPeerGuid = message.ServiceGuid;
+
+            if (targetPeerGuid == Guid.Empty)
             {
                 var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.ClientNotFound, "Target client ID not specified");
+                    message, ResponseCodes.ClientNotFound, "Target peer GUID not specified");
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
                 return;
             }
 
-            // Try to send message to target client
+            // Look up the target peer's session ID using the peer GUID registry
+            if (!_connectionManager.TryGetSessionIdByPeerGuid(targetPeerGuid, out var targetSessionId) || targetSessionId == null)
+            {
+                _logger.LogDebug("Peer GUID {PeerGuid} not found in registry for session {SessionId}",
+                    targetPeerGuid, sessionId);
+
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.ClientNotFound, $"Target peer {targetPeerGuid} not connected");
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                return;
+            }
+
+            _logger.LogDebug("Routing peer-to-peer message from {SourceSession} to peer {TargetPeerGuid} (session {TargetSession}), payload size {PayloadSize}",
+                sessionId, targetPeerGuid, targetSessionId, message.Payload.Length);
+
+            // Forward the message zero-copy to the target peer
             var sent = await _connectionManager.SendMessageAsync(targetSessionId, message, cancellationToken);
 
             if (!sent)
             {
                 var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.ClientNotFound, $"Target client {targetSessionId} not connected");
+                    message, ResponseCodes.ClientNotFound, $"Target peer {targetPeerGuid} disconnected");
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
             else if (message.ExpectsResponse)
             {
-                // For client-to-client, we send an acknowledgment that the message was delivered
+                // For peer-to-peer, send acknowledgment that the message was delivered
                 var ackPayload = new
                 {
                     status = "delivered",
-                    targetClient = targetSessionId,
+                    targetPeerGuid = targetPeerGuid.ToString(),
                     originalMessageId = message.MessageId
                 };
 
@@ -1240,13 +1265,13 @@ public partial class ConnectService : IConnectService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error routing message to client {TargetClient}", routeInfo.TargetId);
-            await PublishErrorEventAsync("RouteToClient", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, TargetClient = routeInfo.TargetId });
+            _logger.LogError(ex, "Error routing peer-to-peer message to {TargetPeerGuid}", message.ServiceGuid);
+            await PublishErrorEventAsync("RouteToClient", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, TargetPeerGuid = message.ServiceGuid });
 
             if (message.ExpectsResponse)
             {
                 var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.RequestError, "Client routing failed");
+                    message, ResponseCodes.RequestError, "Peer routing failed");
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
@@ -1943,7 +1968,8 @@ public partial class ConnectService : IConnectService
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                peerGuid = connectionState.PeerGuid.ToString()
             };
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);
@@ -2551,7 +2577,8 @@ public partial class ConnectService : IConnectService
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                peerGuid = connectionState.PeerGuid.ToString()
             };
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);

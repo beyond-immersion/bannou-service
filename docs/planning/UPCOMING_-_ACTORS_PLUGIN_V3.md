@@ -2213,6 +2213,35 @@ Tests/ConnectNeighborRoutingEdgeTests.cs
 - For internal service-to-service, unsafe is acceptable
 - Tests should verify identical behavior for service and client perspectives
 
+**Implementation Status (don/actors branch):**
+- ✅ `ConnectionState.PeerGuid` - Unique GUID per connection for peer identification
+- ✅ `WebSocketConnectionManager._peerGuidToSessionId` - Peer registry for GUID→session lookup
+- ✅ `RouteToClientAsync` updated - Routes using peerGuid with Client flag (0x20)
+- ✅ `CapabilityManifestEvent.peerGuid` - Clients receive their peerGuid in capability manifest
+- ✅ `SessionConnectedEvent.peerGuid` - Published to RabbitMQ for service awareness
+- ✅ Edge tests in `edge-tester/Tests/PeerRoutingTestHandler.cs` - Full WebSocket peer routing tests
+- ✅ HTTP tests in `http-tester/Tests/PeerRoutingTestHandler.cs` - Pain point documentation
+
+**Pain Points Identified (for Internal Connect):**
+1. Current `/connect` requires JWT with user claims - internal services need service token auth
+2. Capability manifest is always sent - internal services don't need API GUIDs
+3. No HTTP endpoint exposes peerGuid - only WebSocket CapabilityManifestEvent has it
+4. Voice service uses `sessionId` for P2P - should migrate to `peerGuid` for consistency
+
+**Future: Internal Connect Endpoint:**
+A `/connect/internal` or `?mode=internal` endpoint would:
+- Accept X-Service-Token header or internal network trust
+- Skip capability manifest generation
+- Return only: `{ sessionId, peerGuid }`
+- Support same peer routing as external Connect
+
+**Voice Migration Note:**
+`lib-voice/Services/P2PCoordinator.cs` uses `VoicePeer.SessionId` and `peerSessionId` fields.
+These should migrate to `peerGuid` for consistency with Connect's peer routing:
+- `VoicePeer.SessionId` → `VoicePeer.PeerGuid`
+- `peerSessionId` → `peerGuid` in voice-client-events.yaml
+- Direct WebRTC signaling still works - only the identifier changes
+
 #### 9.4.5 Broadcast Extension (Phase 2)
 
 Add broadcast capability to Connect for Game Server → all actors:

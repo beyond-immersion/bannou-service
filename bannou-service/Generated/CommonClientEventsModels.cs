@@ -66,6 +66,17 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string? Reason { get; set; } = default!;
 
+    /// <summary>
+    /// Unique GUID for peer-to-peer routing on this Connect node.
+    /// <br/>Other connections on the same Connect node can route messages directly
+    /// <br/>to this connection using this GUID with the Client flag (0x20).
+    /// <br/>Enables zero-copy message forwarding between Game Servers, Actor Pool Nodes, and clients.
+    /// <br/>Note: Only valid while connected to the same Connect instance.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("peerGuid")]
+    public System.Guid? PeerGuid { get; set; } = default!;
+
 }
 
 /// <summary>

@@ -791,6 +791,11 @@ public class Program
         foreach (ServiceTest serviceTest in connectTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load peer-to-peer routing tests
+        var peerRoutingTestHandler = new PeerRoutingTestHandler();
+        foreach (ServiceTest serviceTest in peerRoutingTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load capability flow tests (permission discovery and GUID routing)
         var capabilityTestHandler = new Tests.CapabilityFlowTestHandler();
         foreach (ServiceTest serviceTest in capabilityTestHandler.GetServiceTests())

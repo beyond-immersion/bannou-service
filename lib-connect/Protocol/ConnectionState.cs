@@ -54,6 +54,17 @@ public class ConnectionState
     /// </summary>
     public ConnectionFlags Flags { get; set; }
 
+    #region Peer-to-Peer Routing
+
+    /// <summary>
+    /// Unique GUID for peer-to-peer routing.
+    /// Other connections can route messages to this connection using this GUID.
+    /// Generated on connection establishment and stable for the connection lifetime.
+    /// </summary>
+    public Guid PeerGuid { get; }
+
+    #endregion
+
     #region Session Shortcuts
 
     /// <summary>
@@ -118,6 +129,7 @@ public class ConnectionState
         SessionShortcuts = new ConcurrentDictionary<Guid, SessionShortcutData>();
         ShortcutsByService = new ConcurrentDictionary<string, HashSet<Guid>>();
         Flags = ConnectionFlags.None;
+        PeerGuid = Guid.NewGuid();
     }
 
     /// <summary>
