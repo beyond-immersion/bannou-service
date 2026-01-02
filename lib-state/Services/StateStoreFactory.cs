@@ -4,6 +4,10 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NRedisStack;
+using NRedisStack.RedisStackCommands;
+using NRedisStack.Search;
+using NRedisStack.Search.Literals.Enums;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
 
@@ -135,6 +139,9 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 _logger.LogInformation("Connecting to Redis: {ConnectionString}",
                     _configuration.RedisConnectionString.Split(',')[0]); // Log only host
                 _redis = await ConnectionMultiplexer.ConnectAsync(_configuration.RedisConnectionString);
+
+                // Auto-create search indexes for stores with EnableSearch=true
+                await CreateSearchIndexesAsync();
             }
 
             // Initialize MySQL if any store uses it (with retry logic)
@@ -446,6 +453,63 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         return _configuration.Stores
             .Where(kvp => kvp.Value.Backend == backend)
             .Select(kvp => kvp.Key);
+    }
+
+    /// <summary>
+    /// Creates search indexes for all stores with EnableSearch=true.
+    /// Uses a generic schema that indexes common JSON fields.
+    /// </summary>
+    private async Task CreateSearchIndexesAsync()
+    {
+        if (_redis == null) return;
+
+        var searchStores = _configuration.Stores
+            .Where(kvp => kvp.Value.Backend == StateBackend.Redis && kvp.Value.EnableSearch)
+            .ToList();
+
+        if (searchStores.Count == 0) return;
+
+        var db = _redis.GetDatabase();
+        var ft = db.FT();
+
+        foreach (var (storeName, config) in searchStores)
+        {
+            var indexName = $"{storeName}-idx";
+            var keyPrefix = config.KeyPrefix ?? storeName;
+
+            try
+            {
+                // Check if index already exists
+                try
+                {
+                    await ft.InfoAsync(indexName);
+                    _logger.LogDebug("Search index '{Index}' already exists", indexName);
+                    continue;
+                }
+                catch (RedisServerException ex) when (ex.Message.Contains("Unknown index") || ex.Message.Contains("no such index"))
+                {
+                    // Index doesn't exist - create it
+                }
+
+                // Create a generic schema that indexes common JSON fields as TEXT
+                // This allows basic full-text search on any JSON documents stored in the store
+                var schema = new Schema()
+                    .AddTextField(new FieldName("$.*", "content"), weight: 1.0, sortable: false, noStem: false);
+
+                var ftParams = new FTCreateParams()
+                    .On(IndexDataType.JSON)
+                    .Prefix($"{keyPrefix}:");
+
+                await ft.CreateAsync(indexName, ftParams, schema);
+                _logger.LogInformation("Created search index '{Index}' for store '{Store}' with prefix '{Prefix}'",
+                    indexName, storeName, keyPrefix);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to create search index '{Index}' for store '{Store}' - search queries may fail",
+                    indexName, storeName);
+            }
+        }
     }
 
     /// <inheritdoc/>

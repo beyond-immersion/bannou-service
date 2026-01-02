@@ -1,7 +1,10 @@
+using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Actor.Tests;
 
@@ -56,6 +59,17 @@ public class ActorRunnerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
+        stateStoreMock.Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<ActorStateSnapshot>(),
+                It.IsAny<StateOptions>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
+        var executorMock = new Mock<IDocumentExecutor>();
+
         var loggerMock = new Mock<ILogger<ActorRunner>>();
 
         var runner = new ActorRunner(
@@ -64,6 +78,9 @@ public class ActorRunnerTests
             characterId,
             config ?? CreateTestConfig(),
             messageBusMock.Object,
+            stateStoreMock.Object,
+            behaviorCacheMock.Object,
+            executorMock.Object,
             loggerMock.Object,
             initialState);
 
@@ -98,6 +115,9 @@ public class ActorRunnerTests
         var template = CreateTestTemplate();
         var config = CreateTestConfig();
         var messageBusMock = new Mock<IMessageBus>();
+        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
+        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
+        var executorMock = new Mock<IDocumentExecutor>();
         var loggerMock = new Mock<ILogger<ActorRunner>>();
 
         // Act & Assert
@@ -107,6 +127,9 @@ public class ActorRunnerTests
             null,
             config,
             messageBusMock.Object,
+            stateStoreMock.Object,
+            behaviorCacheMock.Object,
+            executorMock.Object,
             loggerMock.Object));
         Assert.Equal("actorId", ex.ParamName);
     }
@@ -117,6 +140,9 @@ public class ActorRunnerTests
         // Arrange
         var config = CreateTestConfig();
         var messageBusMock = new Mock<IMessageBus>();
+        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
+        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
+        var executorMock = new Mock<IDocumentExecutor>();
         var loggerMock = new Mock<ILogger<ActorRunner>>();
 
         // Act & Assert
@@ -126,6 +152,9 @@ public class ActorRunnerTests
             null,
             config,
             messageBusMock.Object,
+            stateStoreMock.Object,
+            behaviorCacheMock.Object,
+            executorMock.Object,
             loggerMock.Object));
         Assert.Equal("template", ex.ParamName);
     }
@@ -136,6 +165,9 @@ public class ActorRunnerTests
         // Arrange
         var template = CreateTestTemplate();
         var messageBusMock = new Mock<IMessageBus>();
+        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
+        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
+        var executorMock = new Mock<IDocumentExecutor>();
         var loggerMock = new Mock<ILogger<ActorRunner>>();
 
         // Act & Assert
@@ -145,6 +177,9 @@ public class ActorRunnerTests
             null,
             null!,
             messageBusMock.Object,
+            stateStoreMock.Object,
+            behaviorCacheMock.Object,
+            executorMock.Object,
             loggerMock.Object));
         Assert.Equal("config", ex.ParamName);
     }
@@ -155,6 +190,9 @@ public class ActorRunnerTests
         // Arrange
         var template = CreateTestTemplate();
         var config = CreateTestConfig();
+        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
+        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
+        var executorMock = new Mock<IDocumentExecutor>();
         var loggerMock = new Mock<ILogger<ActorRunner>>();
 
         // Act & Assert
@@ -164,6 +202,9 @@ public class ActorRunnerTests
             null,
             config,
             null!,
+            stateStoreMock.Object,
+            behaviorCacheMock.Object,
+            executorMock.Object,
             loggerMock.Object));
         Assert.Equal("messageBus", ex.ParamName);
     }
@@ -175,6 +216,9 @@ public class ActorRunnerTests
         var template = CreateTestTemplate();
         var config = CreateTestConfig();
         var messageBusMock = new Mock<IMessageBus>();
+        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
+        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
+        var executorMock = new Mock<IDocumentExecutor>();
 
         // Act & Assert
         var ex = Assert.Throws<ArgumentNullException>(() => new ActorRunner(
@@ -183,6 +227,9 @@ public class ActorRunnerTests
             null,
             config,
             messageBusMock.Object,
+            stateStoreMock.Object,
+            behaviorCacheMock.Object,
+            executorMock.Object,
             null!));
         Assert.Equal("logger", ex.ParamName);
     }

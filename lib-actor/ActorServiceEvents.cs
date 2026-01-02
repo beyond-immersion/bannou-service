@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
@@ -28,8 +29,8 @@ public partial class ActorService
 
     /// <summary>
     /// Handles behavior.updated events.
-    /// When a behavior is updated, actors using that behavior should be notified
-    /// for potential hot-reload.
+    /// When a behavior is updated, invalidate the cache and notify running actors
+    /// for hot-reload.
     /// </summary>
     /// <param name="evt">The event data.</param>
     public async Task HandleBehaviorUpdatedAsync(BehaviorUpdatedEvent evt)
@@ -38,6 +39,16 @@ public partial class ActorService
 
         try
         {
+            // Invalidate cached behavior documents (enables hot-reload)
+            _behaviorCache.InvalidateByBehaviorId(evt.BehaviorId);
+            _logger.LogDebug("Invalidated cached behaviors matching {BehaviorId}", evt.BehaviorId);
+
+            // Also invalidate by asset ID if present
+            if (!string.IsNullOrEmpty(evt.AssetId))
+            {
+                _behaviorCache.Invalidate(evt.AssetId);
+            }
+
             // Find actors using this behavior
             var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
             var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);

@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -12,6 +14,9 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly IMessageBus _messageBus;
     private readonly ActorServiceConfiguration _config;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IBehaviorDocumentCache _behaviorCache;
+    private readonly IDocumentExecutorFactory _executorFactory;
 
     /// <summary>
     /// Creates a new actor runner factory.
@@ -19,14 +24,23 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="config">Service configuration.</param>
     /// <param name="loggerFactory">Logger factory for creating loggers.</param>
+    /// <param name="stateStoreFactory">State store factory for actor persistence.</param>
+    /// <param name="behaviorCache">Behavior document cache for loading ABML.</param>
+    /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     public ActorRunnerFactory(
         IMessageBus messageBus,
         ActorServiceConfiguration config,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        IStateStoreFactory stateStoreFactory,
+        IBehaviorDocumentCache behaviorCache,
+        IDocumentExecutorFactory executorFactory)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
+        _executorFactory = executorFactory ?? throw new ArgumentNullException(nameof(executorFactory));
     }
 
     /// <inheritdoc/>
@@ -49,12 +63,21 @@ public class ActorRunnerFactory : IActorRunnerFactory
 
         var logger = _loggerFactory.CreateLogger<ActorRunner>();
 
+        // Get the actor-state store for this actor
+        var stateStore = _stateStoreFactory.GetStore<ActorStateSnapshot>("actor-state");
+
+        // Create a document executor for this actor
+        var executor = _executorFactory.Create();
+
         return new ActorRunner(
             actorId,
             effectiveTemplate,
             characterId,
             _config,
             _messageBus,
+            stateStore,
+            _behaviorCache,
+            executor,
             logger,
             initialState);
     }

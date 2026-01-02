@@ -1,3 +1,6 @@
+using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
@@ -34,6 +37,18 @@ public class ActorServicePlugin : BaseBannouPlugin
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register ActorServiceConfiguration here
+
+        // Register cognition handlers from lib-behavior (used by DocumentExecutorFactory)
+        services.AddSingleton<FilterAttentionHandler>();
+        services.AddSingleton<AssessSignificanceHandler>();
+        services.AddSingleton<QueryMemoryHandler>();
+        services.AddSingleton<StoreMemoryHandler>();
+        services.AddSingleton<EvaluateGoalImpactHandler>();
+        services.AddSingleton<TriggerGoapReplanHandler>();
+
+        // Register behavior execution infrastructure
+        services.AddSingleton<IBehaviorDocumentCache, BehaviorDocumentCache>();
+        services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
 
         // Register actor runtime components as singletons (shared across service instances)
         services.AddSingleton<IActorRegistry, ActorRegistry>();

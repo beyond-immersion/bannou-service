@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -40,6 +41,7 @@ public partial class ActorService : IActorService
     private readonly IActorRegistry _actorRegistry;
     private readonly IActorRunnerFactory _actorRunnerFactory;
     private readonly IEventConsumer _eventConsumer;
+    private readonly IBehaviorDocumentCache _behaviorCache;
 
     private const string TEMPLATE_STORE = "actor-templates";
     private const string INSTANCE_STORE = "actor-instances";
@@ -55,6 +57,7 @@ public partial class ActorService : IActorService
     /// <param name="actorRegistry">Registry for tracking active actors.</param>
     /// <param name="actorRunnerFactory">Factory for creating actor runners.</param>
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
+    /// <param name="behaviorCache">Behavior document cache for hot-reload invalidation.</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -62,7 +65,8 @@ public partial class ActorService : IActorService
         ActorServiceConfiguration configuration,
         IActorRegistry actorRegistry,
         IActorRunnerFactory actorRunnerFactory,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IBehaviorDocumentCache behaviorCache)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
@@ -71,6 +75,7 @@ public partial class ActorService : IActorService
         _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
         _actorRunnerFactory = actorRunnerFactory ?? throw new ArgumentNullException(nameof(actorRunnerFactory));
         _eventConsumer = eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer));
+        _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);

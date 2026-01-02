@@ -101,9 +101,14 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
 
             // Actor/Behavior stores (agent cognition data)
             ["agent-memories"] = (StateBackend.Redis, "agent:mem", false),
+            ["actor-state"] = (StateBackend.Redis, "actor:state", false),
+            ["actor-templates"] = (StateBackend.Redis, "actor:tpl", false),
 
-            // Redis stores with full-text search (Redis 8+ via NRedisStack)
-            ["documentation-statestore"] = (StateBackend.Redis, "doc", true),
+            // Redis store for documentation (uses internal indexes via DocumentationService, not State API)
+            ["documentation-statestore"] = (StateBackend.Redis, "doc", false),
+
+            // Redis store with full-text search enabled (auto-creates index on startup)
+            ["test-search-statestore"] = (StateBackend.Redis, "test-search", true),
 
             // MySQL stores (durable data)
             ["accounts-statestore"] = (StateBackend.MySql, null, false),

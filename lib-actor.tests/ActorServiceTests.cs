@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -21,6 +22,7 @@ public class ActorServiceTests
     private readonly Mock<IActorRegistry> _mockActorRegistry;
     private readonly Mock<IActorRunnerFactory> _mockActorRunnerFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IBehaviorDocumentCache> _mockBehaviorCache;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
 
@@ -39,6 +41,7 @@ public class ActorServiceTests
         _mockActorRegistry = new Mock<IActorRegistry>();
         _mockActorRunnerFactory = new Mock<IActorRunnerFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockBehaviorCache = new Mock<IBehaviorDocumentCache>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
 
@@ -60,7 +63,8 @@ public class ActorServiceTests
             _configuration,
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockBehaviorCache.Object);
     }
 
     #region Constructor Tests
@@ -86,7 +90,8 @@ public class ActorServiceTests
             _configuration,
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object));
+            _mockEventConsumer.Object,
+            _mockBehaviorCache.Object));
     }
 
     [Fact]
@@ -100,7 +105,8 @@ public class ActorServiceTests
             _configuration,
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object));
+            _mockEventConsumer.Object,
+            _mockBehaviorCache.Object));
     }
 
     [Fact]
@@ -114,7 +120,8 @@ public class ActorServiceTests
             _configuration,
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object));
+            _mockEventConsumer.Object,
+            _mockBehaviorCache.Object));
     }
 
     [Fact]
@@ -128,7 +135,8 @@ public class ActorServiceTests
             null!,
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object));
+            _mockEventConsumer.Object,
+            _mockBehaviorCache.Object));
     }
 
     [Fact]
@@ -142,7 +150,8 @@ public class ActorServiceTests
             _configuration,
             null!,
             _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object));
+            _mockEventConsumer.Object,
+            _mockBehaviorCache.Object));
     }
 
     [Fact]
@@ -156,7 +165,8 @@ public class ActorServiceTests
             _configuration,
             _mockActorRegistry.Object,
             null!,
-            _mockEventConsumer.Object));
+            _mockEventConsumer.Object,
+            _mockBehaviorCache.Object));
     }
 
     [Fact]
@@ -170,7 +180,8 @@ public class ActorServiceTests
             _configuration,
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
-            null!));
+            null!,
+            _mockBehaviorCache.Object));
     }
 
     [Fact]

@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
+    <ProjectReference Include="../lib-behavior/lib-behavior.csproj" />
+    <ProjectReference Include="../lib-asset/lib-asset.csproj" />
   </ItemGroup>
 
   <ItemGroup>

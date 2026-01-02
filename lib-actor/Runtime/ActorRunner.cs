@@ -1,3 +1,7 @@
+using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -19,7 +23,11 @@ public class ActorRunner : IActorRunner
     private readonly ActorServiceConfiguration _config;
     private readonly Channel<PerceptionData> _perceptionQueue;
     private readonly ActorState _state;
+    private readonly IStateStore<ActorStateSnapshot> _stateStore;
+    private readonly IBehaviorDocumentCache _behaviorCache;
+    private readonly IDocumentExecutor _executor;
 
+    private AbmlDocument? _behavior;
     private ActorStatus _status = ActorStatus.Pending;
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
@@ -81,6 +89,9 @@ public class ActorRunner : IActorRunner
     /// <param name="characterId">Optional character ID for NPC brain actors.</param>
     /// <param name="config">Service configuration.</param>
     /// <param name="messageBus">Message bus for publishing events.</param>
+    /// <param name="stateStore">State store for actor persistence.</param>
+    /// <param name="behaviorCache">Behavior document cache.</param>
+    /// <param name="executor">Document executor for behavior execution.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="initialState">Optional initial state.</param>
     public ActorRunner(
@@ -89,6 +100,9 @@ public class ActorRunner : IActorRunner
         Guid? characterId,
         ActorServiceConfiguration config,
         IMessageBus messageBus,
+        IStateStore<ActorStateSnapshot> stateStore,
+        IBehaviorDocumentCache behaviorCache,
+        IDocumentExecutor executor,
         ILogger<ActorRunner> logger,
         object? initialState = null)
     {
@@ -97,6 +111,9 @@ public class ActorRunner : IActorRunner
         CharacterId = characterId;
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+        _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
+        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Create bounded perception queue with DropOldest behavior
@@ -370,21 +387,213 @@ public class ActorRunner : IActorRunner
     }
 
     /// <summary>
-    /// Executes one tick of behavior.
-    /// This is a placeholder - actual behavior execution would use IDocumentExecutor.
+    /// Executes one tick of behavior using the loaded ABML document.
     /// </summary>
     private async Task ExecuteBehaviorTickAsync(CancellationToken ct)
     {
-        // TODO: Integrate with behavior execution (IDocumentExecutor)
-        // For now, this is a stub that demonstrates the flow
+        // 1. Lazy-load behavior document on first tick
+        if (_behavior == null)
+        {
+            if (string.IsNullOrWhiteSpace(_template.BehaviorRef))
+            {
+                _logger.LogDebug("Actor {ActorId} has no behavior reference, skipping tick", ActorId);
+                return;
+            }
 
-        // The behavior tree would:
-        // 1. Read from working memory
-        // 2. Make decisions based on goals and feelings
-        // 3. Execute actions
-        // 4. Update state (feelings, goals, memories)
+            try
+            {
+                _behavior = await _behaviorCache.GetOrLoadAsync(_template.BehaviorRef, ct);
+                _logger.LogInformation("Actor {ActorId} loaded behavior from {BehaviorRef}",
+                    ActorId, _template.BehaviorRef);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Actor {ActorId} failed to load behavior from {BehaviorRef}",
+                    ActorId, _template.BehaviorRef);
+                return;
+            }
+        }
 
-        await Task.CompletedTask;
+        // 2. Create scope with current actor state
+        var scope = CreateExecutionScope();
+
+        // 3. Execute behavior (prefer process_tick flow if available, otherwise main)
+        var startFlow = _behavior.Flows.ContainsKey("process_tick") ? "process_tick" : "main";
+        var result = await _executor.ExecuteAsync(_behavior, startFlow, scope, ct);
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning("Actor {ActorId} behavior tick failed: {Error}", ActorId, result.Error);
+            return;
+        }
+
+        // 4. Apply state changes from scope back to ActorState
+        ApplyStateChangesFromScope(scope);
+
+        _logger.LogDebug("Actor {ActorId} completed behavior tick ({Flow})", ActorId, startFlow);
+    }
+
+    /// <summary>
+    /// Creates a variable scope populated with current actor state for behavior execution.
+    /// </summary>
+    private VariableScope CreateExecutionScope()
+    {
+        var scope = new VariableScope();
+
+        // Agent identity
+        scope.SetValue("agent", new Dictionary<string, object?>
+        {
+            ["id"] = ActorId,
+            ["behavior_id"] = _template.BehaviorRef,
+            ["character_id"] = CharacterId?.ToString(),
+            ["category"] = Category,
+            ["template_id"] = TemplateId.ToString()
+        });
+
+        // Current emotional state
+        scope.SetValue("feelings", _state.GetAllFeelings());
+
+        // Current goals
+        var goals = _state.GetGoals();
+        scope.SetValue("goals", new Dictionary<string, object?>
+        {
+            ["primary"] = goals.PrimaryGoal,
+            ["secondary"] = goals.SecondaryGoals,
+            ["parameters"] = goals.GoalParameters
+        });
+
+        // Long-term memories
+        scope.SetValue("memories", _state.GetAllMemories()
+            .ToDictionary(m => m.MemoryKey, m => m.MemoryValue));
+
+        // Working memory (perception-derived data)
+        scope.SetValue("working_memory", _state.GetAllWorkingMemory());
+
+        // Template configuration
+        scope.SetValue("config", _template.Configuration);
+
+        // Current perceptions (collected from queue this tick)
+        scope.SetValue("perceptions", CollectCurrentPerceptions());
+
+        return scope;
+    }
+
+    /// <summary>
+    /// Collects current perceptions from working memory for behavior execution.
+    /// </summary>
+    private List<Dictionary<string, object?>> CollectCurrentPerceptions()
+    {
+        var perceptions = new List<Dictionary<string, object?>>();
+        var workingMemory = _state.GetAllWorkingMemory();
+
+        foreach (var (key, value) in workingMemory)
+        {
+            if (key.StartsWith("perception:", StringComparison.Ordinal) && value is PerceptionData pd)
+            {
+                perceptions.Add(new Dictionary<string, object?>
+                {
+                    ["type"] = pd.PerceptionType,
+                    ["source_id"] = pd.SourceId,
+                    ["source_type"] = pd.SourceType,
+                    ["data"] = pd.Data,
+                    ["urgency"] = pd.Urgency
+                });
+            }
+        }
+
+        return perceptions;
+    }
+
+    /// <summary>
+    /// Applies state changes from behavior execution scope back to ActorState.
+    /// Behavior flows set convention-named variables to indicate changes.
+    /// </summary>
+    private void ApplyStateChangesFromScope(IVariableScope scope)
+    {
+        // Apply feeling updates (convention: _feelings_update = { "feeling_name": value, ... })
+        if (scope.HasVariable("_feelings_update"))
+        {
+            var feelingsUpdate = scope.GetValue("_feelings_update");
+            if (feelingsUpdate is IReadOnlyDictionary<string, object?> feelings)
+            {
+                foreach (var (name, value) in feelings)
+                {
+                    if (value is double d)
+                        _state.SetFeeling(name, d);
+                    else if (value is float f)
+                        _state.SetFeeling(name, f);
+                    else if (value is int i)
+                        _state.SetFeeling(name, i);
+                }
+            }
+        }
+
+        // Apply goal updates (convention: _goals_update = { primary: "...", secondary: [...], parameters: {...} })
+        if (scope.HasVariable("_goals_update"))
+        {
+            var goalsUpdate = scope.GetValue("_goals_update");
+            if (goalsUpdate is IReadOnlyDictionary<string, object?> goalsDict)
+            {
+                if (goalsDict.TryGetValue("primary", out var primary) && primary is string primaryGoal)
+                {
+                    var parameters = goalsDict.TryGetValue("parameters", out var p)
+                        && p is IReadOnlyDictionary<string, object?> pDict
+                        ? pDict.ToDictionary(kv => kv.Key, kv => (object)kv.Value!)
+                        : new Dictionary<string, object>();
+                    _state.SetPrimaryGoal(primaryGoal, parameters);
+                }
+
+                if (goalsDict.TryGetValue("secondary", out var secondary)
+                    && secondary is IEnumerable<object> secondaryGoals)
+                {
+                    foreach (var sg in secondaryGoals.OfType<string>())
+                    {
+                        _state.AddSecondaryGoal(sg);
+                    }
+                }
+            }
+        }
+
+        // Apply memory additions (convention: _memories_add = [{ key: "...", value: {...}, expires_minutes: N }, ...])
+        if (scope.HasVariable("_memories_add"))
+        {
+            var memoriesAdd = scope.GetValue("_memories_add");
+            if (memoriesAdd is IEnumerable<object> memories)
+            {
+                foreach (var mem in memories)
+                {
+                    if (mem is IReadOnlyDictionary<string, object?> memDict)
+                    {
+                        var key = memDict.TryGetValue("key", out var k) ? k?.ToString() : null;
+                        var value = memDict.TryGetValue("value", out var v) ? v : null;
+                        var expiresMinutes = memDict.TryGetValue("expires_minutes", out var e) && e is double exp
+                            ? (int)exp
+                            : 60; // Default 1 hour
+
+                        if (!string.IsNullOrEmpty(key))
+                        {
+                            _state.AddMemory(key, value, DateTimeOffset.UtcNow.AddMinutes(expiresMinutes));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply behavior change (convention: _behavior_change = "new_behavior_name")
+        if (scope.HasVariable("_behavior_change"))
+        {
+            var behaviorChange = scope.GetValue("_behavior_change");
+            if (behaviorChange is string newBehavior && !string.IsNullOrWhiteSpace(newBehavior))
+            {
+                // Record behavior change: adding new behavior, removing old, with reason
+                _state.RecordBehaviorChange(
+                    added: new[] { newBehavior },
+                    removed: null,
+                    reason: "Behavior flow requested change");
+                // Invalidate cached behavior so next tick loads new one
+                _behavior = null;
+            }
+        }
     }
 
     /// <summary>
@@ -416,23 +625,88 @@ public class ActorRunner : IActorRunner
     }
 
     /// <summary>
-    /// Persists actor state (called on auto-save interval and shutdown).
+    /// Persists actor state to the state store.
+    /// Called on auto-save interval and shutdown.
     /// </summary>
     private async Task PersistStateAsync(CancellationToken ct)
     {
-        // TODO: Implement state persistence via lib-state
-        // For now, just log that we would persist
-        _logger.LogDebug("Actor {ActorId} would persist state (not yet implemented)", ActorId);
-        await Task.CompletedTask;
+        var snapshot = GetStateSnapshot();
+
+        try
+        {
+            await _stateStore.SaveAsync(ActorId, snapshot, cancellationToken: ct);
+            _logger.LogDebug("Actor {ActorId} persisted state", ActorId);
+        }
+        catch (Exception ex)
+        {
+            // Log but don't throw - persistence failure shouldn't kill the actor
+            _logger.LogError(ex, "Actor {ActorId} failed to persist state", ActorId);
+        }
     }
 
     /// <summary>
-    /// Initializes actor state from initial state object.
+    /// Initializes actor state from an ActorStateSnapshot.
+    /// Called during construction if initial state is provided.
     /// </summary>
     private void InitializeFromState(object initialState)
     {
-        // TODO: Parse initial state and apply to _state
-        // This would handle loading saved state or initial configuration
-        _logger.LogDebug("Actor {ActorId} initialized with initial state", ActorId);
+        if (initialState is not ActorStateSnapshot snapshot)
+        {
+            _logger.LogDebug("Actor {ActorId} received initial state of type {Type}, expected ActorStateSnapshot",
+                ActorId, initialState.GetType().Name);
+            return;
+        }
+
+        // Restore feelings
+        if (snapshot.Feelings != null)
+        {
+            foreach (var (name, value) in snapshot.Feelings)
+            {
+                _state.SetFeeling(name, value);
+            }
+        }
+
+        // Restore goals
+        if (snapshot.Goals != null)
+        {
+            if (!string.IsNullOrEmpty(snapshot.Goals.PrimaryGoal))
+            {
+                var goalParams = snapshot.Goals.GoalParameters?
+                    .ToDictionary(kv => kv.Key, kv => (object)kv.Value!)
+                    ?? new Dictionary<string, object>();
+                _state.SetPrimaryGoal(snapshot.Goals.PrimaryGoal, goalParams);
+            }
+
+            if (snapshot.Goals.SecondaryGoals != null)
+            {
+                foreach (var secondary in snapshot.Goals.SecondaryGoals)
+                {
+                    _state.AddSecondaryGoal(secondary);
+                }
+            }
+        }
+
+        // Restore memories
+        if (snapshot.Memories != null)
+        {
+            foreach (var memory in snapshot.Memories)
+            {
+                _state.AddMemory(memory.MemoryKey, memory.MemoryValue, memory.ExpiresAt);
+            }
+        }
+
+        // Restore working memory
+        if (snapshot.WorkingMemory != null)
+        {
+            foreach (var (key, value) in snapshot.WorkingMemory)
+            {
+                _state.SetWorkingMemory(key, value);
+            }
+        }
+
+        // Clear pending changes since we just loaded saved state
+        _state.ClearPendingChanges();
+
+        _logger.LogDebug("Actor {ActorId} restored state from snapshot", ActorId);
     }
 }

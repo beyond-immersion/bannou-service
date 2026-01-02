@@ -13,7 +13,7 @@ public class StateTestHandler : BaseHttpTestHandler
     // Well-known stores that MUST exist in the test environment
     private const string MYSQL_STORE = "accounts-statestore";
     private const string REDIS_STORE = "auth-statestore";
-    private const string REDIS_SEARCH_STORE = "documentation-statestore";
+    private const string REDIS_SEARCH_STORE = "test-search-statestore";
     public override ServiceTest[] GetServiceTests() =>
     [
         // List Stores Tests
