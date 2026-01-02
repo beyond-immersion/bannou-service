@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: Actor Service Events
+  version: 1.0.0
+  description: |
+    Events published and subscribed to by the Actor service.
+    Includes lifecycle events for templates and instances, plus event subscriptions.
+
+  x-event-subscriptions:
+    - topic: behavior.updated
+      event: BehaviorUpdatedEvent
+      handler: HandleBehaviorUpdated
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+
+servers: []
+
+paths: {}
+
+x-lifecycle:
+  ActorTemplate:
+    model:
+      templateId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+      category:
+        type: string
+        required: true
+      behaviorRef:
+        type: string
+        required: true
+      createdAt:
+        type: string
+        format: date-time
+        required: true
+    events:
+      - created
+      - updated
+      - deleted
+
+  ActorInstance:
+    model:
+      actorId:
+        type: string
+        primary: true
+        required: true
+      templateId:
+        type: string
+        format: uuid
+        required: true
+      characterId:
+        type: string
+        format: uuid
+      nodeId:
+        type: string
+      status:
+        type: string
+        required: true
+      startedAt:
+        type: string
+        format: date-time
+        required: true
+    events:
+      - created
+      - deleted
+
+components:
+  schemas:
+    # === Pool Node Events (from pool nodes to control plane) ===
+    PoolNodeHeartbeatEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Periodic heartbeat from pool nodes to control plane.
+        Used for health monitoring and load balancing decisions.
+      required:
+        - nodeId
+        - currentLoad
+        - capacity
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.heartbeat"
+        nodeId:
+          type: string
+          description: Unique identifier for this pool node
+        appId:
+          type: string
+          description: Pool node's app-id for direct routing
+        currentLoad:
+          type: integer
+          description: Number of actors currently running
+        capacity:
+          type: integer
+          description: Maximum actors this node can run
+        actorSummary:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Map of actorId to status for sync verification
+
+    ActorStatusChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor's status changes.
+        Used to keep control plane registry in sync with pool node state.
+      required:
+        - actorId
+        - nodeId
+        - previousStatus
+        - newStatus
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.status-changed"
+        actorId:
+          type: string
+        nodeId:
+          type: string
+        previousStatus:
+          type: string
+        newStatus:
+          type: string
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason for status change
+
+    ActorCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor completes execution (self-terminate or external stop).
+        Includes final statistics and exit reason.
+      required:
+        - actorId
+        - nodeId
+        - exitReason
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.completed"
+        actorId:
+          type: string
+        nodeId:
+          type: string
+        exitReason:
+          type: string
+          enum:
+            - behavior_complete
+            - error
+            - timeout
+            - external_stop
+        exitMessage:
+          type: string
+          nullable: true
+          description: Additional context about the exit
+        loopIterations:
+          type: integer
+          format: int64
+          description: Total behavior loop iterations before exit
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID (for NPC brains)
+
+    # === Internal Commands (control plane to pool nodes) ===
+    SpawnActorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to spawn an actor.
+        Published to topic: actor.node.{poolAppId}.spawn
+      required:
+        - actorId
+        - templateId
+        - behaviorRef
+      properties:
+        actorId:
+          type: string
+        templateId:
+          type: string
+          format: uuid
+        behaviorRef:
+          type: string
+          description: Asset reference to fetch behavior from lib-assets
+        configuration:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Merged configuration (template + overrides)
+        initialState:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Initial state for the actor
+        tickIntervalMs:
+          type: integer
+          description: Behavior loop interval in milliseconds
+        autoSaveIntervalSeconds:
+          type: integer
+          description: State persistence interval (0 to disable)
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character ID for NPC brain actors
+
+    StopActorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to stop an actor.
+        Published to topic: actor.node.{poolAppId}.stop
+      required:
+        - actorId
+      properties:
+        actorId:
+          type: string
+        graceful:
+          type: boolean
+          default: true
+          description: If true, allows current tick to complete
+
+    SendMessageCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command to deliver a message to an actor's message queue.
+        Published to topic: actor.node.{poolAppId}.message
+      required:
+        - actorId
+        - messageType
+      properties:
+        actorId:
+          type: string
+        messageType:
+          type: string
+          description: Message type identifier (behavior decides handling)
+        payload:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    ReloadBehaviorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command to reload behavior for an actor (hot-reload support).
+        Published to topic: actor.node.{poolAppId}.reload-behavior
+      required:
+        - actorId
+        - newBehaviorRef
+      properties:
+        actorId:
+          type: string
+        newBehaviorRef:
+          type: string
+          description: New asset reference to fetch

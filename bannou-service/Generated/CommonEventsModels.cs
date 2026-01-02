@@ -688,6 +688,210 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
 
 }
 
+/// <summary>
+/// Published by Actor service when an actor updates a character's behavioral state.
+/// <br/>Game servers subscribe to receive state updates for characters they manage.
+/// <br/>
+/// <br/>This is NOT physics data (position, velocity) - that's Game Server territory.
+/// <br/>This is intent/emotional/goal state that the character's behavior stack reads as input.
+/// <br/>
+/// <br/>Note: Game servers have no knowledge of actors - they only see character state.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterStateUpdateEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "character.state_update";
+
+    /// <summary>
+    /// Character this update applies to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Actor that produced this update (opaque to Game Server)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    public string? ActorId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("feelings")]
+    public FeelingState? Feelings { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("goals")]
+    public GoalState? Goals { get; set; } = default!;
+
+    /// <summary>
+    /// Memory updates (add/remove/modify)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("memories")]
+    public System.Collections.Generic.ICollection<MemoryUpdate>? Memories { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorChange")]
+    public BehaviorCompositionChange? BehaviorChange { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Emotional state values (0.0 - 1.0 intensity).
+/// <br/>The character's behavior stack reads these as inputs to influence decisions.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FeelingState
+{
+
+    /// <summary>
+    /// Anger intensity (0 = calm, 1 = furious)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("angry")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Angry { get; set; } = default!;
+
+    /// <summary>
+    /// Fear intensity (0 = brave, 1 = terrified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fearful")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Fearful { get; set; } = default!;
+
+    /// <summary>
+    /// Happiness intensity (0 = neutral, 1 = joyful)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("happy")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Happy { get; set; } = default!;
+
+    /// <summary>
+    /// Sadness intensity (0 = content, 1 = devastated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sad")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Sad { get; set; } = default!;
+
+    /// <summary>
+    /// Alertness intensity (0 = relaxed, 1 = hypervigilant)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("alert")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Alert { get; set; } = default!;
+
+    /// <summary>
+    /// Additional custom emotional states (game-specific)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("custom")]
+    public System.Collections.Generic.IDictionary<string, float>? Custom { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Goal state for the character.
+/// <br/>Primary goal drives major decisions, secondary goals run in background.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GoalState
+{
+
+    /// <summary>
+    /// Current primary goal (e.g., "find_shelter", "confront_enemy")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("primaryGoal")]
+    public string? PrimaryGoal { get; set; } = default!;
+
+    /// <summary>
+    /// Parameters for the primary goal (e.g., target entity, location)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("goalParameters")]
+    public object? GoalParameters { get; set; } = default!;
+
+    /// <summary>
+    /// Secondary/background goals
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("secondaryGoals")]
+    public System.Collections.Generic.ICollection<string>? SecondaryGoals { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single memory update operation (add, remove, or modify).
+/// <br/>Memories affect character behavior through recall during cognition.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MemoryUpdate
+{
+
+    /// <summary>
+    /// Memory operation type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("operation")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MemoryUpdateOperation Operation { get; set; } = default!;
+
+    /// <summary>
+    /// Memory identifier (e.g., "betrayed_by", "friend_of", "witnessed_event")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("memoryKey")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MemoryKey { get; set; } = default!;
+
+    /// <summary>
+    /// Memory value (entity ID, context, intensity, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("memoryValue")]
+    public object? MemoryValue { get; set; } = default!;
+
+    /// <summary>
+    /// When this memory expires (if temporary)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Changes to the character's behavior composition.
+/// <br/>RARE - only happens during learning/growth events.
+/// <br/>The character's behavior stack is self-sufficient; these changes add new capabilities.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorCompositionChange
+{
+
+    /// <summary>
+    /// Behavior IDs added to composition (e.g., learned skills)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("added")]
+    public System.Collections.Generic.ICollection<string>? Added { get; set; } = default!;
+
+    /// <summary>
+    /// Behavior IDs removed from composition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("removed")]
+    public System.Collections.Generic.ICollection<string>? Removed { get; set; } = default!;
+
+    /// <summary>
+    /// Why this change happened (for debugging/logging)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceEndpointMethod
@@ -767,6 +971,23 @@ public enum ServiceErrorEventSeverity
 
     [System.Runtime.Serialization.EnumMember(Value = @"critical")]
     Critical = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MemoryUpdateOperation
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"add")]
+    Add = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"remove")]
+    Remove = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"modify")]
+    Modify = 2,
 
 }
 #pragma warning restore CS1591

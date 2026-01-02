@@ -529,3 +529,180 @@ components:
           additionalProperties: true
           nullable: true
           description: Optional context from the reconnection (client info, etc.)
+
+    # === Character State Events (from Actor service) ===
+    CharacterStateUpdateEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published by Actor service when an actor updates a character's behavioral state.
+        Game servers subscribe to receive state updates for characters they manage.
+
+        This is NOT physics data (position, velocity) - that's Game Server territory.
+        This is intent/emotional/goal state that the character's behavior stack reads as input.
+
+        Note: Game servers have no knowledge of actors - they only see character state.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - characterId
+      properties:
+        eventName:
+          type: string
+          default: "character.state_update"
+          description: Fixed event type identifier
+        characterId:
+          type: string
+          format: uuid
+          description: Character this update applies to
+        actorId:
+          type: string
+          nullable: true
+          description: Actor that produced this update (opaque to Game Server)
+        feelings:
+          $ref: '#/components/schemas/FeelingState'
+        goals:
+          $ref: '#/components/schemas/GoalState'
+        memories:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/MemoryUpdate'
+          description: Memory updates (add/remove/modify)
+        behaviorChange:
+          $ref: '#/components/schemas/BehaviorCompositionChange'
+
+    FeelingState:
+      type: object
+      additionalProperties: false
+      nullable: true
+      description: |
+        Emotional state values (0.0 - 1.0 intensity).
+        The character's behavior stack reads these as inputs to influence decisions.
+      properties:
+        angry:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Anger intensity (0 = calm, 1 = furious)
+        fearful:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Fear intensity (0 = brave, 1 = terrified)
+        happy:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Happiness intensity (0 = neutral, 1 = joyful)
+        sad:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Sadness intensity (0 = content, 1 = devastated)
+        alert:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Alertness intensity (0 = relaxed, 1 = hypervigilant)
+        custom:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          nullable: true
+          description: Additional custom emotional states (game-specific)
+
+    GoalState:
+      type: object
+      additionalProperties: false
+      nullable: true
+      description: |
+        Goal state for the character.
+        Primary goal drives major decisions, secondary goals run in background.
+      properties:
+        primaryGoal:
+          type: string
+          nullable: true
+          description: Current primary goal (e.g., "find_shelter", "confront_enemy")
+        goalParameters:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Parameters for the primary goal (e.g., target entity, location)
+        secondaryGoals:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Secondary/background goals
+
+    MemoryUpdate:
+      type: object
+      additionalProperties: false
+      description: |
+        A single memory update operation (add, remove, or modify).
+        Memories affect character behavior through recall during cognition.
+      required:
+        - operation
+        - memoryKey
+      properties:
+        operation:
+          type: string
+          enum:
+            - add
+            - remove
+            - modify
+          description: Memory operation type
+        memoryKey:
+          type: string
+          description: Memory identifier (e.g., "betrayed_by", "friend_of", "witnessed_event")
+        memoryValue:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Memory value (entity ID, context, intensity, etc.)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this memory expires (if temporary)
+
+    BehaviorCompositionChange:
+      type: object
+      additionalProperties: false
+      nullable: true
+      description: |
+        Changes to the character's behavior composition.
+        RARE - only happens during learning/growth events.
+        The character's behavior stack is self-sufficient; these changes add new capabilities.
+      properties:
+        added:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Behavior IDs added to composition (e.g., learned skills)
+        removed:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Behavior IDs removed from composition
+        reason:
+          type: string
+          nullable: true
+          description: Why this change happened (for debugging/logging)

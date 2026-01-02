@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Actor Service Configuration
+  version: 1.0.0
+  description: |
+    Configuration options for the Actor service.
+    Controls deployment mode, pool node management, and default behavior parameters.
+
+servers: []
+
+paths: {}
+
+x-service-configuration:
+  properties:
+    # === Deployment Mode ===
+    DeploymentMode:
+      type: string
+      env: ACTOR_DEPLOYMENT_MODE
+      default: "bannou"
+      description: "Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale"
+
+    # === Pool Node Management ===
+    PoolNodeImage:
+      type: string
+      env: ACTOR_POOL_NODE_IMAGE
+      default: "bannou-actor-pool:latest"
+      description: Docker image for pool nodes (pool-per-type, shared-pool, auto-scale modes)
+
+    MinPoolNodes:
+      type: integer
+      env: ACTOR_MIN_POOL_NODES
+      default: 1
+      description: Minimum pool nodes to maintain (auto-scale mode)
+
+    MaxPoolNodes:
+      type: integer
+      env: ACTOR_MAX_POOL_NODES
+      default: 10
+      description: Maximum pool nodes allowed (auto-scale mode)
+
+    DefaultActorsPerNode:
+      type: integer
+      env: ACTOR_DEFAULT_ACTORS_PER_NODE
+      default: 100
+      description: Default capacity per pool node
+
+    # === Heartbeat Configuration ===
+    HeartbeatIntervalSeconds:
+      type: integer
+      env: ACTOR_HEARTBEAT_INTERVAL_SECONDS
+      default: 10
+      description: Pool node heartbeat frequency
+
+    HeartbeatTimeoutSeconds:
+      type: integer
+      env: ACTOR_HEARTBEAT_TIMEOUT_SECONDS
+      default: 30
+      description: Mark node unhealthy after this many seconds without heartbeat
+
+    # === Actor Default Configuration ===
+    DefaultTickIntervalMs:
+      type: integer
+      env: ACTOR_DEFAULT_TICK_INTERVAL_MS
+      default: 100
+      description: Default behavior loop interval in milliseconds
+
+    DefaultAutoSaveIntervalSeconds:
+      type: integer
+      env: ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS
+      default: 60
+      description: Default interval for periodic state saves (0 to disable)
+
+    # === Queue Configuration ===
+    PerceptionQueueSize:
+      type: integer
+      env: ACTOR_PERCEPTION_QUEUE_SIZE
+      default: 100
+      description: Max perceptions queued per actor before dropping oldest
+
+    MessageQueueSize:
+      type: integer
+      env: ACTOR_MESSAGE_QUEUE_SIZE
+      default: 50
+      description: Max messages queued per actor before dropping oldest
+
+    # === State Update Transport ===
+    StateUpdateTransport:
+      type: string
+      env: ACTOR_STATE_UPDATE_TRANSPORT
+      default: "messaging"
+      description: "State update transport: messaging (default, works in bannou mode) or internal-connect (production)"
+
+    # === GOAP Configuration ===
+    GoapReplanThreshold:
+      type: number
+      env: ACTOR_GOAP_REPLAN_THRESHOLD
+      default: 0.3
+      description: Threshold for triggering GOAP replanning when goal relevance drops below this value
+
+    GoapMaxPlanDepth:
+      type: integer
+      env: ACTOR_GOAP_MAX_PLAN_DEPTH
+      default: 10
+      description: Maximum depth for GOAP planning search
+
+    GoapPlanTimeoutMs:
+      type: integer
+      env: ACTOR_GOAP_PLAN_TIMEOUT_MS
+      default: 50
+      description: Maximum time allowed for GOAP planning in milliseconds
+
+components:
+  schemas: {}

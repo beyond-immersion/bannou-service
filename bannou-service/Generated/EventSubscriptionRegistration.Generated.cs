@@ -22,6 +22,10 @@ public static class EventSubscriptionRegistration
     /// </summary>
     public static void RegisterAll()
     {
+        // From actor-events.yaml
+        EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
+        EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<AccountUpdatedEvent>("account.updated");
