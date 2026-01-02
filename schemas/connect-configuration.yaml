@@ -70,6 +70,22 @@ x-service-configuration:
       description: WebSocket URL returned to clients for reconnection
       env: CONNECT_URL
 
+    ConnectionMode:
+      type: string
+      enum: ["external", "relayed", "internal"]
+      description: "Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)"
+      default: "external"
+    InternalAuthMode:
+      type: string
+      enum: ["service-token", "network-trust"]
+      description: "Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)"
+      default: "service-token"
+    InternalServiceToken:
+      type: string
+      nullable: true
+      description: "Secret for X-Service-Token validation when InternalAuthMode is service-token"
+      env: CONNECT_INTERNAL_SERVICE_TOKEN
+
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permissions.capabilities-updated
 

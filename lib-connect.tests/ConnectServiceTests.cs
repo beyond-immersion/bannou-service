@@ -706,6 +706,291 @@ public class ConnectServiceTests
 
     #endregion
 
+    #region ConnectionMode Configuration Tests
+
+    /// <summary>
+    /// Tests that ConnectionMode defaults to "external" when not specified.
+    /// </summary>
+    [Fact]
+    public void Configuration_ConnectionMode_DefaultsToExternal()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
+        };
+
+        // Assert
+        Assert.Equal("external", config.ConnectionMode);
+    }
+
+    /// <summary>
+    /// Tests that InternalAuthMode defaults to "service-token" when not specified.
+    /// </summary>
+    [Fact]
+    public void Configuration_InternalAuthMode_DefaultsToServiceToken()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
+        };
+
+        // Assert
+        Assert.Equal("service-token", config.InternalAuthMode);
+    }
+
+    /// <summary>
+    /// Tests that InternalServiceToken is nullable and defaults to null.
+    /// </summary>
+    [Fact]
+    public void Configuration_InternalServiceToken_IsNullable()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
+        };
+
+        // Assert
+        Assert.Null(config.InternalServiceToken);
+    }
+
+    /// <summary>
+    /// Tests that constructor throws when Internal mode with service-token auth is missing the token.
+    /// </summary>
+    [Fact]
+    public void Constructor_InternalModeServiceToken_WithMissingToken_ShouldThrow()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "internal",
+            InternalAuthMode = "service-token",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object));
+
+        Assert.Contains("CONNECT_INTERNAL_SERVICE_TOKEN", exception.Message);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts Internal mode with service-token auth when token is provided.
+    /// </summary>
+    [Fact]
+    public void Constructor_InternalModeServiceToken_WithToken_ShouldNotThrow()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "internal",
+            InternalAuthMode = "service-token",
+            InternalServiceToken = "test-secret-token"
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object));
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts Internal mode with network-trust auth without token.
+    /// </summary>
+    [Fact]
+    public void Constructor_InternalModeNetworkTrust_WithoutToken_ShouldNotThrow()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "internal",
+            InternalAuthMode = "network-trust",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object));
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts External mode without any internal auth configuration.
+    /// </summary>
+    [Fact]
+    public void Constructor_ExternalMode_ShouldNotRequireInternalToken()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "external",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object));
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts Relayed mode without internal auth configuration.
+    /// </summary>
+    [Fact]
+    public void Constructor_RelayedMode_ShouldNotRequireInternalToken()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "relayed",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object));
+
+        Assert.Null(exception);
+    }
+
+    #endregion
+
+    #region Broadcast Message Routing Tests
+
+    /// <summary>
+    /// Tests that MessageRouter detects broadcast GUID with Client flag correctly.
+    /// </summary>
+    [Fact]
+    public void MessageRouter_BroadcastGuid_WithClientFlag_ShouldReturnBroadcastRoute()
+    {
+        // Arrange
+        var connectionState = new ConnectionState("test-session");
+        var message = new BinaryMessage(
+            MessageFlags.Client, // Client flag (0x20) required for broadcast
+            100,
+            1,
+            AppConstants.BROADCAST_GUID,
+            GuidGenerator.GenerateMessageId(),
+            System.Text.Encoding.UTF8.GetBytes("{\"test\":\"broadcast\"}")
+        );
+
+        // Act
+        var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
+
+        // Assert
+        Assert.True(routeInfo.IsValid);
+        Assert.Equal(RouteType.Broadcast, routeInfo.RouteType);
+        Assert.Equal("broadcast", routeInfo.TargetType);
+        Assert.Equal("all-peers", routeInfo.TargetId);
+    }
+
+    /// <summary>
+    /// Tests that MessageRouter rejects broadcast GUID without Client flag.
+    /// </summary>
+    [Fact]
+    public void MessageRouter_BroadcastGuid_WithoutClientFlag_ShouldReturnError()
+    {
+        // Arrange
+        var connectionState = new ConnectionState("test-session");
+        var message = new BinaryMessage(
+            MessageFlags.None, // No Client flag - invalid for broadcast
+            100,
+            1,
+            AppConstants.BROADCAST_GUID,
+            GuidGenerator.GenerateMessageId(),
+            System.Text.Encoding.UTF8.GetBytes("{\"test\":\"broadcast\"}")
+        );
+
+        // Act
+        var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
+
+        // Assert
+        Assert.False(routeInfo.IsValid);
+        Assert.Equal(ResponseCodes.RequestError, routeInfo.ErrorCode);
+        Assert.Contains("Client flag", routeInfo.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Tests that BROADCAST_GUID constant has the expected value.
+    /// </summary>
+    [Fact]
+    public void AppConstants_BroadcastGuid_ShouldBeAllFs()
+    {
+        // Assert
+        Assert.Equal(new Guid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), AppConstants.BROADCAST_GUID);
+    }
+
+    #endregion
+
     #region HTTP Routing Optimization Tests
 
     /// <summary>

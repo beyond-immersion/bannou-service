@@ -60,4 +60,15 @@ public static class AppConstants
     /// </summary>
     public const string ENV_BANNOU_HTTP_ENDPOINT = "BANNOU_HTTP_ENDPOINT";
 
+    // ==========================================================================
+    // Protocol Constants
+    // ==========================================================================
+
+    /// <summary>
+    /// Special GUID for broadcast messages. When ServiceGuid equals this value,
+    /// the message is broadcast to all connected peers (excluding sender).
+    /// Only allowed in Relayed and Internal connection modes; External mode rejects broadcast.
+    /// </summary>
+    public static readonly Guid BROADCAST_GUID = new("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF");
+
 }

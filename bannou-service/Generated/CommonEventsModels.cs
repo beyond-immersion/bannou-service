@@ -724,9 +724,15 @@ public partial class CharacterStateUpdateEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     public string? ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Emotional state values for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("feelings")]
     public FeelingState? Feelings { get; set; } = default!;
 
+    /// <summary>
+    /// Goal state for the character
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("goals")]
     public GoalState? Goals { get; set; } = default!;
 
@@ -736,6 +742,9 @@ public partial class CharacterStateUpdateEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("memories")]
     public System.Collections.Generic.ICollection<MemoryUpdate>? Memories { get; set; } = default!;
 
+    /// <summary>
+    /// Changes to the character's behavior composition
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorChange")]
     public BehaviorCompositionChange? BehaviorChange { get; set; } = default!;
 

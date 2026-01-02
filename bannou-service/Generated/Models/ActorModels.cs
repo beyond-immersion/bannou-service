@@ -25,6 +25,9 @@ namespace BeyondImmersion.BannouService.Actor;
 
 using System = global::System;
 
+/// <summary>
+/// Request to create a new actor template definition
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateActorTemplateRequest
 {
@@ -51,6 +54,9 @@ public partial class CreateActorTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
     public object? Configuration { get; set; } = default!;
 
+    /// <summary>
+    /// Auto-spawn configuration for instantiate-on-access
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSpawn")]
     public AutoSpawnConfig AutoSpawn { get; set; } = default!;
 
@@ -103,6 +109,9 @@ public partial class AutoSpawnConfig
 
 }
 
+/// <summary>
+/// Response containing actor template details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorTemplateResponse
 {
@@ -125,29 +134,53 @@ public partial class ActorTemplateResponse
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
     public string BehaviorRef { get; set; } = default!;
 
+    /// <summary>
+    /// Default configuration passed to behavior execution
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
     public object? Configuration { get; set; } = default!;
 
+    /// <summary>
+    /// Auto-spawn configuration for instantiate-on-access
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSpawn")]
     public AutoSpawnConfig AutoSpawn { get; set; } = default!;
 
+    /// <summary>
+    /// Milliseconds between behavior loop iterations
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tickIntervalMs")]
     public int TickIntervalMs { get; set; } = default!;
 
+    /// <summary>
+    /// Seconds between automatic state saves
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSaveIntervalSeconds")]
     public int AutoSaveIntervalSeconds { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum actors of this category per pool node
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxInstancesPerNode")]
     public int MaxInstancesPerNode { get; set; } = default!;
 
+    /// <summary>
+    /// When the template was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
+    /// <summary>
+    /// When the template was last updated
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
 }
 
+/// <summary>
+/// Request to get an actor template by ID or category
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetActorTemplateRequest
 {
@@ -166,34 +199,58 @@ public partial class GetActorTemplateRequest
 
 }
 
+/// <summary>
+/// Request to list actor templates with pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListActorTemplatesRequest
 {
 
+    /// <summary>
+    /// Maximum number of templates to return
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     public int Limit { get; set; } = 100;
 
+    /// <summary>
+    /// Number of templates to skip
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
     public int Offset { get; set; } = 0;
 
 }
 
+/// <summary>
+/// Response containing a list of actor templates
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListActorTemplatesResponse
 {
 
+    /// <summary>
+    /// List of actor templates
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templates")]
     public System.Collections.Generic.ICollection<ActorTemplateResponse> Templates { get; set; } = default!;
 
+    /// <summary>
+    /// Total number of templates available
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("total")]
     public int Total { get; set; } = default!;
 
 }
 
+/// <summary>
+/// Request to update an existing actor template
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdateActorTemplateRequest
 {
 
+    /// <summary>
+    /// ID of the template to update
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -205,24 +262,42 @@ public partial class UpdateActorTemplateRequest
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
     public string? BehaviorRef { get; set; } = default!;
 
+    /// <summary>
+    /// Updated configuration settings
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
     public object? Configuration { get; set; } = default!;
 
+    /// <summary>
+    /// Updated auto-spawn configuration
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSpawn")]
     public AutoSpawnConfig AutoSpawn { get; set; } = default!;
 
+    /// <summary>
+    /// Updated tick interval in milliseconds
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tickIntervalMs")]
     public int? TickIntervalMs { get; set; } = default!;
 
+    /// <summary>
+    /// Updated auto-save interval in seconds
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSaveIntervalSeconds")]
     public int? AutoSaveIntervalSeconds { get; set; } = default!;
 
 }
 
+/// <summary>
+/// Request to delete an actor template
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteActorTemplateRequest
 {
 
+    /// <summary>
+    /// ID of the template to delete
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -236,18 +311,30 @@ public partial class DeleteActorTemplateRequest
 
 }
 
+/// <summary>
+/// Response confirming template deletion
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteActorTemplateResponse
 {
 
+    /// <summary>
+    /// Whether the template was successfully deleted
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deleted")]
     public bool Deleted { get; set; } = default!;
 
+    /// <summary>
+    /// Number of running actors that were stopped
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stoppedActorCount")]
     public int StoppedActorCount { get; set; } = default!;
 
 }
 
+/// <summary>
+/// Request to spawn a new actor from a template
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SpawnActorRequest
 {
@@ -286,6 +373,9 @@ public partial class SpawnActorRequest
 
 }
 
+/// <summary>
+/// Request to get an actor instance by ID
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetActorRequest
 {
@@ -300,6 +390,9 @@ public partial class GetActorRequest
 
 }
 
+/// <summary>
+/// Response containing actor instance details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorInstanceResponse
 {
@@ -310,9 +403,15 @@ public partial class ActorInstanceResponse
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Template this actor was instantiated from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     public System.Guid TemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Actor category from template
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string Category { get; set; } = default!;
 
@@ -328,6 +427,9 @@ public partial class ActorInstanceResponse
     [System.Text.Json.Serialization.JsonPropertyName("nodeAppId")]
     public string? NodeAppId { get; set; } = default!;
 
+    /// <summary>
+    /// Current actor lifecycle state
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ActorStatus Status { get; set; } = default!;
@@ -338,12 +440,21 @@ public partial class ActorInstanceResponse
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     public System.Guid? CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// When the actor started running
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
+    /// <summary>
+    /// Last heartbeat timestamp from the actor
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastHeartbeat")]
     public System.DateTimeOffset? LastHeartbeat { get; set; } = default!;
 
+    /// <summary>
+    /// Number of behavior loop iterations executed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loopIterations")]
     public long LoopIterations { get; set; } = default!;
 
@@ -381,10 +492,16 @@ public enum ActorStatus
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to stop a running actor
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StopActorRequest
 {
 
+    /// <summary>
+    /// ID of the actor to stop
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -398,19 +515,31 @@ public partial class StopActorRequest
 
 }
 
+/// <summary>
+/// Response confirming actor stop operation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StopActorResponse
 {
 
+    /// <summary>
+    /// Whether the actor was successfully stopped
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stopped")]
     public bool Stopped { get; set; } = default!;
 
+    /// <summary>
+    /// Final status of the actor after stopping
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("finalStatus")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ActorStatus FinalStatus { get; set; } = default!;
 
 }
 
+/// <summary>
+/// Request to list actor instances with optional filters
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListActorsRequest
 {
@@ -427,6 +556,9 @@ public partial class ListActorsRequest
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     public string? NodeId { get; set; } = default!;
 
+    /// <summary>
+    /// Filter by actor status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ActorStatus Status { get; set; } = default!;
@@ -437,26 +569,44 @@ public partial class ListActorsRequest
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     public System.Guid? CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Maximum number of actors to return
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     public int Limit { get; set; } = 100;
 
+    /// <summary>
+    /// Number of actors to skip
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
     public int Offset { get; set; } = 0;
 
 }
 
+/// <summary>
+/// Response containing a list of actor instances
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListActorsResponse
 {
 
+    /// <summary>
+    /// List of actor instances
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actors")]
     public System.Collections.Generic.ICollection<ActorInstanceResponse> Actors { get; set; } = default!;
 
+    /// <summary>
+    /// Total number of actors matching the filter
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("total")]
     public int Total { get; set; } = default!;
 
 }
 
+/// <summary>
+/// Request to inject a perception event into an actor's queue
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InjectPerceptionRequest
 {
@@ -469,6 +619,9 @@ public partial class InjectPerceptionRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Perception data to inject
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perception")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
@@ -476,6 +629,9 @@ public partial class InjectPerceptionRequest
 
 }
 
+/// <summary>
+/// Data representing a perception event for an actor
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PerceptionData
 {
@@ -517,6 +673,9 @@ public partial class PerceptionData
 
 }
 
+/// <summary>
+/// Response confirming perception injection
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InjectPerceptionResponse
 {

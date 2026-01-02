@@ -708,6 +708,7 @@ components:
       - 30    # ServiceNotFound
       - 31    # ClientNotFound
       - 32    # MessageNotFound
+      - 40    # BroadcastNotAllowed
       - 50    # Service_BadRequest
       - 51    # Service_NotFound
       - 52    # Service_Unauthorized
@@ -726,6 +727,7 @@ components:
       - "ServiceNotFound"
       - "ClientNotFound"
       - "MessageNotFound"
+      - "BroadcastNotAllowed"
       - "Service_BadRequest"
       - "Service_NotFound"
       - "Service_Unauthorized"
@@ -737,6 +739,9 @@ components:
       description: |
         Response codes used in the binary protocol for success/error indication.
         Provides fine-grained error reporting for different failure scenarios.
+
+        **Broadcast error codes (40-49):**
+        - 40 (BroadcastNotAllowed): Broadcast attempted in External mode where it is forbidden
 
         **Shortcut-specific error codes (70-79):**
         - 70 (ShortcutExpired): Session shortcut has expired (TTL exceeded)

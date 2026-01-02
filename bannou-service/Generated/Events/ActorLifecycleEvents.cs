@@ -37,21 +37,33 @@ public partial class ActorTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "actor-template.created";
 
+    /// <summary>
+    /// Unique identifier for the actor template
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Category identifier for the template
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Reference to behavior in lib-assets
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorRef { get; set; } = default!;
 
+    /// <summary>
+    /// When the template was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -74,21 +86,33 @@ public partial class ActorTemplateUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "actor-template.updated";
 
+    /// <summary>
+    /// Unique identifier for the actor template
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Category identifier for the template
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Reference to behavior in lib-assets
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorRef { get; set; } = default!;
 
+    /// <summary>
+    /// When the template was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -119,21 +143,33 @@ public partial class ActorTemplateDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "actor-template.deleted";
 
+    /// <summary>
+    /// Unique identifier for the actor template
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Category identifier for the template
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
+    /// <summary>
+    /// Reference to behavior in lib-assets
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorRef { get; set; } = default!;
 
+    /// <summary>
+    /// When the template was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -162,27 +198,45 @@ public partial class ActorInstanceCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "actor-instance.created";
 
+    /// <summary>
+    /// Unique identifier for the actor instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Template this actor was instantiated from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Associated character ID for NPC brains
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Pool node running this actor
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     public string NodeId { get; set; } = default!;
 
+    /// <summary>
+    /// Current actor lifecycle state
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// When the actor started running
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -205,27 +259,45 @@ public partial class ActorInstanceUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "actor-instance.updated";
 
+    /// <summary>
+    /// Unique identifier for the actor instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Template this actor was instantiated from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Associated character ID for NPC brains
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Pool node running this actor
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     public string NodeId { get; set; } = default!;
 
+    /// <summary>
+    /// Current actor lifecycle state
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// When the actor started running
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -256,27 +328,45 @@ public partial class ActorInstanceDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public override string EventName { get; set; } = "actor-instance.deleted";
 
+    /// <summary>
+    /// Unique identifier for the actor instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Template this actor was instantiated from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
+    /// <summary>
+    /// Associated character ID for NPC brains
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Pool node running this actor
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     public string NodeId { get; set; } = default!;
 
+    /// <summary>
+    /// Current actor lifecycle state
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Status { get; set; } = default!;
 
+    /// <summary>
+    /// When the actor started running
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

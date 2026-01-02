@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -59,8 +60,15 @@ public class ConnectController : ConnectControllerBase
                 return StatusCode(500, "Service implementation not available");
             }
 
-            // Validate and parse JWT token, extracting session ID, account ID, roles, authorizations, and reconnection flag
-            var (sessionId, accountId, roles, authorizations, isReconnection) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
+            // Extract X-Service-Token header for Internal mode authentication
+            string? serviceTokenHeader = null;
+            if (HttpContext.Request.Headers.TryGetValue("X-Service-Token", out var serviceTokenValues))
+            {
+                serviceTokenHeader = serviceTokenValues.FirstOrDefault();
+            }
+
+            // Validate and parse JWT token (or service token for Internal mode)
+            var (sessionId, accountId, roles, authorizations, isReconnection) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, serviceTokenHeader, cancellationToken);
             if (sessionId == null)
             {
                 return Unauthorized("Invalid or expired JWT token");

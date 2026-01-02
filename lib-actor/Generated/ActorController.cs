@@ -331,6 +331,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CreateActorTemplateRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to create a new actor template definition",
       "required": [
         "category",
         "behaviorRef"
@@ -351,6 +352,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Default configuration passed to behavior execution"
         },
         "autoSpawn": {
+          "description": "Auto-spawn configuration for instantiate-on-access",
           "$ref": "#/$defs/AutoSpawnConfig"
         },
         "tickIntervalMs": {
@@ -404,6 +406,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ActorTemplateResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing actor template details",
       "properties": {
         "templateId": {
           "type": "string",
@@ -421,27 +424,34 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "configuration": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Default configuration passed to behavior execution"
         },
         "autoSpawn": {
+          "description": "Auto-spawn configuration for instantiate-on-access",
           "$ref": "#/$defs/AutoSpawnConfig"
         },
         "tickIntervalMs": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Milliseconds between behavior loop iterations"
         },
         "autoSaveIntervalSeconds": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Seconds between automatic state saves"
         },
         "maxInstancesPerNode": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum actors of this category per pool node"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was last updated"
         }
       }
     },
@@ -458,7 +468,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "idPattern": {
           "type": "string",
           "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\ nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
         },
         "maxInstances": {
           "type": "integer",
@@ -533,6 +543,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetActorTemplateRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to get an actor template by ID or category",
       "properties": {
         "templateId": {
           "type": "string",
@@ -559,6 +570,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ActorTemplateResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing actor template details",
       "properties": {
         "templateId": {
           "type": "string",
@@ -576,27 +588,34 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "configuration": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Default configuration passed to behavior execution"
         },
         "autoSpawn": {
+          "description": "Auto-spawn configuration for instantiate-on-access",
           "$ref": "#/$defs/AutoSpawnConfig"
         },
         "tickIntervalMs": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Milliseconds between behavior loop iterations"
         },
         "autoSaveIntervalSeconds": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Seconds between automatic state saves"
         },
         "maxInstancesPerNode": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum actors of this category per pool node"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was last updated"
         }
       }
     },
@@ -613,7 +632,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "idPattern": {
           "type": "string",
           "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\ nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
         },
         "maxInstances": {
           "type": "integer",
@@ -688,14 +707,17 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListActorTemplatesRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to list actor templates with pagination",
       "properties": {
         "limit": {
           "type": "integer",
-          "default": 100
+          "default": 100,
+          "description": "Maximum number of templates to return"
         },
         "offset": {
           "type": "integer",
-          "default": 0
+          "default": 0,
+          "description": "Number of templates to skip"
         }
       }
     }
@@ -711,21 +733,25 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListActorTemplatesResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing a list of actor templates",
       "properties": {
         "templates": {
           "type": "array",
+          "description": "List of actor templates",
           "items": {
             "$ref": "#/$defs/ActorTemplateResponse"
           }
         },
         "total": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of templates available"
         }
       }
     },
     "ActorTemplateResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing actor template details",
       "properties": {
         "templateId": {
           "type": "string",
@@ -743,27 +769,34 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "configuration": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Default configuration passed to behavior execution"
         },
         "autoSpawn": {
+          "description": "Auto-spawn configuration for instantiate-on-access",
           "$ref": "#/$defs/AutoSpawnConfig"
         },
         "tickIntervalMs": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Milliseconds between behavior loop iterations"
         },
         "autoSaveIntervalSeconds": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Seconds between automatic state saves"
         },
         "maxInstancesPerNode": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum actors of this category per pool node"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was last updated"
         }
       }
     },
@@ -855,13 +888,15 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UpdateActorTemplateRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to update an existing actor template",
       "required": [
         "templateId"
       ],
       "properties": {
         "templateId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the template to update"
         },
         "behaviorRef": {
           "type": "string",
@@ -871,18 +906,22 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "configuration": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Updated configuration settings"
         },
         "autoSpawn": {
+          "description": "Updated auto-spawn configuration",
           "$ref": "#/$defs/AutoSpawnConfig"
         },
         "tickIntervalMs": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Updated tick interval in milliseconds"
         },
         "autoSaveIntervalSeconds": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Updated auto-save interval in seconds"
         }
       }
     },
@@ -920,6 +959,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ActorTemplateResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing actor template details",
       "properties": {
         "templateId": {
           "type": "string",
@@ -937,27 +977,34 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "configuration": {
           "type": "object",
           "additionalProperties": true,
-          "nullable": true
+          "nullable": true,
+          "description": "Default configuration passed to behavior execution"
         },
         "autoSpawn": {
+          "description": "Auto-spawn configuration for instantiate-on-access",
           "$ref": "#/$defs/AutoSpawnConfig"
         },
         "tickIntervalMs": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Milliseconds between behavior loop iterations"
         },
         "autoSaveIntervalSeconds": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Seconds between automatic state saves"
         },
         "maxInstancesPerNode": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Maximum actors of this category per pool node"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was created"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the template was last updated"
         }
       }
     },
@@ -974,7 +1021,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         "idPattern": {
           "type": "string",
           "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\ nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
         },
         "maxInstances": {
           "type": "integer",
@@ -1049,13 +1096,15 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeleteActorTemplateRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to delete an actor template",
       "required": [
         "templateId"
       ],
       "properties": {
         "templateId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "ID of the template to delete"
         },
         "forceStopActors": {
           "type": "boolean",
@@ -1076,12 +1125,15 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "DeleteActorTemplateResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response confirming template deletion",
       "properties": {
         "deleted": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the template was successfully deleted"
         },
         "stoppedActorCount": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Number of running actors that were stopped"
         }
       }
     }
@@ -1151,6 +1203,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "SpawnActorRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to spawn a new actor from a template",
       "required": [
         "templateId"
       ],
@@ -1197,6 +1250,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ActorInstanceResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing actor instance details",
       "properties": {
         "actorId": {
           "type": "string",
@@ -1204,10 +1258,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "templateId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Template this actor was instantiated from"
         },
         "category": {
-          "type": "string"
+          "type": "string",
+          "description": "Actor category from template"
         },
         "nodeId": {
           "type": "string",
@@ -1220,6 +1276,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Pool node's app-id for direct messaging"
         },
         "status": {
+          "description": "Current actor lifecycle state",
           "$ref": "#/$defs/ActorStatus"
         },
         "characterId": {
@@ -1230,16 +1287,19 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the actor started running"
         },
         "lastHeartbeat": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Last heartbeat timestamp from the actor"
         },
         "loopIterations": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "Number of behavior loop iterations executed"
         }
       }
     },
@@ -1322,6 +1382,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetActorRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to get an actor instance by ID",
       "required": [
         "actorId"
       ],
@@ -1344,6 +1405,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ActorInstanceResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing actor instance details",
       "properties": {
         "actorId": {
           "type": "string",
@@ -1351,10 +1413,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "templateId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Template this actor was instantiated from"
         },
         "category": {
-          "type": "string"
+          "type": "string",
+          "description": "Actor category from template"
         },
         "nodeId": {
           "type": "string",
@@ -1367,6 +1431,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Pool node's app-id for direct messaging"
         },
         "status": {
+          "description": "Current actor lifecycle state",
           "$ref": "#/$defs/ActorStatus"
         },
         "characterId": {
@@ -1377,16 +1442,19 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the actor started running"
         },
         "lastHeartbeat": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Last heartbeat timestamp from the actor"
         },
         "loopIterations": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "Number of behavior loop iterations executed"
         }
       }
     },
@@ -1469,12 +1537,14 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "StopActorRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to stop a running actor",
       "required": [
         "actorId"
       ],
       "properties": {
         "actorId": {
-          "type": "string"
+          "type": "string",
+          "description": "ID of the actor to stop"
         },
         "graceful": {
           "type": "boolean",
@@ -1495,11 +1565,14 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "StopActorResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response confirming actor stop operation",
       "properties": {
         "stopped": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the actor was successfully stopped"
         },
         "finalStatus": {
+          "description": "Final status of the actor after stopping",
           "$ref": "#/$defs/ActorStatus"
         }
       }
@@ -1583,6 +1656,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListActorsRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to list actor instances with optional filters",
       "properties": {
         "category": {
           "type": "string",
@@ -1595,6 +1669,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Filter by pool node"
         },
         "status": {
+          "description": "Filter by actor status",
           "$ref": "#/$defs/ActorStatus"
         },
         "characterId": {
@@ -1605,11 +1680,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "limit": {
           "type": "integer",
-          "default": 100
+          "default": 100,
+          "description": "Maximum number of actors to return"
         },
         "offset": {
           "type": "integer",
-          "default": 0
+          "default": 0,
+          "description": "Number of actors to skip"
         }
       }
     },
@@ -1638,21 +1715,25 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListActorsResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing a list of actor instances",
       "properties": {
         "actors": {
           "type": "array",
+          "description": "List of actor instances",
           "items": {
             "$ref": "#/$defs/ActorInstanceResponse"
           }
         },
         "total": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Total number of actors matching the filter"
         }
       }
     },
     "ActorInstanceResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response containing actor instance details",
       "properties": {
         "actorId": {
           "type": "string",
@@ -1660,10 +1741,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "templateId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Template this actor was instantiated from"
         },
         "category": {
-          "type": "string"
+          "type": "string",
+          "description": "Actor category from template"
         },
         "nodeId": {
           "type": "string",
@@ -1676,6 +1759,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Pool node's app-id for direct messaging"
         },
         "status": {
+          "description": "Current actor lifecycle state",
           "$ref": "#/$defs/ActorStatus"
         },
         "characterId": {
@@ -1686,16 +1770,19 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "startedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "When the actor started running"
         },
         "lastHeartbeat": {
           "type": "string",
           "format": "date-time",
-          "nullable": true
+          "nullable": true,
+          "description": "Last heartbeat timestamp from the actor"
         },
         "loopIterations": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "Number of behavior loop iterations executed"
         }
       }
     },
@@ -1778,6 +1865,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "InjectPerceptionRequest": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Request to inject a perception event into an actor's queue",
       "required": [
         "actorId",
         "perception"
@@ -1788,6 +1876,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
           "description": "Target actor to inject perception into"
         },
         "perception": {
+          "description": "Perception data to inject",
           "$ref": "#/$defs/PerceptionData"
         }
       }
@@ -1795,6 +1884,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PerceptionData": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Data representing a perception event for an actor",
       "required": [
         "perceptionType",
         "sourceId"
@@ -1841,6 +1931,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     "InjectPerceptionResponse": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Response confirming perception injection",
       "properties": {
         "queued": {
           "type": "boolean",

@@ -107,10 +107,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_AUTHENTICATEDSERVICES` | string[] | `['accounts', 'behavior', 'permissions', 'gamesession']` | Additional services available to authenticated connections |
 | `CONNECT_BINARYPROTOCOLVERSION` | string | `2.0` | Binary protocol version identifier |
 | `CONNECT_BUFFERSIZE` | int | `65536` | Size of message buffers in bytes |
+| `CONNECT_CONNECTIONMODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
 | `CONNECT_CONNECTIONTIMEOUTSECONDS` | int | `300` | WebSocket connection timeout in seconds |
 | `CONNECT_DEFAULTSERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
 | `CONNECT_ENABLECLIENTTOCLIENTROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
 | `CONNECT_HEARTBEATINTERVALSECONDS` | int | `30` | Interval between heartbeat messages |
+| `CONNECT_INTERNALAUTHMODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
+| `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
 | `CONNECT_JWTPUBLICKEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
 | `CONNECT_MAXCONCURRENTCONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAXMESSAGESPERMINUTE` | int | `1000` | Rate limit for messages per minute per client |
@@ -316,9 +319,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 192
-- **Required (no default)**: 33
-- **Optional (has default)**: 159
+- **Total properties**: 195
+- **Required (no default)**: 34
+- **Optional (has default)**: 161
 
 ## Environment Variable Naming Convention
 

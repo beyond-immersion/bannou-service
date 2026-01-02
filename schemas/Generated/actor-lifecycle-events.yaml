@@ -29,13 +29,17 @@ components:
         templateId: &id001
           type: string
           format: uuid
+          description: Unique identifier for the actor template
         category: &id002
           type: string
+          description: Category identifier for the template
         behaviorRef: &id003
           type: string
+          description: Reference to behavior in lib-assets
         createdAt: &id004
           type: string
           format: date-time
+          description: When the template was created
     ActorTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -113,19 +117,25 @@ components:
           description: 'Event type identifier: actor-instance.created'
         actorId: &id005
           type: string
+          description: Unique identifier for the actor instance
         templateId: &id006
           type: string
           format: uuid
+          description: Template this actor was instantiated from
         characterId: &id007
           type: string
           format: uuid
+          description: Associated character ID for NPC brains
         nodeId: &id008
           type: string
+          description: Pool node running this actor
         status: &id009
           type: string
+          description: Current actor lifecycle state
         startedAt: &id010
           type: string
           format: date-time
+          description: When the actor started running
     ActorInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

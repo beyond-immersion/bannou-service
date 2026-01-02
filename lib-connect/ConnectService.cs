@@ -77,6 +77,11 @@ public partial class ConnectService : IConnectService
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
+    // Connection mode configuration
+    private readonly string _connectionMode;
+    private readonly string _internalAuthMode;
+    private readonly string? _internalServiceToken;
+
     public ConnectService(
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
@@ -119,8 +124,24 @@ public partial class ConnectService : IConnectService
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
 
-        _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
-            _instanceId, sessionManager != null ? "Enabled" : "Disabled");
+        // Connection mode configuration
+        _connectionMode = configuration.ConnectionMode ?? "external";
+        _internalAuthMode = configuration.InternalAuthMode ?? "service-token";
+        _internalServiceToken = string.IsNullOrEmpty(configuration.InternalServiceToken)
+            ? null
+            : configuration.InternalServiceToken;
+
+        // Validate Internal mode configuration
+        if (_connectionMode == "internal" &&
+            _internalAuthMode == "service-token" &&
+            string.IsNullOrEmpty(_internalServiceToken))
+        {
+            throw new InvalidOperationException(
+                "CONNECT_INTERNAL_SERVICE_TOKEN is required when ConnectionMode is 'internal' and InternalAuthMode is 'service-token'");
+        }
+
+        _logger.LogInformation("Connect service initialized: InstanceId={InstanceId}, Mode={ConnectionMode}, SessionManager={SessionManagerEnabled}",
+            _instanceId, _connectionMode, sessionManager != null ? "Enabled" : "Disabled");
     }
 
     /// <summary>
@@ -326,12 +347,50 @@ public partial class ConnectService : IConnectService
     /// Validates JWT token and extracts session ID and user roles.
     /// Returns a tuple with session ID, roles, and whether this is a reconnection for capability initialization.
     /// </summary>
+    /// <param name="authorization">Authorization header (Bearer token or Reconnect token).</param>
+    /// <param name="serviceTokenHeader">Optional X-Service-Token header for Internal mode authentication.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<(string? SessionId, Guid? AccountId, ICollection<string>? Roles, ICollection<string>? Authorizations, bool IsReconnection)> ValidateJWTAndExtractSessionAsync(
-        string authorization,
+        string? authorization,
+        string? serviceTokenHeader,
         CancellationToken cancellationToken)
     {
         try
         {
+            // Internal mode authentication - bypass JWT validation
+            if (_connectionMode == "internal")
+            {
+                if (_internalAuthMode == "network-trust")
+                {
+                    // Network trust: Accept connection without authentication
+                    var sessionId = Guid.NewGuid().ToString();
+                    _logger.LogInformation("Internal mode (network-trust): Creating session {SessionId}", sessionId);
+                    return (sessionId, null, new List<string> { "internal" }, null, false);
+                }
+
+                if (_internalAuthMode == "service-token")
+                {
+                    // Service token: Validate X-Service-Token header
+                    if (string.IsNullOrEmpty(serviceTokenHeader))
+                    {
+                        _logger.LogWarning("Internal mode requires X-Service-Token header");
+                        return (null, null, null, null, false);
+                    }
+
+                    if (serviceTokenHeader != _internalServiceToken)
+                    {
+                        _logger.LogWarning("Invalid X-Service-Token provided");
+                        return (null, null, null, null, false);
+                    }
+
+                    // Valid service token - create session
+                    var sessionId = Guid.NewGuid().ToString();
+                    _logger.LogInformation("Internal mode (service-token): Creating session {SessionId}", sessionId);
+                    return (sessionId, null, new List<string> { "internal" }, null, false);
+                }
+            }
+
+            // External/Relayed mode: Require JWT authentication
             _logger.LogDebug("JWT validation starting, AuthorizationLength: {Length}, HasBearerPrefix: {IsBearer}",
                 authorization?.Length ?? 0, authorization?.StartsWith("Bearer ") ?? false);
 
@@ -477,6 +536,37 @@ public partial class ConnectService : IConnectService
     {
         // Create connection state with service mappings from discovery
         var connectionState = new ConnectionState(sessionId);
+
+        // INTERNAL MODE: Skip all capability initialization - just peer routing
+        if (_connectionMode == "internal")
+        {
+            // Add connection to manager (enables peer routing via PeerGuid)
+            _connectionManager.AddConnection(sessionId, webSocket, connectionState);
+
+            // Send minimal response with sessionId and peerGuid
+            var internalResponse = new
+            {
+                sessionId = sessionId,
+                peerGuid = connectionState.PeerGuid.ToString()
+            };
+            var responseJson = BannouJson.Serialize(internalResponse);
+            var responseBytes = Encoding.UTF8.GetBytes(responseJson);
+
+            await webSocket.SendAsync(
+                new ArraySegment<byte>(responseBytes),
+                WebSocketMessageType.Text,
+                endOfMessage: true,
+                cancellationToken);
+
+            _logger.LogInformation("Internal mode: Session {SessionId} connected with PeerGuid {PeerGuid}",
+                sessionId, connectionState.PeerGuid);
+
+            // Enter simplified message loop - only binary messages, no capability/event handling
+            await HandleInternalModeMessageLoopAsync(webSocket, sessionId, connectionState, cancellationToken);
+            return;
+        }
+
+        // EXTERNAL/RELAYED MODE: Full capability initialization
 
         // Transfer service mappings from session discovery to connection state
         Dictionary<string, Guid>? sessionMappings = null;
@@ -927,6 +1017,22 @@ public partial class ConnectService : IConnectService
             {
                 await RouteToClientAsync(message, routeInfo, sessionId, cancellationToken);
             }
+            else if (routeInfo.RouteType == RouteType.Broadcast)
+            {
+                // Broadcast: Send to all connected peers (except sender)
+                // Mode enforcement: External mode rejects broadcast with BroadcastNotAllowed
+                if (_connectionMode == "external")
+                {
+                    _logger.LogWarning("Broadcast rejected in External mode for session {SessionId}", sessionId);
+                    var errorResponse = MessageRouter.CreateErrorResponse(
+                        message, ResponseCodes.BroadcastNotAllowed, "Broadcast not allowed in External mode");
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
+                // Relayed or Internal mode: Allow broadcast
+                await RouteToBroadcastAsync(message, routeInfo, sessionId, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
@@ -1275,6 +1381,144 @@ public partial class ConnectService : IConnectService
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
+        }
+    }
+
+    /// <summary>
+    /// Routes a message to all connected WebSocket clients (broadcast).
+    /// Only allowed in Relayed and Internal connection modes - External mode blocks broadcast.
+    /// </summary>
+    private async Task RouteToBroadcastAsync(
+        BinaryMessage message,
+        MessageRouteInfo routeInfo,
+        string senderSessionId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get all active session IDs except sender
+            var allSessionIds = _connectionManager.GetActiveSessionIds()
+                .Where(id => id != senderSessionId)
+                .ToList();
+
+            _logger.LogDebug("Broadcasting message from session {SessionId} to {PeerCount} peers, payload size {PayloadSize}",
+                senderSessionId, allSessionIds.Count, message.Payload.Length);
+
+            if (allSessionIds.Count == 0)
+            {
+                _logger.LogDebug("No other peers to broadcast to from session {SessionId}", senderSessionId);
+
+                // If sender expects response, send acknowledgment with zero recipients
+                if (message.ExpectsResponse)
+                {
+                    var ackPayload = new
+                    {
+                        status = "broadcast_complete",
+                        recipientCount = 0,
+                        originalMessageId = message.MessageId
+                    };
+
+                    var ackMessage = BinaryMessage.CreateResponse(
+                        message, ResponseCodes.OK, Encoding.UTF8.GetBytes(BannouJson.Serialize(ackPayload)));
+
+                    await _connectionManager.SendMessageAsync(senderSessionId, ackMessage, cancellationToken);
+                }
+                return;
+            }
+
+            // Forward message to all peers (excluding sender) in parallel
+            var tasks = allSessionIds.Select(targetSessionId =>
+                _connectionManager.SendMessageAsync(targetSessionId, message, cancellationToken));
+
+            var results = await Task.WhenAll(tasks);
+            var successCount = results.Count(r => r);
+
+            _logger.LogInformation("Broadcast from {SessionId} sent to {SuccessCount}/{TotalCount} peers",
+                senderSessionId, successCount, allSessionIds.Count);
+
+            // If sender expects response, send acknowledgment
+            if (message.ExpectsResponse)
+            {
+                var ackPayload = new
+                {
+                    status = "broadcast_complete",
+                    recipientCount = successCount,
+                    originalMessageId = message.MessageId
+                };
+
+                var ackMessage = BinaryMessage.CreateResponse(
+                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(BannouJson.Serialize(ackPayload)));
+
+                await _connectionManager.SendMessageAsync(senderSessionId, ackMessage, cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting message from session {SessionId}", senderSessionId);
+            await PublishErrorEventAsync("RouteToBroadcast", ex.GetType().Name, ex.Message, details: new { SessionId = senderSessionId });
+
+            if (message.ExpectsResponse)
+            {
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.RequestError, "Broadcast failed");
+
+                await _connectionManager.SendMessageAsync(senderSessionId, errorResponse, cancellationToken);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Simplified message loop for Internal mode connections.
+    /// Only handles binary messages for peer routing and broadcast - no capability/event handling.
+    /// </summary>
+    private async Task HandleInternalModeMessageLoopAsync(
+        WebSocket webSocket,
+        string sessionId,
+        ConnectionState connectionState,
+        CancellationToken cancellationToken)
+    {
+        var buffer = new byte[65536];
+
+        try
+        {
+            while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
+            {
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    _logger.LogInformation("Internal mode: WebSocket close requested for session {SessionId}", sessionId);
+                    break;
+                }
+
+                connectionState.UpdateActivity();
+
+                if (result.MessageType == WebSocketMessageType.Binary)
+                {
+                    await HandleBinaryMessageAsync(sessionId, connectionState, buffer, result.Count, cancellationToken);
+                }
+                // Internal mode ignores text messages - binary protocol only
+            }
+        }
+        catch (WebSocketException wsEx)
+        {
+            _logger.LogWarning(wsEx, "Internal mode: WebSocket error for session {SessionId}: {Error}",
+                sessionId, wsEx.Message);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Internal mode: WebSocket operation cancelled for session {SessionId}", sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Internal mode: Unexpected error for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("InternalModeMessageLoop", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
+        }
+        finally
+        {
+            // Clean up connection
+            _connectionManager.RemoveConnection(sessionId);
+            _logger.LogInformation("Internal mode: Session {SessionId} disconnected", sessionId);
         }
     }
 

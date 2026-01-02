@@ -399,6 +399,9 @@ public partial class ConnectErrorResponse
 /// Response codes used in the binary protocol for success/error indication.
 /// <br/>Provides fine-grained error reporting for different failure scenarios.
 /// <br/>
+/// <br/>**Broadcast error codes (40-49):**
+/// <br/>- 40 (BroadcastNotAllowed): Broadcast attempted in External mode where it is forbidden
+/// <br/>
 /// <br/>**Shortcut-specific error codes (70-79):**
 /// <br/>- 70 (ShortcutExpired): Session shortcut has expired (TTL exceeded)
 /// <br/>- 71 (ShortcutTargetNotFound): Shortcut's target capability no longer available
@@ -427,6 +430,8 @@ public enum ResponseCodes
     ClientNotFound = 31,
 
     MessageNotFound = 32,
+
+    BroadcastNotAllowed = 40,
 
     Service_BadRequest = 50,
 

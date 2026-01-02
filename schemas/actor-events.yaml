@@ -26,16 +26,20 @@ x-lifecycle:
         format: uuid
         primary: true
         required: true
+        description: Unique identifier for the actor template
       category:
         type: string
         required: true
+        description: Category identifier for the template
       behaviorRef:
         type: string
         required: true
+        description: Reference to behavior in lib-assets
       createdAt:
         type: string
         format: date-time
         required: true
+        description: When the template was created
     events:
       - created
       - updated
@@ -47,22 +51,28 @@ x-lifecycle:
         type: string
         primary: true
         required: true
+        description: Unique identifier for the actor instance
       templateId:
         type: string
         format: uuid
         required: true
+        description: Template this actor was instantiated from
       characterId:
         type: string
         format: uuid
+        description: Associated character ID for NPC brains
       nodeId:
         type: string
+        description: Pool node running this actor
       status:
         type: string
         required: true
+        description: Current actor lifecycle state
       startedAt:
         type: string
         format: date-time
         required: true
+        description: When the actor started running
     events:
       - created
       - deleted
@@ -86,6 +96,7 @@ components:
         eventName:
           type: string
           default: "actor.pool-node.heartbeat"
+          description: Event type identifier for pool node heartbeats
         nodeId:
           type: string
           description: Unique identifier for this pool node
@@ -122,14 +133,19 @@ components:
         eventName:
           type: string
           default: "actor.instance.status-changed"
+          description: Event type identifier for actor status changes
         actorId:
           type: string
+          description: Unique identifier of the actor whose status changed
         nodeId:
           type: string
+          description: Pool node where the actor is running
         previousStatus:
           type: string
+          description: Actor status before the change
         newStatus:
           type: string
+          description: Actor status after the change
         reason:
           type: string
           nullable: true
@@ -151,12 +167,16 @@ components:
         eventName:
           type: string
           default: "actor.instance.completed"
+          description: Event type identifier for actor completion
         actorId:
           type: string
+          description: Unique identifier of the completed actor
         nodeId:
           type: string
+          description: Pool node where the actor was running
         exitReason:
           type: string
+          description: Reason the actor exited
           enum:
             - behavior_complete
             - error
@@ -190,9 +210,11 @@ components:
       properties:
         actorId:
           type: string
+          description: Unique identifier for the actor to spawn
         templateId:
           type: string
           format: uuid
+          description: Template ID to instantiate from
         behaviorRef:
           type: string
           description: Asset reference to fetch behavior from lib-assets
@@ -229,6 +251,7 @@ components:
       properties:
         actorId:
           type: string
+          description: Unique identifier of the actor to stop
         graceful:
           type: boolean
           default: true
@@ -246,6 +269,7 @@ components:
       properties:
         actorId:
           type: string
+          description: Unique identifier of the target actor
         messageType:
           type: string
           description: Message type identifier (behavior decides handling)
@@ -253,6 +277,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          description: Message payload data
 
     ReloadBehaviorCommand:
       type: object
@@ -266,6 +291,7 @@ components:
       properties:
         actorId:
           type: string
+          description: Unique identifier of the actor to reload
         newBehaviorRef:
           type: string
           description: New asset reference to fetch

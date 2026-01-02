@@ -563,8 +563,10 @@ components:
           nullable: true
           description: Actor that produced this update (opaque to Game Server)
         feelings:
+          description: Emotional state values for the character
           $ref: '#/components/schemas/FeelingState'
         goals:
+          description: Goal state for the character
           $ref: '#/components/schemas/GoalState'
         memories:
           type: array
@@ -573,6 +575,7 @@ components:
             $ref: '#/components/schemas/MemoryUpdate'
           description: Memory updates (add/remove/modify)
         behaviorChange:
+          description: Changes to the character's behavior composition
           $ref: '#/components/schemas/BehaviorCompositionChange'
 
     FeelingState:

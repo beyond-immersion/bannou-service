@@ -137,4 +137,22 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string ConnectUrl { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)
+    /// Environment variable: CONNECTIONMODE
+    /// </summary>
+    public string ConnectionMode { get; set; } = "external";
+
+    /// <summary>
+    /// Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)
+    /// Environment variable: INTERNALAUTHMODE
+    /// </summary>
+    public string InternalAuthMode { get; set; } = "service-token";
+
+    /// <summary>
+    /// Secret for X-Service-Token validation when InternalAuthMode is service-token
+    /// Environment variable: CONNECT_INTERNAL_SERVICE_TOKEN
+    /// </summary>
+    public string? InternalServiceToken { get; set; }
+
 }

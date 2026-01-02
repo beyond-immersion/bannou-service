@@ -78,6 +78,7 @@ try:
             prop_default = prop_info.get('default', None)
             prop_description = prop_info.get('description', f'{prop_name} configuration property')
             prop_env_var = prop_info.get('env', prop_name.upper())
+            prop_nullable = prop_info.get('nullable', False)
 
             # Convert type to C# type
             csharp_type = {
@@ -89,7 +90,12 @@ try:
             }.get(prop_type, 'string')
 
             # Handle nullable types and defaults for properties
-            nullable_suffix = '?' if prop_default is None and csharp_type != 'string' else ''
+            # For strings: add ? suffix if explicitly nullable in schema
+            # For other types: add ? suffix if no default provided
+            if csharp_type == 'string':
+                nullable_suffix = '?' if prop_nullable else ''
+            else:
+                nullable_suffix = '?' if prop_default is None else ''
             default_value = ''
 
             if prop_default is not None:
@@ -106,7 +112,8 @@ try:
                         default_value = f' = {prop_default};'
                 else:
                     default_value = f' = {prop_default};'
-            elif csharp_type == 'string':
+            elif csharp_type == 'string' and not prop_nullable:
+                # Only add string.Empty default for non-nullable strings
                 default_value = ' = string.Empty;'
 
             property_name = to_property_name(prop_name)

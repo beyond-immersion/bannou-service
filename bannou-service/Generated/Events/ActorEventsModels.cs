@@ -31,6 +31,9 @@ using System = global::System;
 public partial class PoolNodeHeartbeatEvent : BaseServiceEvent
 {
 
+    /// <summary>
+    /// Event type identifier for pool node heartbeats
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     public override string EventName { get; set; } = "actor.pool-node.heartbeat";
 
@@ -77,24 +80,39 @@ public partial class PoolNodeHeartbeatEvent : BaseServiceEvent
 public partial class ActorStatusChangedEvent : BaseServiceEvent
 {
 
+    /// <summary>
+    /// Event type identifier for actor status changes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     public override string EventName { get; set; } = "actor.instance.status-changed";
 
+    /// <summary>
+    /// Unique identifier of the actor whose status changed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Pool node where the actor is running
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
+    /// <summary>
+    /// Actor status before the change
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousStatus")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string PreviousStatus { get; set; } = default!;
 
+    /// <summary>
+    /// Actor status after the change
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newStatus")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -117,19 +135,31 @@ public partial class ActorStatusChangedEvent : BaseServiceEvent
 public partial class ActorCompletedEvent : BaseServiceEvent
 {
 
+    /// <summary>
+    /// Event type identifier for actor completion
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     public override string EventName { get; set; } = "actor.instance.completed";
 
+    /// <summary>
+    /// Unique identifier of the completed actor
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Pool node where the actor was running
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string NodeId { get; set; } = default!;
 
+    /// <summary>
+    /// Reason the actor exited
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exitReason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -165,11 +195,17 @@ public partial class ActorCompletedEvent : BaseServiceEvent
 public partial class SpawnActorCommand
 {
 
+    /// <summary>
+    /// Unique identifier for the actor to spawn
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
+    /// <summary>
+    /// Template ID to instantiate from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -224,6 +260,9 @@ public partial class SpawnActorCommand
 public partial class StopActorCommand
 {
 
+    /// <summary>
+    /// Unique identifier of the actor to stop
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -246,6 +285,9 @@ public partial class StopActorCommand
 public partial class SendMessageCommand
 {
 
+    /// <summary>
+    /// Unique identifier of the target actor
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -259,6 +301,9 @@ public partial class SendMessageCommand
     [System.Text.Json.Serialization.JsonRequired]
     public string MessageType { get; set; } = default!;
 
+    /// <summary>
+    /// Message payload data
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     public object? Payload { get; set; } = default!;
 
@@ -273,6 +318,9 @@ public partial class SendMessageCommand
 public partial class ReloadBehaviorCommand
 {
 
+    /// <summary>
+    /// Unique identifier of the actor to reload
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

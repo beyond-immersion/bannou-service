@@ -38,6 +38,9 @@ public enum ResponseCodes : byte
     /// <summary>Referenced message ID not found.</summary>
     MessageNotFound = 32,
 
+    /// <summary>Broadcast not allowed in this connection mode (External mode blocks broadcast).</summary>
+    BroadcastNotAllowed = 40,
+
     /// <summary>Service returned 400 Bad Request.</summary>
     Service_BadRequest = 50,
 
