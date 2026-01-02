@@ -99,6 +99,9 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["orchestrator-routings"] = (StateBackend.Redis, "orch:rt", false),
             ["orchestrator-config"] = (StateBackend.Redis, "orch:cfg", false),
 
+            // Actor/Behavior stores (agent cognition data)
+            ["agent-memories"] = (StateBackend.Redis, "agent:mem", false),
+
             // Redis stores with full-text search (Redis 8+ via NRedisStack)
             ["documentation-statestore"] = (StateBackend.Redis, "doc", true),
 

@@ -1,20 +1,23 @@
 // =============================================================================
 // Trigger GOAP Replan Handler (Cognition Stage 5)
-// Non-blocking trigger for GOAP replanning.
+// Triggers GOAP replanning with urgency-based constraints.
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using GoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
 
 namespace BeyondImmersion.Bannou.Behavior.Handlers;
 
 /// <summary>
 /// ABML action handler for triggering GOAP replanning (Cognition Stage 5).
-/// Non-blocking - queues replan request and continues execution.
+/// Invokes the GOAP planner with urgency-based constraints.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -26,6 +29,7 @@ namespace BeyondImmersion.Bannou.Behavior.Handlers;
 ///     world_state: "${agent.world_state}"
 ///     behavior_id: "${agent.behavior_id}"
 ///     entity_id: "${agent.id}"
+///     available_actions: "${agent.goap_actions}"
 ///     result_variable: "replan_status"
 /// </code>
 /// </para>
@@ -40,6 +44,7 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
 {
     private const string ACTION_NAME = "trigger_goap_replan";
     private readonly IGoapPlanner _planner;
+    private readonly BehaviorBundleManager? _bundleManager;
     private readonly ILogger<TriggerGoapReplanHandler> _logger;
 
     /// <summary>
@@ -48,8 +53,23 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
     /// <param name="planner">GOAP planner for creating plans.</param>
     /// <param name="logger">Logger instance.</param>
     public TriggerGoapReplanHandler(IGoapPlanner planner, ILogger<TriggerGoapReplanHandler> logger)
+        : this(planner, null, logger)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new trigger GOAP replan handler with bundle manager.
+    /// </summary>
+    /// <param name="planner">GOAP planner for creating plans.</param>
+    /// <param name="bundleManager">Bundle manager for loading GOAP metadata.</param>
+    /// <param name="logger">Logger instance.</param>
+    public TriggerGoapReplanHandler(
+        IGoapPlanner planner,
+        BehaviorBundleManager? bundleManager,
+        ILogger<TriggerGoapReplanHandler> logger)
     {
         _planner = planner ?? throw new ArgumentNullException(nameof(planner));
+        _bundleManager = bundleManager;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -58,7 +78,7 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
@@ -98,8 +118,6 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
             "Triggering GOAP replan for entity {EntityId} with urgency {Urgency} (depth={MaxDepth}, timeout={TimeoutMs}ms)",
             entityId, urgency, planningOptions.MaxDepth, planningOptions.TimeoutMs);
 
-        // For MVP, we execute the replan synchronously but with urgency-based constraints
-        // In a full implementation, this would queue the replan and return immediately
         var status = new ReplanStatus
         {
             Triggered = true,
@@ -110,30 +128,163 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
             PlanningOptions = planningOptions
         };
 
-        // Try to create a quick plan if we have enough context
-        if (affectedGoals.Count > 0 && worldState.Count > 0)
+        // Get available actions - from params, cached metadata, or scope
+        var availableActions = await GetAvailableActionsAsync(evaluatedParams, behaviorId, scope, ct);
+
+        // Get the goal to plan for
+        var goal = await GetPlanningGoalAsync(evaluatedParams, affectedGoals, behaviorId, ct);
+
+        // Execute planning if we have sufficient context
+        if (goal != null && availableActions.Count > 0 && worldState.Count > 0)
         {
             try
             {
-                // Get actions from behavior model (would normally come from cached GOAP metadata)
-                // For now, we just note that replanning was triggered
-                status.Message = $"Replan queued for {affectedGoals.Count} affected goal(s)";
+                _logger.LogDebug(
+                    "Planning for goal {GoalId} with {ActionCount} actions and {StateCount} state properties",
+                    goal.Id, availableActions.Count, worldState.Count);
+
+                var plan = await _planner.PlanAsync(
+                    worldState,
+                    goal,
+                    availableActions,
+                    planningOptions.ToPlanningOptions(),
+                    ct);
+
+                if (plan != null)
+                {
+                    status.Plan = plan;
+                    status.Message = $"Plan found with {plan.Actions.Count} action(s), total cost {plan.TotalCost:F2}";
+                    _logger.LogInformation(
+                        "GOAP plan found for entity {EntityId}: {ActionCount} actions, cost {Cost:F2}",
+                        entityId, plan.Actions.Count, plan.TotalCost);
+                }
+                else
+                {
+                    status.Message = $"No plan found for goal '{goal.Name}' from current state";
+                    _logger.LogWarning(
+                        "No GOAP plan found for entity {EntityId} goal {GoalId}",
+                        entityId, goal.Id);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error during GOAP replan preparation for entity {EntityId}", entityId);
-                status.Message = $"Replan error: {ex.Message}";
+                _logger.LogWarning(ex, "Error during GOAP planning for entity {EntityId}", entityId);
+                status.Message = $"Planning error: {ex.Message}";
             }
         }
         else
         {
-            status.Message = "Replan triggered but insufficient context for immediate planning";
+            var missing = new List<string>();
+            if (goal == null) missing.Add("goal");
+            if (availableActions.Count == 0) missing.Add("actions");
+            if (worldState.Count == 0) missing.Add("world_state");
+
+            status.Message = $"Insufficient context for planning: missing {string.Join(", ", missing)}";
+            _logger.LogDebug(
+                "Cannot plan for entity {EntityId}: missing {Missing}",
+                entityId, string.Join(", ", missing));
         }
 
         // Store result in scope
         scope.SetValue(resultVariable, status);
 
-        return ValueTask.FromResult(ActionResult.Continue);
+        return ActionResult.Continue;
+    }
+
+    private async Task<IReadOnlyList<GoapAction>> GetAvailableActionsAsync(
+        IReadOnlyDictionary<string, object?> evaluatedParams,
+        string behaviorId,
+        IVariableScope scope,
+        CancellationToken ct)
+    {
+        // First, check if actions were provided directly in parameters
+        if (evaluatedParams.TryGetValue("available_actions", out var actionsObj) && actionsObj != null)
+        {
+            if (actionsObj is IReadOnlyList<GoapAction> actions)
+            {
+                return actions;
+            }
+        }
+
+        // Check if actions are in scope (e.g., from actor context)
+        var scopeActions = scope.GetValue("goap_actions") as IReadOnlyList<GoapAction>;
+        if (scopeActions != null)
+        {
+            return scopeActions;
+        }
+
+        // Try to load from behavior metadata via bundle manager
+        if (_bundleManager != null && !string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
+        {
+            var metadata = await _bundleManager.GetGoapMetadataAsync(behaviorId, ct);
+            if (metadata != null)
+            {
+                return ConvertCachedActions(metadata.Actions);
+            }
+        }
+
+        return [];
+    }
+
+    private async Task<GoapGoal?> GetPlanningGoalAsync(
+        IReadOnlyDictionary<string, object?> evaluatedParams,
+        List<string> affectedGoals,
+        string behaviorId,
+        CancellationToken ct)
+    {
+        // First, check if a goal was provided directly in parameters
+        if (evaluatedParams.TryGetValue("goal", out var goalObj) && goalObj is GoapGoal providedGoal)
+        {
+            return providedGoal;
+        }
+
+        // If no affected goals, can't plan
+        if (affectedGoals.Count == 0)
+        {
+            return null;
+        }
+
+        // Try to load goal definition from behavior metadata
+        if (_bundleManager != null && !string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
+        {
+            var metadata = await _bundleManager.GetGoapMetadataAsync(behaviorId, ct);
+            if (metadata != null)
+            {
+                // Find the first matching affected goal
+                var goalName = affectedGoals[0];
+                var cachedGoal = metadata.Goals.FirstOrDefault(g =>
+                    g.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+
+                if (cachedGoal != null)
+                {
+                    return ConvertCachedGoal(cachedGoal);
+                }
+            }
+        }
+
+        // Create a simple placeholder goal if we have a name but no metadata
+        if (affectedGoals.Count > 0)
+        {
+            // Can't create a meaningful goal without conditions
+            return null;
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyList<GoapAction> ConvertCachedActions(List<CachedGoapAction> cached)
+    {
+        var actions = new List<GoapAction>();
+        foreach (var c in cached)
+        {
+            actions.Add(GoapAction.FromMetadata(c.FlowName, c.Preconditions, c.Effects, c.Cost));
+        }
+        return actions;
+    }
+
+    private static GoapGoal ConvertCachedGoal(CachedGoapGoal cached)
+    {
+        return GoapGoal.FromMetadata(cached.Name, cached.Priority, cached.Conditions);
     }
 
     private static List<string> ExtractGoalIds(object? goals)
@@ -252,6 +403,11 @@ public sealed class ReplanStatus
     /// Planning options derived from urgency.
     /// </summary>
     public UrgencyBasedPlanningOptions? PlanningOptions { get; init; }
+
+    /// <summary>
+    /// The generated plan, if planning succeeded.
+    /// </summary>
+    public GoapPlan? Plan { get; set; }
 
     /// <summary>
     /// Status message.

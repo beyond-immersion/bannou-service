@@ -259,6 +259,20 @@ public sealed class UrgencyBasedPlanningOptions
             MaxNodes = 200
         };
     }
+
+    /// <summary>
+    /// Converts to GOAP PlanningOptions for the planner.
+    /// </summary>
+    /// <returns>GOAP planning options.</returns>
+    public Goap.PlanningOptions ToPlanningOptions()
+    {
+        return new Goap.PlanningOptions
+        {
+            MaxDepth = MaxDepth,
+            MaxNodesExpanded = MaxNodes,
+            TimeoutMs = TimeoutMs
+        };
+    }
 }
 
 /// <summary>
