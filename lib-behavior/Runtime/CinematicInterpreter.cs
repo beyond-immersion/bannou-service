@@ -3,7 +3,7 @@
 // Handles streaming composition and continuation points for behavior models.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// Interpreter for cinematic composition using continuation points.

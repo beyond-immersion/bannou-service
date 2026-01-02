@@ -3,7 +3,7 @@
 // Defines input/output variables for behavior model evaluation.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// Defines the input and output variables for a behavior model.

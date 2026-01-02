@@ -3,9 +3,9 @@
 // Fixed behavior model types and output slot layout conventions.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+namespace BeyondImmersion.BannouService.Behavior.Intent;
 
 /// <summary>
 /// The fixed set of behavior model types for multi-model coordination.

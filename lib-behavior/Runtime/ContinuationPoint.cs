@@ -3,7 +3,7 @@
 // Defines pause points where extensions can attach during execution.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// Defines a point in execution where the interpreter pauses for possible extension attachment.

@@ -3,9 +3,9 @@
 // Stack-based bytecode virtual machine for behavior model execution.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+using BeyondImmersion.BannouService.Behavior.Intent;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// Lightweight interpreter for compiled ABML behavior models.
@@ -20,7 +20,7 @@ namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
 /// The interpreter is NOT thread-safe. Each character should have its own interpreter instance.
 /// </para>
 /// </remarks>
-public sealed class BehaviorModelInterpreter
+public sealed class BehaviorModelInterpreter : IBehaviorModelInterpreter
 {
     private readonly BehaviorModel _model;
     private readonly byte[] _bytecode;

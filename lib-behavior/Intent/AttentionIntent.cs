@@ -3,7 +3,7 @@
 // Blendable attention output for multi-model gaze coordination.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+namespace BeyondImmersion.BannouService.Behavior.Intent;
 
 /// <summary>
 /// Attention intent with blendable gaze targets.

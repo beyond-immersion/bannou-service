@@ -4,7 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Compiler.Codegen;
-using BeyondImmersion.BannouService.Abml.Bytecode;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using System.Text;
 
 namespace BeyondImmersion.Bannou.Behavior.Compiler.Output;
@@ -245,8 +245,8 @@ public sealed class BehaviorModelBuilder
     {
         var checksum = ComputeChecksum();
 
-        writer.Write(BehaviorModelFormat.Magic);
-        writer.Write(BehaviorModelFormat.CurrentVersion);
+        writer.Write(BehaviorModelHeader.Magic);
+        writer.Write(BehaviorModelHeader.CurrentVersion);
         writer.Write((ushort)_flags);
         writer.Write(_modelId.ToByteArray());
         writer.Write(checksum);

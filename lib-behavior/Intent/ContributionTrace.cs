@@ -3,9 +3,9 @@
 // Debug support for understanding merge decisions.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+namespace BeyondImmersion.BannouService.Behavior.Intent;
 
 /// <summary>
 /// A single contribution from a behavior model to a channel.

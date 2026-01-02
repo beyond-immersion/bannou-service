@@ -3,7 +3,7 @@
 // Low-level bytecode emission for behavior model compilation.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Bytecode;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 
 namespace BeyondImmersion.Bannou.Behavior.Compiler.Codegen;
 

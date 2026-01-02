@@ -3,7 +3,7 @@
 // Fixed-size header structure for behavior model binary format.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// Fixed-size header for behavior model binary format (32 bytes).

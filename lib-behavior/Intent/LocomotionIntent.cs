@@ -5,7 +5,7 @@
 
 using System.Numerics;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+namespace BeyondImmersion.BannouService.Behavior.Intent;
 
 /// <summary>
 /// Locomotion intent with blendable target position.

@@ -3,7 +3,7 @@
 // Complete compiled behavior model with bytecode and metadata.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// A compiled behavior model ready for execution.

@@ -4,6 +4,7 @@ using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using BeyondImmersion.BannouService.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,6 +35,9 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
 
         // Register ABML behavior compiler as singleton - it's thread-safe and stateless
         services.AddSingleton<BehaviorCompiler>();
+
+        // Register behavior model interpreter factory for runtime execution
+        services.AddSingleton<IBehaviorModelInterpreterFactory, BehaviorModelInterpreterFactory>();
 
         // Register asset client for storing compiled behavior models
         // Uses mesh client for service-to-service calls

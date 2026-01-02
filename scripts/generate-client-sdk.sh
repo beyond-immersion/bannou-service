@@ -153,7 +153,16 @@ cat >> "$SERVER_SDK_PROJECT" << 'EOF'
 
   <!-- SDK Source Files (WebSocket client, etc.) -->
   <ItemGroup>
-    <Compile Include="../sdk-sources/**/*.cs" />
+    <Compile Include="../sdk-sources/**/*.cs" Exclude="../sdk-sources/Behavior/**/*.cs" />
+  </ItemGroup>
+
+  <!-- Behavior Runtime from lib-behavior (canonical source) -->
+  <ItemGroup>
+    <Compile Include="../lib-behavior/Runtime/*.cs" />
+    <Compile Include="../lib-behavior/Intent/*.cs" />
+    <Compile Include="../lib-behavior/IBehaviorEvaluator.cs" />
+    <Compile Include="../lib-behavior/BehaviorEvaluatorBase.cs" />
+    <Compile Include="../lib-behavior/BehaviorModelCache.cs" />
   </ItemGroup>
 
 </Project>
@@ -347,7 +356,16 @@ cat >> "$CLIENT_SDK_PROJECT" << 'EOF'
 
   <!-- SDK Source Files (WebSocket client, etc.) -->
   <ItemGroup>
-    <Compile Include="../sdk-sources/**/*.cs" />
+    <Compile Include="../sdk-sources/**/*.cs" Exclude="../sdk-sources/Behavior/**/*.cs" />
+  </ItemGroup>
+
+  <!-- Behavior Runtime from lib-behavior (canonical source) -->
+  <ItemGroup>
+    <Compile Include="../lib-behavior/Runtime/*.cs" />
+    <Compile Include="../lib-behavior/Intent/*.cs" />
+    <Compile Include="../lib-behavior/IBehaviorEvaluator.cs" />
+    <Compile Include="../lib-behavior/BehaviorEvaluatorBase.cs" />
+    <Compile Include="../lib-behavior/BehaviorModelCache.cs" />
   </ItemGroup>
 
 </Project>

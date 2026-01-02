@@ -3,9 +3,9 @@
 // Game integration interface for behavior model evaluation.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+using BeyondImmersion.BannouService.Behavior.Intent;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior;
+namespace BeyondImmersion.BannouService.Behavior;
 
 /// <summary>
 /// Interface for evaluating behavior models per character.

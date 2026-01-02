@@ -5,7 +5,7 @@
 
 using BeyondImmersion.Bannou.Behavior.Compiler.Codegen;
 using BeyondImmersion.Bannou.Behavior.Compiler.Output;
-using BeyondImmersion.BannouService.Abml.Bytecode;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 
 namespace BeyondImmersion.Bannou.Behavior.Compiler;
 

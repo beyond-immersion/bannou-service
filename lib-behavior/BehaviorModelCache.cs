@@ -3,11 +3,11 @@
 // Caches interpreter instances per character/type/variant combination.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+using BeyondImmersion.BannouService.Behavior.Intent;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using System.Collections.Concurrent;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior;
+namespace BeyondImmersion.BannouService.Behavior;
 
 /// <summary>
 /// Caches behavior model interpreters per (character, type, variant) combination.

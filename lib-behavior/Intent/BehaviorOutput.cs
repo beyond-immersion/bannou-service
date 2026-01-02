@@ -3,10 +3,10 @@
 // Structured output from a single behavior model evaluation.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using System.Numerics;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+namespace BeyondImmersion.BannouService.Behavior.Intent;
 
 /// <summary>
 /// Structured output from a single behavior model evaluation.

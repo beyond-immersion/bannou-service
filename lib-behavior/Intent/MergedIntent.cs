@@ -3,7 +3,7 @@
 // Unified output from all behavior models for game engine consumption.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+namespace BeyondImmersion.BannouService.Behavior.Intent;
 
 /// <summary>
 /// The merged result of all behavior model outputs.

@@ -3,7 +3,7 @@
 // Compiles expression AST to stack-based bytecode.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Bytecode;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using BeyondImmersion.BannouService.Abml.Compiler;
 using BeyondImmersion.BannouService.Abml.Compiler.Ast;
 

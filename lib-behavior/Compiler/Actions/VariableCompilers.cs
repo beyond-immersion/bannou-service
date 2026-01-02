@@ -4,7 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Compiler.Expressions;
-using BeyondImmersion.BannouService.Abml.Bytecode;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 
 namespace BeyondImmersion.Bannou.Behavior.Compiler.Actions;

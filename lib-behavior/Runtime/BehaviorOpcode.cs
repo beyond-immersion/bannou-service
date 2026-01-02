@@ -2,11 +2,11 @@
 // Behavior Model Opcodes
 // Stack-based instruction set for the local behavior runtime.
 //
-// IMPORTANT: This file MUST stay in sync with:
-//   bannou-service/Abml/Bytecode/BehaviorOpcode.cs
+// This file is the CANONICAL source for behavior opcodes.
+// Both server and SDK use this definition.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// Stack-based bytecode opcodes for behavior model execution.
@@ -15,8 +15,6 @@ namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
 /// <remarks>
 /// Instruction encoding: [Opcode:8][Operand1:8][Operand2:8][Operand3:8]
 /// Most instructions are 1-2 bytes. Jump targets use 16-bit offsets.
-///
-/// SYNC WARNING: Opcode values must match server-side definitions exactly.
 /// </remarks>
 public enum BehaviorOpcode : byte
 {

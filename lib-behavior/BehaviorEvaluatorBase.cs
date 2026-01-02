@@ -3,10 +3,10 @@
 // Abstract base class providing common evaluation and merge logic.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+using BeyondImmersion.BannouService.Behavior.Intent;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior;
+namespace BeyondImmersion.BannouService.Behavior;
 
 /// <summary>
 /// Abstract base class for behavior evaluators providing common merge logic.

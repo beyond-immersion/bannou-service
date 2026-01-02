@@ -3,10 +3,10 @@
 // Urgency-based conflict resolution for multi-model behavior coordination.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using System.Numerics;
 
-namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+namespace BeyondImmersion.BannouService.Behavior.Intent;
 
 /// <summary>
 /// Merges behavior outputs from multiple models using urgency-based resolution.
