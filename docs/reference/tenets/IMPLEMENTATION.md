@@ -203,6 +203,37 @@ private readonly ConcurrentDictionary<string, CachedItem> _cache = new();
 await _stateStore.SaveAsync(key, value);
 ```
 
+### Event-Backed Local Caches (ACCEPTABLE)
+
+Local instance caches are acceptable when **both** conditions are met:
+
+1. **Loaded via API on startup**: Cache is populated from authoritative source (another service or lib-state) during service initialization - no data loss risk
+2. **Kept current via events**: Cache subscribes to relevant pub/sub events to stay synchronized with changes
+
+**Example**: `_accountSubscriptions` in GameSessionService
+- Loaded from SubscriptionsClient on session connect
+- Updated via `subscription.changed` events
+- Authoritative state lives in Subscriptions service
+- Local cache is purely for performance (avoid API call per operation)
+
+```csharp
+// ACCEPTABLE: Event-backed local cache
+private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
+
+// Loaded from API on session connect:
+var subscriptions = await _subscriptionsClient.GetAccountSubscriptionsAsync(accountId);
+_accountSubscriptions[accountId] = subscriptions;
+
+// Updated via event subscription:
+public Task HandleSubscriptionChangedAsync(SubscriptionChangedEvent evt)
+{
+    _accountSubscriptions[evt.AccountId] = evt.ActiveSubscriptions;
+    return Task.CompletedTask;
+}
+```
+
+**NOT acceptable**: Local state that is the *only* source of truth (e.g., tracking which WebSocket sessions are connected - this must use distributed state).
+
 ### Forbidden Patterns
 
 ```csharp

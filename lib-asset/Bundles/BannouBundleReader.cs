@@ -1,7 +1,7 @@
+using BeyondImmersion.BannouService.Configuration;
 using K4os.Compression.LZ4;
 using Microsoft.Extensions.Logging;
 using System.Buffers.Binary;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Asset.Bundles;
 
@@ -91,7 +91,9 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        _manifest = JsonSerializer.Deserialize(manifestBytes, BannouBundleJsonContext.Default.BundleManifest)
+        // Deserialize using BannouJson for consistent serialization (T20)
+        var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
+        _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");
 
         // Read index
@@ -137,7 +139,9 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        _manifest = JsonSerializer.Deserialize(manifestBytes, BannouBundleJsonContext.Default.BundleManifest)
+        // Deserialize using BannouJson for consistent serialization (T20)
+        var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
+        _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");
 
         _index = BundleIndex.ReadFrom(_inputStream);

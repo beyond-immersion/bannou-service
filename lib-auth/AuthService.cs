@@ -1254,7 +1254,7 @@ public partial class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to generate security token for session with ID {sessionKey}.");
+            _logger.LogError(ex, "Failed to generate security token for session with ID {SessionKey}", sessionKey);
             throw;
         }
     }

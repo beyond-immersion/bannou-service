@@ -111,7 +111,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation(
-                "✅ Startup heartbeat published successfully: AppId={AppId}, Services=[{Services}]",
+                "Startup heartbeat published successfully: AppId={AppId}, Services=[{Services}]",
                 AppId,
                 string.Join(", ", heartbeat.Services.Select(s => s.ServiceName)));
 

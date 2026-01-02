@@ -1,9 +1,9 @@
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
 using System.Text;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -104,7 +104,8 @@ public partial class ConnectService
                 correlationId = evt.CorrelationId
             };
 
-            var payloadJson = JsonSerializer.Serialize(adminNotification);
+            // Use BannouJson for consistent serialization (T20)
+            var payloadJson = BannouJson.Serialize(adminNotification);
             var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
 
             // Create binary message with Event flag for push notification

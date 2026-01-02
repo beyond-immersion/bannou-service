@@ -5,16 +5,16 @@
 > **Updated**: 2026-01-01 (Phase 4 partial implementation verified)
 > **Related Documents**:
 > - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
-> - [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
+> - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
 > - [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md) - GOAP implementation details
-> - [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Actor infrastructure
+> - [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md) - Actor infrastructure (authoritative)
 
 **Implementation Status**:
 - **Phase 1 (ABML Runtime)**: COMPLETE - 585 tests passing. See [ABML Guide](../guides/ABML.md).
 - **Phase 2 (GOAP)**: COMPLETE - See [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md). Full A* planner, metadata caching, API endpoints.
 - **Phase 3 (Multi-Channel)**: COMPLETE - Sync points, barriers, deadlock detection.
 - **Phase 4 (Cognition)**: PARTIAL - Handlers implemented (FilterAttention, AssessSignificance, EvaluateGoalImpact, QueryMemory, StoreMemory, TriggerGoapReplan). Pipeline orchestration pending.
-- **Phase 5 (Actor Integration)**: PLANNED - Requires lib-actor infrastructure (see [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md)).
+- **Phase 5 (Actor Integration)**: PLANNED - Requires lib-actor infrastructure (see [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md)).
 
 **Bannou-Specific Constraints**: See [ABML Guide Appendix A](../guides/ABML.md#appendix-a-bannou-implementation-requirements) for mandatory infrastructure patterns.
 
@@ -1260,160 +1260,123 @@ public class ServiceCallHandler : IActionHandler
 
 ## Part 6: Actor Integration
 
-### 6.1 NPC Brain Actor Using Behavior Plugin
+> **Note**: For authoritative actor architecture, see [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md).
 
-The NPC brain actor demonstrates the Actor+Behavior integration:
+### 6.1 The Actor Paradigm: State Updates, Not Direct Control
+
+**Critical insight**: Actors provide **flavor, not foundation**. Characters have massive, self-sufficient behavior stacks that handle every situation. Actors influence characters by updating **state inputs** that the behavior stack reads.
+
+| Actor Output | Frequency | What It Does |
+|--------------|-----------|--------------|
+| **State Updates** (primary) | Every few ticks | Updates feelings, goals, memories - read by behavior stack |
+| **Behavior Changes** (secondary) | Rare | Learning/growth - adds or swaps behavior variants |
+
+**The flow**: Actor → emits STATE → Behavior Stack reads state → EmitIntent → IntentChannels → Character acts
+
+### 6.2 NPC Brain Actor Using Behavior Plugin
+
+The NPC brain actor demonstrates the Actor+Behavior integration with state-update paradigm:
 
 ```csharp
 /// <summary>
 /// NPC cognitive processor actor.
-/// Receives perceptions, processes through Behavior plugin, emits objectives.
+/// Receives perceptions, processes through cognition, emits STATE UPDATES.
+/// Does NOT directly control characters - influences via state updates.
 /// </summary>
 public partial class NpcBrainActor : NpcBrainActorBase
 {
-    private readonly IBehaviorClient _behaviorClient;
+    private readonly IDocumentExecutor _executor;  // Tree-walking for cognition
     private readonly IGoapPlanner _goapPlanner;
+    private readonly IActorStateEmitter _stateEmitter;
 
     // State from actor plugin (persisted automatically)
-    // - State.CurrentGoals
-    // - State.CurrentPlan
-    // - State.LastPerceptionAt
-    // - State.Relationships
+    // - State.Feelings (Dictionary<string, double>)
+    // - State.Goals (GoalState)
+    // - State.Memories (List<Memory>)
 
     public override async Task HandlePerceptionAsync(
         PerceptionEvent perception,
         CancellationToken ct)
     {
-        // 1. Run cognition pipeline via Behavior service
-        var cognitionResult = await _behaviorClient.ProcessCognitionAsync(
-            new ProcessCognitionRequest
-            {
-                AgentId = ActorId,
-                Perception = perception,
-                CurrentState = GetWorldState(),
-                CurrentGoals = State.CurrentGoals
-            },
+        // 1. Run cognition pipeline via tree-walking executor (NOT bytecode)
+        // This is the hot-reloadable, debuggable path for NPC decision-making
+        var result = await _executor.ExecuteAsync(
+            _cognitionBehavior,
+            "process_perception",
+            _scope.WithPerception(perception),
             ct);
 
-        // 2. Update state based on cognition result
-        State.LastPerceptionAt = DateTimeOffset.UtcNow;
-        if (cognitionResult.MemoriesStored.Count > 0)
+        // 2. PRIMARY OUTPUT: Emit state updates to Game Server
+        // The character's behavior stack reads these and responds accordingly
+        if (result.StateUpdates is { } updates)
         {
-            _logger.LogDebug(
-                "Stored {Count} new memories for {ActorId}",
-                cognitionResult.MemoriesStored.Count,
-                ActorId);
-        }
-
-        // 3. Check if replanning needed
-        if (cognitionResult.RequiresReplan)
-        {
-            await ReplanAsync(cognitionResult.UpdatedGoals, ct);
-        }
-
-        // 4. Continue current plan if valid
-        else if (State.CurrentPlan != null)
-        {
-            await ContinuePlanExecutionAsync(ct);
-        }
-    }
-
-    private async Task ReplanAsync(List<GoapGoal> goals, CancellationToken ct)
-    {
-        // Get available actions from compiled behaviors
-        var compiledBehavior = await _behaviorClient.GetCachedBehaviorAsync(
-            new GetCachedBehaviorRequest { BehaviorId = State.BehaviorStackId },
-            ct);
-
-        var availableActions = compiledBehavior.CompiledBehavior?.GoapGoals
-            ?? new List<GoapGoal>();
-
-        // Select highest priority unsatisfied goal
-        var targetGoal = goals
-            .Where(g => !GetWorldState().SatisfiesGoal(g))
-            .OrderByDescending(g => g.Priority)
-            .FirstOrDefault();
-
-        if (targetGoal == null)
-        {
-            _logger.LogDebug("No unsatisfied goals for {ActorId}", ActorId);
-            State.CurrentPlan = null;
-            return;
-        }
-
-        // Plan via GOAP
-        var plan = await _goapPlanner.PlanAsync(
-            GetWorldState(),
-            targetGoal,
-            availableActions,
-            new PlanningOptions { MaxDepth = 10, MaxNodes = 1000 },
-            ct);
-
-        if (plan != null)
-        {
-            State.CurrentPlan = plan;
-            State.CurrentPlanIndex = 0;
-
-            // Emit plan started event (typed event per Appendix C.2)
-            await MessageBus.PublishAsync(
-                $"actor.objective.{ActorId}",
-                new ObjectivesUpdatedEvent
+            await _stateEmitter.EmitStateUpdateAsync(
+                new ActorStateUpdate
                 {
+                    CharacterId = CharacterId,
                     ActorId = ActorId,
-                    CurrentGoal = targetGoal.Name,
-                    PlannedActions = plan.Actions.Select(a => a.Name).ToList()
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Feelings = updates.Feelings,      // e.g., { angry: 0.9 }
+                    Goals = updates.Goals,            // e.g., { target: entityId }
+                    Memories = updates.NewMemories    // e.g., [betrayed_by: X]
                 },
-                cancellationToken: ct);
-        }
-    }
-
-    private async Task ContinuePlanExecutionAsync(CancellationToken ct)
-    {
-        if (State.CurrentPlan == null || State.CurrentPlanIndex >= State.CurrentPlan.Actions.Count)
-        {
-            // Plan complete, trigger replanning
-            await ReplanAsync(State.CurrentGoals, ct);
-            return;
+                ct);
         }
 
-        var currentAction = State.CurrentPlan.Actions[State.CurrentPlanIndex];
-
-        // Execute action via ABML runtime
-        var result = await _behaviorClient.ExecuteActionAsync(
-            new ExecuteActionRequest
-            {
-                AgentId = ActorId,
-                ActionId = currentAction.ActionId,
-                Context = GetWorldState().ToDictionary()
-            },
-            ct);
-
-        if (result.Success)
+        // 3. SECONDARY OUTPUT (rare): Behavior composition changes
+        // Only for learning/growth over time, not moment-to-moment control
+        if (result.BehaviorChange is { } change)
         {
-            State.CurrentPlanIndex++;
+            await _stateEmitter.EmitStateUpdateAsync(
+                new ActorStateUpdate
+                {
+                    CharacterId = CharacterId,
+                    ActorId = ActorId,
+                    Timestamp = DateTimeOffset.UtcNow,
+                    BehaviorChange = change  // e.g., { added: ["learned_technique_v2"] }
+                },
+                ct);
         }
-        else
-        {
-            // Action failed, trigger replanning
-            _logger.LogWarning(
-                "Action {Action} failed for {ActorId}, replanning",
-                currentAction.Name,
-                ActorId);
-            await ReplanAsync(State.CurrentGoals, ct);
-        }
-    }
-
-    private WorldState GetWorldState()
-    {
-        return new WorldState
-        {
-            // Pull current values from actor state
-        };
     }
 }
 ```
 
-### 6.2 Behavior-Actor Communication Patterns
+**Key differences from earlier design:**
+- **No `actor.objective.*` events** - actors emit state updates, not objectives
+- **Behavior stack handles action selection** - character already knows how to fight, flee, etc.
+- **Actor provides context** - feelings, goals, memories influence HOW behavior stack responds
+- **Tree-walking executor** - cognition uses debuggable interpreter, not bytecode
+
+### 6.3 State Flow: Actor to Character
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    ACTOR → BEHAVIOR STACK FLOW                               │
+│                                                                              │
+│  ┌────────────────────┐                     ┌────────────────────┐          │
+│  │    NPC ACTOR       │                     │  GAME SERVER       │          │
+│  │  (Pool Node)       │                     │  (Stride)          │          │
+│  │                    │                     │                    │          │
+│  │  Cognition:        │   ActorStateUpdate  │  Character's       │          │
+│  │  - filter_attention│──────────────────►│  Behavior Stack:   │          │
+│  │  - assess_signif.  │                     │                    │          │
+│  │  - query_memory    │   Feelings:         │  READS state as    │          │
+│  │  - store_memory    │   angry=0.9         │  input variables:  │          │
+│  │  - evaluate_goals  │   Goals:            │  - feelings.angry  │          │
+│  │                    │   target=entityX    │  - goals.target    │          │
+│  │  Produces STATE    │   Memories:         │  - memories.*      │          │
+│  │  (not commands)    │   betrayed_by[X]    │                    │          │
+│  └────────────────────┘                     │  PRODUCES intents: │          │
+│                                             │  - EmitIntent(     │          │
+│                                             │    action=attack,  │          │
+│                                             │    urgency=0.9)    │          │
+│                                             └────────────────────┘          │
+│                                                                              │
+│  WITHOUT ACTOR: Behavior stack still works, characters just don't change.   │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 6.4 Behavior-Actor Communication Patterns
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -1424,16 +1387,18 @@ public partial class NpcBrainActor : NpcBrainActorBase
 │  │                    │                     │                    │          │
 │  │  Receives:         │   lib-messaging     │  Provides:         │          │
 │  │  - perception.*    │◄───────────────────▶│  - ABML compilation│          │
-│  │  - game.time.tick  │                     │  - Context resolve │          │
+│  │  - game.time.tick  │   (direct sub)      │  - GOAP planning   │          │
 │  │                    │                     │  - Cognition proc. │          │
 │  │  State:            │                     │                    │          │
-│  │  - Current goals   │   lib-mesh (HTTP)   │  Caches:           │          │
-│  │  - Active plan     │◄───────────────────▶│  - Compiled ABML   │          │
-│  │  - Relationships   │                     │  - Expression eval │          │
+│  │  - Feelings        │   IGoapPlanner      │  Caches:           │          │
+│  │  - Goals           │   (direct DI)       │  - Compiled ABML   │          │
+│  │  - Memories        │                     │  - Expression eval │          │
 │  │                    │                     │                    │          │
-│  │  Emits:            │   lib-messaging     │  Integrates:       │          │
-│  │  - actor.objective │◄───────────────────▶│  - Memory service  │          │
-│  │  - npc.action.*    │                     │  - World state     │          │
+│  │  Emits:            │   lib-messaging     │  Storage:          │          │
+│  │  - state updates   │──────────────────►│  - lib-asset       │          │
+│  │    (primary)       │                     │    (bytecode)      │          │
+│  │  - behavior change │                     │                    │          │
+│  │    (secondary)     │                     │                    │          │
 │  └────────────────────┘                     └────────────────────┘          │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘

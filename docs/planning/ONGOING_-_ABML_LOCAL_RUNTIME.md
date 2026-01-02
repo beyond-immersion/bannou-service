@@ -3,7 +3,7 @@
 > **Status**: PHASES 1-2 COMPLETE, PHASE 5 COMPLETE (Core runtime implemented)
 > **Created**: 2025-12-29
 > **Updated**: 2026-01-01 (Implementation status verified)
-> **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
+> **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [ONGOING_-_BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 **Implementation Status**:
 - **Phase 1 (Bytecode Foundation)**: COMPLETE - `BehaviorModelInterpreter` (509 lines), `BehaviorOpcode` (40+ opcodes), binary format
@@ -100,9 +100,9 @@ The compiled model is essentially: "Here is the complete decision tree of all ac
 │                         BEHAVIOR PLUGIN (Bannou)                        │
 │                                                                         │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐                │
-│  │    Parser    │──►│   Compiler   │──►│ Distribution │                │
-│  │   (YAML →    │   │  (AST →      │   │   Service    │                │
-│  │    AST)      │   │   Bytecode)  │   │              │                │
+│  │    Parser    │──►│   Compiler   │──►│  lib-asset   │                │
+│  │   (YAML →    │   │  (AST →      │   │ (behavior is │                │
+│  │    AST)      │   │   Bytecode)  │   │  asset type) │                │
 │  └──────────────┘   └──────────────┘   └──────┬───────┘                │
 │         │                                      │                        │
 │         │ Validation                           │ Push/Pull              │
@@ -213,7 +213,7 @@ Bannou.SDK/
 | Component | Location | Rationale |
 |-----------|----------|-----------|
 | `BehaviorCompiler` | lib-behavior | Compilation is server-side only |
-| `BehaviorDistributionService` | lib-behavior | Manages storage, sync, versioning |
+| Behavior distribution | lib-asset | Behavior is an asset type; lib-asset handles storage, sync, versioning |
 | `BehaviorModel` | Bannou.SDK | Clients need to deserialize models |
 | `BehaviorModelInterpreter` | Bannou.SDK | Portable, game-agnostic VM |
 | `StateSchema` | Bannou.SDK | Shared format understanding |
@@ -1079,13 +1079,13 @@ The Behavior Plugin's responsibilities expand from "behavior execution" to "beha
 │     ├── Debug info generation                                          │
 │     └── Model serialization                                            │
 │                                                                         │
-│  3. STORAGE & VERSIONING                                                │
-│     ├── Model persistence (lib-state)                                  │
+│  3. STORAGE & VERSIONING (via lib-asset)                                │
+│     ├── Model persistence (behavior is an asset type)                  │
 │     ├── Version tracking per character                                 │
 │     ├── Dependency tracking (imported behaviors)                       │
 │     └── Garbage collection of unused models                            │
 │                                                                         │
-│  4. DISTRIBUTION                                                        │
+│  4. DISTRIBUTION (via lib-asset)                                        │
 │     ├── Model delivery to game clients                                 │
 │     ├── Delta updates (changed behaviors only)                         │
 │     ├── Priority-based distribution (nearby characters first)          │
@@ -1505,9 +1505,15 @@ public sealed class BehaviorCompiler : IBehaviorCompiler
 
 ### 5.4 Distribution Service
 
+> **Update (2026-01-02)**: Behavior distribution is now handled via **lib-asset** rather than a custom
+> `BehaviorDistributionService`. Behavior is a recognized asset type - lib-asset handles storage,
+> versioning, and sync. The interface patterns below remain valid but integrate with lib-asset's
+> existing infrastructure. See [ACTORS_PLUGIN_V3.md §2.3](./UPCOMING_-_ACTORS_PLUGIN_V3.md) for details.
+
 ```csharp
 /// <summary>
 /// Manages distribution of behavior models to game clients.
+/// NOTE: Implementation integrates with lib-asset for storage/sync.
 /// </summary>
 public interface IBehaviorDistributionService
 {

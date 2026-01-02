@@ -82,13 +82,6 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
-    /// Logging extension/helper methods, for including additional context as JSON.
-    /// </summary>
-    public static void Log(this ILogger logger, LogLevel level, Exception? exc, string message,
-        [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
-        => logger.Log(level, exc, message, null, callerName, callerFile, lineNumber);
-
-    /// <summary>
     /// Check if field or property has the "Obsolete" attribute attached.
     /// </summary>
     public static bool IsObsolete(this MemberInfo memberInfo)

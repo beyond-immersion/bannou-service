@@ -286,13 +286,16 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
         SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        string? queueName = null,
+        TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(topic);
         ArgumentNullException.ThrowIfNull(handler);
 
         var subscriptionId = Guid.NewGuid();
-        var queueName = $"{topic}.dynamic.{subscriptionId:N}";
+        // Use provided queue name for deterministic naming (reconnection support), or generate one
+        var effectiveQueueName = queueName ?? $"{topic}.dynamic.{subscriptionId:N}";
         var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
 
         // Map enum to RabbitMQ exchange type
@@ -302,6 +305,25 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             SubscriptionExchangeType.Fanout => ExchangeType.Fanout,
             _ => ExchangeType.Topic
         };
+
+        // When TTL is specified, create a durable queue that expires after being unused
+        // This supports reconnection scenarios where messages should be buffered during disconnect
+        var isDurable = queueTtl.HasValue;
+        var autoDelete = !queueTtl.HasValue; // Auto-delete only if no TTL (ephemeral)
+        Dictionary<string, object?>? queueArguments = null;
+
+        if (queueTtl.HasValue)
+        {
+            queueArguments = new Dictionary<string, object?>
+            {
+                // x-expires: queue is deleted after being unused (no consumers) for this many ms
+                ["x-expires"] = (int)queueTtl.Value.TotalMilliseconds
+            };
+            _logger.LogDebug(
+                "Creating durable queue {QueueName} with TTL {TtlMs}ms for reconnection support",
+                effectiveQueueName,
+                queueTtl.Value.TotalMilliseconds);
+        }
 
         try
         {
@@ -317,18 +339,18 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 arguments: null,
                 cancellationToken: cancellationToken);
 
-            // Declare a temporary queue for this dynamic subscription
+            // Declare the queue - durable with TTL if specified, otherwise ephemeral
             await channel.QueueDeclareAsync(
-                queue: queueName,
-                durable: false,
+                queue: effectiveQueueName,
+                durable: isDurable,
                 exclusive: false,
-                autoDelete: true,
-                arguments: null,
+                autoDelete: autoDelete,
+                arguments: queueArguments,
                 cancellationToken: cancellationToken);
 
             // Bind queue to exchange
             await channel.QueueBindAsync(
-                queue: queueName,
+                queue: effectiveQueueName,
                 exchange: effectiveExchange,
                 routingKey: topic,
                 arguments: null,
@@ -359,12 +381,12 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
             // Start consuming
             var consumerTag = await channel.BasicConsumeAsync(
-                queue: queueName,
+                queue: effectiveQueueName,
                 autoAck: false,
                 consumer: consumer,
                 cancellationToken: cancellationToken);
 
-            var subscription = new DynamicSubscription(subscriptionId, topic, queueName, channel, consumerTag, this);
+            var subscription = new DynamicSubscription(subscriptionId, topic, effectiveQueueName, channel, consumerTag, this);
             _dynamicSubscriptions[subscriptionId] = subscription;
 
             _logger.LogDebug(

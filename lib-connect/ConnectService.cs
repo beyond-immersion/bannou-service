@@ -64,6 +64,14 @@ public partial class ConnectService : IConnectService
     /// </summary>
     private const string CLIENT_EVENTS_EXCHANGE = "bannou-client-events";
 
+    /// <summary>
+    /// Reconnection window duration. During this time after disconnect:
+    /// - Session state is preserved in Redis
+    /// - Client event queue buffers messages
+    /// - Client can reconnect with reconnection token
+    /// </summary>
+    private static readonly TimeSpan RECONNECTION_WINDOW = TimeSpan.FromMinutes(5);
+
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
@@ -538,15 +546,21 @@ public partial class ConnectService : IConnectService
             try
             {
                 var topic = $"{SESSION_TOPIC_PREFIX}{sessionId}";
+                // Use deterministic queue name based on session ID for reconnection support
+                // Queue survives disconnect with TTL matching reconnection window - messages buffer during disconnect
+                var queueName = $"session.events.{sessionId}";
                 var subscription = await _messageSubscriber.SubscribeDynamicRawAsync(
                     topic: topic,
                     handler: (bytes, ct) => HandleClientEventAsync(sessionId, bytes),
                     exchange: CLIENT_EVENTS_EXCHANGE,
                     exchangeType: SubscriptionExchangeType.Direct,
+                    queueName: queueName,
+                    queueTtl: RECONNECTION_WINDOW,
                     cancellationToken: cancellationToken);
 
                 _sessionSubscriptions[sessionId] = subscription;
-                _logger.LogDebug("Subscribed to client events for session {SessionId} on topic {Topic}", sessionId, topic);
+                _logger.LogDebug("Subscribed to client events for session {SessionId} on queue {QueueName} (TTL: {TtlMinutes}min)",
+                    sessionId, queueName, RECONNECTION_WINDOW.TotalMinutes);
 
                 // CRITICAL: Publish session.connected event AFTER RabbitMQ subscription
                 // This ensures the exchange exists before any service tries to publish to it
@@ -722,14 +736,14 @@ public partial class ConnectService : IConnectService
                     }
 
                     var reconnectionToken = connectionState.InitiateReconnectionWindow(
-                        reconnectionWindowMinutes: 5,
+                        reconnectionWindowMinutes: (int)RECONNECTION_WINDOW.TotalMinutes,
                         userRoles: userRoles);
 
                     // Store reconnection state in Redis
                     await _sessionManager.InitiateReconnectionWindowAsync(
                         sessionId,
                         reconnectionToken,
-                        TimeSpan.FromMinutes(5),
+                        RECONNECTION_WINDOW,
                         userRoles);
 
                     // Publish disconnect event with reconnection info

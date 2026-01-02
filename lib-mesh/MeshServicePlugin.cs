@@ -109,8 +109,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         var appConfig = ServiceProvider?.GetService<AppConfiguration>();
         var appId = appConfig?.AppId ?? "bannou";
 
-        // Determine host and port from environment or defaults
-        // In Docker Compose, the service name is the hostname
+        // T21 Exception: Infrastructure endpoint configuration used during mesh registration
+        // These env vars configure the Docker network routing (hostname = service name).
+        // Defaults to app-id for Docker Compose compatibility.
         var endpointHost = Environment.GetEnvironmentVariable("MESH_ENDPOINT_HOST")
             ?? appConfig?.AppId
             ?? "bannou";

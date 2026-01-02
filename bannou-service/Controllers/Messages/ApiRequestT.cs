@@ -25,7 +25,7 @@ public class ApiRequest<T> : ApiRequest
             responseObj = Activator.CreateInstance(responseType, true) as T;
             if (responseObj == null)
             {
-                Program.Logger.Log(LogLevel.Error, $"A problem occurred attempting to create instance of response type [{responseType.Name}].");
+                Program.Logger.Log(LogLevel.Error, null, "A problem occurred attempting to create instance of response type {ResponseType}", responseType.Name);
                 return new();
             }
 
@@ -49,18 +49,17 @@ public class ApiRequest<T> : ApiRequest
                     if (requestProp != null && responseProp.PropertyType.IsAssignableFrom(requestProp.PropertyType))
                         responseProp.SetValue(responseObj, requestProp.GetValue(this));
                     else
-                        Program.Logger.Log(LogLevel.Error, $"A problem occurred attempting to set header property value " +
-                            $"from request type [{requestType.Name}] to response type [{responseType.Name}].");
+                        Program.Logger.Log(LogLevel.Error, null, "A problem occurred attempting to set header property value from request type {RequestType} to response type {ResponseType}", requestType.Name, responseType.Name);
                 }
                 catch (Exception exc)
                 {
-                    Program.Logger.Log(LogLevel.Error, exc, $"An exception was thrown copying property from [{requestType.Name}] to [{responseType.Name}].");
+                    Program.Logger.Log(LogLevel.Error, exc, "An exception was thrown copying property from {RequestType} to {ResponseType}", requestType.Name, responseType.Name);
                 }
             }
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception was thrown using request model [{requestType.Name}] to create response model [{responseType.Name}].");
+            Program.Logger.Log(LogLevel.Error, exc, "An exception was thrown using request model {RequestType} to create response model {ResponseType}", requestType.Name, responseType.Name);
         }
 
         return responseObj ?? new();

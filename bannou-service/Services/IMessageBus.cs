@@ -199,6 +199,8 @@ public interface IMessageSubscriber
     /// <param name="handler">Handler function called with raw message bytes</param>
     /// <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
     /// <param name="exchangeType">Exchange type (defaults to Topic for routing-key-based service events)</param>
+    /// <param name="queueName">Optional deterministic queue name (for reconnection scenarios)</param>
+    /// <param name="queueTtl">Optional queue TTL - when set, creates a durable queue that expires after this duration of being unused</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Disposable subscription handle - dispose to unsubscribe</returns>
     Task<IAsyncDisposable> SubscribeDynamicRawAsync(
@@ -206,6 +208,8 @@ public interface IMessageSubscriber
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
         SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        string? queueName = null,
+        TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

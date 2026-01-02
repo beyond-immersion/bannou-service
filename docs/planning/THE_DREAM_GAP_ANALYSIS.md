@@ -2,8 +2,8 @@
 
 > **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Revised**: 2025-12-29
-> **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
+> **Revised**: 2026-01-02
+> **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
 
@@ -14,10 +14,10 @@ This document analyzes the gap between THE_DREAM's vision and our current ABML i
 **Key Insight**: THE_DREAM's original technical requirements assumed a service-to-service composition model that doesn't match what we've built or what we actually need. The real composition challenge is **streaming runtime extension** - the ability for a game server to receive a complete compiled behavior/cinematic and then seamlessly extend it mid-execution.
 
 **What We Have**:
-- Complete ABML parser, AST, expression evaluator (414 tests passing)
+- Complete ABML parser, AST, expression evaluator (585 tests passing)
 - Tree-walking `DocumentExecutor` for cloud-side interpretation
-- Designed (not yet built) bytecode format for client-side execution
-- Intent channel architecture for multi-model coordination
+- **Complete bytecode compiler and interpreter** for client-side execution (226+ tests)
+- Intent channel architecture for multi-model coordination (79+ tests)
 
 **What THE_DREAM Actually Needs**:
 
@@ -29,10 +29,10 @@ This document analyzes the gap between THE_DREAM's vision and our current ABML i
 | Multi-character coordination | Complex arbitration | ✓ Solved - Intent channels with urgency |
 
 **The Real Gaps** (in priority order):
-1. **Streaming execution model** - ability to extend running behavior
-2. **Bytecode compilation** - LOCAL_RUNTIME implementation
-3. **Behavior distribution** - pushing models to game servers
-4. **Event Brain actor type** - the orchestrator itself
+1. **Streaming execution model** - ability to extend running behavior (continuation points)
+2. ~~**Bytecode compilation**~~ - ✅ COMPLETE (see ABML_LOCAL_RUNTIME.md Phase 1-2)
+3. ~~**Behavior distribution**~~ - ✅ COMPLETE (lib-asset handles this; behavior is an asset type)
+4. **Event Brain actor type** - the orchestrator itself (see ACTORS_PLUGIN_V3.md)
 
 ---
 
@@ -169,14 +169,15 @@ This is fundamentally different from:
 | **Bytecode Compiler** | `lib-behavior/Compiler/` | ✅ Complete | 226 tests |
 | **Bytecode Interpreter** | `sdk-sources/Behavior/Runtime/` | ✅ Complete | 61 tests |
 | **Intent System** | `sdk-sources/Behavior/Intent/` | ✅ Complete | 79 tests |
+| **Cinematic Interpreter** | `sdk-sources/Behavior/Runtime/` | ✅ Complete | Continuation points |
 
-**Total**: 500+ tests passing (414 ABML + 226 compiler + 140 SDK)
+**Total**: 900+ tests passing (585 ABML + 226 compiler + 140 SDK)
 
 ### 3.2 Remaining Design-to-Implementation Gaps
 
 | Component | Document | Status |
 |-----------|----------|--------|
-| Behavior Distribution | LOCAL_RUNTIME §5.4 | Designed (not built) |
+| ~~Behavior Distribution~~ | ~~LOCAL_RUNTIME §5.4~~ | ✅ lib-asset handles this |
 | Multi-Channel Cutscenes | BEHAVIOR_PLUGIN §1.4 | Partially designed |
 | Streaming Composition | LOCAL_RUNTIME §3.6 | Designed (critical gap) |
 
@@ -468,9 +469,9 @@ The streaming composition model ensures graceful degradation:
 
 | Gap | Description | Effort | Dependencies |
 |-----|-------------|--------|--------------|
-| **Bytecode Compiler** | AST → bytecode compilation | High | LOCAL_RUNTIME Phase 1-2 |
-| **Bytecode Interpreter** | Stack-based VM for client execution | High | Bytecode format |
-| **Event Brain Actor Schema** | Actor type definition | Medium | Actor plugin |
+| ~~**Bytecode Compiler**~~ | ~~AST → bytecode compilation~~ | ~~High~~ | ✅ COMPLETE |
+| ~~**Bytecode Interpreter**~~ | ~~Stack-based VM for client execution~~ | ~~High~~ | ✅ COMPLETE |
+| **Event Brain Actor Schema** | Actor type definition | Medium | Actor plugin (see ACTORS_V3) |
 | **Character Agent Query API** | `/agent/query-combat-options` | Medium | Behavior plugin |
 | **Control Handoff** | How cinematics take control from basic behavior | Medium | Intent system |
 
@@ -523,13 +524,13 @@ The streaming composition model ensures graceful degradation:
 
 ## 8. Implementation Phases (Revised)
 
-### Phase 1: Bytecode Foundation
+### Phase 1: Bytecode Foundation ✅ COMPLETE
 **Goal**: Basic compilation and execution working
 
-- [ ] Bytecode format implementation (without continuation points)
-- [ ] AST → bytecode compiler (basic)
-- [ ] Stack-based interpreter (basic)
-- [ ] Round-trip test: ABML → bytecode → execution → same result as tree-walker
+- [x] Bytecode format implementation (without continuation points)
+- [x] AST → bytecode compiler (basic)
+- [x] Stack-based interpreter (basic)
+- [x] Round-trip test: ABML → bytecode → execution → same result as tree-walker
 
 ### Phase 2: Streaming Composition
 **Goal**: Continuation points and extensions working
@@ -540,21 +541,21 @@ The streaming composition model ensures graceful degradation:
 - [ ] Streaming interpreter (handles mid-execution attachment)
 - [ ] Tests: extension arrives early/on-time/late/never
 
-### Phase 3: Distribution & Integration
+### Phase 3: Distribution & Integration ✅ MOSTLY COMPLETE
 **Goal**: Models flow to game servers, cinematics can be triggered
 
-- [ ] Behavior Distribution Service
-- [ ] `/behavior/models/sync` API
-- [ ] Extension delivery protocol
+- [x] ~~Behavior Distribution Service~~ → lib-asset handles this (behavior is an asset type)
+- [x] `/behavior/models/sync` API - via lib-asset sync
+- [ ] Extension delivery protocol (for continuation point extensions)
 - [ ] Control handoff mechanism (cinematic takes control)
 - [ ] Integration tests with mock game server
 
-### Phase 4: Event Brain
+### Phase 4: Event Brain (see ACTORS_PLUGIN_V3.md §8.4)
 **Goal**: Cloud-side orchestration working
 
-- [ ] Event Brain actor schema
+- [ ] Event Brain actor schema (Event Actor in ACTORS_V3 terminology)
 - [ ] Character Agent query API
-- [ ] Event tap subscriptions
+- [ ] Event tap subscriptions (direct perception routing, not control plane)
 - [ ] Option generation algorithm
 - [ ] Choreography emission (produces cinematics)
 
@@ -661,6 +662,7 @@ The path is clear. The composition model is defined. Let's build it.
 ## Related Documents
 
 - [THE_DREAM.md](./THE_DREAM.md) - Vision document
-- [UPCOMING_-_ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) - Local bytecode execution
-- [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior runtime
+- [ONGOING_-_ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Local bytecode execution
+- [ONGOING_-_BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior runtime
+- [UPCOMING_-_ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md) - Actor infrastructure (authoritative)
 - [ABML Guide](../guides/ABML.md) - ABML language specification

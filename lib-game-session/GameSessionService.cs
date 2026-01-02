@@ -62,19 +62,30 @@ public partial class GameSessionService : IGameSessionService
 
     /// <summary>
     /// Tracks connected WebSocket sessions: WebSocket SessionId -> AccountId.
-    /// Static for multi-instance safety (Tenet 4).
+    /// Static for thread-safety within process. Updated via session.connected/disconnected events.
+    /// NOTE: This is an event-backed cache. All instances receive session events via fanout,
+    /// so all instances maintain synchronized state. See TENET T9 for cache pattern guidance.
+    /// TODO: Consider migrating to Redis state store for guaranteed multi-instance consistency
+    /// if event delivery issues are observed in distributed deployments.
     /// </summary>
     private static readonly ConcurrentDictionary<string, Guid> _connectedSessions = new();
 
     /// <summary>
     /// Caches subscription info: AccountId -> Set of subscribed stubNames.
-    /// Static for multi-instance safety (Tenet 4).
+    /// This is an event-backed local cache (T9 compliant):
+    /// - Loaded from SubscriptionsClient on session connect (FetchAndCacheSubscriptionsAsync)
+    /// - Updated via subscription.updated events from Subscriptions service
+    /// - Authoritative state lives in Subscriptions service, not here
     /// </summary>
     private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
 
     /// <summary>
     /// Reverse index for client event publishing: AccountId -> Set of WebSocket session IDs.
-    /// Static for multi-instance safety (Tenet 4).
+    /// Static for thread-safety within process. Updated via session.connected/disconnected events.
+    /// NOTE: This is an event-backed cache. All instances receive session events via fanout,
+    /// so all instances maintain synchronized state. See TENET T9 for cache pattern guidance.
+    /// TODO: Consider migrating to Redis state store for guaranteed multi-instance consistency
+    /// if event delivery issues are observed in distributed deployments.
     /// </summary>
     private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSessions = new();
 

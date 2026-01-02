@@ -2099,14 +2099,25 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "preset": {
           "type": "string",
+          "nullable": true,
           "description": "Preset name to deploy (mutually exclusive with topology)"
         },
         "topology": {
-          "$ref": "#/$defs/ServiceTopology",
+          "allOf": [
+            {
+              "$ref": "#/$defs/ServiceTopology"
+            }
+          ],
+          "nullable": true,
           "description": "Custom topology (mutually exclusive with preset)"
         },
         "backend": {
-          "$ref": "#/$defs/BackendType",
+          "allOf": [
+            {
+              "$ref": "#/$defs/BackendType"
+            }
+          ],
+          "nullable": true,
           "description": "Specific backend to use (fails if unavailable)"
         },
         "mode": {
@@ -2119,6 +2130,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "additionalProperties": {
             "type": "string"
           },
+          "nullable": true,
           "description": "Environment variable overrides"
         },
         "timeout": {
@@ -2130,6 +2142,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "type": "boolean",
           "default": true,
           "description": "Wait for all services to report healthy"
+        },
+        "dryRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Preview what would be deployed without making changes"
         }
       }
     },
@@ -3544,6 +3561,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "olderThan": {
           "type": "string",
+          "nullable": true,
           "description": "Only clean resources older than (e.g., \"24h\", \"7d\")"
         },
         "labelFilter": {
@@ -3551,6 +3569,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "additionalProperties": {
             "type": "string"
           },
+          "nullable": true,
           "description": "Only clean resources matching labels"
         }
       }

@@ -1285,20 +1285,20 @@ public partial class DeployRequest
     /// Preset name to deploy (mutually exclusive with topology)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preset")]
-    public string Preset { get; set; } = default!;
+    public string? Preset { get; set; } = default!;
 
     /// <summary>
     /// Custom topology (mutually exclusive with preset)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topology")]
-    public ServiceTopology Topology { get; set; } = default!;
+    public ServiceTopology? Topology { get; set; } = default!;
 
     /// <summary>
     /// Specific backend to use (fails if unavailable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backend")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BackendType Backend { get; set; } = default!;
+    public BackendType? Backend { get; set; } = default!;
 
     /// <summary>
     /// How the deployment should be performed
@@ -1311,7 +1311,7 @@ public partial class DeployRequest
     /// Environment variable overrides
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("environment")]
-    public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Environment { get; set; } = default!;
 
     /// <summary>
     /// Deployment timeout in seconds
@@ -1324,6 +1324,12 @@ public partial class DeployRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("waitForHealthy")]
     public bool WaitForHealthy { get; set; } = true;
+
+    /// <summary>
+    /// Preview what would be deployed without making changes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = false;
 
 }
 
@@ -1753,13 +1759,13 @@ public partial class CleanRequest
     /// Only clean resources older than (e.g., "24h", "7d")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("olderThan")]
-    public string OlderThan { get; set; } = default!;
+    public string? OlderThan { get; set; } = default!;
 
     /// <summary>
     /// Only clean resources matching labels
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("labelFilter")]
-    public System.Collections.Generic.IDictionary<string, string> LabelFilter { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? LabelFilter { get; set; } = default!;
 
 }
 
@@ -2124,7 +2130,7 @@ public partial class DeploymentEvent
     /// Preset name used for deployment (if applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preset")]
-    public string Preset { get; set; } = default!;
+    public string? Preset { get; set; } = default!;
 
     /// <summary>
     /// Container orchestration backend used

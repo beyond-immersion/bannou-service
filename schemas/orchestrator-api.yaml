@@ -531,22 +531,26 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeployRequest\"\
         ,\n  \"$defs\": {\n    \"DeployRequest\": {\n      \"description\": \"Request to deploy or update an environment using
         a preset or custom topology\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"properties\"\
-        : {\n        \"preset\": {\n          \"type\": \"string\",\n          \"description\": \"Preset name to deploy (mutually
-        exclusive with topology)\"\n        },\n        \"topology\": {\n          \"$ref\": \"#/$defs/ServiceTopology\",\n\
-        \          \"description\": \"Custom topology (mutually exclusive with preset)\"\n        },\n        \"backend\"\
-        : {\n          \"$ref\": \"#/$defs/BackendType\",\n          \"description\": \"Specific backend to use (fails if
-        unavailable)\"\n        },\n        \"mode\": {\n          \"$ref\": \"#/$defs/DeploymentMode\",\n          \"default\"\
-        : \"graceful\",\n          \"description\": \"How the deployment should be performed\"\n        },\n        \"environment\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n  \
-        \        },\n          \"description\": \"Environment variable overrides\"\n        },\n        \"timeout\": {\n \
-        \         \"type\": \"integer\",\n          \"default\": 300,\n          \"description\": \"Deployment timeout in
-        seconds\"\n        },\n        \"waitForHealthy\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n\
-        \          \"description\": \"Wait for all services to report healthy\"\n        }\n      }\n    },\n    \"ServiceTopology\"\
-        : {\n      \"description\": \"Service distribution topology defining which services run on which nodes\",\n      \"\
-        type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"nodes\"\n      ],\n\
-        \      \"properties\": {\n        \"nodes\": {\n          \"type\": \"array\",\n          \"items\": {\n         \
-        \   \"$ref\": \"#/$defs/TopologyNode\"\n          },\n          \"description\": \"Container/pod definitions with
-        service assignments\"\n        },\n        \"infrastructure\": {\n          \"$ref\": \"#/$defs/InfrastructureConfig\"\
+        : {\n        \"preset\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Preset name to deploy (mutually exclusive with topology)\"\n        },\n        \"topology\": {\n          \"\
+        allOf\": [\n            {\n              \"$ref\": \"#/$defs/ServiceTopology\"\n            }\n          ],\n    \
+        \      \"nullable\": true,\n          \"description\": \"Custom topology (mutually exclusive with preset)\"\n    \
+        \    },\n        \"backend\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/BackendType\"\
+        \n            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Specific backend to use
+        (fails if unavailable)\"\n        },\n        \"mode\": {\n          \"$ref\": \"#/$defs/DeploymentMode\",\n     \
+        \     \"default\": \"graceful\",\n          \"description\": \"How the deployment should be performed\"\n        },\n\
+        \        \"environment\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"\
+        type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"Environment variable
+        overrides\"\n        },\n        \"timeout\": {\n          \"type\": \"integer\",\n          \"default\": 300,\n \
+        \         \"description\": \"Deployment timeout in seconds\"\n        },\n        \"waitForHealthy\": {\n        \
+        \  \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Wait for all services to report
+        healthy\"\n        },\n        \"dryRun\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n  \
+        \        \"description\": \"Preview what would be deployed without making changes\"\n        }\n      }\n    },\n\
+        \    \"ServiceTopology\": {\n      \"description\": \"Service distribution topology defining which services run on
+        which nodes\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n     \
+        \   \"nodes\"\n      ],\n      \"properties\": {\n        \"nodes\": {\n          \"type\": \"array\",\n         \
+        \ \"items\": {\n            \"$ref\": \"#/$defs/TopologyNode\"\n          },\n          \"description\": \"Container/pod
+        definitions with service assignments\"\n        },\n        \"infrastructure\": {\n          \"$ref\": \"#/$defs/InfrastructureConfig\"\
         ,\n          \"description\": \"Infrastructure service configuration\"\n        }\n      }\n    },\n    \"TopologyNode\"\
         : {\n      \"description\": \"A container or pod in the service topology with its assigned services and configuration\"\
         ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"name\",\n\
@@ -1037,12 +1041,13 @@ paths:
         : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/CleanTarget\"\n          },\n          \"description\"\
         : \"Resources to clean (or \\\"all\\\")\"\n        },\n        \"force\": {\n          \"type\": \"boolean\",\n  \
         \        \"default\": false,\n          \"description\": \"Force removal without confirmation\"\n        },\n    \
-        \    \"olderThan\": {\n          \"type\": \"string\",\n          \"description\": \"Only clean resources older than
-        (e.g., \\\"24h\\\", \\\"7d\\\")\"\n        },\n        \"labelFilter\": {\n          \"type\": \"object\",\n     \
-        \     \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Only
-        clean resources matching labels\"\n        }\n      }\n    },\n    \"CleanTarget\": {\n      \"type\": \"string\"\
-        ,\n      \"enum\": [\n        \"containers\",\n        \"networks\",\n        \"volumes\",\n        \"images\",\n\
-        \        \"all\"\n      ],\n      \"description\": \"Type of resource to clean\"\n    }\n  }\n}"
+        \    \"olderThan\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\":
+        \"Only clean resources older than (e.g., \\\"24h\\\", \\\"7d\\\")\"\n        },\n        \"labelFilter\": {\n    \
+        \      \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n\
+        \          \"nullable\": true,\n          \"description\": \"Only clean resources matching labels\"\n        }\n \
+        \     }\n    },\n    \"CleanTarget\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"containers\",\n\
+        \        \"networks\",\n        \"volumes\",\n        \"images\",\n        \"all\"\n      ],\n      \"description\"\
+        : \"Type of resource to clean\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CleanResponse\"\
         ,\n  \"$defs\": {\n    \"CleanResponse\": {\n      \"description\": \"Result of a cleanup operation including reclaimed
         space and removed resource counts\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"\
@@ -2606,12 +2611,17 @@ components:
       properties:
         preset:
           type: string
+          nullable: true
           description: Preset name to deploy (mutually exclusive with topology)
         topology:
-          $ref: '#/components/schemas/ServiceTopology'
+          allOf:
+          - $ref: '#/components/schemas/ServiceTopology'
+          nullable: true
           description: Custom topology (mutually exclusive with preset)
         backend:
-          $ref: '#/components/schemas/BackendType'
+          allOf:
+          - $ref: '#/components/schemas/BackendType'
+          nullable: true
           description: Specific backend to use (fails if unavailable)
         mode:
           $ref: '#/components/schemas/DeploymentMode'
@@ -2621,6 +2631,7 @@ components:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Environment variable overrides
         timeout:
           type: integer
@@ -2630,6 +2641,10 @@ components:
           type: boolean
           default: true
           description: Wait for all services to report healthy
+        dryRun:
+          type: boolean
+          default: false
+          description: Preview what would be deployed without making changes
 
     DeployResponse:
       description: Result of a deployment operation including status and deployed service information
@@ -2885,11 +2900,13 @@ components:
           description: Force removal without confirmation
         olderThan:
           type: string
+          nullable: true
           description: Only clean resources older than (e.g., "24h", "7d")
         labelFilter:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Only clean resources matching labels
 
     CleanResponse:
@@ -3123,6 +3140,7 @@ components:
           description: Unique identifier for the deployment
         preset:
           type: string
+          nullable: true
           description: Preset name used for deployment (if applicable)
         backend:
           $ref: '#/components/schemas/BackendType'

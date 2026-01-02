@@ -67,6 +67,26 @@ public partial class OrchestratorService : IOrchestratorService
     private static bool IsInfrastructureService(string serviceName) =>
         InfrastructureServices.Contains(serviceName);
 
+    /// <summary>
+    /// Gets the configured default backend, parsing from the configuration string.
+    /// Falls back to Compose if the configured value is invalid.
+    /// </summary>
+    private BackendType GetConfiguredDefaultBackend()
+    {
+        var configuredBackend = _configuration.DefaultBackend;
+        if (string.IsNullOrWhiteSpace(configuredBackend))
+            return BackendType.Compose;
+
+        return configuredBackend.ToLowerInvariant() switch
+        {
+            "kubernetes" => BackendType.Kubernetes,
+            "portainer" => BackendType.Portainer,
+            "swarm" => BackendType.Swarm,
+            "compose" => BackendType.Compose,
+            _ => BackendType.Compose
+        };
+    }
+
     public OrchestratorService(
         IMessageBus messageBus,
         ILogger<OrchestratorService> logger,
@@ -403,9 +423,12 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     public async Task<(StatusCodes, DeployResponse?)> DeployAsync(DeployRequest body, CancellationToken cancellationToken)
     {
+        // Resolve effective backend: use request value if provided, otherwise use configured default
+        var effectiveBackend = body.Backend ?? GetConfiguredDefaultBackend();
+
         _logger.LogInformation(
-            "Executing Deploy operation: preset={Preset}, backend={Backend}",
-            body.Preset, body.Backend);
+            "Executing Deploy operation: preset={Preset}, backend={Backend} (requested={RequestedBackend}), dryRun={DryRun}",
+            body.Preset, effectiveBackend, body.Backend, body.DryRun);
 
         var startTime = DateTime.UtcNow;
         var deploymentId = Guid.NewGuid().ToString();
@@ -418,7 +441,7 @@ public partial class OrchestratorService : IOrchestratorService
             Action = DeploymentEventAction.Started,
             DeploymentId = deploymentId,
             Preset = body.Preset,
-            Backend = body.Backend
+            Backend = effectiveBackend
         });
 
         try
@@ -426,10 +449,8 @@ public partial class OrchestratorService : IOrchestratorService
             // Detect available backends first
             var backends = await _backendDetector.DetectBackendsAsync(cancellationToken);
 
-            // Check if the requested backend is available
-            // We always check since default(BackendType) = Kubernetes = 0, making it impossible
-            // to distinguish "not specified" from "explicitly Kubernetes" via the enum value alone
-            var requestedBackend = backends.Backends?.FirstOrDefault(b => b.Type == body.Backend);
+            // Check if the effective backend is available
+            var requestedBackend = backends.Backends?.FirstOrDefault(b => b.Type == effectiveBackend);
 
             IContainerOrchestrator orchestrator;
             if (requestedBackend != null && !requestedBackend.Available)
@@ -438,23 +459,23 @@ public partial class OrchestratorService : IOrchestratorService
                 var errorMsg = requestedBackend.Error ?? "Backend not available";
                 _logger.LogWarning(
                     "Requested backend {Backend} is not available: {Error}",
-                    body.Backend, errorMsg);
+                    effectiveBackend, errorMsg);
 
                 return (StatusCodes.BadRequest, new DeployResponse
                 {
                     Success = false,
                     DeploymentId = deploymentId,
-                    Backend = body.Backend,
+                    Backend = effectiveBackend,
                     Duration = "0s",
-                    Message = $"Requested backend '{body.Backend}' is not available: {errorMsg}. " +
+                    Message = $"Requested backend '{effectiveBackend}' is not available: {errorMsg}. " +
                             $"Available backends: {string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>())}"
                 });
             }
 
-            // Use the requested backend if available, otherwise use recommended
+            // Use the effective backend if available, otherwise use recommended
             if (requestedBackend != null && requestedBackend.Available)
             {
-                orchestrator = _backendDetector.CreateOrchestrator(body.Backend);
+                orchestrator = _backendDetector.CreateOrchestrator(effectiveBackend);
             }
             else
             {
@@ -462,7 +483,7 @@ public partial class OrchestratorService : IOrchestratorService
                 orchestrator = _backendDetector.CreateOrchestrator(backends.Recommended);
                 _logger.LogInformation(
                     "Using recommended backend {Recommended} instead of {Requested}",
-                    backends.Recommended, body.Backend);
+                    backends.Recommended, effectiveBackend);
             }
 
             // Get topology nodes to deploy - from preset or direct topology
@@ -631,6 +652,21 @@ public partial class OrchestratorService : IOrchestratorService
                     "Node {NodeName} service configuration: SERVICES_ENABLED=false, APP_ID={AppId}, enabled services: {Services}",
                     node.Name, appId, string.Join(", ", node.Services));
 
+                // DryRun mode: collect what would be deployed without actually deploying
+                if (body.DryRun)
+                {
+                    deployedServices.Add(new DeployedService
+                    {
+                        Name = node.Name,
+                        Status = DeployedServiceStatus.Starting, // Use Starting as placeholder for dryRun
+                        Node = Environment.MachineName
+                    });
+                    _logger.LogInformation(
+                        "[DryRun] Would deploy node {NodeName} with app-id {AppId}, services: {Services}",
+                        node.Name, appId, string.Join(", ", node.Services));
+                    continue;
+                }
+
                 // Deploy via container orchestrator
                 var deployResult = await orchestrator.DeployServiceAsync(
                     node.Name,
@@ -721,7 +757,8 @@ public partial class OrchestratorService : IOrchestratorService
 
             // Wait for heartbeats from deployed containers before declaring success
             // This ensures new containers are fully operational (mesh connected, plugins loaded)
-            if (expectedAppIds.Count > 0 && failedServices.Count == 0)
+            // Skip in dryRun mode since no containers are actually deployed
+            if (expectedAppIds.Count > 0 && failedServices.Count == 0 && !body.DryRun)
             {
                 _logger.LogInformation(
                     "Waiting for heartbeats from {Count} deployed app-ids: [{AppIds}]",
@@ -816,8 +853,8 @@ public partial class OrchestratorService : IOrchestratorService
             var duration = DateTime.UtcNow - startTime;
             var success = failedServices.Count == 0;
 
-            // Save configuration version on successful deployment
-            if (success)
+            // Save configuration version on successful deployment (skip in dryRun mode)
+            if (success && !body.DryRun)
             {
                 var deploymentConfig = new DeploymentConfiguration
                 {
@@ -866,9 +903,11 @@ public partial class OrchestratorService : IOrchestratorService
                 DeploymentId = deploymentId,
                 Backend = orchestrator.BackendType,
                 Duration = $"{duration.TotalSeconds:F1}s",
-                Message = success
-                    ? $"Successfully deployed {deployedServices.Count} node(s)"
-                    : $"Deployed {deployedServices.Count} node(s), {failedServices.Count} failed: {string.Join("; ", failedServices)}"
+                Message = body.DryRun
+                    ? $"[DryRun] Would deploy {deployedServices.Count} node(s)"
+                    : success
+                        ? $"Successfully deployed {deployedServices.Count} node(s)"
+                        : $"Deployed {deployedServices.Count} node(s), {failedServices.Count} failed: {string.Join("; ", failedServices)}"
             };
 
             // Publish deployment completed/failed event
@@ -1036,7 +1075,7 @@ public partial class OrchestratorService : IOrchestratorService
         if (body.IncludeInfrastructure && !body.DryRun)
         {
             _logger.LogWarning(
-                "⚠️ DESTRUCTIVE OPERATION: includeInfrastructure=true will remove Redis, RabbitMQ, MySQL, etc. " +
+                "DESTRUCTIVE OPERATION: includeInfrastructure=true will remove Redis, RabbitMQ, MySQL, etc. " +
                 "All data will be lost and a full re-deployment will be required.");
         }
 

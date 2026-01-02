@@ -13,6 +13,13 @@ x-service-configuration:
       env: ORCHESTRATOR_CACHE_TTL_MINUTES
       default: 5
 
+    # Backend Configuration
+    DefaultBackend:
+      type: string
+      description: Default container orchestration backend when not specified in deploy request (compose, swarm, portainer, kubernetes)
+      env: ORCHESTRATOR_DEFAULT_BACKEND
+      default: "compose"
+
     # Heartbeat Configuration
     HeartbeatTimeoutSeconds:
       type: integer

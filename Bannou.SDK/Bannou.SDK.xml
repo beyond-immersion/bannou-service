@@ -17816,6 +17816,11 @@
             Wait for all services to report healthy
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployRequest.DryRun">
+            <summary>
+            Preview what would be deployed without making changes
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.DeployResponse">
             <summary>
             Result of a deployment operation including status and deployed service information

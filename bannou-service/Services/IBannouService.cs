@@ -103,7 +103,7 @@ public interface IBannouService
                 List<(Type, BannouServiceAttribute)> serviceProviders = IServiceAttribute.GetClassesWithAttribute<BannouServiceAttribute>();
                 if (!serviceProviders.Any())
                 {
-                    Program.Logger?.Log(LogLevel.Trace, null, $"No service handler types were found.");
+                    Program.Logger?.Log(LogLevel.Trace, null, "No service handler types were found");
                     return Array.Empty<(Type, Type, BannouServiceAttribute)>();
                 }
 
@@ -114,17 +114,17 @@ public interface IBannouService
                     BannouServiceAttribute serviceAttr = serviceProvider.Item2;
                     Type handlerType = serviceAttr.InterfaceType ?? serviceType;
 
-                    Program.Logger?.Log(LogLevel.Trace, null, $"Checking service type {serviceType.Name}...");
+                    Program.Logger?.Log(LogLevel.Trace, null, "Checking service type {ServiceType}", serviceType.Name);
 
                     if (serviceType.IsAbstract || serviceType.IsInterface || !serviceType.IsAssignableTo(typeof(IBannouService)))
                     {
-                        Program.Logger?.Log(LogLevel.Debug, null, $"Invalid service type {serviceType.Name} won't be returned.");
+                        Program.Logger?.Log(LogLevel.Debug, null, "Invalid service type {ServiceType} won't be returned", serviceType.Name);
                         continue;
                     }
 
                     if (!handlerType.IsAssignableTo(typeof(IBannouService)))
                     {
-                        Program.Logger?.Log(LogLevel.Debug, null, $"Invalid handler for service type {serviceType.Name}.");
+                        Program.Logger?.Log(LogLevel.Debug, null, "Invalid handler for service type {ServiceType}", serviceType.Name);
                         continue;
                     }
 
@@ -132,20 +132,20 @@ public interface IBannouService
                     {
                         if (existingEntry.Item3.Priority)
                         {
-                            Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} skipped in favour of existing override {existingEntry.Item2.Name}.");
+                            Program.Logger?.Log(LogLevel.Debug, null, "Service type {ServiceType} skipped in favour of existing override {ExistingType}", serviceType.Name, existingEntry.Item2.Name);
                             continue;
                         }
 
                         if (existingEntry.Item2.IsAssignableTo(serviceType))
                         {
-                            Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} skipped in favour of existing more-derived type {existingEntry.Item2.Name}.");
+                            Program.Logger?.Log(LogLevel.Debug, null, "Service type {ServiceType} skipped in favour of existing more-derived type {ExistingType}", serviceType.Name, existingEntry.Item2.Name);
                             continue;
                         }
 
                         // derived types get automatic priority
                         if (existingEntry.Item2.IsAssignableFrom(serviceType))
                         {
-                            Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} is more derived than existing type {existingEntry.Item2.Name}, and will override it.");
+                            Program.Logger?.Log(LogLevel.Debug, null, "Service type {ServiceType} is more derived than existing type {ExistingType}, and will override it", serviceType.Name, existingEntry.Item2.Name);
                             _ = handlerLookup.Remove(handlerType);
                         }
                     }
@@ -246,7 +246,7 @@ public interface IBannouService
                         return _networkModePresets;
                     }
                     else
-                        Program.Logger.Log(LogLevel.Error, null, $"Couldn't determine service to scale for network mode '{networkMode}'.");
+                        Program.Logger?.Log(LogLevel.Error, null, "Couldn't determine service to scale for network mode {NetworkMode}", networkMode);
                 }
 
                 if (networkMode.IsSafeForPath())
@@ -267,24 +267,24 @@ public interface IBannouService
                                     return _networkModePresets;
                                 }
                                 else
-                                    Program.Logger.Log(LogLevel.Error, null, $"Failed to parse json configuration for network mode '{networkMode}' presets at path: {configFilePath}.");
+                                    Program.Logger?.Log(LogLevel.Error, null, "Failed to parse json configuration for network mode {NetworkMode} presets at path: {ConfigFilePath}", networkMode, configFilePath);
                             }
                             else
-                                Program.Logger.Log(LogLevel.Error, null, $"Failed to read configuration file for network mode '{networkMode}' presets at path: {configFilePath}.");
+                                Program.Logger?.Log(LogLevel.Error, null, "Failed to read configuration file for network mode {NetworkMode} presets at path: {ConfigFilePath}", networkMode, configFilePath);
                         }
                         else
-                            Program.Logger.Log(LogLevel.Information, null, $"No custom configuration file found for network mode '{networkMode}' presets at path: {configFilePath}.");
+                            Program.Logger?.Log(LogLevel.Information, null, "No custom configuration file found for network mode {NetworkMode} presets at path: {ConfigFilePath}", networkMode, configFilePath);
                     }
                     catch (Exception exc)
                     {
-                        Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred loading network mode '{networkMode}' presets at path: {configFilePath}.");
+                        Program.Logger?.Log(LogLevel.Error, exc, "An exception occurred loading network mode {NetworkMode} presets at path: {ConfigFilePath}", networkMode, configFilePath);
                     }
                 }
                 else
-                    Program.Logger.Log(LogLevel.Warning, null, $"Network mode '{networkMode}' contains characters unfit for automated loading of presets.");
+                    Program.Logger?.Log(LogLevel.Warning, null, "Network mode {NetworkMode} contains characters unfit for automated loading of presets", networkMode);
             }
             else
-                Program.Logger.Log(LogLevel.Information, null, $"Network mode not set- using default service mapping presets.");
+                Program.Logger?.Log(LogLevel.Information, null, "Network mode not set - using default service mapping presets");
 
             _networkModePresets = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) { };
             return _networkModePresets;
@@ -300,7 +300,7 @@ public interface IBannouService
     async Task OnStartAsync(CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Information, "🚀 {ServiceName} service starting up", serviceName);
+        Program.Logger?.Log(LogLevel.Information, null, "Service {ServiceName} starting up", serviceName);
         await Task.CompletedTask;
     }
 
@@ -313,7 +313,7 @@ public interface IBannouService
     async Task OnStartAsync(WebApplication webApp, CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Information, "🚀 {ServiceName} service starting up with WebApplication", serviceName);
+        Program.Logger?.Log(LogLevel.Information, null, "Service {ServiceName} starting up with WebApplication", serviceName);
         // Default implementation calls the simpler OnStartAsync
         await OnStartAsync(token);
     }
@@ -325,7 +325,7 @@ public interface IBannouService
     async Task OnRunningAsync(CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Debug, "{ServiceName} service running", serviceName);
+        Program.Logger?.Log(LogLevel.Debug, null, "{ServiceName} service running", serviceName);
         await Task.CompletedTask;
     }
 
@@ -335,7 +335,7 @@ public interface IBannouService
     async Task OnShutdownAsync()
     {
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Information, "{ServiceName} service shutting down", serviceName);
+        Program.Logger?.Log(LogLevel.Information, null, "{ServiceName} service shutting down", serviceName);
         await Task.CompletedTask;
     }
 
@@ -358,7 +358,7 @@ public interface IBannouService
         // Default implementation does nothing - method will be overridden
         // by generated code when x-permissions sections are found in schema
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Debug, "Service {ServiceName} has no permission registration (no x-permissions in schema)", serviceName);
+        Program.Logger?.Log(LogLevel.Debug, null, "Service {ServiceName} has no permission registration (no x-permissions in schema)", serviceName);
         return Task.CompletedTask;
     }
 
@@ -379,7 +379,7 @@ public interface IBannouService
         // Default implementation does nothing - method will be overridden
         // by {Service}ServiceEvents.cs partial class when x-subscribes-to is found in schema
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Debug, "Service {ServiceName} has no event consumers (no x-subscribes-to in schema)", serviceName);
+        Program.Logger?.Log(LogLevel.Debug, null, "Service {ServiceName} has no event consumers (no x-subscribes-to in schema)", serviceName);
     }
 
     /// <summary>

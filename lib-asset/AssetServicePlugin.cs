@@ -85,7 +85,9 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         services.AddSingleton<IAssetProcessor, AudioProcessor>();
         services.AddSingleton<AssetProcessorRegistry>();
 
-        // Register processing worker as hosted service based on processing mode
+        // T21 Exception: ConfigureServices bootstrap - reading config before service provider exists
+        // Determines whether to register AssetProcessingWorker as a hosted service.
+        // Values: "api" (HTTP only), "worker" (processing only), "both" (default)
         var processingMode = Environment.GetEnvironmentVariable("ASSET_PROCESSING_MODE") ?? "both";
 
         if (processingMode.Equals("worker", StringComparison.OrdinalIgnoreCase) ||

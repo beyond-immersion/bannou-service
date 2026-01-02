@@ -1098,17 +1098,28 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             }
 
             // Verify all states were cleared
-            var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            // After clearing ALL states, GetSessionInfo returns 404 (no session data exists)
+            // which is the expected behavior - session has no state info left
+            try
             {
-                SessionId = testSessionId
-            });
+                var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+                {
+                    SessionId = testSessionId
+                });
 
-            if (updatedInfo.States != null && updatedInfo.States.Count > 0)
-            {
-                return TestResult.Failed($"Expected 0 states after clear all, got {updatedInfo.States.Count}");
+                // If we get here, the session still has some info - check it's empty
+                if (updatedInfo.States != null && updatedInfo.States.Count > 0)
+                {
+                    return TestResult.Failed($"Expected 0 states after clear all, got {updatedInfo.States.Count}");
+                }
+
+                return TestResult.Successful($"All states cleared successfully: {clearResponse.Message}");
             }
-
-            return TestResult.Successful($"All states cleared successfully: {clearResponse.Message}");
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // 404 is expected - session has no state info after clearing all states
+                return TestResult.Successful($"All states cleared successfully (session info now returns 404): {clearResponse.Message}");
+            }
         }, "Clear all session states");
 
     /// <summary>

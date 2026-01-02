@@ -270,16 +270,16 @@ public static class Program
             webApp.Use(async (context, next) =>
             {
                 var requestId = Guid.NewGuid().ToString();
-                Logger.Log(LogLevel.Debug, null, $"[{requestId}] Request starting: {context.Request.Method} {context.Request.Path}");
+                Logger.Log(LogLevel.Debug, null, "Request {RequestId} starting: {Method} {Path}", requestId, context.Request.Method, context.Request.Path);
 
                 try
                 {
                     await next();
-                    Logger.Log(LogLevel.Debug, null, $"[{requestId}] Request completed: Status {context.Response.StatusCode}");
+                    Logger.Log(LogLevel.Debug, null, "Request {RequestId} completed: Status {StatusCode}", requestId, context.Response.StatusCode);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Log(LogLevel.Error, ex, $"[{requestId}] Request failed with exception");
+                    Logger.Log(LogLevel.Error, ex, "Request {RequestId} failed with exception", requestId);
                     throw;
                 }
             });
@@ -507,7 +507,7 @@ public static class Program
         if (pluginsLoaded == 0)
             Logger.Log(LogLevel.Warning, null, "No plugins were loaded. Running with existing IBannouService implementations only.");
         else
-            Logger.Log(LogLevel.Information, null, $"Successfully loaded {pluginsLoaded} plugins.");
+            Logger.Log(LogLevel.Information, null, "Successfully loaded {PluginsLoaded} plugins.", pluginsLoaded);
 
         return true;
     }
@@ -602,7 +602,7 @@ public static class Program
             }
             catch (Exception exc)
             {
-                Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
+                Logger.Log(LogLevel.Error, exc, "Failed to load assembly at path: {AssemblyPath}", assemblyPath);
             }
         }
 

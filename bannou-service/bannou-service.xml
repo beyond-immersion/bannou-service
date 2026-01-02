@@ -9048,11 +9048,6 @@
             <param name="value">Optional response value.</param>
             <returns>The corresponding IStatusCodeActionResult.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.Log(Microsoft.Extensions.Logging.ILogger,Microsoft.Extensions.Logging.LogLevel,System.Exception,System.String,System.String,System.String,System.Int32)">
-            <summary>
-            Logging extension/helper methods, for including additional context as JSON.
-            </summary>
-        </member>
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.IsObsolete(System.Reflection.MemberInfo)">
             <summary>
             Check if field or property has the "Obsolete" attribute attached.
@@ -21284,6 +21279,11 @@
             Wait for all services to report healthy
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployRequest.DryRun">
+            <summary>
+            Preview what would be deployed without making changes
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.DeployResponse">
             <summary>
             Result of a deployment operation including status and deployed service information
@@ -31104,7 +31104,7 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>Disposable subscription handle - dispose to unsubscribe</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeDynamicRawAsync(System.String,System.Func{System.Byte[],System.Threading.CancellationToken,System.Threading.Tasks.Task},System.String,BeyondImmersion.BannouService.Services.SubscriptionExchangeType,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeDynamicRawAsync(System.String,System.Func{System.Byte[],System.Threading.CancellationToken,System.Threading.Tasks.Task},System.String,BeyondImmersion.BannouService.Services.SubscriptionExchangeType,System.String,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Create a dynamic subscription for raw bytes (no deserialization).
             Optimized for forwarding scenarios where payload is passed through unchanged.
@@ -31113,6 +31113,8 @@
             <param name="handler">Handler function called with raw message bytes</param>
             <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
             <param name="exchangeType">Exchange type (defaults to Topic for routing-key-based service events)</param>
+            <param name="queueName">Optional deterministic queue name (for reconnection scenarios)</param>
+            <param name="queueTtl">Optional queue TTL - when set, creates a durable queue that expires after this duration of being unused</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>Disposable subscription handle - dispose to unsubscribe</returns>
         </member>

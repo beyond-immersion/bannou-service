@@ -174,8 +174,11 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
         SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        string? queueName = null,
+        TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default)
     {
+        // Note: queueName and queueTtl are ignored in-memory - used for RabbitMQ reconnection support
         ArgumentNullException.ThrowIfNull(topic);
         ArgumentNullException.ThrowIfNull(handler);
 
