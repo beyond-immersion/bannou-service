@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Models;
+using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -33,6 +34,7 @@ public partial class AssetService : IAssetService
     private readonly IAssetEventEmitter _eventEmitter;
     private readonly StorageModels.IAssetStorageProvider _storageProvider;
     private readonly IOrchestratorClient _orchestratorClient;
+    private readonly IAssetProcessorPoolManager _processorPoolManager;
     private readonly IBundleConverter _bundleConverter;
 
     private const string STATE_STORE = "asset-statestore";
@@ -52,6 +54,7 @@ public partial class AssetService : IAssetService
     /// <param name="eventEmitter">Client event emitter for WebSocket notifications.</param>
     /// <param name="storageProvider">Storage provider abstraction for S3/MinIO.</param>
     /// <param name="orchestratorClient">Orchestrator client for processor pool management.</param>
+    /// <param name="processorPoolManager">Pool manager for tracking processor node state.</param>
     /// <param name="bundleConverter">Bundle format converter (.bannou ↔ .zip).</param>
     /// <param name="eventConsumer">Event consumer for pub/sub event handling.</param>
     public AssetService(
@@ -62,6 +65,7 @@ public partial class AssetService : IAssetService
         IAssetEventEmitter eventEmitter,
         StorageModels.IAssetStorageProvider storageProvider,
         IOrchestratorClient orchestratorClient,
+        IAssetProcessorPoolManager processorPoolManager,
         IBundleConverter bundleConverter,
         IEventConsumer eventConsumer)
     {
@@ -72,6 +76,7 @@ public partial class AssetService : IAssetService
         _eventEmitter = eventEmitter;
         _storageProvider = storageProvider;
         _orchestratorClient = orchestratorClient;
+        _processorPoolManager = processorPoolManager;
         _bundleConverter = bundleConverter;
 
         // Register event handlers via partial class
@@ -1364,8 +1369,87 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
+    /// Ensures at least one processor is available for the given pool type.
+    /// If no processors are available, spawns a new one via the orchestrator.
+    /// </summary>
+    /// <param name="poolType">The pool type to check/spawn.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if a processor is available (or was spawned), false if spawning failed.</returns>
+    private async Task<bool> EnsureProcessorAvailableAsync(
+        string poolType,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Check if any processors are available in the pool
+            var availableCount = await _processorPoolManager.GetAvailableCountAsync(poolType, cancellationToken);
+
+            if (availableCount > 0)
+            {
+                _logger.LogDebug(
+                    "EnsureProcessorAvailable: {Count} processors available in pool {PoolType}",
+                    availableCount, poolType);
+                return true;
+            }
+
+            // No processors available - spawn one via orchestrator
+            _logger.LogInformation(
+                "EnsureProcessorAvailable: No processors available in pool {PoolType}, spawning new instance",
+                poolType);
+
+            // Get current total count to calculate target
+            var totalCount = await _processorPoolManager.GetTotalNodeCountAsync(poolType, cancellationToken);
+
+            // Request orchestrator to scale up by 1
+            var scaleResponse = await _orchestratorClient.ScalePoolAsync(
+                new ScalePoolRequest
+                {
+                    PoolType = poolType,
+                    TargetInstances = totalCount + 1
+                },
+                cancellationToken);
+
+            _logger.LogInformation(
+                "EnsureProcessorAvailable: Orchestrator scaled pool {PoolType} from {Previous} to {Current} instances",
+                poolType, scaleResponse.PreviousInstances, scaleResponse.CurrentInstances);
+
+            // Wait for the new processor to register (poll state)
+            var maxWait = TimeSpan.FromSeconds(60);
+            var pollInterval = TimeSpan.FromSeconds(2);
+            var elapsed = TimeSpan.Zero;
+
+            while (elapsed < maxWait)
+            {
+                await Task.Delay(pollInterval, cancellationToken);
+                elapsed += pollInterval;
+
+                availableCount = await _processorPoolManager.GetAvailableCountAsync(poolType, cancellationToken);
+                if (availableCount > 0)
+                {
+                    _logger.LogInformation(
+                        "EnsureProcessorAvailable: Processor registered in pool {PoolType} after {Elapsed:F1}s",
+                        poolType, elapsed.TotalSeconds);
+                    return true;
+                }
+            }
+
+            _logger.LogWarning(
+                "EnsureProcessorAvailable: Spawned processor did not register within {Timeout}s timeout for pool {PoolType}",
+                maxWait.TotalSeconds, poolType);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "EnsureProcessorAvailable: Failed to ensure processor availability for pool {PoolType}",
+                poolType);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Delegates processing to the processing pool.
-    /// If no processor is available (429), queues for retry via pub/sub.
+    /// Spawns a processor if none available, then acquires and publishes job.
     /// </summary>
     private async Task DelegateToProcessingPoolAsync(
         string assetId,
@@ -1378,6 +1462,30 @@ public partial class AssetService : IAssetService
 
         try
         {
+            // Ensure at least one processor is available, spawning if needed
+            var ensured = await EnsureProcessorAvailableAsync(poolType, cancellationToken);
+            if (!ensured)
+            {
+                _logger.LogWarning(
+                    "DelegateToProcessingPool: Could not ensure processor availability for pool {PoolType}, queueing asset {AssetId} for retry",
+                    poolType, assetId);
+
+                // Publish delayed retry event
+                var retryEvent = new AssetProcessingRetryEvent
+                {
+                    AssetId = assetId,
+                    StorageKey = storageKey,
+                    ContentType = metadata.ContentType,
+                    PoolType = poolType,
+                    RetryCount = 0,
+                    MaxRetries = 5,
+                    RetryDelaySeconds = 30
+                };
+
+                await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+                return;
+            }
+
             _logger.LogInformation(
                 "DelegateToProcessingPool: Acquiring processor from pool {PoolType} for asset {AssetId}",
                 poolType, assetId);

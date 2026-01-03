@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Metrics;
+using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Asset.Processing;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Plugins;
@@ -87,6 +88,9 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         services.AddSingleton<IAssetProcessor, ModelProcessor>();
         services.AddSingleton<IAssetProcessor, AudioProcessor>();
         services.AddSingleton<AssetProcessorRegistry>();
+
+        // Register processor pool manager for tracking processor node state
+        services.AddSingleton<IAssetProcessorPoolManager, AssetProcessorPoolManager>();
 
         // T21 Exception: ConfigureServices bootstrap - reading config before service provider exists
         // Determines whether to register AssetProcessingWorker as a hosted service.

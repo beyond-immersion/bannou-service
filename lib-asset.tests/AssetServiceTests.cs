@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Models;
+using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Asset.Webhooks;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
@@ -32,6 +33,7 @@ public class AssetServiceTests
     private Mock<IAssetEventEmitter> _mockAssetEventEmitter = null!;
     private Mock<IAssetStorageProvider> _mockStorageProvider = null!;
     private Mock<IOrchestratorClient> _mockOrchestratorClient = null!;
+    private Mock<IAssetProcessorPoolManager> _mockProcessorPoolManager = null!;
     private Mock<IBundleConverter> _mockBundleConverter = null!;
     private Mock<IEventConsumer> _mockEventConsumer = null!;
 
@@ -48,6 +50,7 @@ public class AssetServiceTests
         _mockAssetEventEmitter = new Mock<IAssetEventEmitter>();
         _mockStorageProvider = new Mock<IAssetStorageProvider>();
         _mockOrchestratorClient = new Mock<IOrchestratorClient>();
+        _mockProcessorPoolManager = new Mock<IAssetProcessorPoolManager>();
         _mockBundleConverter = new Mock<IBundleConverter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -1322,6 +1325,7 @@ public class AssetServiceTests
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
+            _mockProcessorPoolManager.Object,
             _mockBundleConverter.Object,
             _mockEventConsumer.Object);
     }

@@ -153,6 +153,37 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string WorkerPool { get; set; } = string.Empty;
 
     /// <summary>
+    /// Unique processor node ID (set by orchestrator when spawning worker)
+    /// Environment variable: ASSET_PROCESSOR_NODE_ID
+    /// </summary>
+    [Required(AllowEmptyStrings = false)]
+    public string ProcessorNodeId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Seconds of zero-load before auto-termination (0 to disable)
+    /// Environment variable: ASSET_PROCESSOR_IDLE_TIMEOUT_SECONDS
+    /// </summary>
+    public int ProcessorIdleTimeoutSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Heartbeat emission interval in seconds
+    /// Environment variable: ASSET_PROCESSOR_HEARTBEAT_INTERVAL_SECONDS
+    /// </summary>
+    public int ProcessorHeartbeatIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum concurrent jobs per processor node
+    /// Environment variable: ASSET_PROCESSOR_MAX_CONCURRENT_JOBS
+    /// </summary>
+    public int ProcessorMaxConcurrentJobs { get; set; } = 10;
+
+    /// <summary>
+    /// Mark node unhealthy after this many seconds without heartbeat
+    /// Environment variable: ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS
+    /// </summary>
+    public int ProcessorHeartbeatTimeoutSeconds { get; set; } = 90;
+
+    /// <summary>
     /// Path to FFmpeg binary (empty = use system PATH)
     /// Environment variable: ASSET_FFMPEG_PATH
     /// </summary>

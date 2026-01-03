@@ -111,6 +111,36 @@ x-service-configuration:
       description: Worker pool identifier when running in worker mode
       env: ASSET_WORKER_POOL
 
+    # Processor Pool Configuration
+    ProcessorNodeId:
+      type: string
+      description: Unique processor node ID (set by orchestrator when spawning worker)
+      env: ASSET_PROCESSOR_NODE_ID
+
+    ProcessorIdleTimeoutSeconds:
+      type: integer
+      description: Seconds of zero-load before auto-termination (0 to disable)
+      env: ASSET_PROCESSOR_IDLE_TIMEOUT_SECONDS
+      default: 300
+
+    ProcessorHeartbeatIntervalSeconds:
+      type: integer
+      description: Heartbeat emission interval in seconds
+      env: ASSET_PROCESSOR_HEARTBEAT_INTERVAL_SECONDS
+      default: 30
+
+    ProcessorMaxConcurrentJobs:
+      type: integer
+      description: Maximum concurrent jobs per processor node
+      env: ASSET_PROCESSOR_MAX_CONCURRENT_JOBS
+      default: 10
+
+    ProcessorHeartbeatTimeoutSeconds:
+      type: integer
+      description: Mark node unhealthy after this many seconds without heartbeat
+      env: ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS
+      default: 90
+
     # FFmpeg Configuration
     FfmpegPath:
       type: string
