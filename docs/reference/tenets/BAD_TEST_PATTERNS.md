@@ -482,26 +482,27 @@ _mockStore.Setup(x => x.SaveAsync(
   - `lib-character.tests/CharacterServiceTests.cs`
   - `lib-relationship.tests/RelationshipServiceTests.cs`
 
-### Phase 4: ✅ SOLVED - Use ServiceConstructorValidator
+### Phase 4: ✅ SOLVED - Constructor Null Checks Removed
 
-**Implemented**: The `test-utilities/ServiceConstructorValidator.cs` replaces all individual constructor null-check tests with a single comprehensive test per service.
+**Resolution Date**: 2026-01-03
 
-**Usage** (add `test-utilities` reference to your test project):
-```csharp
-[Fact]
-public void MyService_ConstructorIsValid() =>
-    TestUtilities.ServiceConstructorValidator.ValidateServiceConstructor<MyService>();
-```
+**What happened**: Constructor null-checks (`?? throw new ArgumentNullException()`) were removed from all 25 service files. With nullable reference types enabled across all 56 csproj files and ASP.NET Core DI guarantees, these checks were dead code:
 
-**What it catches** (that individual null-check tests don't):
-- Multiple constructors (DI might pick wrong one)
-- Optional parameters (accidental defaults)
-- Missing null checks
-- Wrong parameter names in ArgumentNullException
+1. DI container throws `InvalidOperationException` if service not registered (before constructor runs)
+2. Compiler warns about null assignment to non-nullable parameters
+3. CLAUDE.md forbids `null!` operator, making bypass impossible
 
-**Migration**: Replace 10+ individual `Constructor_WithNull*_ShouldThrow` tests with 1 validator call.
+**Preserved**: Configuration property validations (e.g., `ServerSalt` in GameSessionService/ConnectService) - these check runtime values, not DI parameters.
 
-**Example**: `lib-auth.tests/AuthServiceTests.cs` migrated from 11 constructor tests to 1 line
+**Test Impact**: All `Constructor_WithNull*_ShouldThrow` tests (marked W) should be **deleted** - they test behavior that no longer exists.
+
+**Services cleaned**:
+- AccountsService, AuthService, PermissionsService, BehaviorService, CharacterService
+- SpeciesService, RealmService, LocationService, RelationshipService, RelationshipTypeService
+- SubscriptionsService, ServicedataService, StateService, MeshService, WebsiteService
+- TestingService, MessagingService, SubscriptionExpirationService, AssetService
+- GameSessionService, ConnectService, VoiceService, OrchestratorService, ActorService
+- DocumentationService
 
 ---
 

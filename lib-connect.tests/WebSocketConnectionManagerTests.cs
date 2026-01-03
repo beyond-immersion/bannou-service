@@ -377,11 +377,9 @@ public class WebSocketConnectionManagerTests
         // Arrange
         var message = CreateTestMessage();
 
-        // Act
-        await _manager.BroadcastMessageAsync(message);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should complete without exception
+        var exception = await Record.ExceptionAsync(() => _manager.BroadcastMessageAsync(message));
+        Assert.Null(exception);
     }
 
     [Fact]

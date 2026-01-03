@@ -142,7 +142,7 @@ Assert.Equal(request.DisplayName, savedModel.DisplayName);
 
 ### Purpose
 
-Constructor validation catches AI-introduced DI mistakes before expensive integration testing. These issues include missing null checks, wrong parameter names, optional parameters, and constructor overloads.
+Constructor validation catches AI-introduced DI mistakes before expensive integration testing. These issues include wrong parameter names, optional parameters, and constructor overloads.
 
 ### Recommended Pattern (One Line Per Service)
 
@@ -167,8 +167,7 @@ public class SpeciesServiceTests
 1. **Multiple constructors** - DI might pick wrong one (AI added overload)
 2. **Optional parameters** - AI accidentally made dependency optional
 3. **Default values** - AI added `= null` or similar defaults
-4. **Missing null checks** - AI forgot `?? throw new ArgumentNullException(...)`
-5. **Wrong param names** - AI typo in `nameof(parameter)`
+4. **Wrong param names** - AI typo in `nameof(parameter)`
 
 ### Migration from Old Pattern
 

@@ -73,23 +73,8 @@ public class SubscriptionExpirationServiceTests
         Assert.NotNull(service);
     }
 
-    [Fact]
-    public void Constructor_WithNullServiceProvider_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SubscriptionExpirationService(
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SubscriptionExpirationService(
-            _mockServiceProvider.Object,
-            null!));
-    }
+    // NOTE: Null check tests removed - DI container handles missing registrations,
+    // and nullable reference types provide compile-time warnings.
 
     #endregion
 

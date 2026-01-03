@@ -384,11 +384,9 @@ public class BannouSessionManagerTests
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Store error"));
 
-        // Act - should not throw (heartbeat failures shouldn't break main functionality)
-        await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, instanceId);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw (heartbeat failures shouldn't break main functionality)
+        var exception = await Record.ExceptionAsync(() => _sessionManager.UpdateSessionHeartbeatAsync(sessionId, instanceId));
+        Assert.Null(exception);
     }
 
     #endregion
@@ -508,11 +506,9 @@ public class BannouSessionManagerTests
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Delete failed"));
 
-        // Act - should not throw
-        await _sessionManager.RemoveReconnectionTokenAsync(reconnectionToken);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw
+        var exception = await Record.ExceptionAsync(() => _sessionManager.RemoveReconnectionTokenAsync(reconnectionToken));
+        Assert.Null(exception);
     }
 
     #endregion
@@ -728,11 +724,9 @@ public class BannouSessionManagerTests
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Delete failed"));
 
-        // Act - should not throw
-        await _sessionManager.RemoveSessionAsync(sessionId);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw
+        var exception = await Record.ExceptionAsync(() => _sessionManager.RemoveSessionAsync(sessionId));
+        Assert.Null(exception);
     }
 
     #endregion
@@ -793,11 +787,9 @@ public class BannouSessionManagerTests
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Publish failed"));
 
-        // Act - should not throw
-        await _sessionManager.PublishSessionEventAsync(eventType, sessionId);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw
+        var exception = await Record.ExceptionAsync(() => _sessionManager.PublishSessionEventAsync(eventType, sessionId));
+        Assert.Null(exception);
     }
 
     #endregion
