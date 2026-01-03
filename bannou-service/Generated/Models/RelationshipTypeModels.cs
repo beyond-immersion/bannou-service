@@ -663,7 +663,7 @@ public partial class SeedRelationshipTypesResponse
 }
 
 /// <summary>
-/// Response summarizing the results of a merge operation including the number of relationships migrated
+/// Response summarizing the results of a merge operation including the number of relationships migrated and any failures
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeRelationshipTypeResponse
@@ -686,16 +686,53 @@ public partial class MergeRelationshipTypeResponse
     public System.Guid TargetTypeId { get; set; } = default!;
 
     /// <summary>
-    /// Number of relationships updated to use the target type
+    /// Number of relationships successfully updated to use the target type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipsMigrated")]
     public int RelationshipsMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of relationships that failed to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipsFailed")]
+    public int RelationshipsFailed { get; set; } = default!;
 
     /// <summary>
     /// Whether the source type was hard-deleted after merge
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceDeleted")]
     public bool SourceDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Details of individual migration failures (limited to first 100)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrationErrors")]
+    public System.Collections.Generic.ICollection<MigrationError> MigrationErrors { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Details of a single relationship that failed to migrate
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrationError
+{
+
+    /// <summary>
+    /// ID of the relationship that failed to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RelationshipId { get; set; } = default!;
+
+    /// <summary>
+    /// Error message explaining why the migration failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Error { get; set; } = default!;
 
 }
 

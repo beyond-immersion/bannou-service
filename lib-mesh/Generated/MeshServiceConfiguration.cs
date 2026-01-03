@@ -84,6 +84,18 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int RedisSyncTimeoutMs { get; set; } = 5000;
 
     /// <summary>
+    /// Hostname/IP for mesh endpoint registration. Defaults to app-id for Docker Compose compatibility.
+    /// Environment variable: MESH_ENDPOINT_HOST
+    /// </summary>
+    public string? EndpointHost { get; set; }
+
+    /// <summary>
+    /// Port for mesh endpoint registration.
+    /// Environment variable: MESH_ENDPOINT_PORT
+    /// </summary>
+    public int EndpointPort { get; set; } = 80;
+
+    /// <summary>
     /// Recommended interval between heartbeats
     /// Environment variable: MESH_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>

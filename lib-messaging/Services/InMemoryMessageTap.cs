@@ -51,7 +51,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(destination);
 
         var tapId = Guid.NewGuid();
-        var effectiveSourceExchange = sourceExchange ?? "bannou";
+        var effectiveSourceExchange = sourceExchange ?? AppConstants.DEFAULT_APP_NAME;
         var createdAt = DateTimeOffset.UtcNow;
 
         // In-memory: combine exchange and routing key as the destination topic

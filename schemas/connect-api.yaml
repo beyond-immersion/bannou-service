@@ -151,11 +151,13 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetClientCapabilitiesRequest\"\
         ,\n  \"$defs\": {\n    \"GetClientCapabilitiesRequest\": {\n      \"type\": \"object\",\n      \"description\": \"\
-        Request to get client capability manifest (empty body allowed)\",\n      \"additionalProperties\": false,\n      \"\
-        properties\": {\n        \"serviceFilter\": {\n          \"type\": \"string\",\n          \"description\": \"Optional
-        filter by service name prefix\",\n          \"nullable\": true\n        },\n        \"includeMetadata\": {\n     \
-        \     \"type\": \"boolean\",\n          \"description\": \"Include additional metadata about each capability\",\n\
-        \          \"default\": false\n        }\n      }\n    }\n  }\n}"
+        Request to get capability manifest for a connected session (debugging endpoint)\",\n      \"additionalProperties\"\
+        : false,\n      \"required\": [\n        \"sessionId\"\n      ],\n      \"properties\": {\n        \"sessionId\":
+        {\n          \"type\": \"string\",\n          \"description\": \"Session ID to retrieve capabilities for (must have
+        active WebSocket connection)\"\n        },\n        \"serviceFilter\": {\n          \"type\": \"string\",\n      \
+        \    \"description\": \"Optional filter by service name prefix\",\n          \"nullable\": true\n        },\n    \
+        \    \"includeMetadata\": {\n          \"type\": \"boolean\",\n          \"description\": \"Include additional metadata
+        about each capability\",\n          \"default\": false\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ClientCapabilitiesResponse\"\
         ,\n  \"$defs\": {\n    \"ClientCapabilitiesResponse\": {\n      \"description\": \"Response containing the client's
         capability manifest with available API endpoints and shortcuts\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
@@ -410,14 +412,123 @@ paths:
         POST method for establishing WebSocket connections.\\nFunctionally identical to the GET method but supports clients
         that\\nrequire POST for WebSocket upgrades.\\n\",\n  \"tags\": [\n    \"WebSocket Connection\"\n  ],\n  \"deprecated\"\
         : false,\n  \"operationId\": \"ConnectWebSocketPost\"\n}"
+
+  /connect/get-account-sessions:
+    post:
+      summary: Get all active WebSocket sessions for an account
+      operationId: getAccountSessions
+      tags:
+      - Session Management
+      x-permissions:
+      - role: admin
+        states: {}
+      description: |
+        Returns all active WebSocket session IDs for a specified account.
+        This is an internal endpoint used by services that need to know which
+        sessions are currently connected for a given account.
+
+        **Use Cases:**
+        - GameSessionService periodic cache sync
+        - Service-to-service session discovery
+        - Admin session management
+
+        **Note:** Session IDs returned are those with active WebSocket connections.
+        Sessions in reconnection windows may not appear in this list.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountSessionsRequest'
+      responses:
+        '200':
+          description: Account sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAccountSessionsResponse'
+        '400':
+          description: Invalid request (missing account ID)
+        '403':
+          description: Permission denied
+        '500':
+          description: Error retrieving sessions
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetAccountSessionsRequest\"\
+        ,\n  \"$defs\": {\n    \"GetAccountSessionsRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
+        to get all active WebSocket sessions for an account\",\n      \"additionalProperties\": false,\n      \"required\"\
+        : [\n        \"accountId\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Account ID to retrieve sessions for\"\n        }\n\
+        \      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetAccountSessionsResponse\"\
+        ,\n  \"$defs\": {\n    \"GetAccountSessionsResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response
+        containing all active WebSocket session IDs for an account\",\n      \"additionalProperties\": false,\n      \"required\"\
+        : [\n        \"accountId\",\n        \"sessionIds\",\n        \"retrievedAt\"\n      ],\n      \"properties\": {\n\
+        \        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Account ID the sessions belong to\"\n        },\n        \"sessionIds\": {\n          \"type\": \"array\",\n \
+        \         \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List of active
+        WebSocket session IDs for this account\"\n        },\n        \"count\": {\n          \"type\": \"integer\",\n   \
+        \       \"description\": \"Number of active sessions\"\n        },\n        \"retrievedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When this session list was retrieved\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get all active WebSocket sessions for an account\",\n  \"description\": \"\
+        Returns all active WebSocket session IDs for a specified account.\\nThis is an internal endpoint used by services
+        that need to know which\\nsessions are currently connected for a given account.\\n\\n**Use Cases:**\\n- GameSessionService
+        periodic cache sync\\n- Service-to-service session discovery\\n- Admin session management\\n\\n**Note:** Session IDs
+        returned are those with active WebSocket connections.\\nSessions in reconnection windows may not appear in this list.\\\
+        n\",\n  \"tags\": [\n    \"Session Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getAccountSessions\"\
+        \n}"
 components:
   schemas:
     # Request Models for POST-only pattern
+    GetAccountSessionsRequest:
+      type: object
+      description: Request to get all active WebSocket sessions for an account
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID to retrieve sessions for
+
+    GetAccountSessionsResponse:
+      type: object
+      description: Response containing all active WebSocket session IDs for an account
+      additionalProperties: false
+      required:
+      - accountId
+      - sessionIds
+      - retrievedAt
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID the sessions belong to
+        sessionIds:
+          type: array
+          items:
+            type: string
+          description: List of active WebSocket session IDs for this account
+        count:
+          type: integer
+          description: Number of active sessions
+        retrievedAt:
+          type: string
+          format: date-time
+          description: When this session list was retrieved
+
     GetClientCapabilitiesRequest:
       type: object
-      description: Request to get client capability manifest (empty body allowed)
+      description: Request to get capability manifest for a connected session (debugging endpoint)
       additionalProperties: false
+      required:
+      - sessionId
       properties:
+        sessionId:
+          type: string
+          description: Session ID to retrieve capabilities for (must have active WebSocket connection)
         serviceFilter:
           type: string
           description: Optional filter by service name prefix

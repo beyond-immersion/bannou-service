@@ -925,6 +925,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             // Migrate all relationships from source type to target type
             var migratedCount = 0;
             var failedCount = 0;
+            var migrationErrors = new List<MigrationError>();
+            const int maxErrorsToTrack = 100;
             var page = 1;
             const int pageSize = 100;
             var hasMorePages = true;
@@ -964,9 +966,19 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                         }
                         catch (Exception relEx)
                         {
-                            _logger.LogWarning(relEx, "Failed to migrate relationship {RelationshipId} from type {SourceId} to {TargetId}",
+                            _logger.LogError(relEx, "Failed to migrate relationship {RelationshipId} from type {SourceId} to {TargetId}",
                                 relationship.RelationshipId, body.SourceTypeId, body.TargetTypeId);
                             failedCount++;
+
+                            // Track error details (limited to avoid unbounded memory usage)
+                            if (migrationErrors.Count < maxErrorsToTrack)
+                            {
+                                migrationErrors.Add(new MigrationError
+                                {
+                                    RelationshipId = relationship.RelationshipId,
+                                    Error = relEx.Message
+                                });
+                            }
                         }
                     }
 
@@ -975,14 +987,26 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error fetching relationships for type migration at page {Page}", page);
+                    _logger.LogError(ex, "Error fetching relationships for type migration at page {Page}", page);
                     hasMorePages = false;
                 }
             }
 
             if (failedCount > 0)
             {
-                _logger.LogWarning("Relationship type merge completed with {FailedCount} failed relationship migrations", failedCount);
+                _logger.LogError("Relationship type merge completed with {FailedCount} failed relationship migrations", failedCount);
+
+                // Publish error event for monitoring/alerting
+                await _messageBus.TryPublishErrorAsync(
+                    "relationship-type",
+                    "MergeRelationshipType",
+                    "PartialMigrationFailure",
+                    $"Failed to migrate {failedCount} relationships from type {body.SourceTypeId} to {body.TargetTypeId}",
+                    dependency: "relationship-service",
+                    endpoint: "post:/relationship-type/merge",
+                    details: new { SourceTypeId = body.SourceTypeId, TargetTypeId = body.TargetTypeId, FailedCount = failedCount, MigratedCount = migratedCount },
+                    stack: null,
+                    cancellationToken: cancellationToken);
             }
 
             _logger.LogInformation("Merged relationship type {SourceId} into {TargetId}, migrated {MigratedCount} relationships (failed: {FailedCount})",
@@ -993,6 +1017,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 SourceTypeId = body.SourceTypeId,
                 TargetTypeId = body.TargetTypeId,
                 RelationshipsMigrated = migratedCount,
+                RelationshipsFailed = failedCount,
+                MigrationErrors = migrationErrors,
                 SourceDeleted = false // Source remains as deprecated for historical references
             });
         }

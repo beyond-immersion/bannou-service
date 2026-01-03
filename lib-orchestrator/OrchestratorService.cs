@@ -45,10 +45,10 @@ public partial class OrchestratorService : IOrchestratorService
     private const string CONFIG_VERSION_KEY = "orchestrator:config:version";
 
     /// <summary>
-    /// Default preset name - all services on one "bannou" node.
+    /// Default preset name - all services on one default node.
     /// This matches the default Docker Compose behavior where everything runs in one container.
     /// </summary>
-    private const string DEFAULT_PRESET = "bannou";
+    private static readonly string DEFAULT_PRESET = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// Infrastructure services that should NEVER be included in routing mappings.
@@ -513,7 +513,7 @@ public partial class OrchestratorService : IOrchestratorService
                     {
                         Name = s,
                         Status = DeployedServiceStatus.Stopped,
-                        Node = "bannou"
+                        Node = AppConstants.DEFAULT_APP_NAME
                     }).ToList()
                 });
             }
@@ -988,7 +988,7 @@ public partial class OrchestratorService : IOrchestratorService
             var response = new ServiceRoutingResponse
             {
                 Mappings = mappings,
-                DefaultAppId = "bannou",
+                DefaultAppId = AppConstants.DEFAULT_APP_NAME,
                 GeneratedAt = DateTimeOffset.UtcNow,
                 TotalServices = mappings.Count,
                 DeploymentId = null // TODO: Track deployment ID if needed
@@ -1569,7 +1569,7 @@ public partial class OrchestratorService : IOrchestratorService
                 sinceTime = parsedSince;
             }
 
-            var appName = service ?? container ?? "bannou";
+            var appName = service ?? container ?? AppConstants.DEFAULT_APP_NAME;
             var logsText = await orchestrator.GetContainerLogsAsync(appName, tail, sinceTime, cancellationToken);
 
             // Parse log text into LogEntry objects
@@ -2231,7 +2231,7 @@ public partial class OrchestratorService : IOrchestratorService
         }
 
         var normalizedPreset = preset.Trim().ToLowerInvariant();
-        return normalizedPreset == "default" || normalizedPreset == "bannou";
+        return normalizedPreset == "default" || normalizedPreset == AppConstants.DEFAULT_APP_NAME;
     }
 
     /// <summary>

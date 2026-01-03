@@ -128,7 +128,7 @@ public partial class ServicedataService : IServicedataService
             {
                 _logger.LogWarning("Service not found (serviceId={ServiceId}, stubName={StubName})",
                     body.ServiceId, body.StubName);
-                return (StatusCodes.NotFound, null!);
+                return (StatusCodes.NotFound, null);
             }
 
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
@@ -136,7 +136,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting service");
-            return (StatusCodes.InternalServerError, null!);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -154,13 +154,13 @@ public partial class ServicedataService : IServicedataService
             if (string.IsNullOrWhiteSpace(body.StubName))
             {
                 _logger.LogWarning("Stub name is required");
-                return (StatusCodes.BadRequest, null!);
+                return (StatusCodes.BadRequest, null);
             }
 
             if (string.IsNullOrWhiteSpace(body.DisplayName))
             {
                 _logger.LogWarning("Display name is required");
-                return (StatusCodes.BadRequest, null!);
+                return (StatusCodes.BadRequest, null);
             }
 
             var normalizedStubName = body.StubName.ToLowerInvariant();
@@ -173,7 +173,7 @@ public partial class ServicedataService : IServicedataService
             if (!string.IsNullOrEmpty(existingServiceId))
             {
                 _logger.LogWarning("Service with stub name {StubName} already exists", body.StubName);
-                return (StatusCodes.Conflict, null!);
+                return (StatusCodes.Conflict, null);
             }
 
             // Create new service
@@ -208,7 +208,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating service");
-            return (StatusCodes.InternalServerError, null!);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -224,7 +224,7 @@ public partial class ServicedataService : IServicedataService
             if (body.ServiceId == Guid.Empty)
             {
                 _logger.LogWarning("Service ID is required");
-                return (StatusCodes.BadRequest, null!);
+                return (StatusCodes.BadRequest, null);
             }
 
             var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
@@ -235,7 +235,7 @@ public partial class ServicedataService : IServicedataService
             if (serviceModel == null)
             {
                 _logger.LogWarning("Service {ServiceId} not found", body.ServiceId);
-                return (StatusCodes.NotFound, null!);
+                return (StatusCodes.NotFound, null);
             }
 
             // Update fields if provided
@@ -265,7 +265,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating service {ServiceId}", body.ServiceId);
-            return (StatusCodes.InternalServerError, null!);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

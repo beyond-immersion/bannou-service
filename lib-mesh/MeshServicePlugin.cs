@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Plugins;
@@ -107,17 +108,12 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Get app configuration for app-id
         var appConfig = ServiceProvider?.GetService<AppConfiguration>();
-        var appId = appConfig?.AppId ?? "bannou";
+        var meshConfig = ServiceProvider?.GetService<MeshServiceConfiguration>();
+        var appId = appConfig?.AppId ?? AppConstants.DEFAULT_APP_NAME;
 
-        // T21 Exception: Infrastructure endpoint configuration used during mesh registration
-        // These env vars configure the Docker network routing (hostname = service name).
-        // Defaults to app-id for Docker Compose compatibility.
-        var endpointHost = Environment.GetEnvironmentVariable("MESH_ENDPOINT_HOST")
-            ?? appConfig?.AppId
-            ?? "bannou";
-        var endpointPort = int.TryParse(
-            Environment.GetEnvironmentVariable("MESH_ENDPOINT_PORT"), out var port)
-            ? port : 80;
+        // Endpoint host defaults to app-id for Docker Compose compatibility (hostname = service name)
+        var endpointHost = meshConfig?.EndpointHost ?? appConfig?.AppId ?? AppConstants.DEFAULT_APP_NAME;
+        var endpointPort = meshConfig?.EndpointPort ?? 80;
 
         // Use the shared Program.ServiceGUID for consistent instance identification
         // This ensures mesh endpoint and heartbeat use the same instance ID

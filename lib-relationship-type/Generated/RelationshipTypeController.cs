@@ -2600,13 +2600,14 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
   "$ref": "#/$defs/MergeRelationshipTypeResponse",
   "$defs": {
     "MergeRelationshipTypeResponse": {
-      "description": "Response summarizing the results of a merge operation including the number of relationships migrated",
+      "description": "Response summarizing the results of a merge operation including the number of relationships migrated and any failures",
       "type": "object",
       "additionalProperties": false,
       "required": [
         "sourceTypeId",
         "targetTypeId",
         "relationshipsMigrated",
+        "relationshipsFailed",
         "sourceDeleted"
       ],
       "properties": {
@@ -2622,11 +2623,42 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         },
         "relationshipsMigrated": {
           "type": "integer",
-          "description": "Number of relationships updated to use the target type"
+          "description": "Number of relationships successfully updated to use the target type"
+        },
+        "relationshipsFailed": {
+          "type": "integer",
+          "description": "Number of relationships that failed to migrate"
         },
         "sourceDeleted": {
           "type": "boolean",
           "description": "Whether the source type was hard-deleted after merge"
+        },
+        "migrationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MigrationError"
+          },
+          "description": "Details of individual migration failures (limited to first 100)"
+        }
+      }
+    },
+    "MigrationError": {
+      "description": "Details of a single relationship that failed to migrate",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationshipId",
+        "error"
+      ],
+      "properties": {
+        "relationshipId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the relationship that failed to migrate"
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message explaining why the migration failed"
         }
       }
     }

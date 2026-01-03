@@ -302,7 +302,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Mappings = mappings,
-                DefaultAppId = "bannou",
+                DefaultAppId = AppConstants.DEFAULT_APP_NAME,
                 Version = version,
                 SourceInstanceId = _instanceId,
                 TotalServices = mappings.Count

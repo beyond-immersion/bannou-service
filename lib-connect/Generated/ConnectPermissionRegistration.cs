@@ -80,6 +80,21 @@ public static class ConnectPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/connect/get-account-sessions",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getAccountSessions",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

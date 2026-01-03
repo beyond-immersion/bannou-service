@@ -412,7 +412,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                 new() { Name = "BANNOU_APP_ID", Value = appId },
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 new() { Name = "DAEMON_MODE", Value = "true" },
-                new() { Name = "HEARTBEAT_ENABLED", Value = "true" }
+                new() { Name = "BANNOU_HEARTBEAT_ENABLED", Value = "true" }
             };
 
             if (environment != null)

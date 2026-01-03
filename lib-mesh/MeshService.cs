@@ -435,7 +435,7 @@ public partial class MeshService : IMeshService
         var response = new GetMappingsResponse
         {
             Mappings = mappings,
-            DefaultAppId = "bannou",
+            DefaultAppId = _configuration.DefaultAppId,
             Version = version
         };
 

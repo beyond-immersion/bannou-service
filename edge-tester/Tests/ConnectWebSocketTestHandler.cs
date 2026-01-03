@@ -1534,7 +1534,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 JsonObject? manifest;
                 try { manifest = JsonNode.Parse(payloadJson)?.AsObject(); }
-                catch { continue; }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"⚠️ Failed to parse message as JSON: {ex.Message}");
+                    Console.WriteLine($"   Raw payload: {payloadJson[..Math.Min(200, payloadJson.Length)]}...");
+                    continue;
+                }
 
                 var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest") continue;

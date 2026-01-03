@@ -21,7 +21,7 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        var defaultAppId = config?.DefaultAppId ?? "bannou";
+        var defaultAppId = config?.DefaultAppId ?? AppConstants.DEFAULT_APP_NAME;
 
         // Create a local endpoint representing this instance
         // Use the shared Program.ServiceGUID for consistent identification

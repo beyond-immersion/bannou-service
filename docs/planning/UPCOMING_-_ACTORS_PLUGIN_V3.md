@@ -2332,6 +2332,109 @@ public enum BroadcastScope : byte
 
 **Note**: Topic-based routing deferred. If needed later, actors would subscribe to topics like `region.arcadia.zone-5` and broadcasts could target specific topics. Simple broadcast to all connected is sufficient for Phase 2.
 
+#### 9.4.6 Event Tap Pattern (Multi-Subscriber Streams)
+
+Character actors emit events that multiple consumers need to receive simultaneously:
+- **Character agent** itself (for internal state updates)
+- **Player client** (when a player is controlling the character)
+- **Event actors** (when monitoring combat exchanges)
+- **Analytics/other services** (for tracking, relationship updates, etc.)
+
+This uses RabbitMQ **fanout exchanges** - the same infrastructure as Connect/client eventing.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     CHARACTER EVENT STREAM                               │
+│                                                                          │
+│  Actor publishes to: character.events.{character-id}                    │
+│                                                                          │
+│                    RabbitMQ Fanout Exchange                              │
+│                    (routing_key = character-123)                         │
+│                              │                                           │
+│              ┌───────────────┼───────────────┬───────────────┐          │
+│              │               │               │               │          │
+│              ▼               ▼               ▼               ▼          │
+│       ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐  │
+│       │  Character  │ │   Player    │ │   Event     │ │  Analytics  │  │
+│       │   Actor     │ │   Client    │ │   Actor     │ │   Service   │  │
+│       │  (always)   │ │ (if online) │ │  (if tap)   │ │ (if config) │  │
+│       └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Actor Perspective - Subscribing to Character Events:**
+
+When an Event Actor needs to monitor a combat exchange, it taps into participant event streams:
+
+```csharp
+// Event Actor subscribing to participant streams during combat
+protected override async Task OnActorActivatedAsync(CancellationToken ct)
+{
+    foreach (var participant in State.Participants)
+    {
+        await SubscribeAsync<CharacterEvent>(
+            $"character.events.{participant.CharacterId}",
+            ct);
+
+        _logger.LogDebug(
+            "Event Actor {ExchangeId} tapped into character {CharacterId}",
+            State.ExchangeId,
+            participant.CharacterId);
+    }
+}
+
+// Cleanup when combat ends
+protected override async Task OnActorDeactivatingAsync(CancellationToken ct)
+{
+    foreach (var participant in State.Participants)
+    {
+        await UnsubscribeAsync($"character.events.{participant.CharacterId}", ct);
+    }
+}
+```
+
+**Player Possession - Connect Service Tapping:**
+
+When a player possesses a character, Connect subscribes the client to that character's event stream:
+
+```csharp
+// Connect service subscribing player client to character events
+public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharacterAsync(
+    PossessCharacterRequest request,
+    string sessionId,
+    CancellationToken ct)
+{
+    // 1. Verify ownership
+    // 2. Subscribe this client to character's event stream
+    await _clientEventPublisher.SubscribeClientToTopicAsync(
+        sessionId,
+        $"character.events.{request.CharacterId}",
+        ct);
+
+    // 3. Notify character actor that player is now controlling
+    await _messageBus.PublishAsync(
+        $"actor.personal.npc-brain.{request.CharacterId}",
+        new PlayerPossessionEvent { CharacterId = request.CharacterId, PlayerId = accountId },
+        cancellationToken: ct);
+
+    return (StatusCodes.Status200OK, new PossessCharacterResponse { ... });
+}
+```
+
+**Event Types Published to Character Stream:**
+
+| Event Type | Description | Consumers |
+|------------|-------------|-----------|
+| `perception.received` | What the character noticed | Player, Event Actor |
+| `goal.changed` | Goal priority shift | Player, Analytics |
+| `plan.started` | New action plan | Player |
+| `action.completed` | Action finished | Player, Event Actor |
+| `combat.option_presented` | Combat choice available | Player (for input) |
+| `combat.action_resolved` | Combat outcome | Event Actor, Analytics |
+| `relationship.changed` | Relationship score change | Relationship service |
+
+**Key Insight**: Same lib-messaging infrastructure, different subscribers. No new infrastructure needed - just fanout exchanges with per-subscriber queues.
+
 ---
 
 ## 10. Implementation Phases

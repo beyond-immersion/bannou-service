@@ -5,7 +5,7 @@
 > **Purpose**: ABML/AST demonstration through simplified arena combat
 > **Engine**: Stride
 > **Assets**: Synty (all visual assets)
-> **Related**: [ABML Guide](../guides/ABML.md), [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md)
+> **Related**: [ABML Guide](../guides/ABML.md), [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 ---
 

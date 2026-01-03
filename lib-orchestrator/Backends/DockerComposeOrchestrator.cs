@@ -715,7 +715,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 $"BANNOU_HttpEndpoint=http://{orchestratorAppId}",
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 "DAEMON_MODE=true",
-                "HEARTBEAT_ENABLED=true"
+                "BANNOU_HEARTBEAT_ENABLED=true"
             };
 
             if (certificatesPath != null)

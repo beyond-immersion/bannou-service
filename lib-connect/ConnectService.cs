@@ -302,8 +302,8 @@ public partial class ConnectService : IConnectService
     // Connect service ONLY handles WebSocket connections and message routing
 
     /// <summary>
-    /// Gets the client capability manifest (GUID to API mappings) for the authenticated session.
-    /// Each client receives unique GUIDs for security isolation.
+    /// Gets the client capability manifest (GUID to API mappings) for a connected session.
+    /// Debugging endpoint to inspect what capabilities a WebSocket client currently has.
     /// </summary>
     public async Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
         GetClientCapabilitiesRequest body,
@@ -312,32 +312,97 @@ public partial class ConnectService : IConnectService
         await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
-            // For now, return a placeholder response until full capability system is integrated
-            // TODO: Integrate with Permissions service to get actual capabilities for the session
-            _logger.LogDebug("GetClientCapabilitiesAsync called with serviceFilter: {Filter}",
-                body.ServiceFilter ?? "(none)");
+            _logger.LogDebug("GetClientCapabilitiesAsync called for session {SessionId} with filter: {Filter}",
+                body.SessionId, body.ServiceFilter ?? "(none)");
 
-            // This would normally:
-            // 1. Get the session ID from context/auth
-            // 2. Query Permissions service for session capabilities
-            // 3. Generate client-salted GUIDs for each capability
-            // 4. Return the manifest
+            // Look up the connection by session ID
+            var connection = _connectionManager.GetConnection(body.SessionId);
+            if (connection == null)
+            {
+                _logger.LogWarning("No active WebSocket connection found for session {SessionId}", body.SessionId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var connectionState = connection.ConnectionState;
+            var capabilities = new List<ClientCapability>();
+            var shortcuts = new List<ClientShortcut>();
+
+            // Build capabilities from service mappings
+            foreach (var mapping in connectionState.ServiceMappings)
+            {
+                var endpointKey = mapping.Key;
+                var guid = mapping.Value;
+
+                var firstColon = endpointKey.IndexOf(':');
+                if (firstColon <= 0) continue;
+
+                var serviceName = endpointKey[..firstColon];
+                var methodAndPath = endpointKey[(firstColon + 1)..];
+
+                // Apply service filter if provided
+                if (!string.IsNullOrEmpty(body.ServiceFilter) &&
+                    !serviceName.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var methodPathColon = methodAndPath.IndexOf(':');
+                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
+                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+
+                // Skip template endpoints (zero-copy routing requirement)
+                if (path.Contains('{')) continue;
+
+                // Only expose POST endpoints to WebSocket clients
+                if (method != "POST") continue;
+
+                capabilities.Add(new ClientCapability
+                {
+                    Guid = guid,
+                    Service = serviceName,
+                    Endpoint = path,
+                    Method = ClientCapabilityMethod.POST
+                });
+            }
+
+            // Build shortcuts from connection state
+            foreach (var shortcut in connectionState.GetAllShortcuts())
+            {
+                // Skip expired shortcuts
+                if (shortcut.IsExpired)
+                {
+                    connectionState.RemoveShortcut(shortcut.RouteGuid);
+                    continue;
+                }
+
+                shortcuts.Add(new ClientShortcut
+                {
+                    Guid = shortcut.RouteGuid,
+                    TargetService = shortcut.TargetService,
+                    TargetEndpoint = shortcut.TargetEndpoint,
+                    Name = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    Description = shortcut.Description
+                });
+            }
 
             var response = new ClientCapabilitiesResponse
             {
-                SessionId = "placeholder-session-id",
-                Capabilities = new List<ClientCapability>(),
+                SessionId = body.SessionId,
+                Capabilities = capabilities,
+                Shortcuts = shortcuts.Count > 0 ? shortcuts : null,
                 Version = 1,
                 GeneratedAt = DateTimeOffset.UtcNow
             };
 
-            _logger.LogInformation("Returning client capabilities (placeholder implementation)");
+            _logger.LogInformation("Returning {CapabilityCount} capabilities and {ShortcutCount} shortcuts for session {SessionId}",
+                capabilities.Count, shortcuts.Count, body.SessionId);
+
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving client capabilities");
-            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message);
+            _logger.LogError(ex, "Error retrieving client capabilities for session {SessionId}", body.SessionId);
+            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message, details: new { SessionId = body.SessionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -654,6 +719,12 @@ public partial class ConnectService : IConnectService
                 _logger.LogInformation("Published session.connected event for session {SessionId} with PeerGuid {PeerGuid}",
                     sessionId, connectionState.PeerGuid);
 
+                // Add to account session index for distributed lookup
+                if (accountId.HasValue && accountId.Value != Guid.Empty)
+                {
+                    await _sessionManager.AddSessionToAccountAsync(accountId.Value, sessionId);
+                }
+
                 // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
                 // Shortcuts don't survive reconnection - services must re-evaluate and re-publish them
                 // Note: PeerGuid is a NEW GUID for this connection - peers must be notified of the change
@@ -761,6 +832,12 @@ public partial class ConnectService : IConnectService
                 await _messageBus.TryPublishAsync("session.disconnected", sessionDisconnectedEvent);
                 _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
                     sessionId, !isForcedDisconnect);
+
+                // Remove from account session index
+                if (accountId.HasValue && accountId.Value != Guid.Empty)
+                {
+                    await _sessionManager.RemoveSessionFromAccountAsync(accountId.Value, sessionId);
+                }
             }
             catch (Exception ex)
             {

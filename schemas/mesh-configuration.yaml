@@ -58,6 +58,21 @@ x-service-configuration:
       default: 5000
 
     # =========================================================================
+    # Endpoint Registration Configuration
+    # =========================================================================
+    EndpointHost:
+      type: string
+      description: Hostname/IP for mesh endpoint registration. Defaults to app-id for Docker Compose compatibility.
+      env: MESH_ENDPOINT_HOST
+      nullable: true
+
+    EndpointPort:
+      type: integer
+      description: Port for mesh endpoint registration.
+      env: MESH_ENDPOINT_PORT
+      default: 80
+
+    # =========================================================================
     # Heartbeat and TTL Configuration
     # =========================================================================
     HeartbeatIntervalSeconds:

@@ -371,7 +371,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 $"BANNOU_APP_ID={appId}",
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 "DAEMON_MODE=true",
-                "HEARTBEAT_ENABLED=true"
+                "BANNOU_HEARTBEAT_ENABLED=true"
             };
 
             if (environment != null)

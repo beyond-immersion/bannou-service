@@ -5964,7 +5964,12 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest">
             <summary>
-            Request to get client capability manifest (empty body allowed)
+            Request to get capability manifest for a connected session (debugging endpoint)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest.SessionId">
+            <summary>
+            Session ID to retrieve capabilities for (must have active WebSocket connection)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest.ServiceFilter">
@@ -11321,7 +11326,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse">
             <summary>
-            Response summarizing the results of a merge operation including the number of relationships migrated
+            Response summarizing the results of a merge operation including the number of relationships migrated and any failures
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse.SourceTypeId">
@@ -11336,12 +11341,37 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse.RelationshipsMigrated">
             <summary>
-            Number of relationships updated to use the target type
+            Number of relationships successfully updated to use the target type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse.RelationshipsFailed">
+            <summary>
+            Number of relationships that failed to migrate
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse.SourceDeleted">
             <summary>
             Whether the source type was hard-deleted after merge
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RelationshipType.MergeRelationshipTypeResponse.MigrationErrors">
+            <summary>
+            Details of individual migration failures (limited to first 100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RelationshipType.MigrationError">
+            <summary>
+            Details of a single relationship that failed to migrate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RelationshipType.MigrationError.RelationshipId">
+            <summary>
+            ID of the relationship that failed to migrate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RelationshipType.MigrationError.Error">
+            <summary>
+            Error message explaining why the migration failed
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.IDocumentationClient">

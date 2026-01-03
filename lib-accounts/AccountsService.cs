@@ -468,7 +468,21 @@ public partial class AccountsService : IAccountsService
                     account.Roles = newRoles;
                 }
             }
-            // TODO: Handle metadata from body
+
+            // Handle metadata update if provided
+            if (body.Metadata != null)
+            {
+                var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+                if (newMetadata != null)
+                {
+                    var currentMetadata = account.Metadata ?? new Dictionary<string, object>();
+                    if (!MetadataEquals(currentMetadata, newMetadata))
+                    {
+                        changedFields.Add("metadata");
+                        account.Metadata = newMetadata;
+                    }
+                }
+            }
 
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -845,7 +859,16 @@ public partial class AccountsService : IAccountsService
                 // Update profile fields
                 if (body.DisplayName != null)
                     account.DisplayName = body.DisplayName;
-                // TODO: Handle metadata from body
+
+                // Handle metadata update if provided
+                if (body.Metadata != null)
+                {
+                    var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+                    if (newMetadata != null)
+                    {
+                        account.Metadata = newMetadata;
+                    }
+                }
 
                 account.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1297,6 +1320,87 @@ public partial class AccountsService : IAccountsService
 
     #endregion
 
+    #region Helper Methods
+
+    /// <summary>
+    /// Compares two metadata dictionaries for equality.
+    /// </summary>
+    private static bool MetadataEquals(IDictionary<string, object> a, IDictionary<string, object> b)
+    {
+        if (a.Count != b.Count) return false;
+        foreach (var kvp in a)
+        {
+            if (!b.TryGetValue(kvp.Key, out var bValue)) return false;
+            if (!Equals(kvp.Value, bValue)) return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Converts an object (typically from JSON deserialization) to a metadata dictionary.
+    /// Handles JsonElement and Dictionary types.
+    /// </summary>
+    private static Dictionary<string, object>? ConvertToMetadataDictionary(object? metadata)
+    {
+        if (metadata == null) return null;
+
+        // Handle JsonElement from System.Text.Json deserialization
+        if (metadata is System.Text.Json.JsonElement jsonElement)
+        {
+            if (jsonElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+                return null;
+
+            var result = new Dictionary<string, object>();
+            foreach (var property in jsonElement.EnumerateObject())
+            {
+                result[property.Name] = ConvertJsonElement(property.Value);
+            }
+            return result;
+        }
+
+        // Handle Dictionary types directly
+        if (metadata is IDictionary<string, object> dict)
+        {
+            return new Dictionary<string, object>(dict);
+        }
+
+        // Handle generic Dictionary with string keys
+        if (metadata is System.Collections.IDictionary genericDict)
+        {
+            var result = new Dictionary<string, object>();
+            foreach (System.Collections.DictionaryEntry entry in genericDict)
+            {
+                if (entry.Key is string key && entry.Value != null)
+                {
+                    result[key] = entry.Value;
+                }
+            }
+            return result;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Converts a JsonElement to its appropriate .NET type.
+    /// </summary>
+    private static object ConvertJsonElement(System.Text.Json.JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            System.Text.Json.JsonValueKind.String => element.GetString() ?? string.Empty,
+            System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+            System.Text.Json.JsonValueKind.True => true,
+            System.Text.Json.JsonValueKind.False => false,
+            System.Text.Json.JsonValueKind.Null => string.Empty, // Use empty string for null to avoid null reference issues
+            System.Text.Json.JsonValueKind.Array => element.EnumerateArray().Select(ConvertJsonElement).ToList(),
+            System.Text.Json.JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => ConvertJsonElement(p.Value)),
+            _ => element.ToString()
+        };
+    }
+
+    #endregion
+
     #region Error Event Publishing
 
     /// <summary>
@@ -1334,6 +1438,7 @@ public class AccountModel
     public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
     public bool IsVerified { get; set; }
     public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
+    public Dictionary<string, object>? Metadata { get; set; } // Custom metadata for the account
 
     // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long CreatedAtUnix { get; set; }

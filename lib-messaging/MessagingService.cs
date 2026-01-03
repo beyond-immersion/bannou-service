@@ -136,20 +136,79 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             var callbackUrl = body.CallbackUrl;
 
             // Subscribe dynamically using GenericMessageEnvelope - MassTransit requires concrete types
+            // Capture config values for the lambda closure
+            var maxRetries = _configuration.CallbackRetryMaxAttempts;
+            var retryDelayMs = _configuration.CallbackRetryDelayMs;
+
             var handle = await _messageSubscriber.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 body.Topic,
                 async (envelope, ct) =>
                 {
-                    try
+                    var attempt = 0;
+                    Exception? lastException = null;
+
+                    while (attempt <= maxRetries)
                     {
-                        // Forward the original payload JSON to the callback (unwrap the envelope)
-                        var content = new StringContent(envelope.PayloadJson, System.Text.Encoding.UTF8, envelope.ContentType);
-                        await httpClient.PostAsync(callbackUrl, content, ct);
+                        try
+                        {
+                            // Forward the original payload JSON to the callback (unwrap the envelope)
+                            var content = new StringContent(envelope.PayloadJson, System.Text.Encoding.UTF8, envelope.ContentType);
+                            var response = await httpClient.PostAsync(callbackUrl, content, ct);
+
+                            // Success - don't retry on any HTTP response (including 4xx/5xx)
+                            // Only network-level failures should retry
+                            return;
+                        }
+                        catch (HttpRequestException ex)
+                        {
+                            // Network-level failure (endpoint not reachable) - retry
+                            lastException = ex;
+                            attempt++;
+                            if (attempt <= maxRetries)
+                            {
+                                _logger.LogDebug(
+                                    "HTTP callback delivery attempt {Attempt} failed for {CallbackUrl}, retrying in {DelayMs}ms",
+                                    attempt, callbackUrl, retryDelayMs);
+                                await Task.Delay(retryDelayMs, ct);
+                            }
+                        }
+                        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+                        {
+                            // Timeout (not user cancellation) - retry
+                            lastException = ex;
+                            attempt++;
+                            if (attempt <= maxRetries)
+                            {
+                                _logger.LogDebug(
+                                    "HTTP callback delivery attempt {Attempt} timed out for {CallbackUrl}, retrying in {DelayMs}ms",
+                                    attempt, callbackUrl, retryDelayMs);
+                                await Task.Delay(retryDelayMs, ct);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Other exceptions (including user cancellation) - don't retry
+                            _logger.LogError(ex, "Failed to deliver event to callback {CallbackUrl}: unexpected error", callbackUrl);
+                            return;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to deliver event to callback {CallbackUrl}", callbackUrl);
-                    }
+
+                    // All retries exhausted - log error and publish error event
+                    _logger.LogError(
+                        lastException,
+                        "Failed to deliver event to callback {CallbackUrl} after {Attempts} attempts",
+                        callbackUrl, maxRetries + 1);
+
+                    await _messageBus.TryPublishErrorAsync(
+                        "messaging",
+                        "DeliverCallback",
+                        lastException?.GetType().Name ?? "Unknown",
+                        lastException?.Message ?? "Unknown error",
+                        dependency: "http-callback",
+                        endpoint: callbackUrl.ToString(),
+                        details: new { Topic = body.Topic, Attempts = maxRetries + 1 },
+                        stack: lastException?.StackTrace,
+                        cancellationToken: ct);
                 },
                 exchange: null, // Use default exchange
                 cancellationToken: cancellationToken);

@@ -119,6 +119,18 @@ x-service-configuration:
       env: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
       default: 5
 
+    # HTTP Callback Settings (for dynamic subscriptions)
+    CallbackRetryMaxAttempts:
+      type: integer
+      description: Maximum retry attempts for HTTP callback delivery (network failures only)
+      env: MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS
+      default: 3
+    CallbackRetryDelayMs:
+      type: integer
+      description: Delay between HTTP callback retry attempts in milliseconds
+      env: MESSAGING_CALLBACK_RETRY_DELAY_MS
+      default: 1000
+
     # Feature Flags
     UseMassTransit:
       type: boolean

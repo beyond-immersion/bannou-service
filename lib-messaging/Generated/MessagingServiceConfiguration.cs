@@ -174,6 +174,18 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public int RetryBufferIntervalSeconds { get; set; } = 5;
 
     /// <summary>
+    /// Maximum retry attempts for HTTP callback delivery (network failures only)
+    /// Environment variable: MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS
+    /// </summary>
+    public int CallbackRetryMaxAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Delay between HTTP callback retry attempts in milliseconds
+    /// Environment variable: MESSAGING_CALLBACK_RETRY_DELAY_MS
+    /// </summary>
+    public int CallbackRetryDelayMs { get; set; } = 1000;
+
+    /// <summary>
     /// Use MassTransit wrapper (true) or direct RabbitMQ.Client (false)
     /// Environment variable: MESSAGING_USE_MASSTRANSIT
     /// </summary>

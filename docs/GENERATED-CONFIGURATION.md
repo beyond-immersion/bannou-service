@@ -198,6 +198,8 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `MESSAGING_CALLBACK_RETRY_DELAY_MS` | int | `1000` | Delay between HTTP callback retry attempts in milliseconds |
+| `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for HTTP callback delivery (network f... |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
 | `MESSAGING_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for establishing RabbitMQ connection |
@@ -324,9 +326,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 200
+- **Total properties**: 202
 - **Required (no default)**: 34
-- **Optional (has default)**: 166
+- **Optional (has default)**: 168
 
 ## Environment Variable Naming Convention
 

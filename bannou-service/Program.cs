@@ -350,13 +350,9 @@ public static class Program
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Create heartbeat manager for mesh connectivity check and ongoing health reporting
-            // HEARTBEAT_ENABLED defaults to true - only set to false for minimal infrastructure testing
+            // HeartbeatEnabled defaults to true - only set to false for minimal infrastructure testing
             // where Bannou pub/sub components are intentionally not configured
-            var heartbeatEnabledEnv = Environment.GetEnvironmentVariable("HEARTBEAT_ENABLED");
-            var heartbeatEnabled = string.IsNullOrEmpty(heartbeatEnabledEnv) ||
-                !string.Equals(heartbeatEnabledEnv, "false", StringComparison.OrdinalIgnoreCase);
-
-            if (heartbeatEnabled)
+            if (Configuration.HeartbeatEnabled)
             {
                 if (PluginLoader == null)
                 {
@@ -429,7 +425,7 @@ public static class Program
             }
             else
             {
-                Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via HEARTBEAT_ENABLED=false (infrastructure testing mode).");
+                Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via BANNOU_HEARTBEAT_ENABLED=false (infrastructure testing mode).");
                 // Do NOT register permissions here: infra profile uses empty components (no pubsub),
                 // and permission registration publishes over pubsub. Calling it would fail startup.
             }

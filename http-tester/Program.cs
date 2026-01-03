@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.HttpTester.Tests;
 using BeyondImmersion.BannouService.Mesh;
@@ -163,7 +164,7 @@ public class Program
                 RabbitMQUsername = rabbitUser,
                 RabbitMQPassword = rabbitPass,
                 RabbitMQVirtualHost = "/",
-                DefaultExchange = "bannou"
+                DefaultExchange = AppConstants.DEFAULT_APP_NAME
             };
             serviceCollection.AddSingleton(messagingConfig);
 
@@ -196,7 +197,7 @@ public class Program
             var meshConfig = new MeshServiceConfiguration
             {
                 RedisConnectionString = meshRedisConnectionString,
-                DefaultAppId = "bannou",
+                DefaultAppId = AppConstants.DEFAULT_APP_NAME,
                 UseLocalRouting = false,  // MUST use real Redis
                 RedisConnectionTimeoutSeconds = 60,
                 RedisConnectRetryCount = 10,

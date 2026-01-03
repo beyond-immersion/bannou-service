@@ -2,7 +2,7 @@
 
 > **Status**: VISION DOCUMENT
 > **Created**: 2025-12-28
-> **Related**: [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [UPCOMING_-_ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md), [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [UPCOMING_-_MAP_SERVICE.md](./UPCOMING_-_MAP_SERVICE.md)
+> **Related**: [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [UPCOMING_-_ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md), [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [UPCOMING_-_MAP_SERVICE.md](./UPCOMING_-_MAP_SERVICE.md)
 
 ---
 
@@ -1183,7 +1183,7 @@ The living world isn't just NPCs having schedules. It's NPCs having *memorable m
 ## Related Documents
 
 - [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md) - Behavior markup language
-- [UPCOMING_-_ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Distributed actor system
+- [UPCOMING_-_ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md) - Distributed actor system
 - [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md) - GOAP and behavior execution
 - [UPCOMING_-_MAP_SERVICE.md](./UPCOMING_-_MAP_SERVICE.md) - Spatial awareness and affordances
 - [arcadia-kb: Player-Character Dual Agency](~/repos/arcadia-kb/04%20-%20Game%20Systems/Player-Character%20Dual%20Agency%20Training%20System.md) - Guardian spirit possession model

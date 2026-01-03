@@ -17,6 +17,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -107,6 +122,28 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     /// <param name="body">Optional connection parameters</param>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get all active WebSocket sessions for an account
+    /// </summary>
+
+    /// <remarks>
+    /// Returns all active WebSocket session IDs for a specified account.
+    /// <br/>This is an internal endpoint used by services that need to know which
+    /// <br/>sessions are currently connected for a given account.
+    /// <br/>
+    /// <br/>**Use Cases:**
+    /// <br/>- GameSessionService periodic cache sync
+    /// <br/>- Service-to-service session discovery
+    /// <br/>- Admin session management
+    /// <br/>
+    /// <br/>**Note:** Session IDs returned are those with active WebSocket connections.
+    /// <br/>Sessions in reconnection windows may not appear in this list.
+    /// </remarks>
+
+    /// <returns>Account sessions retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetAccountSessionsResponse>> GetAccountSessionsAsync(GetAccountSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -244,6 +281,32 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("connect")]
 
     public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get all active WebSocket sessions for an account
+    /// </summary>
+    /// <remarks>
+    /// Returns all active WebSocket session IDs for a specified account.
+    /// <br/>This is an internal endpoint used by services that need to know which
+    /// <br/>sessions are currently connected for a given account.
+    /// <br/>
+    /// <br/>**Use Cases:**
+    /// <br/>- GameSessionService periodic cache sync
+    /// <br/>- Service-to-service session discovery
+    /// <br/>- Admin session management
+    /// <br/>
+    /// <br/>**Note:** Session IDs returned are those with active WebSocket connections.
+    /// <br/>Sessions in reconnection windows may not appear in this list.
+    /// </remarks>
+    /// <returns>Account sessions retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("connect/get-account-sessions")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetAccountSessionsResponse>> GetAccountSessions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetAccountSessionsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
 
 
 
@@ -437,9 +500,16 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
   "$defs": {
     "GetClientCapabilitiesRequest": {
       "type": "object",
-      "description": "Request to get client capability manifest (empty body allowed)",
+      "description": "Request to get capability manifest for a connected session (debugging endpoint)",
       "additionalProperties": false,
+      "required": [
+        "sessionId"
+      ],
       "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Session ID to retrieve capabilities for (must have active WebSocket connection)"
+        },
         "serviceFilter": {
           "type": "string",
           "description": "Optional filter by service name prefix",
@@ -809,6 +879,128 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
             _ConnectWebSocketPost_Info,
             _ConnectWebSocketPost_RequestSchema,
             _ConnectWebSocketPost_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAccountSessions
+
+    private static readonly string _GetAccountSessions_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetAccountSessionsRequest",
+  "$defs": {
+    "GetAccountSessionsRequest": {
+      "type": "object",
+      "description": "Request to get all active WebSocket sessions for an account",
+      "additionalProperties": false,
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID to retrieve sessions for"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountSessions_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetAccountSessionsResponse",
+  "$defs": {
+    "GetAccountSessionsResponse": {
+      "type": "object",
+      "description": "Response containing all active WebSocket session IDs for an account",
+      "additionalProperties": false,
+      "required": [
+        "accountId",
+        "sessionIds",
+        "retrievedAt"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID the sessions belong to"
+        },
+        "sessionIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of active WebSocket session IDs for this account"
+        },
+        "count": {
+          "type": "integer",
+          "description": "Number of active sessions"
+        },
+        "retrievedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this session list was retrieved"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountSessions_Info = """
+{
+  "summary": "Get all active WebSocket sessions for an account",
+  "description": "Returns all active WebSocket session IDs for a specified account.\nThis is an internal endpoint used by services that need to know which\nsessions are currently connected for a given account.\n\n**Use Cases:**\n- GameSessionService periodic cache sync\n- Service-to-service session discovery\n- Admin session management\n\n**Note:** Session IDs returned are those with active WebSocket connections.\nSessions in reconnection windows may not appear in this list.\n",
+  "tags": [
+    "Session Management"
+  ],
+  "deprecated": false,
+  "operationId": "getAccountSessions"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAccountSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("connect/get-account-sessions/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSessions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Connect",
+            "Post",
+            "connect/get-account-sessions",
+            _GetAccountSessions_Info));
+
+    /// <summary>Returns request schema for GetAccountSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("connect/get-account-sessions/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSessions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Connect",
+            "Post",
+            "connect/get-account-sessions",
+            "request-schema",
+            _GetAccountSessions_RequestSchema));
+
+    /// <summary>Returns response schema for GetAccountSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("connect/get-account-sessions/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSessions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Connect",
+            "Post",
+            "connect/get-account-sessions",
+            "response-schema",
+            _GetAccountSessions_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAccountSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("connect/get-account-sessions/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSessions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Connect",
+            "Post",
+            "connect/get-account-sessions",
+            _GetAccountSessions_Info,
+            _GetAccountSessions_RequestSchema,
+            _GetAccountSessions_ResponseSchema));
 
     #endregion
 

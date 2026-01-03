@@ -870,15 +870,25 @@ paths:
         merge\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/MergeRelationshipTypeResponse\"\
         ,\n  \"$defs\": {\n    \"MergeRelationshipTypeResponse\": {\n      \"description\": \"Response summarizing the results
-        of a merge operation including the number of relationships migrated\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"required\": [\n        \"sourceTypeId\",\n        \"targetTypeId\",\n        \"relationshipsMigrated\"\
-        ,\n        \"sourceDeleted\"\n      ],\n      \"properties\": {\n        \"sourceTypeId\": {\n          \"type\":
-        \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the deprecated type that was merged
-        from\"\n        },\n        \"targetTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"ID of the type that relationships were merged into\"\n        },\n        \"relationshipsMigrated\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Number of relationships updated to use the target
-        type\"\n        },\n        \"sourceDeleted\": {\n          \"type\": \"boolean\",\n          \"description\": \"\
-        Whether the source type was hard-deleted after merge\"\n        }\n      }\n    }\n  }\n}"
+        of a merge operation including the number of relationships migrated and any failures\",\n      \"type\": \"object\"\
+        ,\n      \"additionalProperties\": false,\n      \"required\": [\n        \"sourceTypeId\",\n        \"targetTypeId\"\
+        ,\n        \"relationshipsMigrated\",\n        \"relationshipsFailed\",\n        \"sourceDeleted\"\n      ],\n   \
+        \   \"properties\": {\n        \"sourceTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
+        ,\n          \"description\": \"ID of the deprecated type that was merged from\"\n        },\n        \"targetTypeId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the type
+        that relationships were merged into\"\n        },\n        \"relationshipsMigrated\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"Number of relationships successfully updated to use the target type\"\n        },\n\
+        \        \"relationshipsFailed\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of relationships
+        that failed to migrate\"\n        },\n        \"sourceDeleted\": {\n          \"type\": \"boolean\",\n          \"\
+        description\": \"Whether the source type was hard-deleted after merge\"\n        },\n        \"migrationErrors\":
+        {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/MigrationError\"\n    \
+        \      },\n          \"description\": \"Details of individual migration failures (limited to first 100)\"\n      \
+        \  }\n      }\n    },\n    \"MigrationError\": {\n      \"description\": \"Details of a single relationship that failed
+        to migrate\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n      \
+        \  \"relationshipId\",\n        \"error\"\n      ],\n      \"properties\": {\n        \"relationshipId\": {\n    \
+        \      \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the relationship
+        that failed to migrate\"\n        },\n        \"error\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Error message explaining why the migration failed\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Merge a deprecated type into another type\",\n  \"description\": \"Migrate
         all relationships using a deprecated type to a target type.\\nThis is the recommended way to handle type removal:\\
         n1. Deprecate the source type\\n2. Merge into the target type (or VOID for effective deletion)\\n3. Optionally hard-delete
@@ -1411,13 +1421,15 @@ components:
           description: List of error messages for types that failed to seed
 
     MergeRelationshipTypeResponse:
-      description: Response summarizing the results of a merge operation including the number of relationships migrated
+      description: Response summarizing the results of a merge operation including the number of relationships migrated 
+        and any failures
       type: object
       additionalProperties: false
       required:
       - sourceTypeId
       - targetTypeId
       - relationshipsMigrated
+      - relationshipsFailed
       - sourceDeleted
       properties:
         sourceTypeId:
@@ -1430,7 +1442,31 @@ components:
           description: ID of the type that relationships were merged into
         relationshipsMigrated:
           type: integer
-          description: Number of relationships updated to use the target type
+          description: Number of relationships successfully updated to use the target type
+        relationshipsFailed:
+          type: integer
+          description: Number of relationships that failed to migrate
         sourceDeleted:
           type: boolean
           description: Whether the source type was hard-deleted after merge
+        migrationErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MigrationError'
+          description: Details of individual migration failures (limited to first 100)
+
+    MigrationError:
+      description: Details of a single relationship that failed to migrate
+      type: object
+      additionalProperties: false
+      required:
+      - relationshipId
+      - error
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+          description: ID of the relationship that failed to migrate
+        error:
+          type: string
+          description: Error message explaining why the migration failed

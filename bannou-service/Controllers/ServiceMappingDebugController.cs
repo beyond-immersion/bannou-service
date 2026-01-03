@@ -28,7 +28,7 @@ public class ServiceMappingDebugController : ControllerBase
         var mappings = _resolver.GetAllMappings();
         return Ok(new
         {
-            DefaultAppId = "bannou",
+            DefaultAppId = AppConstants.DEFAULT_APP_NAME,
             CurrentVersion = _resolver.CurrentVersion,
             CustomMappings = mappings,
             MappingCount = mappings.Count

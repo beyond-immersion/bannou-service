@@ -119,8 +119,15 @@ public class AppConfiguration : BaseServiceConfiguration
     public string? MappingSourceAppId { get; set; }
 
     /// <summary>
+    /// Whether the heartbeat system is enabled.
+    /// Set to false only for minimal infrastructure testing where pub/sub is not configured.
+    /// Environment variable: BANNOU_HEARTBEAT_ENABLED
+    /// </summary>
+    public bool HeartbeatEnabled { get; set; } = true;
+
+    /// <summary>
     /// Interval in seconds between service heartbeats.
-    /// Environment variable: HEARTBEAT_INTERVAL_SECONDS or BANNOU_HEARTBEAT_INTERVAL_SECONDS
+    /// Environment variable: BANNOU_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
     public int HeartbeatIntervalSeconds { get; set; } = 30;
 
