@@ -25,6 +25,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<GameSessionModel>> _mockGameSessionStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<SubscriberSessionsModel>> _mockSubscriberSessionsStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -36,14 +37,18 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
+    private const string SUBSCRIBER_SESSIONS_PREFIX = "subscriber-sessions:";
+    private const string LOBBY_KEY_PREFIX = "lobby:";
 
     private const string TEST_SERVER_SALT = "test-server-salt-2025";
+    private const string TEST_GAME_TYPE = "arcadia";
 
     public GameSessionServiceTests()
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockGameSessionStore = new Mock<IStateStore<GameSessionModel>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockSubscriberSessionsStore = new Mock<IStateStore<SubscriberSessionsModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<GameSessionService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -55,6 +60,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<GameSessionModel>(STATE_STORE)).Returns(_mockGameSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<SubscriberSessionsModel>(STATE_STORE)).Returns(_mockSubscriberSessionsStore.Object);
     }
 
     /// <summary>
@@ -80,6 +86,42 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockVoiceClient.Object,
             _mockPermissionsClient.Object,
             _mockSubscriptionsClient.Object);
+    }
+
+    /// <summary>
+    /// Sets up a valid subscriber session so authorization checks pass.
+    /// </summary>
+    private void SetupValidSubscriberSession(Guid accountId, string sessionId)
+    {
+        var subscriberSessions = new SubscriberSessionsModel
+        {
+            AccountId = accountId,
+            SessionIds = new HashSet<string> { sessionId }
+        };
+
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(subscriberSessions);
+    }
+
+    /// <summary>
+    /// Sets up an existing lobby for a game type.
+    /// </summary>
+    private Guid SetupExistingLobby(string gameType, GameSessionModel lobby)
+    {
+        var lobbyId = Guid.Parse(lobby.SessionId);
+
+        // Setup lookup by lobby key (lobby:{gameType})
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + gameType.ToLowerInvariant(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lobby);
+
+        // Setup lookup by session key (session:{lobbyId})
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lobby);
+
+        return lobbyId;
     }
 
     #region Constructor Tests
@@ -397,10 +439,26 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var request = new JoinGameSessionRequest { SessionId = Guid.NewGuid() };
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
 
+        // Setup valid subscriber session so auth passes
+        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+
+        // Return a lobby from lobby key lookup, but nothing from session key lookup
+        var lobbyId = Guid.NewGuid();
+        var lobby = new GameSessionModel { SessionId = lobbyId.ToString() };
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lobby);
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
@@ -416,24 +474,34 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var sessionId = Guid.NewGuid();
-        var request = new JoinGameSessionRequest { SessionId = sessionId };
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
 
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
+        // Setup valid subscriber session
+        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+
+        // Setup full lobby
+        var lobbyId = Guid.NewGuid();
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId.ToString(),
+            MaxPlayers = 2,
+            CurrentPlayers = 2,
+            Status = GameSessionResponseStatus.Full,
+            Players = new List<GamePlayer>
             {
-                SessionId = sessionId.ToString(),
-                MaxPlayers = 2,
-                CurrentPlayers = 2,
-                Status = GameSessionResponseStatus.Full,
-                Players = new List<GamePlayer>
-                {
-                    new() { AccountId = Guid.NewGuid() },
-                    new() { AccountId = Guid.NewGuid() }
-                },
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+                new() { AccountId = Guid.NewGuid() },
+                new() { AccountId = Guid.NewGuid() }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
@@ -445,32 +513,68 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
-    public async Task JoinGameSessionAsync_WhenSessionFinished_ShouldReturnConflict()
+    public async Task JoinGameSessionAsync_WhenSessionFinished_CreatesNewLobby()
     {
         // Arrange
         var service = CreateService();
-        var sessionId = Guid.NewGuid();
-        var request = new JoinGameSessionRequest { SessionId = sessionId };
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
 
+        // Setup valid subscriber session
+        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+
+        // Setup finished lobby - service will auto-create a new one
+        var lobbyId = Guid.NewGuid();
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId.ToString(),
+            MaxPlayers = 4,
+            CurrentPlayers = 0,
+            Status = GameSessionResponseStatus.Finished,
+            Players = new List<GamePlayer>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // When the lobby is Finished, GetOrCreateLobbySessionAsync creates a NEW lobby
+        // Mock the save operation to capture the new lobby creation
+        GameSessionModel? createdLobby = null;
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
+            .Setup(s => s.SaveAsync(It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX)), It.IsAny<GameSessionModel>(), It.IsAny<CancellationToken>()))
+            .Callback<string, GameSessionModel, CancellationToken>((k, m, ct) => createdLobby = m)
+            .Returns(Task.CompletedTask);
+        _mockGameSessionStore
+            .Setup(s => s.SaveAsync(It.Is<string>(k => k.StartsWith(LOBBY_KEY_PREFIX)), It.IsAny<GameSessionModel>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Also need to mock GetAsync for the NEW lobby ID that will be looked up after creation
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX) && k != SESSION_KEY_PREFIX + lobbyId.ToString()), It.IsAny<CancellationToken>()))
+            .Returns((string key, CancellationToken ct) =>
             {
-                SessionId = sessionId.ToString(),
-                MaxPlayers = 4,
-                CurrentPlayers = 0,
-                Status = GameSessionResponseStatus.Finished,
-                Players = new List<GamePlayer>(),
-                CreatedAt = DateTimeOffset.UtcNow
+                // Return the newly created lobby when looking up the new session
+                if (createdLobby != null && key.EndsWith(createdLobby.SessionId))
+                {
+                    return Task.FromResult<GameSessionModel?>(createdLobby);
+                }
+                return Task.FromResult<GameSessionModel?>(null);
             });
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
 
-        // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
+        // Assert - should succeed with a new lobby
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.True(response.Success);
+        Assert.NotNull(createdLobby);
+        Assert.Equal(GameSessionResponseStatus.Active, createdLobby.Status);
     }
 
     [Fact]
@@ -478,20 +582,30 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var sessionId = Guid.NewGuid();
-        var request = new JoinGameSessionRequest { SessionId = sessionId };
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
 
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
-            {
-                SessionId = sessionId.ToString(),
-                MaxPlayers = 4,
-                CurrentPlayers = 1,
-                Status = GameSessionResponseStatus.Active,
-                Players = new List<GamePlayer>(),
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+        // Setup valid subscriber session
+        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
+
+        // Setup active lobby
+        var lobbyId = Guid.NewGuid();
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId.ToString(),
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = GameSessionResponseStatus.Active,
+            Players = new List<GamePlayer>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
@@ -522,34 +636,23 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         {
             SessionId = clientSessionId,  // WebSocket session ID (from shortcut)
             AccountId = accountId,
-            GameType = "arcadia"
+            GameType = TEST_GAME_TYPE
         };
 
-        // Mock lobby lookup (by lobby key "lobby:arcadia")
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync("lobby:arcadia", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
-            {
-                SessionId = lobbyId.ToString(),
-                MaxPlayers = 4,
-                CurrentPlayers = 1,
-                Status = GameSessionResponseStatus.Active,
-                Players = new List<GamePlayer>(),
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+        // Setup valid subscriber session
+        SetupValidSubscriberSession(accountId, clientSessionId.ToString());
 
-        // Mock session lookup (by session key)
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
-            {
-                SessionId = lobbyId.ToString(),
-                MaxPlayers = 4,
-                CurrentPlayers = 1,
-                Status = GameSessionResponseStatus.Active,
-                Players = new List<GamePlayer>(),
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+        // Setup active lobby
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId.ToString(),
+            MaxPlayers = 4,
+            CurrentPlayers = 1,
+            Status = GameSessionResponseStatus.Active,
+            Players = new List<GamePlayer>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
@@ -583,42 +686,24 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         {
             SessionId = clientSessionId,  // WebSocket session ID (from shortcut)
             AccountId = accountId,
-            GameType = "arcadia"
+            GameType = TEST_GAME_TYPE
         };
 
-        // Mock lobby lookup (by lobby key "lobby:arcadia")
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync("lobby:arcadia", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
+        // Setup lobby with the player in it
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId.ToString(),
+            MaxPlayers = 4,
+            CurrentPlayers = 2,
+            Status = GameSessionResponseStatus.Active,
+            Players = new List<GamePlayer>
             {
-                SessionId = lobbyId.ToString(),
-                MaxPlayers = 4,
-                CurrentPlayers = 2,
-                Status = GameSessionResponseStatus.Active,
-                Players = new List<GamePlayer>
-                {
-                    new() { AccountId = accountId, DisplayName = "TestPlayer" },
-                    new() { AccountId = Guid.NewGuid(), DisplayName = "OtherPlayer" }
-                },
-                CreatedAt = DateTimeOffset.UtcNow
-            });
-
-        // Mock session lookup (by session key)
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
-            {
-                SessionId = lobbyId.ToString(),
-                MaxPlayers = 4,
-                CurrentPlayers = 2,
-                Status = GameSessionResponseStatus.Active,
-                Players = new List<GamePlayer>
-                {
-                    new() { AccountId = accountId, DisplayName = "TestPlayer" },
-                    new() { AccountId = Guid.NewGuid(), DisplayName = "OtherPlayer" }
-                },
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+                new() { AccountId = accountId, DisplayName = "TestPlayer" },
+                new() { AccountId = Guid.NewGuid(), DisplayName = "OtherPlayer" }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
         var status = await service.LeaveGameSessionAsync(request);
@@ -639,10 +724,23 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var request = new LeaveGameSessionRequest { SessionId = Guid.NewGuid() };
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var request = new LeaveGameSessionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE
+        };
 
+        // Return a lobby from lobby key lookup, but nothing from session key lookup
+        var lobbyId = Guid.NewGuid();
+        var lobby = new GameSessionModel { SessionId = lobbyId.ToString() };
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lobby);
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
@@ -661,14 +759,24 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
         var request = new GameActionRequest
         {
-            SessionId = Guid.NewGuid(),
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE,
             ActionType = GameActionRequestActionType.Move
         };
 
+        // Return a lobby from lobby key lookup, but nothing from session key lookup
+        var lobbyId = Guid.NewGuid();
+        var lobby = new GameSessionModel { SessionId = lobbyId.ToString() };
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_GAME_TYPE.ToLowerInvariant(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lobby);
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
@@ -684,22 +792,26 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var sessionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
         var request = new GameActionRequest
         {
-            SessionId = sessionId,
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE,
             ActionType = GameActionRequestActionType.Move
         };
 
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GameSessionModel
-            {
-                SessionId = sessionId.ToString(),
-                Status = GameSessionResponseStatus.Finished,
-                Players = new List<GamePlayer>(),
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+        // Setup finished lobby
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId.ToString(),
+            Status = GameSessionResponseStatus.Finished,
+            Players = new List<GamePlayer>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
         var (status, response) = await service.PerformGameActionAsync(request);

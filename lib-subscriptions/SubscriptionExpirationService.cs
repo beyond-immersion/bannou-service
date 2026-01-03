@@ -72,16 +72,13 @@ public class SubscriptionExpirationService : BackgroundService
                 try
                 {
                     using var errorScope = _serviceProvider.CreateScope();
-                    var messageBus = errorScope.ServiceProvider.GetService<IMessageBus>();
-                    if (messageBus != null)
-                    {
-                        await messageBus.TryPublishErrorAsync(
-                            "subscriptions",
-                            "ExpirationCheck",
-                            ex.GetType().Name,
-                            ex.Message,
-                            severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
-                    }
+                    var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
+                    await messageBus.TryPublishErrorAsync(
+                        "subscriptions",
+                        "ExpirationCheck",
+                        ex.GetType().Name,
+                        ex.Message,
+                        severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
                 }
                 catch
                 {
@@ -110,14 +107,8 @@ public class SubscriptionExpirationService : BackgroundService
         _logger.LogDebug("Checking for expired subscriptions");
 
         using var scope = _serviceProvider.CreateScope();
-        var stateStoreFactory = scope.ServiceProvider.GetService<IStateStoreFactory>();
-        var messageBus = scope.ServiceProvider.GetService<IMessageBus>();
-
-        if (stateStoreFactory == null || messageBus == null)
-        {
-            _logger.LogError("IStateStoreFactory or IMessageBus not available - subscription expiration checks cannot run. This is a critical infrastructure issue.");
-            return;
-        }
+        var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
+        var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
         // Get the subscription index to find all subscription IDs
         var indexStore = stateStoreFactory.GetStore<List<string>>(STATE_STORE);

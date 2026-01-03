@@ -125,23 +125,30 @@ This document catalogs patterns found through comprehensive codebase searches. I
 
 ## Category 5: Inconsistent DI Patterns
 
-### 5.1 Optional Service Resolution for Critical Services (YELLOW)
-**File**: `bannou-service/Program.cs:374`
-```csharp
-MeshInvocationClient = webApp.Services.GetService<IMeshInvocationClient>();
-```
-**Issue**: Uses `GetService<T>()` (optional) instead of `GetRequiredService<T>()`. No null check. Line 369 uses `GetRequiredService` for IServiceAppMappingResolver - inconsistent.
+### 5.1 Optional Service Resolution for Critical Services (GREEN - RESOLVED)
+**File**: `bannou-service/Program.cs`
+**Status**: ✅ Fixed - Changed to `GetRequiredService` for `IMeshInvocationClient` and `IServiceAppMappingResolver`. Core infrastructure should fail fast.
 
-### 5.2 Dead TryAddSingleton Comment (YELLOW)
-**File**: `bannou-service/Program.cs:196-197`
-```
-// NOTE: mesh client is already registered by AddBannouServices() above with proper serializer config
-// Do NOT call Addmesh client() here - it would be ignored due to TryAddSingleton pattern
-```
-**Issue**: References non-existent `AddBannouServices()` method. Stale documentation.
+### 5.2 Dead TryAddSingleton Comment (GREEN - RESOLVED)
+**File**: `bannou-service/Program.cs`
+**Status**: ✅ Fixed - Removed stale comment referencing non-existent `AddBannouServices()` method.
 
-### 5.3 43 GetService Calls Throughout Codebase (YELLOW)
-**Issue**: Mix of optional and required service resolution creates opportunities for silent failures. Needs audit.
+### 5.3 43 GetService Calls Throughout Codebase (GREEN - RESOLVED)
+**Status**: ✅ Fixed - Comprehensive audit completed:
+
+**Fixed (14 calls changed to GetRequiredService + fail-fast):**
+- `Program.cs`: 2 calls (MeshInvocationClient, ServiceAppMappingResolver)
+- `RepositorySyncSchedulerService.cs`: 3 calls (StateStoreFactory, DocumentationService, MessageBus)
+- `SubscriptionExpirationService.cs`: 3 calls (StateStoreFactory, MessageBus x2)
+- `MeshServicePlugin.cs`: 3 calls + changed degraded mode to fail-fast
+- `OrchestratorServicePlugin.cs`: 1 call + changed degraded mode to fail-fast
+- `ActorServicePlugin.cs`: 2 calls
+- `StandardServicePlugin.cs`: 1 call (base class for all plugins)
+
+**Acceptable (remaining ~29 calls):**
+- Tests (22 calls): Intentionally testing optional resolution
+- Plugin ConfigureServices bootstrap (6 calls): T21 exception - before SP built
+- `BaseBannouPlugin.GetLoggerFactory`: Logging is optional early in startup
 
 ---
 
@@ -217,13 +224,13 @@ These patterns were found but are legitimately intentional:
 | Unimplemented Features | 0 | 4 | 1 |
 | Missing Audit | 0 | 1 | 1 |
 | Tenet Violations | 0 | 0 | 2 |
-| DI Patterns | 0 | 3 | 0 |
+| DI Patterns | 0 | 0 | 3 |
 | Test Issues | 0 | 0 | 1 |
 | Documented Limitations | 0 | 2 | 2 |
 | Verified Intentional | 0 | 0 | 14 |
 | String.Empty Usage | 0 | 326 | 0 |
 | Null-Forgiving Exceptions | 0 | 0 | 4 |
-| **TOTAL** | **0** | **336** | **29** |
+| **TOTAL** | **0** | **333** | **32** |
 
 ---
 

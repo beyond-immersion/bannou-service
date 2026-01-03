@@ -80,16 +80,15 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
         Logger?.LogInformation("Starting Orchestrator service");
 
         // Initialize state manager (uses IStateStoreFactory from lib-state)
-        var stateManager = ServiceProvider?.GetService<IOrchestratorStateManager>();
+        var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
+        var stateManager = serviceProvider.GetRequiredService<IOrchestratorStateManager>();
 
-        if (stateManager != null)
+        Logger?.LogInformation("Initializing state stores for orchestrator via lib-state...");
+        var stateInitialized = await stateManager.InitializeAsync();
+        if (!stateInitialized)
         {
-            Logger?.LogInformation("Initializing state stores for orchestrator via lib-state...");
-            var stateInitialized = await stateManager.InitializeAsync();
-            if (!stateInitialized)
-            {
-                Logger?.LogWarning("State store initialization failed - health checks will report unhealthy");
-            }
+            Logger?.LogError("State store initialization failed - cannot start Orchestrator without state");
+            return false;
         }
 
         // Call base to resolve service and call IBannouService.OnStartAsync

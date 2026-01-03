@@ -193,9 +193,6 @@ public static class Program
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { });
 
-            // NOTE: mesh client is already registered by AddBannouServices() above with proper serializer config
-            // Do NOT call Addmesh client() here - it would be ignored due to TryAddSingleton pattern
-
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();
 
@@ -367,7 +364,7 @@ public static class Program
                 HeartbeatManager = new ServiceHeartbeatManager(messageBus, heartbeatLogger, PluginLoader, mappingResolver, Configuration);
 
                 // Initialize mesh invocation client for service-to-service communication
-                MeshInvocationClient = webApp.Services.GetService<IMeshInvocationClient>();
+                MeshInvocationClient = webApp.Services.GetRequiredService<IMeshInvocationClient>();
 
                 // Wait for message bus connectivity using heartbeat publishing as the test
                 // Publishing a heartbeat proves RabbitMQ pub/sub readiness
@@ -651,18 +648,11 @@ public static class Program
 
                     if (mappingsResponse?.Mappings != null)
                     {
-                        var resolver = webApp.Services.GetService<IServiceAppMappingResolver>();
-                        if (resolver != null)
-                        {
-                            resolver.ImportMappings(mappingsResponse.Mappings);
-                            Logger.Log(LogLevel.Information, null,
-                                $"Successfully imported {mappingsResponse.TotalServices} service mappings from {sourceAppId}");
-                            return true;
-                        }
-                        else
-                        {
-                            Logger.Log(LogLevel.Error, null, "ServiceAppMappingResolver not found in DI container");
-                        }
+                        var resolver = webApp.Services.GetRequiredService<IServiceAppMappingResolver>();
+                        resolver.ImportMappings(mappingsResponse.Mappings);
+                        Logger.Log(LogLevel.Information, null,
+                            $"Successfully imported {mappingsResponse.TotalServices} service mappings from {sourceAppId}");
+                        return true;
                     }
                 }
                 else

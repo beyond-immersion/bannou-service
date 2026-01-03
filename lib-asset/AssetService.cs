@@ -1465,7 +1465,11 @@ public partial class AssetService : IAssetService
             var result = new Dictionary<string, object>();
             foreach (var property in jsonElement.EnumerateObject())
             {
-                result[property.Name] = GetJsonValue(property.Value);
+                var value = GetJsonValue(property.Value);
+                if (value != null)
+                {
+                    result[property.Name] = value;
+                }
             }
             return result;
         }

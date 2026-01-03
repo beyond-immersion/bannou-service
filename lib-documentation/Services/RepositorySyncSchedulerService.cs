@@ -99,14 +99,8 @@ public class RepositorySyncSchedulerService : BackgroundService
         _logger.LogDebug("Checking for bindings that need sync");
 
         using var scope = _serviceProvider.CreateScope();
-        var stateStoreFactory = scope.ServiceProvider.GetService<IStateStoreFactory>();
-        var documentationService = scope.ServiceProvider.GetService<IDocumentationService>();
-
-        if (stateStoreFactory == null || documentationService == null)
-        {
-            _logger.LogError("IStateStoreFactory or IDocumentationService not available - sync checks cannot run");
-            return;
-        }
+        var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
+        var documentationService = scope.ServiceProvider.GetRequiredService<IDocumentationService>();
 
         // Get all binding namespace IDs from registry
         var registryStore = stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
@@ -225,17 +219,14 @@ public class RepositorySyncSchedulerService : BackgroundService
         try
         {
             using var errorScope = _serviceProvider.CreateScope();
-            var messageBus = errorScope.ServiceProvider.GetService<IMessageBus>();
-            if (messageBus != null)
-            {
-                await messageBus.TryPublishErrorAsync(
-                    "documentation",
-                    "ScheduledSync",
-                    ex.GetType().Name,
-                    ex.Message,
-                    severity: ServiceErrorEventSeverity.Error,
-                    cancellationToken: cancellationToken);
-            }
+            var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
+            await messageBus.TryPublishErrorAsync(
+                "documentation",
+                "ScheduledSync",
+                ex.GetType().Name,
+                ex.Message,
+                severity: ServiceErrorEventSeverity.Error,
+                cancellationToken: cancellationToken);
         }
         catch
         {

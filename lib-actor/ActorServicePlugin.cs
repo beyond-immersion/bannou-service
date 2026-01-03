@@ -126,14 +126,9 @@ public class ActorServicePlugin : BaseBannouPlugin
         {
             // Get service instance from DI container with proper scope handling
             // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
-            using var scope = _serviceProvider?.CreateScope();
-            _service = scope?.ServiceProvider.GetService<IActorService>();
-
-            if (_service == null)
-            {
-                Logger?.LogError("Failed to resolve IActorService from DI container");
-                return false;
-            }
+            var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
+            using var scope = serviceProvider.CreateScope();
+            _service = scope.ServiceProvider.GetRequiredService<IActorService>();
 
             // Call existing IBannouService.OnStartAsync if the service implements it
             if (_service is IBannouService bannouService)
@@ -188,27 +183,22 @@ public class ActorServicePlugin : BaseBannouPlugin
         try
         {
             // Stop all running actors
-            if (_serviceProvider != null)
-            {
-                var registry = _serviceProvider.GetService<IActorRegistry>();
-                if (registry != null)
-                {
-                    var actors = registry.GetAllRunners().ToList();
-                    Logger?.LogInformation("Stopping {ActorCount} running actors", actors.Count);
+            var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnShutdownAsync");
+            var registry = serviceProvider.GetRequiredService<IActorRegistry>();
+            var actors = registry.GetAllRunners().ToList();
+            Logger?.LogInformation("Stopping {ActorCount} running actors", actors.Count);
 
-                    foreach (var actor in actors)
-                    {
-                        try
-                        {
-                            await actor.StopAsync(graceful: true);
-                            registry.TryRemove(actor.ActorId, out _);
-                            await actor.DisposeAsync();
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger?.LogWarning(ex, "Error stopping actor {ActorId} during shutdown", actor.ActorId);
-                        }
-                    }
+            foreach (var actor in actors)
+            {
+                try
+                {
+                    await actor.StopAsync(graceful: true);
+                    registry.TryRemove(actor.ActorId, out _);
+                    await actor.DisposeAsync();
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogWarning(ex, "Error stopping actor {ActorId} during shutdown", actor.ActorId);
                 }
             }
 
