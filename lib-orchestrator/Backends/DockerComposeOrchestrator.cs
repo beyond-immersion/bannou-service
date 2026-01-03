@@ -701,8 +701,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             // Prepare application container environment
             // Get the orchestrator's own app-id to set as the mapping source
-            var orchestratorAppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID")
-                ?? AppConstants.DEFAULT_APP_NAME;
+            var orchestratorAppId = Program.Configuration.EffectiveAppId;
 
             var envList = new List<string>
             {

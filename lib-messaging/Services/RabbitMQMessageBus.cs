@@ -288,7 +288,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
                 Timestamp = DateTimeOffset.UtcNow,
                 ServiceId = Guid.Parse(Program.ServiceGUID),
                 ServiceName = serviceName,
-                AppId = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_APP_ID) ?? AppConstants.DEFAULT_APP_NAME,
+                AppId = Program.Configuration.EffectiveAppId,
                 Operation = operation,
                 ErrorType = errorType,
                 Message = message,
