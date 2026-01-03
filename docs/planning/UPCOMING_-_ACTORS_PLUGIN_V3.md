@@ -2491,18 +2491,33 @@ public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharact
 - [ ] Implement connection TTL for region transitions
 - [ ] Test dual-transport switching (messaging ↔ internal-connect)
 
-### Phase 3: Pool Node Deployment
-- [ ] Add pool node container support
-- [ ] Implement "shared-pool" deployment mode
-- [ ] Implement "pool-per-type" deployment mode
-- [ ] Pool node ↔ control plane messaging
-- [ ] Heartbeat system
+### Phase 3: Pool Node Deployment ✅ COMPLETE
+- [x] Add pool node container support (ActorPoolNodeWorker BackgroundService)
+- [x] Implement "shared-pool" deployment mode (config schema)
+- [x] Implement "pool-per-type" deployment mode (config schema)
+- [x] Pool node ↔ control plane messaging (event handlers in ActorServiceEvents.cs)
+- [x] Heartbeat system (HeartbeatEmitter, PoolHealthMonitor)
 
-### Phase 4: Orchestration Integration
-- [ ] Pool node spawning via lib-orchestrator
-- [ ] Pool node health monitoring
-- [ ] Node failure detection and event emission
-- [ ] Implement "auto-scale" deployment mode
+**Implementation Notes (Phase 3):**
+- `lib-actor/PoolNode/ActorPoolNodeWorker.cs` - BackgroundService for pool nodes
+- `lib-actor/PoolNode/HeartbeatEmitter.cs` - Periodic heartbeat publishing
+- `lib-actor/Pool/ActorPoolManager.cs` - Pool node registry and management
+- `lib-actor/Pool/PoolHealthMonitor.cs` - Health monitoring and failure detection
+- `lib-actor/ActorServiceEvents.cs` - Event handlers for pool node registration, heartbeat, draining
+- `provisioning/orchestrator/presets/actor-pools.yaml` - Pool configuration preset
+
+### Phase 4: Orchestration Integration ✅ MOSTLY COMPLETE
+- [x] Pool node spawning via lib-orchestrator (ScalePoolAsync calls DeployServiceAsync)
+- [x] Pool node health monitoring (PoolHealthMonitor)
+- [x] Node failure detection and event emission (PoolHealthMonitor)
+- [ ] Implement "auto-scale" deployment mode (deferred)
+
+**Implementation Notes (Phase 4):**
+- `lib-orchestrator/OrchestratorService.cs` - ScalePoolAsync now deploys real containers
+- `lib-orchestrator/PresetLoader.cs` - Added ProcessingPools support for YAML parsing
+- Pool configuration stored in Redis via InitializePoolConfigurationsAsync
+- Workers self-register via `actor.pool-node.registered` event after container starts
+- Environment variables properly set: APP_ID, ACTOR_POOL_NODE_ID, ACTOR_POOL_NODE_APP_ID
 
 ### Phase 5: NPC Brain Integration
 - [ ] Perception event routing (character.*.perception → actor)
@@ -2518,4 +2533,4 @@ public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharact
 
 ---
 
-*Last Updated: 2026-01-02*
+*Last Updated: 2026-01-03*

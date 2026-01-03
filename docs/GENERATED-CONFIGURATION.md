@@ -57,6 +57,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_MULTIPART_THRESHOLD_MB` | int | `50` | File size threshold for multipart uploads in megabytes |
 | `ASSET_PROCESSING_MODE` | string | `both` | Service mode (api, worker, both) |
 | `ASSET_PROCESSING_POOL_TYPE` | string | `asset-processor` | Processing pool identifier for orchestrator |
+| `ASSET_PROCESSOR_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Heartbeat emission interval in seconds |
+| `ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Mark node unhealthy after this many seconds without heartbea... |
+| `ASSET_PROCESSOR_IDLE_TIMEOUT_SECONDS` | int | `300` | Seconds of zero-load before auto-termination (0 to disable) |
+| `ASSET_PROCESSOR_MAX_CONCURRENT_JOBS` | int | `10` | Maximum concurrent jobs per processor node |
+| `ASSET_PROCESSOR_NODE_ID` | string | **REQUIRED** | Unique processor node ID (set by orchestrator when spawning ... |
 | `ASSET_STORAGE_ACCESS_KEY` | string | **REQUIRED** | Storage access key/username |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
 | `ASSET_STORAGE_ENDPOINT` | string | `http://minio:9000` | Storage endpoint URL (MinIO/S3 compatible) |
@@ -178,7 +183,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_CIRCUIT_BREAKER_ENABLED` | bool | `true` | Whether to enable circuit breaker for failed endpoints |
 | `MESH_CIRCUIT_BREAKER_RESET_SECONDS` | int | `30` | Seconds before attempting to close circuit |
 | `MESH_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before opening circuit |
-| `MESH_DEFAULT_APP_ID` | string | `bannou` | Default app-id when no service mapping exists (omnipotent ro... |
 | `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm (RoundRobin, LeastConnectio... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
 | `MESH_ENABLE_DETAILED_LOGGING` | bool | `false` | Whether to log detailed routing decisions |
@@ -333,9 +337,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 209
-- **Required (no default)**: 36
-- **Optional (has default)**: 173
+- **Total properties**: 213
+- **Required (no default)**: 37
+- **Optional (has default)**: 176
 
 ## Environment Variable Naming Convention
 

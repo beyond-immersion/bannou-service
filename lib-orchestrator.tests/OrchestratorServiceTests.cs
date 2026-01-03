@@ -1690,3 +1690,342 @@ public class OrchestratorResetToDefaultTests
             "ResetAllMappingsToDefaultAsync should be called");
     }
 }
+
+/// <summary>
+/// Tests for processing pool functionality in OrchestratorService.
+/// Covers ScalePoolAsync, pool configuration, and container deployment.
+/// </summary>
+public class OrchestratorProcessingPoolTests
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+
+    public OrchestratorProcessingPoolTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            RedisConnectionString = "redis:6379",
+            RabbitMqConnectionString = "amqp://guest:guest@rabbitmq:5672",
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _mockStateManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockEventConsumer.Object);
+    }
+
+    #region ScalePoolAsync Validation Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_WithEmptyPoolType_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ScalePoolRequest { PoolType = "", TargetInstances = 5 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ScalePoolAsync_WithNegativeTargetInstances_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = -1 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ScalePoolAsync_WithNoPoolConfiguration_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // No pool configuration exists
+        _mockStateManager
+            .Setup(x => x.GetValueAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:config"))))
+            .ReturnsAsync((object?)null);
+
+        var request = new ScalePoolRequest { PoolType = "unknown-pool", TargetInstances = 5 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal("unknown-pool", response.PoolType);
+        Assert.Equal(0, response.ScaledUp);
+    }
+
+    #endregion
+
+    #region ScalePoolAsync Scale-Up Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_ScaleUp_ShouldCallDeployServiceAsync()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        mockOrchestrator
+            .Setup(x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeployServiceResult { Success = true, AppId = "test-app" });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+
+        // Pool configuration exists
+        SetupPoolConfiguration("actor-shared", "actor");
+
+        // No existing instances
+        _mockStateManager
+            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:instances"))))
+            .ReturnsAsync((object?)null);
+        _mockStateManager
+            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:available"))))
+            .ReturnsAsync((object?)null);
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:leases"))))
+            .ReturnsAsync((object?)null);
+
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ScaledUp);
+        Assert.Equal(0, response.PreviousInstances);
+        Assert.Equal(2, response.CurrentInstances);
+
+        // Verify DeployServiceAsync was called twice (for 2 new instances)
+        mockOrchestrator.Verify(
+            x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.Is<Dictionary<string, string>>(env =>
+                    env.ContainsKey("BANNOU_APP_ID") &&
+                    env.ContainsKey("ACTOR_POOL_NODE_ID")),
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    #endregion
+
+    #region ScalePoolAsync Scale-Down Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_ScaleDown_ShouldCallTeardownServiceAsync()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult { Success = true });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+
+        // Pool configuration exists
+        SetupPoolConfiguration("actor-shared", "actor");
+
+        // 3 existing instances (all available)
+        SetupExistingPoolInstances("actor-shared", 3, 3);
+
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 1 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ScaledDown);
+        Assert.Equal(3, response.PreviousInstances);
+        Assert.Equal(1, response.CurrentInstances);
+
+        // Verify TeardownServiceAsync was called twice (removing 2 instances)
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync(
+                It.IsAny<string>(),
+                false,
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    #endregion
+
+    #region ScalePoolAsync No-Op Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_WhenTargetEqualsCurrent_ShouldNotDeployOrTeardown()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+
+        // Pool configuration exists
+        SetupPoolConfiguration("actor-shared", "actor");
+
+        // 2 existing instances
+        SetupExistingPoolInstances("actor-shared", 2, 2);
+
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.ScaledUp);
+        Assert.Equal(0, response.ScaledDown);
+        Assert.Equal(2, response.PreviousInstances);
+        Assert.Equal(2, response.CurrentInstances);
+
+        // Verify no deploy or teardown calls
+        mockOrchestrator.Verify(
+            x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never());
+
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never());
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private void SetupPoolConfiguration(string poolType, string serviceName)
+    {
+        // We can't easily mock internal PoolConfiguration class,
+        // so we set up the GetValueAsync to return a properly structured object
+        // Using dynamic/object approach for internal class
+        _mockStateManager
+            .Setup(x => x.GetValueAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:config:{poolType}"))))
+            .Returns((string key) =>
+            {
+                // Return a task with a dynamic object that has the expected properties
+                var config = new
+                {
+                    PoolType = poolType,
+                    ServiceName = serviceName,
+                    Image = (string?)null,
+                    Environment = new Dictionary<string, string>
+                    {
+                        ["SERVICES_ENABLED"] = "false",
+                        [$"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED"] = "true"
+                    },
+                    MinInstances = 1,
+                    MaxInstances = 10,
+                    ScaleUpThreshold = 0.8,
+                    ScaleDownThreshold = 0.2,
+                    IdleTimeoutMinutes = 5
+                };
+                return Task.FromResult<object?>(config);
+            });
+    }
+
+    private void SetupExistingPoolInstances(string poolType, int totalCount, int availableCount)
+    {
+        var instances = Enumerable.Range(0, totalCount).Select(i => new
+        {
+            ProcessorId = $"{poolType}-{Guid.NewGuid():N}",
+            AppId = $"bannou-pool-{poolType}-{i:D4}",
+            PoolType = poolType,
+            Status = i < availableCount ? "available" : "busy",
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+            LastUpdated = DateTimeOffset.UtcNow.AddMinutes(-1)
+        }).ToList();
+
+        var availableInstances = instances.Take(availableCount).ToList();
+
+        _mockStateManager
+            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:instances:{poolType}"))))
+            .Returns(Task.FromResult<object?>(instances));
+
+        _mockStateManager
+            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:available:{poolType}"))))
+            .Returns(Task.FromResult<object?>(availableInstances));
+
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:leases:{poolType}"))))
+            .Returns(Task.FromResult<object?>(new Dictionary<string, object>()));
+    }
+
+    #endregion
+}

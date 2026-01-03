@@ -2665,12 +2665,11 @@ public partial class OrchestratorService : IOrchestratorService
                     }
 
                     // Set the unique identifiers for this worker
-                    // APP_ID is the standard mesh routing identifier
-                    workerEnv["APP_ID"] = appId;
+                    // BANNOU_APP_ID is the standard mesh routing identifier
+                    workerEnv["BANNOU_APP_ID"] = appId;
 
-                    // ActorPoolNodeWorker uses these specific variables for self-registration
+                    // ActorPoolNodeWorker uses this for self-registration
                     workerEnv["ACTOR_POOL_NODE_ID"] = processorId;
-                    workerEnv["ACTOR_POOL_NODE_APP_ID"] = appId;
 
                     // Service name defaults to "bannou" if not specified in pool config
                     var serviceName = poolConfig.ServiceName;
