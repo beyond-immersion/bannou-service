@@ -1040,13 +1040,14 @@ flows:
         // Act
         var result = await _executor.ExecuteAsync(loaded, "start");
 
-        // Assert - Currently context variables are only initialized from root document
-        // This is a known limitation - imported documents don't get their context initialized
+        // Assert - Context variables are intentionally only initialized from root document
+        // in tree-walking execution. This is by design - see ABML.md Appendix C.1.
+        // The bytecode compilation path handles imports differently (merges with prefixes).
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
         Assert.Equal(2, result.Logs.Count);
         Assert.Equal("Calling lib", result.Logs[0].Message);
-        // Note: This tests current behavior - lib_setting won't be initialized
-        // because context variables are only loaded from the root document
+        // lib_setting is not initialized because tree-walking uses explicit parameter passing.
+        // Workaround: set variables before calling imported flows.
     }
 
     // =========================================================================

@@ -80,12 +80,18 @@ This document catalogs patterns found through comprehensive codebase searches. I
 
 **Remaining**: TextureProcessor and ModelProcessor still pass-through (no current use case)
 
-### 2.4 GetBundle Endpoint Not Implemented (YELLOW)
-**File**: `lib-asset/AssetService.cs:914`
-```
-/// TODO: Implement in Phase 5 (Bundle System).
-```
-**Issue**: GetBundle endpoint returns not implemented. Phase 5 timing unclear.
+### 2.4 Bundle System Fully Implemented (GREEN - RESOLVED)
+**Files**:
+- `lib-asset/Bundles/BannouBundleWriter.cs` - Writes .bannou format (LZ4 compression, JSON manifest, binary index)
+- `lib-asset/Bundles/BannouBundleReader.cs` - Reads .bannou format (random access via index)
+- `lib-asset/Bundles/BundleConverter.cs` - Converts .bannou to ZIP for clients
+
+**Status**: ✅ All three bundle endpoints are fully implemented:
+- `/bundles/create` - Creates bundles from asset IDs with LZ4 compression
+- `/bundles/get` - Returns pre-signed download URLs, supports .bannou and .zip with caching
+- `/bundles/upload/request` - Allows uploading pre-built bundles
+
+The stale TODO comment at line 916 has been removed.
 
 ### 2.5 Markdown Rendering Not Implemented (GREEN - RESOLVED)
 **File**: `lib-documentation/DocumentationService.cs`
@@ -225,12 +231,17 @@ The current memory store implementation uses **keyword-based relevance matching*
 - TTL-based cleanup (24 hours) ensures orphaned subscriptions don't accumulate
 - Internal (IMessageBus via DI) subscriptions remain ephemeral by design - plugins re-subscribe on startup
 
-### 7.4 Context Variables Not Initialized from Imported Documents (GREEN?)
+### 7.4 Context Variables Not Initialized from Imported Documents (GREEN - INTENTIONAL)
 **File**: `unit-tests/Abml/DocumentLoaderTests.cs:1044`
-```
-// This is a known limitation - imported documents don't get their context initialized
-```
-**Issue**: Documented ABML limitation. Needs review if this affects real use cases.
+**Status**: ✅ Intentional design decision - documented in ABML.md Appendix C.1
+
+**Analysis**:
+- **Bytecode path** (`DocumentMerger` → `BehaviorCompiler`): Already handles this - merges imported context vars with namespace prefixes
+- **Tree-walking path** (`DocumentExecutor`): Intentionally uses explicit parameter passing
+- **Workaround**: Set variables before calling imported flows
+- **Rationale**: Simple, predictable, matches how utility libraries are used
+
+This is NOT a bug - it's a deliberate design choice with clear documentation.
 
 ---
 
@@ -260,16 +271,16 @@ These patterns were found but are legitimately intentional:
 | Category | RED (Fix) | YELLOW (Investigate) | GREEN (OK) |
 |----------|-----------|---------------------|------------|
 | Silent Failures | 0 | 0 | 4 |
-| Unimplemented Features | 0 | 2 | 3 |
+| Unimplemented Features | 0 | 1 | 4 |
 | Missing Audit | 0 | 0 | 2 |
 | Tenet Violations | 0 | 0 | 3 |
 | DI Patterns | 0 | 0 | 4 |
 | Test Issues | 0 | 0 | 1 |
-| Documented Limitations | 0 | 1 | 3 |
+| Documented Limitations | 0 | 0 | 4 |
 | Verified Intentional | 0 | 0 | 14 |
 | String.Empty Usage | 0 | 326 | 0 |
 | Null-Forgiving Exceptions | 0 | 0 | 4 |
-| **TOTAL** | **0** | **329** | **38** |
+| **TOTAL** | **0** | **328** | **39** |
 
 ---
 

@@ -913,7 +913,8 @@ public partial class AssetService : IAssetService
 
     /// <summary>
     /// Implementation of GetBundle operation.
-    /// TODO: Implement in Phase 5 (Bundle System).
+    /// Returns bundle metadata and a pre-signed download URL.
+    /// Supports both native .bannou format and ZIP conversion (cached).
     /// </summary>
     public async Task<(StatusCodes, BundleWithDownloadUrl?)> GetBundleAsync(GetBundleRequest body, CancellationToken cancellationToken)
     {

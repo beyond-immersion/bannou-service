@@ -1659,15 +1659,17 @@ DELTA         := ("+" | "-") NUMBER
 
 ---
 
-## Appendix C: Potential Improvements
+## Appendix C: Design Decisions and Intentional Limitations
 
-This section documents known limitations and potential enhancements that could be implemented if needed.
+This section documents intentional design decisions that may appear as "limitations" but are deliberate choices with clear rationale. These are NOT bugs or TODOs.
 
-### C.1 Context Variable Initialization for Imported Documents
+### C.1 Context Variable Initialization for Imported Documents (Tree-Walking Only)
 
-**Current Behavior**: Context variables (defined in the `context:` section) are only initialized from the root document. When calling flows from imported documents, those documents' context variables are not automatically initialized.
+**Scope**: This applies only to the tree-walking `DocumentExecutor` (cloud-side orchestration). The bytecode compilation path (`DocumentMerger` → `BehaviorCompiler`) already handles imported context variables correctly by merging them with namespace prefixes.
 
-**Why This Is**: The current design prioritizes explicit parameter passing over implicit initialization. When you call an imported flow, it receives the caller's scope - any variables you set before the call are visible to the called flow. This is simple and predictable.
+**Behavior**: In tree-walking execution, context variables (defined in the `context:` section) are only initialized from the root document. When calling flows from imported documents, those documents' context variables are not automatically initialized.
+
+**Why This Is Intentional**: The design prioritizes explicit parameter passing over implicit initialization. When you call an imported flow, it receives the caller's scope - any variables you set before the call are visible to the called flow. This is simple, predictable, and matches how most imported utility libraries are used.
 
 **What Would Be Needed to Change This**:
 
