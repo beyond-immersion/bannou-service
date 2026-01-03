@@ -77,7 +77,7 @@ public class AccountsEventPublisherTests
     }
 
     [Fact]
-    public async Task PublishAccountCreatedAsync_WithNullDisplayName_ShouldUseEmptyString()
+    public async Task PublishAccountCreatedAsync_WithNullDisplayName_ShouldPreserveNull()
     {
         // Arrange
         var accountId = Guid.NewGuid();
@@ -99,7 +99,7 @@ public class AccountsEventPublisherTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.created",
             It.Is<AccountCreatedEvent>(e =>
-                e.DisplayName == string.Empty &&
+                e.DisplayName == null &&
                 e.Roles.Count == 0),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),

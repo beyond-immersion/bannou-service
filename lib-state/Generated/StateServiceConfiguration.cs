@@ -57,12 +57,14 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// Redis connection string (host:port format) for Redis-backed state stores
     /// Environment variable: REDIS_CONNECTION_STRING
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string RedisConnectionString { get; set; } = string.Empty;
 
     /// <summary>
     /// MySQL connection string for MySQL-backed state stores
     /// Environment variable: MYSQL_CONNECTION_STRING
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string MySqlConnectionString { get; set; } = string.Empty;
 
     /// <summary>

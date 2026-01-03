@@ -87,6 +87,7 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// Salt for SIP password generation
     /// Environment variable: VOICE_SIP_PASSWORD_SALT
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string SipPasswordSalt { get; set; } = string.Empty;
 
     /// <summary>

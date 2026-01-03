@@ -51,7 +51,7 @@ public class AccountsEventPublisher : EventPublisherBase
             Timestamp = CurrentTimestamp(),
             AccountId = accountId,
             Email = email,
-            DisplayName = displayName ?? string.Empty,
+            DisplayName = displayName,
             Roles = roles?.ToList() ?? []
         };
 
@@ -77,7 +77,7 @@ public class AccountsEventPublisher : EventPublisherBase
             Timestamp = CurrentTimestamp(),
             AccountId = account.AccountId,
             Email = account.Email,
-            DisplayName = account.DisplayName ?? string.Empty,
+            DisplayName = account.DisplayName,
             EmailVerified = account.EmailVerified,
             Roles = account.Roles?.ToList() ?? [],
             CreatedAt = account.CreatedAt,
@@ -108,7 +108,7 @@ public class AccountsEventPublisher : EventPublisherBase
             Timestamp = CurrentTimestamp(),
             AccountId = account.AccountId,
             Email = account.Email,
-            DisplayName = account.DisplayName ?? string.Empty,
+            DisplayName = account.DisplayName,
             EmailVerified = account.EmailVerified,
             Roles = account.Roles?.ToList() ?? [],
             CreatedAt = account.CreatedAt,

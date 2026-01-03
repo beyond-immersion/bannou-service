@@ -57,7 +57,7 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     /// Human-readable name for the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
-    public string SessionName { get; set; } = default!;
+    public string? SessionName { get; set; } = default!;
 
     /// <summary>
     /// Current status of the game session (e.g., waiting, active, completed)
@@ -136,7 +136,7 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     /// Human-readable name for the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
-    public string SessionName { get; set; } = default!;
+    public string? SessionName { get; set; } = default!;
 
     /// <summary>
     /// Current status of the game session (e.g., waiting, active, completed)
@@ -223,7 +223,7 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     /// Human-readable name for the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
-    public string SessionName { get; set; } = default!;
+    public string? SessionName { get; set; } = default!;
 
     /// <summary>
     /// Current status of the game session (e.g., waiting, active, completed)

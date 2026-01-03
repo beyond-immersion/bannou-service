@@ -113,17 +113,22 @@ try:
                 else:
                     default_value = f' = {prop_default};'
             elif csharp_type == 'string' and not prop_nullable:
-                # Only add string.Empty default for non-nullable strings
+                # Required string with no default - mark as required for validation
+                # Using string.Empty satisfies nullable reference types, but [Required]
+                # ensures startup validation fails if not configured
                 default_value = ' = string.Empty;'
+                prop_info['is_required'] = True
 
             property_name = to_property_name(prop_name)
+            is_required = prop_info.get('is_required', False)
 
             config_properties.append({
                 'name': property_name,
                 'type': csharp_type + nullable_suffix,
                 'default': default_value,
                 'description': prop_description,
-                'env_var': prop_env_var
+                'env_var': prop_env_var,
+                'is_required': is_required
             })
 
     # Generate the configuration class
@@ -179,11 +184,12 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 
     if config_properties:
         for prop in config_properties:
+            required_attr = '    [Required(AllowEmptyStrings = false)]\n' if prop.get('is_required', False) else ''
             print(f'''    /// <summary>
     /// {prop['description']}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+{required_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
     else:
         print(f'''    /// <summary>

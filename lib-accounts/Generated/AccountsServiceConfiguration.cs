@@ -51,12 +51,14 @@ public class AccountsServiceConfiguration : IServiceConfiguration
     /// Comma-separated list of admin email addresses
     /// Environment variable: ACCOUNTS_ADMIN_EMAILS
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string AdminEmails { get; set; } = string.Empty;
 
     /// <summary>
     /// Email domain that grants admin access (e.g., "@company.com")
     /// Environment variable: ACCOUNTS_ADMIN_EMAIL_DOMAIN
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string AdminEmailDomain { get; set; } = string.Empty;
 
 }

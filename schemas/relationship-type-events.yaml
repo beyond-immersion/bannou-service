@@ -26,16 +26,16 @@ x-lifecycle:
       relationshipTypeId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship type" }
       code: { type: string, required: true, description: "Machine-readable code for the relationship type" }
       name: { type: string, required: true, description: "Human-readable display name for the relationship type" }
-      description: { type: string, description: "Detailed description of the relationship type" }
-      category: { type: string, description: "Category grouping for the relationship type" }
+      description: { type: string, nullable: true, description: "Detailed description of the relationship type" }
+      category: { type: string, nullable: true, description: "Category grouping for the relationship type" }
       parentTypeId: { type: string, format: uuid, description: "ID of the parent relationship type for hierarchical relationships" }
-      parentTypeCode: { type: string, description: "Code of the parent relationship type" }
+      parentTypeCode: { type: string, nullable: true, description: "Code of the parent relationship type" }
       inverseTypeId: { type: string, format: uuid, description: "ID of the inverse relationship type for asymmetric relationships" }
-      inverseTypeCode: { type: string, description: "Code of the inverse relationship type" }
+      inverseTypeCode: { type: string, nullable: true, description: "Code of the inverse relationship type" }
       isBidirectional: { type: boolean, required: true, description: "Whether the relationship applies equally in both directions" }
       isDeprecated: { type: boolean, required: true, description: "Whether this relationship type is deprecated and should not be used for new relationships" }
       deprecatedAt: { type: string, format: date-time, description: "Timestamp when the relationship type was deprecated" }
-      deprecationReason: { type: string, description: "Explanation for why the relationship type was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Explanation for why the relationship type was deprecated" }
       depth: { type: integer, required: true, description: "Hierarchy depth level from the root relationship type" }
       metadata: { type: object, additionalProperties: true, description: "Additional custom metadata for the relationship type" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship type was created" }

@@ -736,7 +736,7 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
-                Category = model.Category ?? string.Empty,
+                Category = model.Category,
                 IsActive = model.IsActive
             };
 
@@ -763,12 +763,12 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 IsActive = model.IsActive,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 ChangedFields = changedFields.ToList()
@@ -798,12 +798,12 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 IsActive = model.IsActive,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 DeletedReason = deletedReason

@@ -41,9 +41,11 @@ components:
           description: "Human-readable display name for the species"
         description: &id004
           type: string
+          nullable: true
           description: "Detailed description of the species characteristics and lore"
         category: &id005
           type: string
+          nullable: true
           description: "Category grouping for the species"
         isPlayable: &id006
           type: boolean
@@ -57,6 +59,7 @@ components:
           description: "Timestamp when the species was deprecated"
         deprecationReason: &id009
           type: string
+          nullable: true
           description: "Explanation for why the species was deprecated"
         baseLifespan: &id010
           type: integer

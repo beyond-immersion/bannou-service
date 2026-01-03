@@ -66,44 +66,44 @@ paths:
         session\"\n                },\n                \"gameType\": {\n                    \"type\": \"string\",\n      \
         \              \"enum\": [\n                        \"arcadia\",\n                        \"generic\"\n          \
         \          ],\n                    \"description\": \"Type of game for this session\"\n                },\n      \
-        \          \"sessionName\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Display name for the session\"\n                },\n                \"status\": {\n                    \"type\": \"\
-        string\",\n                    \"enum\": [\n                        \"waiting\",\n                        \"active\"\
-        ,\n                        \"full\",\n                        \"finished\"\n                    ],\n             \
-        \       \"description\": \"Current status of the game session\"\n                },\n                \"maxPlayers\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum number of players
-        allowed in the session\"\n                },\n                \"currentPlayers\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Current number of players in the session\"\n              \
-        \  },\n                \"isPrivate\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the session requires a password to join\"\n                },\n                \"owner\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Account ID of the session owner\"\n                },\n                \"players\": {\n                    \"\
-        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GamePlayer\"\n \
-        \                   },\n                    \"description\": \"List of players currently in the session\"\n      \
-        \          },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"Timestamp when the session was created\"\n      \
-        \          },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n                  \
-        \  \"additionalProperties\": true,\n                    \"description\": \"Game-specific configuration settings\"\n\
-        \                }\n            }\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information
-        about a player currently participating in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"accountId\",\n                \"sessionId\",\n          \
-        \      \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\": {\n                \"\
-        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
-        \         \"description\": \"Unique identifier for the player's account\"\n                },\n                \"\
-        sessionId\": {\n                    \"type\": \"string\",\n                    \"description\": \"WebSocket session
-        ID that joined the game. Chat and events are delivered to this specific session only.\"\n                },\n    \
-        \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Display name shown to other players\"\n                },\n                \"role\": {\n                    \"type\"\
-        : \"string\",\n                    \"enum\": [\n                        \"player\",\n                        \"spectator\"\
-        ,\n                        \"moderator\"\n                    ],\n                    \"description\": \"Role of the
-        player in the game session\"\n                },\n                \"joinedAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the
-        player joined the session\"\n                },\n                \"characterData\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Game-specific character data for this player (null if none provided)\"\n     \
-        \           },\n                \"voiceSessionId\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Voice participant session ID (if player has joined
-        voice)\"\n                }\n            }\n        }\n    }\n}"
+        \          \"sessionName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Display name for the session\"\n                },\n                \"status\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"waiting\"\
+        ,\n                        \"active\",\n                        \"full\",\n                        \"finished\"\n\
+        \                    ],\n                    \"description\": \"Current status of the game session\"\n           \
+        \     },\n                \"maxPlayers\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Maximum number of players allowed in the session\"\n                },\n                \"currentPlayers\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Current number of players in the
+        session\"\n                },\n                \"isPrivate\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether the session requires a password to join\"\n                },\n      \
+        \          \"owner\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Account ID of the session owner\"\n                },\n                \"players\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/GamePlayer\"\n                    },\n                    \"description\": \"List of players currently
+        in the session\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the session
+        was created\"\n                },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific configuration
+        settings\"\n                }\n            }\n        },\n        \"GamePlayer\": {\n            \"description\":
+        \"Information about a player currently participating in a game session\",\n            \"type\": \"object\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n        \
+        \        \"sessionId\",\n                \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\"\
+        : {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Unique identifier for the player's account\"\n                },\n\
+        \                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"WebSocket session ID that joined the game. Chat and events are delivered to this specific session only.\"\n  \
+        \              },\n                \"displayName\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Display name shown to other players\"\n                },\n                \"role\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"player\",\n\
+        \                        \"spectator\",\n                        \"moderator\"\n                    ],\n         \
+        \           \"description\": \"Role of the player in the game session\"\n                },\n                \"joinedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the player joined the session\"\n                },\n                \"characterData\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Game-specific character data for this player
+        (null if none provided)\"\n                },\n                \"voiceSessionId\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Voice participant session
+        ID (if player has joined voice)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List available game sessions\",\n    \"description\": \"List available
         game sessions. This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts
         or internal service calls.\\n\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\": false,\n\
@@ -144,15 +144,15 @@ paths:
         \            },\n                \"maxPlayers\": {\n                    \"type\": \"integer\",\n                 \
         \   \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"Maximum number
         of players allowed in the session\"\n                },\n                \"sessionName\": {\n                    \"\
-        type\": \"string\",\n                    \"maxLength\": 100,\n                    \"description\": \"Optional display
-        name for the session\"\n                },\n                \"isPrivate\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether the session requires a
-        password to join\"\n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Account ID of the session owner.
-        If not provided, defaults to caller's account.\"\n                },\n                \"gameSettings\": {\n      \
-        \              \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
-        nullable\": true,\n                    \"description\": \"Game-specific configuration settings (null to use defaults)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
+        \          \"description\": \"Optional display name for the session\"\n                },\n                \"isPrivate\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether the session requires a password to join\"\n                },\n                \"ownerId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Account ID of the session owner. If not provided, defaults to caller's account.\"\n                },\n      \
+        \          \"gameSettings\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific configuration
+        settings (null to use defaults)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameSessionResponse\"\
         ,\n    \"$defs\": {\n        \"GameSessionResponse\": {\n            \"description\": \"Complete details of a game
         session including players and settings\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -163,43 +163,44 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"arcadia\"\
         ,\n                        \"generic\"\n                    ],\n                    \"description\": \"Type of game
         for this session\"\n                },\n                \"sessionName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the session\"\n                },\n                \"status\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"waiting\"\
-        ,\n                        \"active\",\n                        \"full\",\n                        \"finished\"\n\
-        \                    ],\n                    \"description\": \"Current status of the game session\"\n           \
-        \     },\n                \"maxPlayers\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum number of players allowed in the session\"\n                },\n                \"currentPlayers\": {\n\
-        \                    \"type\": \"integer\",\n                    \"description\": \"Current number of players in the
-        session\"\n                },\n                \"isPrivate\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether the session requires a password to join\"\n                },\n      \
-        \          \"owner\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
-        \                  \"description\": \"Account ID of the session owner\"\n                },\n                \"players\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/GamePlayer\"\n                    },\n                    \"description\": \"List of players currently
-        in the session\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the session
-        was created\"\n                },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n\
-        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific configuration
-        settings\"\n                }\n            }\n        },\n        \"GamePlayer\": {\n            \"description\":
-        \"Information about a player currently participating in a game session\",\n            \"type\": \"object\",\n   \
-        \         \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n        \
-        \        \"sessionId\",\n                \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\"\
-        : {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"description\": \"Unique identifier for the player's account\"\n                },\n\
-        \                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"WebSocket session ID that joined the game. Chat and events are delivered to this specific session only.\"\n  \
-        \              },\n                \"displayName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Display name shown to other players\"\n                },\n                \"role\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"player\",\n\
-        \                        \"spectator\",\n                        \"moderator\"\n                    ],\n         \
-        \           \"description\": \"Role of the player in the game session\"\n                },\n                \"joinedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Timestamp when the player joined the session\"\n                },\n                \"characterData\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Game-specific character data for this player
-        (null if none provided)\"\n                },\n                \"voiceSessionId\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Voice participant session
-        ID (if player has joined voice)\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the session\"\n\
+        \                },\n                \"status\": {\n                    \"type\": \"string\",\n                  \
+        \  \"enum\": [\n                        \"waiting\",\n                        \"active\",\n                      \
+        \  \"full\",\n                        \"finished\"\n                    ],\n                    \"description\": \"\
+        Current status of the game session\"\n                },\n                \"maxPlayers\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Maximum number of players allowed in the session\"\n\
+        \                },\n                \"currentPlayers\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Current number of players in the session\"\n                },\n                \"\
+        isPrivate\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the session
+        requires a password to join\"\n                },\n                \"owner\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID of the session
+        owner\"\n                },\n                \"players\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"$ref\": \"#/$defs/GamePlayer\"\n                    },\n      \
+        \              \"description\": \"List of players currently in the session\"\n                },\n               \
+        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"description\": \"Timestamp when the session was created\"\n                },\n             \
+        \   \"gameSettings\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
+        true,\n                    \"description\": \"Game-specific configuration settings\"\n                }\n        \
+        \    }\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information about a player currently
+        participating in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\",\n                \"sessionId\",\n                \"joinedAt\"\
+        ,\n                \"role\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the player's account\"\n                },\n                \"sessionId\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"WebSocket session ID that joined the game.
+        Chat and events are delivered to this specific session only.\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display name shown to other
+        players\"\n                },\n                \"role\": {\n                    \"type\": \"string\",\n          \
+        \          \"enum\": [\n                        \"player\",\n                        \"spectator\",\n            \
+        \            \"moderator\"\n                    ],\n                    \"description\": \"Role of the player in the
+        game session\"\n                },\n                \"joinedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the player joined
+        the session\"\n                },\n                \"characterData\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Game-specific character data for this player (null if none provided)\"\n                },\n\
+        \                \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Voice participant session ID (if player has joined voice)\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new game session\",\n    \"description\": \"Create a new game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts or internal
         service calls.\\n\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -247,43 +248,44 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"arcadia\"\
         ,\n                        \"generic\"\n                    ],\n                    \"description\": \"Type of game
         for this session\"\n                },\n                \"sessionName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the session\"\n                },\n                \"status\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"waiting\"\
-        ,\n                        \"active\",\n                        \"full\",\n                        \"finished\"\n\
-        \                    ],\n                    \"description\": \"Current status of the game session\"\n           \
-        \     },\n                \"maxPlayers\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum number of players allowed in the session\"\n                },\n                \"currentPlayers\": {\n\
-        \                    \"type\": \"integer\",\n                    \"description\": \"Current number of players in the
-        session\"\n                },\n                \"isPrivate\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether the session requires a password to join\"\n                },\n      \
-        \          \"owner\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
-        \                  \"description\": \"Account ID of the session owner\"\n                },\n                \"players\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/GamePlayer\"\n                    },\n                    \"description\": \"List of players currently
-        in the session\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the session
-        was created\"\n                },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n\
-        \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific configuration
-        settings\"\n                }\n            }\n        },\n        \"GamePlayer\": {\n            \"description\":
-        \"Information about a player currently participating in a game session\",\n            \"type\": \"object\",\n   \
-        \         \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n        \
-        \        \"sessionId\",\n                \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\"\
-        : {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"description\": \"Unique identifier for the player's account\"\n                },\n\
-        \                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"WebSocket session ID that joined the game. Chat and events are delivered to this specific session only.\"\n  \
-        \              },\n                \"displayName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Display name shown to other players\"\n                },\n                \"role\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"player\",\n\
-        \                        \"spectator\",\n                        \"moderator\"\n                    ],\n         \
-        \           \"description\": \"Role of the player in the game session\"\n                },\n                \"joinedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Timestamp when the player joined the session\"\n                },\n                \"characterData\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Game-specific character data for this player
-        (null if none provided)\"\n                },\n                \"voiceSessionId\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Voice participant session
-        ID (if player has joined voice)\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the session\"\n\
+        \                },\n                \"status\": {\n                    \"type\": \"string\",\n                  \
+        \  \"enum\": [\n                        \"waiting\",\n                        \"active\",\n                      \
+        \  \"full\",\n                        \"finished\"\n                    ],\n                    \"description\": \"\
+        Current status of the game session\"\n                },\n                \"maxPlayers\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Maximum number of players allowed in the session\"\n\
+        \                },\n                \"currentPlayers\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Current number of players in the session\"\n                },\n                \"\
+        isPrivate\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the session
+        requires a password to join\"\n                },\n                \"owner\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID of the session
+        owner\"\n                },\n                \"players\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"$ref\": \"#/$defs/GamePlayer\"\n                    },\n      \
+        \              \"description\": \"List of players currently in the session\"\n                },\n               \
+        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"description\": \"Timestamp when the session was created\"\n                },\n             \
+        \   \"gameSettings\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
+        true,\n                    \"description\": \"Game-specific configuration settings\"\n                }\n        \
+        \    }\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information about a player currently
+        participating in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\",\n                \"sessionId\",\n                \"joinedAt\"\
+        ,\n                \"role\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the player's account\"\n                },\n                \"sessionId\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"WebSocket session ID that joined the game.
+        Chat and events are delivered to this specific session only.\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display name shown to other
+        players\"\n                },\n                \"role\": {\n                    \"type\": \"string\",\n          \
+        \          \"enum\": [\n                        \"player\",\n                        \"spectator\",\n            \
+        \            \"moderator\"\n                    ],\n                    \"description\": \"Role of the player in the
+        game session\"\n                },\n                \"joinedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the player joined
+        the session\"\n                },\n                \"characterData\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Game-specific character data for this player (null if none provided)\"\n                },\n\
+        \                \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Voice participant session ID (if player has joined voice)\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get game session details\",\n    \"description\": \"Get details of the
         current game session the user has joined.\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getGameSession\"\n}"
@@ -642,6 +644,7 @@ components:
           description: Maximum number of players allowed in the session
         sessionName:
           type: string
+          nullable: true
           maxLength: 100
           description: Optional display name for the session
         isPrivate:
@@ -678,6 +681,7 @@ components:
           description: Type of game for this session
         sessionName:
           type: string
+          nullable: true
           description: Display name for the session
         status:
           type: string

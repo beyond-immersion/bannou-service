@@ -378,6 +378,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 },
                 "sessionName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Display name for the session"
                 },
                 "status": {
@@ -567,6 +568,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 },
                 "sessionName": {
                     "type": "string",
+                    "nullable": true,
                     "maxLength": 100,
                     "description": "Optional display name for the session"
                 },
@@ -623,6 +625,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 },
                 "sessionName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Display name for the session"
                 },
                 "status": {
@@ -837,6 +840,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 },
                 "sessionName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Display name for the session"
                 },
                 "status": {

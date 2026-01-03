@@ -210,8 +210,10 @@ public partial class MeshClient : IMeshClient, BeyondImmersion.BannouService.Ser
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new System.ArgumentException("Header name cannot be null or empty", nameof(name));
+        if (value == null)
+            throw new System.ArgumentNullException(nameof(value));
 
-        _customHeaders[name] = value ?? string.Empty;
+        _customHeaders[name] = value;
     }
 
     /// <summary>
@@ -1041,9 +1043,14 @@ public partial class MeshClient : IMeshClient, BeyondImmersion.BannouService.Ser
         /// <returns>The deserialized response object and raw text.</returns>
         protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
-            if (response == null || response.Content == null)
+            if (response == null)
             {
-                return new ObjectResponseResult<T>(default(T)!, string.Empty);
+                throw new System.ArgumentNullException(nameof(response), "HTTP response cannot be null");
+            }
+
+            if (response.Content == null)
+            {
+                throw new ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
             }
 
             if (ReadResponseAsString)
@@ -1052,7 +1059,11 @@ public partial class MeshClient : IMeshClient, BeyondImmersion.BannouService.Ser
                 try
                 {
                     var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
-                    return new ObjectResponseResult<T>(typedBody!, responseText);
+                    if (typedBody == null)
+                    {
+                        throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
+                    }
+                    return new ObjectResponseResult<T>(typedBody, responseText);
                 }
                 catch (System.Text.Json.JsonException exception)
                 {
@@ -1067,7 +1078,11 @@ public partial class MeshClient : IMeshClient, BeyondImmersion.BannouService.Ser
                     using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
                     {
                         var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
-                        return new ObjectResponseResult<T>(typedBody!, string.Empty);
+                        if (typedBody == null)
+                        {
+                            throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
+                        }
+                        return new ObjectResponseResult<T>(typedBody, string.Empty);
                     }
                 }
                 catch (System.Text.Json.JsonException exception)

@@ -57,7 +57,7 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     /// User-chosen display name for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Whether the email address has been verified
@@ -128,7 +128,7 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     /// User-chosen display name for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Whether the email address has been verified
@@ -207,7 +207,7 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     /// User-chosen display name for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Whether the email address has been verified

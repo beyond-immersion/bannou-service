@@ -73,7 +73,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     /// Detailed description of the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Type classification of the location (e.g., room, area, zone)
@@ -111,7 +111,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     /// Explanation for why the location was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Additional custom metadata associated with the location
@@ -188,7 +188,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     /// Detailed description of the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Type classification of the location (e.g., room, area, zone)
@@ -226,7 +226,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     /// Explanation for why the location was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Additional custom metadata associated with the location
@@ -311,7 +311,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// Detailed description of the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Type classification of the location (e.g., room, area, zone)
@@ -349,7 +349,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// Explanation for why the location was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Additional custom metadata associated with the location

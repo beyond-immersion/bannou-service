@@ -36,6 +36,7 @@ components:
           description: "Email address associated with the account"
         displayName: &id003
           type: string
+          nullable: true
           description: "User-chosen display name for the account"
         emailVerified: &id004
           type: boolean

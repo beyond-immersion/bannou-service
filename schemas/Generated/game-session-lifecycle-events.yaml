@@ -35,6 +35,7 @@ components:
           description: "Type of game being played in this session"
         sessionName: &id003
           type: string
+          nullable: true
           description: "Human-readable name for the session"
         status: &id004
           type: string

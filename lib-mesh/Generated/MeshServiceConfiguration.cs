@@ -57,6 +57,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Redis connection string for service registry storage. REQUIRED - no default value.
     /// Environment variable: MESH_REDIS_CONNECTION_STRING
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string RedisConnectionString { get; set; } = string.Empty;
 
     /// <summary>

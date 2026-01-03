@@ -57,6 +57,7 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     /// Server salt for GUID generation. If not set, generates random salt (OK for development, must be shared in production)
     /// Environment variable: SERVERSALT
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string ServerSalt { get; set; } = string.Empty;
 
     /// <summary>

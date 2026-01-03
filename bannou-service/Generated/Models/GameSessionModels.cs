@@ -126,7 +126,7 @@ public partial class CreateGameSessionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string SessionName { get; set; } = default!;
+    public string? SessionName { get; set; } = default!;
 
     /// <summary>
     /// Whether the session requires a password to join
@@ -176,7 +176,7 @@ public partial class GameSessionResponse
     /// Display name for the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
-    public string SessionName { get; set; } = default!;
+    public string? SessionName { get; set; } = default!;
 
     /// <summary>
     /// Current status of the game session

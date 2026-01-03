@@ -65,13 +65,13 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     /// Detailed description of the species characteristics and lore
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category grouping for the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether players can create characters of this species
@@ -95,7 +95,7 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     /// Explanation for why the species was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Average lifespan in years for this species
@@ -188,13 +188,13 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     /// Detailed description of the species characteristics and lore
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category grouping for the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether players can create characters of this species
@@ -218,7 +218,7 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     /// Explanation for why the species was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Average lifespan in years for this species
@@ -319,13 +319,13 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     /// Detailed description of the species characteristics and lore
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category grouping for the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether players can create characters of this species
@@ -349,7 +349,7 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     /// Explanation for why the species was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Average lifespan in years for this species

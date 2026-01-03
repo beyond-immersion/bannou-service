@@ -65,13 +65,13 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     /// Detailed description of the realm and its purpose
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category classification for organizing realms
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether the realm is currently active and accessible
@@ -95,7 +95,7 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     /// Explanation for why the realm was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Additional custom key-value data associated with the realm
@@ -164,13 +164,13 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     /// Detailed description of the realm and its purpose
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category classification for organizing realms
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether the realm is currently active and accessible
@@ -194,7 +194,7 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     /// Explanation for why the realm was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Additional custom key-value data associated with the realm
@@ -271,13 +271,13 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     /// Detailed description of the realm and its purpose
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category classification for organizing realms
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether the realm is currently active and accessible
@@ -301,7 +301,7 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     /// Explanation for why the realm was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Additional custom key-value data associated with the realm

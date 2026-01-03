@@ -69,12 +69,14 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Storage access key/username
     /// Environment variable: ASSET_STORAGE_ACCESS_KEY
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string StorageAccessKey { get; set; } = string.Empty;
 
     /// <summary>
     /// Storage secret key/password
     /// Environment variable: ASSET_STORAGE_SECRET_KEY
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string StorageSecretKey { get; set; } = string.Empty;
 
     /// <summary>
@@ -147,12 +149,14 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Worker pool identifier when running in worker mode
     /// Environment variable: ASSET_WORKER_POOL
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string WorkerPool { get; set; } = string.Empty;
 
     /// <summary>
     /// Path to FFmpeg binary (empty = use system PATH)
     /// Environment variable: ASSET_FFMPEG_PATH
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string FfmpegPath { get; set; } = string.Empty;
 
     /// <summary>
@@ -195,6 +199,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Secret for validating MinIO webhook requests
     /// Environment variable: ASSET_MINIO_WEBHOOK_SECRET
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string MinioWebhookSecret { get; set; } = string.Empty;
 
 }

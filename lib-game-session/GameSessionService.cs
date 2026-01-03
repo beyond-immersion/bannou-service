@@ -292,7 +292,7 @@ public partial class GameSessionService : IGameSessionService
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = Guid.Parse(session.SessionId),
                     GameType = session.GameType.ToString(),
-                    SessionName = session.SessionName ?? string.Empty,
+                    SessionName = session.SessionName,
                     Status = session.Status.ToString(),
                     MaxPlayers = session.MaxPlayers,
                     CurrentPlayers = session.CurrentPlayers,
@@ -1539,7 +1539,7 @@ public partial class GameSessionService : IGameSessionService
         {
             SessionId = Guid.Parse(model.SessionId),
             GameType = model.GameType,
-            SessionName = model.SessionName ?? string.Empty,
+            SessionName = model.SessionName,
             Status = model.Status,
             MaxPlayers = model.MaxPlayers,
             CurrentPlayers = model.CurrentPlayers,

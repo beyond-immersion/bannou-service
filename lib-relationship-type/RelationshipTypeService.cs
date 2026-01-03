@@ -1164,7 +1164,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
                 Code = model.Code,
                 Name = model.Name,
-                Category = model.Category ?? string.Empty,
+                Category = model.Category,
                 ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId)
             };
 
@@ -1192,15 +1192,15 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId),
                 InverseTypeId = string.IsNullOrEmpty(model.InverseTypeId) ? Guid.Empty : Guid.Parse(model.InverseTypeId),
                 IsBidirectional = model.IsBidirectional,
                 Depth = model.Depth,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 ChangedFields = changedFields.ToList()

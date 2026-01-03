@@ -65,13 +65,13 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     /// Detailed description of the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category grouping for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// ID of the parent relationship type for hierarchical relationships
@@ -83,7 +83,7 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     /// Code of the parent relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
-    public string ParentTypeCode { get; set; } = default!;
+    public string? ParentTypeCode { get; set; } = default!;
 
     /// <summary>
     /// ID of the inverse relationship type for asymmetric relationships
@@ -95,7 +95,7 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     /// Code of the inverse relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
-    public string InverseTypeCode { get; set; } = default!;
+    public string? InverseTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Whether the relationship applies equally in both directions
@@ -119,7 +119,7 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     /// Explanation for why the relationship type was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Hierarchy depth level from the root relationship type
@@ -194,13 +194,13 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     /// Detailed description of the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category grouping for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// ID of the parent relationship type for hierarchical relationships
@@ -212,7 +212,7 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     /// Code of the parent relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
-    public string ParentTypeCode { get; set; } = default!;
+    public string? ParentTypeCode { get; set; } = default!;
 
     /// <summary>
     /// ID of the inverse relationship type for asymmetric relationships
@@ -224,7 +224,7 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     /// Code of the inverse relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
-    public string InverseTypeCode { get; set; } = default!;
+    public string? InverseTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Whether the relationship applies equally in both directions
@@ -248,7 +248,7 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     /// Explanation for why the relationship type was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Hierarchy depth level from the root relationship type
@@ -331,13 +331,13 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     /// Detailed description of the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category grouping for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// ID of the parent relationship type for hierarchical relationships
@@ -349,7 +349,7 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     /// Code of the parent relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
-    public string ParentTypeCode { get; set; } = default!;
+    public string? ParentTypeCode { get; set; } = default!;
 
     /// <summary>
     /// ID of the inverse relationship type for asymmetric relationships
@@ -361,7 +361,7 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     /// Code of the inverse relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
-    public string InverseTypeCode { get; set; } = default!;
+    public string? InverseTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Whether the relationship applies equally in both directions
@@ -385,7 +385,7 @@ public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
     /// Explanation for why the relationship type was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    public string DeprecationReason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Hierarchy depth level from the root relationship type

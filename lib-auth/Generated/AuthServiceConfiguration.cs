@@ -51,6 +51,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// Secret key for JWT token signing
     /// Environment variable: AUTH_JWT_SECRET
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string JwtSecret { get; set; } = string.Empty;
 
     /// <summary>
@@ -75,6 +76,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// URL to the Connect service for WebSocket connections. REQUIRED - no default value.
     /// Environment variable: AUTH_CONNECT_URL
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string ConnectUrl { get; set; } = string.Empty;
 
     /// <summary>
@@ -105,66 +107,77 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// Discord OAuth client ID
     /// Environment variable: AUTH_DISCORD_CLIENT_ID
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string DiscordClientId { get; set; } = string.Empty;
 
     /// <summary>
     /// Discord OAuth client secret
     /// Environment variable: AUTH_DISCORD_CLIENT_SECRET
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string DiscordClientSecret { get; set; } = string.Empty;
 
     /// <summary>
     /// Discord OAuth redirect URI
     /// Environment variable: AUTH_DISCORD_REDIRECT_URI
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string DiscordRedirectUri { get; set; } = string.Empty;
 
     /// <summary>
     /// Google OAuth client ID
     /// Environment variable: AUTH_GOOGLE_CLIENT_ID
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string GoogleClientId { get; set; } = string.Empty;
 
     /// <summary>
     /// Google OAuth client secret
     /// Environment variable: AUTH_GOOGLE_CLIENT_SECRET
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string GoogleClientSecret { get; set; } = string.Empty;
 
     /// <summary>
     /// Google OAuth redirect URI
     /// Environment variable: AUTH_GOOGLE_REDIRECT_URI
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string GoogleRedirectUri { get; set; } = string.Empty;
 
     /// <summary>
     /// Twitch OAuth client ID
     /// Environment variable: AUTH_TWITCH_CLIENT_ID
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string TwitchClientId { get; set; } = string.Empty;
 
     /// <summary>
     /// Twitch OAuth client secret
     /// Environment variable: AUTH_TWITCH_CLIENT_SECRET
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string TwitchClientSecret { get; set; } = string.Empty;
 
     /// <summary>
     /// Twitch OAuth redirect URI
     /// Environment variable: AUTH_TWITCH_REDIRECT_URI
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string TwitchRedirectUri { get; set; } = string.Empty;
 
     /// <summary>
     /// Steam Web API key for session ticket validation
     /// Environment variable: AUTH_STEAM_API_KEY
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string SteamApiKey { get; set; } = string.Empty;
 
     /// <summary>
     /// Steam application ID
     /// Environment variable: AUTH_STEAM_APP_ID
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string SteamAppId { get; set; } = string.Empty;
 
     /// <summary>
@@ -177,6 +190,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// Base URL for password reset page
     /// Environment variable: AUTH_PASSWORD_RESET_BASE_URL
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string PasswordResetBaseUrl { get; set; } = string.Empty;
 
 }

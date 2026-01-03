@@ -41,9 +41,11 @@ components:
           description: "Display name of the realm"
         description: &id004
           type: string
+          nullable: true
           description: "Detailed description of the realm and its purpose"
         category: &id005
           type: string
+          nullable: true
           description: "Category classification for organizing realms"
         isActive: &id006
           type: boolean
@@ -57,6 +59,7 @@ components:
           description: "Timestamp when the realm was deprecated"
         deprecationReason: &id009
           type: string
+          nullable: true
           description: "Explanation for why the realm was deprecated"
         metadata: &id010
           type: object

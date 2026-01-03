@@ -50,7 +50,7 @@ x-lifecycle:
     model:
       sessionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the game session" }
       gameType: { type: string, required: true, description: "Type of game being played in this session" }
-      sessionName: { type: string, description: "Human-readable name for the session" }
+      sessionName: { type: string, nullable: true, description: "Human-readable name for the session" }
       status: { type: string, required: true, description: "Current status of the game session (e.g., waiting, active, completed)" }
       maxPlayers: { type: integer, description: "Maximum number of players allowed in the session" }
       currentPlayers: { type: integer, description: "Current number of players in the session" }

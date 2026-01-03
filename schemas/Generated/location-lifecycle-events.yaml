@@ -47,6 +47,7 @@ components:
           description: "Human-readable name of the location"
         description: &id005
           type: string
+          nullable: true
           description: "Detailed description of the location"
         locationType: &id006
           type: string
@@ -67,6 +68,7 @@ components:
           description: "Timestamp when the location was deprecated"
         deprecationReason: &id011
           type: string
+          nullable: true
           description: "Explanation for why the location was deprecated"
         metadata: &id012
           type: object

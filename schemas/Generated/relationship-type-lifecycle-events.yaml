@@ -42,9 +42,11 @@ components:
           description: "Human-readable display name for the relationship type"
         description: &id004
           type: string
+          nullable: true
           description: "Detailed description of the relationship type"
         category: &id005
           type: string
+          nullable: true
           description: "Category grouping for the relationship type"
         parentTypeId: &id006
           type: string
@@ -52,6 +54,7 @@ components:
           description: "ID of the parent relationship type for hierarchical relationships"
         parentTypeCode: &id007
           type: string
+          nullable: true
           description: "Code of the parent relationship type"
         inverseTypeId: &id008
           type: string
@@ -59,6 +62,7 @@ components:
           description: "ID of the inverse relationship type for asymmetric relationships"
         inverseTypeCode: &id009
           type: string
+          nullable: true
           description: "Code of the inverse relationship type"
         isBidirectional: &id010
           type: boolean
@@ -72,6 +76,7 @@ components:
           description: "Timestamp when the relationship type was deprecated"
         deprecationReason: &id013
           type: string
+          nullable: true
           description: "Explanation for why the relationship type was deprecated"
         depth: &id014
           type: integer

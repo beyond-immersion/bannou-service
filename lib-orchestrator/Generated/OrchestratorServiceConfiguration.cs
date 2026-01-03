@@ -75,12 +75,14 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Portainer API URL
     /// Environment variable: ORCHESTRATOR_PORTAINER_URL
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string PortainerUrl { get; set; } = string.Empty;
 
     /// <summary>
     /// Portainer API key
     /// Environment variable: ORCHESTRATOR_PORTAINER_API_KEY
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string PortainerApiKey { get; set; } = string.Empty;
 
     /// <summary>
@@ -129,12 +131,14 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Redis connection string for orchestrator state (required, no default)
     /// Environment variable: ORCHESTRATOR_REDIS_CONNECTION_STRING
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string RedisConnectionString { get; set; } = string.Empty;
 
     /// <summary>
     /// RabbitMQ connection string for orchestrator messaging (required, no default)
     /// Environment variable: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string RabbitMqConnectionString { get; set; } = string.Empty;
 
 }

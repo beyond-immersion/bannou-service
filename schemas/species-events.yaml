@@ -26,12 +26,12 @@ x-lifecycle:
       speciesId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the species" }
       code: { type: string, required: true, description: "Machine-readable code for the species" }
       name: { type: string, required: true, description: "Human-readable display name for the species" }
-      description: { type: string, description: "Detailed description of the species characteristics and lore" }
-      category: { type: string, description: "Category grouping for the species" }
+      description: { type: string, nullable: true, description: "Detailed description of the species characteristics and lore" }
+      category: { type: string, nullable: true, description: "Category grouping for the species" }
       isPlayable: { type: boolean, required: true, description: "Whether players can create characters of this species" }
       isDeprecated: { type: boolean, required: true, description: "Whether this species is deprecated and should not be used for new characters" }
       deprecatedAt: { type: string, format: date-time, description: "Timestamp when the species was deprecated" }
-      deprecationReason: { type: string, description: "Explanation for why the species was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Explanation for why the species was deprecated" }
       baseLifespan: { type: integer, description: "Average lifespan in years for this species" }
       maturityAge: { type: integer, description: "Age at which members of this species reach maturity" }
       traitModifiers: { type: object, additionalProperties: true, description: "Modifiers applied to character traits for this species" }
