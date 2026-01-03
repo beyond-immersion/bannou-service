@@ -55,19 +55,28 @@ public partial class GetAccountSubscriptionsRequest
 }
 
 /// <summary>
-/// Request to get current active subscriptions
+/// Request to query current active subscriptions.
+/// <br/>Provide accountId to get subscriptions for a specific account,
+/// <br/>or stubName to get all accounts subscribed to a specific service,
+/// <br/>or both to check if a specific account is subscribed to a specific service.
+/// <br/>At least one of accountId or stubName must be provided.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GetCurrentSubscriptionsRequest
+public partial class QueryCurrentSubscriptionsRequest
 {
 
     /// <summary>
-    /// ID of the account to get current subscriptions for
+    /// ID of the account to get current subscriptions for. Optional if stubName is provided.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid? AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Stub name of the service to filter by (e.g., "arcadia"). Returns all accounts subscribed to this service.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("stubName")]
+    public string? StubName { get; set; } = default!;
 
 }
 
@@ -334,6 +343,37 @@ public partial class CurrentSubscriptionsResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptions")]
     public System.Collections.Generic.ICollection<SubscriptionInfo> Subscriptions { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from querying current subscriptions.
+/// <br/>Returns subscriptions matching the query criteria (by account, by stub, or both).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QuerySubscriptionsResponse
+{
+
+    /// <summary>
+    /// List of active subscriptions matching the query
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("subscriptions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<SubscriptionInfo> Subscriptions { get; set; } = new System.Collections.ObjectModel.Collection<SubscriptionInfo>();
+
+    /// <summary>
+    /// Total number of subscriptions returned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+    /// <summary>
+    /// Unique account IDs in the result set (useful when querying by stubName)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountIds")]
+    public System.Collections.Generic.ICollection<System.Guid> AccountIds { get; set; } = default!;
 
 }
 

@@ -115,14 +115,6 @@ public sealed class RepeatCompiler : ActionCompilerBase<RepeatAction>
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
 
-    /// <summary>Creates a placeholder repeat compiler.</summary>
-    public RepeatCompiler() : this(null!) { }
-
-    internal void SetRegistry(ActionCompilerRegistry registry)
-    {
-        // For deferred initialization
-    }
-
     /// <inheritdoc/>
     protected override void CompileTyped(RepeatAction action, CompilationContext context)
     {

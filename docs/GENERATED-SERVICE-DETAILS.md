@@ -699,11 +699,11 @@ Tracks which accounts have access to which services (games/applications) with ti
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/subscriptions/account/current` | Get current (active, non-expired) subscriptions | user |
 | `POST` | `/subscriptions/account/list` | Get subscriptions for an account | user |
 | `POST` | `/subscriptions/cancel` | Cancel a subscription | user |
 | `POST` | `/subscriptions/create` | Create a new subscription | admin |
 | `POST` | `/subscriptions/get` | Get a specific subscription by ID | user |
+| `POST` | `/subscriptions/query` | Query current (active, non-expired) subscriptions | service |
 | `POST` | `/subscriptions/renew` | Renew or extend a subscription | admin |
 | `POST` | `/subscriptions/update` | Update a subscription | admin |
 

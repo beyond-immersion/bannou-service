@@ -538,7 +538,8 @@ public class ActorRunner : IActorRunner
                 {
                     var parameters = goalsDict.TryGetValue("parameters", out var p)
                         && p is IReadOnlyDictionary<string, object?> pDict
-                        ? pDict.ToDictionary(kv => kv.Key, kv => (object)kv.Value!)
+                        ? pDict.Where(kv => kv.Value != null)
+                            .ToDictionary(kv => kv.Key, kv => kv.Value!)
                         : new Dictionary<string, object>();
                     _state.SetPrimaryGoal(primaryGoal, parameters);
                 }
@@ -672,7 +673,8 @@ public class ActorRunner : IActorRunner
             if (!string.IsNullOrEmpty(snapshot.Goals.PrimaryGoal))
             {
                 var goalParams = snapshot.Goals.GoalParameters?
-                    .ToDictionary(kv => kv.Key, kv => (object)kv.Value!)
+                    .Where(kv => kv.Value != null)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value!)
                     ?? new Dictionary<string, object>();
                 _state.SetPrimaryGoal(snapshot.Goals.PrimaryGoal, goalParams);
             }

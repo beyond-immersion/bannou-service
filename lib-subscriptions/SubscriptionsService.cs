@@ -113,62 +113,107 @@ public partial class SubscriptionsService : ISubscriptionsService
     }
 
     /// <summary>
-    /// Get current active, non-expired subscriptions as authorization strings.
-    /// Used by Auth service during session creation to populate session authorizations.
+    /// Query current active, non-expired subscriptions.
+    /// Can query by accountId, stubName, or both.
+    /// Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </summary>
-    public async Task<(StatusCodes, CurrentSubscriptionsResponse?)> GetCurrentSubscriptionsAsync(
-        GetCurrentSubscriptionsRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, QuerySubscriptionsResponse?)> QueryCurrentSubscriptionsAsync(
+        QueryCurrentSubscriptionsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting current subscriptions for account {AccountId}", body.AccountId);
+        // Validate that at least one filter is provided
+        if (body.AccountId == null && string.IsNullOrEmpty(body.StubName))
+        {
+            _logger.LogWarning("QueryCurrentSubscriptions called without accountId or stubName");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        _logger.LogInformation("Querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
+            body.AccountId, body.StubName);
 
         try
         {
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
-            var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken);
-
-            var authorizations = new List<string>();
             var subscriptions = new List<SubscriptionInfo>();
+            var accountIds = new HashSet<Guid>();
             var now = DateTimeOffset.UtcNow;
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
             var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
 
-            if (subscriptionIds != null)
+            // Determine which subscription IDs to fetch
+            var subscriptionIds = new List<string>();
+
+            if (body.AccountId.HasValue)
             {
-                foreach (var subscriptionId in subscriptionIds)
+                // Query by account - get all subscriptions for this account
+                var accountSubIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken);
+                if (accountSubIds != null)
                 {
-                    var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", cancellationToken);
-
-                    if (model != null && model.IsActive)
+                    subscriptionIds.AddRange(accountSubIds);
+                }
+            }
+            else if (!string.IsNullOrEmpty(body.StubName))
+            {
+                // Query by stubName - need to look up serviceId first, then get subscriptions for that service
+                var serviceResponse = await _servicedataClient.GetServiceAsync(new GetServiceRequest { StubName = body.StubName });
+                if (serviceResponse?.ServiceId != null)
+                {
+                    var serviceSubIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceResponse.ServiceId}", cancellationToken);
+                    if (serviceSubIds != null)
                     {
-                        // Check expiration
-                        if (model.ExpirationDateUnix.HasValue)
-                        {
-                            var expirationDate = DateTimeOffset.FromUnixTimeSeconds(model.ExpirationDateUnix.Value);
-                            if (expirationDate <= now)
-                                continue;
-                        }
+                        subscriptionIds.AddRange(serviceSubIds);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Service not found for stubName {StubName}", body.StubName);
+                }
+            }
 
-                        // Add authorization string (e.g., "arcadia:authorized")
-                        authorizations.Add($"{model.StubName}:{AuthorizationSuffix}");
-                        subscriptions.Add(MapToSubscriptionInfo(model));
+            // Fetch and filter subscriptions
+            foreach (var subscriptionId in subscriptionIds)
+            {
+                var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", cancellationToken);
+
+                if (model != null && model.IsActive)
+                {
+                    // Check expiration
+                    if (model.ExpirationDateUnix.HasValue)
+                    {
+                        var expirationDate = DateTimeOffset.FromUnixTimeSeconds(model.ExpirationDateUnix.Value);
+                        if (expirationDate <= now)
+                            continue;
+                    }
+
+                    // If stubName filter provided, ensure it matches
+                    if (!string.IsNullOrEmpty(body.StubName) &&
+                        !string.Equals(model.StubName, body.StubName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    subscriptions.Add(MapToSubscriptionInfo(model));
+                    if (Guid.TryParse(model.AccountId, out var accountGuid))
+                    {
+                        accountIds.Add(accountGuid);
                     }
                 }
             }
 
-            var response = new CurrentSubscriptionsResponse
+            var response = new QuerySubscriptionsResponse
             {
-                AccountId = body.AccountId,
-                Authorizations = authorizations,
-                Subscriptions = subscriptions
+                Subscriptions = subscriptions,
+                TotalCount = subscriptions.Count,
+                AccountIds = accountIds.ToList()
             };
 
-            _logger.LogDebug("Found {Count} active authorizations for account {AccountId}: {Authorizations}",
-                authorizations.Count, body.AccountId, string.Join(", ", authorizations));
+            _logger.LogDebug("Found {Count} active subscriptions matching query", subscriptions.Count);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting current subscriptions for account {AccountId}", body.AccountId);
-            await PublishErrorEventAsync("GetCurrentSubscriptions", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.AccountId });
+            _logger.LogError(ex, "Error querying current subscriptions: AccountId={AccountId}, StubName={StubName}",
+                body.AccountId, body.StubName);
+            await PublishErrorEventAsync("QueryCurrentSubscriptions", ex.GetType().Name, ex.Message,
+                dependency: "state", details: new { body.AccountId, body.StubName });
             return (StatusCodes.InternalServerError, null);
         }
     }

@@ -107,7 +107,11 @@ public class SmartRestartManager : ISmartRestartManager
             }
 
             // Restart the container
-            await _dockerClient!.Containers.RestartContainerAsync(
+            if (_dockerClient == null)
+            {
+                throw new InvalidOperationException("Docker client not initialized");
+            }
+            await _dockerClient.Containers.RestartContainerAsync(
                 container.ID,
                 new ContainerRestartParameters
                 {

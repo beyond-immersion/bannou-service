@@ -285,22 +285,24 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinGameSessionRequest\"\
         ,\n  \"$defs\": {\n    \"JoinGameSessionRequest\": {\n      \"description\": \"Request to join an existing game session
         as a player\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n     \
-        \   \"sessionId\",\n        \"accountId\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n         \
-        \ \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the game session to join\"\
-        \n        },\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
-        \   \"description\": \"Account ID of the player joining. Provided by shortcut system or authenticated caller.\"\n\
-        \        },\n        \"password\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Password for private sessions (null for public sessions)\"\n        },\n        \"characterData\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
-        \         \"description\": \"Game-specific character data (null if no character data)\"\n        },\n        \"voiceEndpoint\"\
-        : {\n          \"$ref\": \"#/$defs/VoiceSipEndpoint\",\n          \"nullable\": true,\n          \"description\":
-        \"Client's SIP endpoint for voice communication (null if not using voice)\"\n        }\n      }\n    },\n    \"VoiceSipEndpoint\"\
-        : {\n      \"type\": \"object\",\n      \"description\": \"Client's SIP/WebRTC endpoint for voice communication\"\
-        ,\n      \"additionalProperties\": false,\n      \"required\": [\n        \"sdpOffer\"\n      ],\n      \"properties\"\
-        : {\n        \"sdpOffer\": {\n          \"type\": \"string\",\n          \"description\": \"SDP offer for WebRTC negotiation\"\
-        \n        },\n        \"iceCandidates\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\"\n          },\n          \"description\": \"ICE candidates for NAT traversal\"\n        }\n   \
-        \   }\n    }\n  }\n}"
+        \   \"sessionId\",\n        \"accountId\",\n        \"gameType\"\n      ],\n      \"properties\": {\n        \"sessionId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"WebSocket session
+        ID of the client joining. Provided by shortcut system. Used for event delivery.\"\n        },\n        \"accountId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Account ID of
+        the player joining. Provided by shortcut system.\"\n        },\n        \"gameType\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided
+        by shortcut system.\"\n        },\n        \"password\": {\n          \"type\": \"string\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Password for private sessions (null for public sessions)\"\n        },\n   \
+        \     \"characterData\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n         \
+        \ \"nullable\": true,\n          \"description\": \"Game-specific character data (null if no character data)\"\n \
+        \       },\n        \"voiceEndpoint\": {\n          \"$ref\": \"#/$defs/VoiceSipEndpoint\",\n          \"nullable\"\
+        : true,\n          \"description\": \"Client's SIP endpoint for voice communication (null if not using voice)\"\n\
+        \        }\n      }\n    },\n    \"VoiceSipEndpoint\": {\n      \"type\": \"object\",\n      \"description\": \"Client's
+        SIP/WebRTC endpoint for voice communication\",\n      \"additionalProperties\": false,\n      \"required\": [\n  \
+        \      \"sdpOffer\"\n      ],\n      \"properties\": {\n        \"sdpOffer\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"SDP offer for WebRTC negotiation\"\n        },\n        \"iceCandidates\": {\n     \
+        \     \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
+        : \"ICE candidates for NAT traversal\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinGameSessionResponse\"\
         ,\n  \"$defs\": {\n    \"JoinGameSessionResponse\": {\n      \"description\": \"Response after successfully joining
         a game session with role and permissions\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
@@ -360,11 +362,13 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LeaveGameSessionRequest\"\
         ,\n  \"$defs\": {\n    \"LeaveGameSessionRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
         to leave a game session\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"sessionId\",\n\
-        \        \"accountId\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the game session to leave\"\n        },\n \
-        \       \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Account ID of the player leaving. Provided by shortcut system or authenticated caller.\"\n        }\n      }\n\
-        \    }\n  }\n}"
+        \        \"accountId\",\n        \"gameType\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n     \
+        \     \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"WebSocket session ID of
+        the client leaving. Provided by shortcut system.\"\n        },\n        \"accountId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Account ID of the player leaving. Provided by shortcut
+        system.\"\n        },\n        \"gameType\": {\n          \"type\": \"string\",\n          \"description\": \"Game
+        type being left. Determines which lobby to leave. Provided by shortcut system.\"\n        }\n      }\n    }\n  }\n\
+        }"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Leave a game session\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
         Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"leaveGameSession\"\n}"
@@ -431,14 +435,19 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ChatMessageRequest\"\
         ,\n  \"$defs\": {\n    \"ChatMessageRequest\": {\n      \"description\": \"Request to send a chat message to players
         in a game session\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n\
-        \        \"sessionId\",\n        \"message\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n      \
-        \    \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the game session\"\
-        \n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n          \"\
-        description\": \"Content of the chat message\"\n        },\n        \"messageType\": {\n          \"type\": \"string\"\
-        ,\n          \"enum\": [\n            \"public\",\n            \"whisper\",\n            \"system\"\n          ],\n\
-        \          \"default\": \"public\",\n          \"description\": \"Type of message (public to all, whisper to one player,
-        or system announcement)\"\n        },\n        \"targetPlayerId\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\",\n          \"description\": \"For whisper messages\"\n        }\n      }\n    }\n  }\n}"
+        \        \"sessionId\",\n        \"accountId\",\n        \"gameType\",\n        \"message\"\n      ],\n      \"properties\"\
+        : {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"WebSocket session ID of the sender. Provided by shortcut system.\"\n        },\n        \"accountId\": {\n   \
+        \       \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Account ID of the sender.
+        Provided by shortcut system.\"\n        },\n        \"gameType\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut
+        system.\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n  \
+        \        \"description\": \"Content of the chat message\"\n        },\n        \"messageType\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"public\",\n            \"whisper\",\n            \"system\"\n\
+        \          ],\n          \"default\": \"public\",\n          \"description\": \"Type of message (public to all, whisper
+        to one player, or system announcement)\"\n        },\n        \"targetPlayerId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"For whisper messages\"\n        }\n      }\n    }\n\
+        \  }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Send chat message to game session\",\n  \"description\": \"\",\n  \"tags\"\
         : [\n    \"Game Chat\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"sendChatMessage\"\n}"
@@ -476,14 +485,19 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GameActionRequest\"\
         ,\n  \"$defs\": {\n    \"GameActionRequest\": {\n      \"description\": \"Request to perform a game action such as
         movement or combat\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n\
-        \        \"sessionId\",\n        \"actionType\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the game session\"\
-        \n        },\n        \"actionType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"move\"\
-        ,\n            \"interact\",\n            \"attack\",\n            \"cast_spell\",\n            \"use_item\"\n   \
-        \       ],\n          \"description\": \"Type of game action to perform\"\n        },\n        \"actionData\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Action-specific
-        data\"\n        },\n        \"targetId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n  \
-        \        \"description\": \"Target of the action (if applicable)\"\n        }\n      }\n    }\n  }\n}"
+        \        \"sessionId\",\n        \"accountId\",\n        \"gameType\",\n        \"actionType\"\n      ],\n      \"\
+        properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n    \
+        \      \"description\": \"WebSocket session ID of the client. Provided by shortcut system.\"\n        },\n       \
+        \ \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"\
+        Account ID of the player. Provided by shortcut system.\"\n        },\n        \"gameType\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Game type for the action. Determines which lobby to apply the action.
+        Provided by shortcut system.\"\n        },\n        \"actionType\": {\n          \"type\": \"string\",\n         \
+        \ \"enum\": [\n            \"move\",\n            \"interact\",\n            \"attack\",\n            \"cast_spell\"\
+        ,\n            \"use_item\"\n          ],\n          \"description\": \"Type of game action to perform\"\n       \
+        \ },\n        \"actionData\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n    \
+        \      \"description\": \"Action-specific data\"\n        },\n        \"targetId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Target of the action (if applicable)\"\n        }\n\
+        \      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GameActionResponse\"\
         ,\n  \"$defs\": {\n    \"GameActionResponse\": {\n      \"description\": \"Response indicating the result of a game
         action with any state changes\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
@@ -533,15 +547,19 @@ components:
       required:
       - sessionId
       - accountId
+      - gameType
       properties:
         sessionId:
           type: string
           format: uuid
-          description: ID of the game session to leave
+          description: WebSocket session ID of the client leaving. Provided by shortcut system.
         accountId:
           type: string
           format: uuid
-          description: Account ID of the player leaving. Provided by shortcut system or authenticated caller.
+          description: Account ID of the player leaving. Provided by shortcut system.
+        gameType:
+          type: string
+          description: Game type being left. Determines which lobby to leave. Provided by shortcut system.
 
     CreateGameSessionRequest:
       description: Request to create a new game session with specified settings
@@ -653,15 +671,20 @@ components:
       required:
       - sessionId
       - accountId
+      - gameType
       properties:
         sessionId:
           type: string
           format: uuid
-          description: ID of the game session to join
+          description: WebSocket session ID of the client joining. Provided by shortcut system. Used for event delivery.
         accountId:
           type: string
           format: uuid
-          description: Account ID of the player joining. Provided by shortcut system or authenticated caller.
+          description: Account ID of the player joining. Provided by shortcut system.
+        gameType:
+          type: string
+          description: Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by 
+            shortcut system.
         password:
           type: string
           nullable: true
@@ -775,12 +798,22 @@ components:
       additionalProperties: false
       required:
       - sessionId
+      - accountId
+      - gameType
       - message
       properties:
         sessionId:
           type: string
           format: uuid
-          description: ID of the game session
+          description: WebSocket session ID of the sender. Provided by shortcut system.
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID of the sender. Provided by shortcut system.
+        gameType:
+          type: string
+          description: Game type for the chat. Determines which lobby's players receive the message. Provided by 
+            shortcut system.
         message:
           type: string
           maxLength: 500
@@ -801,12 +834,22 @@ components:
       additionalProperties: false
       required:
       - sessionId
+      - accountId
+      - gameType
       - actionType
       properties:
         sessionId:
           type: string
           format: uuid
-          description: ID of the game session
+          description: WebSocket session ID of the client. Provided by shortcut system.
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID of the player. Provided by shortcut system.
+        gameType:
+          type: string
+          description: Game type for the action. Determines which lobby to apply the action. Provided by shortcut 
+            system.
         actionType:
           type: string
           enum: [move, interact, attack, cast_spell, use_item]

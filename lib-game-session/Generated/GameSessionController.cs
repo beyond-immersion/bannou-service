@@ -1007,18 +1007,23 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "additionalProperties": false,
       "required": [
         "sessionId",
-        "accountId"
+        "accountId",
+        "gameType"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
-          "description": "ID of the game session to join"
+          "description": "WebSocket session ID of the client joining. Provided by shortcut system. Used for event delivery."
         },
         "accountId": {
           "type": "string",
           "format": "uuid",
-          "description": "Account ID of the player joining. Provided by shortcut system or authenticated caller."
+          "description": "Account ID of the player joining. Provided by shortcut system."
+        },
+        "gameType": {
+          "type": "string",
+          "description": "Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system."
         },
         "password": {
           "type": "string",
@@ -1230,18 +1235,23 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "additionalProperties": false,
       "required": [
         "sessionId",
-        "accountId"
+        "accountId",
+        "gameType"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
-          "description": "ID of the game session to leave"
+          "description": "WebSocket session ID of the client leaving. Provided by shortcut system."
         },
         "accountId": {
           "type": "string",
           "format": "uuid",
-          "description": "Account ID of the player leaving. Provided by shortcut system or authenticated caller."
+          "description": "Account ID of the player leaving. Provided by shortcut system."
+        },
+        "gameType": {
+          "type": "string",
+          "description": "Game type being left. Determines which lobby to leave. Provided by shortcut system."
         }
       }
     }
@@ -1415,13 +1425,24 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "additionalProperties": false,
       "required": [
         "sessionId",
+        "accountId",
+        "gameType",
         "message"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
-          "description": "ID of the game session"
+          "description": "WebSocket session ID of the sender. Provided by shortcut system."
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the sender. Provided by shortcut system."
+        },
+        "gameType": {
+          "type": "string",
+          "description": "Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system."
         },
         "message": {
           "type": "string",
@@ -1520,13 +1541,24 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "additionalProperties": false,
       "required": [
         "sessionId",
+        "accountId",
+        "gameType",
         "actionType"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
-          "description": "ID of the game session"
+          "description": "WebSocket session ID of the client. Provided by shortcut system."
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the player. Provided by shortcut system."
+        },
+        "gameType": {
+          "type": "string",
+          "description": "Game type for the action. Determines which lobby to apply the action. Provided by shortcut system."
         },
         "actionType": {
           "type": "string",

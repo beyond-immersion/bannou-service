@@ -18277,12 +18277,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionRequest.SessionId">
             <summary>
-            ID of the game session to leave
+            WebSocket session ID of the client leaving. Provided by shortcut system.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionRequest.AccountId">
             <summary>
-            Account ID of the player leaving. Provided by shortcut system or authenticated caller.
+            Account ID of the player leaving. Provided by shortcut system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionRequest.GameType">
+            <summary>
+            Game type being left. Determines which lobby to leave. Provided by shortcut system.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest">
@@ -18402,12 +18407,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.SessionId">
             <summary>
-            ID of the game session to join
+            WebSocket session ID of the client joining. Provided by shortcut system. Used for event delivery.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.AccountId">
             <summary>
-            Account ID of the player joining. Provided by shortcut system or authenticated caller.
+            Account ID of the player joining. Provided by shortcut system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.GameType">
+            <summary>
+            Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.Password">
@@ -18527,7 +18537,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.ChatMessageRequest.SessionId">
             <summary>
-            ID of the game session
+            WebSocket session ID of the sender. Provided by shortcut system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ChatMessageRequest.AccountId">
+            <summary>
+            Account ID of the sender. Provided by shortcut system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ChatMessageRequest.GameType">
+            <summary>
+            Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.ChatMessageRequest.Message">
@@ -18552,7 +18572,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionRequest.SessionId">
             <summary>
-            ID of the game session
+            WebSocket session ID of the client. Provided by shortcut system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameActionRequest.AccountId">
+            <summary>
+            Account ID of the player. Provided by shortcut system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameActionRequest.GameType">
+            <summary>
+            Game type for the action. Determines which lobby to apply the action. Provided by shortcut system.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionRequest.ActionType">
@@ -28727,17 +28757,21 @@
             <returns>Subscriptions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.GetCurrentSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.QueryCurrentSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.QueryCurrentSubscriptionsRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Get current (active, non-expired) subscriptions
+            Query current (active, non-expired) subscriptions
             </summary>
             <remarks>
-            Returns only active, non-expired subscriptions as authorization strings.
-            <br/>Used by Auth service during session creation to populate session authorizations.
+            Returns active, non-expired subscriptions. Can query by:
+            <br/>- accountId: Get subscriptions for a specific account
+            <br/>- stubName: Get all accounts subscribed to a specific service
+            <br/>- Both: Check if a specific account is subscribed to a specific service
+            <br/>At least one of accountId or stubName must be provided.
+            <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
             </remarks>
-            <returns>Current subscriptions retrieved successfully</returns>
+            <returns>Subscriptions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.GetSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.GetSubscriptionRequest,System.Threading.CancellationToken)">
@@ -28883,17 +28917,21 @@
             <returns>Subscriptions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.GetCurrentSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.QueryCurrentSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.QueryCurrentSubscriptionsRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Get current (active, non-expired) subscriptions
+            Query current (active, non-expired) subscriptions
             </summary>
             <remarks>
-            Returns only active, non-expired subscriptions as authorization strings.
-            <br/>Used by Auth service during session creation to populate session authorizations.
+            Returns active, non-expired subscriptions. Can query by:
+            <br/>- accountId: Get subscriptions for a specific account
+            <br/>- stubName: Get all accounts subscribed to a specific service
+            <br/>- Both: Check if a specific account is subscribed to a specific service
+            <br/>At least one of accountId or stubName must be provided.
+            <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
             </remarks>
-            <returns>Current subscriptions retrieved successfully</returns>
+            <returns>Subscriptions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.GetSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.GetSubscriptionRequest,System.Threading.CancellationToken)">
@@ -29013,14 +29051,24 @@
             If true, include expired subscriptions
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest">
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.QueryCurrentSubscriptionsRequest">
             <summary>
-            Request to get current active subscriptions
+            Request to query current active subscriptions.
+            <br/>Provide accountId to get subscriptions for a specific account,
+            <br/>or stubName to get all accounts subscribed to a specific service,
+            <br/>or both to check if a specific account is subscribed to a specific service.
+            <br/>At least one of accountId or stubName must be provided.
+            <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest.AccountId">
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.QueryCurrentSubscriptionsRequest.AccountId">
             <summary>
-            ID of the account to get current subscriptions for
+            ID of the account to get current subscriptions for. Optional if stubName is provided.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.QueryCurrentSubscriptionsRequest.StubName">
+            <summary>
+            Stub name of the service to filter by (e.g., "arcadia"). Returns all accounts subscribed to this service.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscriptions.GetSubscriptionRequest">
@@ -29201,6 +29249,28 @@
         <member name="P:BeyondImmersion.BannouService.Subscriptions.CurrentSubscriptionsResponse.Subscriptions">
             <summary>
             Full subscription details (optional, for debugging)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.QuerySubscriptionsResponse">
+            <summary>
+            Response from querying current subscriptions.
+            <br/>Returns subscriptions matching the query criteria (by account, by stub, or both).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.QuerySubscriptionsResponse.Subscriptions">
+            <summary>
+            List of active subscriptions matching the query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.QuerySubscriptionsResponse.TotalCount">
+            <summary>
+            Total number of subscriptions returned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.QuerySubscriptionsResponse.AccountIds">
+            <summary>
+            Unique account IDs in the result set (useful when querying by stubName)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscriptions.SubscriptionListResponse">

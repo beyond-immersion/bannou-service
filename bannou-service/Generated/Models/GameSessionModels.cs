@@ -73,7 +73,7 @@ public partial class LeaveGameSessionRequest
 {
 
     /// <summary>
-    /// ID of the game session to leave
+    /// WebSocket session ID of the client leaving. Provided by shortcut system.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -81,12 +81,20 @@ public partial class LeaveGameSessionRequest
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Account ID of the player leaving. Provided by shortcut system or authenticated caller.
+    /// Account ID of the player leaving. Provided by shortcut system.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Game type being left. Determines which lobby to leave. Provided by shortcut system.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GameType { get; set; } = default!;
 
 }
 
@@ -256,7 +264,7 @@ public partial class JoinGameSessionRequest
 {
 
     /// <summary>
-    /// ID of the game session to join
+    /// WebSocket session ID of the client joining. Provided by shortcut system. Used for event delivery.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -264,12 +272,20 @@ public partial class JoinGameSessionRequest
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Account ID of the player joining. Provided by shortcut system or authenticated caller.
+    /// Account ID of the player joining. Provided by shortcut system.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Game type to join (e.g., 'arcadia', 'generic'). Determines which lobby to join. Provided by shortcut system.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Password for private sessions (null for public sessions)
@@ -441,12 +457,28 @@ public partial class ChatMessageRequest
 {
 
     /// <summary>
-    /// ID of the game session
+    /// WebSocket session ID of the sender. Provided by shortcut system.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the sender. Provided by shortcut system.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Content of the chat message
@@ -480,12 +512,28 @@ public partial class GameActionRequest
 {
 
     /// <summary>
-    /// ID of the game session
+    /// WebSocket session ID of the client. Provided by shortcut system.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the player. Provided by shortcut system.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Game type for the action. Determines which lobby to apply the action. Provided by shortcut system.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GameType { get; set; } = default!;
 
     /// <summary>
     /// Type of game action to perform

@@ -132,6 +132,7 @@ cat >> "$SERVER_SDK_PROJECT" << 'EOF'
     <Compile Include="../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/Services/IServiceAppMappingResolver.cs')" />
     <Compile Include="../bannou-service/Services/IMeshInvocationClient.cs" Condition="Exists('../bannou-service/Services/IMeshInvocationClient.cs')" />
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
+    <Compile Include="../bannou-service/AppConstants.cs" Condition="Exists('../bannou-service/AppConstants.cs')" />
     <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>
 
@@ -335,6 +336,7 @@ cat >> "$CLIENT_SDK_PROJECT" << 'EOF'
   <!-- Shared Infrastructure -->
   <ItemGroup>
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
+    <Compile Include="../bannou-service/AppConstants.cs" Condition="Exists('../bannou-service/AppConstants.cs')" />
     <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>
 

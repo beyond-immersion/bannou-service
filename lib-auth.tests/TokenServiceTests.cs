@@ -411,12 +411,17 @@ public class TokenServiceTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionsClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CurrentSubscriptionsResponse
+            .ReturnsAsync(new QuerySubscriptionsResponse
             {
-                Authorizations = new List<string> { "auth1", "auth2" }
+                Subscriptions = new List<SubscriptionInfo>
+                {
+                    new() { StubName = "auth1", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow },
+                    new() { StubName = "auth2", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow }
+                },
+                TotalCount = 2
             });
 
         _mockSessionService.Setup(s => s.SaveSessionAsync(
@@ -454,8 +459,8 @@ public class TokenServiceTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionsClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
 
@@ -493,8 +498,8 @@ public class TokenServiceTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionsClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Server error"));
 
@@ -510,12 +515,16 @@ public class TokenServiceTests
         var account = CreateTestAccount();
         SessionDataModel? capturedSession = null;
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionsClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CurrentSubscriptionsResponse
+            .ReturnsAsync(new QuerySubscriptionsResponse
             {
-                Authorizations = new List<string> { "auth1" }
+                Subscriptions = new List<SubscriptionInfo>
+                {
+                    new() { StubName = "auth1", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow }
+                },
+                TotalCount = 1
             });
 
         _mockSessionService.Setup(s => s.SaveSessionAsync(

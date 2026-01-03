@@ -10,7 +10,6 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -28,7 +27,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
-    private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<BeyondImmersion.BannouService.Voice.IVoiceClient> _mockVoiceClient;
@@ -48,7 +46,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<GameSessionService>>();
-        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockVoiceClient = new Mock<BeyondImmersion.BannouService.Voice.IVoiceClient>();
@@ -78,7 +75,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockHttpContextAccessor.Object,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
             _mockVoiceClient.Object,
@@ -519,20 +515,35 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var sessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
         var clientSessionId = Guid.NewGuid();
-        var request = new JoinGameSessionRequest { SessionId = sessionId };
+        var accountId = Guid.NewGuid();
+        var request = new JoinGameSessionRequest
+        {
+            SessionId = clientSessionId,  // WebSocket session ID (from shortcut)
+            AccountId = accountId,
+            GameType = "arcadia"
+        };
 
-        // Setup HTTP context with session ID header
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId.ToString();
-        _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
-
+        // Mock lobby lookup (by lobby key "lobby:arcadia")
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync("lobby:arcadia", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
-                SessionId = sessionId.ToString(),
+                SessionId = lobbyId.ToString(),
+                MaxPlayers = 4,
+                CurrentPlayers = 1,
+                Status = GameSessionResponseStatus.Active,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Mock session lookup (by session key)
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = lobbyId.ToString(),
                 MaxPlayers = 4,
                 CurrentPlayers = 1,
                 Status = GameSessionResponseStatus.Active,
@@ -547,7 +558,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
         Assert.True(response?.Success);
 
-        // Verify game-session:in_game state was set via Permissions client
+        // Verify game-session:in_game state was set via Permissions client with the WebSocket session ID
         _mockPermissionsClient.Verify(p => p.UpdateSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(u =>
                 u.SessionId == clientSessionId &&
@@ -565,21 +576,39 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange
         var service = CreateService();
-        var sessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
         var clientSessionId = Guid.NewGuid();
         var accountId = Guid.NewGuid();
-        var request = new LeaveGameSessionRequest { SessionId = sessionId, AccountId = accountId };
+        var request = new LeaveGameSessionRequest
+        {
+            SessionId = clientSessionId,  // WebSocket session ID (from shortcut)
+            AccountId = accountId,
+            GameType = "arcadia"
+        };
 
-        // Setup HTTP context with session ID header
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId.ToString();
-        _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
-
+        // Mock lobby lookup (by lobby key "lobby:arcadia")
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync("lobby:arcadia", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
-                SessionId = sessionId.ToString(),
+                SessionId = lobbyId.ToString(),
+                MaxPlayers = 4,
+                CurrentPlayers = 2,
+                Status = GameSessionResponseStatus.Active,
+                Players = new List<GamePlayer>
+                {
+                    new() { AccountId = accountId, DisplayName = "TestPlayer" },
+                    new() { AccountId = Guid.NewGuid(), DisplayName = "OtherPlayer" }
+                },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Mock session lookup (by session key)
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + lobbyId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = lobbyId.ToString(),
                 MaxPlayers = 4,
                 CurrentPlayers = 2,
                 Status = GameSessionResponseStatus.Active,
@@ -597,7 +626,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
-        // Verify game-session:in_game state was cleared via Permissions client
+        // Verify game-session:in_game state was cleared via Permissions client with the WebSocket session ID
         _mockPermissionsClient.Verify(p => p.ClearSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest>(u =>
                 u.SessionId == clientSessionId &&

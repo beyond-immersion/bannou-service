@@ -612,7 +612,7 @@ public partial class AssetService : IAssetService
 
             var response = new AssetSearchResult
             {
-                Assets = paginatedAssets!,
+                Assets = paginatedAssets,
                 Total = total,
                 Limit = body.Limit,
                 Offset = body.Offset
@@ -1510,7 +1510,7 @@ public partial class AssetService : IAssetService
     /// <summary>
     /// Extracts a .NET value from a JsonElement.
     /// </summary>
-    private static object GetJsonValue(JsonElement element)
+    private static object? GetJsonValue(JsonElement element)
     {
         return element.ValueKind switch
         {
@@ -1518,7 +1518,7 @@ public partial class AssetService : IAssetService
             JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
             JsonValueKind.True => true,
             JsonValueKind.False => false,
-            JsonValueKind.Null => null!,
+            JsonValueKind.Null => null,
             JsonValueKind.Array => element.EnumerateArray().Select(GetJsonValue).ToList(),
             JsonValueKind.Object => element.EnumerateObject()
                 .ToDictionary(p => p.Name, p => GetJsonValue(p.Value)),

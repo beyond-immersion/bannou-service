@@ -35,9 +35,9 @@ public partial interface ISubscriptionsService : IBannouService
         Task<(StatusCodes, SubscriptionListResponse?)> GetAccountSubscriptionsAsync(GetAccountSubscriptionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetCurrentSubscriptions operation
+        /// QueryCurrentSubscriptions operation
         /// </summary>
-        Task<(StatusCodes, CurrentSubscriptionsResponse?)> GetCurrentSubscriptionsAsync(GetCurrentSubscriptionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, QuerySubscriptionsResponse?)> QueryCurrentSubscriptionsAsync(QueryCurrentSubscriptionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// GetSubscription operation

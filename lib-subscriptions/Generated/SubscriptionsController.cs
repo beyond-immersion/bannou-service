@@ -39,17 +39,21 @@ public interface ISubscriptionsController : BeyondImmersion.BannouService.Contro
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionListResponse>> GetAccountSubscriptionsAsync(GetAccountSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Get current (active, non-expired) subscriptions
+    /// Query current (active, non-expired) subscriptions
     /// </summary>
 
     /// <remarks>
-    /// Returns only active, non-expired subscriptions as authorization strings.
-    /// <br/>Used by Auth service during session creation to populate session authorizations.
+    /// Returns active, non-expired subscriptions. Can query by:
+    /// <br/>- accountId: Get subscriptions for a specific account
+    /// <br/>- stubName: Get all accounts subscribed to a specific service
+    /// <br/>- Both: Check if a specific account is subscribed to a specific service
+    /// <br/>At least one of accountId or stubName must be provided.
+    /// <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </remarks>
 
-    /// <returns>Current subscriptions retrieved successfully</returns>
+    /// <returns>Subscriptions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrentSubscriptionsResponse>> GetCurrentSubscriptionsAsync(GetCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySubscriptionsResponse>> QueryCurrentSubscriptionsAsync(QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get a specific subscription by ID
@@ -179,19 +183,23 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
     }
 
     /// <summary>
-    /// Get current (active, non-expired) subscriptions
+    /// Query current (active, non-expired) subscriptions
     /// </summary>
     /// <remarks>
-    /// Returns only active, non-expired subscriptions as authorization strings.
-    /// <br/>Used by Auth service during session creation to populate session authorizations.
+    /// Returns active, non-expired subscriptions. Can query by:
+    /// <br/>- accountId: Get subscriptions for a specific account
+    /// <br/>- stubName: Get all accounts subscribed to a specific service
+    /// <br/>- Both: Check if a specific account is subscribed to a specific service
+    /// <br/>At least one of accountId or stubName must be provided.
+    /// <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </remarks>
-    /// <returns>Current subscriptions retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current")]
+    /// <returns>Subscriptions retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("subscriptions/query")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrentSubscriptionsResponse>> GetCurrentSubscriptions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySubscriptionsResponse>> QueryCurrentSubscriptions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetCurrentSubscriptionsAsync(body, cancellationToken);
+        var (statusCode, result) = await _implementation.QueryCurrentSubscriptionsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -472,25 +480,28 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     #endregion
 
-    #region Meta Endpoints for GetCurrentSubscriptions
+    #region Meta Endpoints for QueryCurrentSubscriptions
 
-    private static readonly string _GetCurrentSubscriptions_RequestSchema = """
+    private static readonly string _QueryCurrentSubscriptions_RequestSchema = """
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetCurrentSubscriptionsRequest",
+  "$ref": "#/$defs/QueryCurrentSubscriptionsRequest",
   "$defs": {
-    "GetCurrentSubscriptionsRequest": {
+    "QueryCurrentSubscriptionsRequest": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Request to get current active subscriptions",
-      "required": [
-        "accountId"
-      ],
+      "description": "Request to query current active subscriptions.\nProvide accountId to get subscriptions for a specific account,\nor stubName to get all accounts subscribed to a specific service,\nor both to check if a specific account is subscribed to a specific service.\nAt least one of accountId or stubName must be provided.\n",
       "properties": {
         "accountId": {
           "type": "string",
           "format": "uuid",
-          "description": "ID of the account to get current subscriptions for"
+          "nullable": true,
+          "description": "ID of the account to get current subscriptions for. Optional if stubName is provided."
+        },
+        "stubName": {
+          "type": "string",
+          "nullable": true,
+          "description": "Stub name of the service to filter by (e.g., \"arcadia\"). Returns all accounts subscribed to this service."
         }
       }
     }
@@ -498,38 +509,38 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 }
 """;
 
-    private static readonly string _GetCurrentSubscriptions_ResponseSchema = """
+    private static readonly string _QueryCurrentSubscriptions_ResponseSchema = """
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CurrentSubscriptionsResponse",
+  "$ref": "#/$defs/QuerySubscriptionsResponse",
   "$defs": {
-    "CurrentSubscriptionsResponse": {
+    "QuerySubscriptionsResponse": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Response containing current active subscriptions and authorization strings",
+      "description": "Response from querying current subscriptions.\nReturns subscriptions matching the query criteria (by account, by stub, or both).\n",
       "required": [
-        "accountId",
-        "authorizations"
+        "subscriptions",
+        "totalCount"
       ],
       "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account"
-        },
-        "authorizations": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of authorization strings (e.g., [\"arcadia:authorized\", \"fantasia:authorized\"])"
-        },
         "subscriptions": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/SubscriptionInfo"
           },
-          "description": "Full subscription details (optional, for debugging)"
+          "description": "List of active subscriptions matching the query"
+        },
+        "totalCount": {
+          "type": "integer",
+          "description": "Total number of subscriptions returned"
+        },
+        "accountIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "Unique account IDs in the result set (useful when querying by stubName)"
         }
       }
     },
@@ -613,57 +624,57 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 }
 """;
 
-    private static readonly string _GetCurrentSubscriptions_Info = """
+    private static readonly string _QueryCurrentSubscriptions_Info = """
 {
-  "summary": "Get current (active, non-expired) subscriptions",
-  "description": "Returns only active, non-expired subscriptions as authorization strings.\nUsed by Auth service during session creation to populate session authorizations.\n",
+  "summary": "Query current (active, non-expired) subscriptions",
+  "description": "Returns active, non-expired subscriptions. Can query by:\n- accountId: Get subscriptions for a specific account\ n- stubName: Get all accounts subscribed to a specific service\n- Both: Check if a specific account is subscribed to a specific service\nAt least one of accountId or stubName must be provided.\nUsed by Auth service during session creation and GameSession service for subscriber discovery.\n",
   "tags": [
     "Subscription Management"
   ],
   "deprecated": false,
-  "operationId": "getCurrentSubscriptions"
+  "operationId": "queryCurrentSubscriptions"
 }
 """;
 
-    /// <summary>Returns endpoint information for GetCurrentSubscriptions</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaInfo()
+    /// <summary>Returns endpoint information for QueryCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/query/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryCurrentSubscriptions_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Subscriptions",
             "Post",
-            "subscriptions/account/current",
-            _GetCurrentSubscriptions_Info));
+            "subscriptions/query",
+            _QueryCurrentSubscriptions_Info));
 
-    /// <summary>Returns request schema for GetCurrentSubscriptions</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaRequestSchema()
+    /// <summary>Returns request schema for QueryCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/query/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryCurrentSubscriptions_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Subscriptions",
             "Post",
-            "subscriptions/account/current",
+            "subscriptions/query",
             "request-schema",
-            _GetCurrentSubscriptions_RequestSchema));
+            _QueryCurrentSubscriptions_RequestSchema));
 
-    /// <summary>Returns response schema for GetCurrentSubscriptions</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaResponseSchema()
+    /// <summary>Returns response schema for QueryCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/query/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryCurrentSubscriptions_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Subscriptions",
             "Post",
-            "subscriptions/account/current",
+            "subscriptions/query",
             "response-schema",
-            _GetCurrentSubscriptions_ResponseSchema));
+            _QueryCurrentSubscriptions_ResponseSchema));
 
-    /// <summary>Returns full schema for GetCurrentSubscriptions</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaFullSchema()
+    /// <summary>Returns full schema for QueryCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/query/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryCurrentSubscriptions_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Subscriptions",
             "Post",
-            "subscriptions/account/current",
-            _GetCurrentSubscriptions_Info,
-            _GetCurrentSubscriptions_RequestSchema,
-            _GetCurrentSubscriptions_ResponseSchema));
+            "subscriptions/query",
+            _QueryCurrentSubscriptions_Info,
+            _QueryCurrentSubscriptions_RequestSchema,
+            _QueryCurrentSubscriptions_ResponseSchema));
 
     #endregion
 

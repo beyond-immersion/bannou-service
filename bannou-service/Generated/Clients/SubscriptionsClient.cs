@@ -49,15 +49,19 @@ public partial interface ISubscriptionsClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get current (active, non-expired) subscriptions
+    /// Query current (active, non-expired) subscriptions
     /// </summary>
     /// <remarks>
-    /// Returns only active, non-expired subscriptions as authorization strings.
-    /// <br/>Used by Auth service during session creation to populate session authorizations.
+    /// Returns active, non-expired subscriptions. Can query by:
+    /// <br/>- accountId: Get subscriptions for a specific account
+    /// <br/>- stubName: Get all accounts subscribed to a specific service
+    /// <br/>- Both: Check if a specific account is subscribed to a specific service
+    /// <br/>At least one of accountId or stubName must be provided.
+    /// <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </remarks>
-    /// <returns>Current subscriptions retrieved successfully</returns>
+    /// <returns>Subscriptions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<CurrentSubscriptionsResponse> GetCurrentSubscriptionsAsync(GetCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<QuerySubscriptionsResponse> QueryCurrentSubscriptionsAsync(QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -340,23 +344,27 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get current (active, non-expired) subscriptions
+    /// Query current (active, non-expired) subscriptions
     /// </summary>
     /// <remarks>
-    /// Returns only active, non-expired subscriptions as authorization strings.
-    /// <br/>Used by Auth service during session creation to populate session authorizations.
+    /// Returns active, non-expired subscriptions. Can query by:
+    /// <br/>- accountId: Get subscriptions for a specific account
+    /// <br/>- stubName: Get all accounts subscribed to a specific service
+    /// <br/>- Both: Check if a specific account is subscribed to a specific service
+    /// <br/>At least one of accountId or stubName must be provided.
+    /// <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </remarks>
-    /// <returns>Current subscriptions retrieved successfully</returns>
+    /// <returns>Subscriptions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<CurrentSubscriptionsResponse> GetCurrentSubscriptionsAsync(GetCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<QuerySubscriptionsResponse> QueryCurrentSubscriptionsAsync(QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "subscriptions/account/current"
-        urlBuilder_.Append("subscriptions/account/current");
+        // Operation Path: "subscriptions/query"
+        urlBuilder_.Append("subscriptions/query");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -394,12 +402,18 @@ public partial class SubscriptionsClient : ISubscriptionsClient, BeyondImmersion
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<CurrentSubscriptionsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<QuerySubscriptionsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Neither accountId nor stubName provided", status_, responseText_, headers_, null);
                     }
                     else
                     {

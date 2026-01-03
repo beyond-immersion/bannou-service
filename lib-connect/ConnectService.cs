@@ -375,6 +375,21 @@ public partial class ConnectService : IConnectService
                     continue;
                 }
 
+                // Validate required fields - these should never be null after validation during creation
+                if (string.IsNullOrEmpty(shortcut.TargetService) || string.IsNullOrEmpty(shortcut.TargetEndpoint))
+                {
+                    _logger.LogError(
+                        "Invalid shortcut {RouteGuid} has null/empty required fields: TargetService={TargetService}, TargetEndpoint={TargetEndpoint}",
+                        shortcut.RouteGuid, shortcut.TargetService, shortcut.TargetEndpoint);
+                    await PublishErrorEventAsync(
+                        "GetClientCapabilities",
+                        "invalid_shortcut_data",
+                        $"Shortcut {shortcut.RouteGuid} has null/empty required fields",
+                        details: new { shortcut.RouteGuid, shortcut.TargetService, shortcut.TargetEndpoint });
+                    connectionState.RemoveShortcut(shortcut.RouteGuid);
+                    continue;
+                }
+
                 shortcuts.Add(new ClientShortcut
                 {
                     Guid = shortcut.RouteGuid,
@@ -1347,8 +1362,15 @@ public partial class ConnectService : IConnectService
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
+        // ServiceName must be validated by caller before invoking this method
+        if (routeInfo.ServiceName == null)
+        {
+            throw new InvalidOperationException(
+                "HandleMetaRequestAsync called with null ServiceName - caller must validate");
+        }
+
         // Parse endpoint key: "serviceName:METHOD:/path"
-        var parts = routeInfo.ServiceName!.Split(':', 3);
+        var parts = routeInfo.ServiceName.Split(':', 3);
         if (parts.Length < 3)
         {
             _logger.LogWarning("Invalid endpoint key format for meta request: {EndpointKey}", routeInfo.ServiceName);

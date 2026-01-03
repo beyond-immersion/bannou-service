@@ -50,7 +50,7 @@ public partial class GameSessionService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
-        await HandleSessionDisconnectedInternalAsync(evt.SessionId.ToString());
+        await HandleSessionDisconnectedInternalAsync(evt.SessionId.ToString(), evt.AccountId);
     }
 
     /// <summary>

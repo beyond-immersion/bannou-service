@@ -67,13 +67,13 @@ public class TokenService : ITokenService
         var authorizations = new List<string>();
         try
         {
-            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                new GetCurrentSubscriptionsRequest { AccountId = account.AccountId },
+            var subscriptionsResponse = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+                new QueryCurrentSubscriptionsRequest { AccountId = account.AccountId },
                 cancellationToken);
 
-            if (subscriptionsResponse?.Authorizations != null)
+            if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Authorizations.ToList();
+                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
                 _logger.LogDebug("Fetched {Count} authorizations for account {AccountId}",
                     authorizations.Count, account.AccountId);
             }

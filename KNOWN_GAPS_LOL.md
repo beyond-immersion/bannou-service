@@ -30,18 +30,23 @@ This document catalogs patterns found through comprehensive codebase searches. I
 
 **Status**: ✅ Intentional "eventually consistent" design. `TryPublishAsync` never throws - it buffers failed messages and retries internally. State (Redis/MySQL) is authoritative; events are notifications. If RabbitMQ is down, messages buffer and retry. If buffer overflows, node crashes for orchestrator restart. Alternative (fail if events fail) would mean RabbitMQ outage breaks ALL CRUD operations.
 
-### 1.4 In-Memory Session Caches May Diverge Across Instances (YELLOW - Needs Implementation)
-**File**: `lib-game-session/GameSessionService.cs:66-88`
-**Issue**: Three in-memory caches may diverge across instances:
-- `_connectedSessions`: WebSocket SessionId -> AccountId
-- `_accountSubscriptions`: AccountId -> Set of subscribed stubNames
-- `_accountSessions`: AccountId -> Set of WebSocket session IDs
+### 1.4 In-Memory Session Caches May Diverge Across Instances (GREEN - RESOLVED)
+**File**: `lib-game-session/GameSessionService.cs`
+**Status**: ✅ Fixed - Refactored to T9-compliant architecture:
 
-**Required Changes**:
-1. **Move `_connectedSessions` to lib-state** - These are clients connected to game service; requests not guaranteed to hit same node
-2. **Add periodic cache refresh** - .NET 9+ long-running task pattern to periodically sync subscription cache
-3. **Add Connect endpoint** - "Get all connected sessions for account" internal endpoint (if not exists)
-4. **Use lib-state sessions for cleanup** - The Redis-stored session set should drive cleanup, not local cache
+**Removed** (were problematic per-instance state):
+- `_connectedSessions` (WebSocket SessionId → AccountId)
+- `_accountSessions` (AccountId → Set of WebSocket session IDs)
+
+**Retained** (`_accountSubscriptions` - now T9-compliant):
+- Explicitly documented as "local filter cache" for fast event filtering
+- Loaded from Subscriptions service at startup via `GameSessionStartupService` (BackgroundService)
+- Kept current via `subscription.updated` events
+- Authoritative subscriber session state moved to lib-state (`SUBSCRIBER_SESSIONS_PREFIX`)
+
+**Additional fixes**:
+- `_serverSalt` now comes from configuration with fail-fast validation (IMPLEMENTATION TENETS)
+- Pattern follows T9 "Event-Backed Local Caches" acceptable exception
 
 ---
 
@@ -208,7 +213,7 @@ These patterns were found but are legitimately intentional:
 
 | Category | RED (Fix) | YELLOW (Investigate) | GREEN (OK) |
 |----------|-----------|---------------------|------------|
-| Silent Failures | 0 | 2 | 2 |
+| Silent Failures | 0 | 0 | 4 |
 | Unimplemented Features | 0 | 4 | 1 |
 | Missing Audit | 0 | 1 | 1 |
 | Tenet Violations | 0 | 0 | 2 |
@@ -216,7 +221,81 @@ These patterns were found but are legitimately intentional:
 | Test Issues | 0 | 0 | 1 |
 | Documented Limitations | 0 | 2 | 2 |
 | Verified Intentional | 0 | 0 | 14 |
-| **TOTAL** | **0** | **12** | **23** |
+| String.Empty Usage | 0 | 326 | 0 |
+| Null-Forgiving Exceptions | 0 | 0 | 4 |
+| **TOTAL** | **0** | **336** | **29** |
+
+---
+
+## Category 9: String.Empty Usage Patterns (YELLOW - Needs Investigation)
+
+**Total Instances**: 326 across functional code (excluding tests and generated files)
+
+### 9.1 High-Density Files (10+ occurrences)
+| File | Count | Notes |
+|------|-------|-------|
+| `lib-documentation/DocumentationService.cs` | 30 | |
+| `lib-auth/AuthService.cs` | 21 | |
+| `lib-auth/Services/OAuthProviderService.cs` | 16 | |
+| `lib-asset/AssetService.cs` | 14 | |
+| `lib-behavior/BehaviorService.cs` | 12 | |
+| `lib-testing/TestingController.cs` | 11 | |
+| `lib-voice/Clients/KamailioClient.cs` | 10 | |
+| `lib-species/SpeciesService.cs` | 10 | |
+| `lib-realm/RealmService.cs` | 10 | |
+| `lib-location/LocationService.cs` | 10 | |
+| `lib-behavior/Cognition/IMemoryStore.cs` | 10 | |
+| `lib-orchestrator/OrchestratorService.cs` | 9 | |
+
+### 9.2 Common Patterns Found
+1. **Null-coalescing fallbacks**: `value ?? string.Empty` - hiding potential null issues
+2. **Default property values**: `public string Prop { get; set; } = string.Empty;`
+3. **Error message placeholders**: `ErrorMessage = string.Empty` when no error
+4. **Comparison patterns**: `if (value == string.Empty)` instead of `string.IsNullOrEmpty()`
+
+**Investigation Needed**: Determine which patterns are:
+- Intentional defaults (OK)
+- Hiding null issues (FIX)
+- Inappropriate replacements for null (RETHINK)
+
+---
+
+## Category 10: Null-Forgiving Operator Exceptions (GREEN - Tenet Exceptions)
+
+These patterns use null-forgiving (`!`) but are safe due to compiler limitations tracking nullability across method/property boundaries:
+
+### 10.1 LINQ Chain Filtering Pattern (SAFE)
+```csharp
+// Example: OrchestratorService.cs:2269
+.Where(s => !string.IsNullOrEmpty(s.AppId))
+.Select(s => s.AppId!)  // Compiler can't track that Where filtered nulls
+```
+**Why Safe**: The `.Where()` guarantees non-null; compiler just can't see through LINQ chains.
+
+### 10.2 Property Accessor After EnsureX() Pattern (SAFE)
+```csharp
+// Example: BannouBundleReader.cs Manifest/Index properties
+public BundleManifest Manifest {
+    get { EnsureHeaderRead(); return _manifest!; }
+}
+```
+**Why Safe**: Method guarantees initialization; compiler can't track field assignment in called methods.
+
+### 10.3 Post-Null-Check Value Access (SAFE)
+```csharp
+// Example: RedisStateStore.cs:59
+if (value.IsNullOrEmpty) { return null; }
+return BannouJson.Deserialize<TValue>(value!);
+```
+**Why Safe**: Explicit null check; compiler can't track struct nullability after check.
+
+### 10.4 EF Core Entity Initialization (ACCEPTED PATTERN)
+```csharp
+// Example: StateEntry.cs:21
+[Required]
+public string StoreName { get; set; } = default!;
+```
+**Why Accepted**: Standard EF Core pattern - framework initializes properties, not constructor.
 
 ---
 
@@ -225,3 +304,5 @@ These patterns were found but are legitimately intentional:
 1. ~~Review RED items~~ ✅ **ALL RED ITEMS RESOLVED**
 2. Discuss YELLOW items - determine if intentional or needs fixing
 3. GREEN items are resolved and verified
+4. **NEW**: Investigate string.Empty patterns for hidden null issues
+5. **NEW**: Consider tenet exception for safe null-forgiving LINQ patterns

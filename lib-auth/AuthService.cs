@@ -1125,13 +1125,13 @@ public partial class AuthService : IAuthService
         var authorizations = new List<string>();
         try
         {
-            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                new GetCurrentSubscriptionsRequest { AccountId = account.AccountId },
+            var subscriptionsResponse = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+                new QueryCurrentSubscriptionsRequest { AccountId = account.AccountId },
                 cancellationToken);
 
-            if (subscriptionsResponse?.Authorizations != null)
+            if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Authorizations.ToList();
+                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
                 _logger.LogDebug("Fetched {Count} authorizations for account {AccountId}: {Authorizations}",
                     authorizations.Count, account.AccountId, string.Join(", ", authorizations));
             }
@@ -2467,13 +2467,13 @@ public partial class AuthService : IAuthService
 
             // Fetch fresh authorizations from Subscriptions service
             var authorizations = new List<string>();
-            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                new GetCurrentSubscriptionsRequest { AccountId = accountId },
+            var subscriptionsResponse = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+                new QueryCurrentSubscriptionsRequest { AccountId = accountId },
                 cancellationToken);
 
-            if (subscriptionsResponse?.Authorizations != null)
+            if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Authorizations.ToList();
+                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
             }
 
             var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);

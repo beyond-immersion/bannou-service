@@ -82,14 +82,14 @@ public static class SubscriptionsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/subscriptions/account/current",
+            Path = "/subscriptions/query",
             Method = ServiceEndpointMethod.POST,
-            Description = "getCurrentSubscriptions",
+            Description = "queryCurrentSubscriptions",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
+                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

@@ -139,6 +139,12 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
             }
         }
 
+        // Connection must be set after successful initialization
+        if (_connection == null)
+        {
+            throw new InvalidOperationException("RabbitMQ connection is null after initialization");
+        }
+
         // Try to get from pool
         if (_channelPool.TryTake(out var channel))
         {
@@ -150,7 +156,7 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
         }
 
         // Create new channel
-        return await _connection!.CreateChannelAsync(cancellationToken: cancellationToken);
+        return await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -190,7 +196,13 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
             }
         }
 
-        var channel = await _connection!.CreateChannelAsync(cancellationToken: cancellationToken);
+        // Connection must be set after successful initialization
+        if (_connection == null)
+        {
+            throw new InvalidOperationException("RabbitMQ connection is null after initialization");
+        }
+
+        var channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
         // Set QoS for consumer channels
         await channel.BasicQosAsync(

@@ -80,75 +80,86 @@ paths:
       x-endpoint-info-json: "{\n  \"summary\": \"Get subscriptions for an account\",\n  \"description\": \"Returns all subscriptions
         for a given account, with optional filtering.\",\n  \"tags\": [\n    \"Subscription Management\"\n  ],\n  \"deprecated\"\
         : false,\n  \"operationId\": \"getAccountSubscriptions\"\n}"
-  /subscriptions/account/current:
+  /subscriptions/query:
     post:
-      summary: Get current (active, non-expired) subscriptions
+      summary: Query current (active, non-expired) subscriptions
       description: |
-        Returns only active, non-expired subscriptions as authorization strings.
-        Used by Auth service during session creation to populate session authorizations.
-      operationId: getCurrentSubscriptions
+        Returns active, non-expired subscriptions. Can query by:
+        - accountId: Get subscriptions for a specific account
+        - stubName: Get all accounts subscribed to a specific service
+        - Both: Check if a specific account is subscribed to a specific service
+        At least one of accountId or stubName must be provided.
+        Used by Auth service during session creation and GameSession service for subscriber discovery.
+      operationId: queryCurrentSubscriptions
       tags:
       - Subscription Management
       x-permissions:
-      - role: user
+      - role: service
         states: {}
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetCurrentSubscriptionsRequest'
+              $ref: '#/components/schemas/QueryCurrentSubscriptionsRequest'
       responses:
         '200':
-          description: Current subscriptions retrieved successfully
+          description: Subscriptions retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CurrentSubscriptionsResponse'
-
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetCurrentSubscriptionsRequest\"\
-        ,\n  \"$defs\": {\n    \"GetCurrentSubscriptionsRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"description\": \"Request to get current active subscriptions\",\n      \"required\": [\n       \
-        \ \"accountId\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n  \
-        \        \"format\": \"uuid\",\n          \"description\": \"ID of the account to get current subscriptions for\"\n\
-        \        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CurrentSubscriptionsResponse\"\
-        ,\n  \"$defs\": {\n    \"CurrentSubscriptionsResponse\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"description\": \"Response containing current active subscriptions and authorization strings\",\n\
-        \      \"required\": [\n        \"accountId\",\n        \"authorizations\"\n      ],\n      \"properties\": {\n  \
-        \      \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"ID of the account\"\n        },\n        \"authorizations\": {\n          \"type\": \"array\",\n          \"items\"\
-        : {\n            \"type\": \"string\"\n          },\n          \"description\": \"List of authorization strings (e.g.,
-        [\\\"arcadia:authorized\\\", \\\"fantasia:authorized\\\"])\"\n        },\n        \"subscriptions\": {\n         \
-        \ \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SubscriptionInfo\"\n          },\n\
-        \          \"description\": \"Full subscription details (optional, for debugging)\"\n        }\n      }\n    },\n\
-        \    \"SubscriptionInfo\": {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"description\"\
-        : \"Information about a subscription\",\n      \"required\": [\n        \"subscriptionId\",\n        \"accountId\"\
-        ,\n        \"serviceId\",\n        \"stubName\",\n        \"startDate\",\n        \"isActive\",\n        \"createdAt\"\
-        \n      ],\n      \"properties\": {\n        \"subscriptionId\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\",\n          \"description\": \"Unique identifier for the subscription\"\n        },\n        \"\
-        accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID
-        of the account this subscription belongs to\"\n        },\n        \"serviceId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the subscribed service (game)\"\n        },\n\
-        \        \"stubName\": {\n          \"type\": \"string\",\n          \"description\": \"Stub name of the service (denormalized
-        for efficiency)\"\n        },\n        \"displayName\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Display name of the service (denormalized for efficiency)\"\n        },\n        \"startDate\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When the subscription started\"\
-        \n        },\n        \"expirationDate\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"When the subscription expires (null for unlimited)\"\
-        \n        },\n        \"isActive\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the
-        subscription is currently active\"\n        },\n        \"cancelledAt\": {\n          \"type\": \"string\",\n    \
-        \      \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"When the subscription
-        was cancelled (if applicable)\"\n        },\n        \"cancellationReason\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Reason for cancellation (if applicable)\"\n        },\n\
-        \        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
-        : \"When the subscription was created\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n \
-        \         \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"When the subscription
-        was last updated\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get current (active, non-expired) subscriptions\",\n  \"description\": \"\
-        Returns only active, non-expired subscriptions as authorization strings.\\nUsed by Auth service during session creation
-        to populate session authorizations.\\n\",\n  \"tags\": [\n    \"Subscription Management\"\n  ],\n  \"deprecated\"\
-        : false,\n  \"operationId\": \"getCurrentSubscriptions\"\n}"
+                $ref: '#/components/schemas/QuerySubscriptionsResponse'
+        '400':
+          description: Neither accountId nor stubName provided
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/QueryCurrentSubscriptionsRequest\"\
+        ,\n  \"$defs\": {\n    \"QueryCurrentSubscriptionsRequest\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Request to query current active subscriptions.\\nProvide accountId to get subscriptions
+        for a specific account,\\nor stubName to get all accounts subscribed to a specific service,\\nor both to check if
+        a specific account is subscribed to a specific service.\\nAt least one of accountId or stubName must be provided.\\\
+        n\",\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"\
+        uuid\",\n          \"nullable\": true,\n          \"description\": \"ID of the account to get current subscriptions
+        for. Optional if stubName is provided.\"\n        },\n        \"stubName\": {\n          \"type\": \"string\",\n \
+        \         \"nullable\": true,\n          \"description\": \"Stub name of the service to filter by (e.g., \\\"arcadia\\\
+        \"). Returns all accounts subscribed to this service.\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/QuerySubscriptionsResponse\"\
+        ,\n  \"$defs\": {\n    \"QuerySubscriptionsResponse\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Response from querying current subscriptions.\\nReturns subscriptions matching
+        the query criteria (by account, by stub, or both).\\n\",\n      \"required\": [\n        \"subscriptions\",\n    \
+        \    \"totalCount\"\n      ],\n      \"properties\": {\n        \"subscriptions\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/SubscriptionInfo\"\n          },\n          \"description\"\
+        : \"List of active subscriptions matching the query\"\n        },\n        \"totalCount\": {\n          \"type\":
+        \"integer\",\n          \"description\": \"Total number of subscriptions returned\"\n        },\n        \"accountIds\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\"\
+        : \"uuid\"\n          },\n          \"description\": \"Unique account IDs in the result set (useful when querying
+        by stubName)\"\n        }\n      }\n    },\n    \"SubscriptionInfo\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Information about a subscription\",\n      \"required\": [\n        \"subscriptionId\"\
+        ,\n        \"accountId\",\n        \"serviceId\",\n        \"stubName\",\n        \"startDate\",\n        \"isActive\"\
+        ,\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"subscriptionId\": {\n          \"type\": \"\
+        string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the subscription\"\n\
+        \        },\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n        \
+        \  \"description\": \"ID of the account this subscription belongs to\"\n        },\n        \"serviceId\": {\n   \
+        \       \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the subscribed
+        service (game)\"\n        },\n        \"stubName\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Stub name of the service (denormalized for efficiency)\"\n        },\n        \"displayName\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Display name of the service (denormalized for efficiency)\"\n  \
+        \      },\n        \"startDate\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n     \
+        \     \"description\": \"When the subscription started\"\n        },\n        \"expirationDate\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
+        : \"When the subscription expires (null for unlimited)\"\n        },\n        \"isActive\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether the subscription is currently active\"\n        },\n        \"\
+        cancelledAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n\
+        \          \"description\": \"When the subscription was cancelled (if applicable)\"\n        },\n        \"cancellationReason\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Reason for cancellation
+        (if applicable)\"\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"\
+        date-time\",\n          \"description\": \"When the subscription was created\"\n        },\n        \"updatedAt\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
+        \    \"description\": \"When the subscription was last updated\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Query current (active, non-expired) subscriptions\",\n  \"description\":
+        \"Returns active, non-expired subscriptions. Can query by:\\n- accountId: Get subscriptions for a specific account\\
+        n- stubName: Get all accounts subscribed to a specific service\\n- Both: Check if a specific account is subscribed
+        to a specific service\\nAt least one of accountId or stubName must be provided.\\nUsed by Auth service during session
+        creation and GameSession service for subscriber discovery.\\n\",\n  \"tags\": [\n    \"Subscription Management\"\n\
+        \  ],\n  \"deprecated\": false,\n  \"operationId\": \"queryCurrentSubscriptions\"\n}"
   /subscriptions/get:
     post:
       summary: Get a specific subscription by ID
@@ -487,17 +498,26 @@ components:
           default: false
           description: If true, include expired subscriptions
 
-    GetCurrentSubscriptionsRequest:
+    QueryCurrentSubscriptionsRequest:
       type: object
       additionalProperties: false
-      description: Request to get current active subscriptions
-      required:
-      - accountId
+      description: |
+        Request to query current active subscriptions.
+        Provide accountId to get subscriptions for a specific account,
+        or stubName to get all accounts subscribed to a specific service,
+        or both to check if a specific account is subscribed to a specific service.
+        At least one of accountId or stubName must be provided.
       properties:
         accountId:
           type: string
           format: uuid
-          description: ID of the account to get current subscriptions for
+          nullable: true
+          description: ID of the account to get current subscriptions for. Optional if stubName is provided.
+        stubName:
+          type: string
+          nullable: true
+          description: Stub name of the service to filter by (e.g., "arcadia"). Returns all accounts subscribed to this 
+            service.
 
     GetSubscriptionRequest:
       type: object
@@ -685,6 +705,31 @@ components:
           items:
             $ref: '#/components/schemas/SubscriptionInfo'
           description: Full subscription details (optional, for debugging)
+
+    QuerySubscriptionsResponse:
+      type: object
+      additionalProperties: false
+      description: |
+        Response from querying current subscriptions.
+        Returns subscriptions matching the query criteria (by account, by stub, or both).
+      required:
+      - subscriptions
+      - totalCount
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionInfo'
+          description: List of active subscriptions matching the query
+        totalCount:
+          type: integer
+          description: Total number of subscriptions returned
+        accountIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Unique account IDs in the result set (useful when querying by stubName)
 
     SubscriptionListResponse:
       type: object

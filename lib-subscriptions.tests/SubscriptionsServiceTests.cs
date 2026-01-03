@@ -282,17 +282,17 @@ public class SubscriptionsServiceTests
 
     #endregion
 
-    #region GetCurrentSubscriptionsAsync Tests
+    #region QueryCurrentSubscriptionsAsync Tests
 
     [Fact]
-    public async Task GetCurrentSubscriptionsAsync_ShouldReturnActiveNonExpiredOnly()
+    public async Task QueryCurrentSubscriptionsAsync_ShouldReturnActiveNonExpiredOnly()
     {
         // Arrange
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var activeSubId = Guid.NewGuid();
         var serviceId = Guid.NewGuid();
-        var request = new GetCurrentSubscriptionsRequest { AccountId = accountId };
+        var request = new QueryCurrentSubscriptionsRequest { AccountId = accountId };
 
         // Mock: Account subscription index
         _mockListStore
@@ -316,25 +316,25 @@ public class SubscriptionsServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal(accountId, response.AccountId);
-        Assert.Single(response.Authorizations);
-        Assert.Equal("arcadia:authorized", response.Authorizations.First());
+        Assert.Single(response.Subscriptions);
+        Assert.Equal("arcadia", response.Subscriptions.First().StubName);
+        Assert.Equal(1, response.TotalCount);
     }
 
     [Fact]
-    public async Task GetCurrentSubscriptionsAsync_ShouldExcludeExpiredSubscriptions()
+    public async Task QueryCurrentSubscriptionsAsync_ShouldExcludeExpiredSubscriptions()
     {
         // Arrange
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var expiredSubId = Guid.NewGuid();
         var serviceId = Guid.NewGuid();
-        var request = new GetCurrentSubscriptionsRequest { AccountId = accountId };
+        var request = new QueryCurrentSubscriptionsRequest { AccountId = accountId };
 
         // Mock: Account subscription index
         _mockListStore
@@ -358,23 +358,24 @@ public class SubscriptionsServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Empty(response.Authorizations);
+        Assert.Empty(response.Subscriptions);
+        Assert.Equal(0, response.TotalCount);
     }
 
     [Fact]
-    public async Task GetCurrentSubscriptionsAsync_ShouldExcludeInactiveSubscriptions()
+    public async Task QueryCurrentSubscriptionsAsync_ShouldExcludeInactiveSubscriptions()
     {
         // Arrange
         var service = CreateService();
         var accountId = Guid.NewGuid();
         var inactiveSubId = Guid.NewGuid();
         var serviceId = Guid.NewGuid();
-        var request = new GetCurrentSubscriptionsRequest { AccountId = accountId };
+        var request = new QueryCurrentSubscriptionsRequest { AccountId = accountId };
 
         // Mock: Account subscription index
         _mockListStore
@@ -397,12 +398,28 @@ public class SubscriptionsServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Empty(response.Authorizations);
+        Assert.Empty(response.Subscriptions);
+        Assert.Equal(0, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task QueryCurrentSubscriptionsAsync_ShouldReturnBadRequest_WhenNoFilterProvided()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryCurrentSubscriptionsRequest(); // No accountId or stubName
+
+        // Act
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
     }
 
     #endregion
