@@ -208,9 +208,9 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public Task InitializeAsync(CancellationToken cancellationToken = default)
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        return EnsureInitializedAsync();
+        await EnsureInitializedAsync();
     }
 
     /// <inheritdoc/>

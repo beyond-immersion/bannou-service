@@ -42,8 +42,8 @@ public class AccountTestHandler : BaseHttpTestHandler
         new ServiceTest(TestAccountDeletionSessionInvalidation, "AccountDeletionSessionInvalidation", "Account", "Test account deletion → session invalidation flow"),
     ];
 
-    private static Task<TestResult> TestCreateAccount(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateAccount(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("testuser");
@@ -63,8 +63,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Account created successfully: ID={response.AccountId}, Email={response.Email}");
         }, "Account creation");
 
-    private static Task<TestResult> TestGetAccount(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetAccount(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("testuser");
@@ -88,8 +88,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Account retrieved successfully: ID={response.AccountId}, Email={response.Email}");
         }, "Account retrieval");
 
-    private static Task<TestResult> TestListAccounts(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListAccounts(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var response = await accountsClient.ListAccountsAsync(new ListAccountsRequest { Page = 1, PageSize = 10 });
@@ -97,8 +97,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Account listing successful: Found {response.TotalCount} total accounts, returned {response.Accounts?.Count ?? 0} accounts");
         }, "Account listing");
 
-    private static Task<TestResult> TestUpdateAccount(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateAccount(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("testuser");
@@ -129,8 +129,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Account updated successfully: ID={response.AccountId}, New DisplayName={response.DisplayName}");
         }, "Account update");
 
-    private static Task<TestResult> TestDeleteAccount(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteAccount(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("deletetest");
@@ -160,8 +160,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             }
         }, "Account deletion");
 
-    private static Task<TestResult> TestGetAccountByEmail(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetAccountByEmail(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("emailtest");
@@ -186,7 +186,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Account retrieved by email successfully: ID={response.AccountId}");
         }, "Account email lookup");
 
-    private static Task<TestResult> TestGetAccountByProvider(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetAccountByProvider(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingAnyStatusAsync(
             async () =>
             {
@@ -200,8 +201,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             [404],
             "GetAccountByProvider for non-existent account");
 
-    private static Task<TestResult> TestGetAuthMethods(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetAuthMethods(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("authmethodtest");
@@ -221,8 +222,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"GetAuthMethods returned {response.AuthMethods?.Count ?? 0} auth methods");
         }, "Get auth methods");
 
-    private static Task<TestResult> TestAddAuthMethod(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestAddAuthMethod(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("addauthtest");
@@ -250,8 +251,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"AddAuthMethod completed: MethodId={response.MethodId}, Provider={response.Provider}");
         }, "Add auth method");
 
-    private static Task<TestResult> TestRemoveAuthMethod(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRemoveAuthMethod(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("removeauthtest");
@@ -281,8 +282,8 @@ public class AccountTestHandler : BaseHttpTestHandler
                 "RemoveAuthMethod for test method ID");
         }, "Remove auth method");
 
-    private static Task<TestResult> TestUpdateProfile(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateProfile(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("profiletest");
@@ -312,8 +313,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Profile updated successfully: DisplayName={response.DisplayName}");
         }, "Update profile");
 
-    private static Task<TestResult> TestUpdatePasswordHash(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdatePasswordHash(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("passwordtest");
@@ -341,8 +342,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Password hash updated successfully");
         }, "Update password hash");
 
-    private static Task<TestResult> TestUpdateVerificationStatus(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateVerificationStatus(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testUsername = GenerateTestId("verifytest");
@@ -374,8 +375,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Email verification status updated successfully");
         }, "Update verification status");
 
-    private static Task<TestResult> TestListAccountsPagination(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListAccountsPagination(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testPrefix = GenerateTestId("pagination");
@@ -433,8 +434,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Pagination tests passed: Page1={page1Response.Accounts?.Count}, Page2={page2Response.Accounts?.Count}, Total={page1Response.TotalCount}");
         }, "Pagination test");
 
-    private static Task<TestResult> TestListAccountsFiltering(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListAccountsFiltering(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var testPrefix = GenerateTestId("filter");
@@ -520,8 +521,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Filtering tests passed: EmailFilter={matchingEmails}, NameFilter={matchingNames}, VerifiedFilter={verifiedWithPrefix}, Combined={combinedMatches}");
         }, "Filtering test");
 
-    private static Task<TestResult> TestAccountDeletionSessionInvalidation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestAccountDeletionSessionInvalidation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var accountsClient = GetServiceClient<IAccountsClient>();
             var authClient = GetServiceClient<IAuthClient>();

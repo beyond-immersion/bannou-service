@@ -69,8 +69,8 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
     /// Test that the capability manifest includes peerGuid.
     /// This verifies external clients receive their peer identifier for peer-to-peer routing.
     /// </summary>
-    private static Task<TestResult> TestCapabilityManifestIncludesPeerGuid(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCapabilityManifestIncludesPeerGuid(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
 
@@ -106,9 +106,10 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
     /// Documents the requirements for internal service connections.
     /// This is a "documentation test" that passes while describing what's needed.
     /// </summary>
-    private static Task<TestResult> TestInternalConnectionRequirements(ITestClient client, string[] args) =>
-        ExecuteTestAsync(() =>
+    private static async Task<TestResult> TestInternalConnectionRequirements(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
+            await Task.CompletedTask;
             // This test documents what internal services need
             var requirements = new List<string>
             {
@@ -137,15 +138,15 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
                 result.AppendLine($"  {pain}");
 
             // This test passes - it's documenting requirements
-            return Task.FromResult(TestResult.Successful(result.ToString()));
+            return TestResult.Successful(result.ToString());
         }, "Internal connection requirements");
 
     /// <summary>
     /// Tests if the internal proxy could support peer routing metadata.
     /// The /internal/proxy endpoint could potentially be extended to include peer info.
     /// </summary>
-    private static Task<TestResult> TestPeerRoutingMetadataInProxy(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPeerRoutingMetadataInProxy(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
 

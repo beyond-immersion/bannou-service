@@ -36,8 +36,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCompleteSessionLifecycle, "CompleteSessionLifecycle", "GameSession", "Test complete session lifecycle: create → join → action → leave"),
     ];
 
-    private static Task<TestResult> TestCreateGameSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateGameSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -60,8 +60,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Game session created successfully: ID={response.SessionId}, Name={response.SessionName}");
         }, "Create game session");
 
-    private static Task<TestResult> TestGetGameSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetGameSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -93,8 +93,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Game session retrieved successfully: ID={response.SessionId}, Name={response.SessionName}");
         }, "Get game session");
 
-    private static Task<TestResult> TestListGameSessions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListGameSessions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -126,8 +126,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Sessions.Count} game sessions (Total: {response.TotalCount})");
         }, "List game sessions");
 
-    private static Task<TestResult> TestJoinGameSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestJoinGameSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -160,8 +160,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Successfully joined game session: SessionID={createResponse.SessionId}");
         }, "Join game session");
 
-    private static Task<TestResult> TestLeaveGameSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestLeaveGameSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -188,8 +188,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Successfully left game session: SessionID={createResponse.SessionId}");
         }, "Leave game session");
 
-    private static Task<TestResult> TestKickPlayer(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestKickPlayer(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -231,8 +231,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Successfully kicked player: SessionID={createResponse.SessionId}, KickedPlayerID={playerToKick}");
         }, "Kick player");
 
-    private static Task<TestResult> TestSendChatMessage(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSendChatMessage(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -261,8 +261,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Chat message sent successfully to session {createResponse.SessionId}");
         }, "Send chat message");
 
-    private static Task<TestResult> TestPerformGameAction(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPerformGameAction(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
@@ -298,7 +298,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Game action performed successfully: ActionID={response.ActionId}");
         }, "Perform game action");
 
-    private static Task<TestResult> TestGetNonExistentSession(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentSession(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -311,8 +312,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent session");
 
-    private static Task<TestResult> TestCompleteSessionLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteSessionLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var gameSessionClient = GetServiceClient<IGameSessionClient>();
 

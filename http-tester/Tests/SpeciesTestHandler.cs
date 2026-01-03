@@ -58,8 +58,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
         });
     }
 
-    private static Task<TestResult> TestCreateSpecies(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateSpecies(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
@@ -81,8 +81,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created species: ID={response.SpeciesId}, Code={response.Code}");
         }, "Create species");
 
-    private static Task<TestResult> TestGetSpecies(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetSpecies(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
@@ -106,8 +106,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved species: ID={response.SpeciesId}, Code={response.Code}");
         }, "Get species");
 
-    private static Task<TestResult> TestGetSpeciesByCode(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetSpeciesByCode(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
@@ -127,8 +127,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved species by code: ID={response.SpeciesId}");
         }, "Get species by code");
 
-    private static Task<TestResult> TestUpdateSpecies(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateSpecies(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
@@ -157,8 +157,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Updated species: ID={response.SpeciesId}, Name={response.Name}");
         }, "Update species");
 
-    private static Task<TestResult> TestDeleteSpecies(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteSpecies(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
@@ -185,8 +185,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Deleted species: ID={created.SpeciesId}");
         }, "Delete species");
 
-    private static Task<TestResult> TestListSpecies(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListSpecies(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
@@ -208,8 +208,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Species.Count} species");
         }, "List species");
 
-    private static Task<TestResult> TestAddSpeciesToRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestAddSpeciesToRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("ADD");
             var speciesClient = GetServiceClient<ISpeciesClient>();
@@ -232,8 +232,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Added species to realm: SpeciesID={species.SpeciesId}, RealmID={realm.RealmId}");
         }, "Add species to realm");
 
-    private static Task<TestResult> TestRemoveSpeciesFromRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRemoveSpeciesFromRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm1 = await CreateTestRealmAsync("REMOVE1");
             var realm2 = await CreateTestRealmAsync("REMOVE2");
@@ -261,8 +261,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Removed species from realm: SpeciesID={species.SpeciesId}");
         }, "Remove species from realm");
 
-    private static Task<TestResult> TestListSpeciesByRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListSpeciesByRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("LIST");
             var speciesClient = GetServiceClient<ISpeciesClient>();
@@ -288,7 +288,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Species.Count} species in realm {realm.RealmId}");
         }, "List species by realm");
 
-    private static Task<TestResult> TestGetNonExistentSpecies(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentSpecies(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -298,8 +299,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent species");
 
-    private static Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
             var code = GenerateTestId("DUPLICATE_SPECIES");
@@ -325,8 +326,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
                 "Duplicate code");
         }, "Duplicate code conflict");
 
-    private static Task<TestResult> TestSeedSpecies(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSeedSpecies(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
@@ -358,8 +359,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Seed completed: Created={response.Created}, Updated={response.Updated}, Skipped={response.Skipped}");
         }, "Seed species");
 
-    private static Task<TestResult> TestCompleteSpeciesLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteSpeciesLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("LIFECYCLE");
             var speciesClient = GetServiceClient<ISpeciesClient>();

@@ -61,8 +61,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
 
     #region Fixture Repository Tests
 
-    private static Task<TestResult> TestBindRepository_Fixture(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestBindRepository_Fixture(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -91,8 +91,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Bound fixture repo: BindingId={response.BindingId}, Status={response.Status}");
         }, "Bind fixture repository");
 
-    private static Task<TestResult> TestSyncRepository_Fixture(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSyncRepository_Fixture(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -114,8 +114,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
                 $"Synced fixture repo: Status={response.Status}, Created={response.DocumentsCreated}, Updated={response.DocumentsUpdated}, CommitHash={response.CommitHash?[..7]}");
         }, "Sync fixture repository");
 
-    private static Task<TestResult> TestGetRepositoryStatus_Fixture(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetRepositoryStatus_Fixture(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -137,8 +137,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
                 $"Status: {response.Binding.Status}, DocumentCount={response.Binding.DocumentCount}, LastSync={response.LastSync?.CompletedAt}");
         }, "Get repository status");
 
-    private static Task<TestResult> TestListRepositoryBindings(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListRepositoryBindings(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -159,8 +159,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
                 $"Found {response.Bindings.Count} binding(s), Total={response.Total}");
         }, "List repository bindings");
 
-    private static Task<TestResult> TestUpdateRepositoryBinding(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateRepositoryBinding(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -180,7 +180,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Updated binding: SyncIntervalMinutes={response.Binding.SyncIntervalMinutes}");
         }, "Update repository binding");
 
-    private static Task<TestResult> TestDocumentProtection_403(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestDocumentProtection_403(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -199,8 +200,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
             403,
             "Document creation blocked in bound namespace");
 
-    private static Task<TestResult> TestUnbindRepository_Fixture(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUnbindRepository_Fixture(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -234,8 +235,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
 
     #region Live Git Repository Tests (Conditional)
 
-    private static Task<TestResult> TestBindRepository_Live(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestBindRepository_Live(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -258,8 +259,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Bound live repo: BindingId={response.BindingId}, URL={gitUrl}");
         }, "Bind live git repository");
 
-    private static Task<TestResult> TestSyncRepository_Live(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSyncRepository_Live(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -276,8 +277,8 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
                 $"Live sync: Status={response.Status}, Created={response.DocumentsCreated}, Updated={response.DocumentsUpdated}");
         }, "Sync live git repository");
 
-    private static Task<TestResult> TestUnbindRepository_Live(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUnbindRepository_Live(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 

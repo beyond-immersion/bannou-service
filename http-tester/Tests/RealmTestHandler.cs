@@ -41,8 +41,8 @@ public class RealmTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCompleteRealmLifecycle, "CompleteRealmLifecycle", "Realm", "Test complete realm lifecycle with deprecation"),
     ];
 
-    private static Task<TestResult> TestCreateRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -66,8 +66,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created realm: ID={response.RealmId}, Code={response.Code}");
         }, "Create realm");
 
-    private static Task<TestResult> TestGetRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -89,8 +89,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved realm: ID={response.RealmId}, Code={response.Code}");
         }, "Get realm");
 
-    private static Task<TestResult> TestGetRealmByCode(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetRealmByCode(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -110,8 +110,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved realm by code: ID={response.RealmId}");
         }, "Get realm by code");
 
-    private static Task<TestResult> TestUpdateRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -140,8 +140,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Updated realm: ID={response.RealmId}, Name={response.Name}");
         }, "Update realm");
 
-    private static Task<TestResult> TestDeleteRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -176,8 +176,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Deleted realm: ID={created.RealmId}");
         }, "Delete realm");
 
-    private static Task<TestResult> TestListRealms(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListRealms(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -199,8 +199,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Realms.Count} realms");
         }, "List realms");
 
-    private static Task<TestResult> TestDeprecateRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeprecateRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -225,8 +225,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Deprecated realm: ID={realm.RealmId}");
         }, "Deprecate realm");
 
-    private static Task<TestResult> TestUndeprecateRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUndeprecateRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -246,8 +246,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Undeprecated realm: ID={realm.RealmId}");
         }, "Undeprecate realm");
 
-    private static Task<TestResult> TestRealmExists(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRealmExists(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -273,7 +273,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Realm existence check passed");
         }, "Realm exists");
 
-    private static Task<TestResult> TestGetNonExistentRealm(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentRealm(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -283,8 +284,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent realm");
 
-    private static Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
             var code = GenerateTestId("DUPLICATE_REALM");
@@ -310,8 +311,8 @@ public class RealmTestHandler : BaseHttpTestHandler
                 "Duplicate code");
         }, "Duplicate code conflict");
 
-    private static Task<TestResult> TestSeedRealms(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSeedRealms(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
 
@@ -345,8 +346,8 @@ public class RealmTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Seed completed: Created={response.Created}, Updated={response.Updated}, Skipped={response.Skipped}");
         }, "Seed realms");
 
-    private static Task<TestResult> TestCompleteRealmLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteRealmLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
             var testId = GenerateTestId("LIFECYCLE_REALM");

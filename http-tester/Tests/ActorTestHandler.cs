@@ -44,8 +44,8 @@ public class ActorTestHandler : BaseHttpTestHandler
 
     #region Template CRUD Tests
 
-    private static Task<TestResult> TestCreateTemplate(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateTemplate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("test-category");
@@ -73,8 +73,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created template {response.TemplateId}");
         }, "CreateTemplate");
 
-    private static Task<TestResult> TestGetTemplateById(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetTemplateById(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("get-by-id");
@@ -104,8 +104,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved template by ID");
         }, "GetTemplateById");
 
-    private static Task<TestResult> TestGetTemplateByCategory(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetTemplateByCategory(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("get-by-cat");
@@ -135,8 +135,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved template by category");
         }, "GetTemplateByCategory");
 
-    private static Task<TestResult> TestListTemplates(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListTemplates(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category1 = GenerateTestSlug("list-test-1");
@@ -171,8 +171,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Templates.Count} templates");
         }, "ListTemplates");
 
-    private static Task<TestResult> TestUpdateTemplate(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateTemplate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("update-test");
@@ -205,8 +205,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Template updated successfully");
         }, "UpdateTemplate");
 
-    private static Task<TestResult> TestDeleteTemplate(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteTemplate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("delete-test");
@@ -234,7 +234,8 @@ public class ActorTestHandler : BaseHttpTestHandler
 
     #region Template Validation Tests
 
-    private static Task<TestResult> TestCreateTemplateMissingCategory(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestCreateTemplateMissingCategory(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -248,7 +249,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             400,
             "CreateTemplateMissingCategory");
 
-    private static Task<TestResult> TestCreateTemplateMissingBehaviorRef(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestCreateTemplateMissingBehaviorRef(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -262,7 +264,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             400,
             "CreateTemplateMissingBehaviorRef");
 
-    private static Task<TestResult> TestGetTemplateNotFound(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetTemplateNotFound(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -279,8 +282,8 @@ public class ActorTestHandler : BaseHttpTestHandler
 
     #region Actor Lifecycle Tests
 
-    private static Task<TestResult> TestSpawnActor(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSpawnActor(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("spawn-test");
@@ -314,8 +317,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Spawned actor {actorId}");
         }, "SpawnActor");
 
-    private static Task<TestResult> TestGetActor(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetActor(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("get-actor-test");
@@ -350,8 +353,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved actor {actorId}");
         }, "GetActor");
 
-    private static Task<TestResult> TestListActors(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListActors(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("list-actors-test");
@@ -394,8 +397,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Actors.Count} actors");
         }, "ListActors");
 
-    private static Task<TestResult> TestStopActor(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestStopActor(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("stop-actor-test");
@@ -437,7 +440,8 @@ public class ActorTestHandler : BaseHttpTestHandler
 
     #region Actor Validation Tests
 
-    private static Task<TestResult> TestSpawnActorInvalidTemplate(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestSpawnActorInvalidTemplate(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -451,7 +455,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             404,
             "SpawnActorInvalidTemplate");
 
-    private static Task<TestResult> TestGetActorNotFound(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetActorNotFound(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -464,7 +469,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             404,
             "GetActorNotFound");
 
-    private static Task<TestResult> TestStopActorNotFound(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestStopActorNotFound(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -481,8 +487,8 @@ public class ActorTestHandler : BaseHttpTestHandler
 
     #region Full Lifecycle Tests
 
-    private static Task<TestResult> TestFullLifecycleFlow(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestFullLifecycleFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
             var category = GenerateTestSlug("full-lifecycle");

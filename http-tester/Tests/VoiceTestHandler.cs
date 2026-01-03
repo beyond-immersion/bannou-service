@@ -51,8 +51,8 @@ a=fmtp:111 minptime=10;useinbandfec=1
 a=sendrecv";
     }
 
-    private static Task<TestResult> TestCreateVoiceRoom(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateVoiceRoom(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var voiceClient = GetServiceClient<IVoiceClient>();
 
@@ -75,8 +75,8 @@ a=sendrecv";
             return TestResult.Successful($"Voice room created successfully: ID={response.RoomId}, Tier={response.Tier}");
         }, "Create voice room");
 
-    private static Task<TestResult> TestGetVoiceRoom(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetVoiceRoom(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var voiceClient = GetServiceClient<IVoiceClient>();
 
@@ -103,8 +103,8 @@ a=sendrecv";
             return TestResult.Successful($"Voice room retrieved successfully: ID={response.RoomId}, Tier={response.Tier}");
         }, "Get voice room");
 
-    private static Task<TestResult> TestJoinVoiceRoom(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestJoinVoiceRoom(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var voiceClient = GetServiceClient<IVoiceClient>();
 
@@ -144,8 +144,8 @@ a=sendrecv";
             return TestResult.Successful($"Successfully joined voice room: RoomID={createResponse.RoomId}, Tier={response.Tier}");
         }, "Join voice room");
 
-    private static Task<TestResult> TestLeaveVoiceRoom(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestLeaveVoiceRoom(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var voiceClient = GetServiceClient<IVoiceClient>();
 
@@ -186,8 +186,8 @@ a=sendrecv";
             return TestResult.Successful($"Successfully left voice room: RoomID={createResponse.RoomId}");
         }, "Leave voice room");
 
-    private static Task<TestResult> TestPeerHeartbeat(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPeerHeartbeat(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var voiceClient = GetServiceClient<IVoiceClient>();
 
@@ -228,8 +228,8 @@ a=sendrecv";
             return TestResult.Successful($"Peer heartbeat sent successfully: RoomID={createResponse.RoomId}");
         }, "Peer heartbeat");
 
-    private static Task<TestResult> TestDeleteVoiceRoom(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteVoiceRoom(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var voiceClient = GetServiceClient<IVoiceClient>();
 
@@ -269,7 +269,8 @@ a=sendrecv";
             return TestResult.Successful($"Voice room deleted successfully: RoomID={createResponse.RoomId}");
         }, "Delete voice room");
 
-    private static Task<TestResult> TestGetNonExistentRoom(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentRoom(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -282,8 +283,8 @@ a=sendrecv";
             404,
             "Get non-existent room");
 
-    private static Task<TestResult> TestCompleteVoiceLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteVoiceLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var voiceClient = GetServiceClient<IVoiceClient>();
 

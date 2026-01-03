@@ -87,8 +87,8 @@ public class AssetTestHandler : BaseHttpTestHandler
         return await client.CompleteUploadAsync(completeRequest);
     }
 
-    private static Task<TestResult> TestRequestUpload(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRequestUpload(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -119,8 +119,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Upload URL generated: ID={response.UploadId}, Expires={response.ExpiresAt}");
         }, "Request upload");
 
-    private static Task<TestResult> TestCompleteUploadFlow(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteUploadFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -138,8 +138,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Upload completed: AssetID={metadata.AssetId}, ContentHash={metadata.ContentHash}");
         }, "Complete upload flow");
 
-    private static Task<TestResult> TestGetAsset(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetAsset(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -169,8 +169,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Asset retrieved: ID={response.AssetId}, VersionID={response.VersionId}, Size={response.Size}");
         }, "Get asset");
 
-    private static Task<TestResult> TestListAssetVersions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListAssetVersions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -201,8 +201,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Versions.Count} version(s) for asset {response.AssetId} (Total: {response.Total})");
         }, "List asset versions");
 
-    private static Task<TestResult> TestSearchAssets(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSearchAssets(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -235,8 +235,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Search found {response.Assets.Count} asset(s) (Total: {response.Total}), including uploaded asset");
         }, "Search assets");
 
-    private static Task<TestResult> TestCreateBundle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateBundle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -269,8 +269,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Bundle created: ID={response.BundleId}, Status={response.Status}, EstimatedSize={response.EstimatedSize}");
         }, "Create bundle");
 
-    private static Task<TestResult> TestGetBundle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetBundle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -315,8 +315,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Bundle retrieved: ID={response.BundleId}, Version={response.Version}, Assets={response.AssetCount}, Size={response.Size}");
         }, "Get bundle");
 
-    private static Task<TestResult> TestRequestBundleUpload(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRequestBundleUpload(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 
@@ -346,7 +346,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Bundle upload URL generated: ID={response.UploadId}, Expires={response.ExpiresAt}");
         }, "Request bundle upload");
 
-    private static Task<TestResult> TestGetNonExistentAsset(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentAsset(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -359,7 +360,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent asset");
 
-    private static Task<TestResult> TestGetNonExistentBundle(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentBundle(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -373,8 +375,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent bundle");
 
-    private static Task<TestResult> TestCompleteAssetLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteAssetLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var assetClient = GetServiceClient<IAssetClient>();
 

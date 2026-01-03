@@ -41,8 +41,8 @@ public class ArchiveTestHandler : BaseHttpTestHandler
 
     #region Setup and Cleanup
 
-    private static Task<TestResult> TestCreateDocumentForArchive(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateDocumentForArchive(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -65,8 +65,8 @@ public class ArchiveTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Created 3 test documents for archive testing");
         }, "Create test documents");
 
-    private static Task<TestResult> TestCleanupTestDocuments(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCleanupTestDocuments(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -94,8 +94,8 @@ public class ArchiveTestHandler : BaseHttpTestHandler
 
     #region Archive Tests
 
-    private static Task<TestResult> TestCreateArchive(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateArchive(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -119,8 +119,8 @@ public class ArchiveTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created archive: Id={response.ArchiveId}, Docs={response.DocumentCount}, Size={response.SizeBytes} bytes");
         }, "Create archive");
 
-    private static Task<TestResult> TestListArchives(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListArchives(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -144,7 +144,8 @@ public class ArchiveTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Found {response.Total} archive(s) in namespace");
         }, "List archives");
 
-    private static Task<TestResult> TestCreateArchive_EmptyNamespace_400(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestCreateArchive_EmptyNamespace_400(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -159,8 +160,8 @@ public class ArchiveTestHandler : BaseHttpTestHandler
             400,
             "Empty namespace returns 400");
 
-    private static Task<TestResult> TestDeleteArchive(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteArchive(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -178,7 +179,8 @@ public class ArchiveTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Deleted archive {_createdArchiveId}");
         }, "Delete archive");
 
-    private static Task<TestResult> TestDeleteArchive_NotFound_404(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestDeleteArchive_NotFound_404(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {

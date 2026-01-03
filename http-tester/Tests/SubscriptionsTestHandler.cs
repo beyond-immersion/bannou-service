@@ -59,8 +59,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
         return await accountsClient.CreateAccountAsync(createRequest);
     }
 
-    private static Task<TestResult> TestCreateSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();
@@ -115,8 +115,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Subscription created successfully: ID={response.SubscriptionId}, Service={response.StubName}");
         }, "Create subscription");
 
-    private static Task<TestResult> TestGetSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();
@@ -161,8 +161,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Subscription retrieved successfully: ID={response.SubscriptionId}");
         }, "Get subscription");
 
-    private static Task<TestResult> TestGetAccountSubscriptions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetAccountSubscriptions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();
@@ -207,8 +207,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Account subscriptions retrieved: {response.Subscriptions.Count} subscription(s)");
         }, "Get account subscriptions");
 
-    private static Task<TestResult> TestGetCurrentSubscriptions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetCurrentSubscriptions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();
@@ -260,8 +260,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Current subscriptions retrieved: {response.Authorizations.Count} authorization(s)");
         }, "Get current subscriptions");
 
-    private static Task<TestResult> TestUpdateSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();
@@ -302,8 +302,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Subscription updated successfully: ID={response.SubscriptionId}");
         }, "Update subscription");
 
-    private static Task<TestResult> TestCancelSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCancelSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();
@@ -348,8 +348,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Subscription cancelled successfully: ID={response.SubscriptionId}");
         }, "Cancel subscription");
 
-    private static Task<TestResult> TestRenewSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRenewSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();
@@ -397,8 +397,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Subscription renewed successfully: ID={response.SubscriptionId}");
         }, "Renew subscription");
 
-    private static Task<TestResult> TestCreateSubscriptionServiceNotFound(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateSubscriptionServiceNotFound(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var accountsClient = GetServiceClient<IAccountsClient>();
@@ -432,8 +432,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             }
         }, "Create subscription for non-existent service");
 
-    private static Task<TestResult> TestCreateSubscriptionDuplicate(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateSubscriptionDuplicate(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
             var servicedataClient = GetServiceClient<IServicedataClient>();

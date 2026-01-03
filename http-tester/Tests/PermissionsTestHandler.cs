@@ -72,8 +72,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// Test direct service permission registration via API.
     /// This establishes a baseline that the Permissions service works.
     /// </summary>
-    private static Task<TestResult> TestRegisterServicePermissions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRegisterServicePermissions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = Guid.NewGuid().ToString();
@@ -106,8 +106,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test registering permissions for multiple services.
     /// </summary>
-    private static Task<TestResult> TestRegisterMultipleServicesPermissions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRegisterMultipleServicesPermissions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"multi-svc-{Guid.NewGuid():N}";
@@ -156,8 +156,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test registering service with multiple states (in_lobby, default, in_game).
     /// </summary>
-    private static Task<TestResult> TestRegisterServiceWithMultipleStates(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRegisterServiceWithMultipleStates(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = Guid.NewGuid().ToString();
@@ -195,8 +195,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test registering service with multiple roles (guest, user, admin).
     /// </summary>
-    private static Task<TestResult> TestRegisterServiceWithMultipleRoles(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRegisterServiceWithMultipleRoles(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = Guid.NewGuid().ToString();
@@ -228,8 +228,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test getting capabilities for an existing session.
     /// </summary>
-    private static Task<TestResult> TestGetCapabilitiesExistingSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetCapabilitiesExistingSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = Guid.NewGuid().ToString();
@@ -286,8 +286,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test getting capabilities for a non-existent session returns NotFound.
     /// </summary>
-    private static Task<TestResult> TestGetCapabilitiesNonExistentSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetCapabilitiesNonExistentSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var nonExistentSessionId = Guid.NewGuid();
@@ -316,8 +316,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test getting capabilities filtered by specific service IDs.
     /// </summary>
-    private static Task<TestResult> TestGetCapabilitiesFilteredByService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetCapabilitiesFilteredByService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"filter-test-{Guid.NewGuid():N}";
@@ -391,8 +391,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test API access validation returns allowed=true when access is permitted.
     /// </summary>
-    private static Task<TestResult> TestValidateApiAccessAllowed(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestValidateApiAccessAllowed(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"validate-allowed-{Guid.NewGuid():N}";
@@ -445,8 +445,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test API access validation returns allowed=false when access is denied.
     /// </summary>
-    private static Task<TestResult> TestValidateApiAccessDenied(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestValidateApiAccessDenied(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"validate-denied-{Guid.NewGuid():N}";
@@ -500,8 +500,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test API access validation for unknown service.
     /// </summary>
-    private static Task<TestResult> TestValidateApiAccessUnknownService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestValidateApiAccessUnknownService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testSessionId = Guid.NewGuid();
@@ -532,8 +532,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test updating session state for a service.
     /// </summary>
-    private static Task<TestResult> TestUpdateSessionState(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateSessionState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testSessionId = Guid.NewGuid();
@@ -559,8 +559,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that session state transitions trigger permission recompilation.
     /// </summary>
-    private static Task<TestResult> TestUpdateSessionStateTransition(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateSessionStateTransition(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"transition-{Guid.NewGuid():N}";
@@ -645,8 +645,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test updating session role.
     /// </summary>
-    private static Task<TestResult> TestUpdateSessionRole(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateSessionRole(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testSessionId = Guid.NewGuid();
@@ -670,8 +670,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that role update affects permissions across all services.
     /// </summary>
-    private static Task<TestResult> TestUpdateSessionRoleAffectsAllServices(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateSessionRoleAffectsAllServices(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"role-all-{Guid.NewGuid():N}";
@@ -775,8 +775,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test clearing session state unconditionally (no states filter).
     /// </summary>
-    private static Task<TestResult> TestClearSessionStateUnconditional(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestClearSessionStateUnconditional(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-state-{Guid.NewGuid():N}";
@@ -855,8 +855,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test clearing session state when the filter matches the current state.
     /// </summary>
-    private static Task<TestResult> TestClearSessionStateWithMatchingFilter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestClearSessionStateWithMatchingFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-match-{Guid.NewGuid():N}";
@@ -911,8 +911,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test clearing session state when the filter does not match the current state.
     /// </summary>
-    private static Task<TestResult> TestClearSessionStateWithNonMatchingFilter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestClearSessionStateWithNonMatchingFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-nomatch-{Guid.NewGuid():N}";
@@ -972,8 +972,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test clearing state for a service that has no state set.
     /// </summary>
-    private static Task<TestResult> TestClearSessionStateNonExistent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestClearSessionStateNonExistent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-nostate-{Guid.NewGuid():N}";
@@ -1011,8 +1011,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// Test clearing all session states by omitting ServiceId.
     /// When ServiceId is null, all states for the session should be cleared.
     /// </summary>
-    private static Task<TestResult> TestClearAllSessionStates(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestClearAllSessionStates(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testSessionId = Guid.NewGuid();
@@ -1125,8 +1125,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test getting complete session information.
     /// </summary>
-    private static Task<TestResult> TestGetSessionInfo(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetSessionInfo(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-info-{Guid.NewGuid():N}";
@@ -1187,8 +1187,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test getting session info for non-existent session returns NotFound.
     /// </summary>
-    private static Task<TestResult> TestGetSessionInfoNonExistent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetSessionInfoNonExistent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var nonExistentSessionId = Guid.NewGuid();
@@ -1217,8 +1217,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that admin role receives admin-level permissions.
     /// </summary>
-    private static Task<TestResult> TestAdminRoleCapabilities(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestAdminRoleCapabilities(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"admin-cap-{Guid.NewGuid():N}";
@@ -1274,8 +1274,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that user role receives only user-level permissions.
     /// </summary>
-    private static Task<TestResult> TestUserRoleCapabilities(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUserRoleCapabilities(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"user-cap-{Guid.NewGuid():N}";
@@ -1338,8 +1338,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test role escalation from user to admin increases permissions.
     /// </summary>
-    private static Task<TestResult> TestRoleEscalation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRoleEscalation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"escalation-{Guid.NewGuid():N}";
@@ -1422,8 +1422,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that setting game-session:in_game state grants additional permissions.
     /// </summary>
-    private static Task<TestResult> TestStateBasedPermissionEscalation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestStateBasedPermissionEscalation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"state-esc-{Guid.NewGuid():N}";
@@ -1508,8 +1508,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test the clear difference between default and game-session:in_game state permissions.
     /// </summary>
-    private static Task<TestResult> TestDefaultVsInGameState(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDefaultVsInGameState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"state-diff-{Guid.NewGuid():N}";
@@ -1585,8 +1585,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test pub/sub event subscription for service registration.
     /// </summary>
-    private static Task<TestResult> TestEventSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestEventSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             // Get IMessageBus from the service provider
             var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
@@ -1711,8 +1711,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test pub/sub event subscription for session state changes.
     /// </summary>
-    private static Task<TestResult> TestSessionStateChangeEvent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionStateChangeEvent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             // Get IMessageBus from the service provider
             var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
@@ -1851,8 +1851,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that session.connected event adds session to activeConnections.
     /// </summary>
-    private static Task<TestResult> TestSessionConnectedEvent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionConnectedEvent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
@@ -1937,8 +1937,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that session.connected event properly stores roles from JWT for capability compilation.
     /// </summary>
-    private static Task<TestResult> TestSessionConnectedEventWithRoles(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionConnectedEventWithRoles(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
@@ -2026,8 +2026,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that session.disconnected event removes session from activeConnections.
     /// </summary>
-    private static Task<TestResult> TestSessionDisconnectedEvent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionDisconnectedEvent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
@@ -2106,8 +2106,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that session.disconnected with reconnectable=true preserves session in activeSessions.
     /// </summary>
-    private static Task<TestResult> TestSessionDisconnectedReconnectable(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionDisconnectedReconnectable(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)

@@ -28,23 +28,27 @@ public class MockTestClient : ITestClient
     public bool IsAuthenticated => false;
     public string TransportType => "Mock";
 
-    public Task<TestResponse<T>> PostAsync<T>(string endpoint, object? requestBody = null) where T : class
+    public async Task<TestResponse<T>> PostAsync<T>(string endpoint, object? requestBody = null) where T : class
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual HTTP requests");
     }
 
-    public Task<TestResponse<T>> GetAsync<T>(string endpoint) where T : class
+    public async Task<TestResponse<T>> GetAsync<T>(string endpoint) where T : class
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual HTTP requests");
     }
 
-    public Task<bool> RegisterAsync(string username, string password)
+    public async Task<bool> RegisterAsync(string username, string password)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual authentication");
     }
 
-    public Task<bool> LoginAsync(string username, string password)
+    public async Task<bool> LoginAsync(string username, string password)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual authentication");
     }
 

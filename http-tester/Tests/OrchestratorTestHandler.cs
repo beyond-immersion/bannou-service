@@ -66,8 +66,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the infrastructure health check endpoint.
     /// Validates connectivity to Redis and RabbitMQ.
     /// </summary>
-    private static Task<TestResult> TestInfrastructureHealth(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInfrastructureHealth(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
@@ -95,8 +95,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the services health report endpoint.
     /// Returns health status of all services via Redis heartbeat monitoring.
     /// </summary>
-    private static Task<TestResult> TestServicesHealth(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestServicesHealth(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetServicesHealthAsync(new ServiceHealthRequest());
@@ -112,8 +112,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the backend detection endpoint.
     /// Returns available container orchestration backends (Compose, Docker, Kubernetes, etc.).
     /// </summary>
-    private static Task<TestResult> TestGetBackends(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetBackends(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
@@ -135,8 +135,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the environment status endpoint.
     /// Returns current deployment status including containers, services, and topology.
     /// </summary>
-    private static Task<TestResult> TestGetStatus(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetStatus(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
@@ -154,8 +154,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the deployment presets endpoint.
     /// Returns available deployment presets for different use cases.
     /// </summary>
-    private static Task<TestResult> TestGetPresets(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetPresets(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
@@ -171,8 +171,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that infrastructure health returns component details.
     /// </summary>
-    private static Task<TestResult> TestInfrastructureHealthComponentDetails(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInfrastructureHealthComponentDetails(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
@@ -209,8 +209,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that backends returns a recommended backend.
     /// </summary>
-    private static Task<TestResult> TestBackendsReturnsRecommendation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestBackendsReturnsRecommendation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
@@ -243,8 +243,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that environment status returns topology information.
     /// </summary>
-    private static Task<TestResult> TestStatusReturnsTopology(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestStatusReturnsTopology(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
@@ -270,8 +270,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that presets have required fields.
     /// </summary>
-    private static Task<TestResult> TestPresetsHaveRequiredFields(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPresetsHaveRequiredFields(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
@@ -298,8 +298,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the should-restart service recommendation endpoint.
     /// Uses the 'bannou' service which MUST exist since we're testing against it.
     /// </summary>
-    private static Task<TestResult> TestShouldRestartService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestShouldRestartService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
@@ -350,8 +350,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Note: Recommending restart for unknown services is valid behavior - if the service
     /// isn't known/running, restarting (starting) it is a reasonable recommendation.
     /// </summary>
-    private static Task<TestResult> TestShouldRestartServiceUnknown(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestShouldRestartServiceUnknown(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
@@ -384,8 +384,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the container status endpoint.
     /// The bannou container MUST exist since we're running tests against it.
     /// </summary>
-    private static Task<TestResult> TestGetContainerStatus(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetContainerStatus(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
@@ -429,8 +429,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test container status for unknown container.
     /// </summary>
-    private static Task<TestResult> TestGetContainerStatusUnknown(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetContainerStatusUnknown(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var unknownContainer = $"unknown-container-{Guid.NewGuid():N}";
@@ -457,8 +457,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test the service routing endpoint.
     /// Returns service-to-app-id mappings for Bannou service invocation.
     /// </summary>
-    private static Task<TestResult> TestGetServiceRouting(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetServiceRouting(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
@@ -483,8 +483,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Test that service routing returns default app-id correctly.
     /// In development mode, all services should route to "bannou".
     /// </summary>
-    private static Task<TestResult> TestServiceRoutingDefaults(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestServiceRoutingDefaults(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
@@ -521,8 +521,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test the configuration version endpoint.
     /// </summary>
-    private static Task<TestResult> TestGetConfigVersion(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetConfigVersion(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetConfigVersionAsync(new GetConfigVersionRequest());
@@ -540,8 +540,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test configuration rollback when no previous config exists.
     /// </summary>
-    private static Task<TestResult> TestRollbackConfigurationNoHistory(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRollbackConfigurationNoHistory(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
@@ -588,8 +588,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test the logs retrieval endpoint.
     /// </summary>
-    private static Task<TestResult> TestGetLogs(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetLogs(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
@@ -621,8 +621,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test logs retrieval with tail parameter.
     /// </summary>
-    private static Task<TestResult> TestGetLogsWithTail(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetLogsWithTail(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
@@ -661,8 +661,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// The orchestrator should NOT silently fall back - it should fail or explicitly report the fallback.
     /// Uses Portainer which is typically not configured in test environments.
     /// </summary>
-    private static Task<TestResult> TestDeployWithInvalidBackend(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeployWithInvalidBackend(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
@@ -737,8 +737,8 @@ public class OrchestratorTestHandler : BaseHttpTestHandler
     /// Note: Clean operation may return 400 with success=false if nothing to clean,
     /// or if the operation isn't supported in the current configuration.
     /// </summary>
-    private static Task<TestResult> TestCleanDryRun(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCleanDryRun(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 

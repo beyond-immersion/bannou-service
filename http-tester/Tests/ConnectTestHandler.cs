@@ -41,8 +41,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// Test the client capabilities endpoint.
     /// Returns GUID -> API mappings for the authenticated client's session.
     /// </summary>
-    private static Task<TestResult> TestClientCapabilities(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestClientCapabilities(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
 
@@ -77,8 +77,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that client capabilities response has valid structure.
     /// </summary>
-    private static Task<TestResult> TestClientCapabilitiesStructure(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestClientCapabilitiesStructure(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
 
@@ -128,8 +128,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
             }
         }, "Client capabilities structure");
 
-    private static Task<TestResult> TestInternalProxy(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxy(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"test-session-{DateTime.Now.Ticks}";
@@ -167,8 +167,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// Note: Connect service validates permissions FIRST before checking service existence,
     /// so 403 is correct behavior (don't leak info about what services exist).
     /// </summary>
-    private static Task<TestResult> TestInternalProxyToInvalidService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxyToInvalidService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-invalid-{Guid.NewGuid():N}";
@@ -203,8 +203,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// Test proxy without session ID fails appropriately.
     /// Note: 403 is valid - permission denied for empty/invalid session.
     /// </summary>
-    private static Task<TestResult> TestInternalProxyWithoutSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxyWithoutSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
 
@@ -238,8 +238,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test proxy handles different HTTP methods (GET, POST, PUT, DELETE).
     /// </summary>
-    private static Task<TestResult> TestInternalProxyWithDifferentMethods(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxyWithDifferentMethods(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-methods-{Guid.NewGuid():N}";
@@ -302,8 +302,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test proxy correctly forwards request body.
     /// </summary>
-    private static Task<TestResult> TestInternalProxyWithBody(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxyWithBody(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-body-{Guid.NewGuid():N}";
@@ -338,8 +338,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test proxy correctly forwards custom headers.
     /// </summary>
-    private static Task<TestResult> TestInternalProxyWithHeaders(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxyWithHeaders(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-headers-{Guid.NewGuid():N}";
@@ -374,8 +374,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// Test proxy handles empty endpoint.
     /// Note: 403 is valid - permission check happens before endpoint validation.
     /// </summary>
-    private static Task<TestResult> TestInternalProxyEmptyEndpoint(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxyEmptyEndpoint(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-empty-{Guid.NewGuid():N}";
@@ -410,8 +410,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test proxy to accounts service specifically.
     /// </summary>
-    private static Task<TestResult> TestInternalProxyToAccountsService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInternalProxyToAccountsService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-accounts-{Guid.NewGuid():N}";
@@ -457,8 +457,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// Test token validation endpoint that Connect service uses before WebSocket upgrade.
     /// This simulates the exact flow that happens in WebSocket connection establishment.
     /// </summary>
-    private static Task<TestResult> TestTokenValidationForWebSocket(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTokenValidationForWebSocket(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_token_{DateTime.Now.Ticks}";
@@ -500,8 +500,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Test that token validation returns all session data needed by Connect service.
     /// </summary>
-    private static Task<TestResult> TestTokenValidationReturnsSessionData(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTokenValidationReturnsSessionData(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_data_{DateTime.Now.Ticks}";
@@ -551,8 +551,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// Test sequential token validations to detect any state corruption over multiple calls.
     /// This simulates what happens when Connect service validates tokens repeatedly.
     /// </summary>
-    private static Task<TestResult> TestSequentialTokenValidations(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSequentialTokenValidations(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_seq_{DateTime.Now.Ticks}";
@@ -608,8 +608,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
     /// Test token validation after performing other API operations.
     /// This simulates the scenario where auth tests run and then WebSocket tests run.
     /// </summary>
-    private static Task<TestResult> TestTokenValidationAfterOtherOperations(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTokenValidationAfterOtherOperations(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_postops_{DateTime.Now.Ticks}";

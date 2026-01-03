@@ -44,8 +44,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
         new ServiceTest(TestTapWithDirectExchange, "TapDirect", "Messaging", "Test tap with direct exchange type"),
     ];
 
-    private static Task<TestResult> TestListTopics(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListTopics(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messagingClient = GetServiceClient<IMessagingClient>();
 
@@ -57,8 +57,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"ListTopics returned {response.Topics?.Count ?? 0} topic(s)");
         }, "List topics");
 
-    private static Task<TestResult> TestListTopicsWithFilter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListTopicsWithFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messagingClient = GetServiceClient<IMessagingClient>();
 
@@ -71,8 +71,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"ListTopics with filter returned {response.Topics?.Count ?? 0} topic(s)");
         }, "List topics with filter");
 
-    private static Task<TestResult> TestPublishEvent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPublishEvent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messagingClient = GetServiceClient<IMessagingClient>();
 
@@ -93,8 +93,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Published event with message ID: {response.MessageId}");
         }, "Publish event");
 
-    private static Task<TestResult> TestPublishEventWithOptions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPublishEventWithOptions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messagingClient = GetServiceClient<IMessagingClient>();
 
@@ -120,8 +120,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Published event with options, message ID: {response.MessageId}");
         }, "Publish event with options");
 
-    private static Task<TestResult> TestPublishEventWithCorrelationId(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPublishEventWithCorrelationId(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messagingClient = GetServiceClient<IMessagingClient>();
 
@@ -147,8 +147,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Published event with correlation ID: {correlationId}, message ID: {response.MessageId}");
         }, "Publish event with correlation ID");
 
-    private static Task<TestResult> TestCreateAndRemoveSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateAndRemoveSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messagingClient = GetServiceClient<IMessagingClient>();
 
@@ -186,8 +186,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Subscription lifecycle complete: created and removed subscription {subscriptionId}");
         }, "Subscription lifecycle");
 
-    private static Task<TestResult> TestRemoveNonExistentSubscription(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRemoveNonExistentSubscription(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messagingClient = GetServiceClient<IMessagingClient>();
 
@@ -213,8 +213,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
     // Message Tap Integration Tests
     // =========================================================================
 
-    private static Task<TestResult> TestCreateTap(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateTap(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageTap = GetServiceClient<IMessageTap>();
             var testId = Guid.NewGuid().ToString("N")[..8];
@@ -249,8 +249,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created tap {tapHandle.TapId} from {tapHandle.SourceTopic} to {destination.Exchange}");
         }, "Create message tap");
 
-    private static Task<TestResult> TestTapForwardsMessages(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTapForwardsMessages(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageTap = GetServiceClient<IMessageTap>();
             var messageBus = GetServiceClient<IMessageBus>();
@@ -322,8 +322,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Tap {tapHandle.TapId} successfully forwarded message from {sourceExchange} to {destinationTopic}");
         }, "Tap forwards messages");
 
-    private static Task<TestResult> TestMultipleTapsToSameDestination(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestMultipleTapsToSameDestination(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageTap = GetServiceClient<IMessageTap>();
             var messageBus = GetServiceClient<IMessageBus>();
@@ -395,8 +395,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Both character taps ({tap1.TapId}, {tap2.TapId}) forwarded to session {destinationTopic}");
         }, "Multiple taps to same destination");
 
-    private static Task<TestResult> TestDisposeTapStopsForwarding(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDisposeTapStopsForwarding(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageTap = GetServiceClient<IMessageTap>();
             var messageBus = GetServiceClient<IMessageBus>();
@@ -477,8 +477,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Tap {tapId} stopped forwarding after dispose (received {countBeforeDispose} before, {countAfterDispose} after)");
         }, "Dispose tap stops forwarding");
 
-    private static Task<TestResult> TestTappedEnvelopeMetadata(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTappedEnvelopeMetadata(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageTap = GetServiceClient<IMessageTap>();
             var messageBus = GetServiceClient<IMessageBus>();
@@ -564,8 +564,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"TappedMessageEnvelope metadata verified: TapId={receivedEnvelope.TapId}, SourceExchange={sourceExchange}");
         }, "Tapped envelope metadata");
 
-    private static Task<TestResult> TestTapWithDirectExchange(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTapWithDirectExchange(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var messageTap = GetServiceClient<IMessageTap>();
             var messageBus = GetServiceClient<IMessageBus>();

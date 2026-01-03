@@ -25,8 +25,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
         new ServiceTest(TestListServicesActiveOnly, "ListServicesActiveOnly", "ServiceData", "Test active-only filter on list"),
     ];
 
-    private static Task<TestResult> TestCreateService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
             var testStubName = GenerateTestSlug("test-service");
@@ -53,8 +53,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Service created successfully: ID={response.ServiceId}, StubName={response.StubName}");
         }, "Create service");
 
-    private static Task<TestResult> TestGetServiceById(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetServiceById(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
             var testStubName = GenerateTestSlug("get-by-id");
@@ -89,8 +89,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Service retrieved by ID successfully: ID={response.ServiceId}");
         }, "Get service by ID");
 
-    private static Task<TestResult> TestGetServiceByStubName(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetServiceByStubName(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
             var testStubName = GenerateTestSlug("get-by-stub");
@@ -122,8 +122,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Service retrieved by stub name successfully: StubName={response.StubName}");
         }, "Get service by stub name");
 
-    private static Task<TestResult> TestListServices(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListServices(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
 
@@ -151,8 +151,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Service listing successful: Found {response.TotalCount} services");
         }, "List services");
 
-    private static Task<TestResult> TestUpdateService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
             var testStubName = GenerateTestSlug("update-test");
@@ -199,8 +199,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Service updated successfully: ID={response.ServiceId}, NewDisplayName={response.DisplayName}");
         }, "Update service");
 
-    private static Task<TestResult> TestDeleteService(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteService(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
             var testStubName = GenerateTestSlug("delete-test");
@@ -234,8 +234,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             }
         }, "Delete service");
 
-    private static Task<TestResult> TestCreateServiceDuplicateStubName(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateServiceDuplicateStubName(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
             var testStubName = GenerateTestSlug("duplicate-test");
@@ -273,8 +273,8 @@ public class ServicedataTestHandler : BaseHttpTestHandler
             }
         }, "Duplicate stub name conflict");
 
-    private static Task<TestResult> TestListServicesActiveOnly(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListServicesActiveOnly(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var servicedataClient = GetServiceClient<IServicedataClient>();
             var testPrefix = GenerateTestSlug("active-filter");

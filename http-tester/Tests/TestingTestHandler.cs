@@ -40,8 +40,8 @@ public class TestingTestHandler : BaseHttpTestHandler
         new ServiceTest(TestPathWithDifferentPrefixes, "PathPrefixes", "Testing", "Test paths with various prefixes"),
     ];
 
-    private static Task<TestResult> TestHealthEndpoint(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestHealthEndpoint(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var response = await _httpClient.GetAsync($"{_baseUrl}/testing/health");
 
@@ -52,8 +52,8 @@ public class TestingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Health endpoint OK - {content}");
         }, "Health endpoint");
 
-    private static Task<TestResult> TestDebugPathEndpoint(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDebugPathEndpoint(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
@@ -70,8 +70,8 @@ public class TestingTestHandler : BaseHttpTestHandler
                 $"Debug path endpoint OK - Path: {debugInfo.Path}, ControllerRoute: {debugInfo.ControllerRoute}");
         }, "Debug path endpoint");
 
-    private static Task<TestResult> TestDebugPathReceivedPath(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDebugPathReceivedPath(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
@@ -105,8 +105,8 @@ public class TestingTestHandler : BaseHttpTestHandler
             }
         }, "Path received check");
 
-    private static Task<TestResult> TestDebugPathWithCatchAll(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDebugPathWithCatchAll(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             // Test with a nested path to see what the catch-all captures
             var testPath = "some/nested/path/segments";
@@ -138,8 +138,8 @@ public class TestingTestHandler : BaseHttpTestHandler
             }
         }, "Path catch-all");
 
-    private static Task<TestResult> TestDebugPathControllerRoute(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDebugPathControllerRoute(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
@@ -164,8 +164,8 @@ public class TestingTestHandler : BaseHttpTestHandler
             }
         }, "Controller route check");
 
-    private static Task<TestResult> TestDebugPathMeshHeaders(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDebugPathMeshHeaders(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
@@ -196,8 +196,8 @@ public class TestingTestHandler : BaseHttpTestHandler
             }
         }, "Mesh headers check");
 
-    private static Task<TestResult> TestDirectVsMeshRouting(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDirectVsMeshRouting(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var directResponse = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
@@ -213,8 +213,8 @@ public class TestingTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Direct routing works: path={directInfo.Path}");
         }, "Direct routing");
 
-    private static Task<TestResult> TestPathWithDifferentPrefixes(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPathWithDifferentPrefixes(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             // Test direct path (should work) and legacy prefixed path (should 404)
             var testPaths = new[]

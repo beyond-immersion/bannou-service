@@ -108,8 +108,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
         new ServiceTest(TestGoapPlanValidation, "GoapPlanValidation", "Behavior", "Test GOAP plan validation against world state"),
     ];
 
-    private static Task<TestResult> TestCompileValidAbml(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompileValidAbml(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -143,8 +143,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
         }, "Compile valid ABML");
 
-    private static Task<TestResult> TestCompileInvalidAbml(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompileInvalidAbml(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -179,8 +179,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             }
         }, "Compile invalid ABML");
 
-    private static Task<TestResult> TestCompileEmptyAbml(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompileEmptyAbml(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -208,8 +208,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             }
         }, "Compile empty ABML");
 
-    private static Task<TestResult> TestValidateValidAbml(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestValidateValidAbml(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -232,8 +232,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Validation passed, schema version: {response.SchemaVersion}");
         }, "Validate valid ABML");
 
-    private static Task<TestResult> TestValidateInvalidAbml(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestValidateInvalidAbml(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -256,8 +256,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"Correctly detected {response.ValidationErrors.Count} error(s): {string.Join(", ", errorMessages)}");
         }, "Validate invalid ABML");
 
-    private static Task<TestResult> TestCompileWithBundleId(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompileWithBundleId(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -300,8 +300,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"Compiled with bundle: ID={response.BehaviorId}, Bundle={response.BundleId}, Asset={response.AssetId}");
         }, "Compile with bundle ID");
 
-    private static Task<TestResult> TestCompileWithNameAndCategory(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompileWithNameAndCategory(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -334,8 +334,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"Compiled with name/category: Name={response.BehaviorName}, ID={response.BehaviorId}");
         }, "Compile with name and category");
 
-    private static Task<TestResult> TestGetNonExistentBehavior(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetNonExistentBehavior(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -355,8 +355,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             }
         }, "Get non-existent behavior");
 
-    private static Task<TestResult> TestGoapPlanGeneration(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGoapPlanGeneration(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -432,8 +432,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"time={planResponse.PlanningTimeMs}ms");
         }, "GOAP plan generation");
 
-    private static Task<TestResult> TestGoapPlanNonExistentBehavior(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGoapPlanNonExistentBehavior(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 
@@ -469,8 +469,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             }
         }, "GOAP plan non-existent behavior");
 
-    private static Task<TestResult> TestGoapPlanValidation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGoapPlanValidation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var behaviorClient = GetServiceClient<IBehaviorClient>();
 

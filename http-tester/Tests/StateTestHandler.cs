@@ -47,8 +47,8 @@ public class StateTestHandler : BaseHttpTestHandler
         new ServiceTest(TestQueryStateWithPagination, "QueryStatePagination", "State", "Test querying state with pagination"),
     ];
 
-    private static Task<TestResult> TestListStores(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListStores(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -61,8 +61,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"ListStores returned {response.Stores?.Count ?? 0} store(s): {string.Join(", ", storeNames)}");
         }, "List stores");
 
-    private static Task<TestResult> TestListStoresWithRedisFilter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListStoresWithRedisFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -75,8 +75,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"ListStores (Redis filter) returned {response.Stores?.Count ?? 0} store(s)");
         }, "List stores with Redis filter");
 
-    private static Task<TestResult> TestListStoresWithMySqlFilter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListStoresWithMySqlFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -89,8 +89,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"ListStores (MySQL filter) returned {response.Stores?.Count ?? 0} store(s)");
         }, "List stores with MySQL filter");
 
-    private static Task<TestResult> TestGetStateNonExistentStore(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetStateNonExistentStore(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -111,8 +111,8 @@ public class StateTestHandler : BaseHttpTestHandler
             }
         }, "Get state from non-existent store");
 
-    private static Task<TestResult> TestGetStateNonExistentKey(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetStateNonExistentKey(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -133,8 +133,8 @@ public class StateTestHandler : BaseHttpTestHandler
             }
         }, "Get non-existent key");
 
-    private static Task<TestResult> TestSaveAndGetState(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSaveAndGetState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -178,8 +178,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Save and Get state successful for key: {testKey}, etag: {getResponse.Etag}");
         }, "Save and get state");
 
-    private static Task<TestResult> TestSaveStateWithTTL(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSaveStateWithTTL(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -212,8 +212,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"SaveState with TTL successful for key: {testKey}");
         }, "Save state with TTL");
 
-    private static Task<TestResult> TestDeleteState(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -247,8 +247,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"DeleteState successful for key: {testKey}");
         }, "Delete state");
 
-    private static Task<TestResult> TestDeleteNonExistentKey(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteNonExistentKey(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -269,8 +269,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful("DeleteState correctly returned deleted=false for non-existent key");
         }, "Delete non-existent key");
 
-    private static Task<TestResult> TestBulkGetState(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestBulkGetState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -317,8 +317,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"BulkGetState returned {foundCount} found, {notFoundCount} not found");
         }, "Bulk get state");
 
-    private static Task<TestResult> TestETagConcurrency(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestETagConcurrency(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -388,8 +388,8 @@ public class StateTestHandler : BaseHttpTestHandler
             }
         }, "ETag concurrency");
 
-    private static Task<TestResult> TestQueryStateNonExistentStore(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestQueryStateNonExistentStore(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -411,8 +411,8 @@ public class StateTestHandler : BaseHttpTestHandler
             }
         }, "Query non-existent store");
 
-    private static Task<TestResult> TestQueryStateMySqlBackend(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestQueryStateMySqlBackend(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -455,8 +455,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"QueryState MySQL returned {queryResponse.Results?.Count ?? 0} results, total: {queryResponse.TotalCount}");
         }, "Query MySQL backend");
 
-    private static Task<TestResult> TestQueryStateRedisWithSearch(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestQueryStateRedisWithSearch(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -477,8 +477,8 @@ public class StateTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"QueryState Redis search on '{REDIS_SEARCH_STORE}' returned {queryResponse.Results?.Count ?? 0} results");
         }, "Query Redis with search");
 
-    private static Task<TestResult> TestQueryStateRedisWithoutSearch(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestQueryStateRedisWithoutSearch(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
@@ -502,8 +502,8 @@ public class StateTestHandler : BaseHttpTestHandler
             }
         }, "Query Redis without search");
 
-    private static Task<TestResult> TestQueryStateWithPagination(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestQueryStateWithPagination(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var stateClient = GetServiceClient<IStateClient>();
 
