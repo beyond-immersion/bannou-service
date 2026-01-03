@@ -185,6 +185,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor", "lib-actor\lib-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor.tests", "lib-actor.tests\lib-actor.tests.csproj", "{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test-utilities", "test-utilities\test-utilities.csproj", "{D303EBC6-3680-47B2-9130-2CD8DFF42573}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1098,6 +1100,24 @@ Global
 		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|x64.Build.0 = Release|Any CPU
 		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|x86.ActiveCfg = Release|Any CPU
 		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|x86.Build.0 = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x64.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x86.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x64.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x64.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x86.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x86.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x64.ActiveCfg = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x64.Build.0 = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x86.ActiveCfg = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

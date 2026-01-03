@@ -123,16 +123,6 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act & Assert
-        var service = CreateAuthService();
-
-        Assert.NotNull(service);
-    }
-
-
-    [Fact]
     public void AuthServiceConfiguration_ShouldBindFromEnvironmentVariables()
     {
         // Arrange
@@ -538,205 +528,19 @@ public class AuthServiceTests
 
     #endregion
 
-    #region Configuration Validation Tests
+    #region Constructor Validation Tests
 
+    /// <summary>
+    /// Comprehensive constructor validation that catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults)
+    /// - Missing null checks
+    /// - Wrong parameter names in ArgumentNullException
+    /// This single test replaces 11+ individual constructor null-check tests.
+    /// </summary>
     [Fact]
-    public void Constructor_WithNullAccountsClient_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            null!,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSubscriptionsClient_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            null!,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            null!,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            null!,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            null!,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpClientFactory_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            null!,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullTokenService_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            null!,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSessionService_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            null!,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullOAuthService_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            null!,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            null!));
-    }
+    public void AuthService_ConstructorIsValid() =>
+        TestUtilities.ServiceConstructorValidator.ValidateServiceConstructor<AuthService>();
 
     [Fact]
     public void AuthServiceConfiguration_DefaultValues_ShouldHaveReasonableDefaults()

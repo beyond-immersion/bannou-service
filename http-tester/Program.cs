@@ -656,6 +656,7 @@ public class Program
         var testHandlers = new List<IServiceTestHandler>
         {
             new AccountTestHandler(),
+            new ActorTestHandler(),
             new AssetTestHandler(),
             new AuthTestHandler(),
             new CharacterTestHandler(),

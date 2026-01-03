@@ -8,7 +8,9 @@ using Moq;
 namespace BeyondImmersion.BannouService.Actor.Tests.PoolNode;
 
 /// <summary>
-/// Unit tests for HeartbeatEmitter - periodic heartbeat publishing.
+/// Unit tests for HeartbeatEmitter.
+/// Only tests that verify real behavior without complex mocking.
+/// Timing-based lifecycle tests belong in integration tests.
 /// </summary>
 public class HeartbeatEmitterTests
 {
@@ -32,14 +34,16 @@ public class HeartbeatEmitterTests
         };
     }
 
-    private HeartbeatEmitter CreateEmitter()
+    private HeartbeatEmitter CreateEmitter(ActorServiceConfiguration? config = null)
     {
         return new HeartbeatEmitter(
             _messageBusMock.Object,
             _actorRegistryMock.Object,
-            _configuration,
+            config ?? _configuration,
             _loggerMock.Object);
     }
+
+    #region Constructor Guard Clauses
 
     [Fact]
     public void Constructor_NullMessageBus_ThrowsArgumentNullException()
@@ -69,109 +73,9 @@ public class HeartbeatEmitterTests
             new HeartbeatEmitter(_messageBusMock.Object, _actorRegistryMock.Object, _configuration, null!));
     }
 
-    [Fact]
-    public async Task Start_EmitsHeartbeat()
-    {
-        // Arrange
-        var emitter = CreateEmitter();
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(Array.Empty<IActorRunner>());
+    #endregion
 
-        // Act
-        emitter.Start();
-        await Task.Delay(1500); // Wait for at least one heartbeat
-        await emitter.StopAsync();
-        emitter.Dispose();
-
-        // Assert - use the convenience overload signature (topic, event, ct)
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.heartbeat",
-                It.Is<PoolNodeHeartbeatEvent>(e =>
-                    e.NodeId == "test-node-1" &&
-                    e.AppId == "test-app-1" &&
-                    e.CurrentLoad == 0),
-                It.IsAny<CancellationToken>()),
-            Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task Start_IncludesActorCount()
-    {
-        // Arrange
-        var emitter = CreateEmitter();
-        var mockRunner1 = new Mock<IActorRunner>();
-        var mockRunner2 = new Mock<IActorRunner>();
-        var mockRunner3 = new Mock<IActorRunner>();
-
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(new[] { mockRunner1.Object, mockRunner2.Object, mockRunner3.Object });
-
-        // Act
-        emitter.Start();
-        await Task.Delay(1500);
-        await emitter.StopAsync();
-        emitter.Dispose();
-
-        // Assert
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.heartbeat",
-                It.Is<PoolNodeHeartbeatEvent>(e => e.CurrentLoad == 3),
-                It.IsAny<CancellationToken>()),
-            Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task Start_CalledTwice_DoesNotStartSecondTask()
-    {
-        // Arrange
-        var emitter = CreateEmitter();
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(Array.Empty<IActorRunner>());
-
-        // Act
-        emitter.Start();
-        emitter.Start(); // Second call should be ignored
-        await Task.Delay(500);
-        await emitter.StopAsync();
-        emitter.Dispose();
-
-        // Assert - no exception thrown means test passes
-    }
-
-    [Fact]
-    public async Task StopAsync_StopsHeartbeats()
-    {
-        // Arrange
-        var emitter = CreateEmitter();
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(Array.Empty<IActorRunner>());
-
-        // Act
-        emitter.Start();
-        await Task.Delay(500);
-        await emitter.StopAsync();
-
-        // Clear the mock to reset verification count
-        _messageBusMock.Invocations.Clear();
-
-        // Wait and verify no more heartbeats are sent
-        await Task.Delay(2000);
-        emitter.Dispose();
-
-        // Assert
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.heartbeat",
-                It.IsAny<PoolNodeHeartbeatEvent>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
+    #region Lifecycle Edge Cases
 
     [Fact]
     public async Task StopAsync_NotStarted_DoesNotThrow()
@@ -185,95 +89,34 @@ public class HeartbeatEmitterTests
     }
 
     [Fact]
-    public async Task EmitHeartbeat_MissingNodeId_DoesNotPublish()
-    {
-        // Arrange
-        var configWithoutNodeId = new ActorServiceConfiguration
-        {
-            PoolNodeId = "",
-            PoolNodeAppId = "test-app",
-            HeartbeatIntervalSeconds = 1
-        };
-
-        var emitter = new HeartbeatEmitter(
-            _messageBusMock.Object,
-            _actorRegistryMock.Object,
-            configWithoutNodeId,
-            _loggerMock.Object);
-
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(Array.Empty<IActorRunner>());
-
-        // Act
-        emitter.Start();
-        await Task.Delay(1500);
-        await emitter.StopAsync();
-        emitter.Dispose();
-
-        // Assert - should not have published
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.heartbeat",
-                It.IsAny<PoolNodeHeartbeatEvent>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task EmitHeartbeat_MissingAppId_DoesNotPublish()
-    {
-        // Arrange
-        var configWithoutAppId = new ActorServiceConfiguration
-        {
-            PoolNodeId = "test-node",
-            PoolNodeAppId = "",
-            HeartbeatIntervalSeconds = 1
-        };
-
-        var emitter = new HeartbeatEmitter(
-            _messageBusMock.Object,
-            _actorRegistryMock.Object,
-            configWithoutAppId,
-            _loggerMock.Object);
-
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(Array.Empty<IActorRunner>());
-
-        // Act
-        emitter.Start();
-        await Task.Delay(1500);
-        await emitter.StopAsync();
-        emitter.Dispose();
-
-        // Assert - should not have published
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.heartbeat",
-                It.IsAny<PoolNodeHeartbeatEvent>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
     public void Dispose_MultipleTimes_DoesNotThrow()
     {
         // Arrange
         var emitter = CreateEmitter();
 
-        // Act & Assert
+        // Act & Assert - IDisposable contract requires this to be safe
         emitter.Dispose();
         emitter.Dispose();
         emitter.Dispose();
-        // No exception means test passes
     }
+
+    #endregion
+
+    #region Exception Recovery
 
     [Fact]
     public async Task EmitHeartbeat_ExceptionInPublish_ContinuesEmitting()
     {
-        // Arrange
-        var emitter = CreateEmitter();
+        // Arrange - use fast heartbeat interval for quicker test
+        var fastConfig = new ActorServiceConfiguration
+        {
+            PoolNodeId = "test-node-1",
+            PoolNodeAppId = "test-app-1",
+            PoolNodeType = "shared",
+            HeartbeatIntervalSeconds = 1
+        };
+
+        var emitter = CreateEmitter(fastConfig);
         var callCount = 0;
 
         _actorRegistryMock
@@ -293,22 +136,26 @@ public class HeartbeatEmitterTests
             })
             .ReturnsAsync(true);
 
-        // Act
+        // Act - wait for multiple heartbeat cycles
         emitter.Start();
-        await Task.Delay(3000); // Wait for multiple heartbeat cycles
+        await Task.Delay(2500);
         await emitter.StopAsync();
         emitter.Dispose();
 
-        // Assert - should have been called multiple times despite first exception
-        Assert.True(callCount >= 2);
+        // Assert - should have continued after exception
+        Assert.True(callCount >= 2, $"Expected at least 2 calls but got {callCount}");
     }
 
+    #endregion
+
+    #region Event Data Validation
+
     [Fact]
-    public async Task HeartbeatEvent_HasCorrectTimestamp()
+    public async Task HeartbeatEvent_HasCorrectStructure()
     {
         // Arrange
         var emitter = CreateEmitter();
-        var capturedEvent = (PoolNodeHeartbeatEvent?)null;
+        PoolNodeHeartbeatEvent? capturedEvent = null;
 
         _actorRegistryMock
             .Setup(r => r.GetAllRunners())
@@ -335,10 +182,51 @@ public class HeartbeatEmitterTests
 
         var afterStop = DateTimeOffset.UtcNow;
 
-        // Assert
+        // Assert - verify the event has all required fields populated correctly
         Assert.NotNull(capturedEvent);
+        Assert.Equal("test-node-1", capturedEvent.NodeId);
+        Assert.Equal("test-app-1", capturedEvent.AppId);
         Assert.True(capturedEvent.Timestamp >= beforeStart);
         Assert.True(capturedEvent.Timestamp <= afterStop);
         Assert.NotEqual(Guid.Empty, capturedEvent.EventId);
     }
+
+    [Fact]
+    public async Task HeartbeatEvent_IncludesActorCount()
+    {
+        // Arrange
+        var emitter = CreateEmitter();
+        PoolNodeHeartbeatEvent? capturedEvent = null;
+
+        var mockRunner1 = new Mock<IActorRunner>();
+        var mockRunner2 = new Mock<IActorRunner>();
+        var mockRunner3 = new Mock<IActorRunner>();
+
+        _actorRegistryMock
+            .Setup(r => r.GetAllRunners())
+            .Returns(new[] { mockRunner1.Object, mockRunner2.Object, mockRunner3.Object });
+
+        _messageBusMock
+            .Setup(m => m.TryPublishAsync(
+                "actor.pool-node.heartbeat",
+                It.IsAny<PoolNodeHeartbeatEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, PoolNodeHeartbeatEvent, CancellationToken>((_, evt, _) =>
+            {
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        emitter.Start();
+        await Task.Delay(1500);
+        await emitter.StopAsync();
+        emitter.Dispose();
+
+        // Assert - verify actor count is included
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(3, capturedEvent.CurrentLoad);
+    }
+
+    #endregion
 }

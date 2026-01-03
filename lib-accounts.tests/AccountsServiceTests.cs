@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -53,21 +54,6 @@ public class AccountsServiceTests
             .Setup(f => f.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE))
             .Returns(_mockAuthMethodsStore.Object);
     }
-
-    [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act & Assert
-        var service = new AccountsService(
-            _mockLogger.Object,
-            _configuration,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockEventConsumer.Object);
-
-        Assert.NotNull(service);
-    }
-
 
     #region Permission Registration Tests
 
@@ -640,65 +626,20 @@ public class AccountsServiceTests
 
     #region Constructor Validation Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsService(
-            null!,
-            _configuration,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsService(
-            _mockLogger.Object,
-            null!,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsService(
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockMessageBus.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsService(
-            _mockLogger.Object,
-            _configuration,
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsService(
-            _mockLogger.Object,
-            _configuration,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!));
-    }
+    public void AccountsService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<AccountsService>();
 
     #endregion
 

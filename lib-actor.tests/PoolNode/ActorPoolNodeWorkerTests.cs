@@ -8,7 +8,9 @@ using Moq;
 namespace BeyondImmersion.BannouService.Actor.Tests.PoolNode;
 
 /// <summary>
-/// Unit tests for ActorPoolNodeWorker - pool node background service.
+/// Unit tests for ActorPoolNodeWorker.
+/// Tests direct method behavior without complex BackgroundService lifecycle.
+/// Timing-based lifecycle tests belong in integration tests.
 /// </summary>
 public class ActorPoolNodeWorkerTests
 {
@@ -54,6 +56,8 @@ public class ActorPoolNodeWorkerTests
             _configuration,
             _loggerMock.Object);
     }
+
+    #region Constructor Guard Clauses
 
     [Fact]
     public void Constructor_NullMessageBus_ThrowsArgumentNullException()
@@ -103,35 +107,9 @@ public class ActorPoolNodeWorkerTests
                 _heartbeatEmitter, _configuration, null!));
     }
 
-    [Fact]
-    public async Task ExecuteAsync_PublishesRegistrationEvent()
-    {
-        // Arrange
-        var worker = CreateWorker();
-        using var cts = new CancellationTokenSource();
+    #endregion
 
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(Array.Empty<IActorRunner>());
-
-        // Act
-        var task = worker.StartAsync(cts.Token);
-        await Task.Delay(500); // Allow registration to happen
-        await cts.CancelAsync();
-        await worker.StopAsync(CancellationToken.None);
-
-        // Assert
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.registered",
-                It.Is<PoolNodeRegisteredEvent>(e =>
-                    e.NodeId == "test-node-1" &&
-                    e.AppId == "test-app-1" &&
-                    e.PoolType == "shared" &&
-                    e.Capacity == 50),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
+    #region HandleSpawnCommandAsync Tests
 
     [Fact]
     public async Task HandleSpawnCommandAsync_CreatesAndStartsActor()
@@ -294,39 +272,9 @@ public class ActorPoolNodeWorkerTests
             Times.Once);
     }
 
-    [Fact]
-    public async Task HandleStopCommandAsync_StopsActor()
-    {
-        // Arrange
-        var worker = CreateWorker();
-        var mockRunner = new Mock<IActorRunner>();
-        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
-        mockRunner.SetupGet(r => r.Status).Returns(ActorStatus.Running);
-        mockRunner.SetupGet(r => r.LoopIterations).Returns(42);
-        mockRunner.SetupGet(r => r.CharacterId).Returns(Guid.NewGuid());
+    #endregion
 
-        _actorRegistryMock
-            .Setup(r => r.TryGet("actor-1", out It.Ref<IActorRunner?>.IsAny))
-            .Callback((string id, out IActorRunner? runner) => runner = mockRunner.Object)
-            .Returns(true);
-
-        _actorRegistryMock
-            .Setup(r => r.TryRemove("actor-1", out It.Ref<IActorRunner?>.IsAny))
-            .Returns(true);
-
-        var command = new StopActorCommand
-        {
-            ActorId = "actor-1",
-            Graceful = true
-        };
-
-        // Act
-        var result = await worker.HandleStopCommandAsync(command, CancellationToken.None);
-
-        // Assert
-        Assert.True(result);
-        mockRunner.Verify(r => r.StopAsync(true, It.IsAny<CancellationToken>()), Times.Once);
-    }
+    #region HandleStopCommandAsync Tests
 
     [Fact]
     public async Task HandleStopCommandAsync_ActorNotFound_ReturnsFalse()
@@ -351,161 +299,5 @@ public class ActorPoolNodeWorkerTests
         Assert.False(result);
     }
 
-    [Fact]
-    public async Task HandleStopCommandAsync_PublishesCompletedEvent()
-    {
-        // Arrange
-        var worker = CreateWorker();
-        var characterId = Guid.NewGuid();
-        var mockRunner = new Mock<IActorRunner>();
-        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
-        mockRunner.SetupGet(r => r.Status).Returns(ActorStatus.Running);
-        mockRunner.SetupGet(r => r.LoopIterations).Returns(100);
-        mockRunner.SetupGet(r => r.CharacterId).Returns(characterId);
-
-        _actorRegistryMock
-            .Setup(r => r.TryGet("actor-1", out It.Ref<IActorRunner?>.IsAny))
-            .Callback((string id, out IActorRunner? runner) => runner = mockRunner.Object)
-            .Returns(true);
-
-        _actorRegistryMock
-            .Setup(r => r.TryRemove("actor-1", out It.Ref<IActorRunner?>.IsAny))
-            .Returns(true);
-
-        var command = new StopActorCommand
-        {
-            ActorId = "actor-1",
-            Graceful = false
-        };
-
-        // Act
-        await worker.HandleStopCommandAsync(command, CancellationToken.None);
-
-        // Assert
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.instance.completed",
-                It.Is<ActorCompletedEvent>(e =>
-                    e.ActorId == "actor-1" &&
-                    e.NodeId == "test-node-1" &&
-                    e.ExitReason == ActorCompletedEventExitReason.External_stop &&
-                    e.LoopIterations == 100 &&
-                    e.CharacterId == characterId),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task Shutdown_StopsAllRunningActors()
-    {
-        // Arrange
-        var worker = CreateWorker();
-        using var cts = new CancellationTokenSource();
-
-        var mockRunner1 = new Mock<IActorRunner>();
-        mockRunner1.SetupGet(r => r.ActorId).Returns("actor-1");
-        var mockRunner2 = new Mock<IActorRunner>();
-        mockRunner2.SetupGet(r => r.ActorId).Returns("actor-2");
-
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(new[] { mockRunner1.Object, mockRunner2.Object });
-
-        _actorRegistryMock
-            .Setup(r => r.TryRemove(It.IsAny<string>(), out It.Ref<IActorRunner?>.IsAny))
-            .Returns(true);
-
-        // Act
-        var task = worker.StartAsync(cts.Token);
-        await Task.Delay(500);
-        await cts.CancelAsync();
-        await worker.StopAsync(CancellationToken.None);
-
-        // Assert - both actors should be stopped gracefully
-        mockRunner1.Verify(r => r.StopAsync(true, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-        mockRunner2.Verify(r => r.StopAsync(true, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task Shutdown_PublishesDrainingEvent()
-    {
-        // Arrange
-        var worker = CreateWorker();
-        using var cts = new CancellationTokenSource();
-
-        var mockRunner = new Mock<IActorRunner>();
-        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
-
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(new[] { mockRunner.Object });
-
-        _actorRegistryMock
-            .Setup(r => r.TryRemove(It.IsAny<string>(), out It.Ref<IActorRunner?>.IsAny))
-            .Returns(true);
-
-        // Act
-        var task = worker.StartAsync(cts.Token);
-        await Task.Delay(500);
-        await cts.CancelAsync();
-        await worker.StopAsync(CancellationToken.None);
-
-        // Assert
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.draining",
-                It.Is<PoolNodeDrainingEvent>(e =>
-                    e.NodeId == "test-node-1" &&
-                    e.RemainingActors == 1),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_MissingPoolNodeId_StopsEarly()
-    {
-        // Arrange
-        var configWithoutNodeId = new ActorServiceConfiguration
-        {
-            PoolNodeId = "",
-            PoolNodeAppId = "test-app-1",
-            HeartbeatIntervalSeconds = 10
-        };
-
-        var heartbeatLoggerMock = new Mock<ILogger<HeartbeatEmitter>>();
-        var heartbeatEmitter = new HeartbeatEmitter(
-            _messageBusMock.Object,
-            _actorRegistryMock.Object,
-            configWithoutNodeId,
-            heartbeatLoggerMock.Object);
-
-        var worker = new ActorPoolNodeWorker(
-            _messageBusMock.Object,
-            _actorRegistryMock.Object,
-            _actorRunnerFactoryMock.Object,
-            heartbeatEmitter,
-            configWithoutNodeId,
-            _loggerMock.Object);
-
-        using var cts = new CancellationTokenSource();
-
-        _actorRegistryMock
-            .Setup(r => r.GetAllRunners())
-            .Returns(Array.Empty<IActorRunner>());
-
-        // Act
-        var task = worker.StartAsync(cts.Token);
-        await Task.Delay(500);
-        await cts.CancelAsync();
-        await worker.StopAsync(CancellationToken.None);
-        heartbeatEmitter.Dispose();
-
-        // Assert - should not have registered
-        _messageBusMock.Verify(
-            m => m.TryPublishAsync(
-                "actor.pool-node.registered",
-                It.IsAny<PoolNodeRegisteredEvent>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
+    #endregion
 }

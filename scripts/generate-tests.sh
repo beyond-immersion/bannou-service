@@ -77,6 +77,8 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-$SERVICE_NAME -->
     <ProjectReference Include="../lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>
@@ -172,61 +174,52 @@ if [ ! -f "$SERVICE_TESTS_FILE" ]; then
     echo -e "${YELLOW}📝 Creating service test class...${NC}"
     cat > "$SERVICE_TESTS_FILE" << EOF
 using BeyondImmersion.BannouService.$SERVICE_PASCAL;
+using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL.Tests;
 
 public class ${SERVICE_PASCAL}ServiceTests
 {
-    private Mock<ILogger<${SERVICE_PASCAL}Service>> _mockLogger = null!;
-    private Mock<${SERVICE_PASCAL}ServiceConfiguration> _mockConfiguration = null!;
+    #region Constructor Validation
 
-    public ${SERVICE_PASCAL}ServiceTests()
-    {
-        _mockLogger = new Mock<ILogger<${SERVICE_PASCAL}Service>>();
-        _mockConfiguration = new Mock<${SERVICE_PASCAL}ServiceConfiguration>();
-    }
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
+    [Fact]
+    public void ${SERVICE_PASCAL}Service_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<${SERVICE_PASCAL}Service>();
+
+    #endregion
+
+    #region Configuration Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ${SERVICE_PASCAL}ServiceConfiguration_CanBeInstantiated()
     {
         // Arrange & Act
-        var service = new ${SERVICE_PASCAL}Service(_mockLogger.Object, _mockConfiguration.Object);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ${SERVICE_PASCAL}Service(null!, _mockConfiguration.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ${SERVICE_PASCAL}Service(_mockLogger.Object, null!));
-    }
-
-    // TODO: Add service-specific tests based on schema operations
-    // Schema file: $SCHEMA_FILE
-}
-
-public class ${SERVICE_PASCAL}ConfigurationTests
-{
-    [Fact]
-    public void Configuration_WithValidSettings_ShouldInitializeCorrectly()
-    {
-        // Arrange
         var config = new ${SERVICE_PASCAL}ServiceConfiguration();
 
-        // Act & Assert
+        // Assert
         Assert.NotNull(config);
     }
 
-    // TODO: Add configuration-specific tests
+    #endregion
+
+    // TODO: Add service-specific tests based on schema operations
+    // Schema file: $SCHEMA_FILE
+    //
+    // Guidelines:
+    // - Use the Capture Pattern for event/state verification (see TESTING_PATTERNS.md)
+    // - Verify side effects (saves, events, indices), not just response structure
+    // - Keep Arrange < 50% of test code; extract helpers if needed
 }
 EOF
     echo -e "${GREEN}✅ Created service test class${NC}"
