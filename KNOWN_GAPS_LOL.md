@@ -56,20 +56,29 @@ This document catalogs patterns found through comprehensive codebase searches. I
 **File**: `lib-connect/ConnectService.cs`
 **Status**: ✅ Fixed - Now properly implements capability lookup by session ID. Debugging endpoint that returns actual capabilities and shortcuts for connected WebSocket sessions. Request requires `sessionId` parameter.
 
-### 2.2 RPC Response Forwarding Not Implemented (YELLOW - Feature Gap)
-**File**: `lib-connect/ConnectService.cs:1764`
-```
-// TODO: Implement response timeout and forwarding back to service
-```
-**Issue**: Service-to-client RPC calls don't get responses back to originating service.
+### 2.2 RPC Response Forwarding Not Implemented (GREEN - RESOLVED)
+**File**: `lib-connect/ConnectService.cs`
+**Status**: ✅ Fixed - Full bidirectional RPC support now implemented:
+- Added `ClientRPCResponseEvent` schema for typed response events
+- Added `PendingRPCInfo` class to track pending RPCs with timeout support
+- `ProcessClientRPCEventAsync` registers pending RPCs when sending to clients
+- `HandleBinaryMessageAsync` intercepts response messages and forwards via `ForwardRPCResponseAsync`
+- Responses published to the originating service's `responseChannel` via RabbitMQ
 
-### 2.3 Asset Processors Are Pass-Through Only (YELLOW)
+### 2.3 Audio Processor Now Uses FFMpegCore (GREEN - RESOLVED)
 **Files**:
-- `lib-asset/Processing/AudioProcessor.cs:134` - "TODO: Implement actual audio processing"
-- `lib-asset/Processing/TextureProcessor.cs:121` - "TODO: Implement actual texture processing"
-- `lib-asset/Processing/ModelProcessor.cs:151` - "TODO: Implement actual model processing"
+- `lib-asset/Processing/AudioProcessor.cs` - Full FFmpeg-based WAV→MP3 transcoding
+- `lib-asset/Processing/FFmpegService.cs` - FFMpegCore wrapper with DI/testing support
+- `lib-asset/Processing/IFFmpegService.cs` - Interface for mock testing
+- `lib-asset.tests/Processing/AudioProcessorTests.cs` - 24 unit tests
 
-**Issue**: All asset processors do file copy instead of actual processing. Is this MVP-acceptable or blocking?
+**Status**: ✅ AudioProcessor now uses FFMpegCore (MIT license) for real audio transcoding:
+- Configurable output format (MP3/Opus/AAC), bitrate, normalization
+- Lossless preservation option (keeps original WAV/FLAC alongside transcoded)
+- Configuration via `ASSET_AUDIO_*` environment variables
+- HTTP test with `ASSET_LARGE_FILE_THRESHOLD_MB=0` for small file processing
+
+**Remaining**: TextureProcessor and ModelProcessor still pass-through (no current use case)
 
 ### 2.4 GetBundle Endpoint Not Implemented (YELLOW)
 **File**: `lib-asset/AssetService.cs:914`
@@ -251,7 +260,7 @@ These patterns were found but are legitimately intentional:
 | Category | RED (Fix) | YELLOW (Investigate) | GREEN (OK) |
 |----------|-----------|---------------------|------------|
 | Silent Failures | 0 | 0 | 4 |
-| Unimplemented Features | 0 | 3 | 2 |
+| Unimplemented Features | 0 | 2 | 3 |
 | Missing Audit | 0 | 0 | 2 |
 | Tenet Violations | 0 | 0 | 3 |
 | DI Patterns | 0 | 0 | 4 |
@@ -260,7 +269,7 @@ These patterns were found but are legitimately intentional:
 | Verified Intentional | 0 | 0 | 14 |
 | String.Empty Usage | 0 | 326 | 0 |
 | Null-Forgiving Exceptions | 0 | 0 | 4 |
-| **TOTAL** | **0** | **330** | **37** |
+| **TOTAL** | **0** | **329** | **38** |
 
 ---
 

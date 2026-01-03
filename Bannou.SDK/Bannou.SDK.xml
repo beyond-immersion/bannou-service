@@ -5646,6 +5646,42 @@
             When the message will be considered timed out.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.Protocol.PendingRPCInfo">
+            <summary>
+            Information about a pending RPC call awaiting client response.
+            Used to track service-to-client RPC calls and forward responses back.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.PendingRPCInfo.ClientSessionId">
+            <summary>
+            Session ID of the client that received the RPC.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.PendingRPCInfo.ServiceName">
+            <summary>
+            Name of the service that initiated the RPC.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.PendingRPCInfo.ResponseChannel">
+            <summary>
+            RabbitMQ channel where the response should be published.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.PendingRPCInfo.ServiceGuid">
+            <summary>
+            Service GUID used for the RPC (for correlation).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.PendingRPCInfo.SentAt">
+            <summary>
+            When the RPC was sent.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.PendingRPCInfo.TimeoutAt">
+            <summary>
+            When the RPC will be considered timed out.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.Protocol.ConnectionFlags">
             <summary>
             Connection capability flags.
@@ -6680,6 +6716,48 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCEvent.Timestamp">
             <summary>
             When the RPC was initiated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent">
+            <summary>
+            Response event for bidirectional RPC from client back to service.
+            <br/>Published by Connect when a client responds to a ClientRPCEvent.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ClientId">
+            <summary>
+            Client session ID that sent the response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ServiceName">
+            <summary>
+            Name of the service that initiated the RPC
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ServiceGuid">
+            <summary>
+            Service GUID from the original RPC
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.MessageId">
+            <summary>
+            Message ID for correlation with original request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.Payload">
+            <summary>
+            RPC response payload (binary data)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ResponseCode">
+            <summary>
+            Response code (0 = success, non-zero = error)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.Timestamp">
+            <summary>
+            When the response was received
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.PermissionRecompileEvent">

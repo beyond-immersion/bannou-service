@@ -15402,6 +15402,48 @@
             When the RPC was initiated
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent">
+            <summary>
+            Response event for bidirectional RPC from client back to service.
+            <br/>Published by Connect when a client responds to a ClientRPCEvent.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ClientId">
+            <summary>
+            Client session ID that sent the response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ServiceName">
+            <summary>
+            Name of the service that initiated the RPC
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ServiceGuid">
+            <summary>
+            Service GUID from the original RPC
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.MessageId">
+            <summary>
+            Message ID for correlation with original request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.Payload">
+            <summary>
+            RPC response payload (binary data)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.ResponseCode">
+            <summary>
+            Response code (0 = success, non-zero = error)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientRPCResponseEvent.Timestamp">
+            <summary>
+            When the response was received
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.PermissionRecompileEvent">
             <summary>
             Event to trigger permission recompilation for all sessions.

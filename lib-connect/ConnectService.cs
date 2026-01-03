@@ -1038,6 +1038,13 @@ public partial class ConnectService : IConnectService
             _logger.LogDebug("Binary message from session {SessionId}: {Message}",
                 sessionId, message.ToString());
 
+            // RPC RESPONSE INTERCEPTION: Check if this is a response to a pending RPC
+            if (message.IsResponse && _pendingRPCs.TryRemove(message.MessageId, out var pendingRPC))
+            {
+                await ForwardRPCResponseAsync(message, pendingRPC, sessionId, cancellationToken);
+                return;
+            }
+
             // Analyze message for routing
             var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
 
@@ -1900,11 +1907,22 @@ public partial class ConnectService : IConnectService
 
                 if (sent)
                 {
-                    _logger.LogDebug("Sent RPC message to client {ClientId}, waiting for response", eventData.ClientId);
+                    // Register pending RPC for response forwarding
+                    var now = DateTimeOffset.UtcNow;
+                    var pendingRPC = new PendingRPCInfo
+                    {
+                        ClientSessionId = eventData.ClientId,
+                        ServiceName = eventData.ServiceName,
+                        ResponseChannel = eventData.ResponseChannel,
+                        ServiceGuid = eventData.ServiceGuid,
+                        SentAt = now,
+                        TimeoutAt = now.AddSeconds(eventData.TimeoutSeconds > 0 ? eventData.TimeoutSeconds : 30)
+                    };
 
-                    // TODO: Implement response timeout and forwarding back to service
-                    // The client response will come back through the normal WebSocket message handling
-                    // and should be routed back to the originating service via RabbitMQ
+                    _pendingRPCs[(ulong)eventData.MessageId] = pendingRPC;
+
+                    _logger.LogDebug("Sent RPC message {MessageId} to client {ClientId}, awaiting response for channel {ResponseChannel}",
+                        eventData.MessageId, eventData.ClientId, eventData.ResponseChannel);
 
                     return new { status = "sent", clientId = eventData.ClientId, messageId = eventData.MessageId };
                 }
@@ -1925,6 +1943,47 @@ public partial class ConnectService : IConnectService
             _logger.LogError(ex, "Failed to process client RPC event for {ClientId}", eventData.ClientId);
             await PublishErrorEventAsync("ProcessClientRPC", ex.GetType().Name, ex.Message, details: new { ClientId = eventData.ClientId, ServiceName = eventData.ServiceName });
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Forwards an RPC response from a client back to the originating service.
+    /// </summary>
+    private async Task ForwardRPCResponseAsync(
+        BinaryMessage response,
+        PendingRPCInfo pendingRPC,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug(
+            "Forwarding RPC response from session {SessionId} to service {ServiceName} via channel {ResponseChannel}",
+            sessionId, pendingRPC.ServiceName, pendingRPC.ResponseChannel);
+
+        try
+        {
+            // Create typed response event
+            var responseEvent = new ClientRPCResponseEvent
+            {
+                ClientId = sessionId,
+                ServiceName = pendingRPC.ServiceName,
+                ServiceGuid = pendingRPC.ServiceGuid,
+                MessageId = (long)response.MessageId,
+                Payload = response.Payload.ToArray(),
+                ResponseCode = response.ResponseCode,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            await _messageBus.TryPublishAsync(
+                pendingRPC.ResponseChannel,
+                responseEvent,
+                cancellationToken: cancellationToken);
+
+            _logger.LogDebug("RPC response forwarded to {ResponseChannel} for message {MessageId}",
+                pendingRPC.ResponseChannel, response.MessageId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to forward RPC response to {ResponseChannel}", pendingRPC.ResponseChannel);
         }
     }
 

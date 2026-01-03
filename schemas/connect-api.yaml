@@ -1153,6 +1153,45 @@ components:
           format: date-time
           description: When the RPC was initiated
 
+    ClientRPCResponseEvent:
+      type: object
+      description: |
+        Response event for bidirectional RPC from client back to service.
+        Published by Connect when a client responds to a ClientRPCEvent.
+      additionalProperties: false
+      required:
+      - clientId
+      - messageId
+      - payload
+      - responseCode
+      properties:
+        clientId:
+          type: string
+          description: Client session ID that sent the response
+        serviceName:
+          type: string
+          description: Name of the service that initiated the RPC
+        serviceGuid:
+          type: string
+          format: uuid
+          description: Service GUID from the original RPC
+        messageId:
+          type: integer
+          format: int64
+          description: Message ID for correlation with original request
+        payload:
+          type: string
+          format: byte
+          description: RPC response payload (binary data)
+        responseCode:
+          type: integer
+          format: uint16
+          description: Response code (0 = success, non-zero = error)
+        timestamp:
+          type: string
+          format: date-time
+          description: When the response was received
+
     # NOTE: MessageFlags already defined above in Binary Protocol Schemas section
 
     PermissionRecompileEvent:
