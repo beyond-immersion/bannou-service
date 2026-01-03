@@ -95,15 +95,15 @@ public partial class ConnectService : IConnectService
         IEventConsumer eventConsumer,
         ISessionManager sessionManager)
     {
-        _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _sessionManager = sessionManager ?? throw new ArgumentNullException(nameof(sessionManager));
+        _authClient = authClient;
+        _meshClient = meshClient;
+        _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
+        _httpClientFactory = httpClientFactory;
+        _appMappingResolver = appMappingResolver;
+        _logger = logger;
+        _loggerFactory = loggerFactory;
+        _sessionManager = sessionManager;
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
@@ -121,7 +121,6 @@ public partial class ConnectService : IConnectService
         _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
 
         // Connection mode configuration

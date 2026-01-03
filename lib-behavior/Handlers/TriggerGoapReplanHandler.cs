@@ -44,7 +44,7 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
 {
     private const string ACTION_NAME = "trigger_goap_replan";
     private readonly IGoapPlanner _planner;
-    private readonly BehaviorBundleManager? _bundleManager;
+    private readonly IBehaviorBundleManager? _bundleManager;
     private readonly ILogger<TriggerGoapReplanHandler> _logger;
 
     /// <summary>
@@ -65,7 +65,7 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
     /// <param name="logger">Logger instance.</param>
     public TriggerGoapReplanHandler(
         IGoapPlanner planner,
-        BehaviorBundleManager? bundleManager,
+        IBehaviorBundleManager? bundleManager,
         ILogger<TriggerGoapReplanHandler> logger)
     {
         _planner = planner ?? throw new ArgumentNullException(nameof(planner));

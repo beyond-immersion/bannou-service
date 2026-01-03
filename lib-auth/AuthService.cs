@@ -72,19 +72,18 @@ public partial class AuthService : IAuthService
         IOAuthProviderService oauthService,
         IEventConsumer eventConsumer)
     {
-        _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
-        _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
-        _oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
+        _accountsClient = accountsClient;
+        _subscriptionsClient = subscriptionsClient;
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _configuration = configuration;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+        _tokenService = tokenService;
+        _sessionService = sessionService;
+        _oauthService = oauthService;
 
         // Register event handlers via partial class (AuthServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",

@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Manages behavior bundles for efficient storage and retrieval.
 /// Behaviors can be grouped into bundles for bulk download by clients.
 /// </summary>
-public class BehaviorBundleManager
+public class BehaviorBundleManager : IBehaviorBundleManager
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IAssetClient _assetClient;

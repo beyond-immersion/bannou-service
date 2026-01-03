@@ -32,7 +32,7 @@ public class AssetServiceTests
     private Mock<IAssetEventEmitter> _mockAssetEventEmitter = null!;
     private Mock<IAssetStorageProvider> _mockStorageProvider = null!;
     private Mock<IOrchestratorClient> _mockOrchestratorClient = null!;
-    private BundleConverter _bundleConverter = null!;
+    private Mock<IBundleConverter> _mockBundleConverter = null!;
     private Mock<IEventConsumer> _mockEventConsumer = null!;
 
     public AssetServiceTests()
@@ -48,7 +48,7 @@ public class AssetServiceTests
         _mockAssetEventEmitter = new Mock<IAssetEventEmitter>();
         _mockStorageProvider = new Mock<IAssetStorageProvider>();
         _mockOrchestratorClient = new Mock<IOrchestratorClient>();
-        _bundleConverter = new BundleConverter(new Mock<ILogger<BundleConverter>>().Object);
+        _mockBundleConverter = new Mock<IBundleConverter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup state store factory to return typed stores
@@ -1322,7 +1322,7 @@ public class AssetServiceTests
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
-            _bundleConverter,
+            _mockBundleConverter.Object,
             _mockEventConsumer.Object);
     }
 

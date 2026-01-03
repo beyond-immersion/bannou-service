@@ -53,12 +53,11 @@ public partial class MeshService : IMeshService
         IMeshRedisManager redisManager,
         IEventConsumer eventConsumer)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _redisManager = redisManager;
 
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 

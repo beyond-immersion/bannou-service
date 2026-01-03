@@ -27,14 +27,13 @@ public partial class TestingService : ITestingService
         IClientEventPublisher clientEventPublisher,
         IEventConsumer eventConsumer)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
+        _logger = logger;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _clientEventPublisher = clientEventPublisher;
 
         // Required by FOUNDATION TENETS - calls default IBannouService.RegisterEventConsumers() no-op
         // Must cast to interface to access default interface implementation
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

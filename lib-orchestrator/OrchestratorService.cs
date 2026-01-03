@@ -99,22 +99,21 @@ public partial class OrchestratorService : IOrchestratorService
         IBackendDetector backendDetector,
         IEventConsumer eventConsumer)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
-        _eventManager = eventManager ?? throw new ArgumentNullException(nameof(eventManager));
-        _healthMonitor = healthMonitor ?? throw new ArgumentNullException(nameof(healthMonitor));
-        _restartManager = restartManager ?? throw new ArgumentNullException(nameof(restartManager));
-        _backendDetector = backendDetector ?? throw new ArgumentNullException(nameof(backendDetector));
+        _messageBus = messageBus;
+        _logger = logger;
+        _loggerFactory = loggerFactory;
+        _configuration = configuration;
+        _stateManager = stateManager;
+        _eventManager = eventManager;
+        _healthMonitor = healthMonitor;
+        _restartManager = restartManager;
+        _backendDetector = backendDetector;
 
         // Create preset loader with configured presets directory
         var presetsPath = configuration.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
         _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath);
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 

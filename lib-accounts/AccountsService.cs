@@ -42,13 +42,12 @@ public partial class AccountsService : IAccountsService
         IMessageBus messageBus,
         IEventConsumer eventConsumer)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _logger = logger;
+        _configuration = configuration;
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
 
         // Register event handlers via partial class (AccountsServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

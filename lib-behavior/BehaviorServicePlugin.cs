@@ -44,7 +44,7 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         services.AddScoped<IAssetClient, AssetClient>();
 
         // Register bundle manager for efficient behavior grouping and storage
-        services.AddScoped<BehaviorBundleManager>();
+        services.AddScoped<IBehaviorBundleManager, BehaviorBundleManager>();
 
         // Register memory store for cognition pipeline (actor-local MVP)
         services.AddSingleton<IMemoryStore, ActorLocalMemoryStore>();

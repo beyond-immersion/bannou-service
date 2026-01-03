@@ -63,13 +63,12 @@ public partial class PermissionsService : IPermissionsService
         IClientEventPublisher clientEventPublisher,
         IEventConsumer eventConsumer)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
-        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
-        ArgumentNullException.ThrowIfNull(eventConsumer);
+        _logger = logger;
+        _configuration = configuration;
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _lockProvider = lockProvider;
+        _clientEventPublisher = clientEventPublisher;
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
         // Register event handlers via partial class (PermissionsServiceEvents.cs)

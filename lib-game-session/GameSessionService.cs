@@ -120,15 +120,15 @@ public partial class GameSessionService : IGameSessionService
         IPermissionsClient permissionsClient,
         ISubscriptionsClient subscriptionsClient)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
-        _voiceClient = voiceClient ?? throw new ArgumentNullException(nameof(voiceClient));
-        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
-        _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _httpContextAccessor = httpContextAccessor;
+        _clientEventPublisher = clientEventPublisher;
+        _voiceClient = voiceClient;
+        _permissionsClient = permissionsClient;
+        _subscriptionsClient = subscriptionsClient;
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -139,7 +139,6 @@ public partial class GameSessionService : IGameSessionService
         _serverSalt = configuration.ServerSalt;
 
         // Register event handlers via partial class (GameSessionServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 

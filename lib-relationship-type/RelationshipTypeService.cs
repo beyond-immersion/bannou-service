@@ -38,14 +38,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         IRelationshipClient relationshipClient,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _relationshipClient = relationshipClient ?? throw new ArgumentNullException(nameof(relationshipClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _relationshipClient = relationshipClient;
 
         // Register event handlers via partial class (RelationshipTypeServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

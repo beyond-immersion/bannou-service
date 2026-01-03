@@ -73,7 +73,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         services.AddScoped<IAssetEventEmitter, AssetEventEmitter>();
 
         // Register bundle services
-        services.AddSingleton<BundleConverter>();
+        services.AddSingleton<IBundleConverter, BundleConverter>();
         services.AddSingleton<BundleValidator>();
 
         // Register metrics

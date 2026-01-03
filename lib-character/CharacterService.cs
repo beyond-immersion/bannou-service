@@ -51,15 +51,14 @@ public partial class CharacterService : ICharacterService
         ISpeciesClient speciesClient,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
-        _speciesClient = speciesClient ?? throw new ArgumentNullException(nameof(speciesClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _realmClient = realmClient;
+        _speciesClient = speciesClient;
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

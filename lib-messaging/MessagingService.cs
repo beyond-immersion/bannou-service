@@ -54,11 +54,11 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         IMessageSubscriber messageSubscriber,
         IHttpClientFactory httpClientFactory)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _logger = logger;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
+        _httpClientFactory = httpClientFactory;
     }
 
     /// <inheritdoc />

@@ -43,7 +43,7 @@ public partial class BehaviorService : IBehaviorService
     private readonly BehaviorCompiler _compiler;
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly BehaviorBundleManager _bundleManager;
+    private readonly IBehaviorBundleManager _bundleManager;
 
     /// <summary>
     /// Creates a new instance of the BehaviorService.
@@ -66,19 +66,18 @@ public partial class BehaviorService : IBehaviorService
         BehaviorCompiler compiler,
         IAssetClient assetClient,
         IHttpClientFactory httpClientFactory,
-        BehaviorBundleManager bundleManager)
+        IBehaviorBundleManager bundleManager)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _goapPlanner = goapPlanner ?? throw new ArgumentNullException(nameof(goapPlanner));
-        _compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _bundleManager = bundleManager ?? throw new ArgumentNullException(nameof(bundleManager));
+        _logger = logger;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _goapPlanner = goapPlanner;
+        _compiler = compiler;
+        _assetClient = assetClient;
+        _httpClientFactory = httpClientFactory;
+        _bundleManager = bundleManager;
 
         // Register event handlers via partial class (BehaviorServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

@@ -62,18 +62,17 @@ public partial class VoiceService : IVoiceService
         IClientEventPublisher clientEventPublisher,
         IPermissionsClient permissionsClient)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _endpointRegistry = endpointRegistry ?? throw new ArgumentNullException(nameof(endpointRegistry));
-        _p2pCoordinator = p2pCoordinator ?? throw new ArgumentNullException(nameof(p2pCoordinator));
-        _scaledTierCoordinator = scaledTierCoordinator ?? throw new ArgumentNullException(nameof(scaledTierCoordinator));
-        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
-        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _endpointRegistry = endpointRegistry;
+        _p2pCoordinator = p2pCoordinator;
+        _scaledTierCoordinator = scaledTierCoordinator;
+        _clientEventPublisher = clientEventPublisher;
+        _permissionsClient = permissionsClient;
 
         // Register event handlers via partial class (VoiceServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

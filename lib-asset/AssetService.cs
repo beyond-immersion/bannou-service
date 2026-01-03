@@ -33,7 +33,7 @@ public partial class AssetService : IAssetService
     private readonly IAssetEventEmitter _eventEmitter;
     private readonly StorageModels.IAssetStorageProvider _storageProvider;
     private readonly IOrchestratorClient _orchestratorClient;
-    private readonly BundleConverter _bundleConverter;
+    private readonly IBundleConverter _bundleConverter;
 
     private const string STATE_STORE = "asset-statestore";
     private const string UPLOAD_SESSION_PREFIX = "upload:";
@@ -62,20 +62,19 @@ public partial class AssetService : IAssetService
         IAssetEventEmitter eventEmitter,
         StorageModels.IAssetStorageProvider storageProvider,
         IOrchestratorClient orchestratorClient,
-        BundleConverter bundleConverter,
+        IBundleConverter bundleConverter,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _eventEmitter = eventEmitter ?? throw new ArgumentNullException(nameof(eventEmitter));
-        _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
-        _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
-        _bundleConverter = bundleConverter ?? throw new ArgumentNullException(nameof(bundleConverter));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _eventEmitter = eventEmitter;
+        _storageProvider = storageProvider;
+        _orchestratorClient = orchestratorClient;
+        _bundleConverter = bundleConverter;
 
         // Register event handlers via partial class
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 

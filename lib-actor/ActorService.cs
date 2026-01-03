@@ -72,15 +72,15 @@ public partial class ActorService : IActorService
         IBehaviorDocumentCache behaviorCache,
         IActorPoolManager poolManager)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
-        _actorRunnerFactory = actorRunnerFactory ?? throw new ArgumentNullException(nameof(actorRunnerFactory));
-        _eventConsumer = eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer));
-        _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
-        _poolManager = poolManager ?? throw new ArgumentNullException(nameof(poolManager));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _actorRegistry = actorRegistry;
+        _actorRunnerFactory = actorRunnerFactory;
+        _eventConsumer = eventConsumer;
+        _behaviorCache = behaviorCache;
+        _poolManager = poolManager;
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);

@@ -30,7 +30,7 @@ public class BehaviorServiceTests
     private readonly BehaviorCompiler _compiler;
     private readonly Mock<IAssetClient> _mockAssetClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
-    private readonly Mock<BehaviorBundleManager> _mockBundleManager;
+    private readonly Mock<IBehaviorBundleManager> _mockBundleManager;
 
     public BehaviorServiceTests()
     {
@@ -42,10 +42,7 @@ public class BehaviorServiceTests
         _compiler = new BehaviorCompiler();
         _mockAssetClient = new Mock<IAssetClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
-        _mockBundleManager = new Mock<BehaviorBundleManager>(
-            Mock.Of<IStateStoreFactory>(),
-            Mock.Of<IAssetClient>(),
-            Mock.Of<ILogger<BehaviorBundleManager>>());
+        _mockBundleManager = new Mock<IBehaviorBundleManager>();
     }
 
     #region Constructor Tests

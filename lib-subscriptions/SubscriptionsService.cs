@@ -40,14 +40,13 @@ public partial class SubscriptionsService : ISubscriptionsService
         IServicedataClient servicedataClient,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _servicedataClient = servicedataClient ?? throw new ArgumentNullException(nameof(servicedataClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _servicedataClient = servicedataClient;
 
         // Register event handlers via partial class (SubscriptionsServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 

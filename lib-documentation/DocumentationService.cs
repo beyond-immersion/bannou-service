@@ -74,19 +74,18 @@ public partial class DocumentationService : IDocumentationService
         IAssetClient assetClient,
         IHttpClientFactory httpClientFactory)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _searchIndexService = searchIndexService ?? throw new ArgumentNullException(nameof(searchIndexService));
-        _gitSyncService = gitSyncService ?? throw new ArgumentNullException(nameof(gitSyncService));
-        _contentTransformService = contentTransformService ?? throw new ArgumentNullException(nameof(contentTransformService));
-        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _searchIndexService = searchIndexService;
+        _gitSyncService = gitSyncService;
+        _contentTransformService = contentTransformService;
+        _lockProvider = lockProvider;
+        _assetClient = assetClient;
+        _httpClientFactory = httpClientFactory;
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 

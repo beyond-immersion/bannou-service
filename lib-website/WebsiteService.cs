@@ -28,12 +28,11 @@ public partial class WebsiteService : IWebsiteService
         IMessageBus messageBus,
         IEventConsumer eventConsumer)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _logger = logger;
+        _configuration = configuration;
+        _messageBus = messageBus;
 
         // Register event handlers via partial class (WebsiteServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
