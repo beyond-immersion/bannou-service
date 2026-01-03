@@ -1125,8 +1125,9 @@ public class PluginLoader
     /// <param name="pluginDirectory">Directory containing the plugin</param>
     /// <param name="expectedPluginName">Expected name of the plugin</param>
     /// <returns>Loaded plugin instance or null if loading failed</returns>
-    private Task<IBannouPlugin?> LoadPluginFromDirectoryAsync(string pluginDirectory, string expectedPluginName)
+    private async Task<IBannouPlugin?> LoadPluginFromDirectoryAsync(string pluginDirectory, string expectedPluginName)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Loading plugin from directory: {PluginDirectory}", pluginDirectory);
 
         // Find the main assembly (usually lib-{service}.dll)
@@ -1134,7 +1135,7 @@ public class PluginLoader
         if (!File.Exists(assemblyPath))
         {
             _logger.LogWarning("Plugin assembly not found: {AssemblyPath}", assemblyPath);
-            return Task.FromResult<IBannouPlugin?>(null);
+            return null;
         }
 
         try
@@ -1166,7 +1167,7 @@ public class PluginLoader
             if (pluginTypes.Count == 0)
             {
                 _logger.LogWarning("No IBannouPlugin implementations found in assembly: {AssemblyPath}", assemblyPath);
-                return Task.FromResult<IBannouPlugin?>(null);
+                return null;
             }
 
             if (pluginTypes.Count > 1)
@@ -1181,14 +1182,14 @@ public class PluginLoader
             if (plugin == null)
             {
                 _logger.LogError("Failed to create plugin instance for type: {PluginType}", pluginType.Name);
-                return Task.FromResult<IBannouPlugin?>(null);
+                return null;
             }
 
             // Validate plugin
             if (!plugin.ValidatePlugin())
             {
                 _logger.LogWarning("Plugin validation failed: {PluginName}", plugin.PluginName);
-                return Task.FromResult<IBannouPlugin?>(null);
+                return null;
             }
 
             // Verify plugin name matches expected
@@ -1198,12 +1199,12 @@ public class PluginLoader
                     expectedPluginName, plugin.PluginName);
             }
 
-            return Task.FromResult<IBannouPlugin?>(plugin);
+            return plugin;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load plugin assembly: {AssemblyPath}", assemblyPath);
-            return Task.FromResult<IBannouPlugin?>(null);
+            return null;
         }
     }
 }

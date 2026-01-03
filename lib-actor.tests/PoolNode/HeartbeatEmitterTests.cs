@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Actor.PoolNode;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -43,34 +44,13 @@ public class HeartbeatEmitterTests
             _loggerMock.Object);
     }
 
-    #region Constructor Guard Clauses
+    #region Constructor Tests
 
     [Fact]
-    public void Constructor_NullMessageBus_ThrowsArgumentNullException()
+    public void ConstructorIsValid()
     {
-        Assert.Throws<ArgumentNullException>(() =>
-            new HeartbeatEmitter(null!, _actorRegistryMock.Object, _configuration, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullActorRegistry_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new HeartbeatEmitter(_messageBusMock.Object, null!, _configuration, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullConfiguration_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new HeartbeatEmitter(_messageBusMock.Object, _actorRegistryMock.Object, null!, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullLogger_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new HeartbeatEmitter(_messageBusMock.Object, _actorRegistryMock.Object, _configuration, null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<HeartbeatEmitter>();
+        Assert.NotNull(CreateEmitter());
     }
 
     #endregion

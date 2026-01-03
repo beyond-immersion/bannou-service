@@ -1941,7 +1941,7 @@ public partial class DocumentationService : IDocumentationService
                 ArchiveEnabled = body.ArchiveEnabled,
                 ArchiveOnSync = body.ArchiveOnSync,
                 CreatedAt = DateTimeOffset.UtcNow,
-                CreatedBy = Guid.Empty // TODO: Get from session context when available
+                Owner = body.Owner
             };
 
             // Save binding
@@ -1965,6 +1965,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bind repository to namespace {Namespace}", body.Namespace);
+            await _messageBus.TryPublishErrorAsync("documentation", "BindRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2024,6 +2025,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to unbind repository from namespace {Namespace}", body.Namespace);
+            await _messageBus.TryPublishErrorAsync("documentation", "UnbindRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2068,6 +2070,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to sync repository for namespace {Namespace}", body.Namespace);
+            await _messageBus.TryPublishErrorAsync("documentation", "SyncRepository", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2110,6 +2113,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get repository status for namespace {Namespace}", body.Namespace);
+            await _messageBus.TryPublishErrorAsync("documentation", "GetRepositoryStatus", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2162,6 +2166,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list repository bindings");
+            await _messageBus.TryPublishErrorAsync("documentation", "ListRepositoryBindings", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2218,6 +2223,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update repository binding for namespace {Namespace}", body.Namespace);
+            await _messageBus.TryPublishErrorAsync("documentation", "UpdateRepositoryBinding", ex.GetType().Name, ex.Message, dependency: "state", stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2257,6 +2263,7 @@ public partial class DocumentationService : IDocumentationService
                 DocumentCount = documents.Count,
                 SizeBytes = bundleData.Length,
                 CreatedAt = DateTimeOffset.UtcNow,
+                Owner = body.Owner,
                 Description = body.Description,
                 CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
             };
@@ -2267,6 +2274,7 @@ public partial class DocumentationService : IDocumentationService
                 {
                     var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
                     {
+                        Owner = body.Owner,
                         Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
                         Size = bundleData.Length
                     }, cancellationToken);
@@ -2342,6 +2350,7 @@ public partial class DocumentationService : IDocumentationService
                     ArchiveId = a.ArchiveId,
                     Namespace = a.Namespace,
                     CreatedAt = a.CreatedAt,
+                    Owner = a.Owner,
                     DocumentCount = a.DocumentCount,
                     SizeBytes = (int)Math.Min(a.SizeBytes, int.MaxValue),
                     Description = a.Description ?? string.Empty,
@@ -2973,7 +2982,7 @@ public partial class DocumentationService : IDocumentationService
         SyncIntervalMinutes = binding.SyncIntervalMinutes,
         DocumentCount = binding.DocumentCount,
         CreatedAt = binding.CreatedAt,
-        CreatedBy = binding.CreatedBy
+        Owner = binding.Owner
     };
 
     /// <summary>

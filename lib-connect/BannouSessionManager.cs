@@ -65,6 +65,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to store session service mappings for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "SetSessionServiceMappings",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -89,6 +96,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve session service mappings for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "GetSessionServiceMappings",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
@@ -116,6 +130,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to store connection state for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "SetConnectionState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -140,6 +161,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve connection state for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "GetConnectionState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
@@ -207,6 +235,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to store reconnection token for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "SetReconnectionToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -231,6 +266,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate reconnection token");
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "ValidateReconnectionToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
@@ -298,6 +340,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initiate reconnection window for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "InitiateReconnectionWindow",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -347,6 +396,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to restore session {SessionId} from reconnection", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "RestoreSessionFromReconnection",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - reconnection depends on reliable state access
         }
     }
@@ -535,6 +591,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get sessions for account {AccountId}", accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "GetSessionsForAccount",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             // Return empty set on error - callers can handle gracefully
             return new HashSet<string>();
         }

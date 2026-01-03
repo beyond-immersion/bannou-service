@@ -255,9 +255,7 @@ public partial class CharacterService : ICharacterService
             // Publish update event if there were changes
             if (changedFields.Count > 0)
             {
-                await PublishCharacterUpdatedEventAsync(
-                    Guid.Parse(character.CharacterId),
-                    changedFields);
+                await PublishCharacterUpdatedEventAsync(character, changedFields);
             }
 
             var response = MapToCharacterResponse(character);
@@ -720,32 +718,45 @@ public partial class CharacterService : ICharacterService
     /// <summary>
     /// Publishes character updated event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
-    private async Task PublishCharacterUpdatedEventAsync(Guid characterId, IEnumerable<string> changedFields)
+    private async Task PublishCharacterUpdatedEventAsync(CharacterModel character, IEnumerable<string> changedFields)
     {
         var eventModel = new CharacterUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            CharacterId = characterId,
+            CharacterId = Guid.Parse(character.CharacterId),
+            Name = character.Name,
+            RealmId = Guid.Parse(character.RealmId),
+            SpeciesId = Guid.Parse(character.SpeciesId),
+            BirthDate = character.BirthDate,
+            Status = character.Status.ToString(),
+            CreatedAt = character.CreatedAt,
+            UpdatedAt = character.UpdatedAt,
             ChangedFields = changedFields.ToList()
         };
 
         await _messageBus.TryPublishAsync(CHARACTER_UPDATED_TOPIC, eventModel);
-        _logger.LogDebug("Published CharacterUpdatedEvent for character: {CharacterId}", characterId);
+        _logger.LogDebug("Published CharacterUpdatedEvent for character: {CharacterId}", character.CharacterId);
     }
 
     /// <summary>
     /// Publishes character deleted event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
-    private async Task PublishCharacterDeletedEventAsync(CharacterModel character)
+    private async Task PublishCharacterDeletedEventAsync(CharacterModel character, string? deletedReason = null)
     {
         var eventModel = new CharacterDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             CharacterId = Guid.Parse(character.CharacterId),
+            Name = character.Name,
             RealmId = Guid.Parse(character.RealmId),
-            Name = character.Name
+            SpeciesId = Guid.Parse(character.SpeciesId),
+            BirthDate = character.BirthDate,
+            Status = character.Status.ToString(),
+            CreatedAt = character.CreatedAt,
+            UpdatedAt = character.UpdatedAt,
+            DeletedReason = deletedReason
         };
 
         await _messageBus.TryPublishAsync(CHARACTER_DELETED_TOPIC, eventModel);

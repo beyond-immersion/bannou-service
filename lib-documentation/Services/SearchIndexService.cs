@@ -42,11 +42,11 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
+    public async Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         // In-memory index is created on first use, no pre-creation needed
         _indices.GetOrAdd(namespaceId, _ => new NamespaceIndex());
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -117,61 +117,71 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Task.FromResult<IReadOnlyList<SearchResult>>(Array.Empty<SearchResult>());
+            await Task.CompletedTask;
+            return Array.Empty<SearchResult>();
         }
 
-        return Task.FromResult<IReadOnlyList<SearchResult>>(nsIndex.Search(searchTerm, category, maxResults));
+        await Task.CompletedTask;
+        return nsIndex.Search(searchTerm, category, maxResults);
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Task.FromResult<IReadOnlyList<SearchResult>>(Array.Empty<SearchResult>());
+            await Task.CompletedTask;
+            return Array.Empty<SearchResult>();
         }
 
         // For now, query uses the same logic as search but with relevance filtering
         // Future: Add semantic/AI-based query processing when enabled
         var results = nsIndex.Search(query, category, maxResults * 2);
-        return Task.FromResult<IReadOnlyList<SearchResult>>(results.Where(r => r.RelevanceScore >= minRelevanceScore).Take(maxResults).ToList());
+        await Task.CompletedTask;
+        return results.Where(r => r.RelevanceScore >= minRelevanceScore).Take(maxResults).ToList();
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions = 5, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions = 5, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Task.FromResult<IReadOnlyList<Guid>>(Array.Empty<Guid>());
+            await Task.CompletedTask;
+            return Array.Empty<Guid>();
         }
 
-        return Task.FromResult<IReadOnlyList<Guid>>(nsIndex.GetRelated(sourceValue, maxSuggestions));
+        await Task.CompletedTask;
+        return nsIndex.GetRelated(sourceValue, maxSuggestions);
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Task.FromResult<IReadOnlyList<Guid>>(Array.Empty<Guid>());
+            await Task.CompletedTask;
+            return Array.Empty<Guid>();
         }
 
-        return Task.FromResult<IReadOnlyList<Guid>>(nsIndex.ListDocuments(category, skip, take));
+        await Task.CompletedTask;
+        return nsIndex.ListDocuments(category, skip, take);
     }
 
     /// <inheritdoc />
-    public Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId, CancellationToken cancellationToken = default)
+    public async Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Task.FromResult(new NamespaceStats(0, new Dictionary<string, int>(), 0));
+            await Task.CompletedTask;
+            return new NamespaceStats(0, new Dictionary<string, int>(), 0);
         }
 
-        return Task.FromResult(nsIndex.GetStats());
+        await Task.CompletedTask;
+        return nsIndex.GetStats();
     }
 
     /// <summary>

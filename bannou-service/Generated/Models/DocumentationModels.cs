@@ -1935,6 +1935,17 @@ public partial class BindRepositoryRequest
 {
 
     /// <summary>
+    /// Owner of this binding. NOT a session ID.
+    /// <br/>For user-initiated bindings: the accountId (UUID format).
+    /// <br/>For service-initiated bindings: the service name (e.g., "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Owner { get; set; } = default!;
+
+    /// <summary>
     /// Documentation namespace to bind
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
@@ -2308,10 +2319,13 @@ public partial class RepositoryBindingInfo
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// ID of the user who created the binding
+    /// Owner of this binding. NOT a session ID.
+    /// <br/>Contains either an accountId (UUID format) for user-initiated bindings
+    /// <br/>or a service name for service-initiated bindings.
+    /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public System.Guid CreatedBy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public string Owner { get; set; } = default!;
 
 }
 
@@ -2515,6 +2529,17 @@ public partial class CreateArchiveRequest
 {
 
     /// <summary>
+    /// Owner of this archive. NOT a session ID.
+    /// <br/>For user-initiated archives: the accountId (UUID format).
+    /// <br/>For service-initiated archives: the service name (e.g., "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Owner { get; set; } = default!;
+
+    /// <summary>
     /// Documentation namespace to archive
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("namespace")]
@@ -2706,10 +2731,13 @@ public partial class ArchiveInfo
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// ID of the user who created the archive
+    /// Owner of this archive. NOT a session ID.
+    /// <br/>Contains either an accountId (UUID format) for user-initiated archives
+    /// <br/>or a service name for service-initiated archives.
+    /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public System.Guid CreatedBy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public string Owner { get; set; } = default!;
 
 }
 

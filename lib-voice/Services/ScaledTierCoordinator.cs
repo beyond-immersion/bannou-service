@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
@@ -14,6 +15,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     private readonly IKamailioClient _kamailioClient;
     private readonly IRtpEngineClient _rtpEngineClient;
     private readonly ILogger<ScaledTierCoordinator> _logger;
+    private readonly IMessageBus _messageBus;
     private readonly VoiceServiceConfiguration _configuration;
 
     /// <summary>
@@ -22,16 +24,19 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     /// <param name="kamailioClient">Kamailio client for SIP control.</param>
     /// <param name="rtpEngineClient">RTPEngine client for media control.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="messageBus">Message bus for error event publishing.</param>
     /// <param name="configuration">Voice service configuration.</param>
     public ScaledTierCoordinator(
         IKamailioClient kamailioClient,
         IRtpEngineClient rtpEngineClient,
         ILogger<ScaledTierCoordinator> logger,
+        IMessageBus messageBus,
         VoiceServiceConfiguration configuration)
     {
         _kamailioClient = kamailioClient ?? throw new ArgumentNullException(nameof(kamailioClient));
         _rtpEngineClient = rtpEngineClient ?? throw new ArgumentNullException(nameof(rtpEngineClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
@@ -151,6 +156,14 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         if (!isHealthy)
         {
             _logger.LogError("RTPEngine is not healthy, cannot allocate for room {RoomId}", roomId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "AllocateRtpServer",
+                "RtpEngineUnhealthy",
+                "RTPEngine health check failed",
+                dependency: "rtpengine",
+                details: new { roomId },
+                cancellationToken: cancellationToken);
             throw new InvalidOperationException("RTPEngine is not available");
         }
 

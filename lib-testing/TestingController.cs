@@ -26,8 +26,9 @@ public class TestingController : ControllerBase
     /// </summary>
     [HttpGet("run-enabled")]
     [HttpPost("run-enabled")]
-    public Task<IActionResult> RunEnabled()
+    public async Task<IActionResult> RunEnabled()
     {
+        await Task.CompletedTask;
         try
         {
             _logger.LogInformation("Running infrastructure tests for enabled services");
@@ -44,12 +45,12 @@ public class TestingController : ControllerBase
             };
 
             _logger.LogInformation("Infrastructure test successful - testing service operational");
-            return Task.FromResult<IActionResult>(Ok(response));
+            return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Infrastructure test failed");
-            return Task.FromResult<IActionResult>(StatusCode(500, new { Success = false, Message = "Testing service error", Error = ex.Message }));
+            return StatusCode(500, new { Success = false, Message = "Testing service error", Error = ex.Message });
         }
     }
 

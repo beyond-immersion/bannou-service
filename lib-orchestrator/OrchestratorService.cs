@@ -2786,11 +2786,12 @@ public partial class OrchestratorService : IOrchestratorService
     /// <summary>
     /// Gets a list of known pool types from Redis.
     /// </summary>
-    private Task<List<string>> GetKnownPoolTypesAsync()
+    private async Task<List<string>> GetKnownPoolTypesAsync()
     {
         // For now, we'll use a hardcoded list of known pool types
         // In a full implementation, we'd scan Redis keys or maintain a registry
-        return Task.FromResult(new List<string> { "asset-processor", "texture-processor", "model-processor", "audio-processor" });
+        await Task.CompletedTask;
+        return new List<string> { "asset-processor", "texture-processor", "model-processor", "audio-processor" };
     }
 
     /// <summary>

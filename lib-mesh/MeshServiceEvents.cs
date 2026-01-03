@@ -97,7 +97,7 @@ public partial class MeshService
     /// Updates the local service-to-app-id cache atomically.
     /// </summary>
     /// <param name="evt">The full service mappings event.</param>
-    public Task HandleServiceMappingsAsync(FullServiceMappingsEvent evt)
+    public async Task HandleServiceMappingsAsync(FullServiceMappingsEvent evt)
     {
         _logger.LogDebug(
             "Processing service mappings update v{Version} with {Count} mappings",
@@ -109,7 +109,8 @@ public partial class MeshService
             if (evt.Mappings == null || evt.Mappings.Count == 0)
             {
                 _logger.LogWarning("Received empty service mappings event");
-                return Task.CompletedTask;
+                await Task.CompletedTask;
+                return;
             }
 
             var updated = UpdateMappingsCache(
@@ -141,7 +142,7 @@ public partial class MeshService
             _logger.LogError(ex, "Error processing service mappings event");
         }
 
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <summary>

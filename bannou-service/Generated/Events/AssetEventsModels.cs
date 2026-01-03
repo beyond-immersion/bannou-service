@@ -38,12 +38,15 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
-    /// WebSocket session ID of the requester
+    /// Owner of this asset operation. NOT a session ID.
+    /// <br/>For user-initiated uploads: the accountId (UUID format).
+    /// <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+    /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public string Owner { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the requester
@@ -119,12 +122,15 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
-    /// WebSocket session ID of the requester
+    /// Owner of this asset operation. NOT a session ID.
+    /// <br/>For user-initiated uploads: the accountId (UUID format).
+    /// <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+    /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
+    public string Owner { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the requester
@@ -396,10 +402,13 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     public CompressionTypeEnum? Compression { get; set; } = default!;
 
     /// <summary>
-    /// Account ID that created the bundle
+    /// Owner of this bundle. NOT a session ID.
+    /// <br/>For user-initiated bundles: the accountId (UUID format).
+    /// <br/>For service-initiated bundles: the service name (e.g., "orchestrator").
+    /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public System.Guid? CreatedBy { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public string? Owner { get; set; } = default!;
 
 }
 

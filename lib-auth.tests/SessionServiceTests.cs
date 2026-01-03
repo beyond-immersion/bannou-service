@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -63,54 +64,10 @@ public class SessionServiceTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act & Assert
+        ServiceConstructorValidator.ValidateServiceConstructor<SessionService>();
         Assert.NotNull(_service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            null!,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            null!));
     }
 
     #endregion

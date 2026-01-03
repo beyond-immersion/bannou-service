@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -22,6 +23,7 @@ public class TokenService : ITokenService
     private readonly ISubscriptionsClient _subscriptionsClient;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<TokenService> _logger;
     private const string REDIS_STATE_STORE = "auth-statestore";
 
@@ -33,12 +35,14 @@ public class TokenService : ITokenService
         ISubscriptionsClient subscriptionsClient,
         ISessionService sessionService,
         AuthServiceConfiguration configuration,
+        IMessageBus messageBus,
         ILogger<TokenService> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -85,6 +89,15 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch subscriptions for account {AccountId} - login rejected", account.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "GenerateAccessToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "subscriptions",
+                endpoint: "post:/auth/login",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             throw;
         }
 
@@ -170,6 +183,15 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate refresh token");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ValidateRefreshToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/auth/refresh",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -266,6 +288,15 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during token validation");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ValidateToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/auth/validate",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -273,7 +304,6 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task<string?> ExtractSessionKeyFromJwtAsync(string jwt)
     {
-        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -284,6 +314,12 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error extracting session_key from JWT");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExtractSessionKeyFromJwt",
+                ex.GetType().Name,
+                ex.Message,
+                endpoint: "post:/auth/validate");
             return null;
         }
     }

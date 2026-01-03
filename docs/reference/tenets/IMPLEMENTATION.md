@@ -2,7 +2,7 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23
 
 These tenets define the patterns you follow while implementing services. Reference them during active development.
 
@@ -465,6 +465,77 @@ Environment.GetEnvironmentVariable("...");  // NO - use config class
 
 ---
 
+## Tenet 23: Async Method Pattern (MANDATORY)
+
+**Rule**: All methods returning `Task` or `Task<T>` MUST use the `async` keyword and contain at least one `await`.
+
+### Why This Matters
+
+Non-async Task-returning methods have several problems:
+1. **Exception handling differs** - Exceptions thrown before returning the Task won't be captured in the Task
+2. **Stack traces are incomplete** - Missing async state machine makes debugging harder
+3. **Disposal timing issues** - `using` statements don't work correctly without `await`
+4. **Inconsistent behavior** - Some code paths await, others don't
+
+### Correct Pattern
+
+```csharp
+// CORRECT: async method with await
+public async Task<AccountResponse> GetAccountAsync(Guid accountId, CancellationToken ct)
+{
+    var account = await _stateStore.GetAsync($"account:{accountId}", ct);
+    return MapToResponse(account);
+}
+
+// CORRECT: async even when just returning a value
+public async Task<int> GetCountAsync()
+{
+    return await Task.FromResult(_items.Count);
+}
+```
+
+### Incorrect Patterns
+
+```csharp
+// WRONG: Returns Task without async/await
+public Task<AccountResponse> GetAccountAsync(Guid accountId)
+{
+    var account = _stateStore.GetAsync($"account:{accountId}").Result; // BLOCKS!
+    return Task.FromResult(MapToResponse(account));
+}
+
+// WRONG: Non-async method returning Task
+public Task DoWorkAsync()
+{
+    _logger.LogInformation("Working");
+    return Task.CompletedTask; // Should be: async Task, no return needed
+}
+```
+
+### Synchronous Implementation of Async Interface
+
+When implementing an interface that requires async methods but your implementation is synchronous, use `await Task.CompletedTask;`:
+
+```csharp
+public async Task DoWorkAsync()
+{
+    _logger.LogInformation("Working");
+    // Synchronous work, but interface requires Task
+    await Task.CompletedTask;
+}
+
+public async Task<bool> IsEnabledAsync()
+{
+    var result = _isEnabled; // Synchronous check
+    await Task.CompletedTask;
+    return result;
+}
+```
+
+This maintains proper async semantics without pragma suppressions.
+
+---
+
 ## Quick Reference: Implementation Violations
 
 | Violation | Tenet | Fix |
@@ -480,7 +551,10 @@ Environment.GetEnvironmentVariable("...");  // NO - use config class
 | Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
 | Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
 | Hardcoded credential fallback | T21 | Remove default, require configuration |
+| Non-async Task-returning method | T23 | Add async keyword and await |
+| `Task.FromResult` without async | T23 | Use async method with await |
+| `.Result` or `.Wait()` on Task | T23 | Use await instead |
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21. See [TENETS.md](../TENETS.md) for the complete index.*
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23. See [TENETS.md](../TENETS.md) for the complete index.*

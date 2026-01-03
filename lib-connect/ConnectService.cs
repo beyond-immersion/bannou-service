@@ -1230,8 +1230,12 @@ public partial class ConnectService : IConnectService
                 // Use static cached Accept header to avoid per-request allocation
                 request.Headers.Accept.Add(s_jsonAcceptHeader);
 
-                // Pass client's WebSocket session ID to downstream services
-                // This enables services like Voice to set permissions for the correct client session
+                // TRACING ONLY: Pass client's WebSocket session ID to downstream services for request correlation.
+                // WARNING: This header is ONLY for distributed tracing and logging correlation.
+                // DO NOT use this for ownership, attribution, or access control decisions.
+                // For ownership/audit trail, services must receive an explicit "owner" field in request bodies
+                // containing either a service name (for service-initiated operations) or an accountId
+                // (for user-initiated operations).
                 request.Headers.Add("X-Bannou-Session-Id", sessionId);
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning

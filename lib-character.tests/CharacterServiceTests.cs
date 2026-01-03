@@ -289,8 +289,11 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal(characterId, capturedEvent.CharacterId);
         Assert.Contains("name", capturedEvent.ChangedFields);
         Assert.Contains("status", capturedEvent.ChangedFields);
-        // Note: The event schema has Name/Status/etc. but the service currently
-        // only populates CharacterId and ChangedFields. This is a known gap.
+        // Verify full event population (all required schema fields)
+        Assert.Equal("Updated Name", capturedEvent.Name);
+        Assert.Equal(realmId, capturedEvent.RealmId);
+        Assert.NotEqual(Guid.Empty, capturedEvent.SpeciesId);
+        Assert.Equal("Dead", capturedEvent.Status);
     }
 
     [Fact]

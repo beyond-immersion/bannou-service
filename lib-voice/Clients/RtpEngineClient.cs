@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
@@ -15,6 +16,7 @@ public class RtpEngineClient : IRtpEngineClient
     private readonly UdpClient _client;
     private readonly IPEndPoint _endpoint;
     private readonly ILogger<RtpEngineClient> _logger;
+    private readonly IMessageBus _messageBus;
     private readonly TimeSpan _timeout;
     private readonly object _sendLock = new();
     private long _cookieCounter;
@@ -26,11 +28,13 @@ public class RtpEngineClient : IRtpEngineClient
     /// <param name="host">RTPEngine host address.</param>
     /// <param name="port">RTPEngine ng protocol port (default 22222).</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="messageBus">Message bus for error event publishing.</param>
     /// <param name="timeoutSeconds">Timeout for responses in seconds (default 5).</param>
     public RtpEngineClient(
         string host,
         int port,
         ILogger<RtpEngineClient> logger,
+        IMessageBus messageBus,
         int timeoutSeconds = 5)
     {
         if (string.IsNullOrEmpty(host))
@@ -40,6 +44,7 @@ public class RtpEngineClient : IRtpEngineClient
 
         _client = new UdpClient();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         // Resolve hostname to IP address (IPAddress.Parse only handles numeric IPs)
@@ -488,6 +493,14 @@ public class RtpEngineClient : IRtpEngineClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to parse RTPEngine bencode response: {Bencode}", bencode);
+            _messageBus.TryPublishErrorAsync(
+                "voice",
+                "ParseBencodeResponse",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "rtpengine",
+                details: new { bencode },
+                stack: ex.StackTrace).GetAwaiter().GetResult();
             return new T { Result = "error", ErrorReason = ex.Message };
         }
     }

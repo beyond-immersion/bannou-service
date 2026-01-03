@@ -513,7 +513,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
-    public async Task JoinGameSessionAsync_WhenSessionFinished_CreatesNewLobby()
+    public async Task JoinGameSessionAsync_WhenSessionFinished_ShouldReturnConflict()
     {
         // Arrange
         var service = CreateService();
@@ -529,7 +529,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Setup valid subscriber session
         SetupValidSubscriberSession(accountId, clientSessionId.ToString());
 
-        // Setup finished lobby - service will auto-create a new one
+        // Setup finished lobby
         var lobbyId = Guid.NewGuid();
         var lobby = new GameSessionModel
         {
@@ -542,39 +542,13 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         };
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
-        // When the lobby is Finished, GetOrCreateLobbySessionAsync creates a NEW lobby
-        // Mock the save operation to capture the new lobby creation
-        GameSessionModel? createdLobby = null;
-        _mockGameSessionStore
-            .Setup(s => s.SaveAsync(It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX)), It.IsAny<GameSessionModel>(), It.IsAny<CancellationToken>()))
-            .Callback<string, GameSessionModel, CancellationToken>((k, m, ct) => createdLobby = m)
-            .Returns(Task.CompletedTask);
-        _mockGameSessionStore
-            .Setup(s => s.SaveAsync(It.Is<string>(k => k.StartsWith(LOBBY_KEY_PREFIX)), It.IsAny<GameSessionModel>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Also need to mock GetAsync for the NEW lobby ID that will be looked up after creation
-        _mockGameSessionStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX) && k != SESSION_KEY_PREFIX + lobbyId.ToString()), It.IsAny<CancellationToken>()))
-            .Returns((string key, CancellationToken ct) =>
-            {
-                // Return the newly created lobby when looking up the new session
-                if (createdLobby != null && key.EndsWith(createdLobby.SessionId))
-                {
-                    return Task.FromResult<GameSessionModel?>(createdLobby);
-                }
-                return Task.FromResult<GameSessionModel?>(null);
-            });
-
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
 
-        // Assert - should succeed with a new lobby
-        Assert.Equal(StatusCodes.OK, status);
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
-        Assert.NotNull(createdLobby);
-        Assert.Equal(GameSessionResponseStatus.Active, createdLobby.Status);
+        Assert.False(response.Success);
     }
 
     [Fact]
@@ -606,6 +580,11 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             CreatedAt = DateTimeOffset.UtcNow
         };
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Mock UpdateSessionStateAsync to succeed
+        _mockPermissionsClient
+            .Setup(p => p.UpdateSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permissions.SessionUpdateResponse { Success = true });
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
@@ -653,6 +632,11 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             CreatedAt = DateTimeOffset.UtcNow
         };
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Mock UpdateSessionStateAsync to succeed
+        _mockPermissionsClient
+            .Setup(p => p.UpdateSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permissions.SessionUpdateResponse { Success = true });
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
@@ -704,6 +688,11 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             CreatedAt = DateTimeOffset.UtcNow
         };
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Mock ClearSessionStateAsync to succeed
+        _mockPermissionsClient
+            .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permissions.SessionUpdateResponse { Success = true });
 
         // Act
         var status = await service.LeaveGameSessionAsync(request);

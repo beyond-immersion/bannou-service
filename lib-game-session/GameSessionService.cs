@@ -392,12 +392,12 @@ public partial class GameSessionService : IGameSessionService
                 });
             }
 
-            // Get or create the lobby for this game type
-            var lobbyId = await GetOrCreateLobbySessionAsync(gameType);
+            // Get the lobby for this game type (don't auto-create for join)
+            var lobbyId = await GetLobbySessionAsync(gameType);
             if (lobbyId == Guid.Empty)
             {
-                _logger.LogWarning("Failed to get/create lobby for game type {GameType}", gameType);
-                return (StatusCodes.InternalServerError, null);
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
+                return (StatusCodes.NotFound, null);
             }
 
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
@@ -469,7 +469,23 @@ public partial class GameSessionService : IGameSessionService
                 model.Status = GameSessionResponseStatus.Active;
             }
 
-            // TODO: Set game-session:in_game state via permissions service
+            // Set game-session:in_game state via permissions service (required for API access)
+            try
+            {
+                await _permissionsClient.UpdateSessionStateAsync(new Permissions.SessionStateUpdate
+                {
+                    SessionId = body.SessionId,
+                    ServiceId = "game-session",
+                    NewState = "in_game"
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update session state for {SessionId}", body.SessionId);
+                // Remove the player we just added since they won't have permissions
+                model.Players.Remove(player);
+                return (StatusCodes.InternalServerError, null);
+            }
 
             // Save updated session
             await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, cancellationToken: cancellationToken);
@@ -540,11 +556,11 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Performing game action {ActionType} in game {GameType} by {AccountId}",
                 body.ActionType, gameType, accountId);
 
-            // Get the lobby for this game type
-            var lobbyId = await GetOrCreateLobbySessionAsync(gameType);
+            // Get the lobby for this game type (don't auto-create for action)
+            var lobbyId = await GetLobbySessionAsync(gameType);
             if (lobbyId == Guid.Empty)
             {
-                _logger.LogWarning("Failed to get lobby for game type {GameType}", gameType);
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -640,11 +656,11 @@ public partial class GameSessionService : IGameSessionService
 
             _logger.LogInformation("Player leaving game {GameType} from session {SessionId}", gameType, clientSessionId);
 
-            // Get the lobby for this game type
-            var lobbyId = await GetOrCreateLobbySessionAsync(gameType);
+            // Get the lobby for this game type (don't auto-create for leave)
+            var lobbyId = await GetLobbySessionAsync(gameType);
             if (lobbyId == Guid.Empty)
             {
-                _logger.LogWarning("Failed to get lobby for game type {GameType}", gameType);
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
                 return StatusCodes.NotFound;
             }
 
@@ -668,7 +684,30 @@ public partial class GameSessionService : IGameSessionService
                 return StatusCodes.NotFound;
             }
 
-            // TODO: Clear game-session:in_game state via permissions service
+            // Clear game-session:in_game state via permissions service
+            try
+            {
+                await _permissionsClient.ClearSessionStateAsync(new Permissions.ClearSessionStateRequest
+                {
+                    SessionId = body.SessionId,
+                    ServiceId = "game-session"
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Log error and publish error event - this is an internal failure, not user error
+                // Continue anyway - player wants to leave, don't trap them; state cleaned up on session expiry
+                _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.SessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "permissions",
+                    endpoint: "post:/permissions/clear-session-state",
+                    details: new { SessionId = body.SessionId },
+                    stack: ex.StackTrace);
+            }
 
             model.Players.Remove(leavingPlayer);
             model.CurrentPlayers = model.Players.Count;
@@ -864,11 +903,11 @@ public partial class GameSessionService : IGameSessionService
 
             _logger.LogInformation("Chat message in game {GameType}: {MessageType}", gameType, body.MessageType);
 
-            // Get the lobby for this game type
-            var lobbyId = await GetOrCreateLobbySessionAsync(gameType);
+            // Get the lobby for this game type (don't auto-create for chat)
+            var lobbyId = await GetLobbySessionAsync(gameType);
             if (lobbyId == Guid.Empty)
             {
-                _logger.LogWarning("Failed to get lobby for game type {GameType}", gameType);
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
                 return StatusCodes.NotFound;
             }
 
@@ -1428,6 +1467,36 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get/create lobby for {StubName}", stubName);
+            return Guid.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets an existing lobby session for a game type (does NOT create if missing/finished).
+    /// Use this for Join/Leave/Action operations that require an existing active lobby.
+    /// </summary>
+    private async Task<Guid> GetLobbySessionAsync(string gameType)
+    {
+        var lobbyKey = LOBBY_KEY_PREFIX + gameType.ToLowerInvariant();
+
+        try
+        {
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var existingLobby = await sessionStore.GetAsync(lobbyKey);
+
+            if (existingLobby != null)
+            {
+                _logger.LogDebug("Found lobby {LobbyId} for {GameType} with status {Status}",
+                    existingLobby.SessionId, gameType, existingLobby.Status);
+                return Guid.Parse(existingLobby.SessionId);
+            }
+
+            _logger.LogDebug("No lobby found for {GameType}", gameType);
+            return Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get lobby for {GameType}", gameType);
             return Guid.Empty;
         }
     }

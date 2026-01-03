@@ -29,7 +29,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     }
 
     /// <inheritdoc/>
-    public Task<bool> TryPublishAsync<TEvent>(
+    public async Task<bool> TryPublishAsync<TEvent>(
         string topic,
         TEvent eventData,
         PublishOptions? options = null,
@@ -37,6 +37,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
+        await Task.CompletedTask;
         try
         {
             ArgumentNullException.ThrowIfNull(topic);
@@ -50,17 +51,17 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             // Deliver to local subscribers
             _ = DeliverToSubscribersAsync(topic, eventData, cancellationToken);
 
-            return Task.FromResult(true);
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[InMemory] Failed to publish to topic '{Topic}'", topic);
-            return Task.FromResult(false);
+            return false;
         }
     }
 
     /// <inheritdoc/>
-    public Task<bool> TryPublishRawAsync(
+    public async Task<bool> TryPublishRawAsync(
         string topic,
         ReadOnlyMemory<byte> payload,
         string contentType,
@@ -68,6 +69,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         Guid? messageId = null,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         try
         {
             ArgumentNullException.ThrowIfNull(topic);
@@ -77,17 +79,17 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
                 "[InMemory] Published raw to topic '{Topic}': {ByteCount} bytes, {ContentType} (id: {MessageId})",
                 topic, payload.Length, contentType, effectiveMessageId);
 
-            return Task.FromResult(true);
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[InMemory] Failed to publish raw to topic '{Topic}'", topic);
-            return Task.FromResult(false);
+            return false;
         }
     }
 
     /// <inheritdoc/>
-    public Task<bool> TryPublishErrorAsync(
+    public async Task<bool> TryPublishErrorAsync(
         string serviceName,
         string operation,
         string errorType,
@@ -104,11 +106,12 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             "[InMemory] Error event from {ServiceName}/{Operation}: {ErrorType} - {Message}",
             serviceName, operation, errorType, message);
 
-        return Task.FromResult(true);
+        await Task.CompletedTask;
+        return true;
     }
 
     /// <inheritdoc/>
-    public Task SubscribeAsync<TEvent>(
+    public async Task SubscribeAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
@@ -133,11 +136,11 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 
         _logger.LogDebug("Subscribed to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange})",
             topic, typeof(TEvent).Name, exchange ?? "default");
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    public Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
+    public async Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
@@ -165,11 +168,12 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
             topic, typeof(TEvent).Name, exchange ?? "default", exchangeType);
 
-        return Task.FromResult<IAsyncDisposable>(new DynamicSubscription(this, topic, wrappedHandler));
+        await Task.CompletedTask;
+        return new DynamicSubscription(this, topic, wrappedHandler);
     }
 
     /// <inheritdoc/>
-    public Task<IAsyncDisposable> SubscribeDynamicRawAsync(
+    public async Task<IAsyncDisposable> SubscribeDynamicRawAsync(
         string topic,
         Func<byte[], CancellationToken, Task> handler,
         string? exchange = null,
@@ -200,11 +204,12 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         _logger.LogDebug("Raw dynamic subscription to topic '{Topic}' (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
             topic, exchange ?? "default", exchangeType);
 
-        return Task.FromResult<IAsyncDisposable>(new DynamicSubscription(this, topic, wrappedHandler));
+        await Task.CompletedTask;
+        return new DynamicSubscription(this, topic, wrappedHandler);
     }
 
     /// <inheritdoc/>
-    public Task UnsubscribeAsync(string topic)
+    public async Task UnsubscribeAsync(string topic)
     {
         ArgumentNullException.ThrowIfNull(topic);
 
@@ -214,7 +219,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         }
 
         _logger.LogDebug("Unsubscribed from topic '{Topic}' (in-memory mode)", topic);
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     private async Task DeliverToSubscribersAsync<TEvent>(string topic, TEvent eventData, CancellationToken cancellationToken)

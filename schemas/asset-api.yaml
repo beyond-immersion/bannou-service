@@ -64,24 +64,26 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UploadRequest\"\
         ,\n  \"$defs\": {\n    \"UploadRequest\": {\n      \"description\": \"Request to initiate an asset upload and receive
         a pre-signed URL\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n\
-        \        \"filename\",\n        \"size\",\n        \"contentType\"\n      ],\n      \"properties\": {\n        \"\
-        filename\": {\n          \"type\": \"string\",\n          \"description\": \"Original filename with extension\"\n\
-        \        },\n        \"size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n          \"\
-        description\": \"File size in bytes\"\n        },\n        \"contentType\": {\n          \"type\": \"string\",\n \
-        \         \"description\": \"MIME content type (e.g., image/png, model/gltf-binary)\"\n        },\n        \"metadata\"\
-        : {\n          \"$ref\": \"#/$defs/AssetMetadataInput\",\n          \"description\": \"Optional metadata for asset
-        categorization\"\n        }\n      }\n    },\n    \"AssetMetadataInput\": {\n      \"type\": \"object\",\n      \"\
-        additionalProperties\": false,\n      \"description\": \"User-provided metadata for asset categorization\",\n    \
-        \  \"properties\": {\n        \"assetType\": {\n          \"$ref\": \"#/$defs/AssetType\",\n          \"description\"\
-        : \"Type classification for the asset\"\n        },\n        \"realm\": {\n          \"$ref\": \"#/$defs/Realm\",\n\
-        \          \"description\": \"Game realm the asset belongs to\"\n        },\n        \"tags\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
-        Searchable tags for the asset\"\n        }\n      }\n    },\n    \"AssetType\": {\n      \"type\": \"string\",\n \
-        \     \"enum\": [\n        \"texture\",\n        \"model\",\n        \"audio\",\n        \"behavior\",\n        \"\
-        bundle\",\n        \"prefab\",\n        \"other\"\n      ],\n      \"description\": \"Type classification for assets\"\
-        \n    },\n    \"Realm\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"omega\",\n        \"arcadia\"\
-        ,\n        \"fantasia\",\n        \"shared\"\n      ],\n      \"description\": \"Game realm the asset belongs to\"\
-        \n    }\n  }\n}"
+        \        \"filename\",\n        \"size\",\n        \"contentType\",\n        \"owner\"\n      ],\n      \"properties\"\
+        : {\n        \"owner\": {\n          \"type\": \"string\",\n          \"description\": \"Owner of this asset operation.
+        NOT a session ID.\\nFor user-initiated uploads: the accountId (UUID format).\\nFor service-initiated uploads: the
+        service name (e.g., \\\"behavior\\\", \\\"orchestrator\\\").\\n\"\n        },\n        \"filename\": {\n         \
+        \ \"type\": \"string\",\n          \"description\": \"Original filename with extension\"\n        },\n        \"size\"\
+        : {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n          \"description\": \"File size in
+        bytes\"\n        },\n        \"contentType\": {\n          \"type\": \"string\",\n          \"description\": \"MIME
+        content type (e.g., image/png, model/gltf-binary)\"\n        },\n        \"metadata\": {\n          \"$ref\": \"#/$defs/AssetMetadataInput\"\
+        ,\n          \"description\": \"Optional metadata for asset categorization\"\n        }\n      }\n    },\n    \"AssetMetadataInput\"\
+        : {\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"description\": \"User-provided metadata
+        for asset categorization\",\n      \"properties\": {\n        \"assetType\": {\n          \"$ref\": \"#/$defs/AssetType\"\
+        ,\n          \"description\": \"Type classification for the asset\"\n        },\n        \"realm\": {\n          \"\
+        $ref\": \"#/$defs/Realm\",\n          \"description\": \"Game realm the asset belongs to\"\n        },\n        \"\
+        tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n\
+        \          \"description\": \"Searchable tags for the asset\"\n        }\n      }\n    },\n    \"AssetType\": {\n\
+        \      \"type\": \"string\",\n      \"enum\": [\n        \"texture\",\n        \"model\",\n        \"audio\",\n  \
+        \      \"behavior\",\n        \"bundle\",\n        \"prefab\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Type classification for assets\"\n    },\n    \"Realm\": {\n      \"type\": \"string\",\n      \"enum\": [\n \
+        \       \"omega\",\n        \"arcadia\",\n        \"fantasia\",\n        \"shared\"\n      ],\n      \"description\"\
+        : \"Game realm the asset belongs to\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UploadResponse\"\
         ,\n  \"$defs\": {\n    \"UploadResponse\": {\n      \"description\": \"Response containing pre-signed URL and configuration
         for uploading an asset\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
@@ -439,17 +441,19 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateBundleRequest\"\
         ,\n  \"$defs\": {\n    \"CreateBundleRequest\": {\n      \"description\": \"Request to create a new asset bundle from
         multiple assets\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n \
-        \       \"bundleId\",\n        \"assetIds\"\n      ],\n      \"properties\": {\n        \"bundleId\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"Unique bundle identifier\"\n        },\n        \"version\"\
-        : {\n          \"type\": \"string\",\n          \"default\": \"1.0.0\",\n          \"description\": \"Bundle version
-        string\"\n        },\n        \"assetIds\": {\n          \"type\": \"array\",\n          \"items\": {\n          \
-        \  \"type\": \"string\"\n          },\n          \"description\": \"List of asset IDs to include in the bundle\"\n\
-        \        },\n        \"compression\": {\n          \"$ref\": \"#/$defs/CompressionType\",\n          \"description\"\
-        : \"Compression algorithm to use for the bundle\"\n        },\n        \"metadata\": {\n          \"type\": \"object\"\
-        ,\n          \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Custom metadata
-        for the bundle (null if none)\"\n        }\n      }\n    },\n    \"CompressionType\": {\n      \"type\": \"string\"\
-        ,\n      \"enum\": [\n        \"lz4\",\n        \"lzma\",\n        \"none\"\n      ],\n      \"description\": \"Compression
-        algorithm for bundles\"\n    }\n  }\n}"
+        \       \"bundleId\",\n        \"assetIds\",\n        \"owner\"\n      ],\n      \"properties\": {\n        \"owner\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Owner of this bundle. NOT a session ID.\\nFor user-initiated
+        bundles: the accountId (UUID format).\\nFor service-initiated bundles: the service name (e.g., \\\"orchestrator\\\"\
+        ).\\n\"\n        },\n        \"bundleId\": {\n          \"type\": \"string\",\n          \"description\": \"Unique
+        bundle identifier\"\n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"default\": \"\
+        1.0.0\",\n          \"description\": \"Bundle version string\"\n        },\n        \"assetIds\": {\n          \"\
+        type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
+        : \"List of asset IDs to include in the bundle\"\n        },\n        \"compression\": {\n          \"$ref\": \"#/$defs/CompressionType\"\
+        ,\n          \"description\": \"Compression algorithm to use for the bundle\"\n        },\n        \"metadata\": {\n\
+        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n     \
+        \     \"description\": \"Custom metadata for the bundle (null if none)\"\n        }\n      }\n    },\n    \"CompressionType\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"lz4\",\n        \"lzma\",\n        \"none\"\n     \
+        \ ],\n      \"description\": \"Compression algorithm for bundles\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateBundleResponse\"\
         ,\n  \"$defs\": {\n    \"CreateBundleResponse\": {\n      \"description\": \"Response with bundle creation status
         and estimated size\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"properties\":
@@ -549,18 +553,20 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BundleUploadRequest\"\
         ,\n  \"$defs\": {\n    \"BundleUploadRequest\": {\n      \"description\": \"Request to upload a pre-built asset bundle
         file\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"filename\"\
-        ,\n        \"size\"\n      ],\n      \"properties\": {\n        \"filename\": {\n          \"type\": \"string\",\n\
-        \          \"description\": \"Must end with .bannou or .zip\"\n        },\n        \"size\": {\n          \"type\"\
-        : \"integer\",\n          \"format\": \"int64\",\n          \"description\": \"Bundle file size in bytes\"\n     \
-        \   },\n        \"manifestPreview\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/BundleManifestPreview\"\
-        \n            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Optional preview of bundle
-        manifest for validation\"\n        }\n      }\n    },\n    \"BundleManifestPreview\": {\n      \"type\": \"object\"\
-        ,\n      \"additionalProperties\": false,\n      \"description\": \"Preview of bundle manifest for validation\",\n\
-        \      \"properties\": {\n        \"bundleId\": {\n          \"type\": \"string\",\n          \"description\": \"\
-        Bundle identifier from the manifest\"\n        },\n        \"version\": {\n          \"type\": \"string\",\n     \
-        \     \"description\": \"Bundle version from the manifest\"\n        },\n        \"assetCount\": {\n          \"type\"\
-        : \"integer\",\n          \"description\": \"Number of assets declared in the manifest\"\n        }\n      }\n   \
-        \ }\n  }\n}"
+        ,\n        \"size\",\n        \"owner\"\n      ],\n      \"properties\": {\n        \"owner\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Owner of this bundle upload. NOT a session ID.\\nFor user-initiated uploads:
+        the accountId (UUID format).\\nFor service-initiated uploads: the service name (e.g., \\\"orchestrator\\\").\\n\"\n\
+        \        },\n        \"filename\": {\n          \"type\": \"string\",\n          \"description\": \"Must end with
+        .bannou or .zip\"\n        },\n        \"size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\"\
+        ,\n          \"description\": \"Bundle file size in bytes\"\n        },\n        \"manifestPreview\": {\n        \
+        \  \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/BundleManifestPreview\"\n            }\n       \
+        \   ],\n          \"nullable\": true,\n          \"description\": \"Optional preview of bundle manifest for validation\"\
+        \n        }\n      }\n    },\n    \"BundleManifestPreview\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
+        : false,\n      \"description\": \"Preview of bundle manifest for validation\",\n      \"properties\": {\n       \
+        \ \"bundleId\": {\n          \"type\": \"string\",\n          \"description\": \"Bundle identifier from the manifest\"\
+        \n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"description\": \"Bundle version
+        from the manifest\"\n        },\n        \"assetCount\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Number of assets declared in the manifest\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UploadResponse\"\
         ,\n  \"$defs\": {\n    \"UploadResponse\": {\n      \"description\": \"Response containing pre-signed URL and configuration
         for uploading an asset\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
@@ -657,7 +663,14 @@ components:
       - filename
       - size
       - contentType
+      - owner
       properties:
+        owner:
+          type: string
+          description: |
+            Owner of this asset operation. NOT a session ID.
+            For user-initiated uploads: the accountId (UUID format).
+            For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
         filename:
           type: string
           description: Original filename with extension
@@ -1034,7 +1047,14 @@ components:
       required:
       - bundleId
       - assetIds
+      - owner
       properties:
+        owner:
+          type: string
+          description: |
+            Owner of this bundle. NOT a session ID.
+            For user-initiated bundles: the accountId (UUID format).
+            For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
           description: Unique bundle identifier
@@ -1131,7 +1151,14 @@ components:
       required:
       - filename
       - size
+      - owner
       properties:
+        owner:
+          type: string
+          description: |
+            Owner of this bundle upload. NOT a session ID.
+            For user-initiated uploads: the accountId (UUID format).
+            For service-initiated uploads: the service name (e.g., "orchestrator").
         filename:
           type: string
           description: Must end with .bannou or .zip

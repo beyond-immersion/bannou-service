@@ -111,6 +111,15 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get sessions for account {AccountId}", accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "GetAccountSessions",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/auth/sessions",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             throw; // Don't mask state store failures - empty list should mean "no sessions", not "error"
         }
     }
@@ -141,6 +150,14 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add session to account index: AccountId={AccountId}, SessionKey={SessionKey}", accountId, sessionKey);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "AddSessionToAccountIndex",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -177,6 +194,14 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to remove session from account index: AccountId={AccountId}, SessionKey={SessionKey}", accountId, sessionKey);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "RemoveSessionFromAccountIndex",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -197,6 +222,14 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add reverse index: SessionId={SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "AddSessionIdReverseIndex",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -235,6 +268,14 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error finding session key for SessionId={SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "FindSessionKeyBySessionId",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -326,6 +367,14 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to invalidate sessions for account {AccountId}", accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "InvalidateAllSessionsForAccount",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             throw;
         }
     }
@@ -352,6 +401,14 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish SessionInvalidatedEvent for account {AccountId}", accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "PublishSessionInvalidatedEvent",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "messaging",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
     }
 

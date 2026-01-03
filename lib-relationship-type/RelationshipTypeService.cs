@@ -1108,9 +1108,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         }
     }
 
-    private Task<RelationshipTypeResponse> MapToResponseAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
+    private async Task<RelationshipTypeResponse> MapToResponseAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
     {
-        return Task.FromResult(new RelationshipTypeResponse
+        await Task.CompletedTask;
+        return new RelationshipTypeResponse
         {
             RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
             Code = model.Code,
@@ -1129,7 +1130,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
-        });
+        };
     }
 
     private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)

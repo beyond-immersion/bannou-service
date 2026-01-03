@@ -339,9 +339,14 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "required": [
         "filename",
         "size",
-        "contentType"
+        "contentType",
+        "owner"
       ],
       "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Owner of this asset operation. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+        },
         "filename": {
           "type": "string",
           "description": "Original filename with extension"
@@ -1434,9 +1439,14 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "additionalProperties": false,
       "required": [
         "bundleId",
-        "assetIds"
+        "assetIds",
+        "owner"
       ],
       "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Owner of this bundle. NOT a session ID.\nFor user-initiated bundles: the accountId (UUID format).\nFor service-initiated bundles: the service name (e.g., \"orchestrator\").\n"
+        },
         "bundleId": {
           "type": "string",
           "description": "Unique bundle identifier"
@@ -1730,9 +1740,14 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "additionalProperties": false,
       "required": [
         "filename",
-        "size"
+        "size",
+        "owner"
       ],
       "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Owner of this bundle upload. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"orchestrator\").\n"
+        },
         "filename": {
           "type": "string",
           "description": "Must end with .bannou or .zip"

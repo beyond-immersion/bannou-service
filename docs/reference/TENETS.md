@@ -16,7 +16,7 @@ When documenting tenet compliance in source code comments, **NEVER use specific 
 
 **Instead, use category names:**
 - `FOUNDATION TENETS` - for T1, T2, T4, T5, T6, T13, T15, T18
-- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 
 **Examples:**
@@ -41,7 +41,7 @@ Tenets are organized into three categories based on when they're needed:
 | Category | Tenets | When to Reference |
 |----------|--------|-------------------|
 | [**Foundation**](tenets/FOUNDATION.md) | T1, T2, T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21 | While actively writing service code |
+| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 ---
@@ -77,6 +77,7 @@ Tenets are organized into three categories based on when they're needed:
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
 | **T20** | JSON Serialization | Always use BannouJson; never direct JsonSerializer |
 | **T21** | Configuration-First | Use generated config classes; no direct Environment.GetEnvironmentVariable |
+| **T23** | Async Method Pattern | Task-returning methods must be async with await |
 
 ---
 
@@ -120,6 +121,9 @@ Tenets are organized into three categories based on when they're needed:
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
 | Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
 | Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
+| Non-async Task-returning method | T23 | Add async keyword and await |
+| `Task.FromResult` without async | T23 | Use async method with await |
+| `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |

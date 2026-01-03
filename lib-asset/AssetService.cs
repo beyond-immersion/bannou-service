@@ -165,6 +165,7 @@ public partial class AssetService : IAssetService
                     Size = body.Size,
                     ContentType = body.ContentType,
                     Metadata = body.Metadata,
+                    Owner = body.Owner,
                     StorageKey = storageKey,
                     IsMultipart = true,
                     PartCount = partCount,
@@ -209,6 +210,7 @@ public partial class AssetService : IAssetService
                     Size = body.Size,
                     ContentType = body.ContentType,
                     Metadata = body.Metadata,
+                    Owner = body.Owner,
                     StorageKey = storageKey,
                     IsMultipart = false,
                     PartCount = 0,
@@ -373,7 +375,7 @@ public partial class AssetService : IAssetService
                     Timestamp = now,
                     AssetId = assetId,
                     UploadId = body.UploadId,
-                    SessionId = "system", // TODO: Get from context when auth is integrated
+                    Owner = session.Owner,
                     AccountId = null,
                     Bucket = _configuration.StorageBucket,
                     Key = finalKey,
@@ -883,7 +885,7 @@ public partial class AssetService : IAssetService
                     Size = bundleStream.Length,
                     AssetCount = body.AssetIds.Count,
                     Compression = null, // TODO: Map compression type when implemented
-                    CreatedBy = null // TODO: Get from context when auth is integrated
+                    Owner = body.Owner
                 }).ConfigureAwait(false);
 
             return (StatusCodes.OK, new CreateBundleResponse
@@ -1150,7 +1152,7 @@ public partial class AssetService : IAssetService
                 SizeBytes = body.Size,
                 StorageKey = storageKey,
                 ManifestPreview = body.ManifestPreview,
-                SessionId = "system", // TODO: Get from context when auth is integrated
+                Owner = body.Owner,
                 CreatedAt = DateTimeOffset.UtcNow,
                 ExpiresAt = DateTimeOffset.UtcNow.Add(tokenTtl)
             };
@@ -1544,7 +1546,11 @@ public sealed class AssetProcessingJobEvent
     public string ContentType { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
     public string Filename { get; set; } = string.Empty;
-    public string SessionId { get; set; } = string.Empty;
+    /// <summary>
+    /// Owner of this processing job. NOT a session ID.
+    /// Contains either an accountId or service name.
+    /// </summary>
+    public string Owner { get; set; } = string.Empty;
     public string? RealmId { get; set; }
     public Dictionary<string, string>? Tags { get; set; }
     public Dictionary<string, object>? ProcessingOptions { get; set; }

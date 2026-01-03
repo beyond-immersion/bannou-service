@@ -3830,9 +3830,14 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "additionalProperties": false,
       "required": [
         "namespace",
-        "repositoryUrl"
+        "repositoryUrl",
+        "owner"
       ],
       "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Owner of this binding. NOT a session ID.\nFor user-initiated bindings: the accountId (UUID format).\nFor service-initiated bindings: the service name (e.g., \"orchestrator\").\n"
+        },
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
@@ -4395,10 +4400,9 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "format": "date-time",
           "description": "Timestamp when the binding was created"
         },
-        "createdBy": {
+        "owner": {
           "type": "string",
-          "format": "uuid",
-          "description": "ID of the user who created the binding"
+          "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\ nor a service name for service-initiated bindings.\n"
         }
       }
     },
@@ -4648,10 +4652,9 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "format": "date-time",
           "description": "Timestamp when the binding was created"
         },
-        "createdBy": {
+        "owner": {
           "type": "string",
-          "format": "uuid",
-          "description": "ID of the user who created the binding"
+          "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
         }
       }
     },
@@ -4881,10 +4884,9 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "format": "date-time",
           "description": "Timestamp when the binding was created"
         },
-        "createdBy": {
+        "owner": {
           "type": "string",
-          "format": "uuid",
-          "description": "ID of the user who created the binding"
+          "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\ nor a service name for service-initiated bindings.\n"
         }
       }
     },
@@ -4969,9 +4971,14 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "namespace"
+        "namespace",
+        "owner"
       ],
       "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Owner of this archive. NOT a session ID.\nFor user-initiated archives: the accountId (UUID format).\nFor service-initiated archives: the service name (e.g., \"orchestrator\").\n"
+        },
         "namespace": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
@@ -5208,10 +5215,9 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "format": "date-time",
           "description": "Timestamp when the archive was created"
         },
-        "createdBy": {
+        "owner": {
           "type": "string",
-          "format": "uuid",
-          "description": "ID of the user who created the archive"
+          "description": "Owner of this archive. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
         }
       }
     }

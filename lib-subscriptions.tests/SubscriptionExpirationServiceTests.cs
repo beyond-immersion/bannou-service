@@ -117,7 +117,7 @@ public class SubscriptionExpirationServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenStateStoreFactoryNotAvailable_ShouldLogWarning()
+    public async Task ExecuteAsync_WhenStateStoreFactoryNotAvailable_ShouldThrow()
     {
         // Arrange
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IStateStoreFactory)))
@@ -127,14 +127,13 @@ public class SubscriptionExpirationServiceTests
             _mockServiceProvider.Object,
             _mockLogger.Object);
 
-        // Act - Should not throw
-        await service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None);
-
-        // Assert - Service should handle missing dependencies gracefully
+        // Act & Assert - Required dependency missing should throw
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenMessageBusNotAvailable_ShouldLogWarning()
+    public async Task ExecuteAsync_WhenMessageBusNotAvailable_ShouldThrow()
     {
         // Arrange
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IMessageBus)))
@@ -144,10 +143,9 @@ public class SubscriptionExpirationServiceTests
             _mockServiceProvider.Object,
             _mockLogger.Object);
 
-        // Act - Should not throw
-        await service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None);
-
-        // Assert - Service should handle missing dependencies gracefully
+        // Act & Assert - Required dependency missing should throw
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None));
     }
 
     [Fact]

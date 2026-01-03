@@ -270,10 +270,6 @@ Suppressing warnings hides real issues until they manifest as runtime bugs. The 
 - CS0618 - When testing obsolete API detection, must use obsolete members
 - Suppress with scoped `#pragma warning disable/restore`
 
-**Async Interface Compliance**:
-- CS1998 - Async methods without await are valid for interface compliance
-- Assembly-level suppression acceptable
-
 ### When Warnings Appear
 
 1. **FIRST**: Understand what the warning is telling you

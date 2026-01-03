@@ -1098,30 +1098,32 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BindRepositoryRequest\"\
         ,\n  \"$defs\": {\n    \"BindRepositoryRequest\": {\n      \"description\": \"Request to bind a Git repository for
         automatic documentation sync\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"namespace\",\n        \"repositoryUrl\"\n      ],\n      \"properties\": {\n        \"namespace\":
-        {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n     \
-        \     \"description\": \"Documentation namespace to bind\"\n        },\n        \"repositoryUrl\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Git clone URL (HTTPS for public repos)\"\n        },\n        \"\
-        branch\": {\n          \"type\": \"string\",\n          \"default\": \"main\",\n          \"description\": \"Branch
-        to sync from\"\n        },\n        \"syncIntervalMinutes\": {\n          \"type\": \"integer\",\n          \"default\"\
-        : 60,\n          \"minimum\": 5,\n          \"maximum\": 1440,\n          \"description\": \"How often to sync (5
-        min to 24 hours)\"\n        },\n        \"filePatterns\": {\n          \"type\": \"array\",\n          \"items\":
-        {\n            \"type\": \"string\"\n          },\n          \"default\": [\n            \"**/*.md\"\n          ],\n\
-        \          \"description\": \"Glob patterns for files to include\"\n        },\n        \"excludePatterns\": {\n \
-        \         \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n         \
-        \ \"default\": [\n            \".git/**\",\n            \".obsidian/**\",\n            \"node_modules/**\"\n     \
-        \     ],\n          \"description\": \"Glob patterns for files to exclude\"\n        },\n        \"categoryMapping\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n  \
-        \        },\n          \"description\": \"Map directory prefixes to categories\"\n        },\n        \"defaultCategory\"\
-        : {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"description\": \"Default category for documents
-        without mapping\"\n        },\n        \"archiveEnabled\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false,\n          \"description\": \"Enable archive functionality\"\n        },\n        \"archiveOnSync\": {\n\
-        \          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Create archive after
-        each sync\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\"\
-        : [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n\
-        \        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n      \
-        \  \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n\
-        \    }\n  }\n}"
+        : [\n        \"namespace\",\n        \"repositoryUrl\",\n        \"owner\"\n      ],\n      \"properties\": {\n  \
+        \      \"owner\": {\n          \"type\": \"string\",\n          \"description\": \"Owner of this binding. NOT a session
+        ID.\\nFor user-initiated bindings: the accountId (UUID format).\\nFor service-initiated bindings: the service name
+        (e.g., \\\"orchestrator\\\").\\n\"\n        },\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n          \"description\": \"Documentation namespace
+        to bind\"\n        },\n        \"repositoryUrl\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        Git clone URL (HTTPS for public repos)\"\n        },\n        \"branch\": {\n          \"type\": \"string\",\n   \
+        \       \"default\": \"main\",\n          \"description\": \"Branch to sync from\"\n        },\n        \"syncIntervalMinutes\"\
+        : {\n          \"type\": \"integer\",\n          \"default\": 60,\n          \"minimum\": 5,\n          \"maximum\"\
+        : 1440,\n          \"description\": \"How often to sync (5 min to 24 hours)\"\n        },\n        \"filePatterns\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"default\": [\n            \"**/*.md\"\n          ],\n          \"description\": \"Glob patterns for files
+        to include\"\n        },\n        \"excludePatterns\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\"\n          },\n          \"default\": [\n            \".git/**\",\n            \"\
+        .obsidian/**\",\n            \"node_modules/**\"\n          ],\n          \"description\": \"Glob patterns for files
+        to exclude\"\n        },\n        \"categoryMapping\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"string\"\n          },\n          \"description\": \"Map directory prefixes to categories\"\
+        \n        },\n        \"defaultCategory\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"description\"\
+        : \"Default category for documents without mapping\"\n        },\n        \"archiveEnabled\": {\n          \"type\"\
+        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Enable archive functionality\"\n     \
+        \   },\n        \"archiveOnSync\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"\
+        description\": \"Create archive after each sync\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n     \
+        \ \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\"\
+        ,\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n    \
+        \    \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories
+        for type-safe filtering\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BindRepositoryResponse\"\
         ,\n  \"$defs\": {\n    \"BindRepositoryResponse\": {\n      \"description\": \"Response confirming repository binding
         creation\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"\
@@ -1298,26 +1300,26 @@ paths:
         : \"Sync interval in minutes\"\n        },\n        \"documentCount\": {\n          \"type\": \"integer\",\n     \
         \     \"description\": \"Number of documents from this repository\"\n        },\n        \"createdAt\": {\n      \
         \    \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the
-        binding was created\"\n        },\n        \"createdBy\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"ID of the user who created the binding\"\n        }\n      }\n    },\n \
-        \   \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"syncing\"\
-        ,\n        \"synced\",\n        \"error\",\n        \"disabled\"\n      ],\n      \"description\": \"Status of a repository
-        binding\"\n    },\n    \"SyncInfo\": {\n      \"description\": \"Information about a repository sync operation\",\n\
-        \      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"syncId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier
-        of the sync operation\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/SyncStatus\",\n        \
-        \  \"description\": \"Result status of the sync\"\n        },\n        \"triggeredBy\": {\n          \"$ref\": \"\
-        #/$defs/SyncTrigger\",\n          \"description\": \"What triggered the sync\"\n        },\n        \"startedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp
-        when sync started\"\n        },\n        \"completedAt\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\",\n          \"description\": \"Timestamp when sync completed\"\n        },\n        \"commitHash\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Git commit hash that was synced\"\n        },\n\
-        \        \"documentsProcessed\": {\n          \"type\": \"integer\",\n          \"description\": \"Total documents
-        processed in sync\"\n        }\n      }\n    },\n    \"SyncStatus\": {\n      \"type\": \"string\",\n      \"enum\"\
-        : [\n        \"success\",\n        \"partial\",\n        \"failed\"\n      ],\n      \"description\": \"Result status
-        of a sync operation\"\n    },\n    \"SyncTrigger\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"\
-        manual\",\n        \"scheduled\"\n      ],\n      \"description\": \"What triggered the sync operation\"\n    }\n\
-        \  }\n}"
+        binding was created\"\n        },\n        \"owner\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Owner of this binding. NOT a session ID.\\nContains either an accountId (UUID format) for user-initiated bindings\\
+        nor a service name for service-initiated bindings.\\n\"\n        }\n      }\n    },\n    \"BindingStatus\": {\n  \
+        \    \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"syncing\",\n        \"synced\",\n \
+        \       \"error\",\n        \"disabled\"\n      ],\n      \"description\": \"Status of a repository binding\"\n  \
+        \  },\n    \"SyncInfo\": {\n      \"description\": \"Information about a repository sync operation\",\n      \"type\"\
+        : \"object\",\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"syncId\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier of the sync operation\"\
+        \n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/SyncStatus\",\n          \"description\": \"Result
+        status of the sync\"\n        },\n        \"triggeredBy\": {\n          \"$ref\": \"#/$defs/SyncTrigger\",\n     \
+        \     \"description\": \"What triggered the sync\"\n        },\n        \"startedAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when sync started\"\n        },\n\
+        \        \"completedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when sync completed\"\n        },\n        \"commitHash\": {\n          \"type\": \"string\",\n    \
+        \      \"description\": \"Git commit hash that was synced\"\n        },\n        \"documentsProcessed\": {\n     \
+        \     \"type\": \"integer\",\n          \"description\": \"Total documents processed in sync\"\n        }\n      }\n\
+        \    },\n    \"SyncStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"success\",\n        \"partial\"\
+        ,\n        \"failed\"\n      ],\n      \"description\": \"Result status of a sync operation\"\n    },\n    \"SyncTrigger\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"manual\",\n        \"scheduled\"\n      ],\n      \"\
+        description\": \"What triggered the sync operation\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get repository binding status\",\n  \"description\": \"Get current status
         of a repository binding including sync state and statistics.\\n\",\n  \"tags\": [\n    \"Repository\"\n  ],\n  \"\
         deprecated\": false,\n  \"operationId\": \"getRepositoryStatus\"\n}"
@@ -1378,11 +1380,12 @@ paths:
         ,\n          \"description\": \"Sync interval in minutes\"\n        },\n        \"documentCount\": {\n          \"\
         type\": \"integer\",\n          \"description\": \"Number of documents from this repository\"\n        },\n      \
         \  \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
-        : \"Timestamp when the binding was created\"\n        },\n        \"createdBy\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"ID of the user who created the binding\"\n      \
-        \  }\n      }\n    },\n    \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\"\
-        ,\n        \"syncing\",\n        \"synced\",\n        \"error\",\n        \"disabled\"\n      ],\n      \"description\"\
-        : \"Status of a repository binding\"\n    }\n  }\n}"
+        : \"Timestamp when the binding was created\"\n        },\n        \"owner\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"Owner of this binding. NOT a session ID.\\nContains either an accountId (UUID format)
+        for user-initiated bindings\\nor a service name for service-initiated bindings.\\n\"\n        }\n      }\n    },\n\
+        \    \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"syncing\"\
+        ,\n        \"synced\",\n        \"error\",\n        \"disabled\"\n      ],\n      \"description\": \"Status of a repository
+        binding\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List all repository bindings\",\n  \"description\": \"List all repository
         bindings with optional filtering by status.\\n\",\n  \"tags\": [\n    \"Repository\"\n  ],\n  \"deprecated\": false,\n\
         \  \"operationId\": \"listRepositoryBindings\"\n}"
@@ -1457,11 +1460,12 @@ paths:
         : \"Sync interval in minutes\"\n        },\n        \"documentCount\": {\n          \"type\": \"integer\",\n     \
         \     \"description\": \"Number of documents from this repository\"\n        },\n        \"createdAt\": {\n      \
         \    \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the
-        binding was created\"\n        },\n        \"createdBy\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"ID of the user who created the binding\"\n        }\n      }\n    },\n \
-        \   \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"syncing\"\
-        ,\n        \"synced\",\n        \"error\",\n        \"disabled\"\n      ],\n      \"description\": \"Status of a repository
-        binding\"\n    }\n  }\n}"
+        binding was created\"\n        },\n        \"owner\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Owner of this binding. NOT a session ID.\\nContains either an accountId (UUID format) for user-initiated bindings\\
+        nor a service name for service-initiated bindings.\\n\"\n        }\n      }\n    },\n    \"BindingStatus\": {\n  \
+        \    \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"syncing\",\n        \"synced\",\n \
+        \       \"error\",\n        \"disabled\"\n      ],\n      \"description\": \"Status of a repository binding\"\n  \
+        \  }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Update repository binding configuration\",\n  \"description\": \"Update sync
         settings, file patterns, category mappings, or archive configuration.\\n\",\n  \"tags\": [\n    \"Repository\"\n \
         \ ],\n  \"deprecated\": false,\n  \"operationId\": \"updateRepositoryBinding\"\n}"
@@ -1496,10 +1500,13 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateArchiveRequest\"\
         ,\n  \"$defs\": {\n    \"CreateArchiveRequest\": {\n      \"description\": \"Request to create a point-in-time snapshot
         of namespace documentation\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\"\
-        ,\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n          \"description\": \"Documentation
-        namespace to archive\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"maxLength\"\
-        : 500,\n          \"description\": \"Optional description for the archive\"\n        }\n      }\n    }\n  }\n}"
+        : [\n        \"namespace\",\n        \"owner\"\n      ],\n      \"properties\": {\n        \"owner\": {\n        \
+        \  \"type\": \"string\",\n          \"description\": \"Owner of this archive. NOT a session ID.\\nFor user-initiated
+        archives: the accountId (UUID format).\\nFor service-initiated archives: the service name (e.g., \\\"orchestrator\\\
+        \").\\n\"\n        },\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\"\
+        ,\n          \"maxLength\": 50,\n          \"description\": \"Documentation namespace to archive\"\n        },\n \
+        \       \"description\": {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n          \"description\"\
+        : \"Optional description for the archive\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateArchiveResponse\"\
         ,\n  \"$defs\": {\n    \"CreateArchiveResponse\": {\n      \"description\": \"Response containing the created archive
         details\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"\
@@ -1572,8 +1579,9 @@ paths:
         \    \"commitHash\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Git commit hash if namespace was bound at archive time\"\n        },\n        \"createdAt\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the archive was created\"\
-        \n        },\n        \"createdBy\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
-        \   \"description\": \"ID of the user who created the archive\"\n        }\n      }\n    }\n  }\n}"
+        \n        },\n        \"owner\": {\n          \"type\": \"string\",\n          \"description\": \"Owner of this archive.
+        NOT a session ID.\\nContains either an accountId (UUID format) for user-initiated archives\\nor a service name for
+        service-initiated archives.\\n\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List documentation archives\",\n  \"description\": \"List all archives for
         a namespace.\\n\",\n  \"tags\": [\n    \"Archive\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listDocumentationArchives\"\
         \n}"
@@ -2917,7 +2925,14 @@ components:
       required:
       - namespace
       - repositoryUrl
+      - owner
       properties:
+        owner:
+          type: string
+          description: |
+            Owner of this binding. NOT a session ID.
+            For user-initiated bindings: the accountId (UUID format).
+            For service-initiated bindings: the service name (e.g., "orchestrator").
         namespace:
           type: string
           pattern: '^[a-z0-9-]+$'
@@ -3146,10 +3161,12 @@ components:
           type: string
           format: date-time
           description: Timestamp when the binding was created
-        createdBy:
+        owner:
           type: string
-          format: uuid
-          description: ID of the user who created the binding
+          description: |
+            Owner of this binding. NOT a session ID.
+            Contains either an accountId (UUID format) for user-initiated bindings
+            or a service name for service-initiated bindings.
 
     SyncInfo:
       description: Information about a repository sync operation
@@ -3284,7 +3301,14 @@ components:
       additionalProperties: false
       required:
       - namespace
+      - owner
       properties:
+        owner:
+          type: string
+          description: |
+            Owner of this archive. NOT a session ID.
+            For user-initiated archives: the accountId (UUID format).
+            For service-initiated archives: the service name (e.g., "orchestrator").
         namespace:
           type: string
           pattern: '^[a-z0-9-]+$'
@@ -3407,10 +3431,12 @@ components:
           type: string
           format: date-time
           description: Timestamp when the archive was created
-        createdBy:
+        owner:
           type: string
-          format: uuid
-          description: ID of the user who created the archive
+          description: |
+            Owner of this archive. NOT a session ID.
+            Contains either an accountId (UUID format) for user-initiated archives
+            or a service name for service-initiated archives.
 
     RestoreArchiveRequest:
       description: Request to restore documents from an archive

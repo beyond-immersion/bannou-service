@@ -172,6 +172,15 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         {
             _logger.LogError(ex, "Failed to spawn actor {ActorId}", command.ActorId);
 
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "SpawnActor",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { command.ActorId, command.TemplateId },
+                stack: ex.StackTrace,
+                cancellationToken: ct);
+
             // Publish error status
             await PublishStatusChangedAsync(command.ActorId, "pending", "error", ct);
             return false;
@@ -230,6 +239,14 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to stop actor {ActorId}", command.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "StopActor",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { command.ActorId },
+                stack: ex.StackTrace,
+                cancellationToken: ct);
             return false;
         }
     }
@@ -286,6 +303,13 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Error stopping actor {ActorId} during shutdown", runner.ActorId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "actor",
+                        "ShutdownActor",
+                        ex.GetType().Name,
+                        ex.Message,
+                        details: new { runner.ActorId, nodeId },
+                        stack: ex.StackTrace);
                 }
             }
         }

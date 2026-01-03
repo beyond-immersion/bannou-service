@@ -93,13 +93,20 @@ This document catalogs patterns found through comprehensive codebase searches. I
 **Files**: `lib-accounts/AccountsService.cs`
 **Status**: ✅ Fixed - Both UpdateAccount and UpdateProfile now properly handle and save metadata fields. Added `MetadataEquals` helper for proper comparison.
 
-### 3.2 Missing Creator Attribution (YELLOW)
+### 3.2 Missing Creator Attribution (GREEN - Intentional MVP)
 **Files**:
 - `lib-asset/AssetService.cs:376` - `SessionId = "system"` hardcoded
 - `lib-asset/AssetService.cs:886` - `CreatedBy = null`
 - `lib-documentation/DocumentationService.cs:1944` - `CreatedBy = Guid.Empty`
 
-**Issue**: Cannot track which user/session performed operations. Is this blocking for audit requirements?
+**Status**: ✅ Intentional MVP limitation - waiting for auth integration
+
+**Analysis**: These services don't have `sessionId` in their request schemas. The pattern for attribution requires:
+1. Client connects via WebSocket and gets authenticated (SessionId/AccountId)
+2. Request schemas include `sessionId` field for attribution
+3. Services use the sessionId for audit trail
+
+Asset and Documentation APIs were designed without `sessionId` in requests. The TODO comments explicitly state "Get from context when auth is integrated". This requires schema changes and is deferred to post-MVP auth integration work.
 
 ---
 
@@ -164,12 +171,11 @@ This document catalogs patterns found through comprehensive codebase searches. I
 
 These were documented with "known" keywords and may be intentional:
 
-### 7.1 Character Event Schema Gap (YELLOW)
-**File**: `lib-character.tests/CharacterServiceTests.cs:293`
-```
-// only populates CharacterId and ChangedFields. This is a known gap.
-```
-**Issue**: CharacterChanged event schema defines Name/Status properties, but service only populates CharacterId and ChangedFields.
+### 7.1 Character Event Schema Gap (GREEN - RESOLVED)
+**File**: `lib-character/CharacterService.cs`
+**Status**: ✅ Fixed - Both `CharacterUpdatedEvent` and `CharacterDeletedEvent` now populate all required schema fields:
+- CharacterId, Name, RealmId, SpeciesId, BirthDate, Status, CreatedAt, UpdatedAt, ChangedFields
+- Test updated to verify full event population
 
 ### 7.2 MVP Memory Relevance Uses Keyword Matching (GREEN?)
 **File**: `docs/planning/UPCOMING_-_ACTORS_PLUGIN_V3.md:419-426`
@@ -222,15 +228,15 @@ These patterns were found but are legitimately intentional:
 |----------|-----------|---------------------|------------|
 | Silent Failures | 0 | 0 | 4 |
 | Unimplemented Features | 0 | 4 | 1 |
-| Missing Audit | 0 | 1 | 1 |
+| Missing Audit | 0 | 0 | 2 |
 | Tenet Violations | 0 | 0 | 2 |
 | DI Patterns | 0 | 0 | 3 |
 | Test Issues | 0 | 0 | 1 |
-| Documented Limitations | 0 | 2 | 2 |
+| Documented Limitations | 0 | 1 | 3 |
 | Verified Intentional | 0 | 0 | 14 |
 | String.Empty Usage | 0 | 326 | 0 |
 | Null-Forgiving Exceptions | 0 | 0 | 4 |
-| **TOTAL** | **0** | **333** | **32** |
+| **TOTAL** | **0** | **331** | **34** |
 
 ---
 

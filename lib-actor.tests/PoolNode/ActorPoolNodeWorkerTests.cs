@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Actor.PoolNode;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -57,54 +58,13 @@ public class ActorPoolNodeWorkerTests
             _loggerMock.Object);
     }
 
-    #region Constructor Guard Clauses
+    #region Constructor Tests
 
     [Fact]
-    public void Constructor_NullMessageBus_ThrowsArgumentNullException()
+    public void ConstructorIsValid()
     {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorPoolNodeWorker(null!, _actorRegistryMock.Object, _actorRunnerFactoryMock.Object,
-                _heartbeatEmitter, _configuration, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullActorRegistry_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorPoolNodeWorker(_messageBusMock.Object, null!, _actorRunnerFactoryMock.Object,
-                _heartbeatEmitter, _configuration, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullActorRunnerFactory_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorPoolNodeWorker(_messageBusMock.Object, _actorRegistryMock.Object, null!,
-                _heartbeatEmitter, _configuration, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullHeartbeatEmitter_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorPoolNodeWorker(_messageBusMock.Object, _actorRegistryMock.Object, _actorRunnerFactoryMock.Object,
-                null!, _configuration, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullConfiguration_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorPoolNodeWorker(_messageBusMock.Object, _actorRegistryMock.Object, _actorRunnerFactoryMock.Object,
-                _heartbeatEmitter, null!, _loggerMock.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullLogger_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorPoolNodeWorker(_messageBusMock.Object, _actorRegistryMock.Object, _actorRunnerFactoryMock.Object,
-                _heartbeatEmitter, _configuration, null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<ActorPoolNodeWorker>();
+        Assert.NotNull(CreateWorker());
     }
 
     #endregion

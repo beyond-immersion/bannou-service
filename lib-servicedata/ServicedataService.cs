@@ -89,6 +89,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing services");
+            await PublishErrorEventAsync("ListServices", ex.GetType().Name, ex.Message, dependency: "state");
             return (StatusCodes.InternalServerError, new ListServicesResponse { Services = new List<ServiceInfo>(), TotalCount = 0 });
         }
     }
@@ -136,6 +137,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting service");
+            await PublishErrorEventAsync("GetService", ex.GetType().Name, ex.Message, dependency: "state");
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -208,6 +210,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating service");
+            await PublishErrorEventAsync("CreateService", ex.GetType().Name, ex.Message, dependency: "state");
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -265,6 +268,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating service {ServiceId}", body.ServiceId);
+            await PublishErrorEventAsync("UpdateService", ex.GetType().Name, ex.Message, dependency: "state");
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -314,6 +318,7 @@ public partial class ServicedataService : IServicedataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting service {ServiceId}", body.ServiceId);
+            await PublishErrorEventAsync("DeleteService", ex.GetType().Name, ex.Message, dependency: "state");
             return StatusCodes.InternalServerError;
         }
     }

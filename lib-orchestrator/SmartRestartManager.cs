@@ -35,7 +35,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// <summary>
     /// Initialize Docker client for container management.
     /// </summary>
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         try
         {
@@ -46,13 +46,14 @@ public class SmartRestartManager : ISmartRestartManager
                 .CreateClient();
 
             _logger.LogInformation("Docker client initialized successfully");
-            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize Docker client");
             throw;
         }
+
+        await Task.CompletedTask;
     }
 
     /// <summary>

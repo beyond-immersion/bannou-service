@@ -148,6 +148,17 @@ public partial class UploadRequest
 {
 
     /// <summary>
+    /// Owner of this asset operation. NOT a session ID.
+    /// <br/>For user-initiated uploads: the accountId (UUID format).
+    /// <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Owner { get; set; } = default!;
+
+    /// <summary>
     /// Original filename with extension
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filename")]
@@ -722,6 +733,17 @@ public partial class CreateBundleRequest
 {
 
     /// <summary>
+    /// Owner of this bundle. NOT a session ID.
+    /// <br/>For user-initiated bundles: the accountId (UUID format).
+    /// <br/>For service-initiated bundles: the service name (e.g., "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Owner { get; set; } = default!;
+
+    /// <summary>
     /// Unique bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
@@ -874,6 +896,17 @@ public partial class BundleWithDownloadUrl
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BundleUploadRequest
 {
+
+    /// <summary>
+    /// Owner of this bundle upload. NOT a session ID.
+    /// <br/>For user-initiated uploads: the accountId (UUID format).
+    /// <br/>For service-initiated uploads: the service name (e.g., "orchestrator").
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Owner { get; set; } = default!;
 
     /// <summary>
     /// Must end with .bannou or .zip

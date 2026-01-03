@@ -119,6 +119,13 @@ public partial class ActorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling behavior.updated event for {BehaviorId}", evt.BehaviorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandleBehaviorUpdated",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { evt.BehaviorId, evt.AssetId },
+                stack: ex.StackTrace);
         }
     }
 
@@ -173,6 +180,13 @@ public partial class ActorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering pool node {NodeId}", evt.NodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandlePoolNodeRegistered",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { evt.NodeId, evt.AppId, evt.PoolType },
+                stack: ex.StackTrace);
         }
     }
 
@@ -200,6 +214,13 @@ public partial class ActorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating heartbeat for pool node {NodeId}", evt.NodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandlePoolNodeHeartbeat",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { evt.NodeId, evt.CurrentLoad },
+                stack: ex.StackTrace);
         }
     }
 
@@ -227,6 +248,13 @@ public partial class ActorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking pool node {NodeId} as draining", evt.NodeId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandlePoolNodeDraining",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { evt.NodeId, evt.RemainingActors },
+                stack: ex.StackTrace);
         }
     }
 
@@ -254,6 +282,13 @@ public partial class ActorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating status for actor {ActorId}", evt.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandleActorStatusChanged",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { evt.ActorId, evt.PreviousStatus, evt.NewStatus },
+                stack: ex.StackTrace);
         }
     }
 
@@ -285,6 +320,13 @@ public partial class ActorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing assignment for completed actor {ActorId}", evt.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandleActorCompleted",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { evt.ActorId, evt.ExitReason, evt.LoopIterations },
+                stack: ex.StackTrace);
         }
     }
 

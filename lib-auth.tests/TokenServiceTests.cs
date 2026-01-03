@@ -1,9 +1,11 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Collections.Generic;
@@ -23,6 +25,7 @@ public class TokenServiceTests
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<ISubscriptionsClient> _mockSubscriptionsClient;
     private readonly Mock<ISessionService> _mockSessionService;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<TokenService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly TokenService _service;
@@ -33,6 +36,7 @@ public class TokenServiceTests
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockSubscriptionsClient = new Mock<ISubscriptionsClient>();
         _mockSessionService = new Mock<ISessionService>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<TokenService>>();
 
         _configuration = new AuthServiceConfiguration
@@ -52,76 +56,17 @@ public class TokenServiceTests
             _mockSubscriptionsClient.Object,
             _mockSessionService.Object,
             _configuration,
+            _mockMessageBus.Object,
             _mockLogger.Object);
     }
 
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act & Assert
+        ServiceConstructorValidator.ValidateServiceConstructor<TokenService>();
         Assert.NotNull(_service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            null!,
-            _mockSubscriptionsClient.Object,
-            _mockSessionService.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSubscriptionsClient_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockSessionService.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSessionService_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
-            null!,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
-            _mockSessionService.Object,
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
-            _mockSessionService.Object,
-            _configuration,
-            null!));
     }
 
     #endregion
@@ -348,6 +293,7 @@ public class TokenServiceTests
             _mockSubscriptionsClient.Object,
             _mockSessionService.Object,
             configWithNoSecret,
+            _mockMessageBus.Object,
             _mockLogger.Object);
 
         // Act & Assert
@@ -373,6 +319,7 @@ public class TokenServiceTests
             _mockSubscriptionsClient.Object,
             _mockSessionService.Object,
             configWithNoIssuer,
+            _mockMessageBus.Object,
             _mockLogger.Object);
 
         // Act & Assert
@@ -398,6 +345,7 @@ public class TokenServiceTests
             _mockSubscriptionsClient.Object,
             _mockSessionService.Object,
             configWithNoAudience,
+            _mockMessageBus.Object,
             _mockLogger.Object);
 
         // Act & Assert

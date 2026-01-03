@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
@@ -21,6 +22,7 @@ public class OAuthProviderService : IOAuthProviderService
     private readonly IAccountsClient _accountsClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<OAuthProviderService> _logger;
 
     private const string REDIS_STATE_STORE = "auth-statestore";
@@ -40,12 +42,14 @@ public class OAuthProviderService : IOAuthProviderService
         IAccountsClient accountsClient,
         IHttpClientFactory httpClientFactory,
         AuthServiceConfiguration configuration,
+        IMessageBus messageBus,
         ILogger<OAuthProviderService> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -114,6 +118,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exchanging Discord authorization code");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExchangeDiscordCode",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:discord",
+                endpoint: "post:/auth/oauth/discord/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -180,6 +193,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exchanging Google authorization code");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExchangeGoogleCode",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:google",
+                endpoint: "post:/auth/oauth/google/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -248,6 +270,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exchanging Twitch authorization code");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExchangeTwitchCode",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:twitch",
+                endpoint: "post:/auth/oauth/twitch/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -304,6 +335,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating Steam ticket");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ValidateSteamTicket",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:steam",
+                endpoint: "post:/auth/steam/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -375,6 +415,14 @@ public class OAuthProviderService : IOAuthProviderService
                     catch (Exception innerEx)
                     {
                         _logger.LogError(innerEx, "Email conflict but couldn't find account: {Email}", userInfo.Email);
+                        await _messageBus.TryPublishErrorAsync(
+                            "auth",
+                            "FindOrCreateOAuthAccount",
+                            innerEx.GetType().Name,
+                            innerEx.Message,
+                            dependency: "accounts",
+                            stack: innerEx.StackTrace,
+                            cancellationToken: cancellationToken);
                         return null;
                     }
                 }
@@ -406,6 +454,14 @@ public class OAuthProviderService : IOAuthProviderService
         {
             _logger.LogError(ex, "Error finding or creating OAuth account for {Provider} user {ProviderId}",
                 providerName, userInfo.ProviderId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "FindOrCreateOAuthAccount",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "accounts",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -451,7 +507,7 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     /// <inheritdoc/>
-    public Task<OAuthUserInfo> GetMockUserInfoAsync(Provider provider, CancellationToken cancellationToken = default)
+    public async Task<OAuthUserInfo> GetMockUserInfoAsync(Provider provider, CancellationToken cancellationToken = default)
     {
         var mockProviderId = provider switch
         {
@@ -461,23 +517,25 @@ public class OAuthProviderService : IOAuthProviderService
             _ => Guid.NewGuid().ToString()
         };
 
-        return Task.FromResult(new OAuthUserInfo
+        await Task.CompletedTask;
+        return new OAuthUserInfo
         {
             ProviderId = mockProviderId,
             Email = $"mock-{provider.ToString().ToLower()}@test.local",
             DisplayName = $"Mock {provider} User"
-        });
+        };
     }
 
     /// <inheritdoc/>
-    public Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default)
+    public async Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new OAuthUserInfo
+        await Task.CompletedTask;
+        return new OAuthUserInfo
         {
             ProviderId = _configuration.MockSteamId,
             Email = null,
             DisplayName = $"Steam_{_configuration.MockSteamId.Substring(_configuration.MockSteamId.Length - 6)}"
-        });
+        };
     }
 
     #region OAuth Response Models

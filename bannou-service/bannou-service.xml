@@ -6677,9 +6677,12 @@
             Upload session identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent.SessionId">
+        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent.Owner">
             <summary>
-            WebSocket session ID of the requester
+            Owner of this asset operation. NOT a session ID.
+            <br/>For user-initiated uploads: the accountId (UUID format).
+            <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent.AccountId">
@@ -6732,9 +6735,12 @@
             Upload session identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent.SessionId">
+        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent.Owner">
             <summary>
-            WebSocket session ID of the requester
+            Owner of this asset operation. NOT a session ID.
+            <br/>For user-initiated uploads: the accountId (UUID format).
+            <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent.AccountId">
@@ -6922,9 +6928,12 @@
             Compression algorithm used for the bundle
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BundleCreatedEvent.CreatedBy">
+        <member name="P:BeyondImmersion.BannouService.Events.BundleCreatedEvent.Owner">
             <summary>
-            Account ID that created the bundle
+            Owner of this bundle. NOT a session ID.
+            <br/>For user-initiated bundles: the accountId (UUID format).
+            <br/>For service-initiated bundles: the service name (e.g., "orchestrator").
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.AssetTypeEnum">
@@ -11543,6 +11552,14 @@
             Request to initiate an asset upload and receive a pre-signed URL
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Owner">
+            <summary>
+            Owner of this asset operation. NOT a session ID.
+            <br/>For user-initiated uploads: the accountId (UUID format).
+            <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Filename">
             <summary>
             Original filename with extension
@@ -11958,6 +11975,14 @@
             Request to create a new asset bundle from multiple assets
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Owner">
+            <summary>
+            Owner of this bundle. NOT a session ID.
+            <br/>For user-initiated bundles: the accountId (UUID format).
+            <br/>For service-initiated bundles: the service name (e.g., "orchestrator").
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.BundleId">
             <summary>
             Unique bundle identifier
@@ -12066,6 +12091,14 @@
         <member name="T:BeyondImmersion.BannouService.Asset.BundleUploadRequest">
             <summary>
             Request to upload a pre-built asset bundle file
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Owner">
+            <summary>
+            Owner of this bundle upload. NOT a session ID.
+            <br/>For user-initiated uploads: the accountId (UUID format).
+            <br/>For service-initiated uploads: the service name (e.g., "orchestrator").
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Filename">
@@ -17359,6 +17392,14 @@
             Request to bind a Git repository for automatic documentation sync
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.Owner">
+            <summary>
+            Owner of this binding. NOT a session ID.
+            <br/>For user-initiated bindings: the accountId (UUID format).
+            <br/>For service-initiated bindings: the service name (e.g., "orchestrator").
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.Namespace">
             <summary>
             Documentation namespace to bind
@@ -17614,9 +17655,12 @@
             Timestamp when the binding was created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Documentation.RepositoryBindingInfo.CreatedBy">
+        <member name="P:BeyondImmersion.BannouService.Documentation.RepositoryBindingInfo.Owner">
             <summary>
-            ID of the user who created the binding
+            Owner of this binding. NOT a session ID.
+            <br/>Contains either an accountId (UUID format) for user-initiated bindings
+            <br/>or a service name for service-initiated bindings.
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.SyncInfo">
@@ -17759,6 +17803,14 @@
             Request to create a point-in-time snapshot of namespace documentation
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveRequest.Owner">
+            <summary>
+            Owner of this archive. NOT a session ID.
+            <br/>For user-initiated archives: the accountId (UUID format).
+            <br/>For service-initiated archives: the service name (e.g., "orchestrator").
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveRequest.Namespace">
             <summary>
             Documentation namespace to archive
@@ -17889,9 +17941,12 @@
             Timestamp when the archive was created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Documentation.ArchiveInfo.CreatedBy">
+        <member name="P:BeyondImmersion.BannouService.Documentation.ArchiveInfo.Owner">
             <summary>
-            ID of the user who created the archive
+            Owner of this archive. NOT a session ID.
+            <br/>Contains either an accountId (UUID format) for user-initiated archives
+            <br/>or a service name for service-initiated archives.
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.RestoreArchiveRequest">

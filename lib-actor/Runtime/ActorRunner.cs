@@ -323,6 +323,14 @@ public class ActorRunner : IActorRunner
                 _logger.LogError(ex, "Error in actor {ActorId} behavior loop iteration {Iteration}",
                     ActorId, LoopIterations);
 
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "RunBehaviorLoop",
+                    ex.GetType().Name,
+                    ex.Message,
+                    details: new { ActorId, LoopIterations },
+                    stack: ex.StackTrace);
+
                 // Continue running unless we're cancelled
                 if (!ct.IsCancellationRequested)
                 {
@@ -410,6 +418,13 @@ public class ActorRunner : IActorRunner
             {
                 _logger.LogError(ex, "Actor {ActorId} failed to load behavior from {BehaviorRef}",
                     ActorId, _template.BehaviorRef);
+                await _messageBus.TryPublishErrorAsync(
+                    "actor",
+                    "LoadBehavior",
+                    ex.GetType().Name,
+                    ex.Message,
+                    details: new { ActorId, BehaviorRef = _template.BehaviorRef },
+                    stack: ex.StackTrace);
                 return;
             }
         }
@@ -642,6 +657,14 @@ public class ActorRunner : IActorRunner
         {
             // Log but don't throw - persistence failure shouldn't kill the actor
             _logger.LogError(ex, "Actor {ActorId} failed to persist state", ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "PersistState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                details: new { ActorId },
+                stack: ex.StackTrace);
         }
     }
 

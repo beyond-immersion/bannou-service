@@ -1,8 +1,10 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Web;
@@ -22,6 +24,7 @@ public class OAuthProviderServiceTests
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IAccountsClient> _mockAccountsClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OAuthProviderService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly OAuthProviderService _service;
@@ -32,6 +35,7 @@ public class OAuthProviderServiceTests
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockAccountsClient = new Mock<IAccountsClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OAuthProviderService>>();
 
         _configuration = new AuthServiceConfiguration
@@ -71,76 +75,17 @@ public class OAuthProviderServiceTests
             _mockAccountsClient.Object,
             _mockHttpClientFactory.Object,
             _configuration,
+            _mockMessageBus.Object,
             _mockLogger.Object);
     }
 
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act & Assert
+        ServiceConstructorValidator.ValidateServiceConstructor<OAuthProviderService>();
         Assert.NotNull(_service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new OAuthProviderService(
-            null!,
-            _mockAccountsClient.Object,
-            _mockHttpClientFactory.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullAccountsClient_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new OAuthProviderService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockHttpClientFactory.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpClientFactory_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new OAuthProviderService(
-            _mockStateStoreFactory.Object,
-            _mockAccountsClient.Object,
-            null!,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new OAuthProviderService(
-            _mockStateStoreFactory.Object,
-            _mockAccountsClient.Object,
-            _mockHttpClientFactory.Object,
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new OAuthProviderService(
-            _mockStateStoreFactory.Object,
-            _mockAccountsClient.Object,
-            _mockHttpClientFactory.Object,
-            _configuration,
-            null!));
     }
 
     #endregion
@@ -157,6 +102,7 @@ public class OAuthProviderServiceTests
             _mockAccountsClient.Object,
             _mockHttpClientFactory.Object,
             configWithMock,
+            _mockMessageBus.Object,
             _mockLogger.Object);
 
         // Act & Assert

@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.Actor.Tests;
 
@@ -115,6 +116,12 @@ public class ActorRunnerTests
     #region Constructor Tests
 
     [Fact]
+    public void ConstructorIsValid()
+    {
+        ServiceConstructorValidator.ValidateServiceConstructor<ActorRunner>();
+    }
+
+    [Fact]
     public void Constructor_ValidParameters_SetsProperties()
     {
         // Arrange
@@ -131,132 +138,6 @@ public class ActorRunnerTests
         Assert.Equal(template.Category, runner.Category);
         Assert.Equal(characterId, runner.CharacterId);
         Assert.Equal(ActorStatus.Pending, runner.Status);
-    }
-
-    [Fact]
-    public void Constructor_NullActorId_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var template = CreateTestTemplate();
-        var config = CreateTestConfig();
-        var messageBusMock = new Mock<IMessageBus>();
-        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
-        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-        var executorMock = new Mock<IDocumentExecutor>();
-        var loggerMock = new Mock<ILogger<ActorRunner>>();
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new ActorRunner(
-            null!,
-            template,
-            null,
-            config,
-            messageBusMock.Object,
-            stateStoreMock.Object,
-            behaviorCacheMock.Object,
-            executorMock.Object,
-            loggerMock.Object));
-        Assert.Equal("actorId", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_NullTemplate_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var config = CreateTestConfig();
-        var messageBusMock = new Mock<IMessageBus>();
-        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
-        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-        var executorMock = new Mock<IDocumentExecutor>();
-        var loggerMock = new Mock<ILogger<ActorRunner>>();
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new ActorRunner(
-            "actor-1",
-            null!,
-            null,
-            config,
-            messageBusMock.Object,
-            stateStoreMock.Object,
-            behaviorCacheMock.Object,
-            executorMock.Object,
-            loggerMock.Object));
-        Assert.Equal("template", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_NullConfig_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var template = CreateTestTemplate();
-        var messageBusMock = new Mock<IMessageBus>();
-        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
-        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-        var executorMock = new Mock<IDocumentExecutor>();
-        var loggerMock = new Mock<ILogger<ActorRunner>>();
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new ActorRunner(
-            "actor-1",
-            template,
-            null,
-            null!,
-            messageBusMock.Object,
-            stateStoreMock.Object,
-            behaviorCacheMock.Object,
-            executorMock.Object,
-            loggerMock.Object));
-        Assert.Equal("config", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_NullMessageBus_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var template = CreateTestTemplate();
-        var config = CreateTestConfig();
-        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
-        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-        var executorMock = new Mock<IDocumentExecutor>();
-        var loggerMock = new Mock<ILogger<ActorRunner>>();
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new ActorRunner(
-            "actor-1",
-            template,
-            null,
-            config,
-            null!,
-            stateStoreMock.Object,
-            behaviorCacheMock.Object,
-            executorMock.Object,
-            loggerMock.Object));
-        Assert.Equal("messageBus", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_NullLogger_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var template = CreateTestTemplate();
-        var config = CreateTestConfig();
-        var messageBusMock = new Mock<IMessageBus>();
-        var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
-        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-        var executorMock = new Mock<IDocumentExecutor>();
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new ActorRunner(
-            "actor-1",
-            template,
-            null,
-            config,
-            messageBusMock.Object,
-            stateStoreMock.Object,
-            behaviorCacheMock.Object,
-            executorMock.Object,
-            null!));
-        Assert.Equal("logger", ex.ParamName);
     }
 
     #endregion

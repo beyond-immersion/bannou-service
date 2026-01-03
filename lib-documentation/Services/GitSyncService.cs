@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using LibGit2Sharp;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
@@ -13,16 +14,19 @@ public class GitSyncService : IGitSyncService
 {
     private readonly ILogger<GitSyncService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
+    private readonly IMessageBus _messageBus;
 
     /// <summary>
     /// Creates a new instance of the GitSyncService.
     /// </summary>
     public GitSyncService(
         ILogger<GitSyncService> logger,
-        DocumentationServiceConfiguration configuration)
+        DocumentationServiceConfiguration configuration,
+        IMessageBus messageBus)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
     }
 
     /// <inheritdoc />
@@ -60,11 +64,27 @@ public class GitSyncService : IGitSyncService
             catch (LibGit2SharpException ex)
             {
                 _logger.LogError(ex, "Git operation failed for {Repository}", repositoryUrl);
+                await _messageBus.TryPublishErrorAsync(
+                    "documentation",
+                    "SyncRepository",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "git",
+                    details: new { repositoryUrl, branch },
+                    stack: ex.StackTrace);
                 return GitSyncResult.Failed(ex.Message);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during git sync for {Repository}", repositoryUrl);
+                await _messageBus.TryPublishErrorAsync(
+                    "documentation",
+                    "SyncRepository",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "git",
+                    details: new { repositoryUrl, branch },
+                    stack: ex.StackTrace);
                 return GitSyncResult.Failed($"Unexpected error: {ex.Message}");
             }
         }, cancellationToken);
@@ -141,6 +161,14 @@ public class GitSyncService : IGitSyncService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting changed files in repository at {Path}", localPath);
+                await _messageBus.TryPublishErrorAsync(
+                    "documentation",
+                    "GetChangedFiles",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "git",
+                    details: new { localPath, fromCommit, toCommit },
+                    stack: ex.StackTrace);
             }
 
             return changes;
@@ -187,6 +215,14 @@ public class GitSyncService : IGitSyncService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting matching files in repository at {Path}", localPath);
+                await _messageBus.TryPublishErrorAsync(
+                    "documentation",
+                    "GetMatchingFiles",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "filesystem",
+                    details: new { localPath },
+                    stack: ex.StackTrace);
                 return new List<string>();
             }
         }, cancellationToken);
@@ -213,6 +249,14 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting HEAD commit for repository at {Path}", localPath);
+            _messageBus.TryPublishErrorAsync(
+                "documentation",
+                "GetHeadCommit",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "git",
+                details: new { localPath },
+                stack: ex.StackTrace).GetAwaiter().GetResult();
             return null;
         }
     }
@@ -240,6 +284,15 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error reading file: {FilePath}", fullPath);
+            await _messageBus.TryPublishErrorAsync(
+                "documentation",
+                "ReadFileContent",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "filesystem",
+                details: new { localPath, filePath, fullPath },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             throw;
         }
     }
@@ -269,6 +322,14 @@ public class GitSyncService : IGitSyncService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error cleaning up repository at {Path}", localPath);
+                await _messageBus.TryPublishErrorAsync(
+                    "documentation",
+                    "CleanupRepository",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "filesystem",
+                    details: new { localPath },
+                    stack: ex.StackTrace);
             }
         }, cancellationToken);
     }
@@ -328,6 +389,14 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to clone repository {Url}", repositoryUrl);
+            _messageBus.TryPublishErrorAsync(
+                "documentation",
+                "CloneRepository",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "git",
+                details: new { repositoryUrl, branch, localPath },
+                stack: ex.StackTrace).GetAwaiter().GetResult();
             return GitSyncResult.Failed(ex.Message);
         }
     }
@@ -391,6 +460,14 @@ public class GitSyncService : IGitSyncService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to pull repository at {Path}", localPath);
+            _messageBus.TryPublishErrorAsync(
+                "documentation",
+                "PullRepository",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "git",
+                details: new { localPath, branch },
+                stack: ex.StackTrace).GetAwaiter().GetResult();
             return GitSyncResult.Failed(ex.Message);
         }
     }

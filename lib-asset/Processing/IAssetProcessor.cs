@@ -75,9 +75,11 @@ public sealed class AssetProcessingContext
     public required string Filename { get; init; }
 
     /// <summary>
-    /// The session ID that initiated the processing.
+    /// Owner of this processing operation. NOT a session ID.
+    /// Contains either an accountId (UUID format) for user-initiated processing
+    /// or a service name for service-initiated processing.
     /// </summary>
-    public required string SessionId { get; init; }
+    public required string Owner { get; init; }
 
     /// <summary>
     /// Optional realm-specific context for the asset.
