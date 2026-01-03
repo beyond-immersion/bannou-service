@@ -1,8 +1,8 @@
 # Actor Plugin V3 - Distributed Behavior Execution
 
-> **Status**: IN PROGRESS (Phase 1-2 complete, Phase 3 starting)
+> **Status**: IN PROGRESS (Phase 1-4 mostly complete, Phase 5 next)
 > **Created**: 2026-01-01
-> **Updated**: 2026-01-02 (Phase 1-2 behavior execution integration complete)
+> **Updated**: 2026-01-03 (Phase 3-4 pool node deployment and orchestration complete)
 > **Related Documents**:
 > - [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior compilation and GOAP planning
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Bytecode compilation and client execution

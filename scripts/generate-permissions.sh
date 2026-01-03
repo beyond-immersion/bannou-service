@@ -190,7 +190,7 @@ public static class ${SERVICE_PASCAL}PermissionRegistration
             ServiceId = instanceId,
             ServiceName = ServiceId,
             Version = ServiceVersion,
-            AppId = AppConstants.DEFAULT_APP_NAME,
+            AppId = Program.Configuration.EffectiveAppId,
             Endpoints = GetEndpoints()
         };
     }

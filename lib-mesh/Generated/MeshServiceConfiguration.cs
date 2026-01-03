@@ -127,12 +127,6 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public int LoadThresholdPercent { get; set; } = 80;
 
     /// <summary>
-    /// Default app-id when no service mapping exists (omnipotent routing)
-    /// Environment variable: MESH_DEFAULT_APP_ID
-    /// </summary>
-    public string DefaultAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
-
-    /// <summary>
     /// Whether to subscribe to FullServiceMappingsEvent for routing updates
     /// Environment variable: MESH_ENABLE_SERVICE_MAPPING_SYNC
     /// </summary>

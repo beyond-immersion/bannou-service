@@ -111,12 +111,6 @@ x-service-configuration:
     # =========================================================================
     # Routing Configuration
     # =========================================================================
-    DefaultAppId:
-      type: string
-      description: Default app-id when no service mapping exists (omnipotent routing)
-      env: MESH_DEFAULT_APP_ID
-      default: "bannou"
-
     EnableServiceMappingSync:
       type: boolean
       description: Whether to subscribe to FullServiceMappingsEvent for routing updates

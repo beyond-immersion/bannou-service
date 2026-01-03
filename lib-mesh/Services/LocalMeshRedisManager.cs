@@ -21,14 +21,12 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        var defaultAppId = config?.DefaultAppId ?? AppConstants.DEFAULT_APP_NAME;
-
         // Create a local endpoint representing this instance
         // Use the shared Program.ServiceGUID for consistent identification
         _localEndpoint = new MeshEndpoint
         {
             InstanceId = Guid.Parse(Program.ServiceGUID),
-            AppId = defaultAppId,
+            AppId = AppConstants.DEFAULT_APP_NAME,
             Host = "localhost",
             Port = 80,
             Status = EndpointStatus.Healthy,
@@ -39,7 +37,7 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
 
         _logger.LogWarning(
             "LocalMeshRedisManager initialized - all service calls will route locally to '{AppId}'",
-            defaultAppId);
+            AppConstants.DEFAULT_APP_NAME);
     }
 
     /// <inheritdoc/>

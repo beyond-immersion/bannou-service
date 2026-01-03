@@ -53,7 +53,7 @@ public static class RealmPermissionRegistration
             ServiceId = instanceId,
             ServiceName = ServiceId,
             Version = ServiceVersion,
-            AppId = AppConstants.DEFAULT_APP_NAME,
+            AppId = Program.Configuration.EffectiveAppId,
             Endpoints = GetEndpoints()
         };
     }
