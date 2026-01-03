@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -33,6 +34,7 @@ public class ConnectServiceTests
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ISessionManager> _mockSessionManager;
     private readonly string _testServerSalt = "test-server-salt-2025";
 
     public ConnectServiceTests()
@@ -54,90 +56,30 @@ public class ConnectServiceTests
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockSessionManager = new Mock<ISessionManager>();
     }
 
     #region Basic Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act & Assert
-        var exception = Record.Exception(() => CreateConnectService());
-        Assert.Null(exception);
-    }
+    public void ConnectService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<ConnectService>();
 
-    [Fact]
-    public void Constructor_WithNullAuthClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(null!, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMeshClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, null!, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, null!, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageSubscriber_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, null!, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpClientFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, null!, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullAppMappingResolver_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, null!, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, null!, _mockLoggerFactory.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, null!, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _configuration, _mockLogger.Object, _mockLoggerFactory.Object, null!));
-    }
-
+    /// <summary>
+    /// Business logic validation: ServerSalt is required for security.
+    /// This is NOT covered by ServiceConstructorValidator since it's a business rule, not a null check.
+    /// </summary>
     [Fact]
     public void Constructor_WithEmptyServerSalt_ShouldThrowInvalidOperationException()
     {
@@ -146,7 +88,7 @@ public class ConnectServiceTests
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object));
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object));
     }
 
     #endregion
@@ -670,7 +612,8 @@ public class ConnectServiceTests
             _configuration,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
-            _mockEventConsumer.Object
+            _mockEventConsumer.Object,
+            _mockSessionManager.Object
         );
     }
 
@@ -787,7 +730,8 @@ public class ConnectServiceTests
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
-                _mockEventConsumer.Object));
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
 
         Assert.Contains("CONNECT_INTERNAL_SERVICE_TOKEN", exception.Message);
     }
@@ -820,7 +764,8 @@ public class ConnectServiceTests
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
-                _mockEventConsumer.Object));
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
 
         Assert.Null(exception);
     }
@@ -853,7 +798,8 @@ public class ConnectServiceTests
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
-                _mockEventConsumer.Object));
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
 
         Assert.Null(exception);
     }
@@ -885,7 +831,8 @@ public class ConnectServiceTests
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
-                _mockEventConsumer.Object));
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
 
         Assert.Null(exception);
     }
@@ -917,7 +864,8 @@ public class ConnectServiceTests
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
-                _mockEventConsumer.Object));
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
 
         Assert.Null(exception);
     }

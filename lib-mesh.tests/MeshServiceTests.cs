@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.Mesh.Tests;
 
@@ -48,83 +49,18 @@ public class MeshServiceTests
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Act & Assert
-        var service = CreateService();
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            null!,
-            _mockLogger.Object,
-            _configuration,
-            _mockRedisManager.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("messageBus", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            null!,
-            _configuration,
-            _mockRedisManager.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("logger", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockRedisManager.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("configuration", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullRedisManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("redisManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockRedisManager.Object,
-            null!));
-
-        Assert.Equal("eventConsumer", exception.ParamName);
-    }
+    public void MeshService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<MeshService>();
 
     #endregion
 

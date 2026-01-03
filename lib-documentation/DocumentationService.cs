@@ -31,12 +31,12 @@ public partial class DocumentationService : IDocumentationService
     private readonly IGitSyncService _gitSyncService;
     private readonly IContentTransformService _contentTransformService;
     private readonly IDistributedLockProvider _lockProvider;
-    private readonly IAssetClient? _assetClient;
-    private readonly IHttpClientFactory? _httpClientFactory;
+    private readonly IAssetClient _assetClient;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     private const string STATE_STORE = "documentation-statestore";
 
-    // Event topics following Tenet 16: {entity}.{action} pattern
+    // Event topics following QUALITY TENETS: {entity}.{action} pattern
     private const string DOCUMENT_CREATED_TOPIC = "document.created";
     private const string DOCUMENT_UPDATED_TOPIC = "document.updated";
     private const string DOCUMENT_DELETED_TOPIC = "document.deleted";
@@ -71,8 +71,8 @@ public partial class DocumentationService : IDocumentationService
         IGitSyncService gitSyncService,
         IContentTransformService contentTransformService,
         IDistributedLockProvider lockProvider,
-        IAssetClient? assetClient = null,
-        IHttpClientFactory? httpClientFactory = null)
+        IAssetClient assetClient,
+        IHttpClientFactory httpClientFactory)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -82,8 +82,8 @@ public partial class DocumentationService : IDocumentationService
         _gitSyncService = gitSyncService ?? throw new ArgumentNullException(nameof(gitSyncService));
         _contentTransformService = contentTransformService ?? throw new ArgumentNullException(nameof(contentTransformService));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
-        _assetClient = assetClient; // Optional - archive features require Asset Service
-        _httpClientFactory = httpClientFactory; // Optional - for uploading bundles to pre-signed URLs
+        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -2262,8 +2262,7 @@ public partial class DocumentationService : IDocumentationService
                 CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
             };
 
-            // If Asset Service is available, upload the bundle
-            if (_assetClient != null && _httpClientFactory != null)
+            // Upload the bundle to Asset Service
             {
                 try
                 {
@@ -2293,10 +2292,6 @@ public partial class DocumentationService : IDocumentationService
                 {
                     _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
                 }
-            }
-            else
-            {
-                _logger.LogDebug("Asset Service not available, storing archive metadata only");
             }
 
             // Save archive record to state store
@@ -2402,8 +2397,8 @@ public partial class DocumentationService : IDocumentationService
 
             int documentsRestored = 0;
 
-            // If Asset Service is available and we have a bundle, download and restore from it
-            if (_assetClient != null && _httpClientFactory != null && archive.BundleAssetId != Guid.Empty)
+            // Download and restore from bundle if we have one
+            if (archive.BundleAssetId != Guid.Empty)
             {
                 try
                 {
@@ -2580,7 +2575,7 @@ public partial class DocumentationService : IDocumentationService
         var lockResourceId = $"{SYNC_LOCK_PREFIX}{binding.Namespace}";
         var lockOwner = Guid.NewGuid().ToString();
 
-        // Acquire distributed lock to prevent concurrent syncs (Tenet 9: Multi-Instance Safety)
+        // Acquire distributed lock to prevent concurrent syncs (IMPLEMENTATION TENETS: Multi-Instance Safety)
         await using var lockResponse = await _lockProvider.LockAsync(
             STATE_STORE,
             lockResourceId,

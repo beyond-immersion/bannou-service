@@ -1,10 +1,12 @@
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -23,6 +25,7 @@ public class ActorServiceTests
     private readonly Mock<IActorRunnerFactory> _mockActorRunnerFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IBehaviorDocumentCache> _mockBehaviorCache;
+    private readonly Mock<IActorPoolManager> _mockPoolManager;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
 
@@ -42,6 +45,7 @@ public class ActorServiceTests
         _mockActorRunnerFactory = new Mock<IActorRunnerFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockBehaviorCache = new Mock<IBehaviorDocumentCache>();
+        _mockPoolManager = new Mock<IActorPoolManager>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
 
@@ -64,137 +68,26 @@ public class ActorServiceTests
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
             _mockEventConsumer.Object,
-            _mockBehaviorCache.Object);
+            _mockBehaviorCache.Object,
+            _mockPoolManager.Object);
     }
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Act
-        var service = CreateService();
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ActorService(
-            null!,
-            _mockStateStoreFactory.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockActorRegistry.Object,
-            _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object,
-            _mockBehaviorCache.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ActorService(
-            _mockMessageBus.Object,
-            null!,
-            _mockLogger.Object,
-            _configuration,
-            _mockActorRegistry.Object,
-            _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object,
-            _mockBehaviorCache.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ActorService(
-            _mockMessageBus.Object,
-            _mockStateStoreFactory.Object,
-            null!,
-            _configuration,
-            _mockActorRegistry.Object,
-            _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object,
-            _mockBehaviorCache.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ActorService(
-            _mockMessageBus.Object,
-            _mockStateStoreFactory.Object,
-            _mockLogger.Object,
-            null!,
-            _mockActorRegistry.Object,
-            _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object,
-            _mockBehaviorCache.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullActorRegistry_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ActorService(
-            _mockMessageBus.Object,
-            _mockStateStoreFactory.Object,
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockActorRunnerFactory.Object,
-            _mockEventConsumer.Object,
-            _mockBehaviorCache.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullActorRunnerFactory_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ActorService(
-            _mockMessageBus.Object,
-            _mockStateStoreFactory.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockActorRegistry.Object,
-            null!,
-            _mockEventConsumer.Object,
-            _mockBehaviorCache.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ActorService(
-            _mockMessageBus.Object,
-            _mockStateStoreFactory.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockActorRegistry.Object,
-            _mockActorRunnerFactory.Object,
-            null!,
-            _mockBehaviorCache.Object));
-    }
-
-    [Fact]
-    public void Constructor_RegistersEventConsumers()
-    {
-        // Act
-        var service = CreateService();
-
-        // Assert - service was created successfully (event consumers registered via extension methods)
-        // Note: Extension methods can't be verified with Moq, but if constructor completes,
-        // the event consumer registration was called
-        Assert.NotNull(service);
-    }
+    public void ActorService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<ActorService>();
 
     #endregion
 

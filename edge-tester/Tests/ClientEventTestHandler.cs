@@ -280,7 +280,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                             return true;
                         }
                     }
-                    // TENET 12: Test must fail if expected behavior doesn't occur
+                    // QUALITY TENETS: Test must fail if expected behavior doesn't occur
                     Console.WriteLine($"FAILED Did not receive system.notification event - client event delivery is broken");
                     return false;
                 }
@@ -421,7 +421,7 @@ public class ClientEventTestHandler : IServiceTestHandler
         }
         catch (Exception ex)
         {
-            // TENET 12: If we can't publish to the session, the test cannot verify queue behavior
+            // QUALITY TENETS: If we can't publish to the session, the test cannot verify queue behavior
             // This is a legitimate failure - the session expired before we could test queuing
             Console.WriteLine($"FAILED Could not publish to disconnected session: {ex.Message}");
             Console.WriteLine("   Session expired before event could be queued - test cannot verify queue behavior");
@@ -495,11 +495,11 @@ public class ClientEventTestHandler : IServiceTestHandler
             }
             catch (OperationCanceledException)
             {
-                // TENET 11: Timeout is a failure, not "expected behavior"
+                // QUALITY TENETS: Timeout is a failure, not "expected behavior"
                 Console.WriteLine("FAILED Timeout waiting for messages on reconnection");
             }
 
-            // TENET 12: Test must verify the specific behavior it claims to test
+            // QUALITY TENETS: Test must verify the specific behavior it claims to test
             if (!receivedCapabilityManifest && !receivedQueuedEvent)
             {
                 Console.WriteLine("FAILED Did not receive capability manifest or queued event on reconnection");

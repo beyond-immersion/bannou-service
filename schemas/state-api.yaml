@@ -7,9 +7,9 @@ info:
 
     NOTE: This is an INTERNAL service API. No x-permissions are defined because
     these endpoints are NOT exposed to WebSocket clients. Service-to-service
-    calls within the cluster are always permitted (per TENETS Tenet 13).
+    calls within the cluster are always permitted (per FOUNDATION TENETS).
 
-    All endpoints use POST-only pattern per TENETS Tenet 1 to enable
+    All endpoints use POST-only pattern per FOUNDATION TENETS to enable
     zero-copy WebSocket routing with static endpoint GUIDs.
 
 servers:

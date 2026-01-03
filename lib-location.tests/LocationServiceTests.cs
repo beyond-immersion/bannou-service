@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -118,84 +119,20 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        var service = CreateService();
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new LocationService(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            _mockRealmClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockLogger.Object,
-            Configuration,
-            _mockRealmClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            Configuration,
-            _mockRealmClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockRealmClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullRealmClient_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            null!,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            _mockRealmClient.Object,
-            null!));
-    }
+    public void LocationService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<LocationService>();
 
     #endregion
 

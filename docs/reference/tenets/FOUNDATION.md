@@ -509,14 +509,11 @@ Only create this file when your service needs to handle events from the message 
 [BannouService("service-name", typeof(IServiceNameService), lifetime: ServiceLifetime.Scoped)]
 public partial class ServiceNameService : IServiceNameService
 {
-    // Required dependencies (always available)
     private readonly IStateStore<ServiceModel> _stateStore;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ServiceNameService> _logger;
     private readonly ServiceNameServiceConfiguration _configuration;
-
-    // Optional dependencies (nullable - may not be registered)
-    private readonly IAuthClient? _authClient;
+    private readonly IAuthClient _authClient;
 
     public ServiceNameService(
         IStateStoreFactory stateStoreFactory,
@@ -524,13 +521,13 @@ public partial class ServiceNameService : IServiceNameService
         ILogger<ServiceNameService> logger,
         ServiceNameServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IAuthClient? authClient = null)
+        IAuthClient authClient)
     {
         _stateStore = stateStoreFactory.Create<ServiceModel>("service-name");
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _authClient = authClient;  // May be null - check before use
+        _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
 
         // Register event handlers via partial class
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -560,14 +557,9 @@ public partial class ServiceNameService : IServiceNameService
 | `ILogger<T>` | Structured logging |
 | `{Service}ServiceConfiguration` | Generated configuration class |
 | `IEventConsumer` | Register event handlers for pub/sub fan-out |
-
-**Context-Dependent** (may not be registered):
-
-| Dependency | When Available |
-|------------|----------------|
-| `I{Service}Client` | When the service plugin is loaded |
-| `IDistributedLockProvider` | When Redis-backed locking is configured |
-| `IClientEventPublisher` | When Connect service plugin is loaded (for pushing events to WebSocket clients) |
+| `I{Service}Client` | Generated service clients for inter-service calls |
+| `IDistributedLockProvider` | Redis-backed distributed locking |
+| `IClientEventPublisher` | Push events to WebSocket clients (via Connect service) |
 
 ### Helper Service Decomposition
 

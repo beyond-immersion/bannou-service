@@ -6,7 +6,7 @@ info:
 
     **INTERNAL SERVICE API**: This API has NO x-permissions because these endpoints
     are NOT exposed to WebSocket clients. Service-to-service calls within the cluster
-    are always permitted (per TENETS Tenet 13).
+    are always permitted (per FOUNDATION TENETS).
 
     **POST-Only API Pattern**: All endpoints use POST with request bodies for
     consistency with WebSocket routing architecture.
@@ -164,7 +164,7 @@ paths:
       tags:
       - Messaging
       # No x-permissions - internal service API only
-      # POST-only pattern per TENETS Tenet 1 (enables zero-copy WebSocket routing)
+      # POST-only pattern per FOUNDATION TENETS (enables zero-copy WebSocket routing)
       requestBody:
         required: false
         content:

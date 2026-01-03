@@ -28,6 +28,8 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-actor -->
     <ProjectReference Include="../lib-actor/lib-actor.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

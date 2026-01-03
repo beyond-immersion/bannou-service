@@ -91,7 +91,7 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        // Deserialize using BannouJson for consistent serialization (T20)
+        // Deserialize using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
         var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
         _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");
@@ -139,7 +139,7 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        // Deserialize using BannouJson for consistent serialization (T20)
+        // Deserialize using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
         var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
         _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");

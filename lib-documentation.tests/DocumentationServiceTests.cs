@@ -6,8 +6,10 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Net.Http;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Documentation.Tests;
@@ -33,6 +35,8 @@ public class DocumentationServiceTests
     private readonly Mock<IGitSyncService> _mockGitSyncService;
     private readonly Mock<IContentTransformService> _mockContentTransformService;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<BeyondImmersion.BannouService.Asset.IAssetClient> _mockAssetClient;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly DocumentationService _service;
 
     private const string TEST_NAMESPACE = "test-namespace";
@@ -56,6 +60,8 @@ public class DocumentationServiceTests
         _mockGitSyncService = new Mock<IGitSyncService>();
         _mockContentTransformService = new Mock<IContentTransformService>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockAssetClient = new Mock<BeyondImmersion.BannouService.Asset.IAssetClient>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
@@ -82,125 +88,27 @@ public class DocumentationServiceTests
             _mockSearchIndexService.Object,
             _mockGitSyncService.Object,
             _mockContentTransformService.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object);
     }
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
-        var service = new DocumentationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockEventConsumer.Object,
-            _mockSearchIndexService.Object,
-            _mockGitSyncService.Object,
-            _mockContentTransformService.Object,
-            _mockLockProvider.Object);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockEventConsumer.Object,
-            _mockSearchIndexService.Object,
-            _mockGitSyncService.Object,
-            _mockContentTransformService.Object,
-            _mockLockProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            _configuration,
-            _mockEventConsumer.Object,
-            _mockSearchIndexService.Object,
-            _mockGitSyncService.Object,
-            _mockContentTransformService.Object,
-            _mockLockProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockEventConsumer.Object,
-            _mockSearchIndexService.Object,
-            _mockGitSyncService.Object,
-            _mockContentTransformService.Object,
-            _mockLockProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockSearchIndexService.Object,
-            _mockGitSyncService.Object,
-            _mockContentTransformService.Object,
-            _mockLockProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSearchIndexService_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockEventConsumer.Object,
-            null!,
-            _mockGitSyncService.Object,
-            _mockContentTransformService.Object,
-            _mockLockProvider.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLockProvider_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockEventConsumer.Object,
-            _mockSearchIndexService.Object,
-            _mockGitSyncService.Object,
-            _mockContentTransformService.Object,
-            null!));
-    }
+    public void DocumentationService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<DocumentationService>();
 
     #endregion
 

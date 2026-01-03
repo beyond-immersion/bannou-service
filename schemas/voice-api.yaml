@@ -42,7 +42,7 @@ paths:
       operationId: createVoiceRoom
       tags:
       - Voice Rooms
-      # NO x-permissions = internal-only (Tenet 10)
+      # NO x-permissions = internal-only (FOUNDATION TENETS)
       requestBody:
         required: true
         content:

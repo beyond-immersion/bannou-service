@@ -16,7 +16,7 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Register named HttpClient for mesh proxying (Tenet 4: use IHttpClientFactory)
+        // Register named HttpClient for mesh proxying (FOUNDATION TENETS: use IHttpClientFactory)
         services.AddHttpClient(ConnectService.HttpClientName, client =>
         {
             // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely

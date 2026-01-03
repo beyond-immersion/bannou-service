@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
@@ -8,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Testing;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -28,6 +30,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
+    private readonly Mock<BeyondImmersion.BannouService.Voice.IVoiceClient> _mockVoiceClient;
+    private readonly Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient> _mockPermissionsClient;
+    private readonly Mock<BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient> _mockSubscriptionsClient;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -44,6 +50,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockLogger = new Mock<ILogger<GameSessionService>>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockVoiceClient = new Mock<BeyondImmersion.BannouService.Voice.IVoiceClient>();
+        _mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
+        _mockSubscriptionsClient = new Mock<BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<GameSessionModel>(STATE_STORE)).Returns(_mockGameSessionStore.Object);
@@ -69,68 +79,29 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockLogger.Object,
             Configuration,
             _mockHttpContextAccessor.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockClientEventPublisher.Object,
+            _mockVoiceClient.Object,
+            _mockPermissionsClient.Object,
+            _mockSubscriptionsClient.Object);
     }
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
-        var service = CreateService();
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpContextAccessor_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, null!, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockHttpContextAccessor.Object, null!));
-    }
+    public void GameSessionService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<GameSessionService>();
 
     #endregion
 
@@ -547,17 +518,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     public async Task JoinGameSessionAsync_WhenSuccessful_ShouldSetGameSessionInGameState()
     {
         // Arrange
-        var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
-        var service = new GameSessionService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            _mockHttpContextAccessor.Object,
-            _mockEventConsumer.Object,
-            voiceClient: null,
-            permissionsClient: mockPermissionsClient.Object);
-
+        var service = CreateService();
         var sessionId = Guid.NewGuid();
         var clientSessionId = Guid.NewGuid();
         var request = new JoinGameSessionRequest { SessionId = sessionId };
@@ -587,7 +548,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.True(response?.Success);
 
         // Verify game-session:in_game state was set via Permissions client
-        mockPermissionsClient.Verify(p => p.UpdateSessionStateAsync(
+        _mockPermissionsClient.Verify(p => p.UpdateSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(u =>
                 u.SessionId == clientSessionId &&
                 u.ServiceId == "game-session" &&
@@ -603,17 +564,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     public async Task LeaveGameSessionAsync_WhenSuccessful_ShouldClearGameSessionState()
     {
         // Arrange
-        var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
-        var service = new GameSessionService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            _mockHttpContextAccessor.Object,
-            _mockEventConsumer.Object,
-            voiceClient: null,
-            permissionsClient: mockPermissionsClient.Object);
-
+        var service = CreateService();
         var sessionId = Guid.NewGuid();
         var clientSessionId = Guid.NewGuid();
         var accountId = Guid.NewGuid();
@@ -647,7 +598,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify game-session:in_game state was cleared via Permissions client
-        mockPermissionsClient.Verify(p => p.ClearSessionStateAsync(
+        _mockPermissionsClient.Verify(p => p.ClearSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest>(u =>
                 u.SessionId == clientSessionId &&
                 u.ServiceId == "game-session"),

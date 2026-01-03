@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net;
@@ -38,85 +39,18 @@ public class MessagingServiceTests
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
-        var service = new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            null!,
-            _configuration,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("logger", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            null!,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("configuration", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("messageBus", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageSubscriber_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            _mockMessageBus.Object,
-            null!,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("messageSubscriber", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpClientFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            null!));
-        Assert.Equal("httpClientFactory", ex.ParamName);
-    }
+    public void MessagingService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<MessagingService>();
 
     #endregion
 

@@ -29,6 +29,8 @@
     <ProjectReference Include="../lib-character/lib-character.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-testing/lib-testing.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

@@ -183,10 +183,10 @@ fi
 echo ""
 
 # Post-process generated files to remove NSwag pragma warning blocks
-# Per T22: Warning suppressions are forbidden except for specific documented exceptions.
+# Per QUALITY TENETS: Warning suppressions are forbidden except for specific documented exceptions.
 # We remove all pragmas and rely on .editorconfig for the minimal acceptable exceptions.
-# See: docs/reference/tenets/QUALITY.md (T22)
-echo -e "${BLUE}🔧 Post-processing: Removing NSwag pragma warning blocks (T22 compliance)...${NC}"
+# See: docs/reference/tenets/QUALITY.md (Warning Suppression)
+echo -e "${BLUE}🔧 Post-processing: Removing NSwag pragma warning blocks (QUALITY TENETS compliance)...${NC}"
 
 PRAGMA_REMOVED_COUNT=0
 
@@ -224,7 +224,7 @@ echo ""
 # Post-process generated files to remove null checks on enum parameters (CS0472)
 # NSwag generates null checks for all parameters, but enums are value types that can never be null.
 # These checks cause CS0472: "The result of the expression is always 'false'"
-# Per T22: Fix via post-processing rather than suppression.
+# Per QUALITY TENETS: Fix via post-processing rather than suppression.
 echo -e "${BLUE}🔧 Post-processing: Removing null checks on enum parameters (CS0472)...${NC}"
 
 ENUM_NULL_CHECK_FIXED=0

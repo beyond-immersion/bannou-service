@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Actor;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T6 - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
+/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>
@@ -43,7 +43,7 @@ public partial class ActorService : IActorService
     private readonly IActorRunnerFactory _actorRunnerFactory;
     private readonly IEventConsumer _eventConsumer;
     private readonly IBehaviorDocumentCache _behaviorCache;
-    private readonly IActorPoolManager? _poolManager;
+    private readonly IActorPoolManager _poolManager;
 
     private const string TEMPLATE_STORE = "actor-templates";
     private const string INSTANCE_STORE = "actor-instances";
@@ -60,7 +60,7 @@ public partial class ActorService : IActorService
     /// <param name="actorRunnerFactory">Factory for creating actor runners.</param>
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
     /// <param name="behaviorCache">Behavior document cache for hot-reload invalidation.</param>
-    /// <param name="poolManager">Pool manager for distributed actor routing (null in bannou mode).</param>
+    /// <param name="poolManager">Pool manager for distributed actor routing.</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -70,7 +70,7 @@ public partial class ActorService : IActorService
         IActorRunnerFactory actorRunnerFactory,
         IEventConsumer eventConsumer,
         IBehaviorDocumentCache behaviorCache,
-        IActorPoolManager? poolManager = null)
+        IActorPoolManager poolManager)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
@@ -80,7 +80,7 @@ public partial class ActorService : IActorService
         _actorRunnerFactory = actorRunnerFactory ?? throw new ArgumentNullException(nameof(actorRunnerFactory));
         _eventConsumer = eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer));
         _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
-        _poolManager = poolManager; // Optional - only used in pool modes
+        _poolManager = poolManager ?? throw new ArgumentNullException(nameof(poolManager));
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);
@@ -507,7 +507,7 @@ public partial class ActorService : IActorService
             }
 
             // Check pool assignment for non-bannou modes
-            if (_configuration.DeploymentMode != "bannou" && _poolManager != null)
+            if (_configuration.DeploymentMode != "bannou")
             {
                 var existingAssignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
                 if (existingAssignment != null)
@@ -546,12 +546,6 @@ public partial class ActorService : IActorService
             else
             {
                 // Pool mode: route to pool node
-                if (_poolManager == null)
-                {
-                    _logger.LogError("Pool manager not available for deployment mode {Mode}", _configuration.DeploymentMode);
-                    return (StatusCodes.InternalServerError, null);
-                }
-
                 // Acquire a pool node with capacity
                 var poolNode = await _poolManager.AcquireNodeForActorAsync(template.Category, 1, cancellationToken);
                 if (poolNode == null)
@@ -719,12 +713,6 @@ public partial class ActorService : IActorService
             else
             {
                 // Pool mode: send stop command to pool node
-                if (_poolManager == null)
-                {
-                    _logger.LogError("Pool manager not available for deployment mode {Mode}", _configuration.DeploymentMode);
-                    return (StatusCodes.InternalServerError, null);
-                }
-
                 // Get assignment to find the node
                 var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
                 if (assignment == null)

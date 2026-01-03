@@ -30,6 +30,8 @@
     <!-- bannou-service comes transitively via lib-subscriptions -->
     <ProjectReference Include="../lib-subscriptions/lib-subscriptions.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

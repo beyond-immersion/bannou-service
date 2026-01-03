@@ -10,12 +10,12 @@
 //     1. Edit the source schema (schemas/voice-configuration.yaml)
 //     2. Run: scripts/generate-all-services.sh
 //
-//     USAGE (TENET T21 - Configuration-First):
+//     USAGE (IMPLEMENTATION TENETS - Configuration-First):
 //     Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
 //     Example: public MyService(VoiceServiceConfiguration config) { _config = config; }
 //
-//     See: docs/reference/tenets/FOUNDATION.md (T1, T2)
-//     See: docs/reference/tenets/IMPLEMENTATION.md (T21: Configuration-First)
+//     See: docs/reference/tenets/FOUNDATION.md
+//     See: docs/reference/tenets/IMPLEMENTATION.md
 // </auto-generated>
 //----------------------
 
@@ -34,7 +34,7 @@ namespace BeyondImmersion.BannouService.Voice;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T21 - Configuration-First:</b> Access configuration via dependency injection.
+/// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
 /// </para>
 /// <para>

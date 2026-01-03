@@ -3475,12 +3475,12 @@
         <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_BANNOU_APP_ID">
             <summary>
             Environment variable for app ID (legacy env var name). Used by PermissionRegistration and
-            ServiceHeartbeatManager. This is a Tenet 21 exception - needed before DI is available.
+            ServiceHeartbeatManager. This is an IMPLEMENTATION TENETS exception - needed before DI is available.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_BANNOU_HTTP_ENDPOINT">
             <summary>
-            Environment variable for mesh HTTP endpoint. This is a Tenet 21 exception -
+            Environment variable for mesh HTTP endpoint. This is an IMPLEMENTATION TENETS exception -
             needed to bootstrap mesh client before configuration system initializes.
             </summary>
         </member>
@@ -31021,7 +31021,7 @@
         <member name="T:BeyondImmersion.BannouService.Meta.MetaResponseBuilder">
             <summary>
             Builds MetaResponse objects from pre-computed schema strings.
-            Uses BannouJson for all JSON operations per Tenet 20.
+            Uses BannouJson for all JSON operations per IMPLEMENTATION TENETS.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(System.String,System.String,System.String,System.String)">
@@ -31561,11 +31561,11 @@
             Shared GUID generation utilities for client-server security.
             Provides client-salted GUIDs to prevent cross-session exploitation.
             This is the shared version - all services should use this for consistency.
-            Server salt should come from service configuration (Tenet 21).
+            Server salt should come from service configuration (IMPLEMENTATION TENETS).
             </summary>
             <remarks>
             <para>
-            <b>WARNING - MULTI-INSTANCE SAFETY (T9):</b> The <see cref="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServerSalt"/> method
+            <b>WARNING - MULTI-INSTANCE SAFETY (IMPLEMENTATION TENETS):</b> The <see cref="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServerSalt"/> method
             generates cryptographically random values. In a multi-instance deployment, each instance
             would generate different salts, causing client GUIDs to differ across instances.
             </para>
@@ -31576,7 +31576,7 @@
             salt generation during deployment setup.
             </para>
             <para>
-            See TENETS.md T9: Multi-Instance Safety for distributed state requirements.
+            See TENETS.md IMPLEMENTATION TENETS: Multi-Instance Safety for distributed state requirements.
             </para>
             </remarks>
         </member>
@@ -31740,7 +31740,7 @@
              </summary>
              <remarks>
              <para>
-             <b>TENET T6 - Service Implementation Pattern:</b> All service implementations
+             <b>FOUNDATION TENETS - Service Implementation Pattern:</b> All service implementations
              MUST be declared as <c>partial class</c> to support the following code-split pattern:
              </para>
              <list type="bullet">

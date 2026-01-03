@@ -73,7 +73,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         // Windows: npipe://./pipe/docker_engine
         _client = new DockerClientConfiguration().CreateClient();
 
-        // Read configuration from injected configuration class (Tenet 21 compliant)
+        // Read configuration from injected configuration class (IMPLEMENTATION TENETS compliant)
         _configuredDockerNetwork = config.DockerNetwork ?? "bannou_default";
         _certificatesHostPath = config.CertificatesHostPath ?? "/app/provisioning/certificates";
         _presetsHostPath = config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";

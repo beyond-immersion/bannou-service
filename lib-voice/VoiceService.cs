@@ -30,8 +30,8 @@ public partial class VoiceService : IVoiceService
     private readonly ISipEndpointRegistry _endpointRegistry;
     private readonly IP2PCoordinator _p2pCoordinator;
     private readonly IScaledTierCoordinator _scaledTierCoordinator;
-    private readonly IClientEventPublisher? _clientEventPublisher;
-    private readonly IPermissionsClient? _permissionsClient;
+    private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IPermissionsClient _permissionsClient;
 
     private const string STATE_STORE = "voice-statestore";
     private const string ROOM_KEY_PREFIX = "voice:room:";
@@ -48,8 +48,8 @@ public partial class VoiceService : IVoiceService
     /// <param name="p2pCoordinator">P2P coordinator for mesh topology management.</param>
     /// <param name="scaledTierCoordinator">Scaled tier coordinator for SFU-based conferencing.</param>
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
-    /// <param name="clientEventPublisher">Optional client event publisher for WebSocket push events. May be null if Connect service is not loaded.</param>
-    /// <param name="permissionsClient">Optional permissions client for setting voice:ringing state. May be null if Permissions service is not loaded.</param>
+    /// <param name="clientEventPublisher">Client event publisher for WebSocket push events.</param>
+    /// <param name="permissionsClient">Permissions client for setting voice:ringing state.</param>
     public VoiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -59,8 +59,8 @@ public partial class VoiceService : IVoiceService
         IP2PCoordinator p2pCoordinator,
         IScaledTierCoordinator scaledTierCoordinator,
         IEventConsumer eventConsumer,
-        IClientEventPublisher? clientEventPublisher = null,
-        IPermissionsClient? permissionsClient = null)
+        IClientEventPublisher clientEventPublisher,
+        IPermissionsClient permissionsClient)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -69,8 +69,8 @@ public partial class VoiceService : IVoiceService
         _endpointRegistry = endpointRegistry ?? throw new ArgumentNullException(nameof(endpointRegistry));
         _p2pCoordinator = p2pCoordinator ?? throw new ArgumentNullException(nameof(p2pCoordinator));
         _scaledTierCoordinator = scaledTierCoordinator ?? throw new ArgumentNullException(nameof(scaledTierCoordinator));
-        _clientEventPublisher = clientEventPublisher; // Optional - may be null if Connect service not loaded (Tenet 5)
-        _permissionsClient = permissionsClient; // Optional - may be null if Permissions service not loaded (Tenet 5)
+        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
+        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
 
         // Register event handlers via partial class (VoiceServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -328,8 +328,8 @@ public partial class VoiceService : IVoiceService
             await NotifyPeerJoinedAsync(body.RoomId, body.SessionId, body.DisplayName, body.SipEndpoint, newCount, cancellationToken);
 
             // Also set voice:ringing for the joining session if there are existing peers
-            // This enables them to call /voice/peer/answer to send SDP answers to those peers (Tenet 10)
-            if (peers.Count > 0 && _permissionsClient != null)
+            // This enables them to call /voice/peer/answer to send SDP answers to those peers (FOUNDATION TENETS)
+            if (peers.Count > 0)
             {
                 try
                 {
@@ -557,12 +557,6 @@ public partial class VoiceService : IVoiceService
                 return StatusCodes.NotFound;
             }
 
-            if (_clientEventPublisher == null)
-            {
-                _logger.LogWarning("Client event publisher not available, cannot send answer to target");
-                return StatusCodes.ServiceUnavailable;
-            }
-
             // Get the sender's display name for the event
             var senderParticipant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.SenderSessionId, cancellationToken);
             var senderDisplayName = senderParticipant?.DisplayName ?? "Unknown";
@@ -623,11 +617,6 @@ public partial class VoiceService : IVoiceService
         int currentCount,
         CancellationToken cancellationToken)
     {
-        if (_clientEventPublisher == null)
-        {
-            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
-        }
-
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != newPeerSessionId)
@@ -640,31 +629,24 @@ public partial class VoiceService : IVoiceService
         }
 
         // Set voice:ringing state for all recipient sessions before publishing the event
-        // This enables them to call /voice/peer/answer to send SDP answers (Tenet 10)
-        if (_permissionsClient != null)
+        // This enables them to call /voice/peer/answer to send SDP answers (FOUNDATION TENETS)
+        foreach (var sessionId in sessionIds)
         {
-            foreach (var sessionId in sessionIds)
+            try
             {
-                try
+                await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
                 {
-                    await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
-                    {
-                        SessionId = Guid.Parse(sessionId),
-                        ServiceId = "voice",
-                        NewState = "ringing"
-                    }, cancellationToken);
-                    _logger.LogDebug("Set voice:ringing state for session {SessionId}", sessionId);
-                }
-                catch (Exception ex)
-                {
-                    // Log but don't fail - the event is more important
-                    _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", sessionId);
-                }
+                    SessionId = Guid.Parse(sessionId),
+                    ServiceId = "voice",
+                    NewState = "ringing"
+                }, cancellationToken);
+                _logger.LogDebug("Set voice:ringing state for session {SessionId}", sessionId);
             }
-        }
-        else
-        {
-            _logger.LogDebug("Permissions client not available, voice:ringing state not set");
+            catch (Exception ex)
+            {
+                // Log but don't fail - the event is more important
+                _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", sessionId);
+            }
         }
 
         var peerJoinedEvent = new VoicePeerJoinedEvent
@@ -697,11 +679,6 @@ public partial class VoiceService : IVoiceService
         int remainingCount,
         CancellationToken cancellationToken)
     {
-        if (_clientEventPublisher == null)
-        {
-            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
-        }
-
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId))
@@ -737,11 +714,6 @@ public partial class VoiceService : IVoiceService
         SipEndpoint sipEndpoint,
         CancellationToken cancellationToken)
     {
-        if (_clientEventPublisher == null)
-        {
-            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
-        }
-
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != updatedPeerSessionId)
@@ -781,11 +753,6 @@ public partial class VoiceService : IVoiceService
         string reason,
         CancellationToken cancellationToken)
     {
-        if (_clientEventPublisher == null)
-        {
-            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
-        }
-
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId))
             .Select(p => p.SessionId ?? string.Empty)
@@ -824,11 +791,6 @@ public partial class VoiceService : IVoiceService
         string rtpServerUri,
         CancellationToken cancellationToken)
     {
-        if (_clientEventPublisher == null)
-        {
-            throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
-        }
-
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var participantsWithSessions = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId))

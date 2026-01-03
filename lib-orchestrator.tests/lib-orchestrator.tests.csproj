@@ -30,6 +30,8 @@
     <!-- bannou-service comes transitively via lib-orchestrator -->
     <ProjectReference Include="../lib-orchestrator/lib-orchestrator.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

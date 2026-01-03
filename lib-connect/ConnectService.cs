@@ -45,7 +45,7 @@ public partial class ConnectService : IConnectService
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
-    private readonly ISessionManager? _sessionManager;
+    private readonly ISessionManager _sessionManager;
 
     // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
     private readonly IMessageSubscriber _messageSubscriber;
@@ -93,7 +93,7 @@ public partial class ConnectService : IConnectService
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
         IEventConsumer eventConsumer,
-        ISessionManager? sessionManager = null)
+        ISessionManager sessionManager)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
@@ -103,7 +103,7 @@ public partial class ConnectService : IConnectService
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _sessionManager = sessionManager; // Optional mesh-based session management
+        _sessionManager = sessionManager ?? throw new ArgumentNullException(nameof(sessionManager));
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
@@ -140,8 +140,8 @@ public partial class ConnectService : IConnectService
                 "CONNECT_INTERNAL_SERVICE_TOKEN is required when ConnectionMode is 'internal' and InternalAuthMode is 'service-token'");
         }
 
-        _logger.LogInformation("Connect service initialized: InstanceId={InstanceId}, Mode={ConnectionMode}, SessionManager={SessionManagerEnabled}",
-            _instanceId, _connectionMode, sessionManager != null ? "Enabled" : "Disabled");
+        _logger.LogInformation("Connect service initialized: InstanceId={InstanceId}, Mode={ConnectionMode}",
+            _instanceId, _connectionMode);
     }
 
     /// <summary>
@@ -453,33 +453,25 @@ public partial class ConnectService : IConnectService
                 }
 
                 // Use Redis session manager to validate reconnection token
-                if (_sessionManager != null)
-                {
-                    var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
+                var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
 
-                    if (!string.IsNullOrEmpty(sessionId))
+                if (!string.IsNullOrEmpty(sessionId))
+                {
+                    // Restore the session from reconnection state
+                    var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
+
+                    if (restoredState != null)
                     {
-                        // Restore the session from reconnection state
-                        var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
-
-                        if (restoredState != null)
-                        {
-                            _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
-                            // Return stored roles and authorizations from reconnection state
-                            // Parse AccountId from string back to Guid (stored as string for Redis serialization)
-                            // Mark as reconnection so services can re-publish shortcuts
-                            Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
-                            return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations, true);
-                        }
+                        _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
+                        // Return stored roles and authorizations from reconnection state
+                        // Parse AccountId from string back to Guid (stored as string for Redis serialization)
+                        // Mark as reconnection so services can re-publish shortcuts
+                        Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
+                        return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations, true);
                     }
-
-                    _logger.LogWarning("Invalid or expired reconnection token");
-                }
-                else
-                {
-                    _logger.LogWarning("Reconnection requires Redis session manager - not configured");
                 }
 
+                _logger.LogWarning("Invalid or expired reconnection token");
                 return (null, null, null, null, false);
             }
 
@@ -569,13 +561,8 @@ public partial class ConnectService : IConnectService
         // EXTERNAL/RELAYED MODE: Full capability initialization
 
         // Transfer service mappings from session discovery to connection state
-        Dictionary<string, Guid>? sessionMappings = null;
-
-        if (_sessionManager != null)
-        {
-            // Try to get mappings from Redis first
-            sessionMappings = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
-        }
+        // Try to get mappings from Redis first
+        var sessionMappings = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
 
         if (sessionMappings == null && _sessionServiceMappings.TryGetValue(sessionId, out var fallbackMappings))
         {
@@ -612,23 +599,20 @@ public partial class ConnectService : IConnectService
             _logger.LogInformation("WebSocket connection established for session {SessionId}", sessionId);
 
             // Update session heartbeat in Redis
-            if (_sessionManager != null)
-            {
-                await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+            await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
 
-                // Create initial connection state in Redis for reconnection support
-                var connectionStateData = new ConnectionStateData
-                {
-                    SessionId = sessionId,
-                    AccountId = accountId?.ToString(),
-                    ConnectedAt = DateTimeOffset.UtcNow,
-                    LastActivity = DateTimeOffset.UtcNow,
-                    UserRoles = userRoles?.ToList(),
-                    Authorizations = authorizations?.ToList()
-                };
-                await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
-                _logger.LogDebug("Created connection state in Redis for session {SessionId}, AccountId {AccountId}", sessionId, accountId);
-            }
+            // Create initial connection state in Redis for reconnection support
+            var connectionStateData = new ConnectionStateData
+            {
+                SessionId = sessionId,
+                AccountId = accountId?.ToString(),
+                ConnectedAt = DateTimeOffset.UtcNow,
+                LastActivity = DateTimeOffset.UtcNow,
+                UserRoles = userRoles?.ToList(),
+                Authorizations = authorizations?.ToList()
+            };
+            await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
+            _logger.LogDebug("Created connection state in Redis for session {SessionId}, AccountId {AccountId}", sessionId, accountId);
 
             // Subscribe to session-specific client events via lib-messaging
             // IMPORTANT: Must subscribe BEFORE sending capability manifest to avoid race condition
@@ -788,7 +772,7 @@ public partial class ConnectService : IConnectService
 
             // Remove from connection manager - use instance-matching removal to prevent
             // race condition during session subsume where old connection's cleanup could
-            // accidentally remove a new connection that replaced it (Tenet 4 compliance)
+            // accidentally remove a new connection that replaced it (FOUNDATION TENETS compliance)
             var wasRemoved = _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
 
             // CRITICAL: If wasRemoved is false, this connection was SUBSUMED by a new connection
@@ -801,7 +785,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogDebug("Session {SessionId} was subsumed by new connection - skipping cleanup", sessionId);
                 // Skip all cleanup - new connection owns this session now
             }
-            else if (_sessionManager != null)
+            else
             {
                 // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
                 if (isForcedDisconnect)
@@ -2060,10 +2044,7 @@ public partial class ConnectService : IConnectService
             _connectionManager.RemoveConnection(sessionId);
 
             // Clean up Redis session data (forced disconnect = no reconnection)
-            if (_sessionManager != null)
-            {
-                await _sessionManager.RemoveSessionAsync(sessionId);
-            }
+            await _sessionManager.RemoveSessionAsync(sessionId);
 
             _logger.LogInformation("Force disconnected session {SessionId}: {Reason}", sessionId, reason);
         }
@@ -2401,10 +2382,7 @@ public partial class ConnectService : IConnectService
             {
                 _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
                 // Still clean up Redis in case session exists there
-                if (_sessionManager != null)
-                {
-                    await _sessionManager.RemoveSessionAsync(sessionId);
-                }
+                await _sessionManager.RemoveSessionAsync(sessionId);
                 return;
             }
 
@@ -2432,10 +2410,7 @@ public partial class ConnectService : IConnectService
             _connectionManager.RemoveConnectionIfMatch(sessionId, connection.WebSocket);
 
             // Clean up Redis session data (forced disconnect = no reconnection)
-            if (_sessionManager != null)
-            {
-                await _sessionManager.RemoveSessionAsync(sessionId);
-            }
+            await _sessionManager.RemoveSessionAsync(sessionId);
         }
         catch (Exception ex)
         {

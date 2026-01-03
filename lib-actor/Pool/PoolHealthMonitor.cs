@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Actor.Pool;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T9:</b> Uses distributed state, safe for multi-instance control planes.
+/// <b>IMPLEMENTATION TENETS:</b> Uses distributed state, safe for multi-instance control planes.
 /// Only one instance will "win" the race to mark a node unhealthy (idempotent).
 /// </para>
 /// </remarks>

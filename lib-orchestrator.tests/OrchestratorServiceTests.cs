@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.Logging;
@@ -68,206 +69,20 @@ public class OrchestratorServiceTests
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Act
-        var service = CreateService();
-
-        // Assert - Verify service was created and implements expected interface
-        Assert.NotNull(service);
-        Assert.IsAssignableFrom<IOrchestratorService>(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            null!,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("messageBus", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            null!,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("logger", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("loggerFactory", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            null!,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("configuration", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            null!,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("stateManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            null!,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("eventManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullHealthMonitor_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            null!,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("healthMonitor", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullRestartManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            null!,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("restartManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullBackendDetector_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            null!,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("backendDetector", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            null!));
-
-        Assert.Equal("eventConsumer", exception.ParamName);
-    }
+    public void OrchestratorService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<OrchestratorService>();
 
     #endregion
 

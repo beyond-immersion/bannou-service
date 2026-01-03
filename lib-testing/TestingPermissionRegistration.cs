@@ -41,7 +41,7 @@ public static class TestingPermissionRegistration
             ServiceId = instanceId,
             ServiceName = ServiceId,
             Version = ServiceVersion,
-            // BANNOU_APP_ID is a legitimate Tenet 21 exception - mesh bootstrap variable
+            // BANNOU_APP_ID is a legitimate IMPLEMENTATION TENETS exception - mesh bootstrap variable
             AppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
         };

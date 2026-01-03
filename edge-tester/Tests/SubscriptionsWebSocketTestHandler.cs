@@ -8,7 +8,7 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// WebSocket-based test handler for subscriptions service API endpoints.
 /// Tests the subscriptions service APIs through the Connect service WebSocket binary protocol.
 ///
-/// Tests comprehensive CRUD operations, error handling, and edge cases per TENET 9.
+/// Tests comprehensive CRUD operations, error handling, and edge cases per IMPLEMENTATION TENETS.
 /// </summary>
 public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
 {

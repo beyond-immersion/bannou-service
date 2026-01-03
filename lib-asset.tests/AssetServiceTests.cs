@@ -12,6 +12,7 @@ using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Storage;
+using BeyondImmersion.BannouService.TestUtilities;
 using StorageModels = BeyondImmersion.BannouService.Storage;
 
 namespace BeyondImmersion.BannouService.Asset.Tests;
@@ -58,168 +59,24 @@ public class AssetServiceTests
         _mockStateStoreFactory.Setup(f => f.SupportsSearch(STATE_STORE)).Returns(false);
     }
 
-    [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
-        var service = new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object);
+    #region Constructor Tests
 
-        // Assert
-        Assert.NotNull(service);
-    }
-
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
+    public void AssetService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<AssetService>();
 
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockLogger.Object,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullAssetEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullStorageProvider_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            null!,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullOrchestratorClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            null!,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullBundleConverter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            null!,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            null!));
-    }
+    #endregion
 
     #region RequestUploadAsync Tests
 

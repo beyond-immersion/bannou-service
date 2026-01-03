@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 
 /// <summary>
 /// In-memory search index with thread-safe operations.
-/// Uses ConcurrentDictionary per Tenet 9 (Multi-Instance Safety).
+/// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
 /// Rebuilt on startup from lib-state store.
 /// </summary>
 public partial class SearchIndexService : ISearchIndexService

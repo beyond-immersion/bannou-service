@@ -123,7 +123,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_MAXCONCURRENTCONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAXMESSAGESPERMINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGEQUEUESIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (T... |
+| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (I... |
 | `CONNECT_RATELIMITWINDOWMINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL returned to clients for reconnection |
@@ -330,7 +330,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Environment Variable Naming Convention
 
-Per Tenet 2, all configuration environment variables follow `{SERVICE}_{PROPERTY}` pattern:
+Per FOUNDATION TENETS, all configuration environment variables follow `{SERVICE}_{PROPERTY}` pattern:
 
 ```bash
 # Service prefix in UPPER_CASE
@@ -348,7 +348,7 @@ BANNOU_AUTH_JWT_SECRET=your-secret
 
 ## Required Configuration (Fail-Fast)
 
-Per Tenet 21, configuration marked as **REQUIRED** will cause the service to
+Per IMPLEMENTATION TENETS, configuration marked as **REQUIRED** will cause the service to
 throw an exception at startup if not configured. This prevents running with
 insecure defaults or missing critical configuration.
 

@@ -59,7 +59,7 @@ x-service-configuration:
       description: RSA public key for JWT validation (PEM format)
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for client event subscriptions (Tenet 21 - no default, required)
+      description: RabbitMQ connection string for client event subscriptions (IMPLEMENTATION TENETS - no default, required)
       env: CONNECT_RABBITMQ_CONNECTION_STRING
     ServerSalt:
       type: string

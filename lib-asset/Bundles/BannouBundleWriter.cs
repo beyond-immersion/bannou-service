@@ -163,7 +163,7 @@ public sealed class BannouBundleWriter : IDisposable
             Tags = tags
         };
 
-        // Write manifest using BannouJson for consistent serialization (T20)
+        // Write manifest using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
         var manifestJson = BannouJson.Serialize(manifest);
         var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
 
@@ -225,7 +225,7 @@ public sealed class BannouBundleWriter : IDisposable
             Tags = tags
         };
 
-        // Write manifest using BannouJson for consistent serialization (T20)
+        // Write manifest using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
         var manifestJson = BannouJson.Serialize(manifest);
         var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
 

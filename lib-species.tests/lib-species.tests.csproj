@@ -30,7 +30,8 @@
     <ProjectReference Include="../lib-species/lib-species.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-testing/lib-testing.csproj" />
-    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

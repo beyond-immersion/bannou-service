@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Actor.PoolNode;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T9:</b> Heartbeats are idempotent and safe for multi-instance deployments.
+/// <b>IMPLEMENTATION TENETS:</b> Heartbeats are idempotent and safe for multi-instance deployments.
 /// Each pool node has a unique NodeId, so duplicate heartbeats from same node are expected.
 /// </para>
 /// </remarks>

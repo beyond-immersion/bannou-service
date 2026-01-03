@@ -35,11 +35,11 @@ public partial class GameSessionService : IGameSessionService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
-    private readonly IVoiceClient? _voiceClient;
-    private readonly IPermissionsClient? _permissionsClient;
-    private readonly ISubscriptionsClient? _subscriptionsClient;
+    private readonly IVoiceClient _voiceClient;
+    private readonly IPermissionsClient _permissionsClient;
+    private readonly ISubscriptionsClient _subscriptionsClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IClientEventPublisher? _clientEventPublisher;
+    private readonly IClientEventPublisher _clientEventPublisher;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -64,7 +64,7 @@ public partial class GameSessionService : IGameSessionService
     /// Tracks connected WebSocket sessions: WebSocket SessionId -> AccountId.
     /// Static for thread-safety within process. Updated via session.connected/disconnected events.
     /// NOTE: This is an event-backed cache. All instances receive session events via fanout,
-    /// so all instances maintain synchronized state. See TENET T9 for cache pattern guidance.
+    /// so all instances maintain synchronized state. See IMPLEMENTATION TENETS for cache pattern guidance.
     /// TODO: Consider migrating to Redis state store for guaranteed multi-instance consistency
     /// if event delivery issues are observed in distributed deployments.
     /// </summary>
@@ -83,7 +83,7 @@ public partial class GameSessionService : IGameSessionService
     /// Reverse index for client event publishing: AccountId -> Set of WebSocket session IDs.
     /// Static for thread-safety within process. Updated via session.connected/disconnected events.
     /// NOTE: This is an event-backed cache. All instances receive session events via fanout,
-    /// so all instances maintain synchronized state. See TENET T9 for cache pattern guidance.
+    /// so all instances maintain synchronized state. See IMPLEMENTATION TENETS for cache pattern guidance.
     /// TODO: Consider migrating to Redis state store for guaranteed multi-instance consistency
     /// if event delivery issues are observed in distributed deployments.
     /// </summary>
@@ -91,7 +91,7 @@ public partial class GameSessionService : IGameSessionService
 
     /// <summary>
     /// Server salt for GUID generation. Comes from configuration, with fallback to random generation for development.
-    /// Instance-based to support configuration injection (Tenet 21).
+    /// Instance-based to support configuration injection (IMPLEMENTATION TENETS).
     /// </summary>
     private readonly string _serverSalt;
 
@@ -104,10 +104,10 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="configuration">Service configuration.</param>
     /// <param name="httpContextAccessor">HTTP context accessor for reading request headers.</param>
     /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
-    /// <param name="clientEventPublisher">Optional client event publisher for pushing events to WebSocket clients. May be null in contexts without Connect service.</param>
-    /// <param name="voiceClient">Optional voice client for voice room coordination. May be null if voice service is disabled.</param>
-    /// <param name="permissionsClient">Optional permissions client for setting game-session:in_game state. May be null if Permissions service is not loaded.</param>
-    /// <param name="subscriptionsClient">Optional subscriptions client for fetching account subscriptions. May be null if Subscriptions service is not loaded.</param>
+    /// <param name="clientEventPublisher">Client event publisher for pushing events to WebSocket clients.</param>
+    /// <param name="voiceClient">Voice client for voice room coordination.</param>
+    /// <param name="permissionsClient">Permissions client for setting game-session:in_game state.</param>
+    /// <param name="subscriptionsClient">Subscriptions client for fetching account subscriptions.</param>
     public GameSessionService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -115,20 +115,20 @@ public partial class GameSessionService : IGameSessionService
         GameSessionServiceConfiguration configuration,
         IHttpContextAccessor httpContextAccessor,
         IEventConsumer eventConsumer,
-        IClientEventPublisher? clientEventPublisher = null,
-        IVoiceClient? voiceClient = null,
-        IPermissionsClient? permissionsClient = null,
-        ISubscriptionsClient? subscriptionsClient = null)
+        IClientEventPublisher clientEventPublisher,
+        IVoiceClient voiceClient,
+        IPermissionsClient permissionsClient,
+        ISubscriptionsClient subscriptionsClient)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-        _clientEventPublisher = clientEventPublisher; // Nullable - may not be available in all contexts (Tenet 6)
-        _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 6)
-        _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 6)
-        _subscriptionsClient = subscriptionsClient; // Nullable - subscriptions service may not be loaded (Tenet 6)
+        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
+        _voiceClient = voiceClient ?? throw new ArgumentNullException(nameof(voiceClient));
+        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
+        _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -436,7 +436,7 @@ public partial class GameSessionService : IGameSessionService
 
             // Set game-session:in_game state BEFORE saving - if this fails, we haven't committed anything
             var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
-            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
+            if (!string.IsNullOrEmpty(clientSessionId))
             {
                 try
                 {
@@ -459,9 +459,9 @@ public partial class GameSessionService : IGameSessionService
                     });
                 }
             }
-            else if (_permissionsClient == null)
+            else
             {
-                _logger.LogDebug("Permissions client not available, game-session:in_game state not set");
+                _logger.LogDebug("No X-Bannou-Session-Id header, game-session:in_game state not set");
             }
 
             // Save updated session (permissions already set, safe to commit)
@@ -925,13 +925,6 @@ public partial class GameSessionService : IGameSessionService
                 return StatusCodes.NotFound;
             }
 
-            // Check if client event publisher is available
-            if (_clientEventPublisher == null)
-            {
-                _logger.LogWarning("IClientEventPublisher not available - cannot send chat message to session {SessionId}", sessionId);
-                return StatusCodes.InternalServerError;
-            }
-
             // Get sender info from request context
             var senderAccountIdStr = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Account-Id"].FirstOrDefault();
             var senderId = Guid.TryParse(senderAccountIdStr, out var parsedSenderId) ? parsedSenderId : Guid.Empty;
@@ -1223,11 +1216,6 @@ public partial class GameSessionService : IGameSessionService
     /// </summary>
     private async Task FetchAndCacheSubscriptionsAsync(Guid accountId)
     {
-        if (_subscriptionsClient == null)
-        {
-            _logger.LogDebug("Subscriptions client not available, cannot fetch subscriptions for account {AccountId}", accountId);
-            return;
-        }
 
         try
         {
@@ -1319,14 +1307,9 @@ public partial class GameSessionService : IGameSessionService
             };
 
             // Publish to session-specific client event channel using direct exchange
-            // CRITICAL: Must use IClientEventPublisher for session-specific events (Tenet 6)
+            // CRITICAL: Must use IClientEventPublisher for session-specific events (IMPLEMENTATION TENETS)
             // Using _messageBus directly would publish to fanout exchange "bannou" instead
             // of direct exchange "bannou-client-events" with proper routing key
-            if (_clientEventPublisher == null)
-            {
-                throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
-            }
-
             var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, shortcutEvent);
             if (published)
             {
@@ -1361,12 +1344,7 @@ public partial class GameSessionService : IGameSessionService
             };
 
             // Publish to session-specific client event channel using direct exchange
-            // CRITICAL: Must use IClientEventPublisher for session-specific events (Tenet 6)
-            if (_clientEventPublisher == null)
-            {
-                throw new InvalidOperationException("IClientEventPublisher is required but was not injected - check DI configuration");
-            }
-
+            // CRITICAL: Must use IClientEventPublisher for session-specific events (IMPLEMENTATION TENETS)
             var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, revokeEvent);
             if (published)
             {

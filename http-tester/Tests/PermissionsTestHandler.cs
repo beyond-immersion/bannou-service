@@ -1289,7 +1289,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    // TENETS Tenet 10: Exactly one role per endpoint
+                    // QUALITY TENETS: Exactly one role per endpoint
                     // Admin inherits user permissions via role hierarchy, so admin-only
                     // endpoints should ONLY be listed under admin role
                     ["default"] = new StatePermissions
@@ -1353,7 +1353,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    // TENETS Tenet 10: Exactly one role per endpoint
+                    // QUALITY TENETS: Exactly one role per endpoint
                     // Admin inherits user permissions via role hierarchy
                     ["default"] = new StatePermissions
                     {

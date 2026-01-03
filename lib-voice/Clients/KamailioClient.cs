@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Voice.Clients;
 
 /// <summary>
 /// HTTP client for Kamailio JSONRPC 2.0 control protocol.
-/// Thread-safe implementation suitable for multi-instance deployments (Tenet 4).
+/// Thread-safe implementation suitable for multi-instance deployments (FOUNDATION TENETS).
 /// </summary>
 public class KamailioClient : IKamailioClient
 {

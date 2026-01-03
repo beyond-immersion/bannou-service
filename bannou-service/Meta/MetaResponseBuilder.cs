@@ -6,7 +6,7 @@ namespace BeyondImmersion.BannouService.Meta;
 
 /// <summary>
 /// Builds MetaResponse objects from pre-computed schema strings.
-/// Uses BannouJson for all JSON operations per Tenet 20.
+/// Uses BannouJson for all JSON operations per IMPLEMENTATION TENETS.
 /// </summary>
 public static class MetaResponseBuilder
 {

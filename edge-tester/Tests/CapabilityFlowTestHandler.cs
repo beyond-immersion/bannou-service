@@ -632,7 +632,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             }
             catch (Exception ex)
             {
-                // TENET 12: If state update fails, we cannot test capability updates
+                // QUALITY TENETS: If state update fails, we cannot test capability updates
                 Console.WriteLine($"❌ State update failed: {ex.Message}");
                 Console.WriteLine("   Cannot test state-based capability updates without state update API access");
                 return false;
@@ -666,7 +666,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     }
                     else
                     {
-                        // TENET 12: API count should increase when game-session:in_game is set
+                        // QUALITY TENETS: API count should increase when game-session:in_game is set
                         Console.WriteLine($"❌ API count did not increase: {initialApiCount} → {updatedApiCount}");
                         Console.WriteLine("   State update should grant additional API access");
                         return false;
@@ -674,14 +674,14 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 }
                 else
                 {
-                    // TENET 12: We expected capability_manifest, not something else
+                    // QUALITY TENETS: We expected capability_manifest, not something else
                     Console.WriteLine($"❌ Expected capability_manifest but received: {updatedType}");
                     return false;
                 }
             }
             catch (OperationCanceledException)
             {
-                // TENET 11: Timeout is a failure - state change should trigger WebSocket push
+                // QUALITY TENETS: Timeout is a failure - state change should trigger WebSocket push
                 Console.WriteLine("❌ Timeout waiting for capability update - state change did not trigger WebSocket push");
                 return false;
             }

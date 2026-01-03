@@ -8,11 +8,11 @@ namespace BeyondImmersion.BannouService.Protocol;
 /// Shared GUID generation utilities for client-server security.
 /// Provides client-salted GUIDs to prevent cross-session exploitation.
 /// This is the shared version - all services should use this for consistency.
-/// Server salt should come from service configuration (Tenet 21).
+/// Server salt should come from service configuration (IMPLEMENTATION TENETS).
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>WARNING - MULTI-INSTANCE SAFETY (T9):</b> The <see cref="GenerateServerSalt"/> method
+/// <b>WARNING - MULTI-INSTANCE SAFETY (IMPLEMENTATION TENETS):</b> The <see cref="GenerateServerSalt"/> method
 /// generates cryptographically random values. In a multi-instance deployment, each instance
 /// would generate different salts, causing client GUIDs to differ across instances.
 /// </para>
@@ -23,7 +23,7 @@ namespace BeyondImmersion.BannouService.Protocol;
 /// salt generation during deployment setup.
 /// </para>
 /// <para>
-/// See TENETS.md T9: Multi-Instance Safety for distributed state requirements.
+/// See TENETS.md IMPLEMENTATION TENETS: Multi-Instance Safety for distributed state requirements.
 /// </para>
 /// </remarks>
 public static class GuidGenerator

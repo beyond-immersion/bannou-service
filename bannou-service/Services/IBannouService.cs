@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T6 - Service Implementation Pattern:</b> All service implementations
+/// <b>FOUNDATION TENETS - Service Implementation Pattern:</b> All service implementations
 /// MUST be declared as <c>partial class</c> to support the following code-split pattern:
 /// </para>
 /// <list type="bullet">

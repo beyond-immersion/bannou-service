@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Voice.Clients;
 
 /// <summary>
 /// UDP client for RTPEngine ng control protocol.
-/// Thread-safe implementation suitable for multi-instance deployments (Tenet 4).
+/// Thread-safe implementation suitable for multi-instance deployments (FOUNDATION TENETS).
 /// Uses cookie-prefixed bencode messages as per ng protocol specification.
 /// </summary>
 public class RtpEngineClient : IRtpEngineClient

@@ -160,13 +160,13 @@ if [ ! -f "$GLOBAL_USINGS_FILE" ]; then
     fi
 fi
 
-# Per T22: GlobalSuppressions.cs files with blanket CA1822 suppression are forbidden.
+# Per QUALITY TENETS: GlobalSuppressions.cs files with blanket CA1822 suppression are forbidden.
 # xUnit does NOT require instance methods - the previous justification was incorrect.
 # If CA1822 fires on a test method, either make it static or fix the underlying issue.
-# See: docs/reference/tenets/QUALITY.md (T22)
+# See: docs/reference/tenets/QUALITY.md (Warning Suppression)
 #
 # NOTE: This script no longer creates GlobalSuppressions.cs files.
-# Any existing files should be deleted as part of T22 compliance cleanup.
+# Any existing files should be deleted as part of QUALITY TENETS compliance cleanup.
 
 # Create basic service tests if they don't exist
 SERVICE_TESTS_FILE="$TEST_PROJECT_DIR/${SERVICE_PASCAL}ServiceTests.cs"

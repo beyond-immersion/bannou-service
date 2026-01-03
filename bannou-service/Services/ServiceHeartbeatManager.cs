@@ -78,7 +78,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         // Resolve app-id from configuration
         AppId = configuration.AppId ?? AppConstants.DEFAULT_APP_NAME;
 
-        // Get heartbeat settings from configuration (Tenet 21 compliant)
+        // Get heartbeat settings from configuration (IMPLEMENTATION TENETS compliant)
         HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0
             ? configuration.HeartbeatIntervalSeconds
             : 30;

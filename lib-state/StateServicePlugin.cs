@@ -70,7 +70,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
     }
 
     /// <summary>
-    /// Build StateStoreFactoryConfiguration from StateServiceConfiguration (Tenet 21 compliant).
+    /// Build StateStoreFactoryConfiguration from StateServiceConfiguration (IMPLEMENTATION TENETS compliant).
     /// </summary>
     private static StateStoreFactoryConfiguration BuildFactoryConfiguration(StateServiceConfiguration stateConfig)
     {

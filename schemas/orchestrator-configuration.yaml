@@ -81,7 +81,7 @@ x-service-configuration:
       env: ORCHESTRATOR_KUBERNETES_NAMESPACE
       default: "default"
 
-    # Infrastructure Connection Strings (Tenet 21 - no insecure defaults)
+    # Infrastructure Connection Strings (IMPLEMENTATION TENETS - no insecure defaults)
     RedisConnectionString:
       type: string
       description: Redis connection string for orchestrator state (required, no default)

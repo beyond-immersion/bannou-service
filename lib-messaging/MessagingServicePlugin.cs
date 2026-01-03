@@ -21,7 +21,7 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
     {
         Logger?.LogDebug("Configuring messaging service dependencies");
 
-        // Register named HttpClient for subscription callbacks (Tenet 4: use IHttpClientFactory)
+        // Register named HttpClient for subscription callbacks (FOUNDATION TENETS: use IHttpClientFactory)
         services.AddHttpClient(MessagingService.HttpClientName);
         Logger?.LogDebug("Registered named HttpClient '{ClientName}' for subscription callbacks", MessagingService.HttpClientName);
 

@@ -62,7 +62,7 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T6 - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
+/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
 /// </para>
 /// <para>

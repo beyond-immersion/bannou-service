@@ -2,7 +2,7 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 
 /// <summary>
 /// Service responsible for tracking SIP endpoint registrations within voice rooms.
-/// Uses thread-safe collections for multi-instance safety (Tenet 4).
+/// Uses thread-safe collections for multi-instance safety (FOUNDATION TENETS).
 /// Participants are keyed by sessionId (WebSocket session) to support multiple
 /// connections from the same account (e.g., main game + screenshare).
 /// </summary>

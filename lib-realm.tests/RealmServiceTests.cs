@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -96,67 +97,18 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        var service = CreateService();
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockLogger.Object,
-            Configuration,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            Configuration,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            null!));
-    }
+    public void RealmService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<RealmService>();
 
     #endregion
 

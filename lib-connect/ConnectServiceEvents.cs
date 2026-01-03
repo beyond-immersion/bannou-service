@@ -104,7 +104,7 @@ public partial class ConnectService
                 correlationId = evt.CorrelationId
             };
 
-            // Use BannouJson for consistent serialization (T20)
+            // Use BannouJson for consistent serialization (IMPLEMENTATION TENETS)
             var payloadJson = BannouJson.Serialize(adminNotification);
             var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
 

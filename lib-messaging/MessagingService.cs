@@ -131,7 +131,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             var subscriptionId = Guid.NewGuid();
             var queueName = $"bannou-dynamic-{subscriptionId:N}";
 
-            // Create HTTP client that lives for the subscription duration (Tenet 4: use IHttpClientFactory)
+            // Create HTTP client that lives for the subscription duration (FOUNDATION TENETS: use IHttpClientFactory)
             httpClient = _httpClientFactory.CreateClient(HttpClientName);
             var callbackUrl = body.CallbackUrl;
 

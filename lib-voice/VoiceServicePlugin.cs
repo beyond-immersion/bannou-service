@@ -19,7 +19,7 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
         Logger?.LogInformation("Configuring Voice service dependencies");
 
         // Register helper services for P2P voice coordination
-        // These are Singleton because they maintain local caches for multi-instance safety (Tenet 4)
+        // These are Singleton because they maintain local caches for multi-instance safety (FOUNDATION TENETS)
         services.AddSingleton<ISipEndpointRegistry, SipEndpointRegistry>();
         services.AddSingleton<IP2PCoordinator, P2PCoordinator>();
         Logger?.LogDebug("Registered Voice helper services (SipEndpointRegistry, P2PCoordinator)");

@@ -32,7 +32,7 @@ public partial class TestingService : ITestingService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
 
-        // Required by Tenet 6 - calls default IBannouService.RegisterEventConsumers() no-op
+        // Required by FOUNDATION TENETS - calls default IBannouService.RegisterEventConsumers() no-op
         // Must cast to interface to access default interface implementation
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);

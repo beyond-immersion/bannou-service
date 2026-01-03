@@ -24,7 +24,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Register MinIO configuration options from AssetServiceConfiguration (Tenet 21)
+        // Register MinIO configuration options from AssetServiceConfiguration (IMPLEMENTATION TENETS)
         services.AddOptions<MinioStorageOptions>()
             .Configure<AssetServiceConfiguration>((options, config) =>
             {

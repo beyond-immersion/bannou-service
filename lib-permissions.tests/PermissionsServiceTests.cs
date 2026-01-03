@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -124,69 +125,24 @@ public class PermissionsServiceTests
             _mockEventConsumer.Object);
     }
 
-    [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act & Assert
-        var service = CreateService();
-        Assert.NotNull(service);
-    }
+    #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new PermissionsService(null!, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
-    }
+    public void PermissionsService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<PermissionsService>();
 
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new PermissionsService(_mockLogger.Object, null!, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, null!, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, null!, _mockLockProvider.Object, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLockProvider_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, null!, _mockClientEventPublisher.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullClientEventPublisher_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, null!, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new PermissionsService(_mockLogger.Object, _mockConfiguration.Object, _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLockProvider.Object, _mockClientEventPublisher.Object, null!));
-    }
+    #endregion
 
     [Fact]
     public async Task RegisterServicePermissionsAsync_LockAcquisitionFails_ReturnsInternalServerError()

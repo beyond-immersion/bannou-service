@@ -3,8 +3,10 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.Extensions.Logging;
@@ -27,6 +29,7 @@ public class VoiceServiceTests
     private readonly Mock<IP2PCoordinator> _mockP2PCoordinator;
     private readonly Mock<IScaledTierCoordinator> _mockScaledTierCoordinator;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
+    private readonly Mock<IPermissionsClient> _mockPermissionsClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public VoiceServiceTests()
@@ -41,6 +44,7 @@ public class VoiceServiceTests
         _mockP2PCoordinator = new Mock<IP2PCoordinator>();
         _mockScaledTierCoordinator = new Mock<IScaledTierCoordinator>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockPermissionsClient = new Mock<IPermissionsClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup state store factory to return typed stores
@@ -65,151 +69,24 @@ public class VoiceServiceTests
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
             _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object);
+            _mockClientEventPublisher.Object,
+            _mockPermissionsClient.Object);
     }
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
-        var service = CreateService();
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockConfiguration.Object,
-            _mockEndpointRegistry.Object,
-            _mockP2PCoordinator.Object,
-            _mockScaledTierCoordinator.Object,
-            _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            _mockConfiguration.Object,
-            _mockEndpointRegistry.Object,
-            _mockP2PCoordinator.Object,
-            _mockScaledTierCoordinator.Object,
-            _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockEndpointRegistry.Object,
-            _mockP2PCoordinator.Object,
-            _mockScaledTierCoordinator.Object,
-            _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEndpointRegistry_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockConfiguration.Object,
-            null!,
-            _mockP2PCoordinator.Object,
-            _mockScaledTierCoordinator.Object,
-            _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullP2PCoordinator_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockConfiguration.Object,
-            _mockEndpointRegistry.Object,
-            null!,
-            _mockScaledTierCoordinator.Object,
-            _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullScaledTierCoordinator_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockConfiguration.Object,
-            _mockEndpointRegistry.Object,
-            _mockP2PCoordinator.Object,
-            null!,
-            _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockConfiguration.Object,
-            _mockEndpointRegistry.Object,
-            _mockP2PCoordinator.Object,
-            _mockScaledTierCoordinator.Object,
-            null!,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullClientEventPublisher_ShouldSucceed()
-    {
-        // Arrange, Act - IClientEventPublisher is optional per Tenet 5 (context-dependent)
-        var service = new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockConfiguration.Object,
-            _mockEndpointRegistry.Object,
-            _mockP2PCoordinator.Object,
-            _mockScaledTierCoordinator.Object,
-            _mockEventConsumer.Object,
-            null);
-
-        // Assert - Service should be created successfully
-        Assert.NotNull(service);
-    }
+    public void VoiceService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<VoiceService>();
 
     #endregion
 
@@ -623,7 +500,7 @@ public class VoiceServiceTests
     [Fact]
     public async Task JoinVoiceRoom_WhenExistingPeers_SetsVoiceRingingStateForJoiningSession()
     {
-        // Arrange - joining session should get voice:ringing state when there are existing peers (Tenet 10)
+        // Arrange - joining session should get voice:ringing state when there are existing peers (QUALITY TENETS)
         var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
         var service = new VoiceService(
             _mockStateStoreFactory.Object,

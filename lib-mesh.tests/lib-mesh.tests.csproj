@@ -29,6 +29,8 @@
     <!-- bannou-service comes transitively via lib-mesh -->
     <ProjectReference Include="../lib-mesh/lib-mesh.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

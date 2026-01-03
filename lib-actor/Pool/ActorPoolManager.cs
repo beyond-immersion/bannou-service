@@ -15,10 +15,10 @@ namespace BeyondImmersion.BannouService.Actor.Pool;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T4:</b> Uses lib-state infrastructure, no direct Redis connections.
+/// <b>FOUNDATION TENETS:</b> Uses lib-state infrastructure, no direct Redis connections.
 /// </para>
 /// <para>
-/// <b>TENET T9:</b> All state is in Redis, safe for multi-instance control planes.
+/// <b>IMPLEMENTATION TENETS:</b> All state is in Redis, safe for multi-instance control planes.
 /// </para>
 /// </remarks>
 public sealed class ActorPoolManager : IActorPoolManager
@@ -438,7 +438,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     /// <summary>
     /// Index for tracking known node IDs.
-    /// Avoids KEYS/SCAN operations per TENET T9.
+    /// Avoids KEYS/SCAN operations per IMPLEMENTATION TENETS.
     /// </summary>
     private class PoolNodeIndex
     {

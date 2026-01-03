@@ -11,14 +11,14 @@ info:
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
     **Browser Endpoint**: The GET /documentation/view/{slug} endpoint is browser-facing
-    (NGINX-routed) per Tenet 15 and has NO x-permissions.
+    (NGINX-routed) per FOUNDATION TENETS and has NO x-permissions.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (MUST use "bannou" app-id)
 
 paths:
-  # ===== Browser-Facing Endpoint (Tenet 15) =====
+  # ===== Browser-Facing Endpoint (FOUNDATION TENETS) =====
   # NO x-permissions = NGINX-routed, not WebSocket accessible
   /documentation/view/{slug}:
     get:
@@ -50,7 +50,7 @@ paths:
           description: HTML documentation page (returns ContentResult)
         '404':
           description: Document not found
-      # NOTE: No x-permissions = browser-facing endpoint (Tenet 15)
+      # NOTE: No x-permissions = browser-facing endpoint (FOUNDATION TENETS)
       x-manual-implementation: true  # Returns HTML, not JSON - excluded from interface generation
 
   # ===== Query Endpoints (WebSocket accessible) =====

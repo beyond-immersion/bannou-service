@@ -10,6 +10,30 @@ This document is the authoritative index for Bannou development standards. All s
 
 ---
 
+## Tenet 0: Never Reference Tenet Numbers in Source Code
+
+When documenting tenet compliance in source code comments, **NEVER use specific tenet numbers** (e.g., "T9", "Tenet 21", "TENET T4"). Tenet numbers change over time as tenets are added, removed, or reorganized.
+
+**Instead, use category names:**
+- `FOUNDATION TENETS` - for T1, T2, T4, T5, T6, T13, T15, T18
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21
+- `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
+
+**Examples:**
+```csharp
+// WRONG: Uses specific tenet number (will become stale)
+// Use distributed state per T9
+// Tenet 21 compliant
+
+// CORRECT: Uses category name (stable)
+// Use distributed state per IMPLEMENTATION TENETS
+// IMPLEMENTATION TENETS compliant
+```
+
+This rule applies to: source code comments, schema descriptions, generator scripts, and any non-documentation files. The tenet definition documents (`docs/reference/tenets/*.md`) are the only place where specific numbers should appear.
+
+---
+
 ## Tenet Categories
 
 Tenets are organized into three categories based on when they're needed:
@@ -75,6 +99,7 @@ Tenets are organized into three categories based on when they're needed:
 
 | Violation | Tenet | Fix |
 |-----------|-------|-----|
+| Using "T9" or "Tenet 21" in source code | T0 | Use category name: FOUNDATION/IMPLEMENTATION/QUALITY TENETS |
 | Editing Generated/ files | T1, T2 | Edit schema, regenerate |
 | Missing `description` on schema property | T1 | Add description field (causes CS1591) |
 | Wrong env var format (`JWTSECRET`) | T2 | Use `{SERVICE}_{PROPERTY}` pattern |

@@ -10,12 +10,12 @@
 //     1. Edit the source schema (schemas/connect-configuration.yaml)
 //     2. Run: scripts/generate-all-services.sh
 //
-//     USAGE (TENET T21 - Configuration-First):
+//     USAGE (IMPLEMENTATION TENETS - Configuration-First):
 //     Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
 //     Example: public MyService(ConnectServiceConfiguration config) { _config = config; }
 //
-//     See: docs/reference/tenets/FOUNDATION.md (T1, T2)
-//     See: docs/reference/tenets/IMPLEMENTATION.md (T21: Configuration-First)
+//     See: docs/reference/tenets/FOUNDATION.md
+//     See: docs/reference/tenets/IMPLEMENTATION.md
 // </auto-generated>
 //----------------------
 
@@ -34,7 +34,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>TENET T21 - Configuration-First:</b> Access configuration via dependency injection.
+/// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
 /// </para>
 /// <para>
@@ -120,7 +120,7 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public string JwtPublicKey { get; set; } = string.Empty;
 
     /// <summary>
-    /// RabbitMQ connection string for client event subscriptions (Tenet 21 - no default, required)
+    /// RabbitMQ connection string for client event subscriptions (IMPLEMENTATION TENETS - no default, required)
     /// Environment variable: CONNECT_RABBITMQ_CONNECTION_STRING
     /// </summary>
     public string RabbitMqConnectionString { get; set; } = string.Empty;
