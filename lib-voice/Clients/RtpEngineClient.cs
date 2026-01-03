@@ -26,16 +26,16 @@ public class RtpEngineClient : IRtpEngineClient
     /// Initializes a new instance of the RtpEngineClient.
     /// </summary>
     /// <param name="host">RTPEngine host address.</param>
-    /// <param name="port">RTPEngine ng protocol port (default 22222).</param>
+    /// <param name="port">RTPEngine ng protocol port.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
-    /// <param name="timeoutSeconds">Timeout for responses in seconds (default 5).</param>
+    /// <param name="timeoutSeconds">Timeout for responses in seconds.</param>
     public RtpEngineClient(
         string host,
         int port,
         ILogger<RtpEngineClient> logger,
         IMessageBus messageBus,
-        int timeoutSeconds = 5)
+        int timeoutSeconds)
     {
         if (string.IsNullOrEmpty(host))
         {

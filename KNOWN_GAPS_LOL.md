@@ -128,6 +128,20 @@ Asset and Documentation APIs were designed without `sessionId` in requests. The 
 **File**: `lib-servicedata/ServicedataService.cs`
 **Status**: ✅ Fixed - All 9 instances of `null!` replaced with `null`
 
+### 4.3 Non-Async Task-Returning Methods (T23 Violation) (GREEN - RESOLVED)
+**Status**: ✅ Fixed - 354 violations across codebase
+
+**Fixed locations:**
+- `lib-state/StateStoreFactory.cs` - 1 method (pass-through Task return)
+- `bannou-service/BannouJson.cs` - 1 method (pass-through Task return)
+- `http-tester/Program.cs` - 4 methods (MockTestClient)
+- `http-tester/Tests/*.cs` - 347 methods (expression-bodied test methods)
+- `lib-voice/Services/P2PCoordinator.cs` - Fixed async pattern
+- `lib-voice/Services/ScaledTierCoordinator.cs` - Fixed async pattern
+- `lib-orchestrator/Backends/*.cs` - Fixed async pattern in backend detectors
+
+**Pattern**: All Task-returning methods now have `async` keyword and contain at least one `await`.
+
 ---
 
 ## Category 5: Inconsistent DI Patterns
@@ -140,7 +154,15 @@ Asset and Documentation APIs were designed without `sessionId` in requests. The 
 **File**: `bannou-service/Program.cs`
 **Status**: ✅ Fixed - Removed stale comment referencing non-existent `AddBannouServices()` method.
 
-### 5.3 43 GetService Calls Throughout Codebase (GREEN - RESOLVED)
+### 5.3 Optional Constructor Parameters (DI Anti-Pattern) (GREEN - RESOLVED)
+**File**: `lib-voice/Clients/RtpEngineClient.cs`
+**Status**: ✅ Fixed - Removed default value from `timeoutSeconds` parameter
+
+**Issue**: Constructor had `int timeoutSeconds = 5` which is problematic for DI - optional parameters can accidentally be set to null/default by the DI container.
+
+**Fix**: Made parameter required, updated all callers (tests and VoiceServicePlugin) to pass explicit value.
+
+### 5.4 43 GetService Calls Throughout Codebase (GREEN - RESOLVED)
 **Status**: ✅ Fixed - Comprehensive audit completed:
 
 **Fixed (14 calls changed to GetRequiredService + fail-fast):**
@@ -229,14 +251,14 @@ These patterns were found but are legitimately intentional:
 | Silent Failures | 0 | 0 | 4 |
 | Unimplemented Features | 0 | 4 | 1 |
 | Missing Audit | 0 | 0 | 2 |
-| Tenet Violations | 0 | 0 | 2 |
-| DI Patterns | 0 | 0 | 3 |
+| Tenet Violations | 0 | 0 | 3 |
+| DI Patterns | 0 | 0 | 4 |
 | Test Issues | 0 | 0 | 1 |
 | Documented Limitations | 0 | 1 | 3 |
 | Verified Intentional | 0 | 0 | 14 |
 | String.Empty Usage | 0 | 326 | 0 |
 | Null-Forgiving Exceptions | 0 | 0 | 4 |
-| **TOTAL** | **0** | **331** | **34** |
+| **TOTAL** | **0** | **331** | **36** |
 
 ---
 

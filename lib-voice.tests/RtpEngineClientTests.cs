@@ -33,7 +33,7 @@ public class RtpEngineClientTests : IDisposable
     public void ConstructorIsValid()
     {
         ServiceConstructorValidator.ValidateServiceConstructor<RtpEngineClient>();
-        using var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object);
+        using var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
         Assert.NotNull(client);
     }
 
@@ -45,7 +45,8 @@ public class RtpEngineClientTests : IDisposable
             string.Empty,
             22222,
             _mockLogger.Object,
-            _mockMessageBus.Object));
+            _mockMessageBus.Object,
+            timeoutSeconds: 5));
     }
 
     [Fact]
@@ -62,7 +63,7 @@ public class RtpEngineClientTests : IDisposable
     public void Constructor_WithZeroPort_ShouldNotThrow()
     {
         // Arrange & Act - Port 0 is technically valid (OS assigns)
-        using var client = new RtpEngineClient("127.0.0.1", 0, _mockLogger.Object, _mockMessageBus.Object);
+        using var client = new RtpEngineClient("127.0.0.1", 0, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
 
         // Assert
         Assert.NotNull(client);
@@ -72,7 +73,7 @@ public class RtpEngineClientTests : IDisposable
     public void Constructor_WithMaxPort_ShouldNotThrow()
     {
         // Arrange & Act
-        using var client = new RtpEngineClient("127.0.0.1", 65535, _mockLogger.Object, _mockMessageBus.Object);
+        using var client = new RtpEngineClient("127.0.0.1", 65535, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
 
         // Assert
         Assert.NotNull(client);
@@ -87,14 +88,15 @@ public class RtpEngineClientTests : IDisposable
             "this-hostname-definitely-does-not-exist.invalid",
             22222,
             _mockLogger.Object,
-            _mockMessageBus.Object));
+            _mockMessageBus.Object,
+            timeoutSeconds: 5));
     }
 
     [Fact]
     public void Constructor_WithLocalhostHostname_ShouldResolveSuccessfully()
     {
         // Arrange & Act - "localhost" should resolve to 127.0.0.1
-        using var client = new RtpEngineClient("localhost", 22222, _mockLogger.Object, _mockMessageBus.Object);
+        using var client = new RtpEngineClient("localhost", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
 
         // Assert
         Assert.NotNull(client);
@@ -104,7 +106,7 @@ public class RtpEngineClientTests : IDisposable
     public void Constructor_WithIPv6Localhost_ShouldNotThrow()
     {
         // Arrange & Act - IPv6 loopback address
-        using var client = new RtpEngineClient("::1", 22222, _mockLogger.Object, _mockMessageBus.Object);
+        using var client = new RtpEngineClient("::1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
 
         // Assert
         Assert.NotNull(client);
@@ -118,7 +120,7 @@ public class RtpEngineClientTests : IDisposable
     public void Dispose_ShouldNotThrow()
     {
         // Arrange
-        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object);
+        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
 
         // Act & Assert - Should not throw
         client.Dispose();
@@ -128,7 +130,7 @@ public class RtpEngineClientTests : IDisposable
     public void Dispose_CalledMultipleTimes_ShouldNotThrow()
     {
         // Arrange
-        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object);
+        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
 
         // Act & Assert - Multiple disposals should be safe
         client.Dispose();
@@ -140,7 +142,7 @@ public class RtpEngineClientTests : IDisposable
     public async Task OperationAfterDispose_ShouldThrowObjectDisposedException()
     {
         // Arrange
-        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object);
+        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
         client.Dispose();
 
         // Act & Assert
@@ -154,7 +156,7 @@ public class RtpEngineClientTests : IDisposable
     public async Task IsHealthyAsync_AfterDispose_ReturnsFalse()
     {
         // Arrange
-        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object);
+        var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 5);
         client.Dispose();
 
         // Act - IsHealthyAsync catches ObjectDisposedException and returns false
