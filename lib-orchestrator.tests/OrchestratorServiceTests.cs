@@ -1786,8 +1786,8 @@ public class OrchestratorProcessingPoolTests
 
         // No pool configuration exists
         _mockStateManager
-            .Setup(x => x.GetValueAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:config"))))
-            .ReturnsAsync((object?)null);
+            .Setup(x => x.GetValueAsync<OrchestratorService.PoolConfiguration>(It.Is<string>(s => s.Contains("pool:config"))))
+            .ReturnsAsync((OrchestratorService.PoolConfiguration?)null);
 
         var request = new ScalePoolRequest { PoolType = "unknown-pool", TargetInstances = 5 };
 
@@ -1830,14 +1830,14 @@ public class OrchestratorProcessingPoolTests
 
         // No existing instances
         _mockStateManager
-            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:instances"))))
-            .ReturnsAsync((object?)null);
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains("pool:instances"))))
+            .ReturnsAsync((List<OrchestratorService.ProcessorInstance>?)null);
         _mockStateManager
-            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:available"))))
-            .ReturnsAsync((object?)null);
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains("pool:available"))))
+            .ReturnsAsync((List<OrchestratorService.ProcessorInstance>?)null);
         _mockStateManager
-            .Setup(x => x.GetHashAsync<It.IsAnyType>(It.Is<string>(s => s.Contains("pool:leases"))))
-            .ReturnsAsync((object?)null);
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(It.Is<string>(s => s.Contains("pool:leases"))))
+            .ReturnsAsync((Dictionary<string, OrchestratorService.ProcessorLease>?)null);
 
         var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
 
@@ -1972,37 +1972,31 @@ public class OrchestratorProcessingPoolTests
 
     private void SetupPoolConfiguration(string poolType, string serviceName)
     {
-        // We can't easily mock internal PoolConfiguration class,
-        // so we set up the GetValueAsync to return a properly structured object
-        // Using dynamic/object approach for internal class
-        _mockStateManager
-            .Setup(x => x.GetValueAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:config:{poolType}"))))
-            .Returns((string key) =>
+        var config = new OrchestratorService.PoolConfiguration
+        {
+            PoolType = poolType,
+            ServiceName = serviceName,
+            Image = null,
+            Environment = new Dictionary<string, string>
             {
-                // Return a task with a dynamic object that has the expected properties
-                var config = new
-                {
-                    PoolType = poolType,
-                    ServiceName = serviceName,
-                    Image = (string?)null,
-                    Environment = new Dictionary<string, string>
-                    {
-                        ["SERVICES_ENABLED"] = "false",
-                        [$"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED"] = "true"
-                    },
-                    MinInstances = 1,
-                    MaxInstances = 10,
-                    ScaleUpThreshold = 0.8,
-                    ScaleDownThreshold = 0.2,
-                    IdleTimeoutMinutes = 5
-                };
-                return Task.FromResult<object?>(config);
-            });
+                ["SERVICES_ENABLED"] = "false",
+                [$"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED"] = "true"
+            },
+            MinInstances = 1,
+            MaxInstances = 10,
+            ScaleUpThreshold = 0.8,
+            ScaleDownThreshold = 0.2,
+            IdleTimeoutMinutes = 5
+        };
+
+        _mockStateManager
+            .Setup(x => x.GetValueAsync<OrchestratorService.PoolConfiguration>(It.Is<string>(s => s.Contains($"pool:{poolType}:config"))))
+            .ReturnsAsync(config);
     }
 
     private void SetupExistingPoolInstances(string poolType, int totalCount, int availableCount)
     {
-        var instances = Enumerable.Range(0, totalCount).Select(i => new
+        var instances = Enumerable.Range(0, totalCount).Select(i => new OrchestratorService.ProcessorInstance
         {
             ProcessorId = $"{poolType}-{Guid.NewGuid():N}",
             AppId = $"bannou-pool-{poolType}-{i:D4}",
@@ -2015,16 +2009,289 @@ public class OrchestratorProcessingPoolTests
         var availableInstances = instances.Take(availableCount).ToList();
 
         _mockStateManager
-            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:instances:{poolType}"))))
-            .Returns(Task.FromResult<object?>(instances));
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains($"pool:{poolType}:instances"))))
+            .ReturnsAsync(instances);
 
         _mockStateManager
-            .Setup(x => x.GetListAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:available:{poolType}"))))
-            .Returns(Task.FromResult<object?>(availableInstances));
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains($"pool:{poolType}:available"))))
+            .ReturnsAsync(availableInstances);
 
         _mockStateManager
-            .Setup(x => x.GetHashAsync<It.IsAnyType>(It.Is<string>(s => s.Contains($"pool:leases:{poolType}"))))
-            .Returns(Task.FromResult<object?>(new Dictionary<string, object>()));
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .ReturnsAsync(new Dictionary<string, OrchestratorService.ProcessorLease>());
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for PresetLoader and PresetProcessingPool YAML parsing.
+/// </summary>
+public class PresetLoaderTests
+{
+    private readonly Mock<ILogger<PresetLoader>> _mockLogger;
+    private readonly string _testPresetsDirectory;
+
+    public PresetLoaderTests()
+    {
+        _mockLogger = new Mock<ILogger<PresetLoader>>();
+        _testPresetsDirectory = Path.Combine(Path.GetTempPath(), $"preset-tests-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_testPresetsDirectory);
+    }
+
+    private PresetLoader CreateLoader()
+    {
+        return new PresetLoader(_mockLogger.Object, _testPresetsDirectory);
+    }
+
+    private async Task CreatePresetFileAsync(string name, string content)
+    {
+        var filePath = Path.Combine(_testPresetsDirectory, $"{name}.yaml");
+        await File.WriteAllTextAsync(filePath, content);
+    }
+
+    #region ProcessingPools YAML Parsing Tests
+
+    [Fact]
+    public async Task LoadPresetAsync_WithProcessingPools_ShouldParseCorrectly()
+    {
+        // Arrange
+        const string presetContent = @"
+name: actor-pools
+description: Actor pool configuration
+category: processing
+
+processing_pools:
+  - pool_type: actor-shared
+    plugin: actor
+    min_instances: 1
+    max_instances: 10
+    scale_up_threshold: 0.8
+    scale_down_threshold: 0.2
+    idle_timeout_minutes: 5
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_CAPACITY: '50'
+
+  - pool_type: actor-npc-brain
+    plugin: actor
+    min_instances: 2
+    max_instances: 20
+    scale_up_threshold: 0.7
+    scale_down_threshold: 0.3
+    idle_timeout_minutes: 10
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: npc-brain
+";
+
+        await CreatePresetFileAsync("actor-pools", presetContent);
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("actor-pools");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.Equal("actor-pools", preset.Name);
+        Assert.Equal("Actor pool configuration", preset.Description);
+        Assert.Equal("processing", preset.Category);
+        Assert.NotNull(preset.ProcessingPools);
+        Assert.Equal(2, preset.ProcessingPools.Count);
+
+        // Verify first pool
+        var sharedPool = preset.ProcessingPools[0];
+        Assert.Equal("actor-shared", sharedPool.PoolType);
+        Assert.Equal("actor", sharedPool.Plugin);
+        Assert.Equal(1, sharedPool.MinInstances);
+        Assert.Equal(10, sharedPool.MaxInstances);
+        Assert.Equal(0.8, sharedPool.ScaleUpThreshold);
+        Assert.Equal(0.2, sharedPool.ScaleDownThreshold);
+        Assert.Equal(5, sharedPool.IdleTimeoutMinutes);
+        Assert.NotNull(sharedPool.Environment);
+        Assert.Equal("pool-node", sharedPool.Environment["ACTOR_DEPLOYMENT_MODE"]);
+        Assert.Equal("50", sharedPool.Environment["ACTOR_POOL_NODE_CAPACITY"]);
+
+        // Verify second pool
+        var npcBrainPool = preset.ProcessingPools[1];
+        Assert.Equal("actor-npc-brain", npcBrainPool.PoolType);
+        Assert.Equal(2, npcBrainPool.MinInstances);
+        Assert.Equal(20, npcBrainPool.MaxInstances);
+        Assert.Equal(10, npcBrainPool.IdleTimeoutMinutes);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithNoProcessingPools_ShouldReturnNullProcessingPools()
+    {
+        // Arrange
+        const string presetContent = @"
+name: simple-preset
+description: Simple preset without pools
+
+topology:
+  nodes:
+    - name: test-node
+      services:
+        - auth
+";
+
+        await CreatePresetFileAsync("simple-preset", presetContent);
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("simple-preset");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.Equal("simple-preset", preset.Name);
+        Assert.Null(preset.ProcessingPools);
+        Assert.NotNull(preset.Topology);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithEmptyProcessingPools_ShouldReturnEmptyList()
+    {
+        // Arrange
+        const string presetContent = @"
+name: empty-pools
+description: Preset with empty pools list
+
+processing_pools: []
+";
+
+        await CreatePresetFileAsync("empty-pools", presetContent);
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("empty-pools");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.NotNull(preset.ProcessingPools);
+        Assert.Empty(preset.ProcessingPools);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithPoolImage_ShouldParseImage()
+    {
+        // Arrange
+        const string presetContent = @"
+name: custom-image-pool
+description: Pool with custom image
+
+processing_pools:
+  - pool_type: asset-processor
+    plugin: asset
+    image: myregistry/asset-processor:v2
+    min_instances: 1
+    max_instances: 5
+";
+
+        await CreatePresetFileAsync("custom-image-pool", presetContent);
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("custom-image-pool");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.NotNull(preset.ProcessingPools);
+        Assert.Single(preset.ProcessingPools);
+        Assert.Equal("myregistry/asset-processor:v2", preset.ProcessingPools[0].Image);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithDefaultValues_ShouldUseDefaults()
+    {
+        // Arrange - pool with minimal configuration
+        const string presetContent = @"
+name: minimal-pool
+description: Minimal pool config
+
+processing_pools:
+  - pool_type: test-pool
+    plugin: test
+";
+
+        await CreatePresetFileAsync("minimal-pool", presetContent);
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("minimal-pool");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.NotNull(preset.ProcessingPools);
+        var pool = preset.ProcessingPools[0];
+        Assert.Equal("test-pool", pool.PoolType);
+        Assert.Equal("test", pool.Plugin);
+        Assert.Null(pool.Image); // No custom image
+        Assert.Equal(1, pool.MinInstances); // Default
+        Assert.Equal(5, pool.MaxInstances); // Default
+        Assert.Equal(0.8, pool.ScaleUpThreshold); // Default
+        Assert.Equal(0.2, pool.ScaleDownThreshold); // Default
+        Assert.Equal(5, pool.IdleTimeoutMinutes); // Default
+    }
+
+    #endregion
+
+    #region ListPresetsAsync Tests
+
+    [Fact]
+    public async Task ListPresetsAsync_ShouldReturnPresetMetadata()
+    {
+        // Arrange
+        const string preset1 = @"
+name: preset-one
+description: First preset
+category: development
+requiredBackends:
+  - docker-compose
+";
+        const string preset2 = @"
+name: preset-two
+description: Second preset
+category: production
+requiredBackends:
+  - kubernetes
+  - docker-swarm
+";
+
+        await CreatePresetFileAsync("preset-one", preset1);
+        await CreatePresetFileAsync("preset-two", preset2);
+        var loader = CreateLoader();
+
+        // Act
+        var presets = await loader.ListPresetsAsync();
+
+        // Assert
+        Assert.Equal(2, presets.Count);
+
+        var firstPreset = presets.FirstOrDefault(p => p.Name == "preset-one");
+        Assert.NotNull(firstPreset);
+        Assert.Equal("First preset", firstPreset.Description);
+        Assert.Equal("development", firstPreset.Category);
+        Assert.Single(firstPreset.RequiredBackends);
+        Assert.Contains("docker-compose", firstPreset.RequiredBackends);
+
+        var secondPreset = presets.FirstOrDefault(p => p.Name == "preset-two");
+        Assert.NotNull(secondPreset);
+        Assert.Equal("Second preset", secondPreset.Description);
+        Assert.Equal("production", secondPreset.Category);
+        Assert.Equal(2, secondPreset.RequiredBackends.Count);
+    }
+
+    [Fact]
+    public async Task ListPresetsAsync_WithNonexistentDirectory_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var loader = new PresetLoader(_mockLogger.Object, "/nonexistent/directory");
+
+        // Act
+        var presets = await loader.ListPresetsAsync();
+
+        // Assert
+        Assert.Empty(presets);
     }
 
     #endregion
