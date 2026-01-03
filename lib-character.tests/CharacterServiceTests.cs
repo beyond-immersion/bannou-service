@@ -251,22 +251,46 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
                 UpdatedAt = DateTimeOffset.UtcNow
             });
 
+        // Capture saved model
+        CharacterModel? savedModel = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        // Capture published event
+        CharacterUpdatedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "character.updated",
+                It.IsAny<CharacterUpdatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterUpdatedEvent, PublishOptions?, Guid?, CancellationToken>((_, e, _, _, _) => capturedEvent = e)
+            .ReturnsAsync(true);
+
         // Act
         var (status, response) = await service.UpdateCharacterAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("Updated Name", response.Name);
         Assert.Equal(CharacterStatus.Dead, response.Status);
 
-        // Verify update event published via IMessageBus
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "character.updated",
-            It.IsAny<CharacterUpdatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Assert - State was saved with correct values
+        Assert.NotNull(savedModel);
+        Assert.Equal("Updated Name", savedModel.Name);
+        Assert.Equal(CharacterStatus.Dead, savedModel.Status);
+
+        // Assert - Event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(characterId, capturedEvent.CharacterId);
+        Assert.Contains("name", capturedEvent.ChangedFields);
+        Assert.Contains("status", capturedEvent.ChangedFields);
+        // Note: The event schema has Name/Status/etc. but the service currently
+        // only populates CharacterId and ChangedFields. This is a known gap.
     }
 
     [Fact]
@@ -303,14 +327,26 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
                 UpdatedAt = DateTimeOffset.UtcNow
             });
 
+        // Capture saved model
+        CharacterModel? savedModel = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
         // Act
         var (status, response) = await service.UpdateCharacterAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(CharacterStatus.Dead, response.Status);
         Assert.Equal(deathDate, response.DeathDate);
+
+        // Assert - State was saved with death date and status correctly set
+        Assert.NotNull(savedModel);
+        Assert.Equal(CharacterStatus.Dead, savedModel.Status);
+        Assert.Equal(deathDate, savedModel.DeathDate);
     }
 
     [Fact]

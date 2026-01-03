@@ -131,6 +131,18 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
 
         SetupCreateRelationshipMocks(entity1Id, entity2Id, relationshipTypeId, existingCompositeKey: false);
 
+        RelationshipModel? savedModel = null;
+        string? savedKey = null;
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipModel, StateOptions?, CancellationToken>((k, m, _, _) =>
+            {
+                savedKey = k;
+                savedModel = m;
+            })
+            .ReturnsAsync("etag");
+
+        var startedAt = DateTimeOffset.UtcNow;
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
@@ -138,18 +150,29 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             Entity2Id = entity2Id,
             Entity2Type = EntityType.CHARACTER,
             RelationshipTypeId = relationshipTypeId,
-            StartedAt = DateTimeOffset.UtcNow
+            StartedAt = startedAt
         };
 
         // Act
         var (status, response) = await service.CreateRelationshipAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.Created, status);
         Assert.NotNull(response);
         Assert.Equal(entity1Id, response.Entity1Id);
         Assert.Equal(entity2Id, response.Entity2Id);
         Assert.Equal(relationshipTypeId, response.RelationshipTypeId);
+
+        // Assert - State was saved correctly
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedKey);
+        Assert.StartsWith("rel:", savedKey);
+        Assert.Equal(entity1Id.ToString(), savedModel.Entity1Id);
+        Assert.Equal(entity2Id.ToString(), savedModel.Entity2Id);
+        Assert.Equal("CHARACTER", savedModel.Entity1Type);
+        Assert.Equal("CHARACTER", savedModel.Entity2Type);
+        Assert.Equal(relationshipTypeId.ToString(), savedModel.RelationshipTypeId);
+        Assert.Equal(startedAt, savedModel.StartedAt);
     }
 
     [Fact]
@@ -194,6 +217,12 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
 
         SetupCreateRelationshipMocks(entity1Id, entity2Id, relationshipTypeId, existingCompositeKey: false);
 
+        RelationshipModel? savedModel = null;
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
@@ -208,10 +237,16 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Act
         var (status, response) = await service.CreateRelationshipAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.Created, status);
         Assert.NotNull(response);
         Assert.NotNull(response.Metadata);
+
+        // Assert - State was saved with metadata
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedModel.Metadata);
+        Assert.Equal("CHARACTER", savedModel.Entity1Type);
+        Assert.Equal("NPC", savedModel.Entity2Type);
     }
 
     [Fact]
@@ -225,6 +260,22 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
 
         SetupCreateRelationshipMocks(entity1Id, entity2Id, relationshipTypeId, existingCompositeKey: false);
 
+        RelationshipCreatedEvent? capturedEvent = null;
+        string? capturedTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<RelationshipCreatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipCreatedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
         var request = new CreateRelationshipRequest
         {
             Entity1Id = entity1Id,
@@ -236,16 +287,19 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         };
 
         // Act
-        var (status, _) = await service.CreateRelationshipAsync(request);
+        var (status, response) = await service.CreateRelationshipAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.Created, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "relationship.created",
-            It.IsAny<RelationshipCreatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.NotNull(response);
+
+        // Assert - Event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("relationship.created", capturedTopic);
+        Assert.Equal(response.RelationshipId, capturedEvent.RelationshipId);
+        Assert.Equal(entity1Id, capturedEvent.Entity1Id);
+        Assert.Equal(entity2Id, capturedEvent.Entity2Id);
+        Assert.Equal(relationshipTypeId, capturedEvent.RelationshipTypeId);
     }
 
     #endregion
@@ -264,6 +318,12 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             .Setup(s => s.GetAsync($"rel:{relationshipId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
+        RelationshipModel? savedModel = null;
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
         var request = new UpdateRelationshipRequest
         {
             RelationshipId = relationshipId,
@@ -273,10 +333,14 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Act
         var (status, response) = await service.UpdateRelationshipAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(relationshipId, response.RelationshipId);
+
+        // Assert - State was saved with updated metadata
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedModel.Metadata);
     }
 
     [Fact]
@@ -316,6 +380,26 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             .Setup(s => s.GetAsync($"rel:{relationshipId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        RelationshipUpdatedEvent? capturedEvent = null;
+        string? capturedTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<RelationshipUpdatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipUpdatedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
         var request = new UpdateRelationshipRequest
         {
             RelationshipId = relationshipId,
@@ -325,14 +409,14 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Act
         var (status, _) = await service.UpdateRelationshipAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "relationship.updated",
-            It.IsAny<RelationshipUpdatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - Event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("relationship.updated", capturedTopic);
+        Assert.Equal(relationshipId, capturedEvent.RelationshipId);
+        Assert.Contains("metadata", capturedEvent.ChangedFields);
     }
 
     #endregion
@@ -425,6 +509,26 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             .Setup(s => s.GetAsync($"rel:{relationshipId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
+        _mockRelationshipStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<RelationshipModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        RelationshipDeletedEvent? capturedEvent = null;
+        string? capturedTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<RelationshipDeletedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, RelationshipDeletedEvent, PublishOptions?, Guid?, CancellationToken>((t, e, _, _, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
         var request = new EndRelationshipRequest
         {
             RelationshipId = relationshipId,
@@ -434,14 +538,14 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Act
         var status = await service.EndRelationshipAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "relationship.deleted",
-            It.IsAny<RelationshipDeletedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - Event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("relationship.deleted", capturedTopic);
+        Assert.Equal(relationshipId, capturedEvent.RelationshipId);
+        // Note: Reason is not part of the event schema - it's only stored in the model
     }
 
     #endregion

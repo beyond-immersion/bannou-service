@@ -217,6 +217,21 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var service = CreateService();
         SetupCreateSpeciesMocks(codeExists: false);
 
+        SpeciesModel? savedModel = null;
+        string? savedKey = null;
+        _mockSpeciesStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<SpeciesModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SpeciesModel, StateOptions?, CancellationToken>((k, m, _, _) =>
+            {
+                savedKey = k;
+                savedModel = m;
+            })
+            .ReturnsAsync("etag-1");
+
         var request = new CreateSpeciesRequest
         {
             Code = "ELF",
@@ -230,11 +245,22 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act
         var (status, response) = await service.CreateSpeciesAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.Created, status);
         Assert.NotNull(response);
         Assert.Equal("ELF", response.Code);
         Assert.Equal("Elf", response.Name);
+
+        // Assert - State was saved correctly
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedKey);
+        Assert.StartsWith("species:", savedKey);
+        Assert.Equal("ELF", savedModel.Code);
+        Assert.Equal("Elf", savedModel.Name);
+        Assert.Equal("A magical species", savedModel.Description);
+        Assert.True(savedModel.IsPlayable);
+        Assert.Equal(1000, savedModel.BaseLifespan);
+        Assert.Equal(100, savedModel.MaturityAge);
     }
 
     [Fact]
@@ -265,6 +291,20 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var service = CreateService();
         SetupCreateSpeciesMocks(codeExists: false);
 
+        SpeciesCreatedEvent? capturedEvent = null;
+        string? capturedTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<SpeciesCreatedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SpeciesCreatedEvent, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         var request = new CreateSpeciesRequest
         {
             Code = "DWARF",
@@ -272,14 +312,18 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, _) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.Created, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "species.created",
-            It.IsAny<SpeciesCreatedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.NotNull(response);
+
+        // Assert - Event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("species.created", capturedTopic);
+        Assert.Equal(response.SpeciesId, capturedEvent.SpeciesId);
+        Assert.Equal("DWARF", capturedEvent.Code);
+        Assert.Equal("Dwarf", capturedEvent.Name);
     }
 
     #endregion
@@ -300,12 +344,14 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
+        SpeciesModel? savedModel = null;
         _mockSpeciesStore
             .Setup(s => s.SaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<SpeciesModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
+            .Callback<string, SpeciesModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag-1");
 
         var request = new UpdateSpeciesRequest
@@ -318,10 +364,16 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act
         var (status, response) = await service.UpdateSpeciesAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("High Elf", response.Name);
+
+        // Assert - State was saved with updated values
+        Assert.NotNull(savedModel);
+        Assert.Equal("High Elf", savedModel.Name);
+        Assert.Equal("An updated description", savedModel.Description);
+        Assert.Equal("ELF", savedModel.Code); // Code should not change
     }
 
     [Fact]
@@ -373,6 +425,20 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
+        SpeciesUpdatedEvent? capturedEvent = null;
+        string? capturedTopic = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<SpeciesUpdatedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, SpeciesUpdatedEvent, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
         var request = new UpdateSpeciesRequest
         {
             SpeciesId = speciesId,
@@ -382,12 +448,15 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act
         var (status, _) = await service.UpdateSpeciesAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "species.updated",
-            It.IsAny<SpeciesUpdatedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - Event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("species.updated", capturedTopic);
+        Assert.Equal(speciesId, capturedEvent.SpeciesId);
+        Assert.Equal("ELF", capturedEvent.Code);
+        Assert.Contains("description", capturedEvent.ChangedFields);
     }
 
     #endregion
@@ -587,15 +656,18 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
+        SpeciesModel? savedModel = null;
         _mockSpeciesStore
             .Setup(s => s.SaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<SpeciesModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
+            .Callback<string, SpeciesModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag-1");
 
         // Setup realm index with ETag
+        List<string>? savedRealmIndex = null;
         _mockListStore
             .Setup(s => s.GetWithETagAsync(
                 It.Is<string>(k => k.StartsWith("realm-index:")),
@@ -608,6 +680,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
                 It.IsAny<List<string>>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
+            .Callback<string, List<string>, StateOptions?, CancellationToken>((_, list, _, _) => savedRealmIndex = list)
             .ReturnsAsync("etag-1");
 
         var request = new AddSpeciesToRealmRequest
@@ -619,10 +692,18 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act
         var (status, response) = await service.AddSpeciesToRealmAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Contains(realmId, response.RealmIds);
+
+        // Assert - Species model was saved with realm added
+        Assert.NotNull(savedModel);
+        Assert.Contains(realmId.ToString(), savedModel.RealmIds);
+
+        // Assert - Realm index was updated
+        Assert.NotNull(savedRealmIndex);
+        Assert.Contains(speciesId.ToString(), savedRealmIndex);
     }
 
     [Fact]
@@ -697,12 +778,14 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
+        SpeciesModel? savedModel = null;
         _mockSpeciesStore
             .Setup(s => s.SaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<SpeciesModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
+            .Callback<string, SpeciesModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
             .ReturnsAsync("etag-1");
 
         var request = new DeprecateSpeciesRequest
@@ -714,10 +797,16 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act
         var (status, response) = await service.DeprecateSpeciesAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.True(response.IsDeprecated);
+
+        // Assert - State was saved with deprecation fields set
+        Assert.NotNull(savedModel);
+        Assert.True(savedModel.IsDeprecated);
+        Assert.NotNull(savedModel.DeprecatedAt);
+        Assert.Equal("No longer used", savedModel.DeprecationReason);
     }
 
     [Fact]

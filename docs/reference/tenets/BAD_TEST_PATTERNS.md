@@ -485,10 +485,40 @@ _mockStore.Setup(x => x.SaveAsync(
    - `.Callback<T1,T2,T3>((a,b,c) =>` used when capturing event data
    - All 10 HeartbeatEmitter tests pass
 
-### Phase 2: Add Missing Coverage
-1. `RelationshipTypeService.MergeRelationshipTypeAsync` - HIGH risk
-2. `RelationshipTypeService.SeedRelationshipTypesAsync` - HIGH risk
-3. Hierarchy traversal logic - MEDIUM risk
+### Phase 2: ✅ COMPLETE - Add Missing Coverage
+
+**Resolution Date**: 2026-01-03
+
+Added 21 new tests for previously untested high-risk methods:
+
+**MergeRelationshipTypeAsync tests (7 tests):**
+- Source type not found → NotFound
+- Source type not deprecated → BadRequest
+- Target type not found → NotFound
+- No relationships to migrate → OK with 0 migrated
+- Single page of relationships → migrates all, verifies update calls
+- Multiple pages → pagination working correctly
+- Partial failure → continues with remaining, reports 2 migrated
+
+**SeedRelationshipTypesAsync tests (8 tests):**
+- Empty list → OK with zero counts
+- New type → creates successfully
+- Existing type without UpdateExisting → skips
+- Existing type with UpdateExisting → updates
+- Types with parent hierarchy → processes parent before child (order verification)
+- Unresolvable parent → reports error
+- Multi-level hierarchy (grandchild->child->parent) → correct ordering
+- Mixed create/skip/update → correct counts
+
+**Deep hierarchy traversal tests (6 tests):**
+- GetChildRelationshipTypesAsync with direct children
+- GetChildRelationshipTypesAsync recursive with grandchildren
+- MatchesHierarchyAsync with direct parent → depth 1
+- MatchesHierarchyAsync with grandparent → depth 2
+- MatchesHierarchyAsync with unrelated type → returns false
+- GetAncestorsAsync with multiple ancestors → returns in order
+
+**All 46 RelationshipTypeService tests now pass.**
 
 ### Phase 3: Upgrade P→T Tests
 - Add state capture callbacks to all "Partially useful" tests
