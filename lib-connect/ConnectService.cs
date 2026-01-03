@@ -52,6 +52,9 @@ public partial class ConnectService : IConnectService
     private readonly ConcurrentDictionary<string, IAsyncDisposable> _sessionSubscriptions = new();
     private readonly ILoggerFactory _loggerFactory;
 
+    // Pending RPCs awaiting client responses (MessageId -> RPC info for response forwarding)
+    private readonly ConcurrentDictionary<ulong, PendingRPCInfo> _pendingRPCs = new();
+
     /// <summary>
     /// Prefix for session-specific queue routing keys.
     /// Must match the routing key used by MessageBusClientEventPublisher.

@@ -79,6 +79,9 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Register metrics
         services.AddSingleton<AssetMetrics>();
 
+        // Register FFmpeg service for audio/video transcoding
+        services.AddSingleton<IFFmpegService, FFmpegService>();
+
         // Register asset processors
         services.AddSingleton<IAssetProcessor, TextureProcessor>();
         services.AddSingleton<IAssetProcessor, ModelProcessor>();

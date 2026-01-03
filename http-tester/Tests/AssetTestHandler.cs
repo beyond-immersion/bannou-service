@@ -35,6 +35,9 @@ public class AssetTestHandler : BaseHttpTestHandler
         new ServiceTest(TestGetBundle, "GetBundle", "Asset", "Test retrieving bundle with download URL"),
         new ServiceTest(TestRequestBundleUpload, "RequestBundleUpload", "Asset", "Test requesting bundle upload URL"),
 
+        // Audio processing test (small file - no processing triggered, validates API accepts audio types)
+        new ServiceTest(TestAudioUpload, "AudioUpload", "Asset", "Test audio file upload and metadata creation"),
+
         // Error handling tests
         new ServiceTest(TestGetNonExistentAsset, "GetNonExistentAsset", "Asset", "Test 404 for non-existent asset"),
         new ServiceTest(TestGetNonExistentBundle, "GetNonExistentBundle", "Asset", "Test 404 for non-existent bundle"),
@@ -42,6 +45,41 @@ public class AssetTestHandler : BaseHttpTestHandler
         // Complete lifecycle test
         new ServiceTest(TestCompleteAssetLifecycle, "CompleteAssetLifecycle", "Asset", "Test complete asset lifecycle: upload → search → bundle → download"),
     ];
+
+    /// <summary>
+    /// Creates a minimal valid WAV file header with silence.
+    /// </summary>
+    private static byte[] CreateMinimalWavFile(int durationMs = 100, int sampleRate = 44100, int channels = 1, int bitsPerSample = 16)
+    {
+        var bytesPerSample = bitsPerSample / 8;
+        var numSamples = (int)(sampleRate * (durationMs / 1000.0));
+        var dataSize = numSamples * channels * bytesPerSample;
+
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+
+        // RIFF header
+        writer.Write("RIFF"u8);
+        writer.Write(36 + dataSize); // File size - 8
+        writer.Write("WAVE"u8);
+
+        // fmt chunk
+        writer.Write("fmt "u8);
+        writer.Write(16); // Chunk size
+        writer.Write((short)1); // Audio format (PCM)
+        writer.Write((short)channels);
+        writer.Write(sampleRate);
+        writer.Write(sampleRate * channels * bytesPerSample); // Byte rate
+        writer.Write((short)(channels * bytesPerSample)); // Block align
+        writer.Write((short)bitsPerSample);
+
+        // data chunk (silence)
+        writer.Write("data"u8);
+        writer.Write(dataSize);
+        writer.Write(new byte[dataSize]); // Silence
+
+        return ms.ToArray();
+    }
 
     /// <summary>
     /// Helper to upload a test asset and return its metadata.

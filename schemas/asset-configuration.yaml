@@ -111,6 +111,37 @@ x-service-configuration:
       description: Worker pool identifier when running in worker mode
       env: ASSET_WORKER_POOL
 
+    # FFmpeg Configuration
+    FfmpegPath:
+      type: string
+      description: Path to FFmpeg binary (empty = use system PATH)
+      env: ASSET_FFMPEG_PATH
+
+    FfmpegWorkingDirectory:
+      type: string
+      description: Working directory for FFmpeg temporary files
+      env: ASSET_FFMPEG_WORKING_DIR
+      default: /tmp/bannou-ffmpeg
+
+    # Audio Processing Configuration
+    AudioOutputFormat:
+      type: string
+      description: Default audio output format (mp3, opus, aac)
+      env: ASSET_AUDIO_OUTPUT_FORMAT
+      default: mp3
+
+    AudioBitrateKbps:
+      type: integer
+      description: Default audio bitrate in kbps
+      env: ASSET_AUDIO_BITRATE_KBPS
+      default: 192
+
+    AudioPreserveLossless:
+      type: boolean
+      description: Keep original lossless file alongside transcoded version
+      env: ASSET_AUDIO_PRESERVE_LOSSLESS
+      default: true
+
     # Bundle Configuration
     BundleCompressionDefault:
       type: string

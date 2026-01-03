@@ -37,7 +37,7 @@ EXPOSE 443
 
 ENV ASPNETCORE_URLS=http://+:80;https://+:443
 
-RUN apt-get update && apt-get install -y curl git libgit2-1.5
+RUN apt-get update && apt-get install -y curl git libgit2-1.5 ffmpeg
 
 # Configure git to trust all directories (needed for LibGit2Sharp with mounted volumes)
 RUN git config --global --add safe.directory '*'

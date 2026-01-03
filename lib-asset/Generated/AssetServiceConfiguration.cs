@@ -150,6 +150,36 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string WorkerPool { get; set; } = string.Empty;
 
     /// <summary>
+    /// Path to FFmpeg binary (empty = use system PATH)
+    /// Environment variable: ASSET_FFMPEG_PATH
+    /// </summary>
+    public string FfmpegPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Working directory for FFmpeg temporary files
+    /// Environment variable: ASSET_FFMPEG_WORKING_DIR
+    /// </summary>
+    public string FfmpegWorkingDirectory { get; set; } = "/tmp/bannou-ffmpeg";
+
+    /// <summary>
+    /// Default audio output format (mp3, opus, aac)
+    /// Environment variable: ASSET_AUDIO_OUTPUT_FORMAT
+    /// </summary>
+    public string AudioOutputFormat { get; set; } = "mp3";
+
+    /// <summary>
+    /// Default audio bitrate in kbps
+    /// Environment variable: ASSET_AUDIO_BITRATE_KBPS
+    /// </summary>
+    public int AudioBitrateKbps { get; set; } = 192;
+
+    /// <summary>
+    /// Keep original lossless file alongside transcoded version
+    /// Environment variable: ASSET_AUDIO_PRESERVE_LOSSLESS
+    /// </summary>
+    public bool AudioPreserveLossless { get; set; } = true;
+
+    /// <summary>
     /// Default compression for bundles (lz4, lzma, none)
     /// Environment variable: ASSET_BUNDLE_COMPRESSION_DEFAULT
     /// </summary>

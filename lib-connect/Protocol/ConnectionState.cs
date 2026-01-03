@@ -436,6 +436,43 @@ public class PendingMessageInfo
 }
 
 /// <summary>
+/// Information about a pending RPC call awaiting client response.
+/// Used to track service-to-client RPC calls and forward responses back.
+/// </summary>
+public class PendingRPCInfo
+{
+    /// <summary>
+    /// Session ID of the client that received the RPC.
+    /// </summary>
+    public string ClientSessionId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Name of the service that initiated the RPC.
+    /// </summary>
+    public string ServiceName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// RabbitMQ channel where the response should be published.
+    /// </summary>
+    public string ResponseChannel { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Service GUID used for the RPC (for correlation).
+    /// </summary>
+    public Guid ServiceGuid { get; set; }
+
+    /// <summary>
+    /// When the RPC was sent.
+    /// </summary>
+    public DateTimeOffset SentAt { get; set; }
+
+    /// <summary>
+    /// When the RPC will be considered timed out.
+    /// </summary>
+    public DateTimeOffset TimeoutAt { get; set; }
+}
+
+/// <summary>
 /// Connection capability flags.
 /// </summary>
 [Flags]

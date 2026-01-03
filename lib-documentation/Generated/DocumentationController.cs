@@ -17,6 +17,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Documentation;
 
@@ -861,13 +876,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _ViewDocumentBySlug_Info = """
 {
-  "summary": "View documentation page in browser",
-  "description": "Browser-facing endpoint for viewing documentation.\nRouted via NGINX, not exposed to WebSocket clients.\nReturns HTML-rendered documentation page.\n",
-  "tags": [
-    "Browser"
-  ],
-  "deprecated": false,
-  "operationId": "viewDocumentBySlug"
+    "summary": "View documentation page in browser",
+    "description": "Browser-facing endpoint for viewing documentation.\nRouted via NGINX, not exposed to WebSocket clients.\nReturns HTML-rendered documentation page.\n",
+    "tags": [
+        "Browser"
+    ],
+    "deprecated": false,
+    "operationId": "viewDocumentBySlug"
 }
 """;
 
@@ -925,13 +940,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _RawDocumentBySlug_Info = """
 {
-  "summary": "Get raw markdown content",
-  "description": "Browser-facing endpoint for retrieving raw markdown content.\nRouted via NGINX, not exposed to WebSocket clients.\nReturns raw markdown with text/markdown content type.\n",
-  "tags": [
-    "Browser"
-  ],
-  "deprecated": false,
-  "operationId": "rawDocumentBySlug"
+    "summary": "Get raw markdown content",
+    "description": "Browser-facing endpoint for retrieving raw markdown content.\nRouted via NGINX, not exposed to WebSocket clients.\nReturns raw markdown with text/markdown content type.\n",
+    "tags": [
+        "Browser"
+    ],
+    "deprecated": false,
+    "operationId": "rawDocumentBySlug"
 }
 """;
 
@@ -981,222 +996,222 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _QueryDocumentation_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/QueryDocumentationRequest",
-  "$defs": {
-    "QueryDocumentationRequest": {
-      "description": "Request to search documentation using natural language queries",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "query"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to search within"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryDocumentationRequest",
+    "$defs": {
+        "QueryDocumentationRequest": {
+            "description": "Request to search documentation using natural language queries",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "query"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to search within"
+                },
+                "query": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500,
+                    "description": "Natural language query to search for"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Optional session ID for conversational context"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Filter results to a specific category"
+                },
+                "maxResults": {
+                    "type": "integer",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "Maximum number of results to return"
+                },
+                "includeContent": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include full document content in results"
+                },
+                "maxSummaryLength": {
+                    "type": "integer",
+                    "default": 300,
+                    "minimum": 50,
+                    "maximum": 500,
+                    "description": "Maximum length of summaries in characters"
+                },
+                "minRelevanceScore": {
+                    "type": "number",
+                    "format": "float",
+                    "default": 0.3,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Minimum relevance score threshold for results"
+                }
+            }
         },
-        "query": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 500,
-          "description": "Natural language query to search for"
-        },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Optional session ID for conversational context"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Filter results to a specific category"
-        },
-        "maxResults": {
-          "type": "integer",
-          "default": 5,
-          "minimum": 1,
-          "maximum": 20,
-          "description": "Maximum number of results to return"
-        },
-        "includeContent": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to include full document content in results"
-        },
-        "maxSummaryLength": {
-          "type": "integer",
-          "default": 300,
-          "minimum": 50,
-          "maximum": 500,
-          "description": "Maximum length of summaries in characters"
-        },
-        "minRelevanceScore": {
-          "type": "number",
-          "format": "float",
-          "default": 0.3,
-          "minimum": 0.0,
-          "maximum": 1.0,
-          "description": "Minimum relevance score threshold for results"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _QueryDocumentation_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/QueryDocumentationResponse",
-  "$defs": {
-    "QueryDocumentationResponse": {
-      "description": "Response containing search results and voice-friendly summaries",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "query",
-        "results"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "The namespace that was searched"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryDocumentationResponse",
+    "$defs": {
+        "QueryDocumentationResponse": {
+            "description": "Response containing search results and voice-friendly summaries",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "query",
+                "results"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace that was searched"
+                },
+                "query": {
+                    "type": "string",
+                    "description": "The original query string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DocumentResult"
+                    },
+                    "description": "List of matching documents"
+                },
+                "totalResults": {
+                    "type": "integer",
+                    "description": "Total number of matching documents"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "description": "Concise spoken summary for voice AI"
+                },
+                "suggestedFollowups": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Suggested follow-up queries"
+                },
+                "noResultsMessage": {
+                    "type": "string",
+                    "description": "User-friendly message when no results found"
+                }
+            }
         },
-        "query": {
-          "type": "string",
-          "description": "The original query string"
+        "DocumentResult": {
+            "description": "Search result with relevance scoring and match highlights",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "slug",
+                "title",
+                "relevanceScore"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the document"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly unique identifier"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category of the document"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "Brief text summary of the document"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "description": "Concise summary optimized for voice AI"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Full document content if requested"
+                },
+                "relevanceScore": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Relevance score from 0.0 to 1.0"
+                },
+                "matchHighlights": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Text snippets showing where matches occurred"
+                }
+            }
         },
-        "results": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/DocumentResult"
-          },
-          "description": "List of matching documents"
-        },
-        "totalResults": {
-          "type": "integer",
-          "description": "Total number of matching documents"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "description": "Concise spoken summary for voice AI"
-        },
-        "suggestedFollowups": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Suggested follow-up queries"
-        },
-        "noResultsMessage": {
-          "type": "string",
-          "description": "User-friendly message when no results found"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentResult": {
-      "description": "Search result with relevance scoring and match highlights",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "slug",
-        "title",
-        "relevanceScore"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the document"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly unique identifier"
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title of the document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category of the document"
-        },
-        "summary": {
-          "type": "string",
-          "description": "Brief text summary of the document"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "description": "Concise summary optimized for voice AI"
-        },
-        "content": {
-          "type": "string",
-          "description": "Full document content if requested"
-        },
-        "relevanceScore": {
-          "type": "number",
-          "format": "float",
-          "description": "Relevance score from 0.0 to 1.0"
-        },
-        "matchHighlights": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Text snippets showing where matches occurred"
-        }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _QueryDocumentation_Info = """
 {
-  "summary": "Natural language documentation search",
-  "description": "Search documentation using natural language queries.\nReturns the most relevant documents with voice-friendly summaries.\n",
-  "tags": [
-    "Search"
-  ],
-  "deprecated": false,
-  "operationId": "queryDocumentation"
+    "summary": "Natural language documentation search",
+    "description": "Search documentation using natural language queries.\nReturns the most relevant documents with voice-friendly summaries.\n",
+    "tags": [
+        "Search"
+    ],
+    "deprecated": false,
+    "operationId": "queryDocumentation"
 }
 """;
 
@@ -1246,260 +1261,260 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _GetDocument_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetDocumentRequest",
-  "$defs": {
-    "GetDocumentRequest": {
-      "description": "Request to retrieve a specific document by ID or slug",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace containing the document"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetDocumentRequest",
+    "$defs": {
+        "GetDocumentRequest": {
+            "description": "Request to retrieve a specific document by ID or slug",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace containing the document"
+                },
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Unique identifier of the document to retrieve (null if using slug)"
+                },
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "nullable": true,
+                    "description": "URL-friendly slug of the document to retrieve (null if using documentId)"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Optional session ID for tracking document views (null if not tracking)"
+                },
+                "includeRelated": {
+                    "$ref": "#/$defs/RelatedDepth",
+                    "nullable": true,
+                    "description": "How deep to fetch related documents (null for no related documents)"
+                },
+                "includeContent": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include full document content"
+                },
+                "renderHtml": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to render markdown content as HTML"
+                }
+            }
         },
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Unique identifier of the document to retrieve (null if using slug)"
-        },
-        "slug": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "nullable": true,
-          "description": "URL-friendly slug of the document to retrieve (null if using documentId)"
-        },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Optional session ID for tracking document views (null if not tracking)"
-        },
-        "includeRelated": {
-          "$ref": "#/$defs/RelatedDepth",
-          "nullable": true,
-          "description": "How deep to fetch related documents (null for no related documents)"
-        },
-        "includeContent": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to include full document content"
-        },
-        "renderHtml": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to render markdown content as HTML"
+        "RelatedDepth": {
+            "type": "string",
+            "enum": [
+                "none",
+                "direct",
+                "extended"
+            ],
+            "default": "direct",
+            "description": "How deep to traverse related document links:\n- none: No related documents included\n- direct: Only directly linked documents (depth 1)\n- extended: Related documents + their related documents (depth 2)\n"
         }
-      }
-    },
-    "RelatedDepth": {
-      "type": "string",
-      "enum": [
-        "none",
-        "direct",
-        "extended"
-      ],
-      "default": "direct",
-      "description": "How deep to traverse related document links:\n- none: No related documents included\n- direct: Only directly linked documents (depth 1)\n- extended: Related documents + their related documents (depth 2)\n"
     }
-  }
 }
 """;
 
     private static readonly string _GetDocument_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetDocumentResponse",
-  "$defs": {
-    "GetDocumentResponse": {
-      "description": "Response containing the requested document and optional related documents",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "document"
-      ],
-      "properties": {
-        "document": {
-          "$ref": "#/$defs/Document",
-          "description": "The requested document"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetDocumentResponse",
+    "$defs": {
+        "GetDocumentResponse": {
+            "description": "Response containing the requested document and optional related documents",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "document"
+            ],
+            "properties": {
+                "document": {
+                    "$ref": "#/$defs/Document",
+                    "description": "The requested document"
+                },
+                "relatedDocuments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DocumentSummary"
+                    },
+                    "description": "List of related documents based on includeRelated depth"
+                },
+                "contentFormat": {
+                    "type": "string",
+                    "enum": [
+                        "markdown",
+                        "html",
+                        "none"
+                    ],
+                    "description": "Format of the content field in the response"
+                }
+            }
         },
-        "relatedDocuments": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/DocumentSummary"
-          },
-          "description": "List of related documents based on includeRelated depth"
+        "Document": {
+            "description": "Complete document with all metadata and content",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "namespace",
+                "slug",
+                "title",
+                "category",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the document"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace the document belongs to"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly unique identifier"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category for organizing the document"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Full markdown content of the document"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "Brief text summary of the document"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "description": "Concise summary optimized for voice AI"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags for filtering and search"
+                },
+                "relatedDocuments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "IDs of related documents"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Custom metadata key-value pairs"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document was last updated"
+                }
+            }
         },
-        "contentFormat": {
-          "type": "string",
-          "enum": [
-            "markdown",
-            "html",
-            "none"
-          ],
-          "description": "Format of the content field in the response"
-        }
-      }
-    },
-    "Document": {
-      "description": "Complete document with all metadata and content",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "namespace",
-        "slug",
-        "title",
-        "category",
-        "createdAt",
-        "updatedAt"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the document"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace the document belongs to"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly unique identifier"
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title of the document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category for organizing the document"
-        },
-        "content": {
-          "type": "string",
-          "description": "Full markdown content of the document"
-        },
-        "summary": {
-          "type": "string",
-          "description": "Brief text summary of the document"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "description": "Concise summary optimized for voice AI"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Tags for filtering and search"
-        },
-        "relatedDocuments": {
-          "type": "array",
-          "items": {
+        "DocumentCategory": {
             "type": "string",
-            "format": "uuid"
-          },
-          "description": "IDs of related documents"
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Custom metadata key-value pairs"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was last updated"
+        "DocumentSummary": {
+            "description": "Lightweight document representation for listings and references",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "slug",
+                "title",
+                "category"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the document"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly unique identifier"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category of the document"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "Brief text summary of the document"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "description": "Concise summary optimized for voice AI"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags associated with the document"
+                }
+            }
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
-    },
-    "DocumentSummary": {
-      "description": "Lightweight document representation for listings and references",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "slug",
-        "title",
-        "category"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the document"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly unique identifier"
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title of the document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category of the document"
-        },
-        "summary": {
-          "type": "string",
-          "description": "Brief text summary of the document"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "description": "Concise summary optimized for voice AI"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Tags associated with the document"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetDocument_Info = """
 {
-  "summary": "Get specific document by ID or slug",
-  "description": "Retrieve a specific document by its unique identifier or slug.\nReturns full content with metadata.\n",
-  "tags": [
-    "Documents"
-  ],
-  "deprecated": false,
-  "operationId": "getDocument"
+    "summary": "Get specific document by ID or slug",
+    "description": "Retrieve a specific document by its unique identifier or slug.\nReturns full content with metadata.\n",
+    "tags": [
+        "Documents"
+    ],
+    "deprecated": false,
+    "operationId": "getDocument"
 }
 """;
 
@@ -1549,221 +1564,221 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _SearchDocumentation_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SearchDocumentationRequest",
-  "$defs": {
-    "SearchDocumentationRequest": {
-      "description": "Request to search documentation using keyword matching",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "searchTerm"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to search within"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SearchDocumentationRequest",
+    "$defs": {
+        "SearchDocumentationRequest": {
+            "description": "Request to search documentation using keyword matching",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "searchTerm"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to search within"
+                },
+                "searchTerm": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 200,
+                    "description": "Keyword or phrase to search for"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Optional session ID for tracking searches (null if not tracking)"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "nullable": true,
+                    "description": "Filter results to a specific category (null for all categories)"
+                },
+                "maxResults": {
+                    "type": "integer",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 50,
+                    "description": "Maximum number of results to return"
+                },
+                "searchIn": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SearchField"
+                    },
+                    "nullable": true,
+                    "description": "Fields to search within (null for default fields)"
+                },
+                "sortBy": {
+                    "type": "string",
+                    "enum": [
+                        "relevance",
+                        "recency",
+                        "alphabetical"
+                    ],
+                    "default": "relevance",
+                    "description": "How to sort the search results"
+                },
+                "includeContent": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include full document content in results"
+                }
+            }
         },
-        "searchTerm": {
-          "type": "string",
-          "minLength": 2,
-          "maxLength": 200,
-          "description": "Keyword or phrase to search for"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Optional session ID for tracking searches (null if not tracking)"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "nullable": true,
-          "description": "Filter results to a specific category (null for all categories)"
-        },
-        "maxResults": {
-          "type": "integer",
-          "default": 10,
-          "minimum": 1,
-          "maximum": 50,
-          "description": "Maximum number of results to return"
-        },
-        "searchIn": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SearchField"
-          },
-          "nullable": true,
-          "description": "Fields to search within (null for default fields)"
-        },
-        "sortBy": {
-          "type": "string",
-          "enum": [
-            "relevance",
-            "recency",
-            "alphabetical"
-          ],
-          "default": "relevance",
-          "description": "How to sort the search results"
-        },
-        "includeContent": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to include full document content in results"
+        "SearchField": {
+            "type": "string",
+            "enum": [
+                "title",
+                "content",
+                "tags",
+                "summary"
+            ],
+            "description": "Fields that can be searched within documents"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
-    },
-    "SearchField": {
-      "type": "string",
-      "enum": [
-        "title",
-        "content",
-        "tags",
-        "summary"
-      ],
-      "description": "Fields that can be searched within documents"
     }
-  }
 }
 """;
 
     private static readonly string _SearchDocumentation_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SearchDocumentationResponse",
-  "$defs": {
-    "SearchDocumentationResponse": {
-      "description": "Response containing keyword search results",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "results"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "The namespace that was searched"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SearchDocumentationResponse",
+    "$defs": {
+        "SearchDocumentationResponse": {
+            "description": "Response containing keyword search results",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "results"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace that was searched"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DocumentResult"
+                    },
+                    "description": "List of matching documents"
+                },
+                "totalResults": {
+                    "type": "integer",
+                    "description": "Total number of matching documents"
+                },
+                "searchTerm": {
+                    "type": "string",
+                    "description": "The original search term"
+                }
+            }
         },
-        "results": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/DocumentResult"
-          },
-          "description": "List of matching documents"
+        "DocumentResult": {
+            "description": "Search result with relevance scoring and match highlights",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "slug",
+                "title",
+                "relevanceScore"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the document"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly unique identifier"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category of the document"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "Brief text summary of the document"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "description": "Concise summary optimized for voice AI"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Full document content if requested"
+                },
+                "relevanceScore": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Relevance score from 0.0 to 1.0"
+                },
+                "matchHighlights": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Text snippets showing where matches occurred"
+                }
+            }
         },
-        "totalResults": {
-          "type": "integer",
-          "description": "Total number of matching documents"
-        },
-        "searchTerm": {
-          "type": "string",
-          "description": "The original search term"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentResult": {
-      "description": "Search result with relevance scoring and match highlights",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "slug",
-        "title",
-        "relevanceScore"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the document"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly unique identifier"
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title of the document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category of the document"
-        },
-        "summary": {
-          "type": "string",
-          "description": "Brief text summary of the document"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "description": "Concise summary optimized for voice AI"
-        },
-        "content": {
-          "type": "string",
-          "description": "Full document content if requested"
-        },
-        "relevanceScore": {
-          "type": "number",
-          "format": "float",
-          "description": "Relevance score from 0.0 to 1.0"
-        },
-        "matchHighlights": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Text snippets showing where matches occurred"
-        }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _SearchDocumentation_Info = """
 {
-  "summary": "Full-text keyword search",
-  "description": "Search documentation using exact keyword matching.\nFaster than semantic search but less flexible.\n",
-  "tags": [
-    "Search"
-  ],
-  "deprecated": false,
-  "operationId": "searchDocumentation"
+    "summary": "Full-text keyword search",
+    "description": "Search documentation using exact keyword matching.\nFaster than semantic search but less flexible.\n",
+    "tags": [
+        "Search"
+    ],
+    "deprecated": false,
+    "operationId": "searchDocumentation"
 }
 """;
 
@@ -1813,244 +1828,244 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _ListDocuments_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListDocumentsRequest",
-  "$defs": {
-    "ListDocumentsRequest": {
-      "description": "Request to list documents with optional filtering and pagination",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to list documents from"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListDocumentsRequest",
+    "$defs": {
+        "ListDocumentsRequest": {
+            "description": "Request to list documents with optional filtering and pagination",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to list documents from"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Filter to a specific category"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Filter by tags (null to skip tag filtering)"
+                },
+                "tagsMatch": {
+                    "type": "string",
+                    "enum": [
+                        "all",
+                        "any"
+                    ],
+                    "default": "all",
+                    "description": "Whether documents must match all tags or any tag"
+                },
+                "createdAfter": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Filter to documents created after this timestamp"
+                },
+                "createdBefore": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Filter to documents created before this timestamp"
+                },
+                "updatedAfter": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Filter to documents updated after this timestamp"
+                },
+                "updatedBefore": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Filter to documents updated before this timestamp"
+                },
+                "titlesOnly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Return only document titles without summaries"
+                },
+                "page": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Page number for pagination"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "default": 20,
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Number of documents per page"
+                },
+                "sortBy": {
+                    "$ref": "#/$defs/ListSortField",
+                    "description": "Field to sort results by"
+                },
+                "sortOrder": {
+                    "type": "string",
+                    "enum": [
+                        "asc",
+                        "desc"
+                    ],
+                    "default": "desc",
+                    "description": "Sort order direction"
+                }
+            }
         },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Filter to a specific category"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Filter by tags (null to skip tag filtering)"
-        },
-        "tagsMatch": {
-          "type": "string",
-          "enum": [
-            "all",
-            "any"
-          ],
-          "default": "all",
-          "description": "Whether documents must match all tags or any tag"
-        },
-        "createdAfter": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Filter to documents created after this timestamp"
-        },
-        "createdBefore": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Filter to documents created before this timestamp"
-        },
-        "updatedAfter": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Filter to documents updated after this timestamp"
-        },
-        "updatedBefore": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Filter to documents updated before this timestamp"
-        },
-        "titlesOnly": {
-          "type": "boolean",
-          "default": false,
-          "description": "Return only document titles without summaries"
-        },
-        "page": {
-          "type": "integer",
-          "default": 1,
-          "minimum": 1,
-          "description": "Page number for pagination"
-        },
-        "pageSize": {
-          "type": "integer",
-          "default": 20,
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Number of documents per page"
-        },
-        "sortBy": {
-          "$ref": "#/$defs/ListSortField",
-          "description": "Field to sort results by"
-        },
-        "sortOrder": {
-          "type": "string",
-          "enum": [
-            "asc",
-            "desc"
-          ],
-          "default": "desc",
-          "description": "Sort order direction"
+        "ListSortField": {
+            "type": "string",
+            "enum": [
+                "created_at",
+                "updated_at",
+                "title"
+            ],
+            "default": "updated_at",
+            "description": "Fields available for sorting document lists"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
-    },
-    "ListSortField": {
-      "type": "string",
-      "enum": [
-        "created_at",
-        "updated_at",
-        "title"
-      ],
-      "default": "updated_at",
-      "description": "Fields available for sorting document lists"
     }
-  }
 }
 """;
 
     private static readonly string _ListDocuments_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListDocumentsResponse",
-  "$defs": {
-    "ListDocumentsResponse": {
-      "description": "Response containing a paginated list of documents",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documents"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "The namespace that was listed"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListDocumentsResponse",
+    "$defs": {
+        "ListDocumentsResponse": {
+            "description": "Response containing a paginated list of documents",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documents"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace that was listed"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DocumentSummary"
+                    },
+                    "description": "List of documents in the namespace"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of documents matching filters"
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Number of documents per page"
+                },
+                "totalPages": {
+                    "type": "integer",
+                    "description": "Total number of pages available"
+                }
+            }
         },
-        "documents": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/DocumentSummary"
-          },
-          "description": "List of documents in the namespace"
+        "DocumentSummary": {
+            "description": "Lightweight document representation for listings and references",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "slug",
+                "title",
+                "category"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the document"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly unique identifier"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category of the document"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "Brief text summary of the document"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "description": "Concise summary optimized for voice AI"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags associated with the document"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of documents matching filters"
-        },
-        "page": {
-          "type": "integer",
-          "description": "Current page number"
-        },
-        "pageSize": {
-          "type": "integer",
-          "description": "Number of documents per page"
-        },
-        "totalPages": {
-          "type": "integer",
-          "description": "Total number of pages available"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentSummary": {
-      "description": "Lightweight document representation for listings and references",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "slug",
-        "title",
-        "category"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the document"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly unique identifier"
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title of the document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category of the document"
-        },
-        "summary": {
-          "type": "string",
-          "description": "Brief text summary of the document"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "description": "Concise summary optimized for voice AI"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Tags associated with the document"
-        }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _ListDocuments_Info = """
 {
-  "summary": "List documents by category",
-  "description": "List all documents in a specific category or all categories.\nSupports pagination for large result sets.\n",
-  "tags": [
-    "Documents"
-  ],
-  "deprecated": false,
-  "operationId": "listDocuments"
+    "summary": "List documents by category",
+    "description": "List all documents in a specific category or all categories.\nSupports pagination for large result sets.\n",
+    "tags": [
+        "Documents"
+    ],
+    "deprecated": false,
+    "operationId": "listDocuments"
 }
 """;
 
@@ -2100,161 +2115,161 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _SuggestRelatedTopics_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SuggestRelatedRequest",
-  "$defs": {
-    "SuggestRelatedRequest": {
-      "description": "Request to get related topic suggestions based on a source",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "suggestionSource"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace for suggestions"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SuggestRelatedRequest",
+    "$defs": {
+        "SuggestRelatedRequest": {
+            "description": "Request to get related topic suggestions based on a source",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "suggestionSource"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace for suggestions"
+                },
+                "suggestionSource": {
+                    "$ref": "#/$defs/SuggestionSource",
+                    "description": "Type of source to base suggestions on"
+                },
+                "sourceValue": {
+                    "type": "string",
+                    "description": "The value for the suggestion source (document ID, slug, topic, or category)"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Optional session ID for personalized suggestions"
+                },
+                "maxSuggestions": {
+                    "type": "integer",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "Maximum number of suggestions to return"
+                },
+                "excludeRecentlyViewed": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Exclude documents viewed in current session"
+                }
+            }
         },
-        "suggestionSource": {
-          "$ref": "#/$defs/SuggestionSource",
-          "description": "Type of source to base suggestions on"
-        },
-        "sourceValue": {
-          "type": "string",
-          "description": "The value for the suggestion source (document ID, slug, topic, or category)"
-        },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Optional session ID for personalized suggestions"
-        },
-        "maxSuggestions": {
-          "type": "integer",
-          "default": 5,
-          "minimum": 1,
-          "maximum": 10,
-          "description": "Maximum number of suggestions to return"
-        },
-        "excludeRecentlyViewed": {
-          "type": "boolean",
-          "default": true,
-          "description": "Exclude documents viewed in current session"
+        "SuggestionSource": {
+            "type": "string",
+            "enum": [
+                "document_id",
+                "slug",
+                "topic",
+                "category"
+            ],
+            "description": "Source type for generating related topic suggestions"
         }
-      }
-    },
-    "SuggestionSource": {
-      "type": "string",
-      "enum": [
-        "document_id",
-        "slug",
-        "topic",
-        "category"
-      ],
-      "description": "Source type for generating related topic suggestions"
     }
-  }
 }
 """;
 
     private static readonly string _SuggestRelatedTopics_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SuggestRelatedResponse",
-  "$defs": {
-    "SuggestRelatedResponse": {
-      "description": "Response containing suggested related topics for conversational flow",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "suggestions"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "The namespace suggestions are from"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SuggestRelatedResponse",
+    "$defs": {
+        "SuggestRelatedResponse": {
+            "description": "Response containing suggested related topics for conversational flow",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "suggestions"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace suggestions are from"
+                },
+                "suggestions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TopicSuggestion"
+                    },
+                    "description": "List of suggested related topics"
+                },
+                "voicePrompt": {
+                    "type": "string",
+                    "description": "Voice-friendly prompt for presenting suggestions"
+                },
+                "sessionInfluenced": {
+                    "type": "boolean",
+                    "description": "Whether suggestions were influenced by session history"
+                }
+            }
         },
-        "suggestions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/TopicSuggestion"
-          },
-          "description": "List of suggested related topics"
+        "TopicSuggestion": {
+            "description": "A suggested related topic with relevance context",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "title"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the suggested document"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly slug of the suggested document"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Title of the suggested document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category of the suggested document"
+                },
+                "relevanceReason": {
+                    "type": "string",
+                    "description": "Explanation of why this document is relevant"
+                }
+            }
         },
-        "voicePrompt": {
-          "type": "string",
-          "description": "Voice-friendly prompt for presenting suggestions"
-        },
-        "sessionInfluenced": {
-          "type": "boolean",
-          "description": "Whether suggestions were influenced by session history"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "TopicSuggestion": {
-      "description": "A suggested related topic with relevance context",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "title"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the suggested document"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly slug of the suggested document"
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the suggested document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category of the suggested document"
-        },
-        "relevanceReason": {
-          "type": "string",
-          "description": "Explanation of why this document is relevant"
-        }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _SuggestRelatedTopics_Info = """
 {
-  "summary": "Get related topics and follow-up suggestions",
-  "description": "Given a topic or document ID, returns related topics the user\nmight want to explore. Useful for conversational AI flow.\n",
-  "tags": [
-    "Search"
-  ],
-  "deprecated": false,
-  "operationId": "suggestRelatedTopics"
+    "summary": "Get related topics and follow-up suggestions",
+    "description": "Given a topic or document ID, returns related topics the user\nmight want to explore. Useful for conversational AI flow.\n",
+    "tags": [
+        "Search"
+    ],
+    "deprecated": false,
+    "operationId": "suggestRelatedTopics"
 }
 """;
 
@@ -2304,146 +2319,146 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _CreateDocument_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateDocumentRequest",
-  "$defs": {
-    "CreateDocumentRequest": {
-      "description": "Request to create a new documentation entry",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "slug",
-        "title",
-        "category",
-        "content"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to create document in"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateDocumentRequest",
+    "$defs": {
+        "CreateDocumentRequest": {
+            "description": "Request to create a new documentation entry",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "slug",
+                "title",
+                "category",
+                "content"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to create document in"
+                },
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 100,
+                    "description": "URL-friendly unique identifier for the document"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Display title of the document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category for organizing the document"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Markdown content (max 500KB)"
+                },
+                "summary": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "Brief text summary of the document (null if not provided)"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Concise summary optimized for voice AI (null if not provided)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags for filtering and search (null to skip tagging)"
+                },
+                "relatedDocuments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nullable": true,
+                    "description": "IDs of related documents to link (null to skip linking)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata key-value pairs (null if not needed)"
+                }
+            }
         },
-        "slug": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 100,
-          "description": "URL-friendly unique identifier for the document"
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 200,
-          "description": "Display title of the document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category for organizing the document"
-        },
-        "content": {
-          "type": "string",
-          "description": "Markdown content (max 500KB)"
-        },
-        "summary": {
-          "type": "string",
-          "maxLength": 500,
-          "nullable": true,
-          "description": "Brief text summary of the document (null if not provided)"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "maxLength": 200,
-          "nullable": true,
-          "description": "Concise summary optimized for voice AI (null if not provided)"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Tags for filtering and search (null to skip tagging)"
-        },
-        "relatedDocuments": {
-          "type": "array",
-          "items": {
+        "DocumentCategory": {
             "type": "string",
-            "format": "uuid"
-          },
-          "nullable": true,
-          "description": "IDs of related documents to link (null to skip linking)"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata key-value pairs (null if not needed)"
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _CreateDocument_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateDocumentResponse",
-  "$defs": {
-    "CreateDocumentResponse": {
-      "description": "Response confirming document creation with assigned identifiers",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "slug"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the created document"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly slug of the created document"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was created"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateDocumentResponse",
+    "$defs": {
+        "CreateDocumentResponse": {
+            "description": "Response confirming document creation with assigned identifiers",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "slug"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the created document"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly slug of the created document"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document was created"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateDocument_Info = """
 {
-  "summary": "Create new documentation entry",
-  "description": "",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "createDocument"
+    "summary": "Create new documentation entry",
+    "description": "",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "createDocument"
 }
 """;
 
@@ -2493,143 +2508,143 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _UpdateDocument_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateDocumentRequest",
-  "$defs": {
-    "UpdateDocumentRequest": {
-      "description": "Request to update an existing document's fields",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documentId"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace containing the document"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateDocumentRequest",
+    "$defs": {
+        "UpdateDocumentRequest": {
+            "description": "Request to update an existing document's fields",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documentId"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace containing the document"
+                },
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the document to update"
+                },
+                "slug": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New URL-friendly slug for the document (null to keep unchanged)"
+                },
+                "title": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New display title for the document (null to keep unchanged)"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "nullable": true,
+                    "description": "New category for the document (null to keep unchanged)"
+                },
+                "content": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New markdown content for the document (null to keep unchanged)"
+                },
+                "summary": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New text summary for the document (null to keep unchanged)"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New voice-optimized summary for the document (null to keep unchanged)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "New set of tags for the document (null to keep unchanged)"
+                },
+                "relatedDocuments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nullable": true,
+                    "description": "New set of related document IDs (null to keep unchanged)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "New custom metadata key-value pairs (null to keep unchanged)"
+                }
+            }
         },
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the document to update"
-        },
-        "slug": {
-          "type": "string",
-          "nullable": true,
-          "description": "New URL-friendly slug for the document (null to keep unchanged)"
-        },
-        "title": {
-          "type": "string",
-          "nullable": true,
-          "description": "New display title for the document (null to keep unchanged)"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "nullable": true,
-          "description": "New category for the document (null to keep unchanged)"
-        },
-        "content": {
-          "type": "string",
-          "nullable": true,
-          "description": "New markdown content for the document (null to keep unchanged)"
-        },
-        "summary": {
-          "type": "string",
-          "nullable": true,
-          "description": "New text summary for the document (null to keep unchanged)"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "nullable": true,
-          "description": "New voice-optimized summary for the document (null to keep unchanged)"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "New set of tags for the document (null to keep unchanged)"
-        },
-        "relatedDocuments": {
-          "type": "array",
-          "items": {
+        "DocumentCategory": {
             "type": "string",
-            "format": "uuid"
-          },
-          "nullable": true,
-          "description": "New set of related document IDs (null to keep unchanged)"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "New custom metadata key-value pairs (null to keep unchanged)"
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _UpdateDocument_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateDocumentResponse",
-  "$defs": {
-    "UpdateDocumentResponse": {
-      "description": "Response confirming document update with timestamp",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "updatedAt"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the updated document"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateDocumentResponse",
+    "$defs": {
+        "UpdateDocumentResponse": {
+            "description": "Response confirming document update with timestamp",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "updatedAt"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the updated document"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document was updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateDocument_Info = """
 {
-  "summary": "Update existing documentation entry",
-  "description": "",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "updateDocument"
+    "summary": "Update existing documentation entry",
+    "description": "",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "updateDocument"
 }
 """;
 
@@ -2679,85 +2694,85 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _DeleteDocument_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteDocumentRequest",
-  "$defs": {
-    "DeleteDocumentRequest": {
-      "description": "Request to soft-delete a document to the trashcan",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace containing the document"
-        },
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Unique identifier of the document to delete (null if using slug)"
-        },
-        "slug": {
-          "type": "string",
-          "nullable": true,
-          "description": "URL-friendly slug of the document to delete (null if using documentId)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteDocumentRequest",
+    "$defs": {
+        "DeleteDocumentRequest": {
+            "description": "Request to soft-delete a document to the trashcan",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace containing the document"
+                },
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Unique identifier of the document to delete (null if using slug)"
+                },
+                "slug": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "URL-friendly slug of the document to delete (null if using documentId)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteDocument_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteDocumentResponse",
-  "$defs": {
-    "DeleteDocumentResponse": {
-      "description": "Response confirming document deletion with recovery deadline",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "deletedAt",
-        "recoverableUntil"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the deleted document"
-        },
-        "deletedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was deleted"
-        },
-        "recoverableUntil": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Deadline for recovering the document from trashcan"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteDocumentResponse",
+    "$defs": {
+        "DeleteDocumentResponse": {
+            "description": "Response confirming document deletion with recovery deadline",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "deletedAt",
+                "recoverableUntil"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the deleted document"
+                },
+                "deletedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document was deleted"
+                },
+                "recoverableUntil": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Deadline for recovering the document from trashcan"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteDocument_Info = """
 {
-  "summary": "Soft-delete documentation entry to trashcan",
-  "description": "Moves document to trashcan for recovery within TTL period.\nDocuments are automatically cleaned up after TrashcanTtlDays.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "deleteDocument"
+    "summary": "Soft-delete documentation entry to trashcan",
+    "description": "Moves document to trashcan for recovery within TTL period.\nDocuments are automatically cleaned up after TrashcanTtlDays.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "deleteDocument"
 }
 """;
 
@@ -2807,74 +2822,74 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _RecoverDocument_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RecoverDocumentRequest",
-  "$defs": {
-    "RecoverDocumentRequest": {
-      "description": "Request to recover a deleted document from the trashcan",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documentId"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace containing the trashcan"
-        },
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the document to recover"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RecoverDocumentRequest",
+    "$defs": {
+        "RecoverDocumentRequest": {
+            "description": "Request to recover a deleted document from the trashcan",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documentId"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace containing the trashcan"
+                },
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the document to recover"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RecoverDocument_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RecoverDocumentResponse",
-  "$defs": {
-    "RecoverDocumentResponse": {
-      "description": "Response confirming document recovery with timestamp",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "recoveredAt"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the recovered document"
-        },
-        "recoveredAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was recovered"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RecoverDocumentResponse",
+    "$defs": {
+        "RecoverDocumentResponse": {
+            "description": "Response confirming document recovery with timestamp",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "recoveredAt"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the recovered document"
+                },
+                "recoveredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document was recovered"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RecoverDocument_Info = """
 {
-  "summary": "Recover document from trashcan",
-  "description": "Restores a soft-deleted document from the trashcan.\nMust be called before the trashcan TTL expires.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "recoverDocument"
+    "summary": "Recover document from trashcan",
+    "description": "Restores a soft-deleted document from the trashcan.\nMust be called before the trashcan TTL expires.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "recoverDocument"
 }
 """;
 
@@ -2924,138 +2939,138 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _BulkUpdateDocuments_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BulkUpdateRequest",
-  "$defs": {
-    "BulkUpdateRequest": {
-      "description": "Request to update multiple documents at once",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documentIds"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace containing the documents"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkUpdateRequest",
+    "$defs": {
+        "BulkUpdateRequest": {
+            "description": "Request to update multiple documents at once",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documentIds"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace containing the documents"
+                },
+                "documentIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "List of document IDs to update"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "New category to apply to all documents"
+                },
+                "addTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags to add to all documents (null to skip adding)"
+                },
+                "removeTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags to remove from all documents (null to skip removing)"
+                }
+            }
         },
-        "documentIds": {
-          "type": "array",
-          "items": {
+        "DocumentCategory": {
             "type": "string",
-            "format": "uuid"
-          },
-          "description": "List of document IDs to update"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "New category to apply to all documents"
-        },
-        "addTags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Tags to add to all documents (null to skip adding)"
-        },
-        "removeTags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Tags to remove from all documents (null to skip removing)"
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _BulkUpdateDocuments_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BulkUpdateResponse",
-  "$defs": {
-    "BulkUpdateResponse": {
-      "description": "Response reporting bulk update results with success and failure details",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "succeeded",
-        "failed"
-      ],
-      "properties": {
-        "succeeded": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "description": "IDs of documents successfully updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkUpdateResponse",
+    "$defs": {
+        "BulkUpdateResponse": {
+            "description": "Response reporting bulk update results with success and failure details",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "succeeded",
+                "failed"
+            ],
+            "properties": {
+                "succeeded": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "IDs of documents successfully updated"
+                },
+                "failed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BulkOperationFailure"
+                    },
+                    "description": "Details of documents that failed to update"
+                }
+            }
         },
-        "failed": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/BulkOperationFailure"
-          },
-          "description": "Details of documents that failed to update"
+        "BulkOperationFailure": {
+            "description": "Details of a single document that failed in a bulk operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "error"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the document that failed"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error message explaining the failure"
+                }
+            }
         }
-      }
-    },
-    "BulkOperationFailure": {
-      "description": "Details of a single document that failed in a bulk operation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "error"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the document that failed"
-        },
-        "error": {
-          "type": "string",
-          "description": "Error message explaining the failure"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _BulkUpdateDocuments_Info = """
 {
-  "summary": "Bulk update document metadata",
-  "description": "Apply category, tag, or metadata changes to multiple documents at once.\nEach document is processed independently - partial success is possible.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "bulkUpdateDocuments"
+    "summary": "Bulk update document metadata",
+    "description": "Apply category, tag, or metadata changes to multiple documents at once.\nEach document is processed independently - partial success is possible.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "bulkUpdateDocuments"
 }
 """;
 
@@ -3105,102 +3120,102 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _BulkDeleteDocuments_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BulkDeleteRequest",
-  "$defs": {
-    "BulkDeleteRequest": {
-      "description": "Request to delete multiple documents at once",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documentIds"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace containing the documents"
-        },
-        "documentIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "description": "List of document IDs to delete"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkDeleteRequest",
+    "$defs": {
+        "BulkDeleteRequest": {
+            "description": "Request to delete multiple documents at once",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documentIds"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace containing the documents"
+                },
+                "documentIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "List of document IDs to delete"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _BulkDeleteDocuments_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BulkDeleteResponse",
-  "$defs": {
-    "BulkDeleteResponse": {
-      "description": "Response reporting bulk deletion results with success and failure details",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "succeeded",
-        "failed"
-      ],
-      "properties": {
-        "succeeded": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "description": "IDs of documents successfully deleted"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkDeleteResponse",
+    "$defs": {
+        "BulkDeleteResponse": {
+            "description": "Response reporting bulk deletion results with success and failure details",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "succeeded",
+                "failed"
+            ],
+            "properties": {
+                "succeeded": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "IDs of documents successfully deleted"
+                },
+                "failed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BulkOperationFailure"
+                    },
+                    "description": "Details of documents that failed to delete"
+                }
+            }
         },
-        "failed": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/BulkOperationFailure"
-          },
-          "description": "Details of documents that failed to delete"
+        "BulkOperationFailure": {
+            "description": "Details of a single document that failed in a bulk operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "error"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the document that failed"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error message explaining the failure"
+                }
+            }
         }
-      }
-    },
-    "BulkOperationFailure": {
-      "description": "Details of a single document that failed in a bulk operation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "error"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the document that failed"
-        },
-        "error": {
-          "type": "string",
-          "description": "Error message explaining the failure"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _BulkDeleteDocuments_Info = """
 {
-  "summary": "Bulk soft-delete documents to trashcan",
-  "description": "Move multiple documents to trashcan at once.\nEach document is processed independently - partial success is possible.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "bulkDeleteDocuments"
+    "summary": "Bulk soft-delete documents to trashcan",
+    "description": "Move multiple documents to trashcan at once.\nEach document is processed independently - partial success is possible.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "bulkDeleteDocuments"
 }
 """;
 
@@ -3250,190 +3265,190 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _ImportDocumentation_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ImportDocumentationRequest",
-  "$defs": {
-    "ImportDocumentationRequest": {
-      "description": "Request to import multiple documents into a namespace",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documents"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to import into"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ImportDocumentationRequest",
+    "$defs": {
+        "ImportDocumentationRequest": {
+            "description": "Request to import multiple documents into a namespace",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documents"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to import into"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ImportDocument"
+                    },
+                    "description": "List of documents to import"
+                },
+                "onConflict": {
+                    "type": "string",
+                    "enum": [
+                        "skip",
+                        "update",
+                        "fail"
+                    ],
+                    "default": "skip",
+                    "description": "How to handle documents with existing slugs"
+                }
+            }
         },
-        "documents": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ImportDocument"
-          },
-          "description": "List of documents to import"
+        "ImportDocument": {
+            "description": "A single document to import with required fields",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "title",
+                "category",
+                "content"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly unique identifier for the document"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category for organizing the document"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Markdown content of the document"
+                },
+                "summary": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Brief text summary of the document (null if not provided)"
+                },
+                "voiceSummary": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Concise summary optimized for voice AI (null if not provided)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags for filtering and search (null to skip tagging)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata key-value pairs (null if not needed)"
+                }
+            }
         },
-        "onConflict": {
-          "type": "string",
-          "enum": [
-            "skip",
-            "update",
-            "fail"
-          ],
-          "default": "skip",
-          "description": "How to handle documents with existing slugs"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "ImportDocument": {
-      "description": "A single document to import with required fields",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "title",
-        "category",
-        "content"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly unique identifier for the document"
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title of the document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category for organizing the document"
-        },
-        "content": {
-          "type": "string",
-          "description": "Markdown content of the document"
-        },
-        "summary": {
-          "type": "string",
-          "nullable": true,
-          "description": "Brief text summary of the document (null if not provided)"
-        },
-        "voiceSummary": {
-          "type": "string",
-          "nullable": true,
-          "description": "Concise summary optimized for voice AI (null if not provided)"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Tags for filtering and search (null to skip tagging)"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata key-value pairs (null if not needed)"
-        }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _ImportDocumentation_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ImportDocumentationResponse",
-  "$defs": {
-    "ImportDocumentationResponse": {
-      "description": "Response reporting import results with counts and failure details",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "created",
-        "updated",
-        "skipped",
-        "failed"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "The namespace documents were imported into"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ImportDocumentationResponse",
+    "$defs": {
+        "ImportDocumentationResponse": {
+            "description": "Response reporting import results with counts and failure details",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "created",
+                "updated",
+                "skipped",
+                "failed"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace documents were imported into"
+                },
+                "created": {
+                    "type": "integer",
+                    "description": "Number of new documents created"
+                },
+                "updated": {
+                    "type": "integer",
+                    "description": "Number of existing documents updated"
+                },
+                "skipped": {
+                    "type": "integer",
+                    "description": "Number of documents skipped due to conflicts"
+                },
+                "failed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ImportFailure"
+                    },
+                    "description": "Details of documents that failed to import"
+                }
+            }
         },
-        "created": {
-          "type": "integer",
-          "description": "Number of new documents created"
-        },
-        "updated": {
-          "type": "integer",
-          "description": "Number of existing documents updated"
-        },
-        "skipped": {
-          "type": "integer",
-          "description": "Number of documents skipped due to conflicts"
-        },
-        "failed": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ImportFailure"
-          },
-          "description": "Details of documents that failed to import"
+        "ImportFailure": {
+            "description": "Details of a document that failed to import",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "error"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "description": "Slug of the document that failed to import"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error message explaining the failure"
+                }
+            }
         }
-      }
-    },
-    "ImportFailure": {
-      "description": "Details of a document that failed to import",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "error"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "description": "Slug of the document that failed to import"
-        },
-        "error": {
-          "type": "string",
-          "description": "Error message explaining the failure"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ImportDocumentation_Info = """
 {
-  "summary": "Bulk import documentation from structured source",
-  "description": "Import multiple documents. Each document processed independently.\nPartial success is possible - failures reported per document.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "importDocumentation"
+    "summary": "Bulk import documentation from structured source",
+    "description": "Import multiple documents. Each document processed independently.\nPartial success is possible - failures reported per document.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "importDocumentation"
 }
 """;
 
@@ -3483,139 +3498,139 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _ListTrashcan_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListTrashcanRequest",
-  "$defs": {
-    "ListTrashcanRequest": {
-      "description": "Request to list deleted documents in the trashcan",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to list trashcan from"
-        },
-        "page": {
-          "type": "integer",
-          "default": 1,
-          "description": "Page number for pagination"
-        },
-        "pageSize": {
-          "type": "integer",
-          "default": 20,
-          "description": "Number of items per page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListTrashcanRequest",
+    "$defs": {
+        "ListTrashcanRequest": {
+            "description": "Request to list deleted documents in the trashcan",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to list trashcan from"
+                },
+                "page": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Page number for pagination"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "default": 20,
+                    "description": "Number of items per page"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListTrashcan_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListTrashcanResponse",
-  "$defs": {
-    "ListTrashcanResponse": {
-      "description": "Response containing deleted documents awaiting permanent deletion",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "items"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "The namespace the trashcan belongs to"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListTrashcanResponse",
+    "$defs": {
+        "ListTrashcanResponse": {
+            "description": "Response containing deleted documents awaiting permanent deletion",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "items"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace the trashcan belongs to"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TrashcanItem"
+                    },
+                    "description": "List of deleted documents in trashcan"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of items in trashcan"
+                }
+            }
         },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/TrashcanItem"
-          },
-          "description": "List of deleted documents in trashcan"
+        "TrashcanItem": {
+            "description": "A deleted document in the trashcan with expiration information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "documentId",
+                "title",
+                "deletedAt",
+                "expiresAt"
+            ],
+            "properties": {
+                "documentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the deleted document"
+                },
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly slug of the deleted document"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Title of the deleted document"
+                },
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Category of the deleted document"
+                },
+                "deletedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document was deleted"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the document will be permanently deleted"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of items in trashcan"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "TrashcanItem": {
-      "description": "A deleted document in the trashcan with expiration information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "documentId",
-        "title",
-        "deletedAt",
-        "expiresAt"
-      ],
-      "properties": {
-        "documentId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the deleted document"
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly slug of the deleted document"
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the deleted document"
-        },
-        "category": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Category of the deleted document"
-        },
-        "deletedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was deleted"
-        },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document will be permanently deleted"
-        }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _ListTrashcan_Info = """
 {
-  "summary": "List documents in the trashcan",
-  "description": "List all soft-deleted documents within the namespace's trashcan.\nDocuments remain recoverable until TTL expires or purge is called.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "listTrashcan"
+    "summary": "List documents in the trashcan",
+    "description": "List all soft-deleted documents within the namespace's trashcan.\nDocuments remain recoverable until TTL expires or purge is called.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "listTrashcan"
 }
 """;
 
@@ -3665,69 +3680,69 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _PurgeTrashcan_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PurgeTrashcanRequest",
-  "$defs": {
-    "PurgeTrashcanRequest": {
-      "description": "Request to permanently delete documents from the trashcan",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to purge trashcan from"
-        },
-        "documentIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "description": "If empty, purges all trashcan items"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PurgeTrashcanRequest",
+    "$defs": {
+        "PurgeTrashcanRequest": {
+            "description": "Request to permanently delete documents from the trashcan",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to purge trashcan from"
+                },
+                "documentIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "If empty, purges all trashcan items"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _PurgeTrashcan_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PurgeTrashcanResponse",
-  "$defs": {
-    "PurgeTrashcanResponse": {
-      "description": "Response confirming permanent deletion of trashcan items",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "purgedCount"
-      ],
-      "properties": {
-        "purgedCount": {
-          "type": "integer",
-          "description": "Number of documents permanently deleted"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PurgeTrashcanResponse",
+    "$defs": {
+        "PurgeTrashcanResponse": {
+            "description": "Response confirming permanent deletion of trashcan items",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "purgedCount"
+            ],
+            "properties": {
+                "purgedCount": {
+                    "type": "integer",
+                    "description": "Number of documents permanently deleted"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _PurgeTrashcan_Info = """
 {
-  "summary": "Permanently delete trashcan items",
-  "description": "Permanently delete specified documents from trashcan, or purge all.\nThis operation is irreversible - documents cannot be recovered after purge.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "purgeTrashcan"
+    "summary": "Permanently delete trashcan items",
+    "description": "Permanently delete specified documents from trashcan, or purge all.\nThis operation is irreversible - documents cannot be recovered after purge.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "purgeTrashcan"
 }
 """;
 
@@ -3777,86 +3792,86 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _GetNamespaceStats_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetNamespaceStatsRequest",
-  "$defs": {
-    "GetNamespaceStatsRequest": {
-      "description": "Request to get statistics for a documentation namespace",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to get statistics for"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetNamespaceStatsRequest",
+    "$defs": {
+        "GetNamespaceStatsRequest": {
+            "description": "Request to get statistics for a documentation namespace",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to get statistics for"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetNamespaceStats_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/NamespaceStatsResponse",
-  "$defs": {
-    "NamespaceStatsResponse": {
-      "description": "Response containing namespace statistics and document counts",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documentCount"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "The namespace statistics are for"
-        },
-        "documentCount": {
-          "type": "integer",
-          "description": "Total number of documents in the namespace"
-        },
-        "categoryCounts": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "integer"
-          },
-          "description": "Document count per category"
-        },
-        "trashcanCount": {
-          "type": "integer",
-          "description": "Number of documents in the trashcan"
-        },
-        "totalContentSizeBytes": {
-          "type": "integer",
-          "description": "Total size of all document content in bytes"
-        },
-        "lastUpdated": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of most recent document update"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/NamespaceStatsResponse",
+    "$defs": {
+        "NamespaceStatsResponse": {
+            "description": "Response containing namespace statistics and document counts",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documentCount"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace statistics are for"
+                },
+                "documentCount": {
+                    "type": "integer",
+                    "description": "Total number of documents in the namespace"
+                },
+                "categoryCounts": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Document count per category"
+                },
+                "trashcanCount": {
+                    "type": "integer",
+                    "description": "Number of documents in the trashcan"
+                },
+                "totalContentSizeBytes": {
+                    "type": "integer",
+                    "description": "Total size of all document content in bytes"
+                },
+                "lastUpdated": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp of most recent document update"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetNamespaceStats_Info = """
 {
-  "summary": "Get namespace documentation statistics",
-  "description": "Retrieve usage statistics and metadata for a documentation namespace.\nUseful for monitoring, capacity planning, and administrative dashboards.\n",
-  "tags": [
-    "Admin"
-  ],
-  "deprecated": false,
-  "operationId": "getNamespaceStats"
+    "summary": "Get namespace documentation statistics",
+    "description": "Retrieve usage statistics and metadata for a documentation namespace.\nUseful for monitoring, capacity planning, and administrative dashboards.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "getNamespaceStats"
 }
 """;
 
@@ -3906,177 +3921,177 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _BindRepository_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BindRepositoryRequest",
-  "$defs": {
-    "BindRepositoryRequest": {
-      "description": "Request to bind a Git repository for automatic documentation sync",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "repositoryUrl",
-        "owner"
-      ],
-      "properties": {
-        "owner": {
-          "type": "string",
-          "description": "Owner of this binding. NOT a session ID.\nFor user-initiated bindings: the accountId (UUID format).\nFor service-initiated bindings: the service name (e.g., \"orchestrator\").\n"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BindRepositoryRequest",
+    "$defs": {
+        "BindRepositoryRequest": {
+            "description": "Request to bind a Git repository for automatic documentation sync",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "repositoryUrl",
+                "owner"
+            ],
+            "properties": {
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this binding. NOT a session ID.\nFor user-initiated bindings: the accountId (UUID format).\nFor service-initiated bindings: the service name (e.g., \"orchestrator\").\n"
+                },
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to bind"
+                },
+                "repositoryUrl": {
+                    "type": "string",
+                    "description": "Git clone URL (HTTPS for public repos)"
+                },
+                "branch": {
+                    "type": "string",
+                    "default": "main",
+                    "description": "Branch to sync from"
+                },
+                "syncIntervalMinutes": {
+                    "type": "integer",
+                    "default": 60,
+                    "minimum": 5,
+                    "maximum": 1440,
+                    "description": "How often to sync (5 min to 24 hours)"
+                },
+                "filePatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "**/*.md"
+                    ],
+                    "description": "Glob patterns for files to include"
+                },
+                "excludePatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        ".git/**",
+                        ".obsidian/**",
+                        "node_modules/**"
+                    ],
+                    "description": "Glob patterns for files to exclude"
+                },
+                "categoryMapping": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Map directory prefixes to categories"
+                },
+                "defaultCategory": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "Default category for documents without mapping"
+                },
+                "archiveEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable archive functionality"
+                },
+                "archiveOnSync": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Create archive after each sync"
+                }
+            }
         },
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to bind"
-        },
-        "repositoryUrl": {
-          "type": "string",
-          "description": "Git clone URL (HTTPS for public repos)"
-        },
-        "branch": {
-          "type": "string",
-          "default": "main",
-          "description": "Branch to sync from"
-        },
-        "syncIntervalMinutes": {
-          "type": "integer",
-          "default": 60,
-          "minimum": 5,
-          "maximum": 1440,
-          "description": "How often to sync (5 min to 24 hours)"
-        },
-        "filePatterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "**/*.md"
-          ],
-          "description": "Glob patterns for files to include"
-        },
-        "excludePatterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            ".git/**",
-            ".obsidian/**",
-            "node_modules/**"
-          ],
-          "description": "Glob patterns for files to exclude"
-        },
-        "categoryMapping": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Map directory prefixes to categories"
-        },
-        "defaultCategory": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "Default category for documents without mapping"
-        },
-        "archiveEnabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable archive functionality"
-        },
-        "archiveOnSync": {
-          "type": "boolean",
-          "default": false,
-          "description": "Create archive after each sync"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _BindRepository_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BindRepositoryResponse",
-  "$defs": {
-    "BindRepositoryResponse": {
-      "description": "Response confirming repository binding creation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bindingId",
-        "namespace",
-        "status"
-      ],
-      "properties": {
-        "bindingId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the repository binding"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BindRepositoryResponse",
+    "$defs": {
+        "BindRepositoryResponse": {
+            "description": "Response confirming repository binding creation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bindingId",
+                "namespace",
+                "status"
+            ],
+            "properties": {
+                "bindingId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the repository binding"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace the repository is bound to"
+                },
+                "repositoryUrl": {
+                    "type": "string",
+                    "description": "URL of the bound repository"
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Branch being synced"
+                },
+                "status": {
+                    "$ref": "#/$defs/BindingStatus",
+                    "description": "Current status of the binding"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the binding was created"
+                }
+            }
         },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace the repository is bound to"
-        },
-        "repositoryUrl": {
-          "type": "string",
-          "description": "URL of the bound repository"
-        },
-        "branch": {
-          "type": "string",
-          "description": "Branch being synced"
-        },
-        "status": {
-          "$ref": "#/$defs/BindingStatus",
-          "description": "Current status of the binding"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the binding was created"
+        "BindingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "syncing",
+                "synced",
+                "error",
+                "disabled"
+            ],
+            "description": "Status of a repository binding"
         }
-      }
-    },
-    "BindingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "syncing",
-        "synced",
-        "error",
-        "disabled"
-      ],
-      "description": "Status of a repository binding"
     }
-  }
 }
 """;
 
     private static readonly string _BindRepository_Info = """
 {
-  "summary": "Bind a git repository to a documentation namespace",
-  "description": "Bind a git repository URL to a documentation namespace.\nThe namespace will be exclusively managed by the repository - manual edits will be blocked.\nTriggers initial sync after binding.\n",
-  "tags": [
-    "Repository"
-  ],
-  "deprecated": false,
-  "operationId": "bindRepository"
+    "summary": "Bind a git repository to a documentation namespace",
+    "description": "Bind a git repository URL to a documentation namespace.\nThe namespace will be exclusively managed by the repository - manual edits will be blocked.\nTriggers initial sync after binding.\n",
+    "tags": [
+        "Repository"
+    ],
+    "deprecated": false,
+    "operationId": "bindRepository"
 }
 """;
 
@@ -4126,71 +4141,71 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _UnbindRepository_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UnbindRepositoryRequest",
-  "$defs": {
-    "UnbindRepositoryRequest": {
-      "description": "Request to remove a repository binding from a namespace",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to unbind"
-        },
-        "deleteDocuments": {
-          "type": "boolean",
-          "default": false,
-          "description": "Also delete all documents from the namespace"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UnbindRepositoryRequest",
+    "$defs": {
+        "UnbindRepositoryRequest": {
+            "description": "Request to remove a repository binding from a namespace",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to unbind"
+                },
+                "deleteDocuments": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Also delete all documents from the namespace"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UnbindRepository_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UnbindRepositoryResponse",
-  "$defs": {
-    "UnbindRepositoryResponse": {
-      "description": "Response confirming repository unbinding with cleanup details",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documentsDeleted"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "Namespace that was unbound"
-        },
-        "documentsDeleted": {
-          "type": "integer",
-          "description": "Number of documents deleted (0 if deleteDocuments was false)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UnbindRepositoryResponse",
+    "$defs": {
+        "UnbindRepositoryResponse": {
+            "description": "Response confirming repository unbinding with cleanup details",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documentsDeleted"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace that was unbound"
+                },
+                "documentsDeleted": {
+                    "type": "integer",
+                    "description": "Number of documents deleted (0 if deleteDocuments was false)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UnbindRepository_Info = """
 {
-  "summary": "Remove repository binding from namespace",
-  "description": "Remove repository binding from a namespace, making it manually editable again.\nOptionally delete all documents imported from the repository.\n",
-  "tags": [
-    "Repository"
-  ],
-  "deprecated": false,
-  "operationId": "unbindRepository"
+    "summary": "Remove repository binding from namespace",
+    "description": "Remove repository binding from a namespace, making it manually editable again.\nOptionally delete all documents imported from the repository.\n",
+    "tags": [
+        "Repository"
+    ],
+    "deprecated": false,
+    "operationId": "unbindRepository"
 }
 """;
 
@@ -4240,110 +4255,110 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _SyncRepository_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SyncRepositoryRequest",
-  "$defs": {
-    "SyncRepositoryRequest": {
-      "description": "Request to trigger a manual repository sync",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to sync"
-        },
-        "force": {
-          "type": "boolean",
-          "default": false,
-          "description": "Force full re-sync even if commit hash unchanged"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SyncRepositoryRequest",
+    "$defs": {
+        "SyncRepositoryRequest": {
+            "description": "Request to trigger a manual repository sync",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to sync"
+                },
+                "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Force full re-sync even if commit hash unchanged"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _SyncRepository_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SyncRepositoryResponse",
-  "$defs": {
-    "SyncRepositoryResponse": {
-      "description": "Response containing sync operation results and statistics",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "syncId",
-        "status"
-      ],
-      "properties": {
-        "syncId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of this sync operation"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SyncRepositoryResponse",
+    "$defs": {
+        "SyncRepositoryResponse": {
+            "description": "Response containing sync operation results and statistics",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "syncId",
+                "status"
+            ],
+            "properties": {
+                "syncId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of this sync operation"
+                },
+                "status": {
+                    "$ref": "#/$defs/SyncStatus",
+                    "description": "Result status of the sync"
+                },
+                "commitHash": {
+                    "type": "string",
+                    "description": "Git commit hash that was synced"
+                },
+                "documentsCreated": {
+                    "type": "integer",
+                    "description": "Number of new documents created"
+                },
+                "documentsUpdated": {
+                    "type": "integer",
+                    "description": "Number of existing documents updated"
+                },
+                "documentsDeleted": {
+                    "type": "integer",
+                    "description": "Number of documents deleted"
+                },
+                "documentsFailed": {
+                    "type": "integer",
+                    "description": "Number of documents that failed to process"
+                },
+                "durationMs": {
+                    "type": "integer",
+                    "description": "Time taken for sync in milliseconds"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if sync failed"
+                }
+            }
         },
-        "status": {
-          "$ref": "#/$defs/SyncStatus",
-          "description": "Result status of the sync"
-        },
-        "commitHash": {
-          "type": "string",
-          "description": "Git commit hash that was synced"
-        },
-        "documentsCreated": {
-          "type": "integer",
-          "description": "Number of new documents created"
-        },
-        "documentsUpdated": {
-          "type": "integer",
-          "description": "Number of existing documents updated"
-        },
-        "documentsDeleted": {
-          "type": "integer",
-          "description": "Number of documents deleted"
-        },
-        "documentsFailed": {
-          "type": "integer",
-          "description": "Number of documents that failed to process"
-        },
-        "durationMs": {
-          "type": "integer",
-          "description": "Time taken for sync in milliseconds"
-        },
-        "errorMessage": {
-          "type": "string",
-          "nullable": true,
-          "description": "Error message if sync failed"
+        "SyncStatus": {
+            "type": "string",
+            "enum": [
+                "success",
+                "partial",
+                "failed"
+            ],
+            "description": "Result status of a sync operation"
         }
-      }
-    },
-    "SyncStatus": {
-      "type": "string",
-      "enum": [
-        "success",
-        "partial",
-        "failed"
-      ],
-      "description": "Result status of a sync operation"
     }
-  }
 }
 """;
 
     private static readonly string _SyncRepository_Info = """
 {
-  "summary": "Manually trigger repository sync",
-  "description": "Manually trigger synchronization of a bound repository.\nIf force=true, performs full re-sync regardless of commit hash.\n",
-  "tags": [
-    "Repository"
-  ],
-  "deprecated": false,
-  "operationId": "syncRepository"
+    "summary": "Manually trigger repository sync",
+    "description": "Manually trigger synchronization of a bound repository.\nIf force=true, performs full re-sync regardless of commit hash.\n",
+    "tags": [
+        "Repository"
+    ],
+    "deprecated": false,
+    "operationId": "syncRepository"
 }
 """;
 
@@ -4393,183 +4408,183 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _GetRepositoryStatus_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RepositoryStatusRequest",
-  "$defs": {
-    "RepositoryStatusRequest": {
-      "description": "Request to get current repository binding and sync status",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to get status for"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RepositoryStatusRequest",
+    "$defs": {
+        "RepositoryStatusRequest": {
+            "description": "Request to get current repository binding and sync status",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to get status for"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetRepositoryStatus_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RepositoryStatusResponse",
-  "$defs": {
-    "RepositoryStatusResponse": {
-      "description": "Response containing binding configuration and recent sync information",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "binding": {
-          "$ref": "#/$defs/RepositoryBindingInfo",
-          "description": "Current binding configuration and status"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RepositoryStatusResponse",
+    "$defs": {
+        "RepositoryStatusResponse": {
+            "description": "Response containing binding configuration and recent sync information",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "binding": {
+                    "$ref": "#/$defs/RepositoryBindingInfo",
+                    "description": "Current binding configuration and status"
+                },
+                "lastSync": {
+                    "$ref": "#/$defs/SyncInfo",
+                    "description": "Information about the most recent sync"
+                }
+            }
         },
-        "lastSync": {
-          "$ref": "#/$defs/SyncInfo",
-          "description": "Information about the most recent sync"
+        "RepositoryBindingInfo": {
+            "description": "Detailed repository binding configuration and status",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bindingId",
+                "namespace",
+                "repositoryUrl",
+                "status"
+            ],
+            "properties": {
+                "bindingId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the repository binding"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace the repository is bound to"
+                },
+                "repositoryUrl": {
+                    "type": "string",
+                    "description": "URL of the bound repository"
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Branch being synced"
+                },
+                "status": {
+                    "$ref": "#/$defs/BindingStatus",
+                    "description": "Current status of the binding"
+                },
+                "syncEnabled": {
+                    "type": "boolean",
+                    "description": "Whether automatic sync is enabled"
+                },
+                "syncIntervalMinutes": {
+                    "type": "integer",
+                    "description": "Sync interval in minutes"
+                },
+                "documentCount": {
+                    "type": "integer",
+                    "description": "Number of documents from this repository"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the binding was created"
+                },
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
+                }
+            }
+        },
+        "BindingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "syncing",
+                "synced",
+                "error",
+                "disabled"
+            ],
+            "description": "Status of a repository binding"
+        },
+        "SyncInfo": {
+            "description": "Information about a repository sync operation",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "syncId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the sync operation"
+                },
+                "status": {
+                    "$ref": "#/$defs/SyncStatus",
+                    "description": "Result status of the sync"
+                },
+                "triggeredBy": {
+                    "$ref": "#/$defs/SyncTrigger",
+                    "description": "What triggered the sync"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when sync started"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when sync completed"
+                },
+                "commitHash": {
+                    "type": "string",
+                    "description": "Git commit hash that was synced"
+                },
+                "documentsProcessed": {
+                    "type": "integer",
+                    "description": "Total documents processed in sync"
+                }
+            }
+        },
+        "SyncStatus": {
+            "type": "string",
+            "enum": [
+                "success",
+                "partial",
+                "failed"
+            ],
+            "description": "Result status of a sync operation"
+        },
+        "SyncTrigger": {
+            "type": "string",
+            "enum": [
+                "manual",
+                "scheduled"
+            ],
+            "description": "What triggered the sync operation"
         }
-      }
-    },
-    "RepositoryBindingInfo": {
-      "description": "Detailed repository binding configuration and status",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bindingId",
-        "namespace",
-        "repositoryUrl",
-        "status"
-      ],
-      "properties": {
-        "bindingId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the repository binding"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace the repository is bound to"
-        },
-        "repositoryUrl": {
-          "type": "string",
-          "description": "URL of the bound repository"
-        },
-        "branch": {
-          "type": "string",
-          "description": "Branch being synced"
-        },
-        "status": {
-          "$ref": "#/$defs/BindingStatus",
-          "description": "Current status of the binding"
-        },
-        "syncEnabled": {
-          "type": "boolean",
-          "description": "Whether automatic sync is enabled"
-        },
-        "syncIntervalMinutes": {
-          "type": "integer",
-          "description": "Sync interval in minutes"
-        },
-        "documentCount": {
-          "type": "integer",
-          "description": "Number of documents from this repository"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the binding was created"
-        },
-        "owner": {
-          "type": "string",
-          "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\ nor a service name for service-initiated bindings.\n"
-        }
-      }
-    },
-    "BindingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "syncing",
-        "synced",
-        "error",
-        "disabled"
-      ],
-      "description": "Status of a repository binding"
-    },
-    "SyncInfo": {
-      "description": "Information about a repository sync operation",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "syncId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the sync operation"
-        },
-        "status": {
-          "$ref": "#/$defs/SyncStatus",
-          "description": "Result status of the sync"
-        },
-        "triggeredBy": {
-          "$ref": "#/$defs/SyncTrigger",
-          "description": "What triggered the sync"
-        },
-        "startedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when sync started"
-        },
-        "completedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when sync completed"
-        },
-        "commitHash": {
-          "type": "string",
-          "description": "Git commit hash that was synced"
-        },
-        "documentsProcessed": {
-          "type": "integer",
-          "description": "Total documents processed in sync"
-        }
-      }
-    },
-    "SyncStatus": {
-      "type": "string",
-      "enum": [
-        "success",
-        "partial",
-        "failed"
-      ],
-      "description": "Result status of a sync operation"
-    },
-    "SyncTrigger": {
-      "type": "string",
-      "enum": [
-        "manual",
-        "scheduled"
-      ],
-      "description": "What triggered the sync operation"
     }
-  }
 }
 """;
 
     private static readonly string _GetRepositoryStatus_Info = """
 {
-  "summary": "Get repository binding status",
-  "description": "Get current status of a repository binding including sync state and statistics.\n",
-  "tags": [
-    "Repository"
-  ],
-  "deprecated": false,
-  "operationId": "getRepositoryStatus"
+    "summary": "Get repository binding status",
+    "description": "Get current status of a repository binding including sync state and statistics.\n",
+    "tags": [
+        "Repository"
+    ],
+    "deprecated": false,
+    "operationId": "getRepositoryStatus"
 }
 """;
 
@@ -4619,154 +4634,154 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _ListRepositoryBindings_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListRepositoryBindingsRequest",
-  "$defs": {
-    "ListRepositoryBindingsRequest": {
-      "description": "Request to list all repository bindings with optional filtering",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "status": {
-          "$ref": "#/$defs/BindingStatus",
-          "description": "Filter by binding status"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListRepositoryBindingsRequest",
+    "$defs": {
+        "ListRepositoryBindingsRequest": {
+            "description": "Request to list all repository bindings with optional filtering",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "status": {
+                    "$ref": "#/$defs/BindingStatus",
+                    "description": "Filter by binding status"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 50,
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Maximum number of bindings to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Number of bindings to skip"
+                }
+            }
         },
-        "limit": {
-          "type": "integer",
-          "default": 50,
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Maximum number of bindings to return"
-        },
-        "offset": {
-          "type": "integer",
-          "default": 0,
-          "minimum": 0,
-          "description": "Number of bindings to skip"
+        "BindingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "syncing",
+                "synced",
+                "error",
+                "disabled"
+            ],
+            "description": "Status of a repository binding"
         }
-      }
-    },
-    "BindingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "syncing",
-        "synced",
-        "error",
-        "disabled"
-      ],
-      "description": "Status of a repository binding"
     }
-  }
 }
 """;
 
     private static readonly string _ListRepositoryBindings_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListRepositoryBindingsResponse",
-  "$defs": {
-    "ListRepositoryBindingsResponse": {
-      "description": "Response containing a list of repository bindings",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bindings",
-        "total"
-      ],
-      "properties": {
-        "bindings": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/RepositoryBindingInfo"
-          },
-          "description": "List of repository bindings"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListRepositoryBindingsResponse",
+    "$defs": {
+        "ListRepositoryBindingsResponse": {
+            "description": "Response containing a list of repository bindings",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bindings",
+                "total"
+            ],
+            "properties": {
+                "bindings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RepositoryBindingInfo"
+                    },
+                    "description": "List of repository bindings"
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of bindings matching filter"
+                }
+            }
         },
-        "total": {
-          "type": "integer",
-          "description": "Total number of bindings matching filter"
+        "RepositoryBindingInfo": {
+            "description": "Detailed repository binding configuration and status",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bindingId",
+                "namespace",
+                "repositoryUrl",
+                "status"
+            ],
+            "properties": {
+                "bindingId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the repository binding"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace the repository is bound to"
+                },
+                "repositoryUrl": {
+                    "type": "string",
+                    "description": "URL of the bound repository"
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Branch being synced"
+                },
+                "status": {
+                    "$ref": "#/$defs/BindingStatus",
+                    "description": "Current status of the binding"
+                },
+                "syncEnabled": {
+                    "type": "boolean",
+                    "description": "Whether automatic sync is enabled"
+                },
+                "syncIntervalMinutes": {
+                    "type": "integer",
+                    "description": "Sync interval in minutes"
+                },
+                "documentCount": {
+                    "type": "integer",
+                    "description": "Number of documents from this repository"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the binding was created"
+                },
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
+                }
+            }
+        },
+        "BindingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "syncing",
+                "synced",
+                "error",
+                "disabled"
+            ],
+            "description": "Status of a repository binding"
         }
-      }
-    },
-    "RepositoryBindingInfo": {
-      "description": "Detailed repository binding configuration and status",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bindingId",
-        "namespace",
-        "repositoryUrl",
-        "status"
-      ],
-      "properties": {
-        "bindingId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the repository binding"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace the repository is bound to"
-        },
-        "repositoryUrl": {
-          "type": "string",
-          "description": "URL of the bound repository"
-        },
-        "branch": {
-          "type": "string",
-          "description": "Branch being synced"
-        },
-        "status": {
-          "$ref": "#/$defs/BindingStatus",
-          "description": "Current status of the binding"
-        },
-        "syncEnabled": {
-          "type": "boolean",
-          "description": "Whether automatic sync is enabled"
-        },
-        "syncIntervalMinutes": {
-          "type": "integer",
-          "description": "Sync interval in minutes"
-        },
-        "documentCount": {
-          "type": "integer",
-          "description": "Number of documents from this repository"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the binding was created"
-        },
-        "owner": {
-          "type": "string",
-          "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
-        }
-      }
-    },
-    "BindingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "syncing",
-        "synced",
-        "error",
-        "disabled"
-      ],
-      "description": "Status of a repository binding"
     }
-  }
 }
 """;
 
     private static readonly string _ListRepositoryBindings_Info = """
 {
-  "summary": "List all repository bindings",
-  "description": "List all repository bindings with optional filtering by status.\n",
-  "tags": [
-    "Repository"
-  ],
-  "deprecated": false,
-  "operationId": "listRepositoryBindings"
+    "summary": "List all repository bindings",
+    "description": "List all repository bindings with optional filtering by status.\n",
+    "tags": [
+        "Repository"
+    ],
+    "deprecated": false,
+    "operationId": "listRepositoryBindings"
 }
 """;
 
@@ -4816,189 +4831,189 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _UpdateRepositoryBinding_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateRepositoryBindingRequest",
-  "$defs": {
-    "UpdateRepositoryBindingRequest": {
-      "description": "Request to update repository binding configuration",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace of the binding to update"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateRepositoryBindingRequest",
+    "$defs": {
+        "UpdateRepositoryBindingRequest": {
+            "description": "Request to update repository binding configuration",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace of the binding to update"
+                },
+                "syncEnabled": {
+                    "type": "boolean",
+                    "description": "Enable or disable automatic syncing"
+                },
+                "syncIntervalMinutes": {
+                    "type": "integer",
+                    "minimum": 5,
+                    "maximum": 1440,
+                    "description": "New sync interval in minutes"
+                },
+                "filePatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "New glob patterns for files to include (null to keep unchanged)"
+                },
+                "excludePatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "New glob patterns for files to exclude (null to keep unchanged)"
+                },
+                "categoryMapping": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "New directory-to-category mapping (null to keep unchanged)"
+                },
+                "defaultCategory": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "New default category for unmapped documents"
+                },
+                "archiveEnabled": {
+                    "type": "boolean",
+                    "description": "Enable or disable archive functionality"
+                },
+                "archiveOnSync": {
+                    "type": "boolean",
+                    "description": "Enable or disable archiving after each sync"
+                }
+            }
         },
-        "syncEnabled": {
-          "type": "boolean",
-          "description": "Enable or disable automatic syncing"
-        },
-        "syncIntervalMinutes": {
-          "type": "integer",
-          "minimum": 5,
-          "maximum": 1440,
-          "description": "New sync interval in minutes"
-        },
-        "filePatterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "New glob patterns for files to include (null to keep unchanged)"
-        },
-        "excludePatterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "New glob patterns for files to exclude (null to keep unchanged)"
-        },
-        "categoryMapping": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "New directory-to-category mapping (null to keep unchanged)"
-        },
-        "defaultCategory": {
-          "$ref": "#/$defs/DocumentCategory",
-          "description": "New default category for unmapped documents"
-        },
-        "archiveEnabled": {
-          "type": "boolean",
-          "description": "Enable or disable archive functionality"
-        },
-        "archiveOnSync": {
-          "type": "boolean",
-          "description": "Enable or disable archiving after each sync"
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
-      }
-    },
-    "DocumentCategory": {
-      "type": "string",
-      "enum": [
-        "getting-started",
-        "api-reference",
-        "architecture",
-        "deployment",
-        "troubleshooting",
-        "tutorials",
-        "game-systems",
-        "world-lore",
-        "npc-ai",
-        "other"
-      ],
-      "description": "Fixed categories for type-safe filtering"
     }
-  }
 }
 """;
 
     private static readonly string _UpdateRepositoryBinding_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateRepositoryBindingResponse",
-  "$defs": {
-    "UpdateRepositoryBindingResponse": {
-      "description": "Response containing the updated binding configuration",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "binding"
-      ],
-      "properties": {
-        "binding": {
-          "$ref": "#/$defs/RepositoryBindingInfo",
-          "description": "Updated binding configuration"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateRepositoryBindingResponse",
+    "$defs": {
+        "UpdateRepositoryBindingResponse": {
+            "description": "Response containing the updated binding configuration",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "binding"
+            ],
+            "properties": {
+                "binding": {
+                    "$ref": "#/$defs/RepositoryBindingInfo",
+                    "description": "Updated binding configuration"
+                }
+            }
+        },
+        "RepositoryBindingInfo": {
+            "description": "Detailed repository binding configuration and status",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bindingId",
+                "namespace",
+                "repositoryUrl",
+                "status"
+            ],
+            "properties": {
+                "bindingId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the repository binding"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace the repository is bound to"
+                },
+                "repositoryUrl": {
+                    "type": "string",
+                    "description": "URL of the bound repository"
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Branch being synced"
+                },
+                "status": {
+                    "$ref": "#/$defs/BindingStatus",
+                    "description": "Current status of the binding"
+                },
+                "syncEnabled": {
+                    "type": "boolean",
+                    "description": "Whether automatic sync is enabled"
+                },
+                "syncIntervalMinutes": {
+                    "type": "integer",
+                    "description": "Sync interval in minutes"
+                },
+                "documentCount": {
+                    "type": "integer",
+                    "description": "Number of documents from this repository"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the binding was created"
+                },
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\nor a service name for service-initiated bindings.\n"
+                }
+            }
+        },
+        "BindingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "syncing",
+                "synced",
+                "error",
+                "disabled"
+            ],
+            "description": "Status of a repository binding"
         }
-      }
-    },
-    "RepositoryBindingInfo": {
-      "description": "Detailed repository binding configuration and status",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bindingId",
-        "namespace",
-        "repositoryUrl",
-        "status"
-      ],
-      "properties": {
-        "bindingId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the repository binding"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace the repository is bound to"
-        },
-        "repositoryUrl": {
-          "type": "string",
-          "description": "URL of the bound repository"
-        },
-        "branch": {
-          "type": "string",
-          "description": "Branch being synced"
-        },
-        "status": {
-          "$ref": "#/$defs/BindingStatus",
-          "description": "Current status of the binding"
-        },
-        "syncEnabled": {
-          "type": "boolean",
-          "description": "Whether automatic sync is enabled"
-        },
-        "syncIntervalMinutes": {
-          "type": "integer",
-          "description": "Sync interval in minutes"
-        },
-        "documentCount": {
-          "type": "integer",
-          "description": "Number of documents from this repository"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the binding was created"
-        },
-        "owner": {
-          "type": "string",
-          "description": "Owner of this binding. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated bindings\ nor a service name for service-initiated bindings.\n"
-        }
-      }
-    },
-    "BindingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "syncing",
-        "synced",
-        "error",
-        "disabled"
-      ],
-      "description": "Status of a repository binding"
     }
-  }
 }
 """;
 
     private static readonly string _UpdateRepositoryBinding_Info = """
 {
-  "summary": "Update repository binding configuration",
-  "description": "Update sync settings, file patterns, category mappings, or archive configuration.\n",
-  "tags": [
-    "Repository"
-  ],
-  "deprecated": false,
-  "operationId": "updateRepositoryBinding"
+    "summary": "Update repository binding configuration",
+    "description": "Update sync settings, file patterns, category mappings, or archive configuration.\n",
+    "tags": [
+        "Repository"
+    ],
+    "deprecated": false,
+    "operationId": "updateRepositoryBinding"
 }
 """;
 
@@ -5048,100 +5063,100 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _CreateDocumentationArchive_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateArchiveRequest",
-  "$defs": {
-    "CreateArchiveRequest": {
-      "description": "Request to create a point-in-time snapshot of namespace documentation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "owner"
-      ],
-      "properties": {
-        "owner": {
-          "type": "string",
-          "description": "Owner of this archive. NOT a session ID.\nFor user-initiated archives: the accountId (UUID format).\nFor service-initiated archives: the service name (e.g., \"orchestrator\").\n"
-        },
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to archive"
-        },
-        "description": {
-          "type": "string",
-          "maxLength": 500,
-          "description": "Optional description for the archive"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateArchiveRequest",
+    "$defs": {
+        "CreateArchiveRequest": {
+            "description": "Request to create a point-in-time snapshot of namespace documentation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "owner"
+            ],
+            "properties": {
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this archive. NOT a session ID.\nFor user-initiated archives: the accountId (UUID format).\nFor service-initiated archives: the service name (e.g., \"orchestrator\").\n"
+                },
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to archive"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Optional description for the archive"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateDocumentationArchive_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateArchiveResponse",
-  "$defs": {
-    "CreateArchiveResponse": {
-      "description": "Response containing the created archive details",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "archiveId",
-        "namespace"
-      ],
-      "properties": {
-        "archiveId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the created archive"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace that was archived"
-        },
-        "bundleAssetId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Asset ID in Asset Service"
-        },
-        "documentCount": {
-          "type": "integer",
-          "description": "Number of documents in the archive"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "description": "Total size of the archive in bytes"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the archive was created"
-        },
-        "commitHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "Git commit hash if namespace is bound"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateArchiveResponse",
+    "$defs": {
+        "CreateArchiveResponse": {
+            "description": "Response containing the created archive details",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "archiveId",
+                "namespace"
+            ],
+            "properties": {
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the created archive"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace that was archived"
+                },
+                "bundleAssetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Asset ID in Asset Service"
+                },
+                "documentCount": {
+                    "type": "integer",
+                    "description": "Number of documents in the archive"
+                },
+                "sizeBytes": {
+                    "type": "integer",
+                    "description": "Total size of the archive in bytes"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the archive was created"
+                },
+                "commitHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Git commit hash if namespace is bound"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateDocumentationArchive_Info = """
 {
-  "summary": "Create documentation archive",
-  "description": "Create a .bannou bundle archive of all documents in a namespace.\nArchives are stored via Asset Service.\n",
-  "tags": [
-    "Archive"
-  ],
-  "deprecated": false,
-  "operationId": "createDocumentationArchive"
+    "summary": "Create documentation archive",
+    "description": "Create a .bannou bundle archive of all documents in a namespace.\nArchives are stored via Asset Service.\n",
+    "tags": [
+        "Archive"
+    ],
+    "deprecated": false,
+    "operationId": "createDocumentationArchive"
 }
 """;
 
@@ -5191,134 +5206,134 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _ListDocumentationArchives_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListArchivesRequest",
-  "$defs": {
-    "ListArchivesRequest": {
-      "description": "Request to list available archives for a namespace",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "Documentation namespace to list archives for"
-        },
-        "limit": {
-          "type": "integer",
-          "default": 20,
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Maximum number of archives to return"
-        },
-        "offset": {
-          "type": "integer",
-          "default": 0,
-          "minimum": 0,
-          "description": "Number of archives to skip"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListArchivesRequest",
+    "$defs": {
+        "ListArchivesRequest": {
+            "description": "Request to list available archives for a namespace",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "Documentation namespace to list archives for"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 20,
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Maximum number of archives to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Number of archives to skip"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListDocumentationArchives_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListArchivesResponse",
-  "$defs": {
-    "ListArchivesResponse": {
-      "description": "Response containing a paginated list of archives",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "archives",
-        "total"
-      ],
-      "properties": {
-        "archives": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ArchiveInfo"
-          },
-          "description": "List of archives for the namespace"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListArchivesResponse",
+    "$defs": {
+        "ListArchivesResponse": {
+            "description": "Response containing a paginated list of archives",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "archives",
+                "total"
+            ],
+            "properties": {
+                "archives": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ArchiveInfo"
+                    },
+                    "description": "List of archives for the namespace"
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of archives"
+                }
+            }
         },
-        "total": {
-          "type": "integer",
-          "description": "Total number of archives"
+        "ArchiveInfo": {
+            "description": "Archive metadata including size and document count",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "archiveId",
+                "namespace",
+                "createdAt"
+            ],
+            "properties": {
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the archive"
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace the archive belongs to"
+                },
+                "bundleAssetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Asset ID in Asset Service"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the archive"
+                },
+                "documentCount": {
+                    "type": "integer",
+                    "description": "Number of documents in the archive"
+                },
+                "sizeBytes": {
+                    "type": "integer",
+                    "description": "Total size of the archive in bytes"
+                },
+                "commitHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Git commit hash if namespace was bound at archive time"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the archive was created"
+                },
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this archive. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
+                }
+            }
         }
-      }
-    },
-    "ArchiveInfo": {
-      "description": "Archive metadata including size and document count",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "archiveId",
-        "namespace",
-        "createdAt"
-      ],
-      "properties": {
-        "archiveId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the archive"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace the archive belongs to"
-        },
-        "bundleAssetId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Asset ID in Asset Service"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the archive"
-        },
-        "documentCount": {
-          "type": "integer",
-          "description": "Number of documents in the archive"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "description": "Total size of the archive in bytes"
-        },
-        "commitHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "Git commit hash if namespace was bound at archive time"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the archive was created"
-        },
-        "owner": {
-          "type": "string",
-          "description": "Owner of this archive. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListDocumentationArchives_Info = """
 {
-  "summary": "List documentation archives",
-  "description": "List all archives for a namespace.\n",
-  "tags": [
-    "Archive"
-  ],
-  "deprecated": false,
-  "operationId": "listDocumentationArchives"
+    "summary": "List documentation archives",
+    "description": "List all archives for a namespace.\n",
+    "tags": [
+        "Archive"
+    ],
+    "deprecated": false,
+    "operationId": "listDocumentationArchives"
 }
 """;
 
@@ -5368,75 +5383,75 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _RestoreDocumentationArchive_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RestoreArchiveRequest",
-  "$defs": {
-    "RestoreArchiveRequest": {
-      "description": "Request to restore documents from an archive",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "archiveId"
-      ],
-      "properties": {
-        "archiveId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the archive to restore"
-        },
-        "targetNamespace": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "maxLength": 50,
-          "description": "If not provided, restores to original namespace"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreArchiveRequest",
+    "$defs": {
+        "RestoreArchiveRequest": {
+            "description": "Request to restore documents from an archive",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "archiveId"
+            ],
+            "properties": {
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the archive to restore"
+                },
+                "targetNamespace": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 50,
+                    "description": "If not provided, restores to original namespace"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RestoreDocumentationArchive_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RestoreArchiveResponse",
-  "$defs": {
-    "RestoreArchiveResponse": {
-      "description": "Response containing restore operation results",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "namespace",
-        "documentsRestored"
-      ],
-      "properties": {
-        "namespace": {
-          "type": "string",
-          "description": "Namespace documents were restored to"
-        },
-        "documentsRestored": {
-          "type": "integer",
-          "description": "Number of documents restored from archive"
-        },
-        "previousDocumentsDeleted": {
-          "type": "integer",
-          "description": "Number of existing documents deleted before restore"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreArchiveResponse",
+    "$defs": {
+        "RestoreArchiveResponse": {
+            "description": "Response containing restore operation results",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "namespace",
+                "documentsRestored"
+            ],
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace documents were restored to"
+                },
+                "documentsRestored": {
+                    "type": "integer",
+                    "description": "Number of documents restored from archive"
+                },
+                "previousDocumentsDeleted": {
+                    "type": "integer",
+                    "description": "Number of existing documents deleted before restore"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RestoreDocumentationArchive_Info = """
 {
-  "summary": "Restore documentation from archive",
-  "description": "Restore documents from a .bannou bundle archive.\nReplaces all documents in the namespace with archived content.\n",
-  "tags": [
-    "Archive"
-  ],
-  "deprecated": false,
-  "operationId": "restoreDocumentationArchive"
+    "summary": "Restore documentation from archive",
+    "description": "Restore documents from a .bannou bundle archive.\nReplaces all documents in the namespace with archived content.\n",
+    "tags": [
+        "Archive"
+    ],
+    "deprecated": false,
+    "operationId": "restoreDocumentationArchive"
 }
 """;
 
@@ -5486,60 +5501,60 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _DeleteDocumentationArchive_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteArchiveRequest",
-  "$defs": {
-    "DeleteArchiveRequest": {
-      "description": "Request to permanently delete an archive",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "archiveId"
-      ],
-      "properties": {
-        "archiveId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the archive to delete"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteArchiveRequest",
+    "$defs": {
+        "DeleteArchiveRequest": {
+            "description": "Request to permanently delete an archive",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "archiveId"
+            ],
+            "properties": {
+                "archiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the archive to delete"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteDocumentationArchive_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteArchiveResponse",
-  "$defs": {
-    "DeleteArchiveResponse": {
-      "description": "Response confirming archive deletion",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "deleted"
-      ],
-      "properties": {
-        "deleted": {
-          "type": "boolean",
-          "description": "Whether the archive was successfully deleted"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteArchiveResponse",
+    "$defs": {
+        "DeleteArchiveResponse": {
+            "description": "Response confirming archive deletion",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "deleted"
+            ],
+            "properties": {
+                "deleted": {
+                    "type": "boolean",
+                    "description": "Whether the archive was successfully deleted"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteDocumentationArchive_Info = """
 {
-  "summary": "Delete documentation archive",
-  "description": "Delete an archive from Asset Service storage.\n",
-  "tags": [
-    "Archive"
-  ],
-  "deprecated": false,
-  "operationId": "deleteDocumentationArchive"
+    "summary": "Delete documentation archive",
+    "description": "Delete an archive from Asset Service storage.\n",
+    "tags": [
+        "Archive"
+    ],
+    "deprecated": false,
+    "operationId": "deleteDocumentationArchive"
 }
 """;
 
