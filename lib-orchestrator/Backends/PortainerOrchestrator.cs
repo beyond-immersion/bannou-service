@@ -521,25 +521,26 @@ public class PortainerOrchestrator : IContainerOrchestrator
     }
 
     /// <inheritdoc />
-    public Task<ScaleServiceResult> ScaleServiceAsync(
+    public async Task<ScaleServiceResult> ScaleServiceAsync(
         string appName,
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         _logger.LogWarning(
             "Scale operation not supported in Portainer standalone mode for {AppName}. Use Swarm or Kubernetes for scaling.",
             appName);
 
         // Portainer with standalone Docker doesn't support native scaling
         // For scaling, use Swarm mode or Kubernetes backend
-        return Task.FromResult(new ScaleServiceResult
+        return new ScaleServiceResult
         {
             Success = false,
             AppId = appName,
             PreviousReplicas = 1,
             CurrentReplicas = 1,
             Message = "Scaling not supported in Portainer standalone mode. Use Docker Swarm or Kubernetes for scaling capabilities."
-        });
+        };
     }
 
     /// <inheritdoc />

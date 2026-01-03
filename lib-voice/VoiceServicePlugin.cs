@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,14 +34,16 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
             var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<KamailioClient>>();
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("Kamailio");
-            return new KamailioClient(httpClient, config.KamailioHost, config.KamailioRpcPort, logger);
+            var messageBus = sp.GetRequiredService<IMessageBus>();
+            return new KamailioClient(httpClient, config.KamailioHost, config.KamailioRpcPort, logger, messageBus);
         });
 
         services.AddSingleton<IRtpEngineClient>(sp =>
         {
             var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RtpEngineClient>>();
-            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger);
+            var messageBus = sp.GetRequiredService<IMessageBus>();
+            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus);
         });
         Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, KamailioClient, RtpEngineClient)");
 

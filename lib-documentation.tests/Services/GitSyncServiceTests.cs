@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Documentation.Services;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -14,43 +16,28 @@ namespace BeyondImmersion.BannouService.Documentation.Tests.Services;
 public class GitSyncServiceTests
 {
     private readonly Mock<ILogger<GitSyncService>> _mockLogger;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly GitSyncService _service;
 
     public GitSyncServiceTests()
     {
         _mockLogger = new Mock<ILogger<GitSyncService>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _configuration = new DocumentationServiceConfiguration
         {
             GitStoragePath = Path.Combine(Path.GetTempPath(), "bannou-git-test-" + Guid.NewGuid().ToString("N")[..8])
         };
-        _service = new GitSyncService(_mockLogger.Object, _configuration);
+        _service = new GitSyncService(_mockLogger.Object, _configuration, _mockMessageBus.Object);
     }
 
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var service = new GitSyncService(_mockLogger.Object, _configuration);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new GitSyncService(null!, _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new GitSyncService(_mockLogger.Object, null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<GitSyncService>();
+        Assert.NotNull(_service);
     }
 
     #endregion

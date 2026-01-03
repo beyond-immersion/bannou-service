@@ -55,11 +55,12 @@ public class P2PCoordinator : IP2PCoordinator
     }
 
     /// <inheritdoc />
-    public Task<bool> ShouldUpgradeToScaledAsync(
+    public async Task<bool> ShouldUpgradeToScaledAsync(
         Guid roomId,
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var maxP2P = GetP2PMaxParticipants();
         // Upgrade when EXCEEDING capacity (>), not when AT capacity (>=)
         // P2P with max=2: 2 participants is fine, 3 participants needs upgrade
@@ -72,15 +73,16 @@ public class P2PCoordinator : IP2PCoordinator
                 roomId, currentParticipantCount, maxP2P);
         }
 
-        return Task.FromResult(shouldUpgrade);
+        return shouldUpgrade;
     }
 
     /// <inheritdoc />
-    public Task<bool> CanAcceptNewParticipantAsync(
+    public async Task<bool> CanAcceptNewParticipantAsync(
         Guid roomId,
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         // Check if room is at P2P capacity
         var maxP2P = GetP2PMaxParticipants();
         var canAccept = currentParticipantCount < maxP2P;
@@ -94,7 +96,7 @@ public class P2PCoordinator : IP2PCoordinator
                 roomId, currentParticipantCount, maxP2P);
         }
 
-        return Task.FromResult(canAccept);
+        return canAccept;
     }
 
     /// <inheritdoc />
@@ -106,7 +108,7 @@ public class P2PCoordinator : IP2PCoordinator
     }
 
     /// <inheritdoc />
-    public Task<JoinVoiceRoomResponse> BuildP2PConnectionInfoAsync(
+    public async Task<JoinVoiceRoomResponse> BuildP2PConnectionInfoAsync(
         Guid roomId,
         List<VoicePeer> peers,
         string defaultCodec,
@@ -114,6 +116,7 @@ public class P2PCoordinator : IP2PCoordinator
         bool tierUpgradePending = false,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var response = new JoinVoiceRoomResponse
         {
             Success = true,
@@ -126,7 +129,7 @@ public class P2PCoordinator : IP2PCoordinator
             TierUpgradePending = tierUpgradePending
         };
 
-        return Task.FromResult(response);
+        return response;
     }
 
     /// <summary>

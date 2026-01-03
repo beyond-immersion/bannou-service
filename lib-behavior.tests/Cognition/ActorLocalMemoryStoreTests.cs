@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -63,17 +64,10 @@ public class ActorLocalMemoryStoreTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_NullFactory_ThrowsArgumentNullException()
+    public void ConstructorIsValid()
     {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorLocalMemoryStore(null!, _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullLogger_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new ActorLocalMemoryStore(_mockFactory.Object, null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<ActorLocalMemoryStore>();
+        Assert.NotNull(_memoryStore);
     }
 
     #endregion

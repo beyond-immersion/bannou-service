@@ -28,25 +28,26 @@ public class MinioHealthCheck : IHealthCheck
     /// <summary>
     /// Checks MinIO storage connectivity.
     /// </summary>
-    public Task<HealthCheckResult> CheckHealthAsync(
+    public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         try
         {
             // Check if the storage provider supports the health check capability
             if (!_storageProvider.SupportsCapability(StorageCapability.Versioning))
             {
                 // If we can query capabilities, the connection is working
-                return Task.FromResult(HealthCheckResult.Healthy("MinIO storage is accessible."));
+                return HealthCheckResult.Healthy("MinIO storage is accessible.");
             }
 
-            return Task.FromResult(HealthCheckResult.Healthy("MinIO storage is accessible with versioning support."));
+            return HealthCheckResult.Healthy("MinIO storage is accessible with versioning support.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "MinIO health check failed");
-            return Task.FromResult(HealthCheckResult.Unhealthy("MinIO storage is not accessible.", ex));
+            return HealthCheckResult.Unhealthy("MinIO storage is not accessible.", ex);
         }
     }
 }

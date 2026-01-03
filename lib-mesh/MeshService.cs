@@ -408,10 +408,11 @@ public partial class MeshService : IMeshService
     /// Used for routing decisions based on service name.
     /// Mappings are populated via FullServiceMappingsEvent from RabbitMQ.
     /// </summary>
-    public Task<(StatusCodes, GetMappingsResponse?)> GetMappingsAsync(
+    public async Task<(StatusCodes, GetMappingsResponse?)> GetMappingsAsync(
         GetMappingsRequest body,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Getting service mappings");
 
         // Get mappings from local cache (populated via RabbitMQ events)
@@ -439,7 +440,7 @@ public partial class MeshService : IMeshService
             Version = version
         };
 
-        return Task.FromResult<(StatusCodes, GetMappingsResponse?)>((StatusCodes.OK, response));
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>

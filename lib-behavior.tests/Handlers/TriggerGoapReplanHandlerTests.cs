@@ -8,6 +8,7 @@ using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -50,17 +51,10 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_NullPlanner_ThrowsArgumentNullException()
+    public void ConstructorIsValid()
     {
-        Assert.Throws<ArgumentNullException>(() =>
-            new TriggerGoapReplanHandler(null!, _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_NullLogger_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new TriggerGoapReplanHandler(_mockPlanner.Object, null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<TriggerGoapReplanHandler>();
+        Assert.NotNull(_handler);
     }
 
     #endregion

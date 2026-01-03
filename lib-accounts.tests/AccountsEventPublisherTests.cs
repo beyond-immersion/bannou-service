@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -31,28 +32,10 @@ public class AccountsEventPublisherTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act & Assert
+        ServiceConstructorValidator.ValidateServiceConstructor<AccountsEventPublisher>();
         Assert.NotNull(_publisher);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsEventPublisher(
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsEventPublisher(
-            _mockMessageBus.Object,
-            null!));
     }
 
     #endregion

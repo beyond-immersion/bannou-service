@@ -3,6 +3,7 @@
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Collections.Concurrent;
@@ -32,42 +33,10 @@ public class InMemoryMessageTapTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange
-        var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
-        var bus = new InMemoryMessageBus(loggerFactory.CreateLogger<InMemoryMessageBus>());
-
-        // Act
-        var tap = new InMemoryMessageTap(bus, loggerFactory.CreateLogger<InMemoryMessageTap>());
-
-        // Assert
-        Assert.NotNull(tap);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() =>
-            new InMemoryMessageTap(null!, loggerFactory.CreateLogger<InMemoryMessageTap>()));
-        Assert.Equal("messageBus", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
-        var bus = new InMemoryMessageBus(loggerFactory.CreateLogger<InMemoryMessageBus>());
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() =>
-            new InMemoryMessageTap(bus, null!));
-        Assert.Equal("logger", ex.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<InMemoryMessageTap>();
+        Assert.NotNull(_messageTap);
     }
 
     #endregion

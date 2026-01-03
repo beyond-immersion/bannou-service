@@ -135,15 +135,16 @@ public class ActorRunner : IActorRunner
     }
 
     /// <inheritdoc/>
-    public Task StartAsync(CancellationToken cancellationToken = default)
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         if (_disposed)
             throw new ObjectDisposedException(nameof(ActorRunner));
 
         if (Status != ActorStatus.Pending && Status != ActorStatus.Stopped)
         {
             _logger.LogWarning("Actor {ActorId} cannot start from status {Status}", ActorId, Status);
-            return Task.CompletedTask;
+            return;
         }
 
         Status = ActorStatus.Starting;
@@ -161,8 +162,6 @@ public class ActorRunner : IActorRunner
 
         Status = ActorStatus.Running;
         _logger.LogInformation("Actor {ActorId} started successfully", ActorId);
-
-        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>

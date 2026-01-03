@@ -41,11 +41,12 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     }
 
     /// <inheritdoc />
-    public Task<bool> CanAcceptNewParticipantAsync(
+    public async Task<bool> CanAcceptNewParticipantAsync(
         Guid roomId,
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var maxParticipants = GetScaledMaxParticipants();
         var canAccept = currentParticipantCount < maxParticipants;
 
@@ -56,7 +57,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
                 roomId, currentParticipantCount, maxParticipants);
         }
 
-        return Task.FromResult(canAccept);
+        return canAccept;
     }
 
     /// <inheritdoc />
@@ -111,13 +112,14 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     }
 
     /// <inheritdoc />
-    public Task<JoinVoiceRoomResponse> BuildScaledConnectionInfoAsync(
+    public async Task<JoinVoiceRoomResponse> BuildScaledConnectionInfoAsync(
         Guid roomId,
         string sessionId,
         string rtpServerUri,
         string codec,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var credentials = GenerateSipCredentials(sessionId, roomId);
 
         var response = new JoinVoiceRoomResponse
@@ -138,7 +140,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
             "Built scaled connection info for session {SessionId} in room {RoomId}",
             sessionId[..Math.Min(8, sessionId.Length)], roomId);
 
-        return Task.FromResult(response);
+        return response;
     }
 
     /// <inheritdoc />

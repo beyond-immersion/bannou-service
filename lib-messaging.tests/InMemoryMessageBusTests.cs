@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -24,21 +25,10 @@ public class InMemoryMessageBusTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidLogger_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var bus = new InMemoryMessageBus(_mockLogger.Object);
-
-        // Assert
-        Assert.NotNull(bus);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new InMemoryMessageBus(null!));
-        Assert.Equal("logger", ex.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<InMemoryMessageBus>();
+        Assert.NotNull(_messageBus);
     }
 
     #endregion

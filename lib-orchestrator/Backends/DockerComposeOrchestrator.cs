@@ -990,25 +990,26 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     }
 
     /// <inheritdoc />
-    public Task<ScaleServiceResult> ScaleServiceAsync(
+    public async Task<ScaleServiceResult> ScaleServiceAsync(
         string appName,
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         _logger.LogWarning(
             "Scale operation not supported in Docker Compose mode for {AppName}. Use Docker Swarm for scaling.",
             appName);
 
         // Docker Compose (standalone mode) doesn't support native scaling
         // For scaling, use Docker Swarm or Kubernetes backend
-        return Task.FromResult(new ScaleServiceResult
+        return new ScaleServiceResult
         {
             Success = false,
             AppId = appName,
             PreviousReplicas = 1,
             CurrentReplicas = 1,
             Message = "Scaling not supported in Docker Compose mode. Use Docker Swarm or Kubernetes for scaling capabilities."
-        });
+        };
     }
 
     /// <inheritdoc />

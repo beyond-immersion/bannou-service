@@ -53,27 +53,28 @@ public sealed class AudioProcessor : IAssetProcessor
     }
 
     /// <inheritdoc />
-    public Task<AssetValidationResult> ValidateAsync(
+    public async Task<AssetValidationResult> ValidateAsync(
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var warnings = new List<string>();
 
         // Check if content type is supported
         if (!CanProcess(context.ContentType))
         {
-            return Task.FromResult(AssetValidationResult.Invalid(
+            return AssetValidationResult.Invalid(
                 $"Unsupported content type: {context.ContentType}",
-                "UNSUPPORTED_CONTENT_TYPE"));
+                "UNSUPPORTED_CONTENT_TYPE");
         }
 
         // Check file size limits
         var maxSizeBytes = _configuration.MaxUploadSizeMb * 1024L * 1024L;
         if (context.SizeBytes > maxSizeBytes)
         {
-            return Task.FromResult(AssetValidationResult.Invalid(
+            return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                "FILE_TOO_LARGE"));
+                "FILE_TOO_LARGE");
         }
 
         // Check for potentially problematic scenarios
@@ -93,7 +94,7 @@ public sealed class AudioProcessor : IAssetProcessor
             context.AssetId,
             warnings.Count);
 
-        return Task.FromResult(AssetValidationResult.Valid(warnings.Count > 0 ? warnings : null));
+        return AssetValidationResult.Valid(warnings.Count > 0 ? warnings : null);
     }
 
     /// <inheritdoc />

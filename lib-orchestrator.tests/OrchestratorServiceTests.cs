@@ -1167,34 +1167,12 @@ public class OrchestratorStateManagerTests
     #region OrchestratorStateManager Implementation Tests
 
     [Fact]
-    public void OrchestratorStateManager_Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
+    public void OrchestratorStateManager_ConstructorIsValid()
     {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
-            null!,
-            Mock.Of<ILogger<OrchestratorStateManager>>()));
-        Assert.Equal("stateStoreFactory", ex.ParamName);
-    }
-
-    [Fact]
-    public void OrchestratorStateManager_Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
-            Mock.Of<IStateStoreFactory>(),
-            null!));
-        Assert.Equal("logger", ex.ParamName);
-    }
-
-    [Fact]
-    public void OrchestratorStateManager_Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
+        ServiceConstructorValidator.ValidateServiceConstructor<OrchestratorStateManager>();
         var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
-
-        // Assert
         Assert.NotNull(manager);
     }
 

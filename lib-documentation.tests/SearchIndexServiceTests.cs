@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -42,46 +43,10 @@ public class SearchIndexServiceTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var service = new SearchIndexService(
-            _mockStateStoreFactory.Object,
-            _mockLogger.Object,
-            _configuration);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SearchIndexService(
-            null!,
-            _mockLogger.Object,
-            _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SearchIndexService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SearchIndexService(
-            _mockStateStoreFactory.Object,
-            _mockLogger.Object,
-            null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<SearchIndexService>();
+        Assert.NotNull(_service);
     }
 
     #endregion

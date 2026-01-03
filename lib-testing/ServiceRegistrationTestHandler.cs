@@ -27,8 +27,9 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
     /// <summary>
     /// Tests the service registration pattern infrastructure.
     /// </summary>
-    private static Task<TestResult> TestServiceRegistrationPattern(ITestClient testClient, string[] args)
+    private static async Task<TestResult> TestServiceRegistrationPattern(ITestClient testClient, string[] args)
     {
+        await Task.CompletedTask;
         try
         {
             Console.WriteLine("Testing service registration pattern...");
@@ -39,36 +40,37 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
                 .FirstOrDefault(m => m.Name == "RegisterServicePermissionsAsync");
 
             if (registrationMethod == null)
-                return Task.FromResult(new TestResult(false, "IBannouService.RegisterServicePermissionsAsync method not found"));
+                return new TestResult(false, "IBannouService.RegisterServicePermissionsAsync method not found");
 
             // Verify method signature
             if (registrationMethod.ReturnType != typeof(Task))
-                return Task.FromResult(new TestResult(false, "RegisterServicePermissionsAsync should return Task"));
+                return new TestResult(false, "RegisterServicePermissionsAsync should return Task");
 
             if (registrationMethod.GetParameters().Length != 0)
-                return Task.FromResult(new TestResult(false, "RegisterServicePermissionsAsync should have no parameters"));
+                return new TestResult(false, "RegisterServicePermissionsAsync should have no parameters");
 
             Console.WriteLine("✓ IBannouService.RegisterServicePermissionsAsync method signature correct");
 
             // Test that method is virtual
             if (!registrationMethod.IsVirtual)
-                return Task.FromResult(new TestResult(false, "RegisterServicePermissionsAsync should be virtual for override"));
+                return new TestResult(false, "RegisterServicePermissionsAsync should be virtual for override");
 
             Console.WriteLine("✓ RegisterServicePermissionsAsync is properly virtual");
 
-            return Task.FromResult(new TestResult(true, "Service registration pattern infrastructure verified"));
+            return new TestResult(true, "Service registration pattern infrastructure verified");
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new TestResult(false, $"Test failed with exception: {ex.Message}"));
+            return new TestResult(false, $"Test failed with exception: {ex.Message}");
         }
     }
 
     /// <summary>
     /// Tests that common event models are accessible from bannou-service.
     /// </summary>
-    private static Task<TestResult> TestCommonEventModels(ITestClient testClient, string[] args)
+    private static async Task<TestResult> TestCommonEventModels(ITestClient testClient, string[] args)
     {
+        await Task.CompletedTask;
         try
         {
             Console.WriteLine("Testing common event models access...");
@@ -76,47 +78,48 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
             // Test ServiceRegistrationEvent accessibility
             var serviceRegistrationEventType = typeof(ServiceRegistrationEvent);
             if (serviceRegistrationEventType == null)
-                return Task.FromResult(new TestResult(false, "ServiceRegistrationEvent type not found"));
+                return new TestResult(false, "ServiceRegistrationEvent type not found");
 
             Console.WriteLine("✓ ServiceRegistrationEvent type accessible");
 
             // Test ServiceEndpoint accessibility
             var serviceEndpointType = typeof(ServiceEndpoint);
             if (serviceEndpointType == null)
-                return Task.FromResult(new TestResult(false, "ServiceEndpoint type not found"));
+                return new TestResult(false, "ServiceEndpoint type not found");
 
             Console.WriteLine("✓ ServiceEndpoint type accessible");
 
             // Test PermissionRequirement accessibility
             var permissionRequirementType = typeof(PermissionRequirement);
             if (permissionRequirementType == null)
-                return Task.FromResult(new TestResult(false, "PermissionRequirement type not found"));
+                return new TestResult(false, "PermissionRequirement type not found");
 
             Console.WriteLine("✓ PermissionRequirement type accessible");
 
             // Test ServiceEndpointMethod enum accessibility
             var serviceEndpointMethodType = typeof(ServiceEndpointMethod);
             if (serviceEndpointMethodType == null)
-                return Task.FromResult(new TestResult(false, "ServiceEndpointMethod enum not found"));
+                return new TestResult(false, "ServiceEndpointMethod enum not found");
 
             if (!serviceEndpointMethodType.IsEnum)
-                return Task.FromResult(new TestResult(false, "ServiceEndpointMethod should be an enum"));
+                return new TestResult(false, "ServiceEndpointMethod should be an enum");
 
             Console.WriteLine("✓ ServiceEndpointMethod enum accessible");
 
-            return Task.FromResult(new TestResult(true, "Common event models accessible from bannou-service"));
+            return new TestResult(true, "Common event models accessible from bannou-service");
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new TestResult(false, $"Test failed with exception: {ex.Message}"));
+            return new TestResult(false, $"Test failed with exception: {ex.Message}");
         }
     }
 
     /// <summary>
     /// Tests the registration method signature matches expected pattern.
     /// </summary>
-    private static Task<TestResult> TestRegistrationMethodSignature(ITestClient testClient, string[] args)
+    private static async Task<TestResult> TestRegistrationMethodSignature(ITestClient testClient, string[] args)
     {
+        await Task.CompletedTask;
         try
         {
             Console.WriteLine("Testing registration method signature...");
@@ -126,31 +129,32 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
             var methods = bannouServiceType.GetMethods().Where(m => m.Name.Contains("RegisterService")).ToArray();
 
             if (methods.Length == 0)
-                return Task.FromResult(new TestResult(false, "No RegisterService methods found in IBannouService"));
+                return new TestResult(false, "No RegisterService methods found in IBannouService");
 
             var registrationMethod = methods.FirstOrDefault(m => m.Name == "RegisterServicePermissionsAsync");
             if (registrationMethod == null)
-                return Task.FromResult(new TestResult(false, "RegisterServicePermissionsAsync method not found"));
+                return new TestResult(false, "RegisterServicePermissionsAsync method not found");
 
             // Verify it's a default implementation (has method body)
             if (registrationMethod.IsAbstract)
-                return Task.FromResult(new TestResult(false, "RegisterServicePermissionsAsync should have default implementation"));
+                return new TestResult(false, "RegisterServicePermissionsAsync should have default implementation");
 
             Console.WriteLine("✓ Registration method signature correct with default implementation");
 
-            return Task.FromResult(new TestResult(true, "Registration method signature verified"));
+            return new TestResult(true, "Registration method signature verified");
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new TestResult(false, $"Test failed with exception: {ex.Message}"));
+            return new TestResult(false, $"Test failed with exception: {ex.Message}");
         }
     }
 
     /// <summary>
     /// Tests ServiceRegistrationEvent serialization for RabbitMQ compatibility.
     /// </summary>
-    private static Task<TestResult> TestEventSerialization(ITestClient testClient, string[] args)
+    private static async Task<TestResult> TestEventSerialization(ITestClient testClient, string[] args)
     {
+        await Task.CompletedTask;
         try
         {
             Console.WriteLine("Testing event serialization...");
@@ -195,28 +199,28 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
             // Test JSON serialization
             var json = BannouJson.Serialize(testEvent);
             if (string.IsNullOrEmpty(json))
-                return Task.FromResult(new TestResult(false, "ServiceRegistrationEvent serialization failed"));
+                return new TestResult(false, "ServiceRegistrationEvent serialization failed");
 
             Console.WriteLine("✓ ServiceRegistrationEvent serializes to JSON");
 
             // Test JSON deserialization
             var deserializedEvent = BannouJson.Deserialize<ServiceRegistrationEvent>(json);
             if (deserializedEvent == null)
-                return Task.FromResult(new TestResult(false, "ServiceRegistrationEvent deserialization failed"));
+                return new TestResult(false, "ServiceRegistrationEvent deserialization failed");
 
             if (deserializedEvent.ServiceId != testEvent.ServiceId)
-                return Task.FromResult(new TestResult(false, "ServiceId mismatch after deserialization"));
+                return new TestResult(false, "ServiceId mismatch after deserialization");
 
             if (deserializedEvent.Endpoints?.Count != 1)
-                return Task.FromResult(new TestResult(false, "Endpoints count mismatch after deserialization"));
+                return new TestResult(false, "Endpoints count mismatch after deserialization");
 
             Console.WriteLine("✓ ServiceRegistrationEvent deserializes correctly");
 
-            return Task.FromResult(new TestResult(true, "Event serialization verified"));
+            return new TestResult(true, "Event serialization verified");
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new TestResult(false, $"Test failed with exception: {ex.Message}"));
+            return new TestResult(false, $"Test failed with exception: {ex.Message}");
         }
     }
 }

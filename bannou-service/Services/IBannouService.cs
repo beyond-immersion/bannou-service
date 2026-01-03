@@ -85,10 +85,10 @@ public interface IBannouService
     /// <param name="topic">The event topic (e.g., "account.deleted")</param>
     /// <param name="eventData">The event data payload</param>
     /// <returns>Task representing the event handling operation</returns>
-    virtual Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
+    virtual async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
     {
+        await Task.CompletedTask;
         // Default empty implementation
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -353,13 +353,13 @@ public interface IBannouService
     /// Override this method if the service has custom permission registration logic.
     /// </summary>
     /// <returns>Task representing the registration operation</returns>
-    virtual Task RegisterServicePermissionsAsync()
+    virtual async Task RegisterServicePermissionsAsync()
     {
+        await Task.CompletedTask;
         // Default implementation does nothing - method will be overridden
         // by generated code when x-permissions sections are found in schema
         var serviceName = GetName() ?? GetType().Name;
         Program.Logger?.Log(LogLevel.Debug, null, "Service {ServiceName} has no permission registration (no x-permissions in schema)", serviceName);
-        return Task.CompletedTask;
     }
 
     /// <summary>

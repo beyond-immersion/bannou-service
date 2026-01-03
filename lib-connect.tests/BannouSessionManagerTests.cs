@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -86,49 +87,10 @@ public class BannouSessionManagerTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var manager = new BannouSessionManager(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object);
-
-        // Assert
-        Assert.NotNull(manager);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new BannouSessionManager(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object));
-        Assert.Equal("stateStoreFactory", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new BannouSessionManager(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockLogger.Object));
-        Assert.Equal("messageBus", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new BannouSessionManager(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!));
-        Assert.Equal("logger", ex.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<BannouSessionManager>();
+        Assert.NotNull(_sessionManager);
     }
 
     #endregion

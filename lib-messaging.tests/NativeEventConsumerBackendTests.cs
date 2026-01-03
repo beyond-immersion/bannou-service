@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -43,61 +44,10 @@ public class NativeEventConsumerBackendTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var backend = CreateBackend();
-
-        // Assert
-        Assert.NotNull(backend);
-    }
-
-    [Fact]
-    public void Constructor_WithNullSubscriber_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            null!,
-            _mockEventConsumer.Object,
-            _mockServiceProvider.Object,
-            _mockLogger.Object));
-        Assert.Equal("subscriber", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            _mockSubscriber.Object,
-            null!,
-            _mockServiceProvider.Object,
-            _mockLogger.Object));
-        Assert.Equal("eventConsumer", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullServiceProvider_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            _mockSubscriber.Object,
-            _mockEventConsumer.Object,
-            null!,
-            _mockLogger.Object));
-        Assert.Equal("serviceProvider", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            _mockSubscriber.Object,
-            _mockEventConsumer.Object,
-            _mockServiceProvider.Object,
-            null!));
-        Assert.Equal("logger", ex.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<NativeEventConsumerBackend>();
+        Assert.NotNull(CreateBackend());
     }
 
     #endregion

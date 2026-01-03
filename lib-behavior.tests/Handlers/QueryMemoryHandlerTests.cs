@@ -7,6 +7,7 @@ using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.TestUtilities;
 using Moq;
 using Xunit;
 
@@ -29,9 +30,10 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_NullMemoryStore_ThrowsArgumentNullException()
+    public void ConstructorIsValid()
     {
-        Assert.Throws<ArgumentNullException>(() => new QueryMemoryHandler(null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<QueryMemoryHandler>();
+        Assert.NotNull(_handler);
     }
 
     #endregion

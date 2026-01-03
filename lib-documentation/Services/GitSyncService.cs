@@ -40,7 +40,7 @@ public class GitSyncService : IGitSyncService
         ArgumentException.ThrowIfNullOrWhiteSpace(branch);
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
 
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             try
             {
@@ -100,7 +100,7 @@ public class GitSyncService : IGitSyncService
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(toCommit);
 
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             var changes = new List<GitFileChange>();
 
@@ -184,7 +184,7 @@ public class GitSyncService : IGitSyncService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
 
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             var matcher = new Matcher();
 
@@ -305,7 +305,7 @@ public class GitSyncService : IGitSyncService
             return;
         }
 
-        await Task.Run(() =>
+        await Task.Run(async () =>
         {
             try
             {

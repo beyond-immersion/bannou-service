@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.State.Tests;
 
@@ -38,31 +39,10 @@ public class InMemoryStateStoreTests : IDisposable
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var store = new InMemoryStateStore<TestEntity>("test", _mockLogger.Object);
-
-        // Assert
-        Assert.NotNull(store);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStoreName_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() =>
-            new InMemoryStateStore<TestEntity>(null!, _mockLogger.Object));
-        Assert.Equal("storeName", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() =>
-            new InMemoryStateStore<TestEntity>("test", null!));
-        Assert.Equal("logger", ex.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<InMemoryStateStore<TestEntity>>();
+        Assert.NotNull(_store);
     }
 
     #endregion

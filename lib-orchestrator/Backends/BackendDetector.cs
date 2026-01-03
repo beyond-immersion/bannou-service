@@ -118,8 +118,9 @@ public class BackendDetector : IBackendDetector
         return CreateOrchestrator(detection.Recommended);
     }
 
-    private Task<BackendInfo> DetectKubernetesAsync(CancellationToken cancellationToken)
+    private async Task<BackendInfo> DetectKubernetesAsync(CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         var info = new BackendInfo
         {
             Type = BackendType.Kubernetes,
@@ -138,7 +139,7 @@ public class BackendDetector : IBackendDetector
                 _logger.LogDebug("Kubernetes in-cluster credentials found");
                 info.Available = true;
                 info.Endpoint = "in-cluster";
-                return Task.FromResult(info);
+                return info;
             }
 
             // Check for kubeconfig file
@@ -150,7 +151,7 @@ public class BackendDetector : IBackendDetector
                 _logger.LogDebug("Kubernetes kubeconfig found at {Path}", kubeconfigPath);
                 info.Available = true;
                 info.Endpoint = kubeconfigPath;
-                return Task.FromResult(info);
+                return info;
             }
 
             info.Error = "No Kubernetes credentials found";
@@ -161,7 +162,7 @@ public class BackendDetector : IBackendDetector
             info.Error = $"Detection error: {ex.Message}";
         }
 
-        return Task.FromResult(info);
+        return info;
     }
 
     private async Task<BackendInfo> DetectPortainerAsync(CancellationToken cancellationToken)

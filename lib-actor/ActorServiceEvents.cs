@@ -134,8 +134,9 @@ public partial class ActorService
     /// When a session disconnects, stop any actors associated with that session.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
+    public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
+        await Task.CompletedTask;
         _logger.LogInformation(
             "Received session.disconnected event for session {SessionId}",
             evt.SessionId);
@@ -146,8 +147,6 @@ public partial class ActorService
 
         // For NPC brain actors, they continue running even when players disconnect.
         // For session-bound actors (future), we would stop them here.
-
-        return Task.CompletedTask;
     }
 
     #region Pool Node Event Handlers

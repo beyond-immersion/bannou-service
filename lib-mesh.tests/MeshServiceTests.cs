@@ -945,33 +945,10 @@ public class MeshInvocationClientTests : IDisposable
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Act & Assert
-        var client = CreateClient();
-        Assert.NotNull(client);
-    }
-
-    [Fact]
-    public void Constructor_WithNullRedisManager_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
-            null!,
-            _mockLogger.Object));
-
-        Assert.Equal("redisManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
-            _mockRedisManager.Object,
-            null!));
-
-        Assert.Equal("logger", exception.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<MeshInvocationClient>();
+        Assert.NotNull(CreateClient());
     }
 
     #endregion

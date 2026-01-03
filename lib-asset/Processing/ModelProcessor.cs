@@ -66,10 +66,11 @@ public sealed class ModelProcessor : IAssetProcessor
     }
 
     /// <inheritdoc />
-    public Task<AssetValidationResult> ValidateAsync(
+    public async Task<AssetValidationResult> ValidateAsync(
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var warnings = new List<string>();
 
         // Check if content type or extension is supported
@@ -78,18 +79,18 @@ public sealed class ModelProcessor : IAssetProcessor
 
         if (!isValidContentType && !isValidExtension)
         {
-            return Task.FromResult(AssetValidationResult.Invalid(
+            return AssetValidationResult.Invalid(
                 $"Unsupported model format: {context.ContentType} ({context.Filename})",
-                "UNSUPPORTED_FORMAT"));
+                "UNSUPPORTED_FORMAT");
         }
 
         // Check file size limits
         var maxSizeBytes = _configuration.MaxUploadSizeMb * 1024L * 1024L;
         if (context.SizeBytes > maxSizeBytes)
         {
-            return Task.FromResult(AssetValidationResult.Invalid(
+            return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                "FILE_TOO_LARGE"));
+                "FILE_TOO_LARGE");
         }
 
         // Check for potentially problematic scenarios
@@ -103,9 +104,9 @@ public sealed class ModelProcessor : IAssetProcessor
         {
             if (!isValidExtension)
             {
-                return Task.FromResult(AssetValidationResult.Invalid(
+                return AssetValidationResult.Invalid(
                     "Binary file requires a supported model extension (.gltf, .glb, .obj, .fbx)",
-                    "MISSING_EXTENSION"));
+                    "MISSING_EXTENSION");
             }
             warnings.Add("Content type detected from extension rather than MIME type");
         }
@@ -115,7 +116,7 @@ public sealed class ModelProcessor : IAssetProcessor
             context.AssetId,
             warnings.Count);
 
-        return Task.FromResult(AssetValidationResult.Valid(warnings.Count > 0 ? warnings : null));
+        return AssetValidationResult.Valid(warnings.Count > 0 ? warnings : null);
     }
 
     /// <inheritdoc />

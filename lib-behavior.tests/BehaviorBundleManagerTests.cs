@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -53,43 +54,10 @@ public class BehaviorBundleManagerTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var manager = CreateManager();
-
-        // Assert
-        Assert.NotNull(manager);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new BehaviorBundleManager(
-            null!,
-            _mockAssetClient.Object,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullAssetClient_ShouldThrow()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new BehaviorBundleManager(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new BehaviorBundleManager(
-            _mockStateStoreFactory.Object,
-            _mockAssetClient.Object,
-            null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<BehaviorBundleManager>();
+        Assert.NotNull(CreateManager());
     }
 
     #endregion

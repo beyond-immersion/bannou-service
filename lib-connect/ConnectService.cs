@@ -1686,8 +1686,9 @@ public partial class ConnectService : IConnectService
     /// Note: Capability updates are handled via ConnectEventsController which subscribes
     /// to permissions.capabilities-updated topic via subscriptions.yaml.
     /// </summary>
-    public Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
+    public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
         // Register auth event handler (subscribes via MassTransit, not mesh Topics)
@@ -1711,7 +1712,6 @@ public partial class ConnectService : IConnectService
         // Client event subscriptions are created dynamically per-session via lib-messaging
         // using SubscribeDynamicRawAsync when sessions connect
         _logger.LogInformation("Client event subscriptions will be created per-session via lib-messaging");
-        return Task.CompletedTask;
     }
 
     #endregion
