@@ -72,6 +72,143 @@ public partial class PoolNodeHeartbeatEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published when a pool node starts and registers with the control plane.
+/// <br/>Control plane uses this to add the node to the available pool.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PoolNodeRegisteredEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for pool node registration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.pool-node.registered";
+
+    /// <summary>
+    /// Unique identifier for this pool node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NodeId { get; set; } = default!;
+
+    /// <summary>
+    /// Mesh app-id for direct routing to this node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AppId { get; set; } = default!;
+
+    /// <summary>
+    /// Pool type (shared, npc-brain, event-coordinator, or custom category)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PoolType { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum number of actors this node can run
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("capacity")]
+    public int Capacity { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a pool node begins graceful shutdown.
+/// <br/>Control plane stops routing new actors to this node.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PoolNodeDrainingEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for pool node draining
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.pool-node.draining";
+
+    /// <summary>
+    /// Unique identifier of the draining pool node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NodeId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of actors still running on this node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("remainingActors")]
+    public int RemainingActors { get; set; } = default!;
+
+    /// <summary>
+    /// Estimated time to complete draining
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("estimatedDrainTimeSeconds")]
+    public int? EstimatedDrainTimeSeconds { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published by control plane when a pool node is detected as unhealthy.
+/// <br/>Triggers actor reassignment and alerts.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PoolNodeUnhealthyEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for unhealthy pool node detection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.pool-node.unhealthy";
+
+    /// <summary>
+    /// Unique identifier of the unhealthy pool node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NodeId { get; set; } = default!;
+
+    /// <summary>
+    /// Mesh app-id of the unhealthy node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    public string? AppId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason the node was marked unhealthy
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp of last successful heartbeat
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lastHeartbeat")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset LastHeartbeat { get; set; } = default!;
+
+    /// <summary>
+    /// Number of actors that were on the failed node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorCount")]
+    public int? ActorCount { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published when an actor's status changes.
 /// <br/>Used to keep control plane registry in sync with pool node state.
 /// <br/>

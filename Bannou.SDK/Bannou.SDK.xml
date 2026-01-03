@@ -2796,6 +2796,102 @@
             Map of actorId to status for sync verification
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PoolNodeRegisteredEvent">
+            <summary>
+            Published when a pool node starts and registers with the control plane.
+            <br/>Control plane uses this to add the node to the available pool.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeRegisteredEvent.EventName">
+            <summary>
+            Event type identifier for pool node registration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeRegisteredEvent.NodeId">
+            <summary>
+            Unique identifier for this pool node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeRegisteredEvent.AppId">
+            <summary>
+            Mesh app-id for direct routing to this node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeRegisteredEvent.PoolType">
+            <summary>
+            Pool type (shared, npc-brain, event-coordinator, or custom category)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeRegisteredEvent.Capacity">
+            <summary>
+            Maximum number of actors this node can run
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PoolNodeDrainingEvent">
+            <summary>
+            Published when a pool node begins graceful shutdown.
+            <br/>Control plane stops routing new actors to this node.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeDrainingEvent.EventName">
+            <summary>
+            Event type identifier for pool node draining
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeDrainingEvent.NodeId">
+            <summary>
+            Unique identifier of the draining pool node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeDrainingEvent.RemainingActors">
+            <summary>
+            Number of actors still running on this node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeDrainingEvent.EstimatedDrainTimeSeconds">
+            <summary>
+            Estimated time to complete draining
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PoolNodeUnhealthyEvent">
+            <summary>
+            Published by control plane when a pool node is detected as unhealthy.
+            <br/>Triggers actor reassignment and alerts.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeUnhealthyEvent.EventName">
+            <summary>
+            Event type identifier for unhealthy pool node detection
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeUnhealthyEvent.NodeId">
+            <summary>
+            Unique identifier of the unhealthy pool node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeUnhealthyEvent.AppId">
+            <summary>
+            Mesh app-id of the unhealthy node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeUnhealthyEvent.Reason">
+            <summary>
+            Reason the node was marked unhealthy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeUnhealthyEvent.LastHeartbeat">
+            <summary>
+            Timestamp of last successful heartbeat
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PoolNodeUnhealthyEvent.ActorCount">
+            <summary>
+            Number of actors that were on the failed node
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ActorStatusChangedEvent">
             <summary>
             Published when an actor's status changes.

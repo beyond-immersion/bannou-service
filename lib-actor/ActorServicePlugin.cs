@@ -1,11 +1,14 @@
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Execution;
+using BeyondImmersion.BannouService.Actor.Pool;
+using BeyondImmersion.BannouService.Actor.PoolNode;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor;
@@ -28,6 +31,16 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Conditional Registration:</b>
+    /// <list type="bullet">
+    /// <item>Pool node mode (ACTOR_POOL_NODE_ID set): Registers ActorPoolNodeWorker, HeartbeatEmitter</item>
+    /// <item>Control plane mode (non-bannou without pool node): Registers ActorPoolManager, PoolHealthMonitor</item>
+    /// <item>Bannou mode: No pool infrastructure, actors run locally</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");
@@ -53,6 +66,36 @@ public class ActorServicePlugin : BaseBannouPlugin
         // Register actor runtime components as singletons (shared across service instances)
         services.AddSingleton<IActorRegistry, ActorRegistry>();
         services.AddSingleton<IActorRunnerFactory, ActorRunnerFactory>();
+
+        // Determine deployment mode from environment
+        var poolNodeId = Environment.GetEnvironmentVariable("ACTOR_POOL_NODE_ID");
+        var deploymentMode = Environment.GetEnvironmentVariable("ACTOR_DEPLOYMENT_MODE") ?? "bannou";
+
+        if (!string.IsNullOrEmpty(poolNodeId))
+        {
+            // Running as pool node - register pool node worker components
+            Logger?.LogInformation(
+                "Configuring actor service as pool node (NodeId: {NodeId})",
+                poolNodeId);
+
+            services.AddSingleton<HeartbeatEmitter>();
+            services.AddSingleton<ActorPoolNodeWorker>();
+            services.AddHostedService(sp => sp.GetRequiredService<ActorPoolNodeWorker>());
+        }
+        else if (deploymentMode != "bannou")
+        {
+            // Running as control plane with pool support - register pool manager
+            Logger?.LogInformation(
+                "Configuring actor service as control plane with pool support (mode: {Mode})",
+                deploymentMode);
+
+            services.AddSingleton<IActorPoolManager, ActorPoolManager>();
+            services.AddHostedService<PoolHealthMonitor>();
+        }
+        else
+        {
+            Logger?.LogInformation("Configuring actor service in bannou mode (local actors)");
+        }
 
         Logger?.LogDebug("Service dependencies configured");
     }

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,27 @@ public partial class ActorService
         eventConsumer.RegisterHandler<IActorService, SessionDisconnectedEvent>(
             "session.disconnected",
             async (svc, evt) => await ((ActorService)svc).HandleSessionDisconnectedAsync(evt));
+
+        // Pool node events (control plane only - when _poolManager is available)
+        eventConsumer.RegisterHandler<IActorService, PoolNodeRegisteredEvent>(
+            "actor.pool-node.registered",
+            async (svc, evt) => await ((ActorService)svc).HandlePoolNodeRegisteredAsync(evt));
+
+        eventConsumer.RegisterHandler<IActorService, PoolNodeHeartbeatEvent>(
+            "actor.pool-node.heartbeat",
+            async (svc, evt) => await ((ActorService)svc).HandlePoolNodeHeartbeatAsync(evt));
+
+        eventConsumer.RegisterHandler<IActorService, PoolNodeDrainingEvent>(
+            "actor.pool-node.draining",
+            async (svc, evt) => await ((ActorService)svc).HandlePoolNodeDrainingAsync(evt));
+
+        eventConsumer.RegisterHandler<IActorService, ActorStatusChangedEvent>(
+            "actor.instance.status-changed",
+            async (svc, evt) => await ((ActorService)svc).HandleActorStatusChangedAsync(evt));
+
+        eventConsumer.RegisterHandler<IActorService, ActorCompletedEvent>(
+            "actor.instance.completed",
+            async (svc, evt) => await ((ActorService)svc).HandleActorCompletedAsync(evt));
     }
 
     /// <summary>
@@ -120,4 +142,151 @@ public partial class ActorService
 
         return Task.CompletedTask;
     }
+
+    #region Pool Node Event Handlers
+
+    /// <summary>
+    /// Handles pool node registration events.
+    /// Called when a pool node starts and registers with the control plane.
+    /// </summary>
+    /// <param name="evt">The registration event.</param>
+    public async Task HandlePoolNodeRegisteredAsync(PoolNodeRegisteredEvent evt)
+    {
+        if (_poolManager == null)
+        {
+            _logger.LogDebug("Ignoring pool-node.registered event (not in control plane mode)");
+            return;
+        }
+
+        _logger.LogInformation(
+            "Pool node registered: NodeId={NodeId}, AppId={AppId}, PoolType={PoolType}, Capacity={Capacity}",
+            evt.NodeId, evt.AppId, evt.PoolType, evt.Capacity);
+
+        try
+        {
+            var success = await _poolManager.RegisterNodeAsync(evt, CancellationToken.None);
+            if (!success)
+            {
+                _logger.LogWarning("Pool node {NodeId} already registered (duplicate registration)", evt.NodeId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error registering pool node {NodeId}", evt.NodeId);
+        }
+    }
+
+    /// <summary>
+    /// Handles pool node heartbeat events.
+    /// Called periodically by pool nodes to indicate they are healthy.
+    /// </summary>
+    /// <param name="evt">The heartbeat event.</param>
+    public async Task HandlePoolNodeHeartbeatAsync(PoolNodeHeartbeatEvent evt)
+    {
+        if (_poolManager == null)
+        {
+            _logger.LogDebug("Ignoring pool-node.heartbeat event (not in control plane mode)");
+            return;
+        }
+
+        _logger.LogDebug(
+            "Pool node heartbeat: NodeId={NodeId}, CurrentLoad={Load}",
+            evt.NodeId, evt.CurrentLoad);
+
+        try
+        {
+            await _poolManager.UpdateNodeHeartbeatAsync(evt, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating heartbeat for pool node {NodeId}", evt.NodeId);
+        }
+    }
+
+    /// <summary>
+    /// Handles pool node draining events.
+    /// Called when a pool node is shutting down and draining its actors.
+    /// </summary>
+    /// <param name="evt">The draining event.</param>
+    public async Task HandlePoolNodeDrainingAsync(PoolNodeDrainingEvent evt)
+    {
+        if (_poolManager == null)
+        {
+            _logger.LogDebug("Ignoring pool-node.draining event (not in control plane mode)");
+            return;
+        }
+
+        _logger.LogInformation(
+            "Pool node draining: NodeId={NodeId}, RemainingActors={Count}",
+            evt.NodeId, evt.RemainingActors);
+
+        try
+        {
+            await _poolManager.DrainNodeAsync(evt.NodeId, evt.RemainingActors, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking pool node {NodeId} as draining", evt.NodeId);
+        }
+    }
+
+    /// <summary>
+    /// Handles actor status changed events.
+    /// Called when an actor's status changes (running, paused, error, etc.).
+    /// </summary>
+    /// <param name="evt">The status changed event.</param>
+    public async Task HandleActorStatusChangedAsync(ActorStatusChangedEvent evt)
+    {
+        if (_poolManager == null)
+        {
+            _logger.LogDebug("Ignoring actor.instance.status-changed event (not in control plane mode)");
+            return;
+        }
+
+        _logger.LogDebug(
+            "Actor status changed: ActorId={ActorId}, {OldStatus} -> {NewStatus}",
+            evt.ActorId, evt.PreviousStatus, evt.NewStatus);
+
+        try
+        {
+            await _poolManager.UpdateActorStatusAsync(evt.ActorId, evt.NewStatus, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating status for actor {ActorId}", evt.ActorId);
+        }
+    }
+
+    /// <summary>
+    /// Handles actor completed events.
+    /// Called when an actor finishes execution (behavior complete, error, stopped).
+    /// </summary>
+    /// <param name="evt">The completed event.</param>
+    public async Task HandleActorCompletedAsync(ActorCompletedEvent evt)
+    {
+        if (_poolManager == null)
+        {
+            _logger.LogDebug("Ignoring actor.instance.completed event (not in control plane mode)");
+            return;
+        }
+
+        _logger.LogInformation(
+            "Actor completed: ActorId={ActorId}, ExitReason={Reason}, Iterations={Iterations}",
+            evt.ActorId, evt.ExitReason, evt.LoopIterations);
+
+        try
+        {
+            var removed = await _poolManager.RemoveActorAssignmentAsync(evt.ActorId, CancellationToken.None);
+            if (!removed)
+            {
+                _logger.LogDebug("No assignment found for completed actor {ActorId}", evt.ActorId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing assignment for completed actor {ActorId}", evt.ActorId);
+        }
+    }
+
+    #endregion
 }

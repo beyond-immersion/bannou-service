@@ -19,7 +19,38 @@ x-service-configuration:
       default: "bannou"
       description: "Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale"
 
-    # === Pool Node Management ===
+    # === Pool Node Identity (set when running as pool node) ===
+    PoolNodeId:
+      type: string
+      env: ACTOR_POOL_NODE_ID
+      default: ""
+      description: If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
+
+    PoolNodeAppId:
+      type: string
+      env: ACTOR_POOL_NODE_APP_ID
+      default: ""
+      description: Mesh app-id for routing commands to this pool node. Required when PoolNodeId is set.
+
+    PoolNodeType:
+      type: string
+      env: ACTOR_POOL_NODE_TYPE
+      default: "shared"
+      description: "Pool type this node belongs to: shared, npc-brain, event-coordinator, or custom category"
+
+    PoolNodeCapacity:
+      type: integer
+      env: ACTOR_POOL_NODE_CAPACITY
+      default: 100
+      description: Maximum actors this pool node can run. Overrides DefaultActorsPerNode when set.
+
+    ControlPlaneAppId:
+      type: string
+      env: ACTOR_CONTROL_PLANE_APP_ID
+      default: "bannou"
+      description: App-id of control plane for pool node registration. Pool nodes only.
+
+    # === Pool Node Management (control plane settings) ===
     PoolNodeImage:
       type: string
       env: ACTOR_POOL_NODE_IMAGE

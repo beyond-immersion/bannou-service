@@ -1,0 +1,79 @@
+# Actor Pool Preset
+# Defines pool node configuration for distributed actor execution
+# Supports shared-pool (all categories) and pool-per-type modes
+
+name: actor-pools
+description: Actor pool configuration for distributed behavior execution
+category: processing
+
+processing_pools:
+  - pool_type: actor-shared
+    plugin: actor
+    min_instances: 1
+    max_instances: 10
+    scale_up_threshold: 0.8
+    scale_down_threshold: 0.2
+    idle_timeout_minutes: 5
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: shared
+      ACTOR_POOL_NODE_CAPACITY: "50"
+      ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
+      ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
+
+  - pool_type: actor-npc-brain
+    plugin: actor
+    min_instances: 1
+    max_instances: 20
+    scale_up_threshold: 0.7
+    scale_down_threshold: 0.3
+    idle_timeout_minutes: 10
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: npc-brain
+      ACTOR_POOL_NODE_CAPACITY: "100"
+      ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
+      ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
+
+  - pool_type: actor-event-coordinator
+    plugin: actor
+    min_instances: 1
+    max_instances: 5
+    scale_up_threshold: 0.75
+    scale_down_threshold: 0.25
+    idle_timeout_minutes: 15
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: event-coordinator
+      ACTOR_POOL_NODE_CAPACITY: "20"
+      ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
+      ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
+
+topology:
+  nodes:
+    - name: bannou-actor-control
+      services:
+        - actor
+        - behavior
+        - asset
+      replicas: 1
+      environment:
+        ASPNETCORE_ENVIRONMENT: Production
+        ACTOR_DEPLOYMENT_MODE: shared-pool
+
+  infrastructure:
+    redis:
+      enabled: true
+      version: "7"
+    rabbitmq:
+      enabled: true
+      version: "4"
+
+environment:
+  APP_LOGGING_LEVEL: Information
+  ACTOR_CONTROL_PLANE_APP_ID: bannou
+
+requiredBackends:
+  - docker-compose
+  - docker-swarm
+  - kubernetes

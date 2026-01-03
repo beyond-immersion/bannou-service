@@ -1,8 +1,8 @@
 # Actor Plugin V3 - Distributed Behavior Execution
 
-> **Status**: PLANNING
+> **Status**: IN PROGRESS (Phase 1-2 complete, Phase 3 starting)
 > **Created**: 2026-01-01
-> **Updated**: 2026-01-02 (ConnectionMode implementation complete - internal/relayed/external modes with broadcast)
+> **Updated**: 2026-01-02 (Phase 1-2 behavior execution integration complete)
 > **Related Documents**:
 > - [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior compilation and GOAP planning
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Bytecode compilation and client execution
@@ -2344,25 +2344,36 @@ public enum BroadcastScope : byte
 - [ ] Remove `bannou-service/Abml/Bytecode/BehaviorOpcode.cs` (use lib-behavior)
 - [ ] Update any server-side bytecode references
 
-### Phase 1: Core Infrastructure
-- [ ] Create `schemas/actor-api.yaml`
-- [ ] Create `schemas/actor-events.yaml`
-- [ ] Create `schemas/actor-configuration.yaml` (including DeploymentMode)
-- [ ] Generate service code (`scripts/generate-service.sh actor`)
-- [ ] Implement ActorService (control plane)
-- [ ] Implement actor template CRUD
-- [ ] Implement actor spawn/stop/list
-- [ ] Implement "bannou" deployment mode (actors on control plane)
+### Phase 1: Core Infrastructure ✅ COMPLETE
+- [x] Create `schemas/actor-api.yaml`
+- [x] Create `schemas/actor-events.yaml`
+- [x] Create `schemas/actor-configuration.yaml` (including DeploymentMode)
+- [x] Generate service code (`scripts/generate-service.sh actor`)
+- [x] Implement ActorService (control plane)
+- [x] Implement actor template CRUD
+- [x] Implement actor spawn/stop/list
+- [x] Implement "bannou" deployment mode (actors on control plane)
 
-### Phase 2: ActorRunner & State Update Transport
-- [ ] Implement ActorRunner (behavior loop using tree-walking for cognition)
-- [ ] Implement perception queue (FIFO, bounded)
-- [ ] Implement message queue
-- [ ] Implement periodic state save
-- [ ] Add characterId binding for NPC brain actors
-- [ ] Implement state update emission (lib-messaging transport)
-- [ ] Create `bannou-service/Events/ActorStateUpdate.cs` (transport-agnostic schema)
-- [ ] Test "bannou" mode end-to-end
+### Phase 2: ActorRunner & State Update Transport ✅ COMPLETE
+- [x] Implement ActorRunner (behavior loop using tree-walking for cognition)
+- [x] Implement perception queue (FIFO, bounded)
+- [x] Implement message queue
+- [x] Implement periodic state save
+- [x] Add characterId binding for NPC brain actors
+- [x] Implement state update emission (lib-messaging transport)
+- [x] Create `bannou-service/Events/ActorStateUpdate.cs` (transport-agnostic schema)
+- [x] Test "bannou" mode end-to-end (124 unit tests passing)
+
+**Implementation Notes (Phase 1-2):**
+- `lib-actor/Runtime/ActorRunner.cs` - Behavior execution loop with perception queue, state persistence
+- `lib-actor/Runtime/ActorRunnerFactory.cs` - Factory with DI for all dependencies
+- `lib-actor/Caching/BehaviorDocumentCache.cs` - Caches parsed ABML from lib-asset
+- `lib-actor/Caching/IBehaviorDocumentCache.cs` - Cache interface
+- `lib-actor/Execution/DocumentExecutorFactory.cs` - Creates IDocumentExecutor with cognition handlers
+- `lib-actor/Execution/IDocumentExecutorFactory.cs` - Factory interface
+- `lib-state/StateServicePlugin.cs` - Added "actor-state" store mapping
+- `lib-actor/ActorServicePlugin.cs` - Registered all cognition handlers and factories
+- `lib-actor/ActorServiceEvents.cs` - Added behavior.updated cache invalidation
 
 **Phase 2b: Internal Connect Transport (Production Scale)**
 - [x] Verify/complete Connect neighbor routing (see §9.4.4 prerequisites)

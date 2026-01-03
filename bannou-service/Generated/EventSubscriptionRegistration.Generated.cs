@@ -25,6 +25,11 @@ public static class EventSubscriptionRegistration
         // From actor-events.yaml
         EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+        EventSubscriptionRegistry.Register<PoolNodeRegisteredEvent>("actor.pool-node.registered");
+        EventSubscriptionRegistry.Register<PoolNodeHeartbeatEvent>("actor.pool-node.heartbeat");
+        EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");
+        EventSubscriptionRegistry.Register<ActorStatusChangedEvent>("actor.instance.status-changed");
+        EventSubscriptionRegistry.Register<ActorCompletedEvent>("actor.instance.completed");
 
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");

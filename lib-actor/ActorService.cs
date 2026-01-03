@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -42,6 +43,7 @@ public partial class ActorService : IActorService
     private readonly IActorRunnerFactory _actorRunnerFactory;
     private readonly IEventConsumer _eventConsumer;
     private readonly IBehaviorDocumentCache _behaviorCache;
+    private readonly IActorPoolManager? _poolManager;
 
     private const string TEMPLATE_STORE = "actor-templates";
     private const string INSTANCE_STORE = "actor-instances";
@@ -58,6 +60,7 @@ public partial class ActorService : IActorService
     /// <param name="actorRunnerFactory">Factory for creating actor runners.</param>
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
     /// <param name="behaviorCache">Behavior document cache for hot-reload invalidation.</param>
+    /// <param name="poolManager">Pool manager for distributed actor routing (null in bannou mode).</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -66,7 +69,8 @@ public partial class ActorService : IActorService
         IActorRegistry actorRegistry,
         IActorRunnerFactory actorRunnerFactory,
         IEventConsumer eventConsumer,
-        IBehaviorDocumentCache behaviorCache)
+        IBehaviorDocumentCache behaviorCache,
+        IActorPoolManager? poolManager = null)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
@@ -76,6 +80,7 @@ public partial class ActorService : IActorService
         _actorRunnerFactory = actorRunnerFactory ?? throw new ArgumentNullException(nameof(actorRunnerFactory));
         _eventConsumer = eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer));
         _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
+        _poolManager = poolManager; // Optional - only used in pool modes
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);
@@ -494,33 +499,98 @@ public partial class ActorService : IActorService
                 ? body.ActorId
                 : $"{template.Category}-{Guid.NewGuid():N}";
 
-            // Check for duplicate
-            if (_actorRegistry.TryGet(actorId, out _))
+            // Check for duplicate (local registry - only in bannou mode)
+            if (_configuration.DeploymentMode == "bannou" && _actorRegistry.TryGet(actorId, out _))
             {
                 _logger.LogWarning("Actor {ActorId} already exists", actorId);
                 return (StatusCodes.Conflict, null);
             }
 
-            // Create actor runner
-            var runner = _actorRunnerFactory.Create(
-                actorId,
-                template,
-                body.CharacterId,
-                body.ConfigurationOverrides,
-                body.InitialState);
-
-            // Register in registry
-            if (!_actorRegistry.TryRegister(actorId, runner))
+            // Check pool assignment for non-bannou modes
+            if (_configuration.DeploymentMode != "bannou" && _poolManager != null)
             {
-                _logger.LogWarning("Failed to register actor {ActorId}", actorId);
-                await runner.DisposeAsync();
-                return (StatusCodes.Conflict, null);
+                var existingAssignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
+                if (existingAssignment != null)
+                {
+                    _logger.LogWarning("Actor {ActorId} already assigned to node {NodeId}", actorId, existingAssignment.NodeId);
+                    return (StatusCodes.Conflict, null);
+                }
             }
 
-            // Start the actor (in bannou mode, this runs locally)
+            string nodeId;
+            string nodeAppId;
+            DateTimeOffset startedAt = DateTimeOffset.UtcNow;
+
             if (_configuration.DeploymentMode == "bannou")
             {
+                // Bannou mode: run locally
+                var runner = _actorRunnerFactory.Create(
+                    actorId,
+                    template,
+                    body.CharacterId,
+                    body.ConfigurationOverrides,
+                    body.InitialState);
+
+                if (!_actorRegistry.TryRegister(actorId, runner))
+                {
+                    _logger.LogWarning("Failed to register actor {ActorId}", actorId);
+                    await runner.DisposeAsync();
+                    return (StatusCodes.Conflict, null);
+                }
+
                 await runner.StartAsync(cancellationToken);
+                nodeId = "bannou-local";
+                nodeAppId = "bannou";
+                startedAt = runner.StartedAt;
+            }
+            else
+            {
+                // Pool mode: route to pool node
+                if (_poolManager == null)
+                {
+                    _logger.LogError("Pool manager not available for deployment mode {Mode}", _configuration.DeploymentMode);
+                    return (StatusCodes.InternalServerError, null);
+                }
+
+                // Acquire a pool node with capacity
+                var poolNode = await _poolManager.AcquireNodeForActorAsync(template.Category, 1, cancellationToken);
+                if (poolNode == null)
+                {
+                    _logger.LogWarning("No pool nodes with capacity available for category {Category}", template.Category);
+                    return (StatusCodes.TooManyRequests, null);
+                }
+
+                // Record the assignment
+                var assignment = new ActorAssignment
+                {
+                    ActorId = actorId,
+                    NodeId = poolNode.NodeId,
+                    NodeAppId = poolNode.AppId,
+                    TemplateId = body.TemplateId.ToString(),
+                    Status = "pending",
+                    CharacterId = body.CharacterId
+                };
+                await _poolManager.RecordActorAssignmentAsync(assignment, cancellationToken);
+
+                // Send spawn command to pool node
+                var spawnCommand = new SpawnActorCommand
+                {
+                    ActorId = actorId,
+                    TemplateId = body.TemplateId,
+                    BehaviorRef = template.BehaviorRef,
+                    Configuration = template.Configuration,
+                    InitialState = body.InitialState,
+                    TickIntervalMs = template.TickIntervalMs > 0 ? template.TickIntervalMs : _configuration.DefaultTickIntervalMs,
+                    AutoSaveIntervalSeconds = template.AutoSaveIntervalSeconds > 0 ? template.AutoSaveIntervalSeconds : _configuration.DefaultAutoSaveIntervalSeconds,
+                    CharacterId = body.CharacterId
+                };
+                await _messageBus.TryPublishAsync($"actor.node.{poolNode.AppId}.spawn", spawnCommand, cancellationToken: cancellationToken);
+
+                nodeId = poolNode.NodeId;
+                nodeAppId = poolNode.AppId;
+
+                _logger.LogInformation("Routed actor {ActorId} to pool node {NodeId} (appId: {AppId})",
+                    actorId, poolNode.NodeId, poolNode.AppId);
             }
 
             // Publish spawned event
@@ -531,18 +601,25 @@ public partial class ActorService : IActorService
                 ActorId = actorId,
                 TemplateId = body.TemplateId,
                 CharacterId = body.CharacterId ?? Guid.Empty,
-                NodeId = _configuration.DeploymentMode == "bannou" ? "bannou-local" : string.Empty,
-                Status = runner.Status.ToString().ToLowerInvariant(),
-                StartedAt = runner.StartedAt
+                NodeId = nodeId,
+                Status = _configuration.DeploymentMode == "bannou" ? "running" : "pending",
+                StartedAt = startedAt
             };
             await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Spawned actor {ActorId} from template {TemplateId}",
                 actorId, body.TemplateId);
 
-            return (StatusCodes.Created, runner.GetStateSnapshot().ToResponse(
-                nodeId: _configuration.DeploymentMode == "bannou" ? "bannou-local" : null,
-                nodeAppId: _configuration.DeploymentMode == "bannou" ? "bannou" : null));
+            return (StatusCodes.Created, new ActorInstanceResponse
+            {
+                ActorId = actorId,
+                TemplateId = body.TemplateId,
+                CharacterId = body.CharacterId,
+                NodeId = nodeId,
+                NodeAppId = nodeAppId,
+                Status = _configuration.DeploymentMode == "bannou" ? ActorStatus.Running : ActorStatus.Pending,
+                StartedAt = startedAt
+            });
         }
         catch (Exception ex)
         {
@@ -603,38 +680,79 @@ public partial class ActorService : IActorService
 
         try
         {
-            if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
+            if (_configuration.DeploymentMode == "bannou")
             {
-                return (StatusCodes.NotFound, null);
+                // Bannou mode: stop locally
+                if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+
+                await runner.StopAsync(body.Graceful, cancellationToken);
+                _actorRegistry.TryRemove(body.ActorId, out _);
+
+                // Publish stopped event
+                var evt = new ActorInstanceDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ActorId = body.ActorId,
+                    TemplateId = runner.TemplateId,
+                    CharacterId = runner.CharacterId ?? Guid.Empty,
+                    NodeId = "bannou-local",
+                    Status = runner.Status.ToString().ToLowerInvariant(),
+                    StartedAt = runner.StartedAt,
+                    DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
+                };
+                await _messageBus.TryPublishAsync("actor-instance.deleted", evt, cancellationToken: cancellationToken);
+
+                await runner.DisposeAsync();
+
+                _logger.LogInformation("Stopped actor {ActorId}", body.ActorId);
+
+                return (StatusCodes.OK, new StopActorResponse
+                {
+                    Stopped = true,
+                    FinalStatus = runner.Status
+                });
             }
-
-            await runner.StopAsync(body.Graceful, cancellationToken);
-            _actorRegistry.TryRemove(body.ActorId, out _);
-
-            // Publish stopped event
-            var evt = new ActorInstanceDeletedEvent
+            else
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ActorId = body.ActorId,
-                TemplateId = runner.TemplateId,
-                CharacterId = runner.CharacterId ?? Guid.Empty,
-                NodeId = _configuration.DeploymentMode == "bannou" ? "bannou-local" : string.Empty,
-                Status = runner.Status.ToString().ToLowerInvariant(),
-                StartedAt = runner.StartedAt,
-                DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
-            };
-            await _messageBus.TryPublishAsync("actor-instance.deleted", evt, cancellationToken: cancellationToken);
+                // Pool mode: send stop command to pool node
+                if (_poolManager == null)
+                {
+                    _logger.LogError("Pool manager not available for deployment mode {Mode}", _configuration.DeploymentMode);
+                    return (StatusCodes.InternalServerError, null);
+                }
 
-            await runner.DisposeAsync();
+                // Get assignment to find the node
+                var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
+                if (assignment == null)
+                {
+                    _logger.LogWarning("Actor {ActorId} not found in pool assignments", body.ActorId);
+                    return (StatusCodes.NotFound, null);
+                }
 
-            _logger.LogInformation("Stopped actor {ActorId}", body.ActorId);
+                // Send stop command to pool node
+                var stopCommand = new StopActorCommand
+                {
+                    ActorId = body.ActorId,
+                    Graceful = body.Graceful
+                };
+                await _messageBus.TryPublishAsync($"actor.node.{assignment.NodeAppId}.stop", stopCommand, cancellationToken: cancellationToken);
 
-            return (StatusCodes.OK, new StopActorResponse
-            {
-                Stopped = true,
-                FinalStatus = runner.Status
-            });
+                // Remove assignment (the pool node will publish ActorCompletedEvent)
+                await _poolManager.RemoveActorAssignmentAsync(body.ActorId, cancellationToken);
+
+                _logger.LogInformation("Sent stop command for actor {ActorId} to node {NodeId}",
+                    body.ActorId, assignment.NodeId);
+
+                return (StatusCodes.OK, new StopActorResponse
+                {
+                    Stopped = true,
+                    FinalStatus = ActorStatus.Stopping
+                });
+            }
         }
         catch (Exception ex)
         {

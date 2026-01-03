@@ -54,6 +54,36 @@ public class ActorServiceConfiguration : IServiceConfiguration
     public string DeploymentMode { get; set; } = "bannou";
 
     /// <summary>
+    /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
+    /// Environment variable: ACTOR_POOL_NODE_ID
+    /// </summary>
+    public string PoolNodeId { get; set; } = "";
+
+    /// <summary>
+    /// Mesh app-id for routing commands to this pool node. Required when PoolNodeId is set.
+    /// Environment variable: ACTOR_POOL_NODE_APP_ID
+    /// </summary>
+    public string PoolNodeAppId { get; set; } = "";
+
+    /// <summary>
+    /// Pool type this node belongs to: shared, npc-brain, event-coordinator, or custom category
+    /// Environment variable: ACTOR_POOL_NODE_TYPE
+    /// </summary>
+    public string PoolNodeType { get; set; } = "shared";
+
+    /// <summary>
+    /// Maximum actors this pool node can run. Overrides DefaultActorsPerNode when set.
+    /// Environment variable: ACTOR_POOL_NODE_CAPACITY
+    /// </summary>
+    public int PoolNodeCapacity { get; set; } = 100;
+
+    /// <summary>
+    /// App-id of control plane for pool node registration. Pool nodes only.
+    /// Environment variable: ACTOR_CONTROL_PLANE_APP_ID
+    /// </summary>
+    public string ControlPlaneAppId { get; set; } = "bannou";
+
+    /// <summary>
     /// Docker image for pool nodes (pool-per-type, shared-pool, auto-scale modes)
     /// Environment variable: ACTOR_POOL_NODE_IMAGE
     /// </summary>

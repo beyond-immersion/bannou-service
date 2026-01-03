@@ -103,6 +103,9 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["agent-memories"] = (StateBackend.Redis, "agent:mem", false),
             ["actor-state"] = (StateBackend.Redis, "actor:state", false),
             ["actor-templates"] = (StateBackend.Redis, "actor:tpl", false),
+            ["actor-instances"] = (StateBackend.Redis, "actor:inst", false),
+            ["actor-pool-nodes"] = (StateBackend.Redis, "actor:pool", false),
+            ["actor-assignments"] = (StateBackend.Redis, "actor:assign", false),
 
             // Redis store for documentation (uses internal indexes via DocumentationService, not State API)
             ["documentation-statestore"] = (StateBackend.Redis, "doc", false),

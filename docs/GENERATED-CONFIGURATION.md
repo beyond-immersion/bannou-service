@@ -18,6 +18,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ACTOR_CONTROL_PLANE_APP_ID` | string | `bannou` | App-id of control plane for pool node registration. Pool nod... |
 | `ACTOR_DEFAULT_ACTORS_PER_NODE` | int | `100` | Default capacity per pool node |
 | `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | int | `60` | Default interval for periodic state saves (0 to disable) |
 | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
@@ -31,7 +32,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_MESSAGE_QUEUE_SIZE` | int | `50` | Max messages queued per actor before dropping oldest |
 | `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
+| `ACTOR_POOL_NODE_APP_ID` | string | `` | Mesh app-id for routing commands to this pool node. Required... |
+| `ACTOR_POOL_NODE_CAPACITY` | int | `100` | Maximum actors this pool node can run. Overrides DefaultActo... |
+| `ACTOR_POOL_NODE_ID` | string | `` | If set, this instance runs as a pool node (not control plane... |
 | `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
+| `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
 | `ACTOR_STATE_UPDATE_TRANSPORT` | string | `messaging` | State update transport: messaging (default, works in bannou ... |
 
 ### Asset
@@ -319,9 +324,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 195
+- **Total properties**: 200
 - **Required (no default)**: 34
-- **Optional (has default)**: 161
+- **Optional (has default)**: 166
 
 ## Environment Variable Naming Convention
 

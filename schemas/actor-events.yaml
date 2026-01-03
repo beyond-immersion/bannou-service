@@ -13,6 +13,21 @@ info:
     - topic: session.disconnected
       event: SessionDisconnectedEvent
       handler: HandleSessionDisconnected
+    - topic: actor.pool-node.registered
+      event: PoolNodeRegisteredEvent
+      handler: HandlePoolNodeRegistered
+    - topic: actor.pool-node.heartbeat
+      event: PoolNodeHeartbeatEvent
+      handler: HandlePoolNodeHeartbeat
+    - topic: actor.pool-node.draining
+      event: PoolNodeDrainingEvent
+      handler: HandlePoolNodeDraining
+    - topic: actor.instance.status-changed
+      event: ActorStatusChangedEvent
+      handler: HandleActorStatusChanged
+    - topic: actor.instance.completed
+      event: ActorCompletedEvent
+      handler: HandleActorCompleted
 
 servers: []
 
@@ -115,6 +130,100 @@ components:
             type: string
           nullable: true
           description: Map of actorId to status for sync verification
+
+    PoolNodeRegisteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a pool node starts and registers with the control plane.
+        Control plane uses this to add the node to the available pool.
+      required:
+        - nodeId
+        - appId
+        - poolType
+        - capacity
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.registered"
+          description: Event type identifier for pool node registration
+        nodeId:
+          type: string
+          description: Unique identifier for this pool node
+        appId:
+          type: string
+          description: Mesh app-id for direct routing to this node
+        poolType:
+          type: string
+          description: Pool type (shared, npc-brain, event-coordinator, or custom category)
+        capacity:
+          type: integer
+          description: Maximum number of actors this node can run
+
+    PoolNodeDrainingEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a pool node begins graceful shutdown.
+        Control plane stops routing new actors to this node.
+      required:
+        - nodeId
+        - remainingActors
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.draining"
+          description: Event type identifier for pool node draining
+        nodeId:
+          type: string
+          description: Unique identifier of the draining pool node
+        remainingActors:
+          type: integer
+          description: Number of actors still running on this node
+        estimatedDrainTimeSeconds:
+          type: integer
+          nullable: true
+          description: Estimated time to complete draining
+
+    PoolNodeUnhealthyEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published by control plane when a pool node is detected as unhealthy.
+        Triggers actor reassignment and alerts.
+      required:
+        - nodeId
+        - reason
+        - lastHeartbeat
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.unhealthy"
+          description: Event type identifier for unhealthy pool node detection
+        nodeId:
+          type: string
+          description: Unique identifier of the unhealthy pool node
+        appId:
+          type: string
+          nullable: true
+          description: Mesh app-id of the unhealthy node
+        reason:
+          type: string
+          description: Reason the node was marked unhealthy
+        lastHeartbeat:
+          type: string
+          format: date-time
+          description: Timestamp of last successful heartbeat
+        actorCount:
+          type: integer
+          nullable: true
+          description: Number of actors that were on the failed node
 
     ActorStatusChangedEvent:
       allOf:
