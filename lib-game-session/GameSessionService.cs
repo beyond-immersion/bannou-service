@@ -1245,6 +1245,40 @@ public partial class GameSessionService : IGameSessionService
     }
 
     /// <summary>
+    /// Syncs subscription caches for all tracked accounts.
+    /// Called periodically by SessionCacheSyncService to ensure consistency across instances.
+    /// </summary>
+    /// <returns>Number of accounts whose subscriptions were synced.</returns>
+    internal async Task<int> SyncSubscriptionCachesAsync(CancellationToken cancellationToken)
+    {
+        // Get all account IDs currently in the subscription cache
+        var accountIds = _accountSubscriptions.Keys.ToList();
+        var syncedCount = 0;
+
+        foreach (var accountId in accountIds)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
+            try
+            {
+                // Re-fetch subscriptions from authoritative source
+                await FetchAndCacheSubscriptionsAsync(accountId);
+                syncedCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to sync subscriptions for account {AccountId}", accountId);
+            }
+
+            // Small delay between accounts to avoid overwhelming the subscriptions service
+            await Task.Delay(10, cancellationToken);
+        }
+
+        return syncedCount;
+    }
+
+    /// <summary>
     /// Publishes a join shortcut for a session to access a game lobby.
     /// </summary>
     private async Task PublishJoinShortcutAsync(string sessionId, Guid accountId, string stubName)

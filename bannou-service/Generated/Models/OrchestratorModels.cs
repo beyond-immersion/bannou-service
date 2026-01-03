@@ -93,7 +93,7 @@ public partial class ServiceRoutingResponse
     [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultAppId { get; set; } = "bannou";
+    public string DefaultAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// When this routing information was generated

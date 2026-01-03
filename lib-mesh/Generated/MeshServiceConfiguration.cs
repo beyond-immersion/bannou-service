@@ -129,7 +129,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Default app-id when no service mapping exists (omnipotent routing)
     /// Environment variable: MESH_DEFAULT_APP_ID
     /// </summary>
-    public string DefaultAppId { get; set; } = "bannou";
+    public string DefaultAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// Whether to subscribe to FullServiceMappingsEvent for routing updates

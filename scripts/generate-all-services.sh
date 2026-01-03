@@ -252,6 +252,34 @@ else
 fi
 echo ""
 
+# Post-process generated files to replace hardcoded "bannou" app-id defaults with AppConstants.DEFAULT_APP_NAME
+# Per CLAUDE.md: We shouldn't have hardcoded "bannou" values - use the constant for consistency.
+# This replaces specific property defaults that represent the app-id, NOT product names like "bannou-dlx".
+echo -e "${BLUE}🔧 Post-processing: Replacing hardcoded app-id defaults with AppConstants.DEFAULT_APP_NAME...${NC}"
+
+APPID_REPLACED_COUNT=0
+
+# Properties that represent the default app-id and should use the constant
+APPID_PROPERTIES=("DefaultAppId" "DefaultExchange" "DeploymentMode" "ControlPlaneAppId" "Exchange")
+
+for file in "${GENERATED_FILES[@]}"; do
+    for prop in "${APPID_PROPERTIES[@]}"; do
+        # Pattern: public string PropName { get; set; } = "bannou";
+        # Replace with: public string PropName { get; set; } = AppConstants.DEFAULT_APP_NAME;
+        if grep -q "public string ${prop} { get; set; } = \"bannou\";" "$file" 2>/dev/null; then
+            sed -i "s/public string ${prop} { get; set; } = \"bannou\";/public string ${prop} { get; set; } = AppConstants.DEFAULT_APP_NAME;/" "$file"
+            APPID_REPLACED_COUNT=$((APPID_REPLACED_COUNT + 1))
+        fi
+    done
+done
+
+if [ $APPID_REPLACED_COUNT -gt 0 ]; then
+    echo -e "${GREEN}✅ Replaced app-id defaults in $APPID_REPLACED_COUNT locations${NC}"
+else
+    echo -e "${YELLOW}ℹ️  No app-id defaults found to replace${NC}"
+fi
+echo ""
+
 # Print summary
 echo -e "${BLUE}📊 Generation Summary:${NC}"
 echo "=========================="

@@ -76,12 +76,14 @@ paths:
         \       },\n        \"gameSettings\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
         \          \"description\": \"Game-specific configuration settings\"\n        }\n      }\n    },\n    \"GamePlayer\"\
         : {\n      \"description\": \"Information about a player currently participating in a game session\",\n      \"type\"\
-        : \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"accountId\",\n        \"joinedAt\"\
-        ,\n        \"role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n\
-        \          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the player's account\"\n    \
-        \    },\n        \"displayName\": {\n          \"type\": \"string\",\n          \"description\": \"Display name shown
-        to other players\"\n        },\n        \"role\": {\n          \"type\": \"string\",\n          \"enum\": [\n    \
-        \        \"player\",\n            \"spectator\",\n            \"moderator\"\n          ],\n          \"description\"\
+        : \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"accountId\",\n        \"sessionId\"\
+        ,\n        \"joinedAt\",\n        \"role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n        \
+        \  \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the
+        player's account\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"WebSocket session ID that joined the game. Chat and events are delivered to this specific session only.\"\n  \
+        \      },\n        \"displayName\": {\n          \"type\": \"string\",\n          \"description\": \"Display name
+        shown to other players\"\n        },\n        \"role\": {\n          \"type\": \"string\",\n          \"enum\": [\n\
+        \            \"player\",\n            \"spectator\",\n            \"moderator\"\n          ],\n          \"description\"\
         : \"Role of the player in the game session\"\n        },\n        \"joinedAt\": {\n          \"type\": \"string\"\
         ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the player joined the session\"\
         \n        },\n        \"characterData\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
@@ -158,9 +160,11 @@ paths:
         : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Game-specific
         configuration settings\"\n        }\n      }\n    },\n    \"GamePlayer\": {\n      \"description\": \"Information
         about a player currently participating in a game session\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"required\": [\n        \"accountId\",\n        \"joinedAt\",\n        \"role\"\n      ],\n     \
-        \ \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Unique identifier for the player's account\"\n        },\n        \"displayName\": {\n\
+        : false,\n      \"required\": [\n        \"accountId\",\n        \"sessionId\",\n        \"joinedAt\",\n        \"\
+        role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"\
+        format\": \"uuid\",\n          \"description\": \"Unique identifier for the player's account\"\n        },\n     \
+        \   \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"WebSocket session ID that joined
+        the game. Chat and events are delivered to this specific session only.\"\n        },\n        \"displayName\": {\n\
         \          \"type\": \"string\",\n          \"description\": \"Display name shown to other players\"\n        },\n\
         \        \"role\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"player\",\n          \
         \  \"spectator\",\n            \"moderator\"\n          ],\n          \"description\": \"Role of the player in the
@@ -229,9 +233,11 @@ paths:
         : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Game-specific
         configuration settings\"\n        }\n      }\n    },\n    \"GamePlayer\": {\n      \"description\": \"Information
         about a player currently participating in a game session\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"required\": [\n        \"accountId\",\n        \"joinedAt\",\n        \"role\"\n      ],\n     \
-        \ \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
-        \          \"description\": \"Unique identifier for the player's account\"\n        },\n        \"displayName\": {\n\
+        : false,\n      \"required\": [\n        \"accountId\",\n        \"sessionId\",\n        \"joinedAt\",\n        \"\
+        role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"\
+        format\": \"uuid\",\n          \"description\": \"Unique identifier for the player's account\"\n        },\n     \
+        \   \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"WebSocket session ID that joined
+        the game. Chat and events are delivered to this specific session only.\"\n        },\n        \"displayName\": {\n\
         \          \"type\": \"string\",\n          \"description\": \"Display name shown to other players\"\n        },\n\
         \        \"role\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"player\",\n          \
         \  \"spectator\",\n            \"moderator\"\n          ],\n          \"description\": \"Role of the player in the
@@ -709,6 +715,7 @@ components:
       additionalProperties: false
       required:
       - accountId
+      - sessionId
       - joinedAt
       - role
       properties:
@@ -716,6 +723,10 @@ components:
           type: string
           format: uuid
           description: Unique identifier for the player's account
+        sessionId:
+          type: string
+          description: WebSocket session ID that joined the game. Chat and events are delivered to this specific session
+            only.
         displayName:
           type: string
           description: Display name shown to other players

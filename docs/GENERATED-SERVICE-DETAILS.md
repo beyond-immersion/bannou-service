@@ -15,7 +15,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 6 | Character management service for Arcadia game world. |
-| [Connect](#connect) | 2.0.0 | 4 | Real-time communication and WebSocket connection management ... |
+| [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Documentation](#documentation) | 1.0.0 | 26 | Knowledge base API for AI agents to query documentation.
 Des... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
@@ -266,6 +266,12 @@ Real-time communication and WebSocket connection management for Bannou services.
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/internal/proxy` | Internal API proxy for stateless requests | authenticated |
+
+### Session Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/connect/get-account-sessions` | Get all active WebSocket sessions for an account | admin |
 
 ### WebSocket Connection
 
@@ -786,7 +792,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 23
-- **Total endpoints**: 239
+- **Total endpoints**: 240
 
 ---
 

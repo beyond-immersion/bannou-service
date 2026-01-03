@@ -67,7 +67,7 @@ public partial class PublishOptions
     /// Exchange name for routing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchange")]
-    public string Exchange { get; set; } = "bannou";
+    public string Exchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)

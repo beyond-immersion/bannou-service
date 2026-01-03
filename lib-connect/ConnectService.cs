@@ -408,6 +408,41 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
+    /// Gets all active WebSocket session IDs for an account.
+    /// Internal endpoint for service-to-service session discovery.
+    /// </summary>
+    public async Task<(StatusCodes, GetAccountSessionsResponse?)> GetAccountSessionsAsync(
+        GetAccountSessionsRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("GetAccountSessionsAsync called for account {AccountId}", body.AccountId);
+
+            var sessions = await _sessionManager.GetSessionsForAccountAsync(body.AccountId);
+
+            var response = new GetAccountSessionsResponse
+            {
+                AccountId = body.AccountId,
+                SessionIds = sessions.ToList(),
+                Count = sessions.Count,
+                RetrievedAt = DateTimeOffset.UtcNow
+            };
+
+            _logger.LogInformation("Returning {Count} sessions for account {AccountId}",
+                sessions.Count, body.AccountId);
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving sessions for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync("GetAccountSessions", ex.GetType().Name, ex.Message, details: new { AccountId = body.AccountId });
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
     /// Validates JWT token and extracts session ID and user roles.
     /// Returns a tuple with session ID, roles, and whether this is a reconnection for capability initialization.
     /// </summary>

@@ -566,7 +566,7 @@ public partial class GetMappingsResponse
     /// Default app-id when no mapping exists
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
-    public string DefaultAppId { get; set; } = "bannou";
+    public string DefaultAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// Mapping version for change detection

@@ -178,6 +178,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
 | `MESH_ENABLE_DETAILED_LOGGING` | bool | `false` | Whether to log detailed routing decisions |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
+| `MESH_ENDPOINT_HOST` | string | **REQUIRED** | Hostname/IP for mesh endpoint registration. Defaults to app-... |
+| `MESH_ENDPOINT_PORT` | int | `80` | Port for mesh endpoint registration. |
 | `MESH_ENDPOINT_TTL_SECONDS` | int | `90` | TTL for endpoint registration (should be > 2x heartbeat inte... |
 | `MESH_HEALTH_CHECK_ENABLED` | bool | `false` | Whether to perform active health checks on endpoints |
 | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | int | `60` | Interval between active health checks |
@@ -326,9 +328,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 202
-- **Required (no default)**: 34
-- **Optional (has default)**: 168
+- **Total properties**: 204
+- **Required (no default)**: 35
+- **Optional (has default)**: 169
 
 ## Environment Variable Naming Convention
 

@@ -16,5 +16,9 @@ public class GameSessionServicePlugin : StandardServicePlugin<IGameSessionServic
         // Add IHttpContextAccessor so GameSessionService can read the X-Bannou-Session-Id header
         // This header is set by Connect service when routing WebSocket requests
         services.AddHttpContextAccessor();
+
+        // Register background service for periodic cache synchronization
+        // This ensures session/subscription caches stay in sync across instances
+        services.AddHostedService<SessionCacheSyncService>();
     }
 }
