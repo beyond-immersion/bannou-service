@@ -99,6 +99,9 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["orchestrator-routings"] = (StateBackend.Redis, "orch:rt", false),
             ["orchestrator-config"] = (StateBackend.Redis, "orch:cfg", false),
 
+            // Messaging stores (external subscription recovery)
+            ["messaging-external-subs"] = (StateBackend.Redis, "msg:subs", false),
+
             // Actor/Behavior stores (agent cognition data)
             ["agent-memories"] = (StateBackend.Redis, "agent:mem", false),
             ["actor-state"] = (StateBackend.Redis, "actor:state", false),

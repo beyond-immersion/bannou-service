@@ -755,4 +755,78 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     }
 
     #endregion
+
+    // ==================== Set Operations (Not Supported) ====================
+    // MySQL backend does not support set operations. Use Redis or InMemory for sets.
+
+    /// <inheritdoc/>
+    public Task<bool> AddToSetAsync<TItem>(
+        string key,
+        TItem item,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
+
+    /// <inheritdoc/>
+    public Task<long> AddToSetAsync<TItem>(
+        string key,
+        IEnumerable<TItem> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> RemoveFromSetAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> SetContainsAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
+
+    /// <inheritdoc/>
+    public Task<long> SetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> DeleteSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> RefreshSetTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+    }
 }

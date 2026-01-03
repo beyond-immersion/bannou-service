@@ -73,6 +73,11 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         services.AddHostedService<NativeEventConsumerBackend>();
         Logger?.LogInformation("Registered NativeEventConsumerBackend - messaging is required infrastructure");
 
+        // Register subscription recovery service
+        // Recovers external HTTP callback subscriptions from lib-state on startup
+        services.AddHostedService<MessagingSubscriptionRecoveryService>();
+        Logger?.LogDebug("Registered MessagingSubscriptionRecoveryService for external subscription recovery");
+
         Logger?.LogDebug("Messaging service dependencies configured");
     }
 }

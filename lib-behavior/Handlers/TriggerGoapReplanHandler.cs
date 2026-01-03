@@ -51,17 +51,7 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
     /// Creates a new trigger GOAP replan handler.
     /// </summary>
     /// <param name="planner">GOAP planner for creating plans.</param>
-    /// <param name="logger">Logger instance.</param>
-    public TriggerGoapReplanHandler(IGoapPlanner planner, ILogger<TriggerGoapReplanHandler> logger)
-        : this(planner, null, logger)
-    {
-    }
-
-    /// <summary>
-    /// Creates a new trigger GOAP replan handler with bundle manager.
-    /// </summary>
-    /// <param name="planner">GOAP planner for creating plans.</param>
-    /// <param name="bundleManager">Bundle manager for loading GOAP metadata.</param>
+    /// <param name="bundleManager">Bundle manager for loading GOAP metadata (optional).</param>
     /// <param name="logger">Logger instance.</param>
     public TriggerGoapReplanHandler(
         IGoapPlanner planner,

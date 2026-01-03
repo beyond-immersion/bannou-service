@@ -45,6 +45,24 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ViewDocumentBySlugAsync(string slug, string ns, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Get raw markdown content
+    /// </summary>
+
+    /// <remarks>
+    /// Browser-facing endpoint for retrieving raw markdown content.
+    /// <br/>Routed via NGINX, not exposed to WebSocket clients.
+    /// <br/>Returns raw markdown with text/markdown content type.
+    /// </remarks>
+
+    /// <param name="slug">Document slug within namespace</param>
+
+    /// <param name="ns">Documentation namespace (defaults to bannou)</param>
+
+    /// <returns>Raw markdown content</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<string>> RawDocumentBySlugAsync(string slug, string ns, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Natural language documentation search
     /// </summary>
 
@@ -411,6 +429,9 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     }
 
     // Endpoint ViewDocumentBySlug requires manual implementation in partial class.
+    // See x-manual-implementation: true in the OpenAPI schema.
+
+    // Endpoint RawDocumentBySlug requires manual implementation in partial class.
     // See x-manual-implementation: true in the OpenAPI schema.
 
     /// <summary>
@@ -889,6 +910,70 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             _ViewDocumentBySlug_Info,
             _ViewDocumentBySlug_RequestSchema,
             _ViewDocumentBySlug_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RawDocumentBySlug
+
+    private static readonly string _RawDocumentBySlug_RequestSchema = """
+{}
+""";
+
+    private static readonly string _RawDocumentBySlug_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _RawDocumentBySlug_Info = """
+{
+  "summary": "Get raw markdown content",
+  "description": "Browser-facing endpoint for retrieving raw markdown content.\nRouted via NGINX, not exposed to WebSocket clients.\nReturns raw markdown with text/markdown content type.\n",
+  "tags": [
+    "Browser"
+  ],
+  "deprecated": false,
+  "operationId": "rawDocumentBySlug"
+}
+""";
+
+    /// <summary>Returns endpoint information for RawDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/raw/{slug}/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RawDocumentBySlug_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Get",
+            "documentation/raw/{slug}",
+            _RawDocumentBySlug_Info));
+
+    /// <summary>Returns request schema for RawDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/raw/{slug}/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RawDocumentBySlug_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Get",
+            "documentation/raw/{slug}",
+            "request-schema",
+            _RawDocumentBySlug_RequestSchema));
+
+    /// <summary>Returns response schema for RawDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/raw/{slug}/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RawDocumentBySlug_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Get",
+            "documentation/raw/{slug}",
+            "response-schema",
+            _RawDocumentBySlug_ResponseSchema));
+
+    /// <summary>Returns full schema for RawDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/raw/{slug}/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RawDocumentBySlug_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Get",
+            "documentation/raw/{slug}",
+            _RawDocumentBySlug_Info,
+            _RawDocumentBySlug_RequestSchema,
+            _RawDocumentBySlug_ResponseSchema));
 
     #endregion
 

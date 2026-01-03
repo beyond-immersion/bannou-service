@@ -78,12 +78,14 @@ This document catalogs patterns found through comprehensive codebase searches. I
 ```
 **Issue**: GetBundle endpoint returns not implemented. Phase 5 timing unclear.
 
-### 2.5 Markdown Rendering Not Implemented (YELLOW)
-**File**: `lib-documentation/DocumentationService.cs:1645`
-```
-// TODO: Implement proper markdown rendering (e.g., with Markdig)
-```
-**Issue**: Documentation HTML rendering returns raw markdown.
+### 2.5 Markdown Rendering Not Implemented (GREEN - RESOLVED)
+**File**: `lib-documentation/DocumentationService.cs`
+**Status**: ✅ Fixed - Proper markdown rendering implemented with Markdig library:
+- `/documentation/view/{slug}` returns fully rendered HTML page (`text/html`)
+- `/documentation/raw/{slug}` returns raw markdown content (`text/markdown`)
+- Both endpoints use `x-manual-implementation` in schema for manual controller implementation
+- Controller uses `[Produces]` attributes to declare content types
+- Added Markdig NuGet package with `UseAdvancedExtensions()` pipeline
 
 ---
 
@@ -206,13 +208,13 @@ The current memory store implementation uses **keyword-based relevance matching*
 ```
 **Issue**: Documented MVP limitation. Likely intentional for now.
 
-### 7.3 Dynamic HTTP Subscriptions Lost on Restart (GREEN?)
-**File**: `lib-messaging/MessagingService.cs:30-36`
-```
-/// WARNING: In-memory storage - subscriptions will be lost on service restart.
-/// This is a known limitation for dynamic HTTP callback subscriptions.
-```
-**Issue**: Documented limitation. May be acceptable for current use cases.
+### 7.3 ~~Dynamic HTTP Subscriptions Lost on Restart~~ (RESOLVED)
+**File**: `lib-messaging/MessagingService.cs`
+**Resolution**: External HTTP callback subscriptions are now persisted to lib-state keyed by app-id.
+- `ExternalSubscriptionData` model stores subscription metadata
+- Subscriptions are recovered automatically on restart via `MessagingSubscriptionRecoveryService`
+- TTL-based cleanup (24 hours) ensures orphaned subscriptions don't accumulate
+- Internal (IMessageBus via DI) subscriptions remain ephemeral by design - plugins re-subscribe on startup
 
 ### 7.4 Context Variables Not Initialized from Imported Documents (GREEN?)
 **File**: `unit-tests/Abml/DocumentLoaderTests.cs:1044`
@@ -249,7 +251,7 @@ These patterns were found but are legitimately intentional:
 | Category | RED (Fix) | YELLOW (Investigate) | GREEN (OK) |
 |----------|-----------|---------------------|------------|
 | Silent Failures | 0 | 0 | 4 |
-| Unimplemented Features | 0 | 4 | 1 |
+| Unimplemented Features | 0 | 3 | 2 |
 | Missing Audit | 0 | 0 | 2 |
 | Tenet Violations | 0 | 0 | 3 |
 | DI Patterns | 0 | 0 | 4 |
@@ -258,7 +260,7 @@ These patterns were found but are legitimately intentional:
 | Verified Intentional | 0 | 0 | 14 |
 | String.Empty Usage | 0 | 326 | 0 |
 | Null-Forgiving Exceptions | 0 | 0 | 4 |
-| **TOTAL** | **0** | **331** | **36** |
+| **TOTAL** | **0** | **330** | **37** |
 
 ---
 

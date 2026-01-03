@@ -16,7 +16,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 6 | Character management service for Arcadia game world. |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
-| [Documentation](#documentation) | 1.0.0 | 26 | Knowledge base API for AI agents to query documentation.
+| [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
@@ -318,6 +318,7 @@ All endpoints return voice-friendly summaries alongside detaile...
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `GET` | `/documentation/raw/{slug}` | Get raw markdown content | authenticated |
 | `GET` | `/documentation/view/{slug}` | View documentation page in browser | authenticated |
 
 ### Documents
@@ -792,7 +793,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 23
-- **Total endpoints**: 240
+- **Total endpoints**: 241
 
 ---
 

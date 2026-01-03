@@ -34,7 +34,21 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     // This allows different typed stores to share the same underlying data
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, StoreEntry>> _allStores = new();
 
+    // Shared set store for set operations
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SetEntry>> _allSetStores = new();
+
+    /// <summary>
+    /// Entry for a set in the in-memory store.
+    /// </summary>
+    private sealed class SetEntry
+    {
+        public HashSet<string> Items { get; } = new();
+        public DateTimeOffset? ExpiresAt { get; set; }
+        public readonly object Lock = new();
+    }
+
     private readonly ConcurrentDictionary<string, StoreEntry> _store;
+    private readonly ConcurrentDictionary<string, SetEntry> _setStore;
 
     /// <summary>
     /// Creates a new in-memory state store.
@@ -50,6 +64,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
 
         // Get or create the store for this name
         _store = _allStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, StoreEntry>());
+        _setStore = _allSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SetEntry>());
 
         _logger.LogDebug("In-memory state store '{StoreName}' initialized", storeName);
     }
@@ -272,6 +287,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     public void Clear()
     {
         _store.Clear();
+        _setStore.Clear();
         _logger.LogDebug("Cleared all entries from store '{Store}'", _storeName);
     }
 
@@ -284,6 +300,277 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         {
             CleanupExpired();
             return _store.Count;
+        }
+    }
+
+    // ==================== Set Operations ====================
+
+    private bool IsSetExpired(SetEntry entry)
+    {
+        return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> AddToSetAsync<TItem>(
+        string key,
+        TItem item,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var json = BannouJson.Serialize(item);
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _setStore.GetOrAdd(key, _ => new SetEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                entry.Items.Clear();
+            }
+
+            var added = entry.Items.Add(json);
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Added item to set '{Key}' in store '{Store}' (new: {IsNew})",
+                key, _storeName, added);
+
+            return added;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> AddToSetAsync<TItem>(
+        string key,
+        IEnumerable<TItem> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(items);
+
+        var itemList = items.ToList();
+        if (itemList.Count == 0)
+        {
+            return 0;
+        }
+
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _setStore.GetOrAdd(key, _ => new SetEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                entry.Items.Clear();
+            }
+
+            var added = 0L;
+            foreach (var item in itemList)
+            {
+                var json = BannouJson.Serialize(item);
+                if (entry.Items.Add(json))
+                {
+                    added++;
+                }
+            }
+
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Added {Count} items to set '{Key}' in store '{Store}' (new: {Added})",
+                itemList.Count, key, _storeName, added);
+
+            return added;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveFromSetAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        var json = BannouJson.Serialize(item);
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return false;
+            }
+
+            var removed = entry.Items.Remove(json);
+
+            _logger.LogDebug("Removed item from set '{Key}' in store '{Store}' (existed: {Existed})",
+                key, _storeName, removed);
+
+            return removed;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            _logger.LogDebug("Set '{Key}' not found in store '{Store}'", key, _storeName);
+            return Array.Empty<TItem>();
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return Array.Empty<TItem>();
+            }
+
+            var result = new List<TItem>(entry.Items.Count);
+            foreach (var json in entry.Items)
+            {
+                var item = BannouJson.Deserialize<TItem>(json);
+                if (item != null)
+                {
+                    result.Add(item);
+                }
+            }
+
+            _logger.LogDebug("Retrieved {Count} items from set '{Key}' in store '{Store}'",
+                result.Count, key, _storeName);
+
+            return result;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> SetContainsAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        var json = BannouJson.Serialize(item);
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return false;
+            }
+
+            return entry.Items.Contains(json);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> SetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return 0;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return 0;
+            }
+
+            return entry.Items.Count;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        var deleted = _setStore.TryRemove(key, out _);
+
+        _logger.LogDebug("Deleted set '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _storeName, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RefreshSetTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return false;
+            }
+
+            entry.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(ttlSeconds);
+
+            _logger.LogDebug("Refreshed TTL on set '{Key}' in store '{Store}' to {Ttl}s",
+                key, _storeName, ttlSeconds);
+
+            return true;
         }
     }
 }

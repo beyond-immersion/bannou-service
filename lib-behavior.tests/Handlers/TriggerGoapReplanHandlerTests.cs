@@ -45,7 +45,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
     {
         _mockPlanner = new Mock<IGoapPlanner>();
         _mockLogger = new Mock<ILogger<TriggerGoapReplanHandler>>();
-        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, _mockLogger.Object);
+        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, null, _mockLogger.Object);
     }
 
     #region Constructor Tests

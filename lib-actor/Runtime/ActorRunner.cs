@@ -93,7 +93,7 @@ public class ActorRunner : IActorRunner
     /// <param name="behaviorCache">Behavior document cache.</param>
     /// <param name="executor">Document executor for behavior execution.</param>
     /// <param name="logger">Logger instance.</param>
-    /// <param name="initialState">Optional initial state.</param>
+    /// <param name="initialState">Initial state snapshot, or null for fresh actor.</param>
     public ActorRunner(
         string actorId,
         ActorTemplateData template,
@@ -104,7 +104,7 @@ public class ActorRunner : IActorRunner
         IBehaviorDocumentCache behaviorCache,
         IDocumentExecutor executor,
         ILogger<ActorRunner> logger,
-        object? initialState = null)
+        object? initialState)
     {
         ActorId = actorId ?? throw new ArgumentNullException(nameof(actorId));
         _template = template ?? throw new ArgumentNullException(nameof(template));

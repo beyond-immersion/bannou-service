@@ -596,4 +596,358 @@ public class InMemoryStateStoreTests : IDisposable
     }
 
     #endregion
+
+    #region Set Operation Tests
+
+    [Fact]
+    public async Task AddToSetAsync_WithSingleItem_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+
+        // Act
+        var result = await _store.AddToSetAsync("test-set", item);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task AddToSetAsync_WithDuplicateItem_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        await _store.AddToSetAsync("test-set", item);
+
+        // Act - Add same item again
+        var result = await _store.AddToSetAsync("test-set", item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task AddToSetAsync_WithMultipleItems_ReturnsCount()
+    {
+        // Arrange
+        var items = new[]
+        {
+            new TestEntity { Id = "1", Name = "Item1", Value = 10 },
+            new TestEntity { Id = "2", Name = "Item2", Value = 20 },
+            new TestEntity { Id = "3", Name = "Item3", Value = 30 }
+        };
+
+        // Act - Use AsEnumerable() to ensure bulk overload is selected
+        var result = await _store.AddToSetAsync("test-set", items.AsEnumerable());
+
+        // Assert
+        Assert.Equal(3, result);
+    }
+
+    [Fact]
+    public async Task AddToSetAsync_WithPartialDuplicates_ReturnsNewItemCount()
+    {
+        // Arrange
+        var item1 = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        await _store.AddToSetAsync("test-set", item1);
+
+        var items = new[]
+        {
+            item1, // Duplicate
+            new TestEntity { Id = "2", Name = "Item2", Value = 20 },
+            new TestEntity { Id = "3", Name = "Item3", Value = 30 }
+        };
+
+        // Act - Use AsEnumerable() to ensure bulk overload is selected
+        var result = await _store.AddToSetAsync("test-set", items.AsEnumerable());
+
+        // Assert
+        Assert.Equal(2, result); // Only 2 new items
+    }
+
+    [Fact]
+    public async Task AddToSetAsync_WithTtl_SetsExpiration()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+
+        // Act
+        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 });
+
+        // Assert - Should exist immediately
+        var countBefore = await _store.SetCountAsync("expiring-set");
+        Assert.Equal(1, countBefore);
+
+        // Wait for expiration
+        await Task.Delay(1100);
+
+        // Should be expired now
+        var countAfter = await _store.SetCountAsync("expiring-set");
+        Assert.Equal(0, countAfter);
+    }
+
+    [Fact]
+    public async Task RemoveFromSetAsync_WithExistingItem_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        await _store.AddToSetAsync("test-set", item);
+
+        // Act
+        var result = await _store.RemoveFromSetAsync("test-set", item);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(0, await _store.SetCountAsync("test-set"));
+    }
+
+    [Fact]
+    public async Task RemoveFromSetAsync_WithNonExistentItem_ReturnsFalse()
+    {
+        // Arrange
+        var item1 = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        var item2 = new TestEntity { Id = "2", Name = "Item2", Value = 20 };
+        await _store.AddToSetAsync("test-set", item1);
+
+        // Act
+        var result = await _store.RemoveFromSetAsync("test-set", item2);
+
+        // Assert
+        Assert.False(result);
+        Assert.Equal(1, await _store.SetCountAsync("test-set"));
+    }
+
+    [Fact]
+    public async Task RemoveFromSetAsync_WithNonExistentSet_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+
+        // Act
+        var result = await _store.RemoveFromSetAsync("nonexistent-set", item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task GetSetAsync_WithExistingSet_ReturnsAllItems()
+    {
+        // Arrange
+        var item1 = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        var item2 = new TestEntity { Id = "2", Name = "Item2", Value = 20 };
+        var item3 = new TestEntity { Id = "3", Name = "Item3", Value = 30 };
+
+        await _store.AddToSetAsync("test-set", new[] { item1, item2, item3 }.AsEnumerable());
+
+        // Act
+        var result = await _store.GetSetAsync<TestEntity>("test-set");
+
+        // Assert
+        Assert.Equal(3, result.Count);
+        Assert.Contains(result, i => i.Id == "1" && i.Name == "Item1");
+        Assert.Contains(result, i => i.Id == "2" && i.Name == "Item2");
+        Assert.Contains(result, i => i.Id == "3" && i.Name == "Item3");
+    }
+
+    [Fact]
+    public async Task GetSetAsync_WithNonExistentSet_ReturnsEmptyList()
+    {
+        // Act
+        var result = await _store.GetSetAsync<TestEntity>("nonexistent-set");
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetSetAsync_WithExpiredSet_ReturnsEmptyList()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 });
+
+        // Wait for expiration
+        await Task.Delay(1100);
+
+        // Act
+        var result = await _store.GetSetAsync<TestEntity>("expiring-set");
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task SetContainsAsync_WithExistingItem_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        await _store.AddToSetAsync("test-set", item);
+
+        // Act
+        var result = await _store.SetContainsAsync("test-set", item);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task SetContainsAsync_WithNonExistentItem_ReturnsFalse()
+    {
+        // Arrange
+        var item1 = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        var item2 = new TestEntity { Id = "2", Name = "Item2", Value = 20 };
+        await _store.AddToSetAsync("test-set", item1);
+
+        // Act
+        var result = await _store.SetContainsAsync("test-set", item2);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task SetContainsAsync_WithNonExistentSet_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+
+        // Act
+        var result = await _store.SetContainsAsync("nonexistent-set", item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task SetCountAsync_WithExistingSet_ReturnsCount()
+    {
+        // Arrange
+        var items = new[]
+        {
+            new TestEntity { Id = "1", Name = "Item1", Value = 10 },
+            new TestEntity { Id = "2", Name = "Item2", Value = 20 },
+            new TestEntity { Id = "3", Name = "Item3", Value = 30 }
+        };
+        await _store.AddToSetAsync("test-set", items.AsEnumerable());
+
+        // Act
+        var result = await _store.SetCountAsync("test-set");
+
+        // Assert
+        Assert.Equal(3, result);
+    }
+
+    [Fact]
+    public async Task SetCountAsync_WithNonExistentSet_ReturnsZero()
+    {
+        // Act
+        var result = await _store.SetCountAsync("nonexistent-set");
+
+        // Assert
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public async Task DeleteSetAsync_WithExistingSet_ReturnsTrueAndRemovesSet()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        await _store.AddToSetAsync("test-set", item);
+
+        // Act
+        var result = await _store.DeleteSetAsync("test-set");
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(0, await _store.SetCountAsync("test-set"));
+    }
+
+    [Fact]
+    public async Task DeleteSetAsync_WithNonExistentSet_ReturnsFalse()
+    {
+        // Act
+        var result = await _store.DeleteSetAsync("nonexistent-set");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task RefreshSetTtlAsync_WithExistingSet_RefreshesTtl()
+    {
+        // Arrange
+        var item = new TestEntity { Id = "1", Name = "Item1", Value = 10 };
+        await _store.AddToSetAsync("test-set", item, new StateOptions { Ttl = 1 });
+
+        // Act - Refresh with longer TTL before expiration
+        await Task.Delay(500);
+        var result = await _store.RefreshSetTtlAsync("test-set", 3);
+
+        // Assert
+        Assert.True(result);
+
+        // Wait past original TTL
+        await Task.Delay(700);
+
+        // Should still exist due to refreshed TTL
+        Assert.Equal(1, await _store.SetCountAsync("test-set"));
+    }
+
+    [Fact]
+    public async Task RefreshSetTtlAsync_WithNonExistentSet_ReturnsFalse()
+    {
+        // Act
+        var result = await _store.RefreshSetTtlAsync("nonexistent-set", 60);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task SetOperations_ConcurrentAccess_ThreadSafe()
+    {
+        // Arrange & Act - Concurrent adds and removes
+        var tasks = Enumerable.Range(1, 50).Select(async i =>
+        {
+            var item = new TestEntity { Id = i.ToString(), Name = $"Item{i}", Value = i };
+            await _store.AddToSetAsync("concurrent-set", item);
+
+            // Immediately remove half of them
+            if (i % 2 == 0)
+            {
+                await _store.RemoveFromSetAsync("concurrent-set", item);
+            }
+        });
+
+        await Task.WhenAll(tasks);
+
+        // Assert - Should have 25 items (odd numbers only)
+        var count = await _store.SetCountAsync("concurrent-set");
+        Assert.Equal(25, count);
+    }
+
+    [Fact]
+    public async Task SetOperations_MultipleStoresWithSameName_ShareSetData()
+    {
+        // Arrange
+        var sharedStoreName = $"shared-set-store-{Guid.NewGuid():N}";
+        var store1 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
+        var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, _mockLogger.Object);
+
+        var item = new TestEntity { Id = "1", Name = "Shared", Value = 42 };
+
+        // Act - Add via store1
+        await store1.AddToSetAsync("shared-set", item);
+
+        // Assert - Retrieve via store2
+        var result = await store2.GetSetAsync<TestEntity>("shared-set");
+        Assert.Single(result);
+        Assert.Equal("Shared", result.First().Name);
+
+        // Cleanup
+        await store1.DeleteSetAsync("shared-set");
+    }
+
+    #endregion
 }

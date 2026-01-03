@@ -11573,6 +11573,21 @@
             <returns>HTML documentation page (returns ContentResult)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.RawDocumentBySlugAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get raw markdown content
+            </summary>
+            <remarks>
+            Browser-facing endpoint for retrieving raw markdown content.
+            <br/>Routed via NGINX, not exposed to WebSocket clients.
+            <br/>Returns raw markdown with text/markdown content type.
+            </remarks>
+            <param name="slug">Document slug within namespace</param>
+            <param name="ns">Documentation namespace (defaults to bannou)</param>
+            <returns>Raw markdown content</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.QueryDocumentationAsync(BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -11972,6 +11987,21 @@
             <param name="slug">Document slug within namespace</param>
             <param name="ns">Documentation namespace (defaults to bannou)</param>
             <returns>HTML documentation page (returns ContentResult)</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.RawDocumentBySlugAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get raw markdown content
+            </summary>
+            <remarks>
+            Browser-facing endpoint for retrieving raw markdown content.
+            <br/>Routed via NGINX, not exposed to WebSocket clients.
+            <br/>Returns raw markdown with text/markdown content type.
+            </remarks>
+            <param name="slug">Document slug within namespace</param>
+            <param name="ns">Documentation namespace (defaults to bannou)</param>
+            <returns>Raw markdown content</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.QueryDocumentationAsync(BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest,System.Threading.CancellationToken)">

@@ -15455,6 +15455,21 @@
             <returns>HTML documentation page (returns ContentResult)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.RawDocumentBySlugAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get raw markdown content
+            </summary>
+            <remarks>
+            Browser-facing endpoint for retrieving raw markdown content.
+            <br/>Routed via NGINX, not exposed to WebSocket clients.
+            <br/>Returns raw markdown with text/markdown content type.
+            </remarks>
+            <param name="slug">Document slug within namespace</param>
+            <param name="ns">Documentation namespace (defaults to bannou)</param>
+            <returns>Raw markdown content</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.QueryDocumentationAsync(BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -15854,6 +15869,21 @@
             <param name="slug">Document slug within namespace</param>
             <param name="ns">Documentation namespace (defaults to bannou)</param>
             <returns>HTML documentation page (returns ContentResult)</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.RawDocumentBySlugAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get raw markdown content
+            </summary>
+            <remarks>
+            Browser-facing endpoint for retrieving raw markdown content.
+            <br/>Routed via NGINX, not exposed to WebSocket clients.
+            <br/>Returns raw markdown with text/markdown content type.
+            </remarks>
+            <param name="slug">Document slug within namespace</param>
+            <param name="ns">Documentation namespace (defaults to bannou)</param>
+            <returns>Raw markdown content</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.QueryDocumentationAsync(BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest,System.Threading.CancellationToken)">
@@ -33273,6 +33303,91 @@
             <param name="keys">The keys to retrieve.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Dictionary of key to value (missing keys are excluded).</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.AddToSetAsync``1(System.String,``0,BeyondImmersion.BannouService.State.StateOptions,System.Threading.CancellationToken)">
+            <summary>
+            Add an item to a set. Creates the set if it doesn't exist.
+            </summary>
+            <typeparam name="TItem">Type of item to add.</typeparam>
+            <param name="key">The set key.</param>
+            <param name="item">The item to add.</param>
+            <param name="options">Optional state options (TTL applies to entire set).</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if item was added, false if already existed.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.AddToSetAsync``1(System.String,System.Collections.Generic.IEnumerable{``0},BeyondImmersion.BannouService.State.StateOptions,System.Threading.CancellationToken)">
+            <summary>
+            Add multiple items to a set. Creates the set if it doesn't exist.
+            </summary>
+            <typeparam name="TItem">Type of items to add.</typeparam>
+            <param name="key">The set key.</param>
+            <param name="items">The items to add.</param>
+            <param name="options">Optional state options (TTL applies to entire set).</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Number of items actually added (excludes duplicates).</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.RemoveFromSetAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Remove an item from a set.
+            </summary>
+            <typeparam name="TItem">Type of item to remove.</typeparam>
+            <param name="key">The set key.</param>
+            <param name="item">The item to remove.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if item was removed, false if not found.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.GetSetAsync``1(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get all items in a set.
+            </summary>
+            <typeparam name="TItem">Type of items in the set.</typeparam>
+            <param name="key">The set key.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>All items in the set, or empty list if set doesn't exist.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.SetContainsAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Check if an item exists in a set.
+            </summary>
+            <typeparam name="TItem">Type of item to check.</typeparam>
+            <param name="key">The set key.</param>
+            <param name="item">The item to check for.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if item exists in set.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.SetCountAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get the number of items in a set.
+            </summary>
+            <param name="key">The set key.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Number of items in the set, or 0 if set doesn't exist.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.DeleteSetAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Delete an entire set.
+            </summary>
+            <param name="key">The set key.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if set existed and was deleted.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.RefreshSetTtlAsync(System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Refresh/extend the TTL on a set without modifying its contents.
+            Useful for keeping a set alive while it's still in use.
+            </summary>
+            <param name="key">The set key.</param>
+            <param name="ttlSeconds">New TTL in seconds.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if set exists and TTL was updated.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown by MySQL backend.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.PagedResult`1">
             <summary>

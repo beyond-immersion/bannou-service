@@ -1,8 +1,10 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -16,25 +18,60 @@ public class MessagingServiceTests
 {
     private readonly Mock<ILogger<MessagingService>> _mockLogger;
     private readonly MessagingServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<ExternalSubscriptionData>> _mockSubscriptionStore;
     private readonly MessagingService _service;
 
     public MessagingServiceTests()
     {
         _mockLogger = new Mock<ILogger<MessagingService>>();
         _configuration = new MessagingServiceConfiguration();
+        _appConfiguration = new AppConfiguration { AppId = "test-app" };
         _mockMessageBus = new Mock<IMessageBus>();
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockSubscriptionStore = new Mock<IStateStore<ExternalSubscriptionData>>();
+
+        // Configure state store factory to return the mock subscription store
+        _mockStateStoreFactory
+            .Setup(x => x.GetStore<ExternalSubscriptionData>(MessagingService.ExternalSubscriptionStoreName))
+            .Returns(_mockSubscriptionStore.Object);
+
+        // Configure default mock behaviors for state store set operations
+        _mockSubscriptionStore
+            .Setup(x => x.AddToSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(),
+                It.IsAny<ExternalSubscriptionData>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockSubscriptionStore
+            .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ExternalSubscriptionData>());
+
+        _mockSubscriptionStore
+            .Setup(x => x.RemoveFromSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(),
+                It.IsAny<ExternalSubscriptionData>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _service = new MessagingService(
             _mockLogger.Object,
             _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object);
+            _mockHttpClientFactory.Object,
+            _mockStateStoreFactory.Object);
     }
 
     #region Constructor Tests

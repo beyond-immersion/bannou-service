@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
+using Markdig;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
@@ -1638,13 +1639,23 @@ public partial class DocumentationService : IDocumentationService
     }
 
     /// <summary>
-    /// Renders markdown content to HTML (placeholder for future implementation).
+    /// Markdig pipeline configured for safe HTML rendering with common extensions.
+    /// </summary>
+    private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .Build();
+
+    /// <summary>
+    /// Renders markdown content to HTML using Markdig.
     /// </summary>
     private static string? RenderMarkdownToHtml(string? markdown)
     {
-        // TODO: Implement proper markdown rendering (e.g., with Markdig)
-        // For now, return as-is
-        return markdown;
+        if (string.IsNullOrEmpty(markdown))
+        {
+            return string.Empty;
+        }
+
+        return Markdown.ToHtml(markdown, MarkdownPipeline);
     }
 
     /// <summary>

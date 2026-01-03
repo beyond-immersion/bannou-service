@@ -53,13 +53,56 @@ paths:
       # NOTE: No x-permissions = browser-facing endpoint (FOUNDATION TENETS)
       x-manual-implementation: true  # Returns HTML, not JSON - excluded from interface generation
 
-  # ===== Query Endpoints (WebSocket accessible) =====
       x-request-schema-json: '{}'
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"View documentation page in browser\",\n  \"description\": \"Browser-facing
         endpoint for viewing documentation.\\nRouted via NGINX, not exposed to WebSocket clients.\\nReturns HTML-rendered
         documentation page.\\n\",\n  \"tags\": [\n    \"Browser\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"viewDocumentBySlug\"\
         \n}"
+  /documentation/raw/{slug}:
+    get:
+      operationId: rawDocumentBySlug
+      summary: Get raw markdown content
+      description: |
+        Browser-facing endpoint for retrieving raw markdown content.
+        Routed via NGINX, not exposed to WebSocket clients.
+        Returns raw markdown with text/markdown content type.
+      tags:
+      - Browser
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+        description: Document slug within namespace
+      - name: ns
+        in: query
+        required: false
+        schema:
+          type: string
+          default: bannou
+        description: Documentation namespace (defaults to bannou)
+      responses:
+        '200':
+          description: Raw markdown content
+          content:
+            text/markdown:
+              schema:
+                type: string
+        '404':
+          description: Document not found
+      # NOTE: No x-permissions = browser-facing endpoint (FOUNDATION TENETS)
+      x-manual-implementation: true  # Returns text/markdown, not JSON - excluded from interface generation
+
+  # ===== Query Endpoints (WebSocket accessible) =====
+      x-request-schema-json: '{}'
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n  \"summary\": \"Get raw markdown content\",\n  \"description\": \"Browser-facing endpoint
+        for retrieving raw markdown content.\\nRouted via NGINX, not exposed to WebSocket clients.\\nReturns raw markdown
+        with text/markdown content type.\\n\",\n  \"tags\": [\n    \"Browser\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
+        : \"rawDocumentBySlug\"\n}"
   /documentation/query:
     post:
       operationId: queryDocumentation
