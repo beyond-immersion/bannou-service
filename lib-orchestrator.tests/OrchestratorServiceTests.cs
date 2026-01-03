@@ -2056,30 +2056,29 @@ public class PresetLoaderTests
     public async Task LoadPresetAsync_WithProcessingPools_ShouldParseCorrectly()
     {
         // Arrange
-        const string presetContent = @"
-name: actor-pools
+        const string presetContent = @"name: actor-pools
 description: Actor pool configuration
 category: processing
 
-processing_pools:
-  - pool_type: actor-shared
+processingPools:
+  - poolType: actor-shared
     plugin: actor
-    min_instances: 1
-    max_instances: 10
-    scale_up_threshold: 0.8
-    scale_down_threshold: 0.2
-    idle_timeout_minutes: 5
+    minInstances: 1
+    maxInstances: 10
+    scaleUpThreshold: 0.8
+    scaleDownThreshold: 0.2
+    idleTimeoutMinutes: 5
     environment:
       ACTOR_DEPLOYMENT_MODE: pool-node
       ACTOR_POOL_NODE_CAPACITY: '50'
 
-  - pool_type: actor-npc-brain
+  - poolType: actor-npc-brain
     plugin: actor
-    min_instances: 2
-    max_instances: 20
-    scale_up_threshold: 0.7
-    scale_down_threshold: 0.3
-    idle_timeout_minutes: 10
+    minInstances: 2
+    maxInstances: 20
+    scaleUpThreshold: 0.7
+    scaleDownThreshold: 0.3
+    idleTimeoutMinutes: 10
     environment:
       ACTOR_DEPLOYMENT_MODE: pool-node
       ACTOR_POOL_NODE_TYPE: npc-brain
@@ -2124,8 +2123,7 @@ processing_pools:
     public async Task LoadPresetAsync_WithNoProcessingPools_ShouldReturnNullProcessingPools()
     {
         // Arrange
-        const string presetContent = @"
-name: simple-preset
+        const string presetContent = @"name: simple-preset
 description: Simple preset without pools
 
 topology:
@@ -2152,11 +2150,10 @@ topology:
     public async Task LoadPresetAsync_WithEmptyProcessingPools_ShouldReturnEmptyList()
     {
         // Arrange
-        const string presetContent = @"
-name: empty-pools
+        const string presetContent = @"name: empty-pools
 description: Preset with empty pools list
 
-processing_pools: []
+processingPools: []
 ";
 
         await CreatePresetFileAsync("empty-pools", presetContent);
@@ -2175,16 +2172,15 @@ processing_pools: []
     public async Task LoadPresetAsync_WithPoolImage_ShouldParseImage()
     {
         // Arrange
-        const string presetContent = @"
-name: custom-image-pool
+        const string presetContent = @"name: custom-image-pool
 description: Pool with custom image
 
-processing_pools:
-  - pool_type: asset-processor
+processingPools:
+  - poolType: asset-processor
     plugin: asset
     image: myregistry/asset-processor:v2
-    min_instances: 1
-    max_instances: 5
+    minInstances: 1
+    maxInstances: 5
 ";
 
         await CreatePresetFileAsync("custom-image-pool", presetContent);
@@ -2204,12 +2200,11 @@ processing_pools:
     public async Task LoadPresetAsync_WithDefaultValues_ShouldUseDefaults()
     {
         // Arrange - pool with minimal configuration
-        const string presetContent = @"
-name: minimal-pool
+        const string presetContent = @"name: minimal-pool
 description: Minimal pool config
 
-processing_pools:
-  - pool_type: test-pool
+processingPools:
+  - poolType: test-pool
     plugin: test
 ";
 
@@ -2241,15 +2236,13 @@ processing_pools:
     public async Task ListPresetsAsync_ShouldReturnPresetMetadata()
     {
         // Arrange
-        const string preset1 = @"
-name: preset-one
+        const string preset1 = @"name: preset-one
 description: First preset
 category: development
 requiredBackends:
   - docker-compose
 ";
-        const string preset2 = @"
-name: preset-two
+        const string preset2 = @"name: preset-two
 description: Second preset
 category: production
 requiredBackends:

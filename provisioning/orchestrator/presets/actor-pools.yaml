@@ -6,14 +6,14 @@ name: actor-pools
 description: Actor pool configuration for distributed behavior execution
 category: processing
 
-processing_pools:
-  - pool_type: actor-shared
+processingPools:
+  - poolType: actor-shared
     plugin: actor
-    min_instances: 1
-    max_instances: 10
-    scale_up_threshold: 0.8
-    scale_down_threshold: 0.2
-    idle_timeout_minutes: 5
+    minInstances: 1
+    maxInstances: 10
+    scaleUpThreshold: 0.8
+    scaleDownThreshold: 0.2
+    idleTimeoutMinutes: 5
     environment:
       ACTOR_DEPLOYMENT_MODE: pool-node
       ACTOR_POOL_NODE_TYPE: shared
@@ -21,13 +21,13 @@ processing_pools:
       ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
       ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
 
-  - pool_type: actor-npc-brain
+  - poolType: actor-npc-brain
     plugin: actor
-    min_instances: 1
-    max_instances: 20
-    scale_up_threshold: 0.7
-    scale_down_threshold: 0.3
-    idle_timeout_minutes: 10
+    minInstances: 1
+    maxInstances: 20
+    scaleUpThreshold: 0.7
+    scaleDownThreshold: 0.3
+    idleTimeoutMinutes: 10
     environment:
       ACTOR_DEPLOYMENT_MODE: pool-node
       ACTOR_POOL_NODE_TYPE: npc-brain
@@ -35,13 +35,13 @@ processing_pools:
       ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
       ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
 
-  - pool_type: actor-event-coordinator
+  - poolType: actor-event-coordinator
     plugin: actor
-    min_instances: 1
-    max_instances: 5
-    scale_up_threshold: 0.75
-    scale_down_threshold: 0.25
-    idle_timeout_minutes: 15
+    minInstances: 1
+    maxInstances: 5
+    scaleUpThreshold: 0.75
+    scaleDownThreshold: 0.25
+    idleTimeoutMinutes: 15
     environment:
       ACTOR_DEPLOYMENT_MODE: pool-node
       ACTOR_POOL_NODE_TYPE: event-coordinator

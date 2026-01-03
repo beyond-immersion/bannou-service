@@ -238,7 +238,6 @@ public class PresetDefinition
     /// Processing pools configuration for on-demand worker containers.
     /// Used by actor pools, asset processors, etc.
     /// </summary>
-    [YamlMember(Alias = "processing_pools")]
     public List<PresetProcessingPool>? ProcessingPools { get; set; }
 }
 
@@ -251,7 +250,6 @@ public class PresetProcessingPool
     /// <summary>
     /// Pool type identifier (e.g., "actor-shared", "asset-image").
     /// </summary>
-    [YamlMember(Alias = "pool_type")]
     public string PoolType { get; set; } = string.Empty;
 
     /// <summary>
@@ -268,31 +266,26 @@ public class PresetProcessingPool
     /// <summary>
     /// Minimum number of instances to maintain.
     /// </summary>
-    [YamlMember(Alias = "min_instances")]
     public int MinInstances { get; set; } = 1;
 
     /// <summary>
     /// Maximum number of instances allowed.
     /// </summary>
-    [YamlMember(Alias = "max_instances")]
     public int MaxInstances { get; set; } = 5;
 
     /// <summary>
     /// Scale up when utilization exceeds this threshold (0.0-1.0).
     /// </summary>
-    [YamlMember(Alias = "scale_up_threshold")]
     public double ScaleUpThreshold { get; set; } = 0.8;
 
     /// <summary>
     /// Scale down when utilization drops below this threshold (0.0-1.0).
     /// </summary>
-    [YamlMember(Alias = "scale_down_threshold")]
     public double ScaleDownThreshold { get; set; } = 0.2;
 
     /// <summary>
     /// Time in minutes before idle workers are cleaned up.
     /// </summary>
-    [YamlMember(Alias = "idle_timeout_minutes")]
     public int IdleTimeoutMinutes { get; set; } = 5;
 
     /// <summary>
