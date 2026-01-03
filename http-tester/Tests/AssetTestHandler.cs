@@ -446,8 +446,8 @@ public class AssetTestHandler : BaseHttpTestHandler
             var startTime = DateTime.UtcNow;
 
             while (metadata.ProcessingStatus != ProcessingStatus.Complete &&
-                   metadata.ProcessingStatus != ProcessingStatus.Failed &&
-                   (DateTime.UtcNow - startTime).TotalSeconds < maxWaitSeconds)
+                    metadata.ProcessingStatus != ProcessingStatus.Failed &&
+                    (DateTime.UtcNow - startTime).TotalSeconds < maxWaitSeconds)
             {
                 await Task.Delay(pollIntervalMs);
                 var getRequest = new GetAssetRequest { AssetId = metadata.AssetId };

@@ -331,161 +331,161 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetEndpoints_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetEndpointsRequest",
-  "$defs": {
-    "GetEndpointsRequest": {
-      "type": "object",
-      "description": "Request to get endpoints for a service",
-      "additionalProperties": false,
-      "required": [
-        "appId"
-      ],
-      "properties": {
-        "appId": {
-          "type": "string",
-          "description": "App-id to get endpoints for"
-        },
-        "includeUnhealthy": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, include degraded/unavailable endpoints"
-        },
-        "serviceName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional filter by specific service name (null for all services)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEndpointsRequest",
+    "$defs": {
+        "GetEndpointsRequest": {
+            "type": "object",
+            "description": "Request to get endpoints for a service",
+            "additionalProperties": false,
+            "required": [
+                "appId"
+            ],
+            "properties": {
+                "appId": {
+                    "type": "string",
+                    "description": "App-id to get endpoints for"
+                },
+                "includeUnhealthy": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, include degraded/unavailable endpoints"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional filter by specific service name (null for all services)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetEndpoints_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetEndpointsResponse",
-  "$defs": {
-    "GetEndpointsResponse": {
-      "type": "object",
-      "description": "Response containing endpoints for a service",
-      "additionalProperties": false,
-      "required": [
-        "appId",
-        "endpoints"
-      ],
-      "properties": {
-        "appId": {
-          "type": "string",
-          "description": "The app-id that was queried"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEndpointsResponse",
+    "$defs": {
+        "GetEndpointsResponse": {
+            "type": "object",
+            "description": "Response containing endpoints for a service",
+            "additionalProperties": false,
+            "required": [
+                "appId",
+                "endpoints"
+            ],
+            "properties": {
+                "appId": {
+                    "type": "string",
+                    "description": "The app-id that was queried"
+                },
+                "endpoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MeshEndpoint"
+                    },
+                    "description": "List of endpoints for the requested app-id"
+                },
+                "healthyCount": {
+                    "type": "integer",
+                    "description": "Number of healthy endpoints"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of endpoints (including unhealthy)"
+                }
+            }
         },
-        "endpoints": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/MeshEndpoint"
-          },
-          "description": "List of endpoints for the requested app-id"
+        "MeshEndpoint": {
+            "type": "object",
+            "description": "A service endpoint in the mesh",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "appId",
+                "host",
+                "port",
+                "status"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this instance"
+                },
+                "appId": {
+                    "type": "string",
+                    "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "Hostname or IP address"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "Service port (typically 80)"
+                },
+                "status": {
+                    "$ref": "#/$defs/EndpointStatus",
+                    "description": "Current health status of the endpoint"
+                },
+                "loadPercent": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Current load as percentage (0-100)",
+                    "default": 0
+                },
+                "maxConnections": {
+                    "type": "integer",
+                    "description": "Maximum concurrent connections"
+                },
+                "currentConnections": {
+                    "type": "integer",
+                    "description": "Current active connections"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of service names hosted on this endpoint"
+                },
+                "lastSeen": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last heartbeat timestamp"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When endpoint was first registered"
+                }
+            }
         },
-        "healthyCount": {
-          "type": "integer",
-          "description": "Number of healthy endpoints"
-        },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of endpoints (including unhealthy)"
+        "EndpointStatus": {
+            "type": "string",
+            "description": "Health status of an endpoint",
+            "enum": [
+                "Healthy",
+                "Degraded",
+                "Unavailable",
+                "ShuttingDown"
+            ]
         }
-      }
-    },
-    "MeshEndpoint": {
-      "type": "object",
-      "description": "A service endpoint in the mesh",
-      "additionalProperties": false,
-      "required": [
-        "instanceId",
-        "appId",
-        "host",
-        "port",
-        "status"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for this instance"
-        },
-        "appId": {
-          "type": "string",
-          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
-        },
-        "host": {
-          "type": "string",
-          "description": "Hostname or IP address"
-        },
-        "port": {
-          "type": "integer",
-          "description": "Service port (typically 80)"
-        },
-        "status": {
-          "$ref": "#/$defs/EndpointStatus",
-          "description": "Current health status of the endpoint"
-        },
-        "loadPercent": {
-          "type": "number",
-          "format": "float",
-          "description": "Current load as percentage (0-100)",
-          "default": 0
-        },
-        "maxConnections": {
-          "type": "integer",
-          "description": "Maximum concurrent connections"
-        },
-        "currentConnections": {
-          "type": "integer",
-          "description": "Current active connections"
-        },
-        "services": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of service names hosted on this endpoint"
-        },
-        "lastSeen": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last heartbeat timestamp"
-        },
-        "registeredAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When endpoint was first registered"
-        }
-      }
-    },
-    "EndpointStatus": {
-      "type": "string",
-      "description": "Health status of an endpoint",
-      "enum": [
-        "Healthy",
-        "Degraded",
-        "Unavailable",
-        "ShuttingDown"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetEndpoints_Info = """
 {
-  "summary": "Get endpoints for a service",
-  "description": "Returns all healthy endpoints for the specified app-id.\nUsed by IMeshClient to resolve target hosts for service invocation.\n",
-  "tags": [
-    "Service Discovery"
-  ],
-  "deprecated": false,
-  "operationId": "getEndpoints"
+    "summary": "Get endpoints for a service",
+    "description": "Returns all healthy endpoints for the specified app-id.\nUsed by IMeshClient to resolve target hosts for service invocation.\n",
+    "tags": [
+        "Service Discovery"
+    ],
+    "deprecated": false,
+    "operationId": "getEndpoints"
 }
 """;
 
@@ -535,183 +535,183 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ListEndpoints_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListEndpointsRequest",
-  "$defs": {
-    "ListEndpointsRequest": {
-      "type": "object",
-      "description": "Request to list all endpoints",
-      "additionalProperties": false,
-      "properties": {
-        "statusFilter": {
-          "$ref": "#/$defs/EndpointStatus",
-          "nullable": true,
-          "description": "Filter endpoints by health status (null for all statuses)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListEndpointsRequest",
+    "$defs": {
+        "ListEndpointsRequest": {
+            "type": "object",
+            "description": "Request to list all endpoints",
+            "additionalProperties": false,
+            "properties": {
+                "statusFilter": {
+                    "$ref": "#/$defs/EndpointStatus",
+                    "nullable": true,
+                    "description": "Filter endpoints by health status (null for all statuses)"
+                },
+                "appIdFilter": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional filter by app-id prefix (null for all app IDs)"
+                }
+            }
         },
-        "appIdFilter": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional filter by app-id prefix (null for all app IDs)"
+        "EndpointStatus": {
+            "type": "string",
+            "description": "Health status of an endpoint",
+            "enum": [
+                "Healthy",
+                "Degraded",
+                "Unavailable",
+                "ShuttingDown"
+            ]
         }
-      }
-    },
-    "EndpointStatus": {
-      "type": "string",
-      "description": "Health status of an endpoint",
-      "enum": [
-        "Healthy",
-        "Degraded",
-        "Unavailable",
-        "ShuttingDown"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _ListEndpoints_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListEndpointsResponse",
-  "$defs": {
-    "ListEndpointsResponse": {
-      "type": "object",
-      "description": "Response containing all endpoints",
-      "additionalProperties": false,
-      "required": [
-        "endpoints",
-        "summary"
-      ],
-      "properties": {
-        "endpoints": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/MeshEndpoint"
-          },
-          "description": "List of all registered endpoints"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListEndpointsResponse",
+    "$defs": {
+        "ListEndpointsResponse": {
+            "type": "object",
+            "description": "Response containing all endpoints",
+            "additionalProperties": false,
+            "required": [
+                "endpoints",
+                "summary"
+            ],
+            "properties": {
+                "endpoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MeshEndpoint"
+                    },
+                    "description": "List of all registered endpoints"
+                },
+                "summary": {
+                    "$ref": "#/$defs/EndpointSummary",
+                    "description": "Summary statistics for the endpoints"
+                }
+            }
         },
-        "summary": {
-          "$ref": "#/$defs/EndpointSummary",
-          "description": "Summary statistics for the endpoints"
+        "MeshEndpoint": {
+            "type": "object",
+            "description": "A service endpoint in the mesh",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "appId",
+                "host",
+                "port",
+                "status"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this instance"
+                },
+                "appId": {
+                    "type": "string",
+                    "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "Hostname or IP address"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "Service port (typically 80)"
+                },
+                "status": {
+                    "$ref": "#/$defs/EndpointStatus",
+                    "description": "Current health status of the endpoint"
+                },
+                "loadPercent": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Current load as percentage (0-100)",
+                    "default": 0
+                },
+                "maxConnections": {
+                    "type": "integer",
+                    "description": "Maximum concurrent connections"
+                },
+                "currentConnections": {
+                    "type": "integer",
+                    "description": "Current active connections"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of service names hosted on this endpoint"
+                },
+                "lastSeen": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last heartbeat timestamp"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When endpoint was first registered"
+                }
+            }
+        },
+        "EndpointStatus": {
+            "type": "string",
+            "description": "Health status of an endpoint",
+            "enum": [
+                "Healthy",
+                "Degraded",
+                "Unavailable",
+                "ShuttingDown"
+            ]
+        },
+        "EndpointSummary": {
+            "type": "object",
+            "description": "Summary statistics for endpoints",
+            "additionalProperties": false,
+            "properties": {
+                "totalEndpoints": {
+                    "type": "integer",
+                    "description": "Total number of registered endpoints"
+                },
+                "healthyCount": {
+                    "type": "integer",
+                    "description": "Number of endpoints with Healthy status"
+                },
+                "degradedCount": {
+                    "type": "integer",
+                    "description": "Number of endpoints with Degraded status"
+                },
+                "unavailableCount": {
+                    "type": "integer",
+                    "description": "Number of endpoints with Unavailable status"
+                },
+                "uniqueAppIds": {
+                    "type": "integer",
+                    "description": "Number of unique app-ids across all endpoints"
+                }
+            }
         }
-      }
-    },
-    "MeshEndpoint": {
-      "type": "object",
-      "description": "A service endpoint in the mesh",
-      "additionalProperties": false,
-      "required": [
-        "instanceId",
-        "appId",
-        "host",
-        "port",
-        "status"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for this instance"
-        },
-        "appId": {
-          "type": "string",
-          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
-        },
-        "host": {
-          "type": "string",
-          "description": "Hostname or IP address"
-        },
-        "port": {
-          "type": "integer",
-          "description": "Service port (typically 80)"
-        },
-        "status": {
-          "$ref": "#/$defs/EndpointStatus",
-          "description": "Current health status of the endpoint"
-        },
-        "loadPercent": {
-          "type": "number",
-          "format": "float",
-          "description": "Current load as percentage (0-100)",
-          "default": 0
-        },
-        "maxConnections": {
-          "type": "integer",
-          "description": "Maximum concurrent connections"
-        },
-        "currentConnections": {
-          "type": "integer",
-          "description": "Current active connections"
-        },
-        "services": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of service names hosted on this endpoint"
-        },
-        "lastSeen": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last heartbeat timestamp"
-        },
-        "registeredAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When endpoint was first registered"
-        }
-      }
-    },
-    "EndpointStatus": {
-      "type": "string",
-      "description": "Health status of an endpoint",
-      "enum": [
-        "Healthy",
-        "Degraded",
-        "Unavailable",
-        "ShuttingDown"
-      ]
-    },
-    "EndpointSummary": {
-      "type": "object",
-      "description": "Summary statistics for endpoints",
-      "additionalProperties": false,
-      "properties": {
-        "totalEndpoints": {
-          "type": "integer",
-          "description": "Total number of registered endpoints"
-        },
-        "healthyCount": {
-          "type": "integer",
-          "description": "Number of endpoints with Healthy status"
-        },
-        "degradedCount": {
-          "type": "integer",
-          "description": "Number of endpoints with Degraded status"
-        },
-        "unavailableCount": {
-          "type": "integer",
-          "description": "Number of endpoints with Unavailable status"
-        },
-        "uniqueAppIds": {
-          "type": "integer",
-          "description": "Number of unique app-ids across all endpoints"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListEndpoints_Info = """
 {
-  "summary": "List all registered endpoints",
-  "description": "Returns all registered service endpoints across all app-ids.\nAdmin-only endpoint for monitoring and debugging.\n",
-  "tags": [
-    "Service Discovery"
-  ],
-  "deprecated": false,
-  "operationId": "listEndpoints"
+    "summary": "List all registered endpoints",
+    "description": "Returns all registered service endpoints across all app-ids.\nAdmin-only endpoint for monitoring and debugging.\n",
+    "tags": [
+        "Service Discovery"
+    ],
+    "deprecated": false,
+    "operationId": "listEndpoints"
 }
 """;
 
@@ -761,182 +761,182 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _RegisterEndpoint_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RegisterEndpointRequest",
-  "$defs": {
-    "RegisterEndpointRequest": {
-      "type": "object",
-      "description": "Request to register a service endpoint",
-      "additionalProperties": false,
-      "required": [
-        "instanceId",
-        "appId",
-        "host",
-        "port"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for this instance"
-        },
-        "appId": {
-          "type": "string",
-          "description": "App-id for this instance"
-        },
-        "host": {
-          "type": "string",
-          "description": "Hostname or IP address to register"
-        },
-        "port": {
-          "type": "integer",
-          "default": 80,
-          "description": "Service port"
-        },
-        "services": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "List of service names hosted on this endpoint (null for none)"
-        },
-        "maxConnections": {
-          "type": "integer",
-          "default": 1000,
-          "description": "Maximum concurrent connections"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Optional metadata key-value pairs (null if none)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterEndpointRequest",
+    "$defs": {
+        "RegisterEndpointRequest": {
+            "type": "object",
+            "description": "Request to register a service endpoint",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "appId",
+                "host",
+                "port"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this instance"
+                },
+                "appId": {
+                    "type": "string",
+                    "description": "App-id for this instance"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "Hostname or IP address to register"
+                },
+                "port": {
+                    "type": "integer",
+                    "default": 80,
+                    "description": "Service port"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of service names hosted on this endpoint (null for none)"
+                },
+                "maxConnections": {
+                    "type": "integer",
+                    "default": 1000,
+                    "description": "Maximum concurrent connections"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Optional metadata key-value pairs (null if none)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RegisterEndpoint_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RegisterEndpointResponse",
-  "$defs": {
-    "RegisterEndpointResponse": {
-      "type": "object",
-      "description": "Response after registering endpoint",
-      "additionalProperties": false,
-      "required": [
-        "success",
-        "endpoint"
-      ],
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether the registration was successful"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterEndpointResponse",
+    "$defs": {
+        "RegisterEndpointResponse": {
+            "type": "object",
+            "description": "Response after registering endpoint",
+            "additionalProperties": false,
+            "required": [
+                "success",
+                "endpoint"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the registration was successful"
+                },
+                "endpoint": {
+                    "$ref": "#/$defs/MeshEndpoint",
+                    "description": "The registered endpoint details"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "TTL for the registration (requires heartbeat refresh)"
+                }
+            }
         },
-        "endpoint": {
-          "$ref": "#/$defs/MeshEndpoint",
-          "description": "The registered endpoint details"
+        "MeshEndpoint": {
+            "type": "object",
+            "description": "A service endpoint in the mesh",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "appId",
+                "host",
+                "port",
+                "status"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this instance"
+                },
+                "appId": {
+                    "type": "string",
+                    "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "Hostname or IP address"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "Service port (typically 80)"
+                },
+                "status": {
+                    "$ref": "#/$defs/EndpointStatus",
+                    "description": "Current health status of the endpoint"
+                },
+                "loadPercent": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Current load as percentage (0-100)",
+                    "default": 0
+                },
+                "maxConnections": {
+                    "type": "integer",
+                    "description": "Maximum concurrent connections"
+                },
+                "currentConnections": {
+                    "type": "integer",
+                    "description": "Current active connections"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of service names hosted on this endpoint"
+                },
+                "lastSeen": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last heartbeat timestamp"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When endpoint was first registered"
+                }
+            }
         },
-        "ttlSeconds": {
-          "type": "integer",
-          "description": "TTL for the registration (requires heartbeat refresh)"
+        "EndpointStatus": {
+            "type": "string",
+            "description": "Health status of an endpoint",
+            "enum": [
+                "Healthy",
+                "Degraded",
+                "Unavailable",
+                "ShuttingDown"
+            ]
         }
-      }
-    },
-    "MeshEndpoint": {
-      "type": "object",
-      "description": "A service endpoint in the mesh",
-      "additionalProperties": false,
-      "required": [
-        "instanceId",
-        "appId",
-        "host",
-        "port",
-        "status"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for this instance"
-        },
-        "appId": {
-          "type": "string",
-          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
-        },
-        "host": {
-          "type": "string",
-          "description": "Hostname or IP address"
-        },
-        "port": {
-          "type": "integer",
-          "description": "Service port (typically 80)"
-        },
-        "status": {
-          "$ref": "#/$defs/EndpointStatus",
-          "description": "Current health status of the endpoint"
-        },
-        "loadPercent": {
-          "type": "number",
-          "format": "float",
-          "description": "Current load as percentage (0-100)",
-          "default": 0
-        },
-        "maxConnections": {
-          "type": "integer",
-          "description": "Maximum concurrent connections"
-        },
-        "currentConnections": {
-          "type": "integer",
-          "description": "Current active connections"
-        },
-        "services": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of service names hosted on this endpoint"
-        },
-        "lastSeen": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last heartbeat timestamp"
-        },
-        "registeredAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When endpoint was first registered"
-        }
-      }
-    },
-    "EndpointStatus": {
-      "type": "string",
-      "description": "Health status of an endpoint",
-      "enum": [
-        "Healthy",
-        "Degraded",
-        "Unavailable",
-        "ShuttingDown"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _RegisterEndpoint_Info = """
 {
-  "summary": "Register a service endpoint",
-  "description": "Registers this instance's endpoint in the service mesh.\nCalled during service startup to announce availability.\nEndpoint TTL is refreshed on each heartbeat.\n",
-  "tags": [
-    "Registration"
-  ],
-  "deprecated": false,
-  "operationId": "registerEndpoint"
+    "summary": "Register a service endpoint",
+    "description": "Registers this instance's endpoint in the service mesh.\nCalled during service startup to announce availability.\nEndpoint TTL is refreshed on each heartbeat.\n",
+    "tags": [
+        "Registration"
+    ],
+    "deprecated": false,
+    "operationId": "registerEndpoint"
 }
 """;
 
@@ -986,25 +986,25 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _DeregisterEndpoint_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeregisterEndpointRequest",
-  "$defs": {
-    "DeregisterEndpointRequest": {
-      "type": "object",
-      "description": "Request to deregister an endpoint",
-      "additionalProperties": false,
-      "required": [
-        "instanceId"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Instance to deregister"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeregisterEndpointRequest",
+    "$defs": {
+        "DeregisterEndpointRequest": {
+            "type": "object",
+            "description": "Request to deregister an endpoint",
+            "additionalProperties": false,
+            "required": [
+                "instanceId"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Instance to deregister"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1014,13 +1014,13 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _DeregisterEndpoint_Info = """
 {
-  "summary": "Deregister a service endpoint",
-  "description": "Removes this instance's endpoint from the service mesh.\nCalled during graceful shutdown.\n",
-  "tags": [
-    "Registration"
-  ],
-  "deprecated": false,
-  "operationId": "deregisterEndpoint"
+    "summary": "Deregister a service endpoint",
+    "description": "Removes this instance's endpoint from the service mesh.\nCalled during graceful shutdown.\n",
+    "tags": [
+        "Registration"
+    ],
+    "deprecated": false,
+    "operationId": "deregisterEndpoint"
 }
 """;
 
@@ -1070,106 +1070,106 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _Heartbeat_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/HeartbeatRequest",
-  "$defs": {
-    "HeartbeatRequest": {
-      "type": "object",
-      "description": "Heartbeat to refresh endpoint TTL and update metrics",
-      "additionalProperties": false,
-      "required": [
-        "instanceId"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the instance sending the heartbeat"
-        },
-        "status": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/EndpointStatus"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/HeartbeatRequest",
+    "$defs": {
+        "HeartbeatRequest": {
+            "type": "object",
+            "description": "Heartbeat to refresh endpoint TTL and update metrics",
+            "additionalProperties": false,
+            "required": [
+                "instanceId"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the instance sending the heartbeat"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EndpointStatus"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Current health status of the endpoint (null defaults to Healthy)"
+                },
+                "loadPercent": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Current load 0-100 (null defaults to 0)"
+                },
+                "currentConnections": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Current active connections (null defaults to 0)"
+                },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of non-critical issues (null if none)"
+                }
             }
-          ],
-          "nullable": true,
-          "description": "Current health status of the endpoint (null defaults to Healthy)"
         },
-        "loadPercent": {
-          "type": "number",
-          "format": "float",
-          "nullable": true,
-          "description": "Current load 0-100 (null defaults to 0)"
-        },
-        "currentConnections": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Current active connections (null defaults to 0)"
-        },
-        "issues": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "List of non-critical issues (null if none)"
+        "EndpointStatus": {
+            "type": "string",
+            "description": "Health status of an endpoint",
+            "enum": [
+                "Healthy",
+                "Degraded",
+                "Unavailable",
+                "ShuttingDown"
+            ]
         }
-      }
-    },
-    "EndpointStatus": {
-      "type": "string",
-      "description": "Health status of an endpoint",
-      "enum": [
-        "Healthy",
-        "Degraded",
-        "Unavailable",
-        "ShuttingDown"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _Heartbeat_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/HeartbeatResponse",
-  "$defs": {
-    "HeartbeatResponse": {
-      "type": "object",
-      "description": "Response after heartbeat processed",
-      "additionalProperties": false,
-      "required": [
-        "success"
-      ],
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether the heartbeat was processed successfully"
-        },
-        "nextHeartbeatSeconds": {
-          "type": "integer",
-          "description": "Recommended seconds until next heartbeat"
-        },
-        "ttlSeconds": {
-          "type": "integer",
-          "description": "Remaining TTL for registration"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/HeartbeatResponse",
+    "$defs": {
+        "HeartbeatResponse": {
+            "type": "object",
+            "description": "Response after heartbeat processed",
+            "additionalProperties": false,
+            "required": [
+                "success"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the heartbeat was processed successfully"
+                },
+                "nextHeartbeatSeconds": {
+                    "type": "integer",
+                    "description": "Recommended seconds until next heartbeat"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "Remaining TTL for registration"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _Heartbeat_Info = """
 {
-  "summary": "Update endpoint health and load",
-  "description": "Refreshes endpoint TTL and updates health/load metrics.\nShould be called periodically (default: every 30 seconds).\n",
-  "tags": [
-    "Registration"
-  ],
-  "deprecated": false,
-  "operationId": "heartbeat"
+    "summary": "Update endpoint health and load",
+    "description": "Refreshes endpoint TTL and updates health/load metrics.\nShould be called periodically (default: every 30 seconds).\n",
+    "tags": [
+        "Registration"
+    ],
+    "deprecated": false,
+    "operationId": "heartbeat"
 }
 """;
 
@@ -1219,161 +1219,161 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetRoute_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetRouteRequest",
-  "$defs": {
-    "GetRouteRequest": {
-      "type": "object",
-      "description": "Request to get optimal route for a service call",
-      "additionalProperties": false,
-      "required": [
-        "appId"
-      ],
-      "properties": {
-        "appId": {
-          "type": "string",
-          "description": "Target app-id to route to"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetRouteRequest",
+    "$defs": {
+        "GetRouteRequest": {
+            "type": "object",
+            "description": "Request to get optimal route for a service call",
+            "additionalProperties": false,
+            "required": [
+                "appId"
+            ],
+            "properties": {
+                "appId": {
+                    "type": "string",
+                    "description": "Target app-id to route to"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional service name for affinity routing (null for no affinity)"
+                },
+                "algorithm": {
+                    "$ref": "#/$defs/LoadBalancerAlgorithm",
+                    "description": "Load balancing algorithm to use for endpoint selection"
+                }
+            }
         },
-        "serviceName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional service name for affinity routing (null for no affinity)"
-        },
-        "algorithm": {
-          "$ref": "#/$defs/LoadBalancerAlgorithm",
-          "description": "Load balancing algorithm to use for endpoint selection"
+        "LoadBalancerAlgorithm": {
+            "type": "string",
+            "description": "Load balancing algorithm",
+            "enum": [
+                "RoundRobin",
+                "LeastConnections",
+                "Weighted",
+                "Random"
+            ]
         }
-      }
-    },
-    "LoadBalancerAlgorithm": {
-      "type": "string",
-      "description": "Load balancing algorithm",
-      "enum": [
-        "RoundRobin",
-        "LeastConnections",
-        "Weighted",
-        "Random"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetRoute_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetRouteResponse",
-  "$defs": {
-    "GetRouteResponse": {
-      "type": "object",
-      "description": "Selected route for service call",
-      "additionalProperties": false,
-      "required": [
-        "endpoint"
-      ],
-      "properties": {
-        "endpoint": {
-          "$ref": "#/$defs/MeshEndpoint",
-          "description": "The selected optimal endpoint for routing"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetRouteResponse",
+    "$defs": {
+        "GetRouteResponse": {
+            "type": "object",
+            "description": "Selected route for service call",
+            "additionalProperties": false,
+            "required": [
+                "endpoint"
+            ],
+            "properties": {
+                "endpoint": {
+                    "$ref": "#/$defs/MeshEndpoint",
+                    "description": "The selected optimal endpoint for routing"
+                },
+                "alternates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MeshEndpoint"
+                    },
+                    "description": "Alternative endpoints if primary fails"
+                }
+            }
         },
-        "alternates": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/MeshEndpoint"
-          },
-          "description": "Alternative endpoints if primary fails"
+        "MeshEndpoint": {
+            "type": "object",
+            "description": "A service endpoint in the mesh",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "appId",
+                "host",
+                "port",
+                "status"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this instance"
+                },
+                "appId": {
+                    "type": "string",
+                    "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "Hostname or IP address"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "Service port (typically 80)"
+                },
+                "status": {
+                    "$ref": "#/$defs/EndpointStatus",
+                    "description": "Current health status of the endpoint"
+                },
+                "loadPercent": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Current load as percentage (0-100)",
+                    "default": 0
+                },
+                "maxConnections": {
+                    "type": "integer",
+                    "description": "Maximum concurrent connections"
+                },
+                "currentConnections": {
+                    "type": "integer",
+                    "description": "Current active connections"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of service names hosted on this endpoint"
+                },
+                "lastSeen": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last heartbeat timestamp"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When endpoint was first registered"
+                }
+            }
+        },
+        "EndpointStatus": {
+            "type": "string",
+            "description": "Health status of an endpoint",
+            "enum": [
+                "Healthy",
+                "Degraded",
+                "Unavailable",
+                "ShuttingDown"
+            ]
         }
-      }
-    },
-    "MeshEndpoint": {
-      "type": "object",
-      "description": "A service endpoint in the mesh",
-      "additionalProperties": false,
-      "required": [
-        "instanceId",
-        "appId",
-        "host",
-        "port",
-        "status"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for this instance"
-        },
-        "appId": {
-          "type": "string",
-          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
-        },
-        "host": {
-          "type": "string",
-          "description": "Hostname or IP address"
-        },
-        "port": {
-          "type": "integer",
-          "description": "Service port (typically 80)"
-        },
-        "status": {
-          "$ref": "#/$defs/EndpointStatus",
-          "description": "Current health status of the endpoint"
-        },
-        "loadPercent": {
-          "type": "number",
-          "format": "float",
-          "description": "Current load as percentage (0-100)",
-          "default": 0
-        },
-        "maxConnections": {
-          "type": "integer",
-          "description": "Maximum concurrent connections"
-        },
-        "currentConnections": {
-          "type": "integer",
-          "description": "Current active connections"
-        },
-        "services": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of service names hosted on this endpoint"
-        },
-        "lastSeen": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last heartbeat timestamp"
-        },
-        "registeredAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When endpoint was first registered"
-        }
-      }
-    },
-    "EndpointStatus": {
-      "type": "string",
-      "description": "Health status of an endpoint",
-      "enum": [
-        "Healthy",
-        "Degraded",
-        "Unavailable",
-        "ShuttingDown"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetRoute_Info = """
 {
-  "summary": "Get optimal endpoint for routing",
-  "description": "Returns a single endpoint for the specified app-id, selected by the\nconfigured load balancing algorithm (round-robin, least-connections, weighted).\n",
-  "tags": [
-    "Routing"
-  ],
-  "deprecated": false,
-  "operationId": "getRoute"
+    "summary": "Get optimal endpoint for routing",
+    "description": "Returns a single endpoint for the specified app-id, selected by the\nconfigured load balancing algorithm (round-robin, least-connections, weighted).\n",
+    "tags": [
+        "Routing"
+    ],
+    "deprecated": false,
+    "operationId": "getRoute"
 }
 """;
 
@@ -1423,71 +1423,71 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetMappings_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetMappingsRequest",
-  "$defs": {
-    "GetMappingsRequest": {
-      "type": "object",
-      "description": "Request to get service-to-app-id mappings",
-      "additionalProperties": false,
-      "properties": {
-        "serviceNameFilter": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional filter by service name prefix (null for all services)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetMappingsRequest",
+    "$defs": {
+        "GetMappingsRequest": {
+            "type": "object",
+            "description": "Request to get service-to-app-id mappings",
+            "additionalProperties": false,
+            "properties": {
+                "serviceNameFilter": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional filter by service name prefix (null for all services)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetMappings_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetMappingsResponse",
-  "$defs": {
-    "GetMappingsResponse": {
-      "type": "object",
-      "description": "Current service mappings",
-      "additionalProperties": false,
-      "required": [
-        "mappings",
-        "version"
-      ],
-      "properties": {
-        "mappings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Map of serviceName -> appId"
-        },
-        "defaultAppId": {
-          "type": "string",
-          "default": "bannou",
-          "description": "Default app-id when no mapping exists"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Mapping version for change detection"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetMappingsResponse",
+    "$defs": {
+        "GetMappingsResponse": {
+            "type": "object",
+            "description": "Current service mappings",
+            "additionalProperties": false,
+            "required": [
+                "mappings",
+                "version"
+            ],
+            "properties": {
+                "mappings": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Map of serviceName -> appId"
+                },
+                "defaultAppId": {
+                    "type": "string",
+                    "default": "bannou",
+                    "description": "Default app-id when no mapping exists"
+                },
+                "version": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Mapping version for change detection"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetMappings_Info = """
 {
-  "summary": "Get service-to-app-id mappings",
-  "description": "Returns the current service name to app-id mapping table.\nUsed by ServiceAppMappingResolver for distributed deployment.\n",
-  "tags": [
-    "Routing"
-  ],
-  "deprecated": false,
-  "operationId": "getMappings"
+    "summary": "Get service-to-app-id mappings",
+    "description": "Returns the current service name to app-id mapping table.\nUsed by ServiceAppMappingResolver for distributed deployment.\n",
+    "tags": [
+        "Routing"
+    ],
+    "deprecated": false,
+    "operationId": "getMappings"
 }
 """;
 
@@ -1537,185 +1537,185 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetHealth_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetHealthRequest",
-  "$defs": {
-    "GetHealthRequest": {
-      "type": "object",
-      "description": "Request for mesh health status",
-      "additionalProperties": false,
-      "properties": {
-        "includeEndpoints": {
-          "type": "boolean",
-          "default": false,
-          "description": "Include full endpoint list in response"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetHealthRequest",
+    "$defs": {
+        "GetHealthRequest": {
+            "type": "object",
+            "description": "Request for mesh health status",
+            "additionalProperties": false,
+            "properties": {
+                "includeEndpoints": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include full endpoint list in response"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetHealth_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/MeshHealthResponse",
-  "$defs": {
-    "MeshHealthResponse": {
-      "type": "object",
-      "description": "Overall mesh health status",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "summary"
-      ],
-      "properties": {
-        "status": {
-          "$ref": "#/$defs/EndpointStatus",
-          "description": "Overall health status of the mesh"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MeshHealthResponse",
+    "$defs": {
+        "MeshHealthResponse": {
+            "type": "object",
+            "description": "Overall mesh health status",
+            "additionalProperties": false,
+            "required": [
+                "status",
+                "summary"
+            ],
+            "properties": {
+                "status": {
+                    "$ref": "#/$defs/EndpointStatus",
+                    "description": "Overall health status of the mesh"
+                },
+                "summary": {
+                    "$ref": "#/$defs/EndpointSummary",
+                    "description": "Summary statistics for all endpoints"
+                },
+                "redisConnected": {
+                    "type": "boolean",
+                    "description": "Whether Redis connection is healthy"
+                },
+                "lastUpdateTime": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp of the last health status update"
+                },
+                "uptime": {
+                    "type": "string",
+                    "description": "Mesh service uptime (e.g., \"2d 5h 30m\")"
+                },
+                "endpoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MeshEndpoint"
+                    },
+                    "description": "Full endpoint list (only if includeEndpoints=true)"
+                }
+            }
         },
-        "summary": {
-          "$ref": "#/$defs/EndpointSummary",
-          "description": "Summary statistics for all endpoints"
+        "EndpointStatus": {
+            "type": "string",
+            "description": "Health status of an endpoint",
+            "enum": [
+                "Healthy",
+                "Degraded",
+                "Unavailable",
+                "ShuttingDown"
+            ]
         },
-        "redisConnected": {
-          "type": "boolean",
-          "description": "Whether Redis connection is healthy"
+        "EndpointSummary": {
+            "type": "object",
+            "description": "Summary statistics for endpoints",
+            "additionalProperties": false,
+            "properties": {
+                "totalEndpoints": {
+                    "type": "integer",
+                    "description": "Total number of registered endpoints"
+                },
+                "healthyCount": {
+                    "type": "integer",
+                    "description": "Number of endpoints with Healthy status"
+                },
+                "degradedCount": {
+                    "type": "integer",
+                    "description": "Number of endpoints with Degraded status"
+                },
+                "unavailableCount": {
+                    "type": "integer",
+                    "description": "Number of endpoints with Unavailable status"
+                },
+                "uniqueAppIds": {
+                    "type": "integer",
+                    "description": "Number of unique app-ids across all endpoints"
+                }
+            }
         },
-        "lastUpdateTime": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of the last health status update"
-        },
-        "uptime": {
-          "type": "string",
-          "description": "Mesh service uptime (e.g., \"2d 5h 30m\")"
-        },
-        "endpoints": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/MeshEndpoint"
-          },
-          "description": "Full endpoint list (only if includeEndpoints=true)"
+        "MeshEndpoint": {
+            "type": "object",
+            "description": "A service endpoint in the mesh",
+            "additionalProperties": false,
+            "required": [
+                "instanceId",
+                "appId",
+                "host",
+                "port",
+                "status"
+            ],
+            "properties": {
+                "instanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this instance"
+                },
+                "appId": {
+                    "type": "string",
+                    "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "Hostname or IP address"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "Service port (typically 80)"
+                },
+                "status": {
+                    "$ref": "#/$defs/EndpointStatus",
+                    "description": "Current health status of the endpoint"
+                },
+                "loadPercent": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Current load as percentage (0-100)",
+                    "default": 0
+                },
+                "maxConnections": {
+                    "type": "integer",
+                    "description": "Maximum concurrent connections"
+                },
+                "currentConnections": {
+                    "type": "integer",
+                    "description": "Current active connections"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of service names hosted on this endpoint"
+                },
+                "lastSeen": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last heartbeat timestamp"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When endpoint was first registered"
+                }
+            }
         }
-      }
-    },
-    "EndpointStatus": {
-      "type": "string",
-      "description": "Health status of an endpoint",
-      "enum": [
-        "Healthy",
-        "Degraded",
-        "Unavailable",
-        "ShuttingDown"
-      ]
-    },
-    "EndpointSummary": {
-      "type": "object",
-      "description": "Summary statistics for endpoints",
-      "additionalProperties": false,
-      "properties": {
-        "totalEndpoints": {
-          "type": "integer",
-          "description": "Total number of registered endpoints"
-        },
-        "healthyCount": {
-          "type": "integer",
-          "description": "Number of endpoints with Healthy status"
-        },
-        "degradedCount": {
-          "type": "integer",
-          "description": "Number of endpoints with Degraded status"
-        },
-        "unavailableCount": {
-          "type": "integer",
-          "description": "Number of endpoints with Unavailable status"
-        },
-        "uniqueAppIds": {
-          "type": "integer",
-          "description": "Number of unique app-ids across all endpoints"
-        }
-      }
-    },
-    "MeshEndpoint": {
-      "type": "object",
-      "description": "A service endpoint in the mesh",
-      "additionalProperties": false,
-      "required": [
-        "instanceId",
-        "appId",
-        "host",
-        "port",
-        "status"
-      ],
-      "properties": {
-        "instanceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for this instance"
-        },
-        "appId": {
-          "type": "string",
-          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
-        },
-        "host": {
-          "type": "string",
-          "description": "Hostname or IP address"
-        },
-        "port": {
-          "type": "integer",
-          "description": "Service port (typically 80)"
-        },
-        "status": {
-          "$ref": "#/$defs/EndpointStatus",
-          "description": "Current health status of the endpoint"
-        },
-        "loadPercent": {
-          "type": "number",
-          "format": "float",
-          "description": "Current load as percentage (0-100)",
-          "default": 0
-        },
-        "maxConnections": {
-          "type": "integer",
-          "description": "Maximum concurrent connections"
-        },
-        "currentConnections": {
-          "type": "integer",
-          "description": "Current active connections"
-        },
-        "services": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of service names hosted on this endpoint"
-        },
-        "lastSeen": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last heartbeat timestamp"
-        },
-        "registeredAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When endpoint was first registered"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetHealth_Info = """
 {
-  "summary": "Get mesh health status",
-  "description": "Returns overall health of the service mesh including:\n- Total registered endpoints\n- Healthy/degraded/unavailable counts\n- Redis connectivity status\n",
-  "tags": [
-    "Diagnostics"
-  ],
-  "deprecated": false,
-  "operationId": "getHealth"
+    "summary": "Get mesh health status",
+    "description": "Returns overall health of the service mesh including:\n- Total registered endpoints\n- Healthy/degraded/unavailable counts\n- Redis connectivity status\n",
+    "tags": [
+        "Diagnostics"
+    ],
+    "deprecated": false,
+    "operationId": "getHealth"
 }
 """;
 

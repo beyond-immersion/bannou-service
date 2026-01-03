@@ -405,141 +405,141 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _Login_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/LoginRequest",
-  "$defs": {
-    "LoginRequest": {
-      "description": "Request to authenticate a user with email and password credentials",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "email",
-        "password"
-      ],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address for authentication"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LoginRequest",
+    "$defs": {
+        "LoginRequest": {
+            "description": "Request to authenticate a user with email and password credentials",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address for authentication"
+                },
+                "password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "User password for authentication"
+                },
+                "rememberMe": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to extend the session duration for persistent login"
+                },
+                "deviceInfo": {
+                    "$ref": "#/$defs/DeviceInfo",
+                    "nullable": true,
+                    "description": "Information about the client device (optional)"
+                }
+            }
         },
-        "password": {
-          "type": "string",
-          "format": "password",
-          "description": "User password for authentication"
-        },
-        "rememberMe": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to extend the session duration for persistent login"
-        },
-        "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo",
-          "nullable": true,
-          "description": "Information about the client device (optional)"
+        "DeviceInfo": {
+            "description": "Information about the client device used for authentication or session tracking",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deviceType": {
+                    "type": "string",
+                    "enum": [
+                        "desktop",
+                        "mobile",
+                        "tablet",
+                        "console"
+                    ],
+                    "description": "Category of the device"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Operating system or platform name"
+                },
+                "browser": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Browser name and version if applicable"
+                },
+                "appVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Version of the client application"
+                }
+            }
         }
-      }
-    },
-    "DeviceInfo": {
-      "description": "Information about the client device used for authentication or session tracking",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "deviceType": {
-          "type": "string",
-          "enum": [
-            "desktop",
-            "mobile",
-            "tablet",
-            "console"
-          ],
-          "description": "Category of the device"
-        },
-        "platform": {
-          "type": "string",
-          "description": "Operating system or platform name"
-        },
-        "browser": {
-          "type": "string",
-          "nullable": true,
-          "description": "Browser name and version if applicable"
-        },
-        "appVersion": {
-          "type": "string",
-          "nullable": true,
-          "description": "Version of the client application"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _Login_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AuthResponse",
-  "$defs": {
-    "AuthResponse": {
-      "description": "Successful authentication response containing tokens and session information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "accessToken",
-        "refreshToken",
-        "expiresIn",
-        "connectUrl"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authenticated account"
-        },
-        "accessToken": {
-          "type": "string",
-          "description": "JWT access token for API authentication"
-        },
-        "refreshToken": {
-          "type": "string",
-          "description": "Token used to obtain new access tokens when the current one expires"
-        },
-        "expiresIn": {
-          "type": "integer",
-          "description": "Seconds until access token expires"
-        },
-        "connectUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "WebSocket endpoint for Connect service"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the authenticated user"
-        },
-        "requiresTwoFactor": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the user needs to complete two-factor authentication"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AuthResponse",
+    "$defs": {
+        "AuthResponse": {
+            "description": "Successful authentication response containing tokens and session information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "accessToken",
+                "refreshToken",
+                "expiresIn",
+                "connectUrl"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authenticated account"
+                },
+                "accessToken": {
+                    "type": "string",
+                    "description": "JWT access token for API authentication"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "description": "Token used to obtain new access tokens when the current one expires"
+                },
+                "expiresIn": {
+                    "type": "integer",
+                    "description": "Seconds until access token expires"
+                },
+                "connectUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "WebSocket endpoint for Connect service"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the authenticated user"
+                },
+                "requiresTwoFactor": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the user needs to complete two-factor authentication"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _Login_Info = """
 {
-  "summary": "Login with email/password",
-  "description": "",
-  "tags": [
-    "Authentication"
-  ],
-  "deprecated": false,
-  "operationId": "login"
+    "summary": "Login with email/password",
+    "description": "",
+    "tags": [
+        "Authentication"
+    ],
+    "deprecated": false,
+    "operationId": "login"
 }
 """;
 
@@ -589,91 +589,91 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _Register_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RegisterRequest",
-  "$defs": {
-    "RegisterRequest": {
-      "type": "object",
-      "description": "Request to register a new user account",
-      "additionalProperties": false,
-      "required": [
-        "username",
-        "password",
-        "email"
-      ],
-      "properties": {
-        "username": {
-          "type": "string",
-          "description": "Unique username for the account",
-          "minLength": 3,
-          "maxLength": 32,
-          "pattern": "^[a-zA-Z0-9_]+$",
-          "example": "gameuser123"
-        },
-        "password": {
-          "type": "string",
-          "description": "Password for the account (will be hashed)",
-          "minLength": 8,
-          "format": "password",
-          "example": "SecurePassword123!"
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address for account recovery and notifications",
-          "example": "user@example.com"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterRequest",
+    "$defs": {
+        "RegisterRequest": {
+            "type": "object",
+            "description": "Request to register a new user account",
+            "additionalProperties": false,
+            "required": [
+                "username",
+                "password",
+                "email"
+            ],
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "description": "Unique username for the account",
+                    "minLength": 3,
+                    "maxLength": 32,
+                    "pattern": "^[a-zA-Z0-9_]+$",
+                    "example": "gameuser123"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "Password for the account (will be hashed)",
+                    "minLength": 8,
+                    "format": "password",
+                    "example": "SecurePassword123!"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address for account recovery and notifications",
+                    "example": "user@example.com"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _Register_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RegisterResponse",
-  "$defs": {
-    "RegisterResponse": {
-      "type": "object",
-      "description": "Response from successful user registration",
-      "additionalProperties": false,
-      "required": [
-        "accessToken",
-        "connectUrl"
-      ],
-      "properties": {
-        "accessToken": {
-          "type": "string",
-          "description": "JWT access token for immediate authentication",
-          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
-        },
-        "refreshToken": {
-          "type": "string",
-          "description": "Refresh token for obtaining new access tokens",
-          "nullable": true,
-          "example": "refresh_token_abc123xyz789"
-        },
-        "connectUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "WebSocket endpoint for Connect service"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterResponse",
+    "$defs": {
+        "RegisterResponse": {
+            "type": "object",
+            "description": "Response from successful user registration",
+            "additionalProperties": false,
+            "required": [
+                "accessToken",
+                "connectUrl"
+            ],
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "description": "JWT access token for immediate authentication",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "description": "Refresh token for obtaining new access tokens",
+                    "nullable": true,
+                    "example": "refresh_token_abc123xyz789"
+                },
+                "connectUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "WebSocket endpoint for Connect service"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _Register_Info = """
 {
-  "summary": "Register new user account",
-  "description": "",
-  "tags": [
-    "Authentication"
-  ],
-  "deprecated": false,
-  "operationId": "register"
+    "summary": "Register new user account",
+    "description": "",
+    "tags": [
+        "Authentication"
+    ],
+    "deprecated": false,
+    "operationId": "register"
 }
 """;
 
@@ -731,13 +731,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _InitOAuth_Info = """
 {
-  "summary": "Initialize OAuth2 flow (browser redirect)",
-  "description": "Browser-facing endpoint for initiating OAuth flows. The user's browser navigates\nto this URL directly, which then redirects to the OAuth provider.\n\n**Note**: This endpoint uses GET with path parameters because it's a browser\nredirect flow, not a WebSocket-routed API call.\n",
-  "tags": [
-    "OAuth"
-  ],
-  "deprecated": false,
-  "operationId": "initOAuth"
+    "summary": "Initialize OAuth2 flow (browser redirect)",
+    "description": "Browser-facing endpoint for initiating OAuth flows. The user's browser navigates\nto this URL directly, which then redirects to the OAuth provider.\n\n**Note**: This endpoint uses GET with path parameters because it's a browser\nredirect flow, not a WebSocket-routed API call.\n",
+    "tags": [
+        "OAuth"
+    ],
+    "deprecated": false,
+    "operationId": "initOAuth"
 }
 """;
 
@@ -787,134 +787,134 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _CompleteOAuth_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/OAuthCallbackRequest",
-  "$defs": {
-    "OAuthCallbackRequest": {
-      "description": "Request containing OAuth provider callback data to complete authentication",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "code"
-      ],
-      "properties": {
-        "code": {
-          "type": "string",
-          "description": "Authorization code returned by the OAuth provider"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/OAuthCallbackRequest",
+    "$defs": {
+        "OAuthCallbackRequest": {
+            "description": "Request containing OAuth provider callback data to complete authentication",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "description": "Authorization code returned by the OAuth provider"
+                },
+                "state": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "State parameter for CSRF protection, must match the value sent in the init request"
+                },
+                "deviceInfo": {
+                    "$ref": "#/$defs/DeviceInfo",
+                    "nullable": true,
+                    "description": "Information about the client device (optional)"
+                }
+            }
         },
-        "state": {
-          "type": "string",
-          "nullable": true,
-          "description": "State parameter for CSRF protection, must match the value sent in the init request"
-        },
-        "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo",
-          "nullable": true,
-          "description": "Information about the client device (optional)"
+        "DeviceInfo": {
+            "description": "Information about the client device used for authentication or session tracking",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deviceType": {
+                    "type": "string",
+                    "enum": [
+                        "desktop",
+                        "mobile",
+                        "tablet",
+                        "console"
+                    ],
+                    "description": "Category of the device"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Operating system or platform name"
+                },
+                "browser": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Browser name and version if applicable"
+                },
+                "appVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Version of the client application"
+                }
+            }
         }
-      }
-    },
-    "DeviceInfo": {
-      "description": "Information about the client device used for authentication or session tracking",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "deviceType": {
-          "type": "string",
-          "enum": [
-            "desktop",
-            "mobile",
-            "tablet",
-            "console"
-          ],
-          "description": "Category of the device"
-        },
-        "platform": {
-          "type": "string",
-          "description": "Operating system or platform name"
-        },
-        "browser": {
-          "type": "string",
-          "nullable": true,
-          "description": "Browser name and version if applicable"
-        },
-        "appVersion": {
-          "type": "string",
-          "nullable": true,
-          "description": "Version of the client application"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CompleteOAuth_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AuthResponse",
-  "$defs": {
-    "AuthResponse": {
-      "description": "Successful authentication response containing tokens and session information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "accessToken",
-        "refreshToken",
-        "expiresIn",
-        "connectUrl"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authenticated account"
-        },
-        "accessToken": {
-          "type": "string",
-          "description": "JWT access token for API authentication"
-        },
-        "refreshToken": {
-          "type": "string",
-          "description": "Token used to obtain new access tokens when the current one expires"
-        },
-        "expiresIn": {
-          "type": "integer",
-          "description": "Seconds until access token expires"
-        },
-        "connectUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "WebSocket endpoint for Connect service"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the authenticated user"
-        },
-        "requiresTwoFactor": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the user needs to complete two-factor authentication"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AuthResponse",
+    "$defs": {
+        "AuthResponse": {
+            "description": "Successful authentication response containing tokens and session information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "accessToken",
+                "refreshToken",
+                "expiresIn",
+                "connectUrl"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authenticated account"
+                },
+                "accessToken": {
+                    "type": "string",
+                    "description": "JWT access token for API authentication"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "description": "Token used to obtain new access tokens when the current one expires"
+                },
+                "expiresIn": {
+                    "type": "integer",
+                    "description": "Seconds until access token expires"
+                },
+                "connectUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "WebSocket endpoint for Connect service"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the authenticated user"
+                },
+                "requiresTwoFactor": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the user needs to complete two-factor authentication"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CompleteOAuth_Info = """
 {
-  "summary": "Complete OAuth2 flow (browser redirect callback)",
-  "description": "Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects\nthe user's browser back to this URL after authentication.\n\n**Note**: This endpoint uses path parameters because the callback URL is registered\ nwith OAuth providers and cannot be changed without updating provider configurations.\n",
-  "tags": [
-    "OAuth"
-  ],
-  "deprecated": false,
-  "operationId": "completeOAuth"
+    "summary": "Complete OAuth2 flow (browser redirect callback)",
+    "description": "Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects\nthe user's browser back to this URL after authentication.\n\n**Note**: This endpoint uses path parameters because the callback URL is registered\ nwith OAuth providers and cannot be changed without updating provider configurations.\n",
+    "tags": [
+        "OAuth"
+    ],
+    "deprecated": false,
+    "operationId": "completeOAuth"
 }
 """;
 
@@ -964,130 +964,130 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _VerifySteamAuth_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SteamVerifyRequest",
-  "$defs": {
-    "SteamVerifyRequest": {
-      "type": "object",
-      "description": "Request to verify a Steam Session Ticket. The ticket is obtained client-side via\nISteamUser::GetAuthTicketForWebApi(\"bannou\"). SteamID is NOT included because\nit must be obtained from Steam's Web API response (never trust client-provided SteamID).\n",
-      "additionalProperties": false,
-      "required": [
-        "ticket"
-      ],
-      "properties": {
-        "ticket": {
-          "type": "string",
-          "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
-          "example": "140000006A7B3C8E..."
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SteamVerifyRequest",
+    "$defs": {
+        "SteamVerifyRequest": {
+            "type": "object",
+            "description": "Request to verify a Steam Session Ticket. The ticket is obtained client-side via\nISteamUser::GetAuthTicketForWebApi(\"bannou\"). SteamID is NOT included because\nit must be obtained from Steam's Web API response (never trust client-provided SteamID).\n",
+            "additionalProperties": false,
+            "required": [
+                "ticket"
+            ],
+            "properties": {
+                "ticket": {
+                    "type": "string",
+                    "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\ nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
+                    "example": "140000006A7B3C8E..."
+                },
+                "deviceInfo": {
+                    "$ref": "#/$defs/DeviceInfo",
+                    "nullable": true,
+                    "description": "Information about the client device (optional)"
+                }
+            }
         },
-        "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo",
-          "nullable": true,
-          "description": "Information about the client device (optional)"
+        "DeviceInfo": {
+            "description": "Information about the client device used for authentication or session tracking",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deviceType": {
+                    "type": "string",
+                    "enum": [
+                        "desktop",
+                        "mobile",
+                        "tablet",
+                        "console"
+                    ],
+                    "description": "Category of the device"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Operating system or platform name"
+                },
+                "browser": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Browser name and version if applicable"
+                },
+                "appVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Version of the client application"
+                }
+            }
         }
-      }
-    },
-    "DeviceInfo": {
-      "description": "Information about the client device used for authentication or session tracking",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "deviceType": {
-          "type": "string",
-          "enum": [
-            "desktop",
-            "mobile",
-            "tablet",
-            "console"
-          ],
-          "description": "Category of the device"
-        },
-        "platform": {
-          "type": "string",
-          "description": "Operating system or platform name"
-        },
-        "browser": {
-          "type": "string",
-          "nullable": true,
-          "description": "Browser name and version if applicable"
-        },
-        "appVersion": {
-          "type": "string",
-          "nullable": true,
-          "description": "Version of the client application"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _VerifySteamAuth_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AuthResponse",
-  "$defs": {
-    "AuthResponse": {
-      "description": "Successful authentication response containing tokens and session information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "accessToken",
-        "refreshToken",
-        "expiresIn",
-        "connectUrl"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authenticated account"
-        },
-        "accessToken": {
-          "type": "string",
-          "description": "JWT access token for API authentication"
-        },
-        "refreshToken": {
-          "type": "string",
-          "description": "Token used to obtain new access tokens when the current one expires"
-        },
-        "expiresIn": {
-          "type": "integer",
-          "description": "Seconds until access token expires"
-        },
-        "connectUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "WebSocket endpoint for Connect service"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the authenticated user"
-        },
-        "requiresTwoFactor": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the user needs to complete two-factor authentication"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AuthResponse",
+    "$defs": {
+        "AuthResponse": {
+            "description": "Successful authentication response containing tokens and session information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "accessToken",
+                "refreshToken",
+                "expiresIn",
+                "connectUrl"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authenticated account"
+                },
+                "accessToken": {
+                    "type": "string",
+                    "description": "JWT access token for API authentication"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "description": "Token used to obtain new access tokens when the current one expires"
+                },
+                "expiresIn": {
+                    "type": "integer",
+                    "description": "Seconds until access token expires"
+                },
+                "connectUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "WebSocket endpoint for Connect service"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the authenticated user"
+                },
+                "requiresTwoFactor": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the user needs to complete two-factor authentication"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _VerifySteamAuth_Info = """
 {
-  "summary": "Verify Steam Session Ticket",
-  "description": "Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().\nThe server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.\nNEVER trust client-provided SteamID - it must come from Steam's authenticated response.\n",
-  "tags": [
-    "Steam"
-  ],
-  "deprecated": false,
-  "operationId": "verifySteamAuth"
+    "summary": "Verify Steam Session Ticket",
+    "description": "Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().\nThe server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.\nNEVER trust client-provided SteamID - it must come from Steam's authenticated response.\n",
+    "tags": [
+        "Steam"
+    ],
+    "deprecated": false,
+    "operationId": "verifySteamAuth"
 }
 """;
 
@@ -1137,93 +1137,93 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _RefreshToken_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RefreshRequest",
-  "$defs": {
-    "RefreshRequest": {
-      "description": "Request to obtain a new access token using a valid refresh token",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "refreshToken"
-      ],
-      "properties": {
-        "refreshToken": {
-          "type": "string",
-          "description": "Refresh token issued during authentication to obtain a new access token"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RefreshRequest",
+    "$defs": {
+        "RefreshRequest": {
+            "description": "Request to obtain a new access token using a valid refresh token",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "refreshToken"
+            ],
+            "properties": {
+                "refreshToken": {
+                    "type": "string",
+                    "description": "Refresh token issued during authentication to obtain a new access token"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RefreshToken_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AuthResponse",
-  "$defs": {
-    "AuthResponse": {
-      "description": "Successful authentication response containing tokens and session information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "accessToken",
-        "refreshToken",
-        "expiresIn",
-        "connectUrl"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authenticated account"
-        },
-        "accessToken": {
-          "type": "string",
-          "description": "JWT access token for API authentication"
-        },
-        "refreshToken": {
-          "type": "string",
-          "description": "Token used to obtain new access tokens when the current one expires"
-        },
-        "expiresIn": {
-          "type": "integer",
-          "description": "Seconds until access token expires"
-        },
-        "connectUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "WebSocket endpoint for Connect service"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the authenticated user"
-        },
-        "requiresTwoFactor": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the user needs to complete two-factor authentication"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AuthResponse",
+    "$defs": {
+        "AuthResponse": {
+            "description": "Successful authentication response containing tokens and session information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "accessToken",
+                "refreshToken",
+                "expiresIn",
+                "connectUrl"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authenticated account"
+                },
+                "accessToken": {
+                    "type": "string",
+                    "description": "JWT access token for API authentication"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "description": "Token used to obtain new access tokens when the current one expires"
+                },
+                "expiresIn": {
+                    "type": "integer",
+                    "description": "Seconds until access token expires"
+                },
+                "connectUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "WebSocket endpoint for Connect service"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the authenticated user"
+                },
+                "requiresTwoFactor": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the user needs to complete two-factor authentication"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RefreshToken_Info = """
 {
-  "summary": "Refresh access token",
-  "description": "",
-  "tags": [
-    "Tokens"
-  ],
-  "deprecated": false,
-  "operationId": "refreshToken"
+    "summary": "Refresh access token",
+    "description": "",
+    "tags": [
+        "Tokens"
+    ],
+    "deprecated": false,
+    "operationId": "refreshToken"
 }
 """;
 
@@ -1277,66 +1277,66 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ValidateToken_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ValidateTokenResponse",
-  "$defs": {
-    "ValidateTokenResponse": {
-      "description": "Response from token validation containing validity status and associated account details",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "valid",
-        "accountId",
-        "sessionId"
-      ],
-      "properties": {
-        "valid": {
-          "type": "boolean",
-          "description": "Whether the token is valid and not expired"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account associated with the token"
-        },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session identifier for WebSocket connections and service routing"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the authenticated user"
-        },
-        "authorizations": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
-        },
-        "remainingTime": {
-          "type": "integer",
-          "description": "Seconds until expiration"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateTokenResponse",
+    "$defs": {
+        "ValidateTokenResponse": {
+            "description": "Response from token validation containing validity status and associated account details",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "valid",
+                "accountId",
+                "sessionId"
+            ],
+            "properties": {
+                "valid": {
+                    "type": "boolean",
+                    "description": "Whether the token is valid and not expired"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account associated with the token"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session identifier for WebSocket connections and service routing"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the authenticated user"
+                },
+                "authorizations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
+                },
+                "remainingTime": {
+                    "type": "integer",
+                    "description": "Seconds until expiration"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ValidateToken_Info = """
 {
-  "summary": "Validate access token",
-  "description": "",
-  "tags": [
-    "Tokens"
-  ],
-  "deprecated": false,
-  "operationId": "validateToken"
+    "summary": "Validate access token",
+    "description": "",
+    "tags": [
+        "Tokens"
+    ],
+    "deprecated": false,
+    "operationId": "validateToken"
 }
 """;
 
@@ -1386,22 +1386,22 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _Logout_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/LogoutRequest",
-  "$defs": {
-    "LogoutRequest": {
-      "description": "Request to logout and invalidate authentication tokens",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "allSessions": {
-          "type": "boolean",
-          "default": false,
-          "description": "Logout from all sessions/devices"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LogoutRequest",
+    "$defs": {
+        "LogoutRequest": {
+            "description": "Request to logout and invalidate authentication tokens",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "allSessions": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Logout from all sessions/devices"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1411,13 +1411,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _Logout_Info = """
 {
-  "summary": "Logout and invalidate tokens",
-  "description": "",
-  "tags": [
-    "Authentication"
-  ],
-  "deprecated": false,
-  "operationId": "logout"
+    "summary": "Logout and invalidate tokens",
+    "description": "",
+    "tags": [
+        "Authentication"
+    ],
+    "deprecated": false,
+    "operationId": "logout"
 }
 """;
 
@@ -1471,111 +1471,111 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetSessions_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionsResponse",
-  "$defs": {
-    "SessionsResponse": {
-      "description": "Response containing a list of all active sessions for an account",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessions"
-      ],
-      "properties": {
-        "sessions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SessionInfo"
-          },
-          "description": "List of active sessions for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionsResponse",
+    "$defs": {
+        "SessionsResponse": {
+            "description": "Response containing a list of all active sessions for an account",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessions"
+            ],
+            "properties": {
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SessionInfo"
+                    },
+                    "description": "List of active sessions for the account"
+                }
+            }
+        },
+        "SessionInfo": {
+            "description": "Information about an active user session including device and activity details",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "createdAt",
+                "lastActive"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the session"
+                },
+                "deviceInfo": {
+                    "$ref": "#/$defs/DeviceInfo",
+                    "nullable": true,
+                    "description": "Information about the device used for this session"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the session was created"
+                },
+                "lastActive": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp of the last activity in this session"
+                },
+                "ipAddress": {
+                    "type": "string",
+                    "description": "IP address from which the session was initiated"
+                },
+                "location": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Geographic location derived from the IP address"
+                }
+            }
+        },
+        "DeviceInfo": {
+            "description": "Information about the client device used for authentication or session tracking",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deviceType": {
+                    "type": "string",
+                    "enum": [
+                        "desktop",
+                        "mobile",
+                        "tablet",
+                        "console"
+                    ],
+                    "description": "Category of the device"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Operating system or platform name"
+                },
+                "browser": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Browser name and version if applicable"
+                },
+                "appVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Version of the client application"
+                }
+            }
         }
-      }
-    },
-    "SessionInfo": {
-      "description": "Information about an active user session including device and activity details",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "createdAt",
-        "lastActive"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the session"
-        },
-        "deviceInfo": {
-          "$ref": "#/$defs/DeviceInfo",
-          "nullable": true,
-          "description": "Information about the device used for this session"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the session was created"
-        },
-        "lastActive": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of the last activity in this session"
-        },
-        "ipAddress": {
-          "type": "string",
-          "description": "IP address from which the session was initiated"
-        },
-        "location": {
-          "type": "string",
-          "nullable": true,
-          "description": "Geographic location derived from the IP address"
-        }
-      }
-    },
-    "DeviceInfo": {
-      "description": "Information about the client device used for authentication or session tracking",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "deviceType": {
-          "type": "string",
-          "enum": [
-            "desktop",
-            "mobile",
-            "tablet",
-            "console"
-          ],
-          "description": "Category of the device"
-        },
-        "platform": {
-          "type": "string",
-          "description": "Operating system or platform name"
-        },
-        "browser": {
-          "type": "string",
-          "nullable": true,
-          "description": "Browser name and version if applicable"
-        },
-        "appVersion": {
-          "type": "string",
-          "nullable": true,
-          "description": "Version of the client application"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetSessions_Info = """
 {
-  "summary": "Get active sessions for account",
-  "description": "",
-  "tags": [
-    "Sessions"
-  ],
-  "deprecated": false,
-  "operationId": "getSessions"
+    "summary": "Get active sessions for account",
+    "description": "",
+    "tags": [
+        "Sessions"
+    ],
+    "deprecated": false,
+    "operationId": "getSessions"
 }
 """;
 
@@ -1625,25 +1625,25 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _TerminateSession_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/TerminateSessionRequest",
-  "$defs": {
-    "TerminateSessionRequest": {
-      "type": "object",
-      "description": "Request to terminate a specific session",
-      "additionalProperties": false,
-      "required": [
-        "sessionId"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the session to terminate"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TerminateSessionRequest",
+    "$defs": {
+        "TerminateSessionRequest": {
+            "type": "object",
+            "description": "Request to terminate a specific session",
+            "additionalProperties": false,
+            "required": [
+                "sessionId"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the session to terminate"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1653,13 +1653,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _TerminateSession_Info = """
 {
-  "summary": "Terminate specific session",
-  "description": "",
-  "tags": [
-    "Sessions"
-  ],
-  "deprecated": false,
-  "operationId": "terminateSession"
+    "summary": "Terminate specific session",
+    "description": "",
+    "tags": [
+        "Sessions"
+    ],
+    "deprecated": false,
+    "operationId": "terminateSession"
 }
 """;
 
@@ -1709,25 +1709,25 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _RequestPasswordReset_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PasswordResetRequest",
-  "$defs": {
-    "PasswordResetRequest": {
-      "description": "Request to initiate a password reset by sending a reset link to the email",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "email"
-      ],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account to reset"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PasswordResetRequest",
+    "$defs": {
+        "PasswordResetRequest": {
+            "description": "Request to initiate a password reset by sending a reset link to the email",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account to reset"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1737,13 +1737,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _RequestPasswordReset_Info = """
 {
-  "summary": "Request password reset",
-  "description": "",
-  "tags": [
-    "Password"
-  ],
-  "deprecated": false,
-  "operationId": "requestPasswordReset"
+    "summary": "Request password reset",
+    "description": "",
+    "tags": [
+        "Password"
+    ],
+    "deprecated": false,
+    "operationId": "requestPasswordReset"
 }
 """;
 
@@ -1793,31 +1793,31 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ConfirmPasswordReset_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PasswordResetConfirmRequest",
-  "$defs": {
-    "PasswordResetConfirmRequest": {
-      "description": "Request to confirm a password reset using the emailed token and new password",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "token",
-        "newPassword"
-      ],
-      "properties": {
-        "token": {
-          "type": "string",
-          "description": "Password reset token received via email"
-        },
-        "newPassword": {
-          "type": "string",
-          "format": "password",
-          "minLength": 8,
-          "description": "New password to set for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PasswordResetConfirmRequest",
+    "$defs": {
+        "PasswordResetConfirmRequest": {
+            "description": "Request to confirm a password reset using the emailed token and new password",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "token",
+                "newPassword"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "description": "Password reset token received via email"
+                },
+                "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 8,
+                    "description": "New password to set for the account"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1827,13 +1827,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ConfirmPasswordReset_Info = """
 {
-  "summary": "Confirm password reset with token",
-  "description": "",
-  "tags": [
-    "Password"
-  ],
-  "deprecated": false,
-  "operationId": "confirmPasswordReset"
+    "summary": "Confirm password reset with token",
+    "description": "",
+    "tags": [
+        "Password"
+    ],
+    "deprecated": false,
+    "operationId": "confirmPasswordReset"
 }
 """;
 

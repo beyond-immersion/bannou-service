@@ -299,138 +299,138 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
 
     private static readonly string _ProxyInternalRequest_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/InternalProxyRequest",
-  "$defs": {
-    "InternalProxyRequest": {
-      "description": "Request to proxy an API call through the Connect service to a target backend service",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "targetService",
-        "targetEndpoint",
-        "method"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "description": "WebSocket session ID making the request"
-        },
-        "targetService": {
-          "type": "string",
-          "description": "Target service name (e.g., \"accounts\", \"auth\", \"behavior\")"
-        },
-        "targetEndpoint": {
-          "type": "string",
-          "description": "Target API endpoint path (e.g., \"/accounts/{id}\")"
-        },
-        "method": {
-          "type": "string",
-          "enum": [
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "PATCH"
-          ],
-          "description": "HTTP method for the target endpoint"
-        },
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Additional headers to forward to the service (null if none)"
-        },
-        "body": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Request body to forward to target service (null for no body)"
-        },
-        "pathParameters": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Path parameters for the endpoint (null if none)"
-        },
-        "queryParameters": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Query string parameters for the endpoint (null if none)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/InternalProxyRequest",
+    "$defs": {
+        "InternalProxyRequest": {
+            "description": "Request to proxy an API call through the Connect service to a target backend service",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "targetService",
+                "targetEndpoint",
+                "method"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID making the request"
+                },
+                "targetService": {
+                    "type": "string",
+                    "description": "Target service name (e.g., \"accounts\", \"auth\", \"behavior\")"
+                },
+                "targetEndpoint": {
+                    "type": "string",
+                    "description": "Target API endpoint path (e.g., \"/accounts/{id}\")"
+                },
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH"
+                    ],
+                    "description": "HTTP method for the target endpoint"
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Additional headers to forward to the service (null if none)"
+                },
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Request body to forward to target service (null for no body)"
+                },
+                "pathParameters": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Path parameters for the endpoint (null if none)"
+                },
+                "queryParameters": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Query string parameters for the endpoint (null if none)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ProxyInternalRequest_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/InternalProxyResponse",
-  "$defs": {
-    "InternalProxyResponse": {
-      "description": "Response from a proxied API call containing the target service's response data",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "success",
-        "statusCode"
-      ],
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether the proxy request was successful"
-        },
-        "statusCode": {
-          "type": "integer",
-          "description": "HTTP status code from the target service"
-        },
-        "response": {
-          "type": "string",
-          "description": "JSON response from the target service (as string)"
-        },
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/InternalProxyResponse",
+    "$defs": {
+        "InternalProxyResponse": {
+            "description": "Response from a proxied API call containing the target service's response data",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "success",
+                "statusCode"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the proxy request was successful"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code from the target service"
+                },
+                "response": {
+                    "type": "string",
+                    "description": "JSON response from the target service (as string)"
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": "Response headers from the target service"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error message if the request failed"
+                },
+                "executionTime": {
+                    "type": "integer",
+                    "description": "Request execution time in milliseconds"
+                }
             }
-          },
-          "description": "Response headers from the target service"
-        },
-        "error": {
-          "type": "string",
-          "description": "Error message if the request failed"
-        },
-        "executionTime": {
-          "type": "integer",
-          "description": "Request execution time in milliseconds"
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ProxyInternalRequest_Info = """
 {
-  "summary": "Internal API proxy for stateless requests",
-  "description": "Stateless HTTP proxy for internal requests that don't require persistent sessions.\nApplies permission validation and rate limiting based on agent role and context.\nPerfect for AI agents making one-off API calls or bulk operations.\n",
-  "tags": [
-    "Internal Proxy"
-  ],
-  "deprecated": false,
-  "operationId": "proxyInternalRequest"
+    "summary": "Internal API proxy for stateless requests",
+    "description": "Stateless HTTP proxy for internal requests that don't require persistent sessions.\nApplies permission validation and rate limiting based on agent role and context.\nPerfect for AI agents making one-off API calls or bulk operations.\n",
+    "tags": [
+        "Internal Proxy"
+    ],
+    "deprecated": false,
+    "operationId": "proxyInternalRequest"
 }
 """;
 
@@ -480,209 +480,209 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
 
     private static readonly string _GetClientCapabilities_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetClientCapabilitiesRequest",
-  "$defs": {
-    "GetClientCapabilitiesRequest": {
-      "type": "object",
-      "description": "Request to get capability manifest for a connected session (debugging endpoint)",
-      "additionalProperties": false,
-      "required": [
-        "sessionId"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "description": "Session ID to retrieve capabilities for (must have active WebSocket connection)"
-        },
-        "serviceFilter": {
-          "type": "string",
-          "description": "Optional filter by service name prefix",
-          "nullable": true
-        },
-        "includeMetadata": {
-          "type": "boolean",
-          "description": "Include additional metadata about each capability",
-          "default": false
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetClientCapabilitiesRequest",
+    "$defs": {
+        "GetClientCapabilitiesRequest": {
+            "type": "object",
+            "description": "Request to get capability manifest for a connected session (debugging endpoint)",
+            "additionalProperties": false,
+            "required": [
+                "sessionId"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "Session ID to retrieve capabilities for (must have active WebSocket connection)"
+                },
+                "serviceFilter": {
+                    "type": "string",
+                    "description": "Optional filter by service name prefix",
+                    "nullable": true
+                },
+                "includeMetadata": {
+                    "type": "boolean",
+                    "description": "Include additional metadata about each capability",
+                    "default": false
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetClientCapabilities_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ClientCapabilitiesResponse",
-  "$defs": {
-    "ClientCapabilitiesResponse": {
-      "description": "Response containing the client's capability manifest with available API endpoints and shortcuts",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "capabilities",
-        "version",
-        "generatedAt"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "description": "Session ID this capability manifest belongs to"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ClientCapabilitiesResponse",
+    "$defs": {
+        "ClientCapabilitiesResponse": {
+            "description": "Response containing the client's capability manifest with available API endpoints and shortcuts",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "capabilities",
+                "version",
+                "generatedAt"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "Session ID this capability manifest belongs to"
+                },
+                "capabilities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ClientCapability"
+                    },
+                    "description": "Available API capabilities for this client"
+                },
+                "shortcuts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ClientShortcut"
+                    },
+                    "description": "Pre-bound API calls available for this session.\ nShortcuts are invoked like normal capabilities but Connect injects\na pre-bound payload instead of using the client's payload.\n",
+                    "nullable": true
+                },
+                "version": {
+                    "type": "integer",
+                    "description": "Capability manifest version (increments on changes)"
+                },
+                "generatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this capability manifest was generated"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When these capabilities expire and need refresh",
+                    "nullable": true
+                }
+            }
         },
-        "capabilities": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ClientCapability"
-          },
-          "description": "Available API capabilities for this client"
+        "ClientCapability": {
+            "description": "A single API capability available to the client, mapping a client-salted GUID to a service endpoint",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "guid",
+                "service",
+                "endpoint",
+                "method"
+            ],
+            "properties": {
+                "guid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Client-salted GUID for this API endpoint (unique per session)"
+                },
+                "service": {
+                    "type": "string",
+                    "description": "Service name (e.g., \"accounts\", \"auth\")"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "API endpoint path (e.g., \"/accounts/create\")"
+                },
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH"
+                    ],
+                    "description": "HTTP method for this endpoint"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of this capability",
+                    "nullable": true
+                },
+                "channel": {
+                    "type": "integer",
+                    "format": "uint16",
+                    "description": "Preferred WebSocket channel for this capability",
+                    "default": 0
+                }
+            }
         },
-        "shortcuts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ClientShortcut"
-          },
-          "description": "Pre-bound API calls available for this session.\nShortcuts are invoked like normal capabilities but Connect injects\na pre-bound payload instead of using the client's payload.\n",
-          "nullable": true
-        },
-        "version": {
-          "type": "integer",
-          "description": "Capability manifest version (increments on changes)"
-        },
-        "generatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When this capability manifest was generated"
-        },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When these capabilities expire and need refresh",
-          "nullable": true
+        "ClientShortcut": {
+            "type": "object",
+            "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
+            "additionalProperties": false,
+            "required": [
+                "guid",
+                "targetService",
+                "targetEndpoint",
+                "name"
+            ],
+            "properties": {
+                "guid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "GUID to use in WebSocket message header when invoking this shortcut.\nUses UUID version 7 bits to distinguish from regular service GUIDs (version 5).\n"
+                },
+                "targetService": {
+                    "type": "string",
+                    "description": "The service this shortcut invokes (for client display purposes)."
+                },
+                "targetEndpoint": {
+                    "type": "string",
+                    "description": "The endpoint this shortcut invokes (for client display purposes)."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Machine-readable shortcut identifier (e.g., \"get_my_stats\", \"join_game\")."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of what this shortcut does.",
+                    "nullable": true
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "User-friendly name for display in client UIs.",
+                    "nullable": true
+                },
+                "sourceService": {
+                    "type": "string",
+                    "description": "The service that created this shortcut.",
+                    "nullable": true
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Categorization tags for client-side organization.",
+                    "nullable": true
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this shortcut expires (if time-limited).",
+                    "nullable": true
+                }
+            }
         }
-      }
-    },
-    "ClientCapability": {
-      "description": "A single API capability available to the client, mapping a client-salted GUID to a service endpoint",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "guid",
-        "service",
-        "endpoint",
-        "method"
-      ],
-      "properties": {
-        "guid": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Client-salted GUID for this API endpoint (unique per session)"
-        },
-        "service": {
-          "type": "string",
-          "description": "Service name (e.g., \"accounts\", \"auth\")"
-        },
-        "endpoint": {
-          "type": "string",
-          "description": "API endpoint path (e.g., \"/accounts/create\")"
-        },
-        "method": {
-          "type": "string",
-          "enum": [
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "PATCH"
-          ],
-          "description": "HTTP method for this endpoint"
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of this capability",
-          "nullable": true
-        },
-        "channel": {
-          "type": "integer",
-          "format": "uint16",
-          "description": "Preferred WebSocket channel for this capability",
-          "default": 0
-        }
-      }
-    },
-    "ClientShortcut": {
-      "type": "object",
-      "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
-      "additionalProperties": false,
-      "required": [
-        "guid",
-        "targetService",
-        "targetEndpoint",
-        "name"
-      ],
-      "properties": {
-        "guid": {
-          "type": "string",
-          "format": "uuid",
-          "description": "GUID to use in WebSocket message header when invoking this shortcut.\nUses UUID version 7 bits to distinguish from regular service GUIDs (version 5).\n"
-        },
-        "targetService": {
-          "type": "string",
-          "description": "The service this shortcut invokes (for client display purposes)."
-        },
-        "targetEndpoint": {
-          "type": "string",
-          "description": "The endpoint this shortcut invokes (for client display purposes)."
-        },
-        "name": {
-          "type": "string",
-          "description": "Machine-readable shortcut identifier (e.g., \"get_my_stats\", \"join_game\")."
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of what this shortcut does.",
-          "nullable": true
-        },
-        "displayName": {
-          "type": "string",
-          "description": "User-friendly name for display in client UIs.",
-          "nullable": true
-        },
-        "sourceService": {
-          "type": "string",
-          "description": "The service that created this shortcut.",
-          "nullable": true
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Categorization tags for client-side organization.",
-          "nullable": true
-        },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When this shortcut expires (if time-limited).",
-          "nullable": true
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetClientCapabilities_Info = """
 {
-  "summary": "Get client capability manifest (GUID \u2192 API mappings)",
-  "description": "Returns the capability manifest for the authenticated client's session.\nMaps client-salted GUIDs to available API endpoints based on the client's\ncurrent permissions and session state.\n\n**Security**: Each client receives unique GUIDs for the same API endpoints.\nThis prevents cross-session exploitation and enables per-client rate limiting.\ n\n**Dynamic Updates**: Capabilities may change during a session when:\n- Role changes occur (admin promotion, etc.)\ n- Subscription status changes\n- Session state transitions\n\nClients should listen for capability update events via WebSocket to stay current.\n",
-  "tags": [
-    "Client Capabilities"
-  ],
-  "deprecated": false,
-  "operationId": "getClientCapabilities"
+    "summary": "Get client capability manifest (GUID \u2192 API mappings)",
+    "description": "Returns the capability manifest for the authenticated client's session.\nMaps client-salted GUIDs to available API endpoints based on the client's\ncurrent permissions and session state.\n\n**Security**: Each client receives unique GUIDs for the same API endpoints.\nThis prevents cross-session exploitation and enables per-client rate limiting.\ n\n**Dynamic Updates**: Capabilities may change during a session when:\n- Role changes occur (admin promotion, etc.)\ n- Subscription status changes\n- Session state transitions\n\nClients should listen for capability update events via WebSocket to stay current.\n",
+    "tags": [
+        "Client Capabilities"
+    ],
+    "deprecated": false,
+    "operationId": "getClientCapabilities"
 }
 """;
 
@@ -740,13 +740,13 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
 
     private static readonly string _ConnectWebSocket_Info = """
 {
-  "summary": "Establish WebSocket connection",
-  "description": "Initiates a WebSocket connection for real-time communication.\nRequires JWT authentication via Authorization header.\n\n**Connection Flow:**\n1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers\n2. Include `Authorization: Bearer <jwt_token>` header for authentication\n3. Server validates JWT and extracts user claims (roles, scopes, services)\ n4. Connection upgrades to WebSocket protocol\n5. Client can send binary messages using the custom protocol\n\n**Reconnection:**\nFor existing sessions, use `Authorization: Reconnect <reconnect_token>` instead.\n",
-  "tags": [
-    "WebSocket Connection"
-  ],
-  "deprecated": false,
-  "operationId": "ConnectWebSocket"
+    "summary": "Establish WebSocket connection",
+    "description": "Initiates a WebSocket connection for real-time communication.\nRequires JWT authentication via Authorization header.\n\n**Connection Flow:**\n1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers\n2. Include `Authorization: Bearer <jwt_token>` header for authentication\n3. Server validates JWT and extracts user claims (roles, scopes, services)\ n4. Connection upgrades to WebSocket protocol\n5. Client can send binary messages using the custom protocol\n\n**Reconnection:**\nFor existing sessions, use `Authorization: Reconnect <reconnect_token>` instead.\n",
+    "tags": [
+        "WebSocket Connection"
+    ],
+    "deprecated": false,
+    "operationId": "ConnectWebSocket"
 }
 """;
 
@@ -796,16 +796,16 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
 
     private static readonly string _ConnectWebSocketPost_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ConnectRequest",
-  "$defs": {
-    "ConnectRequest": {
-      "type": "object",
-      "description": "Request model for WebSocket connection establishment.\nCurrently contains no specific fields but extends the base ApiRequest.\n",
-      "properties": {},
-      "additionalProperties": false
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConnectRequest",
+    "$defs": {
+        "ConnectRequest": {
+            "type": "object",
+            "description": "Request model for WebSocket connection establishment.\nCurrently contains no specific fields but extends the base ApiRequest.\n",
+            "properties": {},
+            "additionalProperties": false
+        }
     }
-  }
 }
 """;
 
@@ -815,13 +815,13 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
 
     private static readonly string _ConnectWebSocketPost_Info = """
 {
-  "summary": "Establish WebSocket connection (POST variant)",
-  "description": "Alternative POST method for establishing WebSocket connections.\nFunctionally identical to the GET method but supports clients that\nrequire POST for WebSocket upgrades.\n",
-  "tags": [
-    "WebSocket Connection"
-  ],
-  "deprecated": false,
-  "operationId": "ConnectWebSocketPost"
+    "summary": "Establish WebSocket connection (POST variant)",
+    "description": "Alternative POST method for establishing WebSocket connections.\nFunctionally identical to the GET method but supports clients that\nrequire POST for WebSocket upgrades.\n",
+    "tags": [
+        "WebSocket Connection"
+    ],
+    "deprecated": false,
+    "operationId": "ConnectWebSocketPost"
 }
 """;
 
@@ -871,79 +871,79 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
 
     private static readonly string _GetAccountSessions_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAccountSessionsRequest",
-  "$defs": {
-    "GetAccountSessionsRequest": {
-      "type": "object",
-      "description": "Request to get all active WebSocket sessions for an account",
-      "additionalProperties": false,
-      "required": [
-        "accountId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Account ID to retrieve sessions for"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAccountSessionsRequest",
+    "$defs": {
+        "GetAccountSessionsRequest": {
+            "type": "object",
+            "description": "Request to get all active WebSocket sessions for an account",
+            "additionalProperties": false,
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID to retrieve sessions for"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountSessions_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAccountSessionsResponse",
-  "$defs": {
-    "GetAccountSessionsResponse": {
-      "type": "object",
-      "description": "Response containing all active WebSocket session IDs for an account",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "sessionIds",
-        "retrievedAt"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Account ID the sessions belong to"
-        },
-        "sessionIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of active WebSocket session IDs for this account"
-        },
-        "count": {
-          "type": "integer",
-          "description": "Number of active sessions"
-        },
-        "retrievedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When this session list was retrieved"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAccountSessionsResponse",
+    "$defs": {
+        "GetAccountSessionsResponse": {
+            "type": "object",
+            "description": "Response containing all active WebSocket session IDs for an account",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "sessionIds",
+                "retrievedAt"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID the sessions belong to"
+                },
+                "sessionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of active WebSocket session IDs for this account"
+                },
+                "count": {
+                    "type": "integer",
+                    "description": "Number of active sessions"
+                },
+                "retrievedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this session list was retrieved"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountSessions_Info = """
 {
-  "summary": "Get all active WebSocket sessions for an account",
-  "description": "Returns all active WebSocket session IDs for a specified account.\nThis is an internal endpoint used by services that need to know which\nsessions are currently connected for a given account.\n\n**Use Cases:**\n- GameSessionService periodic cache sync\n- Service-to-service session discovery\n- Admin session management\n\n**Note:** Session IDs returned are those with active WebSocket connections.\nSessions in reconnection windows may not appear in this list.\n",
-  "tags": [
-    "Session Management"
-  ],
-  "deprecated": false,
-  "operationId": "getAccountSessions"
+    "summary": "Get all active WebSocket sessions for an account",
+    "description": "Returns all active WebSocket session IDs for a specified account.\nThis is an internal endpoint used by services that need to know which\nsessions are currently connected for a given account.\n\n**Use Cases:**\n- GameSessionService periodic cache sync\n- Service-to-service session discovery\n- Admin session management\n\n**Note:** Session IDs returned are those with active WebSocket connections.\nSessions in reconnection windows may not appear in this list.\n",
+    "tags": [
+        "Session Management"
+    ],
+    "deprecated": false,
+    "operationId": "getAccountSessions"
 }
 """;
 

@@ -371,242 +371,242 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _ListAccounts_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListAccountsRequest",
-  "$defs": {
-    "ListAccountsRequest": {
-      "type": "object",
-      "description": "Request to list accounts with optional filtering",
-      "additionalProperties": false,
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "nullable": true,
-          "description": "Filter accounts by email address"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Filter accounts by display name"
-        },
-        "provider": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AuthProvider"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListAccountsRequest",
+    "$defs": {
+        "ListAccountsRequest": {
+            "type": "object",
+            "description": "Request to list accounts with optional filtering",
+            "additionalProperties": false,
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "nullable": true,
+                    "description": "Filter accounts by email address"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter accounts by display name"
+                },
+                "provider": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Filter accounts by authentication provider"
+                },
+                "verified": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Filter accounts by email verification status"
+                },
+                "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Page number for pagination"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Number of accounts per page"
+                }
             }
-          ],
-          "nullable": true,
-          "description": "Filter accounts by authentication provider"
         },
-        "verified": {
-          "type": "boolean",
-          "nullable": true,
-          "description": "Filter accounts by email verification status"
-        },
-        "page": {
-          "type": "integer",
-          "minimum": 1,
-          "default": 1,
-          "description": "Page number for pagination"
-        },
-        "pageSize": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "default": 20,
-          "description": "Number of accounts per page"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _ListAccounts_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountListResponse",
-  "$defs": {
-    "AccountListResponse": {
-      "type": "object",
-      "description": "Paginated list of accounts",
-      "additionalProperties": false,
-      "required": [
-        "accounts",
-        "totalCount",
-        "page",
-        "pageSize"
-      ],
-      "properties": {
-        "accounts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AccountResponse"
-          },
-          "description": "List of accounts for the current page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountListResponse",
+    "$defs": {
+        "AccountListResponse": {
+            "type": "object",
+            "description": "Paginated list of accounts",
+            "additionalProperties": false,
+            "required": [
+                "accounts",
+                "totalCount",
+                "page",
+                "pageSize"
+            ],
+            "properties": {
+                "accounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AccountResponse"
+                    },
+                    "description": "List of accounts for the current page"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of accounts matching the filter"
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Number of accounts per page"
+                },
+                "hasNextPage": {
+                    "type": "boolean",
+                    "description": "Whether there are more pages after this one"
+                },
+                "hasPreviousPage": {
+                    "type": "boolean",
+                    "description": "Whether there are pages before this one"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of accounts matching the filter"
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         },
-        "page": {
-          "type": "integer",
-          "description": "Current page number"
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "pageSize": {
-          "type": "integer",
-          "description": "Number of accounts per page"
-        },
-        "hasNextPage": {
-          "type": "boolean",
-          "description": "Whether there are more pages after this one"
-        },
-        "hasPreviousPage": {
-          "type": "boolean",
-          "description": "Whether there are pages before this one"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AccountResponse": {
-      "type": "object",
-      "description": "Account information response",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt",
-        "emailVerified",
-        "roles"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name for the account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "BCrypt hashed password for authentication"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the account was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Timestamp when the account was last updated"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the account"
-        },
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
-        }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _ListAccounts_Info = """
 {
-  "summary": "List accounts with filtering",
-  "description": "",
-  "tags": [
-    "Account Management"
-  ],
-  "deprecated": false,
-  "operationId": "listAccounts"
+    "summary": "List accounts with filtering",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "listAccounts"
 }
 """;
 
@@ -656,191 +656,191 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _CreateAccount_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateAccountRequest",
-  "$defs": {
-    "CreateAccountRequest": {
-      "type": "object",
-      "description": "Request to create a new account",
-      "additionalProperties": false,
-      "required": [
-        "email"
-      ],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address for the new account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "Pre-hashed password from Auth service"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "maxLength": 100,
-          "description": "Display name for the account"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "List of roles assigned to the account (null defaults to empty)"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateAccountRequest",
+    "$defs": {
+        "CreateAccountRequest": {
+            "type": "object",
+            "description": "Request to create a new account",
+            "additionalProperties": false,
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address for the new account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pre-hashed password from Auth service"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Display name for the account"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of roles assigned to the account (null defaults to empty)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateAccount_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountResponse",
-  "$defs": {
-    "AccountResponse": {
-      "type": "object",
-      "description": "Account information response",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt",
-        "emailVerified",
-        "roles"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountResponse",
+    "$defs": {
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name for the account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "BCrypt hashed password for authentication"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the account was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Timestamp when the account was last updated"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the account"
-        },
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _CreateAccount_Info = """
 {
-  "summary": "Create new account",
-  "description": "",
-  "tags": [
-    "Account Management"
-  ],
-  "deprecated": false,
-  "operationId": "createAccount"
+    "summary": "Create new account",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "createAccount"
 }
 """;
 
@@ -890,161 +890,161 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _GetAccount_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAccountRequest",
-  "$defs": {
-    "GetAccountRequest": {
-      "type": "object",
-      "description": "Request to get a specific account by ID",
-      "additionalProperties": false,
-      "required": [
-        "accountId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAccountRequest",
+    "$defs": {
+        "GetAccountRequest": {
+            "type": "object",
+            "description": "Request to get a specific account by ID",
+            "additionalProperties": false,
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to retrieve"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccount_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountResponse",
-  "$defs": {
-    "AccountResponse": {
-      "type": "object",
-      "description": "Account information response",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt",
-        "emailVerified",
-        "roles"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountResponse",
+    "$defs": {
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name for the account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "BCrypt hashed password for authentication"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the account was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Timestamp when the account was last updated"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the account"
-        },
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetAccount_Info = """
 {
-  "summary": "Get account by ID",
-  "description": "",
-  "tags": [
-    "Account Management"
-  ],
-  "deprecated": false,
-  "operationId": "getAccount"
+    "summary": "Get account by ID",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "getAccount"
 }
 """;
 
@@ -1094,181 +1094,181 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _UpdateAccount_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateAccountRequest",
-  "$defs": {
-    "UpdateAccountRequest": {
-      "type": "object",
-      "description": "Request to update an existing account",
-      "additionalProperties": false,
-      "required": [
-        "accountId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to update"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "maxLength": 100,
-          "description": "New display name for the account"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Updated list of roles for the account (null to keep unchanged)"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Updated custom metadata for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateAccountRequest",
+    "$defs": {
+        "UpdateAccountRequest": {
+            "type": "object",
+            "description": "Request to update an existing account",
+            "additionalProperties": false,
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to update"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "New display name for the account"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Updated list of roles for the account (null to keep unchanged)"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Updated custom metadata for the account"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateAccount_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountResponse",
-  "$defs": {
-    "AccountResponse": {
-      "type": "object",
-      "description": "Account information response",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt",
-        "emailVerified",
-        "roles"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountResponse",
+    "$defs": {
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name for the account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "BCrypt hashed password for authentication"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the account was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Timestamp when the account was last updated"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the account"
-        },
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _UpdateAccount_Info = """
 {
-  "summary": "Update account",
-  "description": "",
-  "tags": [
-    "Account Management"
-  ],
-  "deprecated": false,
-  "operationId": "updateAccount"
+    "summary": "Update account",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateAccount"
 }
 """;
 
@@ -1318,25 +1318,25 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _DeleteAccount_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteAccountRequest",
-  "$defs": {
-    "DeleteAccountRequest": {
-      "type": "object",
-      "description": "Request to delete a specific account",
-      "additionalProperties": false,
-      "required": [
-        "accountId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to delete"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteAccountRequest",
+    "$defs": {
+        "DeleteAccountRequest": {
+            "type": "object",
+            "description": "Request to delete a specific account",
+            "additionalProperties": false,
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to delete"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1346,13 +1346,13 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _DeleteAccount_Info = """
 {
-  "summary": "Delete account",
-  "description": "",
-  "tags": [
-    "Account Management"
-  ],
-  "deprecated": false,
-  "operationId": "deleteAccount"
+    "summary": "Delete account",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "deleteAccount"
 }
 """;
 
@@ -1402,161 +1402,161 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _GetAccountByEmail_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAccountByEmailRequest",
-  "$defs": {
-    "GetAccountByEmailRequest": {
-      "type": "object",
-      "description": "Request to get account by email address",
-      "additionalProperties": false,
-      "required": [
-        "email"
-      ],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address to look up"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAccountByEmailRequest",
+    "$defs": {
+        "GetAccountByEmailRequest": {
+            "type": "object",
+            "description": "Request to get account by email address",
+            "additionalProperties": false,
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address to look up"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountByEmail_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountResponse",
-  "$defs": {
-    "AccountResponse": {
-      "type": "object",
-      "description": "Account information response",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt",
-        "emailVerified",
-        "roles"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountResponse",
+    "$defs": {
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name for the account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "BCrypt hashed password for authentication"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the account was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Timestamp when the account was last updated"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the account"
-        },
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountByEmail_Info = """
 {
-  "summary": "Get account by email",
-  "description": "",
-  "tags": [
-    "Account Lookup"
-  ],
-  "deprecated": false,
-  "operationId": "getAccountByEmail"
+    "summary": "Get account by email",
+    "description": "",
+    "tags": [
+        "Account Lookup"
+    ],
+    "deprecated": false,
+    "operationId": "getAccountByEmail"
 }
 """;
 
@@ -1606,109 +1606,109 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _GetAuthMethods_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAuthMethodsRequest",
-  "$defs": {
-    "GetAuthMethodsRequest": {
-      "type": "object",
-      "description": "Request to get authentication methods for an account",
-      "additionalProperties": false,
-      "required": [
-        "accountId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAuthMethodsRequest",
+    "$defs": {
+        "GetAuthMethodsRequest": {
+            "type": "object",
+            "description": "Request to get authentication methods for an account",
+            "additionalProperties": false,
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAuthMethods_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AuthMethodsResponse",
-  "$defs": {
-    "AuthMethodsResponse": {
-      "type": "object",
-      "description": "Response containing list of authentication methods",
-      "additionalProperties": false,
-      "required": [
-        "authMethods"
-      ],
-      "properties": {
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AuthMethodsResponse",
+    "$defs": {
+        "AuthMethodsResponse": {
+            "type": "object",
+            "description": "Response containing list of authentication methods",
+            "additionalProperties": false,
+            "required": [
+                "authMethods"
+            ],
+            "properties": {
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                }
+            }
+        },
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
+        },
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetAuthMethods_Info = """
 {
-  "summary": "Get authentication methods for account",
-  "description": "",
-  "tags": [
-    "Authentication Methods"
-  ],
-  "deprecated": false,
-  "operationId": "getAuthMethods"
+    "summary": "Get authentication methods for account",
+    "description": "",
+    "tags": [
+        "Authentication Methods"
+    ],
+    "deprecated": false,
+    "operationId": "getAuthMethods"
 }
 """;
 
@@ -1758,115 +1758,115 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _AddAuthMethod_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AddAuthMethodRequest",
-  "$defs": {
-    "AddAuthMethodRequest": {
-      "type": "object",
-      "description": "Request to add an authentication method to an account",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "provider"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to add auth method to"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AddAuthMethodRequest",
+    "$defs": {
+        "AddAuthMethodRequest": {
+            "type": "object",
+            "description": "Request to add an authentication method to an account",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "provider"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to add auth method to"
+                },
+                "provider": {
+                    "$ref": "#/$defs/OAuthProvider",
+                    "description": "OAuth provider type to add"
+                },
+                "externalId": {
+                    "type": "string",
+                    "description": "External user ID from the OAuth provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the OAuth provider"
+                }
+            }
         },
-        "provider": {
-          "$ref": "#/$defs/OAuthProvider",
-          "description": "OAuth provider type to add"
-        },
-        "externalId": {
-          "type": "string",
-          "description": "External user ID from the OAuth provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the OAuth provider"
+        "OAuthProvider": {
+            "type": "string",
+            "description": "OAuth provider types (excludes email)",
+            "enum": [
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "OAuthProvider": {
-      "type": "string",
-      "description": "OAuth provider types (excludes email)",
-      "enum": [
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _AddAuthMethod_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AuthMethodResponse",
-  "$defs": {
-    "AuthMethodResponse": {
-      "type": "object",
-      "description": "Response after adding an authentication method",
-      "additionalProperties": false,
-      "required": [
-        "methodId",
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AuthMethodResponse",
+    "$defs": {
+        "AuthMethodResponse": {
+            "type": "object",
+            "description": "Response after adding an authentication method",
+            "additionalProperties": false,
+            "required": [
+                "methodId",
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/OAuthProvider",
+                    "description": "OAuth provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "description": "External user ID from the OAuth provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the OAuth provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "provider": {
-          "$ref": "#/$defs/OAuthProvider",
-          "description": "OAuth provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "description": "External user ID from the OAuth provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the OAuth provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
+        "OAuthProvider": {
+            "type": "string",
+            "description": "OAuth provider types (excludes email)",
+            "enum": [
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "OAuthProvider": {
-      "type": "string",
-      "description": "OAuth provider types (excludes email)",
-      "enum": [
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _AddAuthMethod_Info = """
 {
-  "summary": "Add authentication method to account",
-  "description": "",
-  "tags": [
-    "Authentication Methods"
-  ],
-  "deprecated": false,
-  "operationId": "addAuthMethod"
+    "summary": "Add authentication method to account",
+    "description": "",
+    "tags": [
+        "Authentication Methods"
+    ],
+    "deprecated": false,
+    "operationId": "addAuthMethod"
 }
 """;
 
@@ -1916,31 +1916,31 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _RemoveAuthMethod_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RemoveAuthMethodRequest",
-  "$defs": {
-    "RemoveAuthMethodRequest": {
-      "type": "object",
-      "description": "Request to remove an authentication method from an account",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "methodId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account"
-        },
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the authentication method to remove"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RemoveAuthMethodRequest",
+    "$defs": {
+        "RemoveAuthMethodRequest": {
+            "type": "object",
+            "description": "Request to remove an authentication method from an account",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "methodId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account"
+                },
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the authentication method to remove"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1950,13 +1950,13 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _RemoveAuthMethod_Info = """
 {
-  "summary": "Remove authentication method from account",
-  "description": "",
-  "tags": [
-    "Authentication Methods"
-  ],
-  "deprecated": false,
-  "operationId": "removeAuthMethod"
+    "summary": "Remove authentication method from account",
+    "description": "",
+    "tags": [
+        "Authentication Methods"
+    ],
+    "deprecated": false,
+    "operationId": "removeAuthMethod"
 }
 """;
 
@@ -2006,175 +2006,175 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _GetAccountByProvider_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAccountByProviderRequest",
-  "$defs": {
-    "GetAccountByProviderRequest": {
-      "type": "object",
-      "description": "Request to get account by external provider ID",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "externalId"
-      ],
-      "properties": {
-        "provider": {
-          "$ref": "#/$defs/OAuthProvider",
-          "description": "OAuth provider type"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAccountByProviderRequest",
+    "$defs": {
+        "GetAccountByProviderRequest": {
+            "type": "object",
+            "description": "Request to get account by external provider ID",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "externalId"
+            ],
+            "properties": {
+                "provider": {
+                    "$ref": "#/$defs/OAuthProvider",
+                    "description": "OAuth provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "description": "External ID from the provider"
+                }
+            }
         },
-        "externalId": {
-          "type": "string",
-          "description": "External ID from the provider"
+        "OAuthProvider": {
+            "type": "string",
+            "description": "OAuth provider types (excludes email)",
+            "enum": [
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "OAuthProvider": {
-      "type": "string",
-      "description": "OAuth provider types (excludes email)",
-      "enum": [
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountByProvider_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountResponse",
-  "$defs": {
-    "AccountResponse": {
-      "type": "object",
-      "description": "Account information response",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt",
-        "emailVerified",
-        "roles"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountResponse",
+    "$defs": {
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name for the account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "BCrypt hashed password for authentication"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the account was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Timestamp when the account was last updated"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the account"
-        },
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountByProvider_Info = """
 {
-  "summary": "Get account by external provider ID",
-  "description": "",
-  "tags": [
-    "Account Lookup"
-  ],
-  "deprecated": false,
-  "operationId": "getAccountByProvider"
+    "summary": "Get account by external provider ID",
+    "description": "",
+    "tags": [
+        "Account Lookup"
+    ],
+    "deprecated": false,
+    "operationId": "getAccountByProvider"
 }
 """;
 
@@ -2224,173 +2224,173 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _UpdateProfile_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateProfileRequest",
-  "$defs": {
-    "UpdateProfileRequest": {
-      "type": "object",
-      "description": "Request to update an account profile",
-      "additionalProperties": false,
-      "required": [
-        "accountId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to update"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "maxLength": 100,
-          "description": "New display name for the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Updated custom metadata for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateProfileRequest",
+    "$defs": {
+        "UpdateProfileRequest": {
+            "type": "object",
+            "description": "Request to update an account profile",
+            "additionalProperties": false,
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to update"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "New display name for the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Updated custom metadata for the account"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateProfile_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountResponse",
-  "$defs": {
-    "AccountResponse": {
-      "type": "object",
-      "description": "Account information response",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt",
-        "emailVerified",
-        "roles"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountResponse",
+    "$defs": {
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                }
+            }
         },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
         },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name for the account"
-        },
-        "passwordHash": {
-          "type": "string",
-          "nullable": true,
-          "description": "BCrypt hashed password for authentication"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the account was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Timestamp when the account was last updated"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "Whether the email address has been verified"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of roles assigned to the account"
-        },
-        "authMethods": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AuthMethodInfo"
-          },
-          "description": "List of authentication methods linked to the account"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata associated with the account"
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
         }
-      }
-    },
-    "AuthMethodInfo": {
-      "type": "object",
-      "description": "Information about a linked authentication method",
-      "additionalProperties": false,
-      "required": [
-        "provider",
-        "linkedAt"
-      ],
-      "properties": {
-        "methodId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the authentication method"
-        },
-        "provider": {
-          "$ref": "#/$defs/AuthProvider",
-          "description": "Authentication provider type"
-        },
-        "externalId": {
-          "type": "string",
-          "nullable": true,
-          "description": "External user ID from the authentication provider"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name from the authentication provider"
-        },
-        "linkedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the authentication method was linked"
-        }
-      }
-    },
-    "AuthProvider": {
-      "type": "string",
-      "description": "All authentication provider types including email",
-      "enum": [
-        "email",
-        "google",
-        "discord",
-        "twitch",
-        "steam"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _UpdateProfile_Info = """
 {
-  "summary": "Update account profile",
-  "description": "",
-  "tags": [
-    "Profile Management"
-  ],
-  "deprecated": false,
-  "operationId": "updateProfile"
+    "summary": "Update account profile",
+    "description": "",
+    "tags": [
+        "Profile Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateProfile"
 }
 """;
 
@@ -2440,30 +2440,30 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _UpdatePasswordHash_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdatePasswordRequest",
-  "$defs": {
-    "UpdatePasswordRequest": {
-      "type": "object",
-      "description": "Request to update an account password",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "passwordHash"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to update"
-        },
-        "passwordHash": {
-          "type": "string",
-          "description": "New pre-hashed password from Auth service"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdatePasswordRequest",
+    "$defs": {
+        "UpdatePasswordRequest": {
+            "type": "object",
+            "description": "Request to update an account password",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "passwordHash"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to update"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "description": "New pre-hashed password from Auth service"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -2473,13 +2473,13 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _UpdatePasswordHash_Info = """
 {
-  "summary": "Update account password hash",
-  "description": "",
-  "tags": [
-    "Account Management"
-  ],
-  "deprecated": false,
-  "operationId": "updatePasswordHash"
+    "summary": "Update account password hash",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "updatePasswordHash"
 }
 """;
 
@@ -2529,30 +2529,30 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _UpdateVerificationStatus_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateVerificationRequest",
-  "$defs": {
-    "UpdateVerificationRequest": {
-      "type": "object",
-      "description": "Request to update email verification status",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "emailVerified"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to update"
-        },
-        "emailVerified": {
-          "type": "boolean",
-          "description": "New email verification status"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateVerificationRequest",
+    "$defs": {
+        "UpdateVerificationRequest": {
+            "type": "object",
+            "description": "Request to update email verification status",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "emailVerified"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to update"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "New email verification status"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -2562,13 +2562,13 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _UpdateVerificationStatus_Info = """
 {
-  "summary": "Update email verification status",
-  "description": "",
-  "tags": [
-    "Account Management"
-  ],
-  "deprecated": false,
-  "operationId": "updateVerificationStatus"
+    "summary": "Update email verification status",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateVerificationStatus"
 }
 """;
 

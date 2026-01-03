@@ -225,112 +225,112 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _ListServices_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListServicesRequest",
-  "$defs": {
-    "ListServicesRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to list all game services",
-      "properties": {
-        "activeOnly": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, only return active services"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListServicesRequest",
+    "$defs": {
+        "ListServicesRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list all game services",
+            "properties": {
+                "activeOnly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, only return active services"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListServices_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListServicesResponse",
-  "$defs": {
-    "ListServicesResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing list of game services",
-      "required": [
-        "services",
-        "totalCount"
-      ],
-      "properties": {
-        "services": {
-          "type": "array",
-          "description": "List of game services matching the request criteria",
-          "items": {
-            "$ref": "#/$defs/ServiceInfo"
-          }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListServicesResponse",
+    "$defs": {
+        "ListServicesResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing list of game services",
+            "required": [
+                "services",
+                "totalCount"
+            ],
+            "properties": {
+                "services": {
+                    "type": "array",
+                    "description": "List of game services matching the request criteria",
+                    "items": {
+                        "$ref": "#/$defs/ServiceInfo"
+                    }
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of services matching the filter"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of services matching the filter"
+        "ServiceInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a game service",
+            "required": [
+                "serviceId",
+                "stubName",
+                "displayName",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the service"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the service is currently active"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the service was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the service was last updated"
+                }
+            }
         }
-      }
-    },
-    "ServiceInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a game service",
-      "required": [
-        "serviceId",
-        "stubName",
-        "displayName",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the service"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "URL-safe identifier (e.g., \"arcadia\")"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Human-readable name (e.g., \"Arcadia Online\")"
-        },
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional description"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the service is currently active"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the service was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the service was last updated"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListServices_Info = """
 {
-  "summary": "List all registered game services",
-  "description": "Returns all game services, optionally filtered by active status.",
-  "tags": [
-    "Service Registry"
-  ],
-  "deprecated": false,
-  "operationId": "listServices"
+    "summary": "List all registered game services",
+    "description": "Returns all game services, optionally filtered by active status.",
+    "tags": [
+        "Service Registry"
+    ],
+    "deprecated": false,
+    "operationId": "listServices"
 }
 """;
 
@@ -380,96 +380,96 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _GetService_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetServiceRequest",
-  "$defs": {
-    "GetServiceRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to get a service by ID or stub name (provide either one)",
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "ID of the service to retrieve (null if using stubName)"
-        },
-        "stubName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Stub name of the service to retrieve (null if using serviceId)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetServiceRequest",
+    "$defs": {
+        "GetServiceRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get a service by ID or stub name (provide either one)",
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the service to retrieve (null if using stubName)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Stub name of the service to retrieve (null if using serviceId)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetService_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ServiceInfo",
-  "$defs": {
-    "ServiceInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a game service",
-      "required": [
-        "serviceId",
-        "stubName",
-        "displayName",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the service"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "URL-safe identifier (e.g., \"arcadia\")"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Human-readable name (e.g., \"Arcadia Online\")"
-        },
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional description"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the service is currently active"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the service was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the service was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ServiceInfo",
+    "$defs": {
+        "ServiceInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a game service",
+            "required": [
+                "serviceId",
+                "stubName",
+                "displayName",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the service"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the service is currently active"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the service was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the service was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetService_Info = """
 {
-  "summary": "Get service by ID or stub name",
-  "description": "Retrieves a single service by either serviceId (GUID) or stubName.",
-  "tags": [
-    "Service Registry"
-  ],
-  "deprecated": false,
-  "operationId": "getService"
+    "summary": "Get service by ID or stub name",
+    "description": "Retrieves a single service by either serviceId (GUID) or stubName.",
+    "tags": [
+        "Service Registry"
+    ],
+    "deprecated": false,
+    "operationId": "getService"
 }
 """;
 
@@ -519,113 +519,113 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _CreateService_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateServiceRequest",
-  "$defs": {
-    "CreateServiceRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to create a new game service",
-      "required": [
-        "stubName",
-        "displayName"
-      ],
-      "properties": {
-        "stubName": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "minLength": 2,
-          "maxLength": 50,
-          "description": "URL-safe identifier for the service (e.g., \"arcadia\", \"fantasia\")"
-        },
-        "displayName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 100,
-          "description": "Human-readable name for the service (e.g., \"Arcadia Online\")"
-        },
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "maxLength": 500,
-          "description": "Optional description of the service"
-        },
-        "isActive": {
-          "type": "boolean",
-          "default": true,
-          "description": "Whether the service is currently active"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateServiceRequest",
+    "$defs": {
+        "CreateServiceRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to create a new game service",
+            "required": [
+                "stubName",
+                "displayName"
+            ],
+            "properties": {
+                "stubName": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "minLength": 2,
+                    "maxLength": 50,
+                    "description": "URL-safe identifier for the service (e.g., \"arcadia\", \"fantasia\")"
+                },
+                "displayName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Human-readable name for the service (e.g., \"Arcadia Online\")"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Optional description of the service"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether the service is currently active"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateService_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ServiceInfo",
-  "$defs": {
-    "ServiceInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a game service",
-      "required": [
-        "serviceId",
-        "stubName",
-        "displayName",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the service"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "URL-safe identifier (e.g., \"arcadia\")"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Human-readable name (e.g., \"Arcadia Online\")"
-        },
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional description"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the service is currently active"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the service was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the service was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ServiceInfo",
+    "$defs": {
+        "ServiceInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a game service",
+            "required": [
+                "serviceId",
+                "stubName",
+                "displayName",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the service"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the service is currently active"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the service was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the service was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateService_Info = """
 {
-  "summary": "Create a new game service entry",
-  "description": "Admin-only endpoint to register a new game service in the registry.",
-  "tags": [
-    "Service Registry"
-  ],
-  "deprecated": false,
-  "operationId": "createService"
+    "summary": "Create a new game service entry",
+    "description": "Admin-only endpoint to register a new game service in the registry.",
+    "tags": [
+        "Service Registry"
+    ],
+    "deprecated": false,
+    "operationId": "createService"
 }
 """;
 
@@ -675,110 +675,110 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _UpdateService_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateServiceRequest",
-  "$defs": {
-    "UpdateServiceRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to update an existing game service",
-      "required": [
-        "serviceId"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the service to update"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "maxLength": 100,
-          "description": "New display name"
-        },
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "maxLength": 500,
-          "description": "New description"
-        },
-        "isActive": {
-          "type": "boolean",
-          "nullable": true,
-          "description": "New active status"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateServiceRequest",
+    "$defs": {
+        "UpdateServiceRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update an existing game service",
+            "required": [
+                "serviceId"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the service to update"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "New display name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "New description"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "New active status"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateService_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ServiceInfo",
-  "$defs": {
-    "ServiceInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a game service",
-      "required": [
-        "serviceId",
-        "stubName",
-        "displayName",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the service"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "URL-safe identifier (e.g., \"arcadia\")"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Human-readable name (e.g., \"Arcadia Online\")"
-        },
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional description"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the service is currently active"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the service was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the service was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ServiceInfo",
+    "$defs": {
+        "ServiceInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a game service",
+            "required": [
+                "serviceId",
+                "stubName",
+                "displayName",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the service"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "URL-safe identifier (e.g., \"arcadia\")"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name (e.g., \"Arcadia Online\")"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the service is currently active"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the service was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the service was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateService_Info = """
 {
-  "summary": "Update a game service entry",
-  "description": "Admin-only endpoint to update an existing game service.",
-  "tags": [
-    "Service Registry"
-  ],
-  "deprecated": false,
-  "operationId": "updateService"
+    "summary": "Update a game service entry",
+    "description": "Admin-only endpoint to update an existing game service.",
+    "tags": [
+        "Service Registry"
+    ],
+    "deprecated": false,
+    "operationId": "updateService"
 }
 """;
 
@@ -828,25 +828,25 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _DeleteService_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteServiceRequest",
-  "$defs": {
-    "DeleteServiceRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to delete a game service",
-      "required": [
-        "serviceId"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the service to delete"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteServiceRequest",
+    "$defs": {
+        "DeleteServiceRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to delete a game service",
+            "required": [
+                "serviceId"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the service to delete"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -856,13 +856,13 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _DeleteService_Info = """
 {
-  "summary": "Delete a game service entry",
-  "description": "Admin-only endpoint to remove a game service from the registry.",
-  "tags": [
-    "Service Registry"
-  ],
-  "deprecated": false,
-  "operationId": "deleteService"
+    "summary": "Delete a game service entry",
+    "description": "Admin-only endpoint to remove a game service from the registry.",
+    "tags": [
+        "Service Registry"
+    ],
+    "deprecated": false,
+    "operationId": "deleteService"
 }
 """;
 

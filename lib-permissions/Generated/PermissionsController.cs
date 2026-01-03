@@ -325,85 +325,85 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _GetCapabilities_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CapabilityRequest",
-  "$defs": {
-    "CapabilityRequest": {
-      "description": "Request to retrieve available API methods for a session",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID for lookup in Redis"
-        },
-        "serviceIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Optional filter for specific services (null for all services)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CapabilityRequest",
+    "$defs": {
+        "CapabilityRequest": {
+            "description": "Request to retrieve available API methods for a session",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID for lookup in Redis"
+                },
+                "serviceIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Optional filter for specific services (null for all services)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetCapabilities_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CapabilityResponse",
-  "$defs": {
-    "CapabilityResponse": {
-      "description": "Response containing the compiled permissions for a session",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "permissions"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID that was queried"
-        },
-        "permissions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CapabilityResponse",
+    "$defs": {
+        "CapabilityResponse": {
+            "description": "Response containing the compiled permissions for a session",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "permissions"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID that was queried"
+                },
+                "permissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": "Map of ServiceID -> List of available methods"
+                },
+                "generatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When these permissions were compiled"
+                }
             }
-          },
-          "description": "Map of ServiceID -> List of available methods"
-        },
-        "generatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When these permissions were compiled"
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetCapabilities_Info = """
 {
-  "summary": "Get available API methods for session",
-  "description": "Returns compiled list of methods available to this session",
-  "tags": [
-    "Permission Lookup"
-  ],
-  "deprecated": false,
-  "operationId": "getCapabilities"
+    "summary": "Get available API methods for session",
+    "description": "Returns compiled list of methods available to this session",
+    "tags": [
+        "Permission Lookup"
+    ],
+    "deprecated": false,
+    "operationId": "getCapabilities"
 }
 """;
 
@@ -453,80 +453,80 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _ValidateApiAccess_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ValidationRequest",
-  "$defs": {
-    "ValidationRequest": {
-      "description": "Request to validate whether a session has access to a specific API method",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "serviceId",
-        "method"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID to validate access for"
-        },
-        "serviceId": {
-          "type": "string",
-          "description": "Target service ID"
-        },
-        "method": {
-          "type": "string",
-          "description": "Method name being accessed"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidationRequest",
+    "$defs": {
+        "ValidationRequest": {
+            "description": "Request to validate whether a session has access to a specific API method",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "serviceId",
+                "method"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID to validate access for"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "description": "Target service ID"
+                },
+                "method": {
+                    "type": "string",
+                    "description": "Method name being accessed"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ValidateApiAccess_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ValidationResponse",
-  "$defs": {
-    "ValidationResponse": {
-      "description": "Response indicating whether access to a specific API method is permitted",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "allowed",
-        "sessionId"
-      ],
-      "properties": {
-        "allowed": {
-          "type": "boolean",
-          "description": "Whether access is permitted"
-        },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID that was validated"
-        },
-        "reason": {
-          "type": "string",
-          "description": "Reason for denial (if applicable)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidationResponse",
+    "$defs": {
+        "ValidationResponse": {
+            "description": "Response indicating whether access to a specific API method is permitted",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "allowed",
+                "sessionId"
+            ],
+            "properties": {
+                "allowed": {
+                    "type": "boolean",
+                    "description": "Whether access is permitted"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID that was validated"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Reason for denial (if applicable)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ValidateApiAccess_Info = """
 {
-  "summary": "Validate specific API access for session",
-  "description": "Fast O(1) validation using Redis lookup",
-  "tags": [
-    "Permission Validation"
-  ],
-  "deprecated": false,
-  "operationId": "validateApiAccess"
+    "summary": "Validate specific API access for session",
+    "description": "Fast O(1) validation using Redis lookup",
+    "tags": [
+        "Permission Validation"
+    ],
+    "deprecated": false,
+    "operationId": "validateApiAccess"
 }
 """;
 
@@ -576,120 +576,120 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _RegisterServicePermissions_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ServicePermissionMatrix",
-  "$defs": {
-    "ServicePermissionMatrix": {
-      "description": "Complete permission matrix for a service defining state-role-method access rules",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "serviceId",
-        "permissions"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "description": "Unique service identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ServicePermissionMatrix",
+    "$defs": {
+        "ServicePermissionMatrix": {
+            "description": "Complete permission matrix for a service defining state-role-method access rules",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "serviceId",
+                "permissions"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "description": "Unique service identifier"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable service name (null to use serviceId)"
+                },
+                "permissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/$defs/StatePermissions"
+                    },
+                    "description": "Map of State -> Role -> Methods structure"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Service API version for change tracking"
+                }
+            }
         },
-        "serviceName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Human-readable service name (null to use serviceId)"
-        },
-        "permissions": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/$defs/StatePermissions"
-          },
-          "description": "Map of State -> Role -> Methods structure"
-        },
-        "version": {
-          "type": "string",
-          "description": "Service API version for change tracking"
+        "StatePermissions": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "description": "Map of Role -> List of Methods for this state",
+            "example": {
+                "user": [
+                    "ListGameSessions",
+                    "GetGameSession"
+                ],
+                "admin": [
+                    "ListGameSessions",
+                    "GetGameSession",
+                    "CreateGameSession"
+                ]
+            }
         }
-      }
-    },
-    "StatePermissions": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      },
-      "description": "Map of Role -> List of Methods for this state",
-      "example": {
-        "user": [
-          "ListGameSessions",
-          "GetGameSession"
-        ],
-        "admin": [
-          "ListGameSessions",
-          "GetGameSession",
-          "CreateGameSession"
-        ]
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RegisterServicePermissions_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RegistrationResponse",
-  "$defs": {
-    "RegistrationResponse": {
-      "description": "Response from registering or updating a service permission matrix",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "serviceId",
-        "success",
-        "affectedSessions"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "description": "Service ID that was registered"
-        },
-        "success": {
-          "type": "boolean",
-          "description": "Whether registration was successful"
-        },
-        "message": {
-          "type": "string",
-          "description": "Success or error message"
-        },
-        "registered": {
-          "type": "boolean",
-          "description": "Whether registration was successful"
-        },
-        "affectedSessions": {
-          "type": "integer",
-          "description": "Number of sessions that had permissions recompiled"
-        },
-        "recompiledAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when permissions were recompiled"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegistrationResponse",
+    "$defs": {
+        "RegistrationResponse": {
+            "description": "Response from registering or updating a service permission matrix",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "serviceId",
+                "success",
+                "affectedSessions"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "description": "Service ID that was registered"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether registration was successful"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Success or error message"
+                },
+                "registered": {
+                    "type": "boolean",
+                    "description": "Whether registration was successful"
+                },
+                "affectedSessions": {
+                    "type": "integer",
+                    "description": "Number of sessions that had permissions recompiled"
+                },
+                "recompiledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when permissions were recompiled"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RegisterServicePermissions_Info = """
 {
-  "summary": "Register or update service permission matrix",
-  "description": "Updates Redis with ServiceID -> State -> Role -> Methods structure",
-  "tags": [
-    "Service Management"
-  ],
-  "deprecated": false,
-  "operationId": "registerServicePermissions"
+    "summary": "Register or update service permission matrix",
+    "description": "Updates Redis with ServiceID -> State -> Role -> Methods structure",
+    "tags": [
+        "Service Management"
+    ],
+    "deprecated": false,
+    "operationId": "registerServicePermissions"
 }
 """;
 
@@ -739,111 +739,111 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _UpdateSessionState_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionStateUpdate",
-  "$defs": {
-    "SessionStateUpdate": {
-      "description": "Request to update a session's state for a specific service",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "serviceId",
-        "newState"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID to update state for"
-        },
-        "serviceId": {
-          "type": "string",
-          "description": "Service whose state is changing for this session"
-        },
-        "newState": {
-          "type": "string",
-          "description": "New state value (lobby, in_game, etc.)"
-        },
-        "previousState": {
-          "type": "string",
-          "description": "Previous state value (null for initial state)",
-          "nullable": true
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Optional context data (null if none)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionStateUpdate",
+    "$defs": {
+        "SessionStateUpdate": {
+            "description": "Request to update a session's state for a specific service",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "serviceId",
+                "newState"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID to update state for"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "description": "Service whose state is changing for this session"
+                },
+                "newState": {
+                    "type": "string",
+                    "description": "New state value (lobby, in_game, etc.)"
+                },
+                "previousState": {
+                    "type": "string",
+                    "description": "Previous state value (null for initial state)",
+                    "nullable": true
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Optional context data (null if none)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSessionState_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionUpdateResponse",
-  "$defs": {
-    "SessionUpdateResponse": {
-      "description": "Response from updating a session's state or role with recompiled permissions",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "success",
-        "permissionsChanged"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID that was updated"
-        },
-        "success": {
-          "type": "boolean",
-          "description": "Whether update was successful"
-        },
-        "message": {
-          "type": "string",
-          "description": "Success or error message"
-        },
-        "permissionsChanged": {
-          "type": "boolean",
-          "description": "Whether compiled permissions actually changed"
-        },
-        "newPermissions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionUpdateResponse",
+    "$defs": {
+        "SessionUpdateResponse": {
+            "description": "Response from updating a session's state or role with recompiled permissions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "success",
+                "permissionsChanged"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID that was updated"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether update was successful"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Success or error message"
+                },
+                "permissionsChanged": {
+                    "type": "boolean",
+                    "description": "Whether compiled permissions actually changed"
+                },
+                "newPermissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": "Updated ServiceID -> Methods if permissions changed"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the session was updated"
+                }
             }
-          },
-          "description": "Updated ServiceID -> Methods if permissions changed"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the session was updated"
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSessionState_Info = """
 {
-  "summary": "Update session state for specific service",
-  "description": "Updates SessionID -> ServiceID -> State and recompiles permissions",
-  "tags": [
-    "Session Management"
-  ],
-  "deprecated": false,
-  "operationId": "updateSessionState"
+    "summary": "Update session state for specific service",
+    "description": "Updates SessionID -> ServiceID -> State and recompiles permissions",
+    "tags": [
+        "Session Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateSessionState"
 }
 """;
 
@@ -893,100 +893,100 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _UpdateSessionRole_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionRoleUpdate",
-  "$defs": {
-    "SessionRoleUpdate": {
-      "description": "Request to update a session's role affecting permissions across all services",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "newRole"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID to update role for"
-        },
-        "newRole": {
-          "type": "string",
-          "description": "New role (user, admin, etc.)"
-        },
-        "previousRole": {
-          "type": "string",
-          "description": "Previous role (null for initial role)",
-          "nullable": true
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionRoleUpdate",
+    "$defs": {
+        "SessionRoleUpdate": {
+            "description": "Request to update a session's role affecting permissions across all services",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "newRole"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID to update role for"
+                },
+                "newRole": {
+                    "type": "string",
+                    "description": "New role (user, admin, etc.)"
+                },
+                "previousRole": {
+                    "type": "string",
+                    "description": "Previous role (null for initial role)",
+                    "nullable": true
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSessionRole_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionUpdateResponse",
-  "$defs": {
-    "SessionUpdateResponse": {
-      "description": "Response from updating a session's state or role with recompiled permissions",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "success",
-        "permissionsChanged"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID that was updated"
-        },
-        "success": {
-          "type": "boolean",
-          "description": "Whether update was successful"
-        },
-        "message": {
-          "type": "string",
-          "description": "Success or error message"
-        },
-        "permissionsChanged": {
-          "type": "boolean",
-          "description": "Whether compiled permissions actually changed"
-        },
-        "newPermissions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionUpdateResponse",
+    "$defs": {
+        "SessionUpdateResponse": {
+            "description": "Response from updating a session's state or role with recompiled permissions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "success",
+                "permissionsChanged"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID that was updated"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether update was successful"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Success or error message"
+                },
+                "permissionsChanged": {
+                    "type": "boolean",
+                    "description": "Whether compiled permissions actually changed"
+                },
+                "newPermissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": "Updated ServiceID -> Methods if permissions changed"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the session was updated"
+                }
             }
-          },
-          "description": "Updated ServiceID -> Methods if permissions changed"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the session was updated"
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSessionRole_Info = """
 {
-  "summary": "Update session role (affects all services)",
-  "description": "Updates SessionID -> Role and recompiles all service permissions",
-  "tags": [
-    "Session Management"
-  ],
-  "deprecated": false,
-  "operationId": "updateSessionRole"
+    "summary": "Update session role (affects all services)",
+    "description": "Updates SessionID -> Role and recompiles all service permissions",
+    "tags": [
+        "Session Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateSessionRole"
 }
 """;
 
@@ -1036,103 +1036,103 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _ClearSessionState_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ClearSessionStateRequest",
-  "$defs": {
-    "ClearSessionStateRequest": {
-      "description": "Request to clear a session's state for a specific service or all services",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID to clear state from"
-        },
-        "serviceId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Service whose state should be cleared (null to clear all services)"
-        },
-        "states": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Optional list of state values to match. If provided, only clears if\ncurrent state matches one of these values. If empty or not provided,\nclears the state unconditionally.\n",
-          "nullable": true
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ClearSessionStateRequest",
+    "$defs": {
+        "ClearSessionStateRequest": {
+            "description": "Request to clear a session's state for a specific service or all services",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID to clear state from"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Service whose state should be cleared (null to clear all services)"
+                },
+                "states": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Optional list of state values to match. If provided, only clears if\ncurrent state matches one of these values. If empty or not provided,\nclears the state unconditionally.\n",
+                    "nullable": true
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ClearSessionState_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionUpdateResponse",
-  "$defs": {
-    "SessionUpdateResponse": {
-      "description": "Response from updating a session's state or role with recompiled permissions",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "success",
-        "permissionsChanged"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID that was updated"
-        },
-        "success": {
-          "type": "boolean",
-          "description": "Whether update was successful"
-        },
-        "message": {
-          "type": "string",
-          "description": "Success or error message"
-        },
-        "permissionsChanged": {
-          "type": "boolean",
-          "description": "Whether compiled permissions actually changed"
-        },
-        "newPermissions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionUpdateResponse",
+    "$defs": {
+        "SessionUpdateResponse": {
+            "description": "Response from updating a session's state or role with recompiled permissions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "success",
+                "permissionsChanged"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID that was updated"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether update was successful"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Success or error message"
+                },
+                "permissionsChanged": {
+                    "type": "boolean",
+                    "description": "Whether compiled permissions actually changed"
+                },
+                "newPermissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": "Updated ServiceID -> Methods if permissions changed"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the session was updated"
+                }
             }
-          },
-          "description": "Updated ServiceID -> Methods if permissions changed"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the session was updated"
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ClearSessionState_Info = """
 {
-  "summary": "Clear session state for specific service",
-  "description": "Removes state for a specific service from the session and recompiles permissions.\nIf states list is provided, only clears if current state matches one of the values.\nIf states list is empty or not provided, clears the state unconditionally.\n",
-  "tags": [
-    "Session Management"
-  ],
-  "deprecated": false,
-  "operationId": "clearSessionState"
+    "summary": "Clear session state for specific service",
+    "description": "Removes state for a specific service from the session and recompiles permissions.\nIf states list is provided, only clears if current state matches one of the values.\nIf states list is empty or not provided, clears the state unconditionally.\n",
+    "tags": [
+        "Session Management"
+    ],
+    "deprecated": false,
+    "operationId": "clearSessionState"
 }
 """;
 
@@ -1182,104 +1182,104 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _GetSessionInfo_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionInfoRequest",
-  "$defs": {
-    "SessionInfoRequest": {
-      "description": "Request to retrieve complete information about a session",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID to retrieve information for"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionInfoRequest",
+    "$defs": {
+        "SessionInfoRequest": {
+            "description": "Request to retrieve complete information about a session",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID to retrieve information for"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetSessionInfo_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SessionInfo",
-  "$defs": {
-    "SessionInfo": {
-      "description": "Complete session information including role, states, and compiled permissions",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "sessionId",
-        "role",
-        "states",
-        "permissions"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Session ID being queried"
-        },
-        "role": {
-          "type": "string",
-          "description": "Current session role"
-        },
-        "states": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Map of ServiceID -> Current State"
-        },
-        "permissions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SessionInfo",
+    "$defs": {
+        "SessionInfo": {
+            "description": "Complete session information including role, states, and compiled permissions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "role",
+                "states",
+                "permissions"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID being queried"
+                },
+                "role": {
+                    "type": "string",
+                    "description": "Current session role"
+                },
+                "states": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Map of ServiceID -> Current State"
+                },
+                "permissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": "Map of ServiceID -> List of available methods"
+                },
+                "compiledPermissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": "Map of ServiceID -> List of available methods"
+                },
+                "version": {
+                    "type": "integer",
+                    "description": "Permission version number"
+                },
+                "lastUpdated": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When permissions were last recompiled"
+                }
             }
-          },
-          "description": "Map of ServiceID -> List of available methods"
-        },
-        "compiledPermissions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "description": "Map of ServiceID -> List of available methods"
-        },
-        "version": {
-          "type": "integer",
-          "description": "Permission version number"
-        },
-        "lastUpdated": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When permissions were last recompiled"
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetSessionInfo_Info = """
 {
-  "summary": "Get complete session information",
-  "description": "Returns current states, role, and compiled permissions",
-  "tags": [
-    "Session Management"
-  ],
-  "deprecated": false,
-  "operationId": "getSessionInfo"
+    "summary": "Get complete session information",
+    "description": "Returns current states, role, and compiled permissions",
+    "tags": [
+        "Session Management"
+    ],
+    "deprecated": false,
+    "operationId": "getSessionInfo"
 }
 """;
 
@@ -1329,99 +1329,99 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
     private static readonly string _GetRegisteredServices_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListServicesRequest",
-  "$defs": {
-    "ListServicesRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to list registered services (empty body allowed for listing all)",
-      "properties": {
-        "serviceIdFilter": {
-          "type": "string",
-          "description": "Optional filter by service ID prefix",
-          "nullable": true
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListServicesRequest",
+    "$defs": {
+        "ListServicesRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list registered services (empty body allowed for listing all)",
+            "properties": {
+                "serviceIdFilter": {
+                    "type": "string",
+                    "description": "Optional filter by service ID prefix",
+                    "nullable": true
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetRegisteredServices_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RegisteredServicesResponse",
-  "$defs": {
-    "RegisteredServicesResponse": {
-      "description": "Response containing list of all services that have registered their permissions",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "services",
-        "timestamp"
-      ],
-      "properties": {
-        "services": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/RegisteredServiceInfo"
-          },
-          "description": "List of all registered services"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisteredServicesResponse",
+    "$defs": {
+        "RegisteredServicesResponse": {
+            "description": "Response containing list of all services that have registered their permissions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "services",
+                "timestamp"
+            ],
+            "properties": {
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RegisteredServiceInfo"
+                    },
+                    "description": "List of all registered services"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this response was generated"
+                }
+            }
         },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When this response was generated"
+        "RegisteredServiceInfo": {
+            "description": "Information about a registered service including its ID, version, and endpoint count",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "serviceId",
+                "registeredAt",
+                "endpointCount"
+            ],
+            "properties": {
+                "serviceId": {
+                    "type": "string",
+                    "description": "Unique service identifier"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Human-readable service name"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Service API version"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the service registered its permissions"
+                },
+                "endpointCount": {
+                    "type": "integer",
+                    "description": "Number of API endpoints registered by this service"
+                }
+            }
         }
-      }
-    },
-    "RegisteredServiceInfo": {
-      "description": "Information about a registered service including its ID, version, and endpoint count",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "serviceId",
-        "registeredAt",
-        "endpointCount"
-      ],
-      "properties": {
-        "serviceId": {
-          "type": "string",
-          "description": "Unique service identifier"
-        },
-        "serviceName": {
-          "type": "string",
-          "description": "Human-readable service name"
-        },
-        "version": {
-          "type": "string",
-          "description": "Service API version"
-        },
-        "registeredAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the service registered its permissions"
-        },
-        "endpointCount": {
-          "type": "integer",
-          "description": "Number of API endpoints registered by this service"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetRegisteredServices_Info = """
 {
-  "summary": "List all registered services",
-  "description": "Returns list of all services that have registered their permissions.\nThis endpoint is used by testers to wait for service readiness - a service\nappearing in this list means it has completed startup and registered its\nAPI permissions, indicating it's ready to handle requests.\n\nFor service-to-service calls (via mesh), this endpoint is unrestricted.\nFor client calls through WebSocket/Connect, only admin users can access it.\n",
-  "tags": [
-    "Service Management"
-  ],
-  "deprecated": false,
-  "operationId": "getRegisteredServices"
+    "summary": "List all registered services",
+    "description": "Returns list of all services that have registered their permissions.\nThis endpoint is used by testers to wait for service readiness - a service\nappearing in this list means it has completed startup and registered its\nAPI permissions, indicating it's ready to handle requests.\n\nFor service-to-service calls (via mesh), this endpoint is unrestricted.\nFor client calls through WebSocket/Connect, only admin users can access it.\n",
+    "tags": [
+        "Service Management"
+    ],
+    "deprecated": false,
+    "operationId": "getRegisteredServices"
 }
 """;
 

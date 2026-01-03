@@ -18,7 +18,7 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCreateSubscription, "CreateSubscription", "Subscriptions", "Test subscription creation endpoint"),
         new ServiceTest(TestGetSubscription, "GetSubscription", "Subscriptions", "Test subscription retrieval by ID"),
         new ServiceTest(TestGetAccountSubscriptions, "GetAccountSubscriptions", "Subscriptions", "Test subscription listing for account"),
-        new ServiceTest(TestGetCurrentSubscriptions, "GetCurrentSubscriptions", "Subscriptions", "Test active subscription authorization strings"),
+        new ServiceTest(TestQueryCurrentSubscriptions, "QueryCurrentSubscriptions", "Subscriptions", "Test active subscription authorization strings"),
         new ServiceTest(TestUpdateSubscription, "UpdateSubscription", "Subscriptions", "Test subscription update endpoint"),
         new ServiceTest(TestCancelSubscription, "CancelSubscription", "Subscriptions", "Test subscription cancellation endpoint"),
         new ServiceTest(TestRenewSubscription, "RenewSubscription", "Subscriptions", "Test subscription renewal endpoint"),
@@ -207,7 +207,7 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Account subscriptions retrieved: {response.Subscriptions.Count} subscription(s)");
         }, "Get account subscriptions");
 
-    private static async Task<TestResult> TestGetCurrentSubscriptions(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestQueryCurrentSubscriptions(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
             var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
@@ -233,32 +233,33 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
                 ExpirationDate = DateTimeOffset.UtcNow.AddDays(30)
             });
 
-            // Get current subscriptions (should include authorization strings)
-            var response = await subscriptionsClient.GetCurrentSubscriptionsAsync(new GetCurrentSubscriptionsRequest
+            // Query current subscriptions (should include authorization strings)
+            var response = await subscriptionsClient.QueryCurrentSubscriptionsAsync(new QueryCurrentSubscriptionsRequest
             {
                 AccountId = accountResponse.AccountId
             });
 
-            if (response.Authorizations == null || response.Authorizations.Count == 0)
+            if (response.Subscriptions == null || response.Subscriptions.Count == 0)
             {
                 await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountResponse.AccountId });
                 await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
-                return TestResult.Failed("GetCurrentSubscriptions returned empty authorizations");
+                return TestResult.Failed("QueryCurrentSubscriptions returned empty subscriptions");
             }
 
-            // Check authorization string format (should be "stubname:authorized")
-            var hasExpectedAuth = response.Authorizations.Any(a => a.Contains(testStubName.ToLowerInvariant()));
+            // Check that returned subscriptions include the expected stub name
+            var hasExpectedSub = response.Subscriptions.Any(s =>
+                s.StubName.Equals(testStubName, StringComparison.OrdinalIgnoreCase));
 
             // Clean up
             await subscriptionsClient.CancelSubscriptionAsync(new CancelSubscriptionRequest { SubscriptionId = createResponse.SubscriptionId });
             await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountResponse.AccountId });
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
 
-            if (!hasExpectedAuth)
-                return TestResult.Failed($"Expected authorization containing '{testStubName.ToLowerInvariant()}', got: {string.Join(", ", response.Authorizations)}");
+            if (!hasExpectedSub)
+                return TestResult.Failed($"Expected subscription with stubName '{testStubName}', got: {string.Join(", ", response.Subscriptions.Select(s => s.StubName))}");
 
-            return TestResult.Successful($"Current subscriptions retrieved: {response.Authorizations.Count} authorization(s)");
-        }, "Get current subscriptions");
+            return TestResult.Successful($"Current subscriptions retrieved: {response.Subscriptions.Count} subscription(s)");
+        }, "Query current subscriptions");
 
     private static async Task<TestResult> TestUpdateSubscription(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>

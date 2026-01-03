@@ -325,391 +325,391 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _CompileAbmlBehavior_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CompileBehaviorRequest",
-  "$defs": {
-    "CompileBehaviorRequest": {
-      "description": "Request to compile an ABML behavior definition into executable behavior trees",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "abmlContent"
-      ],
-      "properties": {
-        "abmlContent": {
-          "type": "string",
-          "description": "Raw ABML YAML content to compile",
-          "example": "version: \"1.0.0\"\nmetadata:\n  id: \"example_behavior\"\n  category: \"basic\"\nbehaviors:\n  example:\n    triggers:\n      - condition: \"true\"\n    actions:\n      - log:\n          message: \"Hello World\"\n"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CompileBehaviorRequest",
+    "$defs": {
+        "CompileBehaviorRequest": {
+            "description": "Request to compile an ABML behavior definition into executable behavior trees",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "abmlContent"
+            ],
+            "properties": {
+                "abmlContent": {
+                    "type": "string",
+                    "description": "Raw ABML YAML content to compile",
+                    "example": "version: \"1.0.0\"\nmetadata:\n  id: \"example_behavior\"\n  category: \"basic\"\nbehaviors:\n  example:\n    triggers:\n      - condition: \"true\"\n    actions:\n      - log:\n          message: \"Hello World\"\n"
+                },
+                "behaviorName": {
+                    "type": "string",
+                    "description": "Optional human-readable name for the behavior.\nIf not provided, extracted from ABML metadata.id or generated from content hash.\n",
+                    "example": "blacksmith_daily_routine"
+                },
+                "behaviorCategory": {
+                    "type": "string",
+                    "description": "Category for organizing behaviors (e.g., profession, cultural, situational).\nUsed for filtering and grouping in bundles.\n",
+                    "enum": [
+                        "base",
+                        "cultural",
+                        "professional",
+                        "personal",
+                        "situational",
+                        "ambient"
+                    ],
+                    "example": "professional"
+                },
+                "bundleId": {
+                    "type": "string",
+                    "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\nIf the bundle doesn't exist, it will be created.\n",
+                    "example": "blacksmith-behaviors-v1"
+                },
+                "characterContext": {
+                    "$ref": "#/$defs/CharacterContext",
+                    "description": "Character context for context variable resolution during compilation"
+                },
+                "compilationOptions": {
+                    "$ref": "#/$defs/CompilationOptions",
+                    "description": "Options controlling the compilation process"
+                }
+            }
         },
-        "behaviorName": {
-          "type": "string",
-          "description": "Optional human-readable name for the behavior.\nIf not provided, extracted from ABML metadata.id or generated from content hash.\n",
-          "example": "blacksmith_daily_routine"
+        "CharacterContext": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Context information about a character for behavior resolution",
+            "properties": {
+                "npcId": {
+                    "type": "string",
+                    "description": "Unique identifier for the NPC",
+                    "example": "npc_12345"
+                },
+                "culture": {
+                    "type": "string",
+                    "description": "Cultural background identifier",
+                    "example": "european_medieval"
+                },
+                "profession": {
+                    "type": "string",
+                    "description": "Character profession identifier",
+                    "example": "blacksmith"
+                },
+                "stats": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Character statistics and attributes",
+                    "example": {
+                        "energy": 0.8,
+                        "health": 1.0,
+                        "hunger": 0.3
+                    }
+                },
+                "skills": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Character skill levels",
+                    "example": {
+                        "blacksmithing": 85,
+                        "trading": 42
+                    }
+                },
+                "location": {
+                    "$ref": "#/$defs/Location",
+                    "description": "Current location information for the character"
+                },
+                "relationships": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Relationship values with other characters"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Relevant world state information"
+                }
+            }
         },
-        "behaviorCategory": {
-          "type": "string",
-          "description": "Category for organizing behaviors (e.g., profession, cultural, situational).\nUsed for filtering and grouping in bundles.\n",
-          "enum": [
-            "base",
-            "cultural",
-            "professional",
-            "personal",
-            "situational",
-            "ambient"
-          ],
-          "example": "professional"
+        "Location": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Character location information including current position, region, and 3D coordinates",
+            "properties": {
+                "current": {
+                    "type": "string",
+                    "description": "Current location name or identifier"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "Region or zone the character is in"
+                },
+                "coordinates": {
+                    "$ref": "#/$defs/Coordinates",
+                    "description": "3D spatial coordinates of the character's position in the game world"
+                }
+            }
         },
-        "bundleId": {
-          "type": "string",
-          "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\nIf the bundle doesn't exist, it will be created.\n",
-          "example": "blacksmith-behaviors-v1"
+        "Coordinates": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "3D spatial coordinates representing a position in the game world",
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "description": "X coordinate position"
+                },
+                "y": {
+                    "type": "number",
+                    "description": "Y coordinate position"
+                },
+                "z": {
+                    "type": "number",
+                    "description": "Z coordinate position"
+                }
+            }
         },
-        "characterContext": {
-          "$ref": "#/$defs/CharacterContext",
-          "description": "Character context for context variable resolution during compilation"
-        },
-        "compilationOptions": {
-          "$ref": "#/$defs/CompilationOptions",
-          "description": "Options controlling the compilation process"
+        "CompilationOptions": {
+            "description": "Options controlling the ABML compilation process including optimizations and caching",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enableOptimizations": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable behavior tree optimizations"
+                },
+                "cacheCompiledResult": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Cache the compiled behavior for reuse"
+                },
+                "strictValidation": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable strict validation mode"
+                },
+                "culturalAdaptations": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Apply cultural adaptations during compilation"
+                },
+                "goapIntegration": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Generate GOAP goals from behaviors"
+                }
+            }
         }
-      }
-    },
-    "CharacterContext": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Context information about a character for behavior resolution",
-      "properties": {
-        "npcId": {
-          "type": "string",
-          "description": "Unique identifier for the NPC",
-          "example": "npc_12345"
-        },
-        "culture": {
-          "type": "string",
-          "description": "Cultural background identifier",
-          "example": "european_medieval"
-        },
-        "profession": {
-          "type": "string",
-          "description": "Character profession identifier",
-          "example": "blacksmith"
-        },
-        "stats": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Character statistics and attributes",
-          "example": {
-            "energy": 0.8,
-            "health": 1.0,
-            "hunger": 0.3
-          }
-        },
-        "skills": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Character skill levels",
-          "example": {
-            "blacksmithing": 85,
-            "trading": 42
-          }
-        },
-        "location": {
-          "$ref": "#/$defs/Location",
-          "description": "Current location information for the character"
-        },
-        "relationships": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Relationship values with other characters"
-        },
-        "worldState": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Relevant world state information"
-        }
-      }
-    },
-    "Location": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Character location information including current position, region, and 3D coordinates",
-      "properties": {
-        "current": {
-          "type": "string",
-          "description": "Current location name or identifier"
-        },
-        "region": {
-          "type": "string",
-          "description": "Region or zone the character is in"
-        },
-        "coordinates": {
-          "$ref": "#/$defs/Coordinates",
-          "description": "3D spatial coordinates of the character's position in the game world"
-        }
-      }
-    },
-    "Coordinates": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "3D spatial coordinates representing a position in the game world",
-      "properties": {
-        "x": {
-          "type": "number",
-          "description": "X coordinate position"
-        },
-        "y": {
-          "type": "number",
-          "description": "Y coordinate position"
-        },
-        "z": {
-          "type": "number",
-          "description": "Z coordinate position"
-        }
-      }
-    },
-    "CompilationOptions": {
-      "description": "Options controlling the ABML compilation process including optimizations and caching",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "enableOptimizations": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable behavior tree optimizations"
-        },
-        "cacheCompiledResult": {
-          "type": "boolean",
-          "default": true,
-          "description": "Cache the compiled behavior for reuse"
-        },
-        "strictValidation": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable strict validation mode"
-        },
-        "culturalAdaptations": {
-          "type": "boolean",
-          "default": true,
-          "description": "Apply cultural adaptations during compilation"
-        },
-        "goapIntegration": {
-          "type": "boolean",
-          "default": true,
-          "description": "Generate GOAP goals from behaviors"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CompileAbmlBehavior_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CompileBehaviorResponse",
-  "$defs": {
-    "CompileBehaviorResponse": {
-      "description": "Response containing the results of an ABML behavior compilation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "success",
-        "behaviorId"
-      ],
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether compilation was successful"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CompileBehaviorResponse",
+    "$defs": {
+        "CompileBehaviorResponse": {
+            "description": "Response containing the results of an ABML behavior compilation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "success",
+                "behaviorId"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether compilation was successful"
+                },
+                "behaviorId": {
+                    "type": "string",
+                    "description": "Unique identifier for the compiled behavior (content-addressable hash)",
+                    "example": "behavior-a1b2c3d4e5f6g7h8"
+                },
+                "behaviorName": {
+                    "type": "string",
+                    "description": "Human-readable name of the behavior",
+                    "example": "blacksmith_daily_routine"
+                },
+                "compiledBehavior": {
+                    "$ref": "#/$defs/CompiledBehavior",
+                    "description": "The compiled behavior data including behavior tree and metadata"
+                },
+                "compilationTimeMs": {
+                    "type": "integer",
+                    "description": "Time taken to compile the behavior in milliseconds"
+                },
+                "assetId": {
+                    "type": "string",
+                    "description": "Asset service ID where the compiled bytecode is stored"
+                },
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle ID if the behavior was added to a bundle"
+                },
+                "isUpdate": {
+                    "type": "boolean",
+                    "description": "True if this replaced an existing behavior with the same content hash"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Non-fatal warnings during compilation"
+                }
+            }
         },
-        "behaviorId": {
-          "type": "string",
-          "description": "Unique identifier for the compiled behavior (content-addressable hash)",
-          "example": "behavior-a1b2c3d4e5f6g7h8"
+        "CompiledBehavior": {
+            "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "behaviorTree",
+                "contextSchema"
+            ],
+            "properties": {
+                "behaviorTree": {
+                    "$ref": "#/$defs/BehaviorTreeData",
+                    "description": "Compiled behavior tree data with bytecode or download reference"
+                },
+                "contextSchema": {
+                    "$ref": "#/$defs/ContextSchemaData",
+                    "description": "Schema defining required context variables for execution"
+                },
+                "serviceDependencies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of required services for this behavior"
+                },
+                "goapGoals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/GoapGoal"
+                    },
+                    "description": "GOAP goals extracted from the behavior"
+                },
+                "executionMetadata": {
+                    "$ref": "#/$defs/ExecutionMetadata",
+                    "description": "Metadata for behavior execution including performance hints and resource requirements"
+                }
+            }
         },
-        "behaviorName": {
-          "type": "string",
-          "description": "Human-readable name of the behavior",
-          "example": "blacksmith_daily_routine"
+        "BehaviorTreeData": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Compiled behavior tree data with bytecode or download reference",
+            "properties": {
+                "bytecode": {
+                    "type": "string",
+                    "description": "Base64-encoded compiled bytecode for the behavior tree"
+                },
+                "bytecodeSize": {
+                    "type": "integer",
+                    "description": "Size of the bytecode in bytes"
+                },
+                "downloadUrl": {
+                    "type": "string",
+                    "description": "URL to download the compiled behavior asset"
+                }
+            }
         },
-        "compiledBehavior": {
-          "$ref": "#/$defs/CompiledBehavior",
-          "description": "The compiled behavior data including behavior tree and metadata"
+        "ContextSchemaData": {
+            "type": "object",
+            "description": "Schema defining required context variables for behavior execution",
+            "additionalProperties": true
         },
-        "compilationTimeMs": {
-          "type": "integer",
-          "description": "Time taken to compile the behavior in milliseconds"
+        "GoapGoal": {
+            "description": "Goal definition for GOAP planning with conditions and priority",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "conditions",
+                "priority"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the goal",
+                    "example": "satisfy_hunger"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of the goal"
+                },
+                "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions that satisfy this goal (literal conditions)",
+                    "example": {
+                        "hunger": "<= 0.3",
+                        "gold": ">= 50"
+                    }
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Priority of this goal relative to others"
+                },
+                "preconditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions required to pursue this goal"
+                }
+            }
         },
-        "assetId": {
-          "type": "string",
-          "description": "Asset service ID where the compiled bytecode is stored"
-        },
-        "bundleId": {
-          "type": "string",
-          "description": "Bundle ID if the behavior was added to a bundle"
-        },
-        "isUpdate": {
-          "type": "boolean",
-          "description": "True if this replaced an existing behavior with the same content hash"
-        },
-        "warnings": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Non-fatal warnings during compilation"
+        "ExecutionMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
+            "properties": {
+                "estimatedDuration": {
+                    "type": "integer",
+                    "description": "Estimated execution time in seconds"
+                },
+                "resourceRequirements": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Resource requirements for behavior execution"
+                },
+                "interruptConditions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Conditions that can interrupt behavior execution"
+                }
+            }
         }
-      }
-    },
-    "CompiledBehavior": {
-      "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "behaviorTree",
-        "contextSchema"
-      ],
-      "properties": {
-        "behaviorTree": {
-          "$ref": "#/$defs/BehaviorTreeData",
-          "description": "Compiled behavior tree data with bytecode or download reference"
-        },
-        "contextSchema": {
-          "$ref": "#/$defs/ContextSchemaData",
-          "description": "Schema defining required context variables for execution"
-        },
-        "serviceDependencies": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of required services for this behavior"
-        },
-        "goapGoals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/GoapGoal"
-          },
-          "description": "GOAP goals extracted from the behavior"
-        },
-        "executionMetadata": {
-          "$ref": "#/$defs/ExecutionMetadata",
-          "description": "Metadata for behavior execution including performance hints and resource requirements"
-        }
-      }
-    },
-    "BehaviorTreeData": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Compiled behavior tree data with bytecode or download reference",
-      "properties": {
-        "bytecode": {
-          "type": "string",
-          "description": "Base64-encoded compiled bytecode for the behavior tree"
-        },
-        "bytecodeSize": {
-          "type": "integer",
-          "description": "Size of the bytecode in bytes"
-        },
-        "downloadUrl": {
-          "type": "string",
-          "description": "URL to download the compiled behavior asset"
-        }
-      }
-    },
-    "ContextSchemaData": {
-      "type": "object",
-      "description": "Schema defining required context variables for behavior execution",
-      "additionalProperties": true
-    },
-    "GoapGoal": {
-      "description": "Goal definition for GOAP planning with conditions and priority",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "conditions",
-        "priority"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the goal",
-          "example": "satisfy_hunger"
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of the goal"
-        },
-        "conditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions that satisfy this goal (literal conditions)",
-          "example": {
-            "hunger": "<= 0.3",
-            "gold": ">= 50"
-          }
-        },
-        "priority": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Priority of this goal relative to others"
-        },
-        "preconditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions required to pursue this goal"
-        }
-      }
-    },
-    "ExecutionMetadata": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
-      "properties": {
-        "estimatedDuration": {
-          "type": "integer",
-          "description": "Estimated execution time in seconds"
-        },
-        "resourceRequirements": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Resource requirements for behavior execution"
-        },
-        "interruptConditions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Conditions that can interrupt behavior execution"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CompileAbmlBehavior_Info = """
 {
-  "summary": "Compile ABML behavior definition",
-  "description": "Compiles a YAML-based ABML behavior definition into executable behavior trees.\nHandles stackable behavior sets, cultural adaptations, and context variable resolution.\n",
-  "tags": [
-    "ABML"
-  ],
-  "deprecated": false,
-  "operationId": "CompileAbmlBehavior"
+    "summary": "Compile ABML behavior definition",
+    "description": "Compiles a YAML-based ABML behavior definition into executable behavior trees.\nHandles stackable behavior sets, cultural adaptations, and context variable resolution.\n",
+    "tags": [
+        "ABML"
+    ],
+    "deprecated": false,
+    "operationId": "CompileAbmlBehavior"
 }
 """;
 
@@ -759,414 +759,414 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _CompileBehaviorStack_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BehaviorStackRequest",
-  "$defs": {
-    "BehaviorStackRequest": {
-      "description": "Request to compile multiple stackable behavior sets with priority-based merging",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "behaviorSets"
-      ],
-      "properties": {
-        "behaviorSets": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/BehaviorSetDefinition"
-          },
-          "description": "Array of behavior sets to compile together"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BehaviorStackRequest",
+    "$defs": {
+        "BehaviorStackRequest": {
+            "description": "Request to compile multiple stackable behavior sets with priority-based merging",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "behaviorSets"
+            ],
+            "properties": {
+                "behaviorSets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BehaviorSetDefinition"
+                    },
+                    "description": "Array of behavior sets to compile together"
+                },
+                "characterContext": {
+                    "$ref": "#/$defs/CharacterContext",
+                    "description": "Character context for context variable resolution during compilation"
+                },
+                "compilationOptions": {
+                    "$ref": "#/$defs/CompilationOptions",
+                    "description": "Options controlling the compilation process"
+                }
+            }
         },
-        "characterContext": {
-          "$ref": "#/$defs/CharacterContext",
-          "description": "Character context for context variable resolution during compilation"
+        "BehaviorSetDefinition": {
+            "description": "Definition of a behavior set with priority for stackable behavior merging",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "priority",
+                "abmlContent"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the behavior set",
+                    "example": "base_humanoid"
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Priority level for merging (higher priority overrides lower)",
+                    "example": 50
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the behavior set",
+                    "enum": [
+                        "base",
+                        "cultural",
+                        "professional",
+                        "personal",
+                        "situational"
+                    ]
+                },
+                "abmlContent": {
+                    "type": "string",
+                    "description": "Raw ABML YAML content for this behavior set"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Additional metadata for the behavior set"
+                }
+            }
         },
-        "compilationOptions": {
-          "$ref": "#/$defs/CompilationOptions",
-          "description": "Options controlling the compilation process"
+        "CharacterContext": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Context information about a character for behavior resolution",
+            "properties": {
+                "npcId": {
+                    "type": "string",
+                    "description": "Unique identifier for the NPC",
+                    "example": "npc_12345"
+                },
+                "culture": {
+                    "type": "string",
+                    "description": "Cultural background identifier",
+                    "example": "european_medieval"
+                },
+                "profession": {
+                    "type": "string",
+                    "description": "Character profession identifier",
+                    "example": "blacksmith"
+                },
+                "stats": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Character statistics and attributes",
+                    "example": {
+                        "energy": 0.8,
+                        "health": 1.0,
+                        "hunger": 0.3
+                    }
+                },
+                "skills": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Character skill levels",
+                    "example": {
+                        "blacksmithing": 85,
+                        "trading": 42
+                    }
+                },
+                "location": {
+                    "$ref": "#/$defs/Location",
+                    "description": "Current location information for the character"
+                },
+                "relationships": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Relationship values with other characters"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Relevant world state information"
+                }
+            }
+        },
+        "Location": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Character location information including current position, region, and 3D coordinates",
+            "properties": {
+                "current": {
+                    "type": "string",
+                    "description": "Current location name or identifier"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "Region or zone the character is in"
+                },
+                "coordinates": {
+                    "$ref": "#/$defs/Coordinates",
+                    "description": "3D spatial coordinates of the character's position in the game world"
+                }
+            }
+        },
+        "Coordinates": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "3D spatial coordinates representing a position in the game world",
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "description": "X coordinate position"
+                },
+                "y": {
+                    "type": "number",
+                    "description": "Y coordinate position"
+                },
+                "z": {
+                    "type": "number",
+                    "description": "Z coordinate position"
+                }
+            }
+        },
+        "CompilationOptions": {
+            "description": "Options controlling the ABML compilation process including optimizations and caching",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enableOptimizations": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable behavior tree optimizations"
+                },
+                "cacheCompiledResult": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Cache the compiled behavior for reuse"
+                },
+                "strictValidation": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable strict validation mode"
+                },
+                "culturalAdaptations": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Apply cultural adaptations during compilation"
+                },
+                "goapIntegration": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Generate GOAP goals from behaviors"
+                }
+            }
         }
-      }
-    },
-    "BehaviorSetDefinition": {
-      "description": "Definition of a behavior set with priority for stackable behavior merging",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "priority",
-        "abmlContent"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the behavior set",
-          "example": "base_humanoid"
-        },
-        "priority": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Priority level for merging (higher priority overrides lower)",
-          "example": 50
-        },
-        "category": {
-          "type": "string",
-          "description": "Category of the behavior set",
-          "enum": [
-            "base",
-            "cultural",
-            "professional",
-            "personal",
-            "situational"
-          ]
-        },
-        "abmlContent": {
-          "type": "string",
-          "description": "Raw ABML YAML content for this behavior set"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Additional metadata for the behavior set"
-        }
-      }
-    },
-    "CharacterContext": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Context information about a character for behavior resolution",
-      "properties": {
-        "npcId": {
-          "type": "string",
-          "description": "Unique identifier for the NPC",
-          "example": "npc_12345"
-        },
-        "culture": {
-          "type": "string",
-          "description": "Cultural background identifier",
-          "example": "european_medieval"
-        },
-        "profession": {
-          "type": "string",
-          "description": "Character profession identifier",
-          "example": "blacksmith"
-        },
-        "stats": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Character statistics and attributes",
-          "example": {
-            "energy": 0.8,
-            "health": 1.0,
-            "hunger": 0.3
-          }
-        },
-        "skills": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Character skill levels",
-          "example": {
-            "blacksmithing": 85,
-            "trading": 42
-          }
-        },
-        "location": {
-          "$ref": "#/$defs/Location",
-          "description": "Current location information for the character"
-        },
-        "relationships": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Relationship values with other characters"
-        },
-        "worldState": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Relevant world state information"
-        }
-      }
-    },
-    "Location": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Character location information including current position, region, and 3D coordinates",
-      "properties": {
-        "current": {
-          "type": "string",
-          "description": "Current location name or identifier"
-        },
-        "region": {
-          "type": "string",
-          "description": "Region or zone the character is in"
-        },
-        "coordinates": {
-          "$ref": "#/$defs/Coordinates",
-          "description": "3D spatial coordinates of the character's position in the game world"
-        }
-      }
-    },
-    "Coordinates": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "3D spatial coordinates representing a position in the game world",
-      "properties": {
-        "x": {
-          "type": "number",
-          "description": "X coordinate position"
-        },
-        "y": {
-          "type": "number",
-          "description": "Y coordinate position"
-        },
-        "z": {
-          "type": "number",
-          "description": "Z coordinate position"
-        }
-      }
-    },
-    "CompilationOptions": {
-      "description": "Options controlling the ABML compilation process including optimizations and caching",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "enableOptimizations": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable behavior tree optimizations"
-        },
-        "cacheCompiledResult": {
-          "type": "boolean",
-          "default": true,
-          "description": "Cache the compiled behavior for reuse"
-        },
-        "strictValidation": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable strict validation mode"
-        },
-        "culturalAdaptations": {
-          "type": "boolean",
-          "default": true,
-          "description": "Apply cultural adaptations during compilation"
-        },
-        "goapIntegration": {
-          "type": "boolean",
-          "default": true,
-          "description": "Generate GOAP goals from behaviors"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CompileBehaviorStack_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CompileBehaviorResponse",
-  "$defs": {
-    "CompileBehaviorResponse": {
-      "description": "Response containing the results of an ABML behavior compilation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "success",
-        "behaviorId"
-      ],
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether compilation was successful"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CompileBehaviorResponse",
+    "$defs": {
+        "CompileBehaviorResponse": {
+            "description": "Response containing the results of an ABML behavior compilation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "success",
+                "behaviorId"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether compilation was successful"
+                },
+                "behaviorId": {
+                    "type": "string",
+                    "description": "Unique identifier for the compiled behavior (content-addressable hash)",
+                    "example": "behavior-a1b2c3d4e5f6g7h8"
+                },
+                "behaviorName": {
+                    "type": "string",
+                    "description": "Human-readable name of the behavior",
+                    "example": "blacksmith_daily_routine"
+                },
+                "compiledBehavior": {
+                    "$ref": "#/$defs/CompiledBehavior",
+                    "description": "The compiled behavior data including behavior tree and metadata"
+                },
+                "compilationTimeMs": {
+                    "type": "integer",
+                    "description": "Time taken to compile the behavior in milliseconds"
+                },
+                "assetId": {
+                    "type": "string",
+                    "description": "Asset service ID where the compiled bytecode is stored"
+                },
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle ID if the behavior was added to a bundle"
+                },
+                "isUpdate": {
+                    "type": "boolean",
+                    "description": "True if this replaced an existing behavior with the same content hash"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Non-fatal warnings during compilation"
+                }
+            }
         },
-        "behaviorId": {
-          "type": "string",
-          "description": "Unique identifier for the compiled behavior (content-addressable hash)",
-          "example": "behavior-a1b2c3d4e5f6g7h8"
+        "CompiledBehavior": {
+            "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "behaviorTree",
+                "contextSchema"
+            ],
+            "properties": {
+                "behaviorTree": {
+                    "$ref": "#/$defs/BehaviorTreeData",
+                    "description": "Compiled behavior tree data with bytecode or download reference"
+                },
+                "contextSchema": {
+                    "$ref": "#/$defs/ContextSchemaData",
+                    "description": "Schema defining required context variables for execution"
+                },
+                "serviceDependencies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of required services for this behavior"
+                },
+                "goapGoals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/GoapGoal"
+                    },
+                    "description": "GOAP goals extracted from the behavior"
+                },
+                "executionMetadata": {
+                    "$ref": "#/$defs/ExecutionMetadata",
+                    "description": "Metadata for behavior execution including performance hints and resource requirements"
+                }
+            }
         },
-        "behaviorName": {
-          "type": "string",
-          "description": "Human-readable name of the behavior",
-          "example": "blacksmith_daily_routine"
+        "BehaviorTreeData": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Compiled behavior tree data with bytecode or download reference",
+            "properties": {
+                "bytecode": {
+                    "type": "string",
+                    "description": "Base64-encoded compiled bytecode for the behavior tree"
+                },
+                "bytecodeSize": {
+                    "type": "integer",
+                    "description": "Size of the bytecode in bytes"
+                },
+                "downloadUrl": {
+                    "type": "string",
+                    "description": "URL to download the compiled behavior asset"
+                }
+            }
         },
-        "compiledBehavior": {
-          "$ref": "#/$defs/CompiledBehavior",
-          "description": "The compiled behavior data including behavior tree and metadata"
+        "ContextSchemaData": {
+            "type": "object",
+            "description": "Schema defining required context variables for behavior execution",
+            "additionalProperties": true
         },
-        "compilationTimeMs": {
-          "type": "integer",
-          "description": "Time taken to compile the behavior in milliseconds"
+        "GoapGoal": {
+            "description": "Goal definition for GOAP planning with conditions and priority",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "conditions",
+                "priority"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the goal",
+                    "example": "satisfy_hunger"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of the goal"
+                },
+                "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions that satisfy this goal (literal conditions)",
+                    "example": {
+                        "hunger": "<= 0.3",
+                        "gold": ">= 50"
+                    }
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Priority of this goal relative to others"
+                },
+                "preconditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions required to pursue this goal"
+                }
+            }
         },
-        "assetId": {
-          "type": "string",
-          "description": "Asset service ID where the compiled bytecode is stored"
-        },
-        "bundleId": {
-          "type": "string",
-          "description": "Bundle ID if the behavior was added to a bundle"
-        },
-        "isUpdate": {
-          "type": "boolean",
-          "description": "True if this replaced an existing behavior with the same content hash"
-        },
-        "warnings": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Non-fatal warnings during compilation"
+        "ExecutionMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
+            "properties": {
+                "estimatedDuration": {
+                    "type": "integer",
+                    "description": "Estimated execution time in seconds"
+                },
+                "resourceRequirements": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Resource requirements for behavior execution"
+                },
+                "interruptConditions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Conditions that can interrupt behavior execution"
+                }
+            }
         }
-      }
-    },
-    "CompiledBehavior": {
-      "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "behaviorTree",
-        "contextSchema"
-      ],
-      "properties": {
-        "behaviorTree": {
-          "$ref": "#/$defs/BehaviorTreeData",
-          "description": "Compiled behavior tree data with bytecode or download reference"
-        },
-        "contextSchema": {
-          "$ref": "#/$defs/ContextSchemaData",
-          "description": "Schema defining required context variables for execution"
-        },
-        "serviceDependencies": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of required services for this behavior"
-        },
-        "goapGoals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/GoapGoal"
-          },
-          "description": "GOAP goals extracted from the behavior"
-        },
-        "executionMetadata": {
-          "$ref": "#/$defs/ExecutionMetadata",
-          "description": "Metadata for behavior execution including performance hints and resource requirements"
-        }
-      }
-    },
-    "BehaviorTreeData": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Compiled behavior tree data with bytecode or download reference",
-      "properties": {
-        "bytecode": {
-          "type": "string",
-          "description": "Base64-encoded compiled bytecode for the behavior tree"
-        },
-        "bytecodeSize": {
-          "type": "integer",
-          "description": "Size of the bytecode in bytes"
-        },
-        "downloadUrl": {
-          "type": "string",
-          "description": "URL to download the compiled behavior asset"
-        }
-      }
-    },
-    "ContextSchemaData": {
-      "type": "object",
-      "description": "Schema defining required context variables for behavior execution",
-      "additionalProperties": true
-    },
-    "GoapGoal": {
-      "description": "Goal definition for GOAP planning with conditions and priority",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "conditions",
-        "priority"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the goal",
-          "example": "satisfy_hunger"
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of the goal"
-        },
-        "conditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions that satisfy this goal (literal conditions)",
-          "example": {
-            "hunger": "<= 0.3",
-            "gold": ">= 50"
-          }
-        },
-        "priority": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Priority of this goal relative to others"
-        },
-        "preconditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions required to pursue this goal"
-        }
-      }
-    },
-    "ExecutionMetadata": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
-      "properties": {
-        "estimatedDuration": {
-          "type": "integer",
-          "description": "Estimated execution time in seconds"
-        },
-        "resourceRequirements": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Resource requirements for behavior execution"
-        },
-        "interruptConditions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Conditions that can interrupt behavior execution"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CompileBehaviorStack_Info = """
 {
-  "summary": "Compile stackable behavior sets",
-  "description": "Compiles multiple ABML behavior sets with priority-based merging.\nHandles cultural adaptations, profession specializations, and context resolution.\n",
-  "tags": [
-    "BehaviorStacks"
-  ],
-  "deprecated": false,
-  "operationId": "CompileBehaviorStack"
+    "summary": "Compile stackable behavior sets",
+    "description": "Compiles multiple ABML behavior sets with priority-based merging.\nHandles cultural adaptations, profession specializations, and context resolution.\n",
+    "tags": [
+        "BehaviorStacks"
+    ],
+    "deprecated": false,
+    "operationId": "CompileBehaviorStack"
 }
 """;
 
@@ -1216,121 +1216,121 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _ValidateAbml_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ValidateAbmlRequest",
-  "$defs": {
-    "ValidateAbmlRequest": {
-      "description": "Request to validate ABML YAML content against schema and semantic rules",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "abmlContent"
-      ],
-      "properties": {
-        "abmlContent": {
-          "type": "string",
-          "description": "Raw ABML YAML content to validate"
-        },
-        "strictMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable strict validation mode with enhanced checking"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateAbmlRequest",
+    "$defs": {
+        "ValidateAbmlRequest": {
+            "description": "Request to validate ABML YAML content against schema and semantic rules",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "abmlContent"
+            ],
+            "properties": {
+                "abmlContent": {
+                    "type": "string",
+                    "description": "Raw ABML YAML content to validate"
+                },
+                "strictMode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable strict validation mode with enhanced checking"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ValidateAbml_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ValidateAbmlResponse",
-  "$defs": {
-    "ValidateAbmlResponse": {
-      "description": "Response containing the results of ABML validation including errors and warnings",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "isValid"
-      ],
-      "properties": {
-        "isValid": {
-          "type": "boolean",
-          "description": "Whether the ABML definition is valid"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateAbmlResponse",
+    "$defs": {
+        "ValidateAbmlResponse": {
+            "description": "Response containing the results of ABML validation including errors and warnings",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "isValid"
+            ],
+            "properties": {
+                "isValid": {
+                    "type": "boolean",
+                    "description": "Whether the ABML definition is valid"
+                },
+                "validationErrors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationError"
+                    },
+                    "description": "List of validation errors if invalid"
+                },
+                "semanticWarnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Semantic warnings that don't prevent compilation"
+                },
+                "schemaVersion": {
+                    "type": "string",
+                    "description": "ABML schema version used for validation"
+                }
+            }
         },
-        "validationErrors": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ValidationError"
-          },
-          "description": "List of validation errors if invalid"
-        },
-        "semanticWarnings": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Semantic warnings that don't prevent compilation"
-        },
-        "schemaVersion": {
-          "type": "string",
-          "description": "ABML schema version used for validation"
+        "ValidationError": {
+            "description": "Detailed validation error with type, location, and message information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "message"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "syntax",
+                        "semantic",
+                        "schema",
+                        "context",
+                        "service_dependency"
+                    ],
+                    "description": "Type of validation error"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Human-readable error message"
+                },
+                "lineNumber": {
+                    "type": "integer",
+                    "description": "Line number where the error occurred (if applicable)"
+                },
+                "columnNumber": {
+                    "type": "integer",
+                    "description": "Column number where the error occurred (if applicable)"
+                },
+                "yamlPath": {
+                    "type": "string",
+                    "description": "YAML path to the problematic element",
+                    "example": "behaviors.morning_startup.actions[0]"
+                }
+            }
         }
-      }
-    },
-    "ValidationError": {
-      "description": "Detailed validation error with type, location, and message information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "type",
-        "message"
-      ],
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "syntax",
-            "semantic",
-            "schema",
-            "context",
-            "service_dependency"
-          ],
-          "description": "Type of validation error"
-        },
-        "message": {
-          "type": "string",
-          "description": "Human-readable error message"
-        },
-        "lineNumber": {
-          "type": "integer",
-          "description": "Line number where the error occurred (if applicable)"
-        },
-        "columnNumber": {
-          "type": "integer",
-          "description": "Column number where the error occurred (if applicable)"
-        },
-        "yamlPath": {
-          "type": "string",
-          "description": "YAML path to the problematic element",
-          "example": "behaviors.morning_startup.actions[0]"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ValidateAbml_Info = """
 {
-  "summary": "Validate ABML definition",
-  "description": "Validates ABML YAML against schema and checks for semantic correctness.\nIncludes context variable validation and service dependency checking.\n",
-  "tags": [
-    "Validation"
-  ],
-  "deprecated": false,
-  "operationId": "ValidateAbml"
+    "summary": "Validate ABML definition",
+    "description": "Validates ABML YAML against schema and checks for semantic correctness.\nIncludes context variable validation and service dependency checking.\n",
+    "tags": [
+        "Validation"
+    ],
+    "deprecated": false,
+    "operationId": "ValidateAbml"
 }
 """;
 
@@ -1380,204 +1380,204 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _GetCachedBehavior_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetCachedBehaviorRequest",
-  "$defs": {
-    "GetCachedBehaviorRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to get a cached compiled behavior",
-      "required": [
-        "behaviorId"
-      ],
-      "properties": {
-        "behaviorId": {
-          "type": "string",
-          "description": "Unique identifier for the cached behavior"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCachedBehaviorRequest",
+    "$defs": {
+        "GetCachedBehaviorRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get a cached compiled behavior",
+            "required": [
+                "behaviorId"
+            ],
+            "properties": {
+                "behaviorId": {
+                    "type": "string",
+                    "description": "Unique identifier for the cached behavior"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetCachedBehavior_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CachedBehaviorResponse",
-  "$defs": {
-    "CachedBehaviorResponse": {
-      "description": "Response containing a previously compiled behavior retrieved from cache",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "behaviorId",
-        "compiledBehavior"
-      ],
-      "properties": {
-        "behaviorId": {
-          "type": "string",
-          "description": "Unique identifier for the cached behavior"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CachedBehaviorResponse",
+    "$defs": {
+        "CachedBehaviorResponse": {
+            "description": "Response containing a previously compiled behavior retrieved from cache",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "behaviorId",
+                "compiledBehavior"
+            ],
+            "properties": {
+                "behaviorId": {
+                    "type": "string",
+                    "description": "Unique identifier for the cached behavior"
+                },
+                "compiledBehavior": {
+                    "$ref": "#/$defs/CompiledBehavior",
+                    "description": "The compiled behavior data retrieved from cache"
+                },
+                "cacheTimestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the behavior was cached"
+                },
+                "cacheHit": {
+                    "type": "boolean",
+                    "description": "Whether this was a cache hit or miss"
+                }
+            }
         },
-        "compiledBehavior": {
-          "$ref": "#/$defs/CompiledBehavior",
-          "description": "The compiled behavior data retrieved from cache"
+        "CompiledBehavior": {
+            "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "behaviorTree",
+                "contextSchema"
+            ],
+            "properties": {
+                "behaviorTree": {
+                    "$ref": "#/$defs/BehaviorTreeData",
+                    "description": "Compiled behavior tree data with bytecode or download reference"
+                },
+                "contextSchema": {
+                    "$ref": "#/$defs/ContextSchemaData",
+                    "description": "Schema defining required context variables for execution"
+                },
+                "serviceDependencies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of required services for this behavior"
+                },
+                "goapGoals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/GoapGoal"
+                    },
+                    "description": "GOAP goals extracted from the behavior"
+                },
+                "executionMetadata": {
+                    "$ref": "#/$defs/ExecutionMetadata",
+                    "description": "Metadata for behavior execution including performance hints and resource requirements"
+                }
+            }
         },
-        "cacheTimestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the behavior was cached"
+        "BehaviorTreeData": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Compiled behavior tree data with bytecode or download reference",
+            "properties": {
+                "bytecode": {
+                    "type": "string",
+                    "description": "Base64-encoded compiled bytecode for the behavior tree"
+                },
+                "bytecodeSize": {
+                    "type": "integer",
+                    "description": "Size of the bytecode in bytes"
+                },
+                "downloadUrl": {
+                    "type": "string",
+                    "description": "URL to download the compiled behavior asset"
+                }
+            }
         },
-        "cacheHit": {
-          "type": "boolean",
-          "description": "Whether this was a cache hit or miss"
+        "ContextSchemaData": {
+            "type": "object",
+            "description": "Schema defining required context variables for behavior execution",
+            "additionalProperties": true
+        },
+        "GoapGoal": {
+            "description": "Goal definition for GOAP planning with conditions and priority",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "conditions",
+                "priority"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the goal",
+                    "example": "satisfy_hunger"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of the goal"
+                },
+                "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions that satisfy this goal (literal conditions)",
+                    "example": {
+                        "hunger": "<= 0.3",
+                        "gold": ">= 50"
+                    }
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Priority of this goal relative to others"
+                },
+                "preconditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions required to pursue this goal"
+                }
+            }
+        },
+        "ExecutionMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
+            "properties": {
+                "estimatedDuration": {
+                    "type": "integer",
+                    "description": "Estimated execution time in seconds"
+                },
+                "resourceRequirements": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Resource requirements for behavior execution"
+                },
+                "interruptConditions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Conditions that can interrupt behavior execution"
+                }
+            }
         }
-      }
-    },
-    "CompiledBehavior": {
-      "description": "Compiled behavior containing behavior tree, context schema, and GOAP integration data",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "behaviorTree",
-        "contextSchema"
-      ],
-      "properties": {
-        "behaviorTree": {
-          "$ref": "#/$defs/BehaviorTreeData",
-          "description": "Compiled behavior tree data with bytecode or download reference"
-        },
-        "contextSchema": {
-          "$ref": "#/$defs/ContextSchemaData",
-          "description": "Schema defining required context variables for execution"
-        },
-        "serviceDependencies": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of required services for this behavior"
-        },
-        "goapGoals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/GoapGoal"
-          },
-          "description": "GOAP goals extracted from the behavior"
-        },
-        "executionMetadata": {
-          "$ref": "#/$defs/ExecutionMetadata",
-          "description": "Metadata for behavior execution including performance hints and resource requirements"
-        }
-      }
-    },
-    "BehaviorTreeData": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Compiled behavior tree data with bytecode or download reference",
-      "properties": {
-        "bytecode": {
-          "type": "string",
-          "description": "Base64-encoded compiled bytecode for the behavior tree"
-        },
-        "bytecodeSize": {
-          "type": "integer",
-          "description": "Size of the bytecode in bytes"
-        },
-        "downloadUrl": {
-          "type": "string",
-          "description": "URL to download the compiled behavior asset"
-        }
-      }
-    },
-    "ContextSchemaData": {
-      "type": "object",
-      "description": "Schema defining required context variables for behavior execution",
-      "additionalProperties": true
-    },
-    "GoapGoal": {
-      "description": "Goal definition for GOAP planning with conditions and priority",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "conditions",
-        "priority"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the goal",
-          "example": "satisfy_hunger"
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of the goal"
-        },
-        "conditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions that satisfy this goal (literal conditions)",
-          "example": {
-            "hunger": "<= 0.3",
-            "gold": ">= 50"
-          }
-        },
-        "priority": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Priority of this goal relative to others"
-        },
-        "preconditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions required to pursue this goal"
-        }
-      }
-    },
-    "ExecutionMetadata": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Metadata about behavior execution requirements including timing, resources, and interrupt conditions",
-      "properties": {
-        "estimatedDuration": {
-          "type": "integer",
-          "description": "Estimated execution time in seconds"
-        },
-        "resourceRequirements": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Resource requirements for behavior execution"
-        },
-        "interruptConditions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Conditions that can interrupt behavior execution"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetCachedBehavior_Info = """
 {
-  "summary": "Get cached compiled behavior",
-  "description": "Retrieves a previously compiled behavior from the cache.\nUsed for performance optimization in high-frequency behavior execution.\n",
-  "tags": [
-    "Cache"
-  ],
-  "deprecated": false,
-  "operationId": "GetCachedBehavior"
+    "summary": "Get cached compiled behavior",
+    "description": "Retrieves a previously compiled behavior from the cache.\nUsed for performance optimization in high-frequency behavior execution.\n",
+    "tags": [
+        "Cache"
+    ],
+    "deprecated": false,
+    "operationId": "GetCachedBehavior"
 }
 """;
 
@@ -1627,24 +1627,24 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _InvalidateCachedBehavior_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/InvalidateCacheRequest",
-  "$defs": {
-    "InvalidateCacheRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to invalidate a cached behavior",
-      "required": [
-        "behaviorId"
-      ],
-      "properties": {
-        "behaviorId": {
-          "type": "string",
-          "description": "Unique identifier for the cached behavior to invalidate"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/InvalidateCacheRequest",
+    "$defs": {
+        "InvalidateCacheRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to invalidate a cached behavior",
+            "required": [
+                "behaviorId"
+            ],
+            "properties": {
+                "behaviorId": {
+                    "type": "string",
+                    "description": "Unique identifier for the cached behavior to invalidate"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1654,13 +1654,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _InvalidateCachedBehavior_Info = """
 {
-  "summary": "Invalidate cached behavior",
-  "description": "Removes a behavior from the cache, forcing recompilation on next access.\nUsed when behavior definitions are updated.\n",
-  "tags": [
-    "Cache"
-  ],
-  "deprecated": false,
-  "operationId": "InvalidateCachedBehavior"
+    "summary": "Invalidate cached behavior",
+    "description": "Removes a behavior from the cache, forcing recompilation on next access.\nUsed when behavior definitions are updated.\n",
+    "tags": [
+        "Cache"
+    ],
+    "deprecated": false,
+    "operationId": "InvalidateCachedBehavior"
 }
 """;
 
@@ -1710,181 +1710,181 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _ResolveContextVariables_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ResolveContextRequest",
-  "$defs": {
-    "ResolveContextRequest": {
-      "description": "Request to resolve context variable expressions against character and world state",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "contextExpression",
-        "characterContext"
-      ],
-      "properties": {
-        "contextExpression": {
-          "type": "string",
-          "description": "Context variable expression to resolve",
-          "example": "${npc.stats.energy > 0.5 && world.time.hour < 18}"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ResolveContextRequest",
+    "$defs": {
+        "ResolveContextRequest": {
+            "description": "Request to resolve context variable expressions against character and world state",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "contextExpression",
+                "characterContext"
+            ],
+            "properties": {
+                "contextExpression": {
+                    "type": "string",
+                    "description": "Context variable expression to resolve",
+                    "example": "${npc.stats.energy > 0.5 && world.time.hour < 18}"
+                },
+                "characterContext": {
+                    "$ref": "#/$defs/CharacterContext",
+                    "description": "Character context providing values for variable resolution"
+                }
+            }
         },
-        "characterContext": {
-          "$ref": "#/$defs/CharacterContext",
-          "description": "Character context providing values for variable resolution"
+        "CharacterContext": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Context information about a character for behavior resolution",
+            "properties": {
+                "npcId": {
+                    "type": "string",
+                    "description": "Unique identifier for the NPC",
+                    "example": "npc_12345"
+                },
+                "culture": {
+                    "type": "string",
+                    "description": "Cultural background identifier",
+                    "example": "european_medieval"
+                },
+                "profession": {
+                    "type": "string",
+                    "description": "Character profession identifier",
+                    "example": "blacksmith"
+                },
+                "stats": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Character statistics and attributes",
+                    "example": {
+                        "energy": 0.8,
+                        "health": 1.0,
+                        "hunger": 0.3
+                    }
+                },
+                "skills": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Character skill levels",
+                    "example": {
+                        "blacksmithing": 85,
+                        "trading": 42
+                    }
+                },
+                "location": {
+                    "$ref": "#/$defs/Location",
+                    "description": "Current location information for the character"
+                },
+                "relationships": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Relationship values with other characters"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Relevant world state information"
+                }
+            }
+        },
+        "Location": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Character location information including current position, region, and 3D coordinates",
+            "properties": {
+                "current": {
+                    "type": "string",
+                    "description": "Current location name or identifier"
+                },
+                "region": {
+                    "type": "string",
+                    "description": "Region or zone the character is in"
+                },
+                "coordinates": {
+                    "$ref": "#/$defs/Coordinates",
+                    "description": "3D spatial coordinates of the character's position in the game world"
+                }
+            }
+        },
+        "Coordinates": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "3D spatial coordinates representing a position in the game world",
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "description": "X coordinate position"
+                },
+                "y": {
+                    "type": "number",
+                    "description": "Y coordinate position"
+                },
+                "z": {
+                    "type": "number",
+                    "description": "Z coordinate position"
+                }
+            }
         }
-      }
-    },
-    "CharacterContext": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Context information about a character for behavior resolution",
-      "properties": {
-        "npcId": {
-          "type": "string",
-          "description": "Unique identifier for the NPC",
-          "example": "npc_12345"
-        },
-        "culture": {
-          "type": "string",
-          "description": "Cultural background identifier",
-          "example": "european_medieval"
-        },
-        "profession": {
-          "type": "string",
-          "description": "Character profession identifier",
-          "example": "blacksmith"
-        },
-        "stats": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Character statistics and attributes",
-          "example": {
-            "energy": 0.8,
-            "health": 1.0,
-            "hunger": 0.3
-          }
-        },
-        "skills": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Character skill levels",
-          "example": {
-            "blacksmithing": 85,
-            "trading": 42
-          }
-        },
-        "location": {
-          "$ref": "#/$defs/Location",
-          "description": "Current location information for the character"
-        },
-        "relationships": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Relationship values with other characters"
-        },
-        "worldState": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Relevant world state information"
-        }
-      }
-    },
-    "Location": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Character location information including current position, region, and 3D coordinates",
-      "properties": {
-        "current": {
-          "type": "string",
-          "description": "Current location name or identifier"
-        },
-        "region": {
-          "type": "string",
-          "description": "Region or zone the character is in"
-        },
-        "coordinates": {
-          "$ref": "#/$defs/Coordinates",
-          "description": "3D spatial coordinates of the character's position in the game world"
-        }
-      }
-    },
-    "Coordinates": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "3D spatial coordinates representing a position in the game world",
-      "properties": {
-        "x": {
-          "type": "number",
-          "description": "X coordinate position"
-        },
-        "y": {
-          "type": "number",
-          "description": "Y coordinate position"
-        },
-        "z": {
-          "type": "number",
-          "description": "Z coordinate position"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ResolveContextVariables_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ResolveContextResponse",
-  "$defs": {
-    "ResolveContextResponse": {
-      "description": "Response containing the resolved value of a context variable expression",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "resolvedValue"
-      ],
-      "properties": {
-        "resolvedValue": {
-          "description": "The resolved value of the context expression"
-        },
-        "resolvedType": {
-          "type": "string",
-          "enum": [
-            "boolean",
-            "string",
-            "number",
-            "object",
-            "array"
-          ],
-          "description": "Type of the resolved value"
-        },
-        "contextVariablesUsed": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of context variables referenced in the expression"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ResolveContextResponse",
+    "$defs": {
+        "ResolveContextResponse": {
+            "description": "Response containing the resolved value of a context variable expression",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "resolvedValue"
+            ],
+            "properties": {
+                "resolvedValue": {
+                    "description": "The resolved value of the context expression"
+                },
+                "resolvedType": {
+                    "type": "string",
+                    "enum": [
+                        "boolean",
+                        "string",
+                        "number",
+                        "object",
+                        "array"
+                    ],
+                    "description": "Type of the resolved value"
+                },
+                "contextVariablesUsed": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of context variables referenced in the expression"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ResolveContextVariables_Info = """
 {
-  "summary": "Resolve context variables",
-  "description": "Resolves context variables in ABML definitions against character and world state.\nUsed for dynamic behavior adaptation based on current game state.\n",
-  "tags": [
-    "Context"
-  ],
-  "deprecated": false,
-  "operationId": "ResolveContextVariables"
+    "summary": "Resolve context variables",
+    "description": "Resolves context variables in ABML definitions against character and world state.\nUsed for dynamic behavior adaptation based on current game state.\n",
+    "tags": [
+        "Context"
+    ],
+    "deprecated": false,
+    "operationId": "ResolveContextVariables"
 }
 """;
 
@@ -1934,220 +1934,220 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _GenerateGoapPlan_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GoapPlanRequest",
-  "$defs": {
-    "GoapPlanRequest": {
-      "description": "Request to generate a GOAP plan to achieve a goal from current world state",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "goal",
-        "worldState",
-        "behaviorId"
-      ],
-      "properties": {
-        "agentId": {
-          "type": "string",
-          "description": "Unique identifier for the agent requesting the plan"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GoapPlanRequest",
+    "$defs": {
+        "GoapPlanRequest": {
+            "description": "Request to generate a GOAP plan to achieve a goal from current world state",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "goal",
+                "worldState",
+                "behaviorId"
+            ],
+            "properties": {
+                "agentId": {
+                    "type": "string",
+                    "description": "Unique identifier for the agent requesting the plan"
+                },
+                "goal": {
+                    "$ref": "#/$defs/GoapGoal",
+                    "description": "The goal to achieve through planning"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Current world state as key-value pairs",
+                    "example": {
+                        "hunger": 0.8,
+                        "gold": 50,
+                        "location": "home"
+                    }
+                },
+                "behaviorId": {
+                    "type": "string",
+                    "description": "ID of compiled behavior containing GOAP actions"
+                },
+                "options": {
+                    "$ref": "#/$defs/GoapPlanningOptions",
+                    "description": "Options controlling the planning process"
+                }
+            }
         },
-        "goal": {
-          "$ref": "#/$defs/GoapGoal",
-          "description": "The goal to achieve through planning"
+        "GoapGoal": {
+            "description": "Goal definition for GOAP planning with conditions and priority",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "conditions",
+                "priority"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the goal",
+                    "example": "satisfy_hunger"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of the goal"
+                },
+                "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions that satisfy this goal (literal conditions)",
+                    "example": {
+                        "hunger": "<= 0.3",
+                        "gold": ">= 50"
+                    }
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Priority of this goal relative to others"
+                },
+                "preconditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions required to pursue this goal"
+                }
+            }
         },
-        "worldState": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Current world state as key-value pairs",
-          "example": {
-            "hunger": 0.8,
-            "gold": 50,
-            "location": "home"
-          }
-        },
-        "behaviorId": {
-          "type": "string",
-          "description": "ID of compiled behavior containing GOAP actions"
-        },
-        "options": {
-          "$ref": "#/$defs/GoapPlanningOptions",
-          "description": "Options controlling the planning process"
+        "GoapPlanningOptions": {
+            "description": "Options controlling the GOAP planning process including depth and timeout limits",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "maxDepth": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Maximum plan depth (number of actions)"
+                },
+                "maxNodes": {
+                    "type": "integer",
+                    "default": 1000,
+                    "description": "Maximum nodes to expand during search"
+                },
+                "timeoutMs": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Planning timeout in milliseconds"
+                }
+            }
         }
-      }
-    },
-    "GoapGoal": {
-      "description": "Goal definition for GOAP planning with conditions and priority",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "conditions",
-        "priority"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the goal",
-          "example": "satisfy_hunger"
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of the goal"
-        },
-        "conditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions that satisfy this goal (literal conditions)",
-          "example": {
-            "hunger": "<= 0.3",
-            "gold": ">= 50"
-          }
-        },
-        "priority": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Priority of this goal relative to others"
-        },
-        "preconditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions required to pursue this goal"
-        }
-      }
-    },
-    "GoapPlanningOptions": {
-      "description": "Options controlling the GOAP planning process including depth and timeout limits",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "maxDepth": {
-          "type": "integer",
-          "default": 10,
-          "description": "Maximum plan depth (number of actions)"
-        },
-        "maxNodes": {
-          "type": "integer",
-          "default": 1000,
-          "description": "Maximum nodes to expand during search"
-        },
-        "timeoutMs": {
-          "type": "integer",
-          "default": 100,
-          "description": "Planning timeout in milliseconds"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GenerateGoapPlan_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GoapPlanResponse",
-  "$defs": {
-    "GoapPlanResponse": {
-      "description": "Response containing the generated GOAP plan or failure information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "success"
-      ],
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether planning was successful"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GoapPlanResponse",
+    "$defs": {
+        "GoapPlanResponse": {
+            "description": "Response containing the generated GOAP plan or failure information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "success"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether planning was successful"
+                },
+                "plan": {
+                    "$ref": "#/$defs/GoapPlanResult",
+                    "description": "The generated plan if successful"
+                },
+                "planningTimeMs": {
+                    "type": "integer",
+                    "description": "Time spent planning in milliseconds"
+                },
+                "nodesExpanded": {
+                    "type": "integer",
+                    "description": "Number of nodes expanded during A* search"
+                },
+                "failureReason": {
+                    "type": "string",
+                    "description": "Reason for planning failure if unsuccessful",
+                    "example": "No plan found - goal unreachable"
+                }
+            }
         },
-        "plan": {
-          "$ref": "#/$defs/GoapPlanResult",
-          "description": "The generated plan if successful"
+        "GoapPlanResult": {
+            "description": "Result of GOAP planning containing the ordered sequence of actions to achieve a goal",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "goalId",
+                "actions",
+                "totalCost"
+            ],
+            "properties": {
+                "goalId": {
+                    "type": "string",
+                    "description": "ID of the goal this plan achieves"
+                },
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlannedActionResponse"
+                    },
+                    "description": "Ordered sequence of actions to execute"
+                },
+                "totalCost": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Total cost of all actions in the plan"
+                }
+            }
         },
-        "planningTimeMs": {
-          "type": "integer",
-          "description": "Time spent planning in milliseconds"
-        },
-        "nodesExpanded": {
-          "type": "integer",
-          "description": "Number of nodes expanded during A* search"
-        },
-        "failureReason": {
-          "type": "string",
-          "description": "Reason for planning failure if unsuccessful",
-          "example": "No plan found - goal unreachable"
+        "PlannedActionResponse": {
+            "description": "Single action within a GOAP plan with position and cost information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "actionId",
+                "index",
+                "cost"
+            ],
+            "properties": {
+                "actionId": {
+                    "type": "string",
+                    "description": "ID of the action (flow name)"
+                },
+                "index": {
+                    "type": "integer",
+                    "description": "Position in the plan sequence"
+                },
+                "cost": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Cost of this action"
+                }
+            }
         }
-      }
-    },
-    "GoapPlanResult": {
-      "description": "Result of GOAP planning containing the ordered sequence of actions to achieve a goal",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "goalId",
-        "actions",
-        "totalCost"
-      ],
-      "properties": {
-        "goalId": {
-          "type": "string",
-          "description": "ID of the goal this plan achieves"
-        },
-        "actions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/PlannedActionResponse"
-          },
-          "description": "Ordered sequence of actions to execute"
-        },
-        "totalCost": {
-          "type": "number",
-          "format": "float",
-          "description": "Total cost of all actions in the plan"
-        }
-      }
-    },
-    "PlannedActionResponse": {
-      "description": "Single action within a GOAP plan with position and cost information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "actionId",
-        "index",
-        "cost"
-      ],
-      "properties": {
-        "actionId": {
-          "type": "string",
-          "description": "ID of the action (flow name)"
-        },
-        "index": {
-          "type": "integer",
-          "description": "Position in the plan sequence"
-        },
-        "cost": {
-          "type": "number",
-          "format": "float",
-          "description": "Cost of this action"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GenerateGoapPlan_Info = """
 {
-  "summary": "Generate GOAP plan",
-  "description": "Generates a GOAP plan to achieve a goal from the current world state.\nUses A* search to find the optimal sequence of actions.\n",
-  "tags": [
-    "GOAP"
-  ],
-  "deprecated": false,
-  "operationId": "GenerateGoapPlan"
+    "summary": "Generate GOAP plan",
+    "description": "Generates a GOAP plan to achieve a goal from the current world state.\nUses A* search to find the optimal sequence of actions.\n",
+    "tags": [
+        "GOAP"
+    ],
+    "deprecated": false,
+    "operationId": "GenerateGoapPlan"
 }
 """;
 
@@ -2197,207 +2197,207 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
 
     private static readonly string _ValidateGoapPlan_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ValidateGoapPlanRequest",
-  "$defs": {
-    "ValidateGoapPlanRequest": {
-      "description": "Request to validate an existing GOAP plan against current world state",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "plan",
-        "currentActionIndex",
-        "worldState"
-      ],
-      "properties": {
-        "plan": {
-          "$ref": "#/$defs/GoapPlanResult",
-          "description": "The plan to validate"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateGoapPlanRequest",
+    "$defs": {
+        "ValidateGoapPlanRequest": {
+            "description": "Request to validate an existing GOAP plan against current world state",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "plan",
+                "currentActionIndex",
+                "worldState"
+            ],
+            "properties": {
+                "plan": {
+                    "$ref": "#/$defs/GoapPlanResult",
+                    "description": "The plan to validate"
+                },
+                "currentActionIndex": {
+                    "type": "integer",
+                    "description": "Index of the action currently being executed"
+                },
+                "worldState": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Current world state"
+                },
+                "activeGoals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/GoapGoal"
+                    },
+                    "description": "All active goals for priority checking"
+                }
+            }
         },
-        "currentActionIndex": {
-          "type": "integer",
-          "description": "Index of the action currently being executed"
+        "GoapPlanResult": {
+            "description": "Result of GOAP planning containing the ordered sequence of actions to achieve a goal",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "goalId",
+                "actions",
+                "totalCost"
+            ],
+            "properties": {
+                "goalId": {
+                    "type": "string",
+                    "description": "ID of the goal this plan achieves"
+                },
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PlannedActionResponse"
+                    },
+                    "description": "Ordered sequence of actions to execute"
+                },
+                "totalCost": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Total cost of all actions in the plan"
+                }
+            }
         },
-        "worldState": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Current world state"
+        "PlannedActionResponse": {
+            "description": "Single action within a GOAP plan with position and cost information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "actionId",
+                "index",
+                "cost"
+            ],
+            "properties": {
+                "actionId": {
+                    "type": "string",
+                    "description": "ID of the action (flow name)"
+                },
+                "index": {
+                    "type": "integer",
+                    "description": "Position in the plan sequence"
+                },
+                "cost": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Cost of this action"
+                }
+            }
         },
-        "activeGoals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/GoapGoal"
-          },
-          "description": "All active goals for priority checking"
+        "GoapGoal": {
+            "description": "Goal definition for GOAP planning with conditions and priority",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "conditions",
+                "priority"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the goal",
+                    "example": "satisfy_hunger"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of the goal"
+                },
+                "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions that satisfy this goal (literal conditions)",
+                    "example": {
+                        "hunger": "<= 0.3",
+                        "gold": ">= 50"
+                    }
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Priority of this goal relative to others"
+                },
+                "preconditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "World state conditions required to pursue this goal"
+                }
+            }
         }
-      }
-    },
-    "GoapPlanResult": {
-      "description": "Result of GOAP planning containing the ordered sequence of actions to achieve a goal",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "goalId",
-        "actions",
-        "totalCost"
-      ],
-      "properties": {
-        "goalId": {
-          "type": "string",
-          "description": "ID of the goal this plan achieves"
-        },
-        "actions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/PlannedActionResponse"
-          },
-          "description": "Ordered sequence of actions to execute"
-        },
-        "totalCost": {
-          "type": "number",
-          "format": "float",
-          "description": "Total cost of all actions in the plan"
-        }
-      }
-    },
-    "PlannedActionResponse": {
-      "description": "Single action within a GOAP plan with position and cost information",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "actionId",
-        "index",
-        "cost"
-      ],
-      "properties": {
-        "actionId": {
-          "type": "string",
-          "description": "ID of the action (flow name)"
-        },
-        "index": {
-          "type": "integer",
-          "description": "Position in the plan sequence"
-        },
-        "cost": {
-          "type": "number",
-          "format": "float",
-          "description": "Cost of this action"
-        }
-      }
-    },
-    "GoapGoal": {
-      "description": "Goal definition for GOAP planning with conditions and priority",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "conditions",
-        "priority"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the goal",
-          "example": "satisfy_hunger"
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of the goal"
-        },
-        "conditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions that satisfy this goal (literal conditions)",
-          "example": {
-            "hunger": "<= 0.3",
-            "gold": ">= 50"
-          }
-        },
-        "priority": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "description": "Priority of this goal relative to others"
-        },
-        "preconditions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "World state conditions required to pursue this goal"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ValidateGoapPlan_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ValidateGoapPlanResponse",
-  "$defs": {
-    "ValidateGoapPlanResponse": {
-      "description": "Response indicating whether a GOAP plan is still valid and suggested next action",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "isValid",
-        "reason",
-        "suggestedAction"
-      ],
-      "properties": {
-        "isValid": {
-          "type": "boolean",
-          "description": "Whether the plan is still valid"
-        },
-        "reason": {
-          "type": "string",
-          "enum": [
-            "none",
-            "preconditionInvalidated",
-            "actionFailed",
-            "betterGoalAvailable",
-            "planCompleted",
-            "goalAlreadySatisfied",
-            "suboptimalPlan"
-          ],
-          "description": "Reason for the validation result"
-        },
-        "suggestedAction": {
-          "type": "string",
-          "enum": [
-            "continue",
-            "replan",
-            "abort"
-          ],
-          "description": "Suggested action based on validation"
-        },
-        "invalidatedAtIndex": {
-          "type": "integer",
-          "description": "Index where plan became invalid (if applicable)"
-        },
-        "message": {
-          "type": "string",
-          "description": "Additional details about the validation result"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateGoapPlanResponse",
+    "$defs": {
+        "ValidateGoapPlanResponse": {
+            "description": "Response indicating whether a GOAP plan is still valid and suggested next action",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "isValid",
+                "reason",
+                "suggestedAction"
+            ],
+            "properties": {
+                "isValid": {
+                    "type": "boolean",
+                    "description": "Whether the plan is still valid"
+                },
+                "reason": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "preconditionInvalidated",
+                        "actionFailed",
+                        "betterGoalAvailable",
+                        "planCompleted",
+                        "goalAlreadySatisfied",
+                        "suboptimalPlan"
+                    ],
+                    "description": "Reason for the validation result"
+                },
+                "suggestedAction": {
+                    "type": "string",
+                    "enum": [
+                        "continue",
+                        "replan",
+                        "abort"
+                    ],
+                    "description": "Suggested action based on validation"
+                },
+                "invalidatedAtIndex": {
+                    "type": "integer",
+                    "description": "Index where plan became invalid (if applicable)"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Additional details about the validation result"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ValidateGoapPlan_Info = """
 {
-  "summary": "Validate existing GOAP plan",
-  "description": "Validates an existing GOAP plan against the current world state.\nReturns whether the plan is still valid or needs replanning.\n",
-  "tags": [
-    "GOAP"
-  ],
-  "deprecated": false,
-  "operationId": "ValidateGoapPlan"
+    "summary": "Validate existing GOAP plan",
+    "description": "Validates an existing GOAP plan against the current world state.\nReturns whether the plan is still valid or needs replanning.\n",
+    "tags": [
+        "GOAP"
+    ],
+    "deprecated": false,
+    "operationId": "ValidateGoapPlan"
 }
 """;
 

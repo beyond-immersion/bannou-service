@@ -46,43 +46,52 @@ paths:
         '429':
           description: Too many login attempts
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LoginRequest\"\
-        ,\n  \"$defs\": {\n    \"LoginRequest\": {\n      \"description\": \"Request to authenticate a user with email and
-        password credentials\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\":
-        [\n        \"email\",\n        \"password\"\n      ],\n      \"properties\": {\n        \"email\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"email\",\n          \"description\": \"Email address for authentication\"\
-        \n        },\n        \"password\": {\n          \"type\": \"string\",\n          \"format\": \"password\",\n    \
-        \      \"description\": \"User password for authentication\"\n        },\n        \"rememberMe\": {\n          \"\
-        type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to extend the session duration
-        for persistent login\"\n        },\n        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\",\n     \
-        \     \"nullable\": true,\n          \"description\": \"Information about the client device (optional)\"\n       \
-        \ }\n      }\n    },\n    \"DeviceInfo\": {\n      \"description\": \"Information about the client device used for
-        authentication or session tracking\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n     \
-        \ \"properties\": {\n        \"deviceType\": {\n          \"type\": \"string\",\n          \"enum\": [\n         \
-        \   \"desktop\",\n            \"mobile\",\n            \"tablet\",\n            \"console\"\n          ],\n      \
-        \    \"description\": \"Category of the device\"\n        },\n        \"platform\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Operating system or platform name\"\n        },\n        \"browser\": {\n        \
-        \  \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Browser name and version if
-        applicable\"\n        },\n        \"appVersion\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Version of the client application\"\n        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AuthResponse\"\
-        ,\n  \"$defs\": {\n    \"AuthResponse\": {\n      \"description\": \"Successful authentication response containing
-        tokens and session information\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"accountId\",\n        \"accessToken\",\n        \"refreshToken\",\n        \"expiresIn\",\n       \
-        \ \"connectUrl\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n \
-        \         \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the authenticated account\"\n\
-        \        },\n        \"accessToken\": {\n          \"type\": \"string\",\n          \"description\": \"JWT access
-        token for API authentication\"\n        },\n        \"refreshToken\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Token used to obtain new access tokens when the current one expires\"\n        },\n       \
-        \ \"expiresIn\": {\n          \"type\": \"integer\",\n          \"description\": \"Seconds until access token expires\"\
-        \n        },\n        \"connectUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n       \
-        \   \"description\": \"WebSocket endpoint for Connect service\"\n        },\n        \"roles\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
-        List of roles assigned to the authenticated user\"\n        },\n        \"requiresTwoFactor\": {\n          \"type\"\
-        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether the user needs to complete two-factor
-        authentication\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Login with email/password\",\n  \"description\": \"\",\n  \"tags\": [\n \
-        \   \"Authentication\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"login\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoginRequest\"\
+        ,\n    \"$defs\": {\n        \"LoginRequest\": {\n            \"description\": \"Request to authenticate a user with
+        email and password credentials\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"email\",\n                \"password\"\n            ],\n         \
+        \   \"properties\": {\n                \"email\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"email\",\n                    \"description\": \"Email address for authentication\"\n          \
+        \      },\n                \"password\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"password\",\n                    \"description\": \"User password for authentication\"\n                },\n \
+        \               \"rememberMe\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether to extend the session duration for persistent login\"\n          \
+        \      },\n                \"deviceInfo\": {\n                    \"$ref\": \"#/$defs/DeviceInfo\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Information about the client device (optional)\"\
+        \n                }\n            }\n        },\n        \"DeviceInfo\": {\n            \"description\": \"Information
+        about the client device used for authentication or session tracking\",\n            \"type\": \"object\",\n      \
+        \      \"additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n      \
+        \              \"type\": \"string\",\n                    \"enum\": [\n                        \"desktop\",\n    \
+        \                    \"mobile\",\n                        \"tablet\",\n                        \"console\"\n     \
+        \               ],\n                    \"description\": \"Category of the device\"\n                },\n        \
+        \        \"platform\": {\n                    \"type\": \"string\",\n                    \"description\": \"Operating
+        system or platform name\"\n                },\n                \"browser\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\
+        \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
+        \        }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
+        ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
+        containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"accessToken\",\n        \
+        \        \"refreshToken\",\n                \"expiresIn\",\n                \"connectUrl\"\n            ],\n     \
+        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authenticated
+        account\"\n                },\n                \"accessToken\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"JWT access token for API authentication\"\n                },\n             \
+        \   \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token used
+        to obtain new access tokens when the current one expires\"\n                },\n                \"expiresIn\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Seconds until access token expires\"\
+        \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
+        \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Login with email/password\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Authentication\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"login\"\n}"
   /auth/register:
     post:
       summary: Register new user account
@@ -112,28 +121,32 @@ paths:
 
   # OAuth endpoints use path parameters because they are browser-facing redirect flows.
   # These are NOT routed through WebSocket and are accessed directly via browser navigation.
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RegisterRequest\"\
-        ,\n  \"$defs\": {\n    \"RegisterRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to register
-        a new user account\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"username\",\n    \
-        \    \"password\",\n        \"email\"\n      ],\n      \"properties\": {\n        \"username\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"Unique username for the account\",\n          \"minLength\": 3,\n    \
-        \      \"maxLength\": 32,\n          \"pattern\": \"^[a-zA-Z0-9_]+$\",\n          \"example\": \"gameuser123\"\n \
-        \       },\n        \"password\": {\n          \"type\": \"string\",\n          \"description\": \"Password for the
-        account (will be hashed)\",\n          \"minLength\": 8,\n          \"format\": \"password\",\n          \"example\"\
-        : \"SecurePassword123!\"\n        },\n        \"email\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"email\",\n          \"description\": \"Email address for account recovery and notifications\",\n          \"example\"\
-        : \"user@example.com\"\n        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RegisterResponse\"\
-        ,\n  \"$defs\": {\n    \"RegisterResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response from
-        successful user registration\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"accessToken\"\
-        ,\n        \"connectUrl\"\n      ],\n      \"properties\": {\n        \"accessToken\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"JWT access token for immediate authentication\",\n          \"example\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature\"\
-        \n        },\n        \"refreshToken\": {\n          \"type\": \"string\",\n          \"description\": \"Refresh token
-        for obtaining new access tokens\",\n          \"nullable\": true,\n          \"example\": \"refresh_token_abc123xyz789\"\
-        \n        },\n        \"connectUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n       \
-        \   \"description\": \"WebSocket endpoint for Connect service\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Register new user account\",\n  \"description\": \"\",\n  \"tags\": [\n \
-        \   \"Authentication\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"register\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterRequest\"\
+        ,\n    \"$defs\": {\n        \"RegisterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to register a new user account\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"username\",\n                \"password\",\n                \"email\"\n            ],\n   \
+        \         \"properties\": {\n                \"username\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Unique username for the account\",\n                    \"minLength\": 3,\n      \
+        \              \"maxLength\": 32,\n                    \"pattern\": \"^[a-zA-Z0-9_]+$\",\n                    \"example\"\
+        : \"gameuser123\"\n                },\n                \"password\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Password for the account (will be hashed)\",\n                    \"minLength\"\
+        : 8,\n                    \"format\": \"password\",\n                    \"example\": \"SecurePassword123!\"\n   \
+        \             },\n                \"email\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"email\",\n                    \"description\": \"Email address for account recovery and notifications\"\
+        ,\n                    \"example\": \"user@example.com\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterResponse\"\
+        ,\n    \"$defs\": {\n        \"RegisterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from successful user registration\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accessToken\",\n                \"connectUrl\"\n            ],\n            \"properties\"\
+        : {\n                \"accessToken\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"JWT access token for immediate authentication\",\n                    \"example\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature\"\
+        \n                },\n                \"refreshToken\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Refresh token for obtaining new access tokens\",\n                    \"nullable\": true,\n\
+        \                    \"example\": \"refresh_token_abc123xyz789\"\n                },\n                \"connectUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\"\
+        : \"WebSocket endpoint for Connect service\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Register new user account\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Authentication\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"register\"\n}"
   /auth/oauth/{provider}/init:
     get:
       summary: Initialize OAuth2 flow (browser redirect)
@@ -172,11 +185,11 @@ paths:
 
       x-request-schema-json: '{}'
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Initialize OAuth2 flow (browser redirect)\",\n  \"description\": \"Browser-facing
+      x-endpoint-info-json: "{\n    \"summary\": \"Initialize OAuth2 flow (browser redirect)\",\n    \"description\": \"Browser-facing
         endpoint for initiating OAuth flows. The user's browser navigates\\nto this URL directly, which then redirects to
         the OAuth provider.\\n\\n**Note**: This endpoint uses GET with path parameters because it's a browser\\nredirect flow,
-        not a WebSocket-routed API call.\\n\",\n  \"tags\": [\n    \"OAuth\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
-        : \"initOAuth\"\n}"
+        not a WebSocket-routed API call.\\n\",\n    \"tags\": [\n        \"OAuth\"\n    ],\n    \"deprecated\": false,\n \
+        \   \"operationId\": \"initOAuth\"\n}"
   /auth/oauth/{provider}/callback:
     post:
       summary: Complete OAuth2 flow (browser redirect callback)
@@ -212,45 +225,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/OAuthCallbackRequest\"\
-        ,\n  \"$defs\": {\n    \"OAuthCallbackRequest\": {\n      \"description\": \"Request containing OAuth provider callback
-        data to complete authentication\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"\
-        required\": [\n        \"code\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Authorization code returned by the OAuth provider\"\n        },\n        \"state\"\
-        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"State parameter
-        for CSRF protection, must match the value sent in the init request\"\n        },\n        \"deviceInfo\": {\n    \
-        \      \"$ref\": \"#/$defs/DeviceInfo\",\n          \"nullable\": true,\n          \"description\": \"Information
-        about the client device (optional)\"\n        }\n      }\n    },\n    \"DeviceInfo\": {\n      \"description\": \"\
-        Information about the client device used for authentication or session tracking\",\n      \"type\": \"object\",\n\
-        \      \"additionalProperties\": false,\n      \"properties\": {\n        \"deviceType\": {\n          \"type\": \"\
-        string\",\n          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"tablet\",\n   \
-        \         \"console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n        \"\
-        platform\": {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform name\"\n\
-        \        },\n        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n          \"type\"\
-        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\n \
-        \       }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AuthResponse\"\
-        ,\n  \"$defs\": {\n    \"AuthResponse\": {\n      \"description\": \"Successful authentication response containing
-        tokens and session information\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"accountId\",\n        \"accessToken\",\n        \"refreshToken\",\n        \"expiresIn\",\n       \
-        \ \"connectUrl\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n \
-        \         \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the authenticated account\"\n\
-        \        },\n        \"accessToken\": {\n          \"type\": \"string\",\n          \"description\": \"JWT access
-        token for API authentication\"\n        },\n        \"refreshToken\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Token used to obtain new access tokens when the current one expires\"\n        },\n       \
-        \ \"expiresIn\": {\n          \"type\": \"integer\",\n          \"description\": \"Seconds until access token expires\"\
-        \n        },\n        \"connectUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n       \
-        \   \"description\": \"WebSocket endpoint for Connect service\"\n        },\n        \"roles\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
-        List of roles assigned to the authenticated user\"\n        },\n        \"requiresTwoFactor\": {\n          \"type\"\
-        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether the user needs to complete two-factor
-        authentication\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Complete OAuth2 flow (browser redirect callback)\",\n  \"description\": \"\
-        Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects\\nthe user's browser back to this
-        URL after authentication.\\n\\n**Note**: This endpoint uses path parameters because the callback URL is registered\\
-        nwith OAuth providers and cannot be changed without updating provider configurations.\\n\",\n  \"tags\": [\n    \"\
-        OAuth\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"completeOAuth\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/OAuthCallbackRequest\"\
+        ,\n    \"$defs\": {\n        \"OAuthCallbackRequest\": {\n            \"description\": \"Request containing OAuth
+        provider callback data to complete authentication\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"code\"\n            ],\n            \"properties\": {\n \
+        \               \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Authorization
+        code returned by the OAuth provider\"\n                },\n                \"state\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"State parameter for
+        CSRF protection, must match the value sent in the init request\"\n                },\n                \"deviceInfo\"\
+        : {\n                    \"$ref\": \"#/$defs/DeviceInfo\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Information about the client device (optional)\"\n                }\n            }\n \
+        \       },\n        \"DeviceInfo\": {\n            \"description\": \"Information about the client device used for
+        authentication or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"deviceType\": {\n                    \"type\": \"string\",\n   \
+        \                 \"enum\": [\n                        \"desktop\",\n                        \"mobile\",\n       \
+        \                 \"tablet\",\n                        \"console\"\n                    ],\n                    \"\
+        description\": \"Category of the device\"\n                },\n                \"platform\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Operating system or platform name\"\n          \
+        \      },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Browser name and version if applicable\"\n                },\n   \
+        \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
+        \      }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
+        ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
+        containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"accessToken\",\n        \
+        \        \"refreshToken\",\n                \"expiresIn\",\n                \"connectUrl\"\n            ],\n     \
+        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authenticated
+        account\"\n                },\n                \"accessToken\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"JWT access token for API authentication\"\n                },\n             \
+        \   \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token used
+        to obtain new access tokens when the current one expires\"\n                },\n                \"expiresIn\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Seconds until access token expires\"\
+        \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
+        \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Complete OAuth2 flow (browser redirect callback)\",\n    \"description\"\
+        : \"Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects\\nthe user's browser back to
+        this URL after authentication.\\n\\n**Note**: This endpoint uses path parameters because the callback URL is registered\\
+        nwith OAuth providers and cannot be changed without updating provider configurations.\\n\",\n    \"tags\": [\n   \
+        \     \"OAuth\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"completeOAuth\"\n}"
   /auth/steam/verify:
     post:
       summary: Verify Steam Session Ticket
@@ -282,46 +303,54 @@ paths:
         '500':
           description: Steam API unavailable or internal error
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SteamVerifyRequest\"\
-        ,\n  \"$defs\": {\n    \"SteamVerifyRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to
-        verify a Steam Session Ticket. The ticket is obtained client-side via\\nISteamUser::GetAuthTicketForWebApi(\\\"bannou\\\
-        \"). SteamID is NOT included because\\nit must be obtained from Steam's Web API response (never trust client-provided
-        SteamID).\\n\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"ticket\"\n      ],\n   \
-        \   \"properties\": {\n        \"ticket\": {\n          \"type\": \"string\",\n          \"description\": \"Hex-encoded
-        Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\\\
-        \"-\\\", \\\"\\\")\\n\",\n          \"example\": \"140000006A7B3C8E...\"\n        },\n        \"deviceInfo\": {\n\
-        \          \"$ref\": \"#/$defs/DeviceInfo\",\n          \"nullable\": true,\n          \"description\": \"Information
-        about the client device (optional)\"\n        }\n      }\n    },\n    \"DeviceInfo\": {\n      \"description\": \"\
-        Information about the client device used for authentication or session tracking\",\n      \"type\": \"object\",\n\
-        \      \"additionalProperties\": false,\n      \"properties\": {\n        \"deviceType\": {\n          \"type\": \"\
-        string\",\n          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"tablet\",\n   \
-        \         \"console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n        \"\
-        platform\": {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform name\"\n\
-        \        },\n        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n          \"type\"\
-        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\n \
-        \       }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AuthResponse\"\
-        ,\n  \"$defs\": {\n    \"AuthResponse\": {\n      \"description\": \"Successful authentication response containing
-        tokens and session information\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"accountId\",\n        \"accessToken\",\n        \"refreshToken\",\n        \"expiresIn\",\n       \
-        \ \"connectUrl\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n \
-        \         \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the authenticated account\"\n\
-        \        },\n        \"accessToken\": {\n          \"type\": \"string\",\n          \"description\": \"JWT access
-        token for API authentication\"\n        },\n        \"refreshToken\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Token used to obtain new access tokens when the current one expires\"\n        },\n       \
-        \ \"expiresIn\": {\n          \"type\": \"integer\",\n          \"description\": \"Seconds until access token expires\"\
-        \n        },\n        \"connectUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n       \
-        \   \"description\": \"WebSocket endpoint for Connect service\"\n        },\n        \"roles\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
-        List of roles assigned to the authenticated user\"\n        },\n        \"requiresTwoFactor\": {\n          \"type\"\
-        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether the user needs to complete two-factor
-        authentication\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Verify Steam Session Ticket\",\n  \"description\": \"Validates a Steam Session
-        Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().\\nThe server validates the ticket with
-        Steam's Web API and retrieves the SteamID from Steam's response.\\nNEVER trust client-provided SteamID - it must come
-        from Steam's authenticated response.\\n\",\n  \"tags\": [\n    \"Steam\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
-        : \"verifySteamAuth\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SteamVerifyRequest\"\
+        ,\n    \"$defs\": {\n        \"SteamVerifyRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to verify a Steam Session Ticket. The ticket is obtained client-side via\\nISteamUser::GetAuthTicketForWebApi(\\\
+        \"bannou\\\"). SteamID is NOT included because\\nit must be obtained from Steam's Web API response (never trust client-provided
+        SteamID).\\n\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"ticket\"\
+        \n            ],\n            \"properties\": {\n                \"ticket\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\\
+        nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\\\"-\\\", \\\"\\\")\\n\",\n\
+        \                    \"example\": \"140000006A7B3C8E...\"\n                },\n                \"deviceInfo\": {\n\
+        \                    \"$ref\": \"#/$defs/DeviceInfo\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Information about the client device (optional)\"\n                }\n            }\n     \
+        \   },\n        \"DeviceInfo\": {\n            \"description\": \"Information about the client device used for authentication
+        or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"properties\": {\n                \"deviceType\": {\n                    \"type\": \"string\",\n           \
+        \         \"enum\": [\n                        \"desktop\",\n                        \"mobile\",\n               \
+        \         \"tablet\",\n                        \"console\"\n                    ],\n                    \"description\"\
+        : \"Category of the device\"\n                },\n                \"platform\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Operating system or platform name\"\n                },\n      \
+        \          \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Browser name and version if applicable\"\n                },\n             \
+        \   \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Version of the client application\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
+        ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
+        containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"accessToken\",\n        \
+        \        \"refreshToken\",\n                \"expiresIn\",\n                \"connectUrl\"\n            ],\n     \
+        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authenticated
+        account\"\n                },\n                \"accessToken\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"JWT access token for API authentication\"\n                },\n             \
+        \   \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token used
+        to obtain new access tokens when the current one expires\"\n                },\n                \"expiresIn\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Seconds until access token expires\"\
+        \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
+        \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Verify Steam Session Ticket\",\n    \"description\": \"Validates a Steam
+        Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().\\nThe server validates the
+        ticket with Steam's Web API and retrieves the SteamID from Steam's response.\\nNEVER trust client-provided SteamID
+        - it must come from Steam's authenticated response.\\n\",\n    \"tags\": [\n        \"Steam\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"verifySteamAuth\"\n}"
   /auth/refresh:
     post:
       summary: Refresh access token
@@ -353,30 +382,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RefreshRequest\"\
-        ,\n  \"$defs\": {\n    \"RefreshRequest\": {\n      \"description\": \"Request to obtain a new access token using
-        a valid refresh token\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"refreshToken\"\n      ],\n      \"properties\": {\n        \"refreshToken\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"Refresh token issued during authentication to obtain a new access token\"\
-        \n        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AuthResponse\"\
-        ,\n  \"$defs\": {\n    \"AuthResponse\": {\n      \"description\": \"Successful authentication response containing
-        tokens and session information\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"accountId\",\n        \"accessToken\",\n        \"refreshToken\",\n        \"expiresIn\",\n       \
-        \ \"connectUrl\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n \
-        \         \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the authenticated account\"\n\
-        \        },\n        \"accessToken\": {\n          \"type\": \"string\",\n          \"description\": \"JWT access
-        token for API authentication\"\n        },\n        \"refreshToken\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Token used to obtain new access tokens when the current one expires\"\n        },\n       \
-        \ \"expiresIn\": {\n          \"type\": \"integer\",\n          \"description\": \"Seconds until access token expires\"\
-        \n        },\n        \"connectUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n       \
-        \   \"description\": \"WebSocket endpoint for Connect service\"\n        },\n        \"roles\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
-        List of roles assigned to the authenticated user\"\n        },\n        \"requiresTwoFactor\": {\n          \"type\"\
-        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether the user needs to complete two-factor
-        authentication\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Refresh access token\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
-        Tokens\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"refreshToken\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RefreshRequest\"\
+        ,\n    \"$defs\": {\n        \"RefreshRequest\": {\n            \"description\": \"Request to obtain a new access
+        token using a valid refresh token\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"refreshToken\"\n            ],\n            \"properties\": {\n  \
+        \              \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Refresh token issued during authentication to obtain a new access token\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
+        ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
+        containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"accessToken\",\n        \
+        \        \"refreshToken\",\n                \"expiresIn\",\n                \"connectUrl\"\n            ],\n     \
+        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authenticated
+        account\"\n                },\n                \"accessToken\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"JWT access token for API authentication\"\n                },\n             \
+        \   \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token used
+        to obtain new access tokens when the current one expires\"\n                },\n                \"expiresIn\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Seconds until access token expires\"\
+        \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
+        \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Refresh access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"Tokens\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"refreshToken\"\n}"
   /auth/validate:
     post:
       summary: Validate access token
@@ -407,23 +441,26 @@ paths:
           description: Token expired or malformed
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ValidateTokenResponse\"\
-        ,\n  \"$defs\": {\n    \"ValidateTokenResponse\": {\n      \"description\": \"Response from token validation containing
-        validity status and associated account details\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
-        \      \"required\": [\n        \"valid\",\n        \"accountId\",\n        \"sessionId\"\n      ],\n      \"properties\"\
-        : {\n        \"valid\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the token is valid
-        and not expired\"\n        },\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"\
-        uuid\",\n          \"description\": \"Unique identifier for the account associated with the token\"\n        },\n\
-        \        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Session identifier for WebSocket connections and service routing\"\n        },\n        \"roles\": {\n       \
-        \   \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
-        : \"List of roles assigned to the authenticated user\"\n        },\n        \"authorizations\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
-        Authorization strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"arcadia:authorized\\\
-        \")\\n\"\n        },\n        \"remainingTime\": {\n          \"type\": \"integer\",\n          \"description\": \"\
-        Seconds until expiration\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Validate access token\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
-        Tokens\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"validateToken\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateTokenResponse\"\
+        ,\n    \"$defs\": {\n        \"ValidateTokenResponse\": {\n            \"description\": \"Response from token validation
+        containing validity status and associated account details\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"valid\",\n                \"accountId\",\n              \
+        \  \"sessionId\"\n            ],\n            \"properties\": {\n                \"valid\": {\n                  \
+        \  \"type\": \"boolean\",\n                    \"description\": \"Whether the token is valid and not expired\"\n \
+        \               },\n                \"accountId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the account associated with
+        the token\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"description\": \"Session identifier for WebSocket connections
+        and service routing\"\n                },\n                \"roles\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"List of roles assigned to the authenticated user\"\n                },\n         \
+        \       \"authorizations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"type\": \"string\"\n                    },\n                    \"description\": \"Authorization
+        strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"arcadia:authorized\\\")\\n\"\n\
+        \                },\n                \"remainingTime\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Seconds until expiration\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Validate access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"Tokens\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"validateToken\"\n}"
   /auth/logout:
     post:
       summary: Logout and invalidate tokens
@@ -450,14 +487,15 @@ paths:
         '200':
           description: Logged out successfully
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LogoutRequest\"\
-        ,\n  \"$defs\": {\n    \"LogoutRequest\": {\n      \"description\": \"Request to logout and invalidate authentication
-        tokens\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"\
-        allSessions\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Logout
-        from all sessions/devices\"\n        }\n      }\n    }\n  }\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LogoutRequest\"\
+        ,\n    \"$defs\": {\n        \"LogoutRequest\": {\n            \"description\": \"Request to logout and invalidate
+        authentication tokens\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n      \
+        \      \"properties\": {\n                \"allSessions\": {\n                    \"type\": \"boolean\",\n       \
+        \             \"default\": false,\n                    \"description\": \"Logout from all sessions/devices\"\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Logout and invalidate tokens\",\n  \"description\": \"\",\n  \"tags\": [\n\
-        \    \"Authentication\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"logout\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Logout and invalidate tokens\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Authentication\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"logout\"\n}"
   /auth/sessions/list:
     post:
       summary: Get active sessions for account
@@ -484,35 +522,42 @@ paths:
                 $ref: '#/components/schemas/SessionsResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionsResponse\"\
-        ,\n  \"$defs\": {\n    \"SessionsResponse\": {\n      \"description\": \"Response containing a list of all active
-        sessions for an account\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"sessions\"\n      ],\n      \"properties\": {\n        \"sessions\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/SessionInfo\"\n          },\n          \"description\"\
-        : \"List of active sessions for the account\"\n        }\n      }\n    },\n    \"SessionInfo\": {\n      \"description\"\
-        : \"Information about an active user session including device and activity details\",\n      \"type\": \"object\"\
-        ,\n      \"additionalProperties\": false,\n      \"required\": [\n        \"sessionId\",\n        \"createdAt\",\n\
-        \        \"lastActive\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the session\"\n        },\n\
-        \        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\",\n          \"nullable\": true,\n         \
-        \ \"description\": \"Information about the device used for this session\"\n        },\n        \"createdAt\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when
-        the session was created\"\n        },\n        \"lastActive\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\",\n          \"description\": \"Timestamp of the last activity in this session\"\n        },\n    \
-        \    \"ipAddress\": {\n          \"type\": \"string\",\n          \"description\": \"IP address from which the session
-        was initiated\"\n        },\n        \"location\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Geographic location derived from the IP address\"\n        }\n      }\n    },\n    \"\
-        DeviceInfo\": {\n      \"description\": \"Information about the client device used for authentication or session tracking\"\
-        ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"deviceType\"\
-        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n \
-        \           \"tablet\",\n            \"console\"\n          ],\n          \"description\": \"Category of the device\"\
-        \n        },\n        \"platform\": {\n          \"type\": \"string\",\n          \"description\": \"Operating system
-        or platform name\"\n        },\n        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n  \
-        \        \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Version of the client
-        application\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get active sessions for account\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getSessions\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SessionsResponse\"\
+        ,\n    \"$defs\": {\n        \"SessionsResponse\": {\n            \"description\": \"Response containing a list of
+        all active sessions for an account\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"sessions\"\n            ],\n            \"properties\": {\n      \
+        \          \"sessions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
+        \               \"$ref\": \"#/$defs/SessionInfo\"\n                    },\n                    \"description\": \"\
+        List of active sessions for the account\"\n                }\n            }\n        },\n        \"SessionInfo\":
+        {\n            \"description\": \"Information about an active user session including device and activity details\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"sessionId\",\n                \"createdAt\",\n                \"lastActive\"\n            ],\n\
+        \            \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the session\"\
+        \n                },\n                \"deviceInfo\": {\n                    \"$ref\": \"#/$defs/DeviceInfo\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Information about the device used
+        for this session\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the session
+        was created\"\n                },\n                \"lastActive\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp of the last activity
+        in this session\"\n                },\n                \"ipAddress\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"IP address from which the session was initiated\"\n                },\n\
+        \                \"location\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Geographic location derived from the IP address\"\n                }\n   \
+        \         }\n        },\n        \"DeviceInfo\": {\n            \"description\": \"Information about the client device
+        used for authentication or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"deviceType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"desktop\",\n                        \"mobile\",\n  \
+        \                      \"tablet\",\n                        \"console\"\n                    ],\n                \
+        \    \"description\": \"Category of the device\"\n                },\n                \"platform\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Operating system or platform name\"\n   \
+        \             },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\n             \
+        \   },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Version of the client application\"\n                }\n         \
+        \   }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get active sessions for account\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSessions\"\n}"
   /auth/sessions/terminate:
     post:
       summary: Terminate specific session
@@ -542,14 +587,15 @@ paths:
         '404':
           description: Session not found
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/TerminateSessionRequest\"\
-        ,\n  \"$defs\": {\n    \"TerminateSessionRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
-        to terminate a specific session\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"sessionId\"\
-        \n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"ID of the session to terminate\"\n        }\n      }\n    }\n  }\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TerminateSessionRequest\"\
+        ,\n    \"$defs\": {\n        \"TerminateSessionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to terminate a specific session\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"sessionId\"\n            ],\n            \"properties\": {\n                \"sessionId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the session to terminate\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Terminate specific session\",\n  \"description\": \"\",\n  \"tags\": [\n\
-        \    \"Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"terminateSession\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Terminate specific session\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"terminateSession\"\n}"
   /auth/password/reset:
     post:
       summary: Request password reset
@@ -569,15 +615,16 @@ paths:
         '200':
           description: Reset email sent if account exists
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PasswordResetRequest\"\
-        ,\n  \"$defs\": {\n    \"PasswordResetRequest\": {\n      \"description\": \"Request to initiate a password reset
-        by sending a reset link to the email\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n   \
-        \   \"required\": [\n        \"email\"\n      ],\n      \"properties\": {\n        \"email\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"email\",\n          \"description\": \"Email address associated with the account
-        to reset\"\n        }\n      }\n    }\n  }\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PasswordResetRequest\"\
+        ,\n    \"$defs\": {\n        \"PasswordResetRequest\": {\n            \"description\": \"Request to initiate a password
+        reset by sending a reset link to the email\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"email\"\n            ],\n            \"properties\": {\n\
+        \                \"email\": {\n                    \"type\": \"string\",\n                    \"format\": \"email\"\
+        ,\n                    \"description\": \"Email address associated with the account to reset\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Request password reset\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
-        Password\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"requestPasswordReset\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Request password reset\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"Password\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"requestPasswordReset\"\n}"
   /auth/password/confirm:
     post:
       summary: Confirm password reset with token
@@ -597,17 +644,19 @@ paths:
         '200':
           description: Password reset successfully
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PasswordResetConfirmRequest\"\
-        ,\n  \"$defs\": {\n    \"PasswordResetConfirmRequest\": {\n      \"description\": \"Request to confirm a password
-        reset using the emailed token and new password\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
-        \      \"required\": [\n        \"token\",\n        \"newPassword\"\n      ],\n      \"properties\": {\n        \"\
-        token\": {\n          \"type\": \"string\",\n          \"description\": \"Password reset token received via email\"\
-        \n        },\n        \"newPassword\": {\n          \"type\": \"string\",\n          \"format\": \"password\",\n \
-        \         \"minLength\": 8,\n          \"description\": \"New password to set for the account\"\n        }\n     \
-        \ }\n    }\n  }\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PasswordResetConfirmRequest\"\
+        ,\n    \"$defs\": {\n        \"PasswordResetConfirmRequest\": {\n            \"description\": \"Request to confirm
+        a password reset using the emailed token and new password\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"token\",\n                \"newPassword\"\n            ],\n\
+        \            \"properties\": {\n                \"token\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Password reset token received via email\"\n                },\n                \"\
+        newPassword\": {\n                    \"type\": \"string\",\n                    \"format\": \"password\",\n     \
+        \               \"minLength\": 8,\n                    \"description\": \"New password to set for the account\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Confirm password reset with token\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"Password\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"confirmPasswordReset\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Confirm password reset with token\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"Password\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"confirmPasswordReset\"\
+        \n}"
 components:
   securitySchemes:
     BearerAuth:

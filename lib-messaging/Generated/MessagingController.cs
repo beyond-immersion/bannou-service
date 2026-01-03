@@ -173,129 +173,129 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _PublishEvent_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PublishEventRequest",
-  "$defs": {
-    "PublishEventRequest": {
-      "description": "Request to publish an event to a messaging topic",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "topic",
-        "payload"
-      ],
-      "properties": {
-        "topic": {
-          "type": "string",
-          "description": "Topic/routing key for the event"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PublishEventRequest",
+    "$defs": {
+        "PublishEventRequest": {
+            "description": "Request to publish an event to a messaging topic",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "topic",
+                "payload"
+            ],
+            "properties": {
+                "topic": {
+                    "type": "string",
+                    "description": "Topic/routing key for the event"
+                },
+                "payload": {
+                    "type": "object",
+                    "description": "Event payload (any JSON)"
+                },
+                "options": {
+                    "$ref": "#/$defs/PublishOptions",
+                    "nullable": true,
+                    "description": "Optional publishing configuration for message delivery (null for defaults)"
+                }
+            }
         },
-        "payload": {
-          "type": "object",
-          "description": "Event payload (any JSON)"
-        },
-        "options": {
-          "$ref": "#/$defs/PublishOptions",
-          "nullable": true,
-          "description": "Optional publishing configuration for message delivery (null for defaults)"
+        "PublishOptions": {
+            "type": "object",
+            "description": "Options for publishing messages to RabbitMQ",
+            "additionalProperties": false,
+            "properties": {
+                "exchange": {
+                    "type": "string",
+                    "default": "bannou",
+                    "description": "Exchange name for routing"
+                },
+                "routingKey": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)"
+                },
+                "exchangeType": {
+                    "type": "string",
+                    "enum": [
+                        "fanout",
+                        "direct",
+                        "topic"
+                    ],
+                    "default": "topic",
+                    "nullable": true,
+                    "description": "Exchange type - determines how messages are routed (topic routes by routing key pattern)"
+                },
+                "persistent": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether the message should be persisted to disk"
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "default": 0,
+                    "description": "Message priority (0-9)"
+                },
+                "correlationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Correlation ID for request/response patterns"
+                },
+                "expiration": {
+                    "type": "string",
+                    "format": "duration",
+                    "nullable": true,
+                    "description": "Message expiration time (ISO 8601 duration format)"
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom headers to include with the message"
+                }
+            }
         }
-      }
-    },
-    "PublishOptions": {
-      "type": "object",
-      "description": "Options for publishing messages to RabbitMQ",
-      "additionalProperties": false,
-      "properties": {
-        "exchange": {
-          "type": "string",
-          "default": "bannou",
-          "description": "Exchange name for routing"
-        },
-        "routingKey": {
-          "type": "string",
-          "nullable": true,
-          "description": "Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)"
-        },
-        "exchangeType": {
-          "type": "string",
-          "enum": [
-            "fanout",
-            "direct",
-            "topic"
-          ],
-          "default": "topic",
-          "nullable": true,
-          "description": "Exchange type - determines how messages are routed (topic routes by routing key pattern)"
-        },
-        "persistent": {
-          "type": "boolean",
-          "default": true,
-          "description": "Whether the message should be persisted to disk"
-        },
-        "priority": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9,
-          "default": 0,
-          "description": "Message priority (0-9)"
-        },
-        "correlationId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Correlation ID for request/response patterns"
-        },
-        "expiration": {
-          "type": "string",
-          "format": "duration",
-          "nullable": true,
-          "description": "Message expiration time (ISO 8601 duration format)"
-        },
-        "headers": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom headers to include with the message"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _PublishEvent_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PublishEventResponse",
-  "$defs": {
-    "PublishEventResponse": {
-      "description": "Response confirming event publication with message identifier",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Indicates whether the event was published successfully"
-        },
-        "messageId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier assigned to the published message"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PublishEventResponse",
+    "$defs": {
+        "PublishEventResponse": {
+            "description": "Response confirming event publication with message identifier",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Indicates whether the event was published successfully"
+                },
+                "messageId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier assigned to the published message"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _PublishEvent_Info = """
 {
-  "summary": "Publish an event to a topic",
-  "description": "",
-  "tags": [
-    "Messaging"
-  ],
-  "deprecated": false,
-  "operationId": "publishEvent"
+    "summary": "Publish an event to a topic",
+    "description": "",
+    "tags": [
+        "Messaging"
+    ],
+    "deprecated": false,
+    "operationId": "publishEvent"
 }
 """;
 
@@ -345,109 +345,109 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _CreateSubscription_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateSubscriptionRequest",
-  "$defs": {
-    "CreateSubscriptionRequest": {
-      "description": "Request to create a new subscription to a messaging topic",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "topic",
-        "callbackUrl"
-      ],
-      "properties": {
-        "topic": {
-          "type": "string",
-          "description": "Topic pattern to subscribe to for receiving events"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateSubscriptionRequest",
+    "$defs": {
+        "CreateSubscriptionRequest": {
+            "description": "Request to create a new subscription to a messaging topic",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "topic",
+                "callbackUrl"
+            ],
+            "properties": {
+                "topic": {
+                    "type": "string",
+                    "description": "Topic pattern to subscribe to for receiving events"
+                },
+                "callbackUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "HTTP endpoint to receive events"
+                },
+                "options": {
+                    "$ref": "#/$defs/SubscriptionOptions",
+                    "nullable": true,
+                    "description": "Optional subscription configuration for queue behavior (null for defaults)"
+                }
+            }
         },
-        "callbackUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "HTTP endpoint to receive events"
-        },
-        "options": {
-          "$ref": "#/$defs/SubscriptionOptions",
-          "nullable": true,
-          "description": "Optional subscription configuration for queue behavior (null for defaults)"
+        "SubscriptionOptions": {
+            "type": "object",
+            "description": "Options for subscribing to RabbitMQ topics",
+            "additionalProperties": false,
+            "properties": {
+                "durable": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether the queue should survive broker restarts"
+                },
+                "exclusive": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether only this connection can consume from the queue"
+                },
+                "autoAck": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether messages should be auto-acknowledged"
+                },
+                "prefetchCount": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Number of messages to prefetch"
+                },
+                "useDeadLetter": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to use dead letter exchange for failed messages"
+                },
+                "consumerGroup": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name of the consumer group for load balancing"
+                }
+            }
         }
-      }
-    },
-    "SubscriptionOptions": {
-      "type": "object",
-      "description": "Options for subscribing to RabbitMQ topics",
-      "additionalProperties": false,
-      "properties": {
-        "durable": {
-          "type": "boolean",
-          "default": true,
-          "description": "Whether the queue should survive broker restarts"
-        },
-        "exclusive": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether only this connection can consume from the queue"
-        },
-        "autoAck": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether messages should be auto-acknowledged"
-        },
-        "prefetchCount": {
-          "type": "integer",
-          "default": 10,
-          "description": "Number of messages to prefetch"
-        },
-        "useDeadLetter": {
-          "type": "boolean",
-          "default": true,
-          "description": "Whether to use dead letter exchange for failed messages"
-        },
-        "consumerGroup": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name of the consumer group for load balancing"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateSubscriptionResponse",
-  "$defs": {
-    "CreateSubscriptionResponse": {
-      "description": "Response containing the created subscription details",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the created subscription"
-        },
-        "queueName": {
-          "type": "string",
-          "description": "Name of the RabbitMQ queue created for this subscription"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateSubscriptionResponse",
+    "$defs": {
+        "CreateSubscriptionResponse": {
+            "description": "Response containing the created subscription details",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the created subscription"
+                },
+                "queueName": {
+                    "type": "string",
+                    "description": "Name of the RabbitMQ queue created for this subscription"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateSubscription_Info = """
 {
-  "summary": "Create a dynamic subscription to a topic",
-  "description": "",
-  "tags": [
-    "Messaging"
-  ],
-  "deprecated": false,
-  "operationId": "createSubscription"
+    "summary": "Create a dynamic subscription to a topic",
+    "description": "",
+    "tags": [
+        "Messaging"
+    ],
+    "deprecated": false,
+    "operationId": "createSubscription"
 }
 """;
 
@@ -497,57 +497,57 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _RemoveSubscription_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RemoveSubscriptionRequest",
-  "$defs": {
-    "RemoveSubscriptionRequest": {
-      "description": "Request to remove an existing subscription",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "subscriptionId"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier of the subscription to remove"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RemoveSubscriptionRequest",
+    "$defs": {
+        "RemoveSubscriptionRequest": {
+            "description": "Request to remove an existing subscription",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "subscriptionId"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier of the subscription to remove"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RemoveSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RemoveSubscriptionResponse",
-  "$defs": {
-    "RemoveSubscriptionResponse": {
-      "description": "Response confirming subscription removal status",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Indicates whether the subscription was removed successfully"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RemoveSubscriptionResponse",
+    "$defs": {
+        "RemoveSubscriptionResponse": {
+            "description": "Response confirming subscription removal status",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Indicates whether the subscription was removed successfully"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RemoveSubscription_Info = """
 {
-  "summary": "Remove a dynamic subscription",
-  "description": "",
-  "tags": [
-    "Messaging"
-  ],
-  "deprecated": false,
-  "operationId": "removeSubscription"
+    "summary": "Remove a dynamic subscription",
+    "description": "",
+    "tags": [
+        "Messaging"
+    ],
+    "deprecated": false,
+    "operationId": "removeSubscription"
 }
 """;
 
@@ -597,80 +597,80 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _ListTopics_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListTopicsRequest",
-  "$defs": {
-    "ListTopicsRequest": {
-      "type": "object",
-      "description": "Optional filters for topic listing (empty object returns all)",
-      "additionalProperties": false,
-      "properties": {
-        "exchangeFilter": {
-          "type": "string",
-          "description": "Filter topics by exchange name prefix"
-        },
-        "includeEmpty": {
-          "type": "boolean",
-          "default": true,
-          "description": "Include topics with no messages"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListTopicsRequest",
+    "$defs": {
+        "ListTopicsRequest": {
+            "type": "object",
+            "description": "Optional filters for topic listing (empty object returns all)",
+            "additionalProperties": false,
+            "properties": {
+                "exchangeFilter": {
+                    "type": "string",
+                    "description": "Filter topics by exchange name prefix"
+                },
+                "includeEmpty": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include topics with no messages"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListTopics_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListTopicsResponse",
-  "$defs": {
-    "ListTopicsResponse": {
-      "description": "Response containing a list of available messaging topics",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "topics": {
-          "type": "array",
-          "description": "List of topics matching the filter criteria",
-          "items": {
-            "$ref": "#/$defs/TopicInfo"
-          }
-        }
-      }
-    },
-    "TopicInfo": {
-      "description": "Information about a messaging topic including its name and statistics",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the topic/exchange"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListTopicsResponse",
+    "$defs": {
+        "ListTopicsResponse": {
+            "description": "Response containing a list of available messaging topics",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "topics": {
+                    "type": "array",
+                    "description": "List of topics matching the filter criteria",
+                    "items": {
+                        "$ref": "#/$defs/TopicInfo"
+                    }
+                }
+            }
         },
-        "messageCount": {
-          "type": "integer",
-          "description": "Number of messages currently in the topic queue"
-        },
-        "consumerCount": {
-          "type": "integer",
-          "description": "Number of active consumers subscribed to this topic"
+        "TopicInfo": {
+            "description": "Information about a messaging topic including its name and statistics",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the topic/exchange"
+                },
+                "messageCount": {
+                    "type": "integer",
+                    "description": "Number of messages currently in the topic queue"
+                },
+                "consumerCount": {
+                    "type": "integer",
+                    "description": "Number of active consumers subscribed to this topic"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListTopics_Info = """
 {
-  "summary": "List all known topics",
-  "description": "",
-  "tags": [
-    "Messaging"
-  ],
-  "deprecated": false,
-  "operationId": "listTopics"
+    "summary": "List all known topics",
+    "description": "",
+    "tags": [
+        "Messaging"
+    ],
+    "deprecated": false,
+    "operationId": "listTopics"
 }
 """;
 

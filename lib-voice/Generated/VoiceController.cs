@@ -311,181 +311,181 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _CreateVoiceRoom_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateVoiceRoomRequest",
-  "$defs": {
-    "CreateVoiceRoomRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to create a voice room for a game session",
-      "required": [
-        "sessionId"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Game session ID this voice room is associated with"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateVoiceRoomRequest",
+    "$defs": {
+        "CreateVoiceRoomRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to create a voice room for a game session",
+            "required": [
+                "sessionId"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game session ID this voice room is associated with"
+                },
+                "preferredTier": {
+                    "$ref": "#/$defs/VoiceTier",
+                    "description": "Preferred voice tier (defaults to p2p)"
+                },
+                "maxParticipants": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "maximum": 100,
+                    "default": 6,
+                    "description": "Maximum participants before tier upgrade"
+                },
+                "codec": {
+                    "$ref": "#/$defs/VoiceCodec",
+                    "description": "Preferred audio codec (defaults to opus)"
+                }
+            }
         },
-        "preferredTier": {
-          "$ref": "#/$defs/VoiceTier",
-          "description": "Preferred voice tier (defaults to p2p)"
+        "VoiceTier": {
+            "type": "string",
+            "enum": [
+                "p2p",
+                "scaled"
+            ],
+            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
         },
-        "maxParticipants": {
-          "type": "integer",
-          "minimum": 2,
-          "maximum": 100,
-          "default": 6,
-          "description": "Maximum participants before tier upgrade"
-        },
-        "codec": {
-          "$ref": "#/$defs/VoiceCodec",
-          "description": "Preferred audio codec (defaults to opus)"
+        "VoiceCodec": {
+            "type": "string",
+            "enum": [
+                "opus",
+                "g711",
+                "g722"
+            ],
+            "description": "Audio codec for voice communication"
         }
-      }
-    },
-    "VoiceTier": {
-      "type": "string",
-      "enum": [
-        "p2p",
-        "scaled"
-      ],
-      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
-    },
-    "VoiceCodec": {
-      "type": "string",
-      "enum": [
-        "opus",
-        "g711",
-        "g722"
-      ],
-      "description": "Audio codec for voice communication"
     }
-  }
 }
 """;
 
     private static readonly string _CreateVoiceRoom_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/VoiceRoomResponse",
-  "$defs": {
-    "VoiceRoomResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Voice room details",
-      "required": [
-        "roomId",
-        "sessionId",
-        "tier",
-        "createdAt"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique voice room identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/VoiceRoomResponse",
+    "$defs": {
+        "VoiceRoomResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Voice room details",
+            "required": [
+                "roomId",
+                "sessionId",
+                "tier",
+                "createdAt"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique voice room identifier"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Associated game session ID"
+                },
+                "tier": {
+                    "$ref": "#/$defs/VoiceTier",
+                    "description": "Current voice tier"
+                },
+                "codec": {
+                    "$ref": "#/$defs/VoiceCodec",
+                    "description": "Active audio codec"
+                },
+                "maxParticipants": {
+                    "type": "integer",
+                    "description": "Maximum participants before tier upgrade"
+                },
+                "currentParticipants": {
+                    "type": "integer",
+                    "description": "Current number of participants"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/VoiceParticipant"
+                    },
+                    "description": "List of current participants"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the room was created"
+                },
+                "rtpServerUri": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "RTP server URI (only present in scaled tier)"
+                }
+            }
         },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Associated game session ID"
+        "VoiceTier": {
+            "type": "string",
+            "enum": [
+                "p2p",
+                "scaled"
+            ],
+            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
         },
-        "tier": {
-          "$ref": "#/$defs/VoiceTier",
-          "description": "Current voice tier"
+        "VoiceCodec": {
+            "type": "string",
+            "enum": [
+                "opus",
+                "g711",
+                "g722"
+            ],
+            "description": "Audio codec for voice communication"
         },
-        "codec": {
-          "$ref": "#/$defs/VoiceCodec",
-          "description": "Active audio codec"
-        },
-        "maxParticipants": {
-          "type": "integer",
-          "description": "Maximum participants before tier upgrade"
-        },
-        "currentParticipants": {
-          "type": "integer",
-          "description": "Current number of participants"
-        },
-        "participants": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/VoiceParticipant"
-          },
-          "description": "List of current participants"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the room was created"
-        },
-        "rtpServerUri": {
-          "type": "string",
-          "nullable": true,
-          "description": "RTP server URI (only present in scaled tier)"
+        "VoiceParticipant": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Participant in a voice room",
+            "required": [
+                "sessionId",
+                "joinedAt"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID (unique participant identifier)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name"
+                },
+                "joinedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the participant joined"
+                },
+                "isMuted": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether participant is muted"
+                }
+            }
         }
-      }
-    },
-    "VoiceTier": {
-      "type": "string",
-      "enum": [
-        "p2p",
-        "scaled"
-      ],
-      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
-    },
-    "VoiceCodec": {
-      "type": "string",
-      "enum": [
-        "opus",
-        "g711",
-        "g722"
-      ],
-      "description": "Audio codec for voice communication"
-    },
-    "VoiceParticipant": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Participant in a voice room",
-      "required": [
-        "sessionId",
-        "joinedAt"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "description": "WebSocket session ID (unique participant identifier)"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name"
-        },
-        "joinedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the participant joined"
-        },
-        "isMuted": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether participant is muted"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateVoiceRoom_Info = """
 {
-  "summary": "Create voice room for a game session",
-  "description": "Creates a new voice room associated with a game session.\nCalled by GameSession service when creating a session with voice enabled.\ nReturns room ID and initial configuration.\n",
-  "tags": [
-    "Voice Rooms"
-  ],
-  "deprecated": false,
-  "operationId": "createVoiceRoom"
+    "summary": "Create voice room for a game session",
+    "description": "Creates a new voice room associated with a game session.\nCalled by GameSession service when creating a session with voice enabled.\nReturns room ID and initial configuration.\n",
+    "tags": [
+        "Voice Rooms"
+    ],
+    "deprecated": false,
+    "operationId": "createVoiceRoom"
 }
 """;
 
@@ -535,149 +535,149 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetVoiceRoom_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetVoiceRoomRequest",
-  "$defs": {
-    "GetVoiceRoomRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to get voice room details",
-      "required": [
-        "roomId"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Voice room ID to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetVoiceRoomRequest",
+    "$defs": {
+        "GetVoiceRoomRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get voice room details",
+            "required": [
+                "roomId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID to retrieve"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetVoiceRoom_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/VoiceRoomResponse",
-  "$defs": {
-    "VoiceRoomResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Voice room details",
-      "required": [
-        "roomId",
-        "sessionId",
-        "tier",
-        "createdAt"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique voice room identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/VoiceRoomResponse",
+    "$defs": {
+        "VoiceRoomResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Voice room details",
+            "required": [
+                "roomId",
+                "sessionId",
+                "tier",
+                "createdAt"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique voice room identifier"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Associated game session ID"
+                },
+                "tier": {
+                    "$ref": "#/$defs/VoiceTier",
+                    "description": "Current voice tier"
+                },
+                "codec": {
+                    "$ref": "#/$defs/VoiceCodec",
+                    "description": "Active audio codec"
+                },
+                "maxParticipants": {
+                    "type": "integer",
+                    "description": "Maximum participants before tier upgrade"
+                },
+                "currentParticipants": {
+                    "type": "integer",
+                    "description": "Current number of participants"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/VoiceParticipant"
+                    },
+                    "description": "List of current participants"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the room was created"
+                },
+                "rtpServerUri": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "RTP server URI (only present in scaled tier)"
+                }
+            }
         },
-        "sessionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Associated game session ID"
+        "VoiceTier": {
+            "type": "string",
+            "enum": [
+                "p2p",
+                "scaled"
+            ],
+            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
         },
-        "tier": {
-          "$ref": "#/$defs/VoiceTier",
-          "description": "Current voice tier"
+        "VoiceCodec": {
+            "type": "string",
+            "enum": [
+                "opus",
+                "g711",
+                "g722"
+            ],
+            "description": "Audio codec for voice communication"
         },
-        "codec": {
-          "$ref": "#/$defs/VoiceCodec",
-          "description": "Active audio codec"
-        },
-        "maxParticipants": {
-          "type": "integer",
-          "description": "Maximum participants before tier upgrade"
-        },
-        "currentParticipants": {
-          "type": "integer",
-          "description": "Current number of participants"
-        },
-        "participants": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/VoiceParticipant"
-          },
-          "description": "List of current participants"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the room was created"
-        },
-        "rtpServerUri": {
-          "type": "string",
-          "nullable": true,
-          "description": "RTP server URI (only present in scaled tier)"
+        "VoiceParticipant": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Participant in a voice room",
+            "required": [
+                "sessionId",
+                "joinedAt"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID (unique participant identifier)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name"
+                },
+                "joinedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the participant joined"
+                },
+                "isMuted": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether participant is muted"
+                }
+            }
         }
-      }
-    },
-    "VoiceTier": {
-      "type": "string",
-      "enum": [
-        "p2p",
-        "scaled"
-      ],
-      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
-    },
-    "VoiceCodec": {
-      "type": "string",
-      "enum": [
-        "opus",
-        "g711",
-        "g722"
-      ],
-      "description": "Audio codec for voice communication"
-    },
-    "VoiceParticipant": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Participant in a voice room",
-      "required": [
-        "sessionId",
-        "joinedAt"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "description": "WebSocket session ID (unique participant identifier)"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name"
-        },
-        "joinedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the participant joined"
-        },
-        "isMuted": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether participant is muted"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetVoiceRoom_Info = """
 {
-  "summary": "Get voice room details",
-  "description": "Retrieves current state of a voice room including participant list.\nCalled by GameSession service to check room status.\n",
-  "tags": [
-    "Voice Rooms"
-  ],
-  "deprecated": false,
-  "operationId": "getVoiceRoom"
+    "summary": "Get voice room details",
+    "description": "Retrieves current state of a voice room including participant list.\nCalled by GameSession service to check room status.\n",
+    "tags": [
+        "Voice Rooms"
+    ],
+    "deprecated": false,
+    "operationId": "getVoiceRoom"
 }
 """;
 
@@ -727,217 +727,217 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _JoinVoiceRoom_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/JoinVoiceRoomRequest",
-  "$defs": {
-    "JoinVoiceRoomRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to join a voice room",
-      "required": [
-        "roomId",
-        "sessionId",
-        "sipEndpoint"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Voice room ID to join"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/JoinVoiceRoomRequest",
+    "$defs": {
+        "JoinVoiceRoomRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to join a voice room",
+            "required": [
+                "roomId",
+                "sessionId",
+                "sipEndpoint"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID to join"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID (unique participant identifier)"
+                },
+                "sipEndpoint": {
+                    "$ref": "#/$defs/SipEndpoint",
+                    "description": "Participant's SIP endpoint details"
+                },
+                "displayName": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "description": "Display name for UI"
+                }
+            }
         },
-        "sessionId": {
-          "type": "string",
-          "description": "WebSocket session ID (unique participant identifier)"
-        },
-        "sipEndpoint": {
-          "$ref": "#/$defs/SipEndpoint",
-          "description": "Participant's SIP endpoint details"
-        },
-        "displayName": {
-          "type": "string",
-          "maxLength": 50,
-          "description": "Display name for UI"
+        "SipEndpoint": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "SIP/WebRTC endpoint details for a participant",
+            "required": [
+                "sdpOffer"
+            ],
+            "properties": {
+                "sdpOffer": {
+                    "type": "string",
+                    "description": "SDP offer for WebRTC negotiation"
+                },
+                "iceCandidates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "ICE candidates for NAT traversal"
+                },
+                "publicIp": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Public IP address if known"
+                },
+                "port": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "UDP port for RTP"
+                }
+            }
         }
-      }
-    },
-    "SipEndpoint": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "SIP/WebRTC endpoint details for a participant",
-      "required": [
-        "sdpOffer"
-      ],
-      "properties": {
-        "sdpOffer": {
-          "type": "string",
-          "description": "SDP offer for WebRTC negotiation"
-        },
-        "iceCandidates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "ICE candidates for NAT traversal"
-        },
-        "publicIp": {
-          "type": "string",
-          "nullable": true,
-          "description": "Public IP address if known"
-        },
-        "port": {
-          "type": "integer",
-          "nullable": true,
-          "description": "UDP port for RTP"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _JoinVoiceRoom_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/JoinVoiceRoomResponse",
-  "$defs": {
-    "JoinVoiceRoomResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response after joining a voice room",
-      "required": [
-        "success",
-        "roomId",
-        "tier"
-      ],
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether join was successful"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/JoinVoiceRoomResponse",
+    "$defs": {
+        "JoinVoiceRoomResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after joining a voice room",
+            "required": [
+                "success",
+                "roomId",
+                "tier"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether join was successful"
+                },
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "tier": {
+                    "$ref": "#/$defs/VoiceTier",
+                    "description": "Current voice tier"
+                },
+                "codec": {
+                    "$ref": "#/$defs/VoiceCodec",
+                    "description": "Codec to use"
+                },
+                "peers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/VoicePeer"
+                    },
+                    "description": "Current peers to connect to (P2P mode only)"
+                },
+                "rtpServerUri": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "RTP server URI (scaled mode only)"
+                },
+                "stunServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "STUN server URIs for NAT traversal"
+                },
+                "tierUpgradePending": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "True if room is about to upgrade to scaled tier"
+                }
+            }
         },
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Voice room ID"
+        "VoiceTier": {
+            "type": "string",
+            "enum": [
+                "p2p",
+                "scaled"
+            ],
+            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
         },
-        "tier": {
-          "$ref": "#/$defs/VoiceTier",
-          "description": "Current voice tier"
+        "VoiceCodec": {
+            "type": "string",
+            "enum": [
+                "opus",
+                "g711",
+                "g722"
+            ],
+            "description": "Audio codec for voice communication"
         },
-        "codec": {
-          "$ref": "#/$defs/VoiceCodec",
-          "description": "Codec to use"
+        "VoicePeer": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Peer endpoint details for P2P connection",
+            "required": [
+                "sessionId",
+                "sipEndpoint"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID for this peer (ephemeral identifier)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name"
+                },
+                "sipEndpoint": {
+                    "$ref": "#/$defs/SipEndpoint",
+                    "description": "Peer's SIP endpoint for direct connection"
+                }
+            }
         },
-        "peers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/VoicePeer"
-          },
-          "description": "Current peers to connect to (P2P mode only)"
-        },
-        "rtpServerUri": {
-          "type": "string",
-          "nullable": true,
-          "description": "RTP server URI (scaled mode only)"
-        },
-        "stunServers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "STUN server URIs for NAT traversal"
-        },
-        "tierUpgradePending": {
-          "type": "boolean",
-          "default": false,
-          "description": "True if room is about to upgrade to scaled tier"
+        "SipEndpoint": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "SIP/WebRTC endpoint details for a participant",
+            "required": [
+                "sdpOffer"
+            ],
+            "properties": {
+                "sdpOffer": {
+                    "type": "string",
+                    "description": "SDP offer for WebRTC negotiation"
+                },
+                "iceCandidates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "ICE candidates for NAT traversal"
+                },
+                "publicIp": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Public IP address if known"
+                },
+                "port": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "UDP port for RTP"
+                }
+            }
         }
-      }
-    },
-    "VoiceTier": {
-      "type": "string",
-      "enum": [
-        "p2p",
-        "scaled"
-      ],
-      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
-    },
-    "VoiceCodec": {
-      "type": "string",
-      "enum": [
-        "opus",
-        "g711",
-        "g722"
-      ],
-      "description": "Audio codec for voice communication"
-    },
-    "VoicePeer": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Peer endpoint details for P2P connection",
-      "required": [
-        "sessionId",
-        "sipEndpoint"
-      ],
-      "properties": {
-        "sessionId": {
-          "type": "string",
-          "description": "WebSocket session ID for this peer (ephemeral identifier)"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Display name"
-        },
-        "sipEndpoint": {
-          "$ref": "#/$defs/SipEndpoint",
-          "description": "Peer's SIP endpoint for direct connection"
-        }
-      }
-    },
-    "SipEndpoint": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "SIP/WebRTC endpoint details for a participant",
-      "required": [
-        "sdpOffer"
-      ],
-      "properties": {
-        "sdpOffer": {
-          "type": "string",
-          "description": "SDP offer for WebRTC negotiation"
-        },
-        "iceCandidates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "ICE candidates for NAT traversal"
-        },
-        "publicIp": {
-          "type": "string",
-          "nullable": true,
-          "description": "Public IP address if known"
-        },
-        "port": {
-          "type": "integer",
-          "nullable": true,
-          "description": "UDP port for RTP"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _JoinVoiceRoom_Info = """
 {
-  "summary": "Join voice room and register SIP endpoint",
-  "description": "Registers a participant's SIP endpoint with the voice room.\nCalled by GameSession service when a player joins a session.\ nReturns connection info and current peer list for P2P mode,\nor RTP server details for scaled mode.\n",
-  "tags": [
-    "Voice Rooms"
-  ],
-  "deprecated": false,
-  "operationId": "joinVoiceRoom"
+    "summary": "Join voice room and register SIP endpoint",
+    "description": "Registers a participant's SIP endpoint with the voice room.\nCalled by GameSession service when a player joins a session.\ nReturns connection info and current peer list for P2P mode,\nor RTP server details for scaled mode.\n",
+    "tags": [
+        "Voice Rooms"
+    ],
+    "deprecated": false,
+    "operationId": "joinVoiceRoom"
 }
 """;
 
@@ -987,30 +987,30 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _LeaveVoiceRoom_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/LeaveVoiceRoomRequest",
-  "$defs": {
-    "LeaveVoiceRoomRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to leave a voice room",
-      "required": [
-        "roomId",
-        "sessionId"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Voice room ID to leave"
-        },
-        "sessionId": {
-          "type": "string",
-          "description": "WebSocket session ID of the leaving participant"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LeaveVoiceRoomRequest",
+    "$defs": {
+        "LeaveVoiceRoomRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to leave a voice room",
+            "required": [
+                "roomId",
+                "sessionId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID to leave"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID of the leaving participant"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1020,13 +1020,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _LeaveVoiceRoom_Info = """
 {
-  "summary": "Leave voice room",
-  "description": "Removes a participant from the voice room and notifies other peers.\nCalled by GameSession service when a player leaves a session.\n",
-  "tags": [
-    "Voice Rooms"
-  ],
-  "deprecated": false,
-  "operationId": "leaveVoiceRoom"
+    "summary": "Leave voice room",
+    "description": "Removes a participant from the voice room and notifies other peers.\nCalled by GameSession service when a player leaves a session.\n",
+    "tags": [
+        "Voice Rooms"
+    ],
+    "deprecated": false,
+    "operationId": "leaveVoiceRoom"
 }
 """;
 
@@ -1076,29 +1076,29 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _DeleteVoiceRoom_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteVoiceRoomRequest",
-  "$defs": {
-    "DeleteVoiceRoomRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to delete a voice room",
-      "required": [
-        "roomId"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Voice room ID to delete"
-        },
-        "reason": {
-          "type": "string",
-          "description": "Reason for deletion (e.g., \"session_ended\")"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteVoiceRoomRequest",
+    "$defs": {
+        "DeleteVoiceRoomRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to delete a voice room",
+            "required": [
+                "roomId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID to delete"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Reason for deletion (e.g., \"session_ended\")"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1108,13 +1108,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _DeleteVoiceRoom_Info = """
 {
-  "summary": "Delete voice room",
-  "description": "Deletes a voice room and notifies all participants.\nCalled by GameSession service when a session is deleted.\n",
-  "tags": [
-    "Voice Rooms"
-  ],
-  "deprecated": false,
-  "operationId": "deleteVoiceRoom"
+    "summary": "Delete voice room",
+    "description": "Deletes a voice room and notifies all participants.\nCalled by GameSession service when a session is deleted.\n",
+    "tags": [
+        "Voice Rooms"
+    ],
+    "deprecated": false,
+    "operationId": "deleteVoiceRoom"
 }
 """;
 
@@ -1164,30 +1164,30 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _PeerHeartbeat_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PeerHeartbeatRequest",
-  "$defs": {
-    "PeerHeartbeatRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Heartbeat to keep peer registration active",
-      "required": [
-        "roomId",
-        "sessionId"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Voice room ID"
-        },
-        "sessionId": {
-          "type": "string",
-          "description": "WebSocket session ID of the peer"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PeerHeartbeatRequest",
+    "$defs": {
+        "PeerHeartbeatRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Heartbeat to keep peer registration active",
+            "required": [
+                "roomId",
+                "sessionId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID of the peer"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1197,13 +1197,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _PeerHeartbeat_Info = """
 {
-  "summary": "Update peer endpoint TTL",
-  "description": "Refreshes the TTL for a participant's endpoint registration.\nShould be called periodically to prevent endpoint expiration.\n",
-  "tags": [
-    "Voice Peers"
-  ],
-  "deprecated": false,
-  "operationId": "peerHeartbeat"
+    "summary": "Update peer endpoint TTL",
+    "description": "Refreshes the TTL for a participant's endpoint registration.\nShould be called periodically to prevent endpoint expiration.\n",
+    "tags": [
+        "Voice Peers"
+    ],
+    "deprecated": false,
+    "operationId": "peerHeartbeat"
 }
 """;
 
@@ -1253,47 +1253,47 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _AnswerPeer_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AnswerPeerRequest",
-  "$defs": {
-    "AnswerPeerRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to send an SDP answer to complete a WebRTC handshake.\nSent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.\n",
-      "required": [
-        "roomId",
-        "senderSessionId",
-        "targetSessionId",
-        "sdpAnswer"
-      ],
-      "properties": {
-        "roomId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Voice room ID"
-        },
-        "senderSessionId": {
-          "type": "string",
-          "description": "Session ID of the answering peer (caller of this endpoint)"
-        },
-        "targetSessionId": {
-          "type": "string",
-          "description": "Session ID of the peer whose offer we're answering"
-        },
-        "sdpAnswer": {
-          "type": "string",
-          "description": "SDP answer generated by this client's WebRTC stack"
-        },
-        "iceCandidates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "ICE candidates for NAT traversal (can be trickled later)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AnswerPeerRequest",
+    "$defs": {
+        "AnswerPeerRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to send an SDP answer to complete a WebRTC handshake.\nSent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.\n",
+            "required": [
+                "roomId",
+                "senderSessionId",
+                "targetSessionId",
+                "sdpAnswer"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Voice room ID"
+                },
+                "senderSessionId": {
+                    "type": "string",
+                    "description": "Session ID of the answering peer (caller of this endpoint)"
+                },
+                "targetSessionId": {
+                    "type": "string",
+                    "description": "Session ID of the peer whose offer we're answering"
+                },
+                "sdpAnswer": {
+                    "type": "string",
+                    "description": "SDP answer generated by this client's WebRTC stack"
+                },
+                "iceCandidates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "ICE candidates for NAT traversal (can be trickled later)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -1303,13 +1303,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _AnswerPeer_Info = """
 {
-  "summary": "Send SDP answer to complete WebRTC handshake",
-  "description": "Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.\nThe client generates an SDP answer and sends it via this endpoint.\nThe answering peer is notified via VoicePeerUpdatedEvent.\n\n**Access Control**: This endpoint requires the `voice:ringing` state, which is\nautomatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.\nThe state is cleared after the answer is processed or times out.\n",
-  "tags": [
-    "Voice Peers"
-  ],
-  "deprecated": false,
-  "operationId": "answerPeer"
+    "summary": "Send SDP answer to complete WebRTC handshake",
+    "description": "Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.\nThe client generates an SDP answer and sends it via this endpoint.\nThe answering peer is notified via VoicePeerUpdatedEvent.\n\n**Access Control**: This endpoint requires the `voice:ringing` state, which is\nautomatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.\nThe state is cleared after the answer is processed or times out.\n",
+    "tags": [
+        "Voice Peers"
+    ],
+    "deprecated": false,
+    "operationId": "answerPeer"
 }
 """;
 

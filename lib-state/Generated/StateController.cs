@@ -217,95 +217,95 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetState_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetStateRequest",
-  "$defs": {
-    "GetStateRequest": {
-      "description": "Request to retrieve a single state value by key from a state store",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "storeName",
-        "key"
-      ],
-      "properties": {
-        "storeName": {
-          "type": "string",
-          "description": "Name of the state store"
-        },
-        "key": {
-          "type": "string",
-          "description": "Key to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetStateRequest",
+    "$defs": {
+        "GetStateRequest": {
+            "description": "Request to retrieve a single state value by key from a state store",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "key"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "Key to retrieve"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetState_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetStateResponse",
-  "$defs": {
-    "GetStateResponse": {
-      "description": "Response containing a retrieved state value with its metadata and ETag",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "value": {
-          "type": "object",
-          "additionalProperties": false,
-          "nullable": true,
-          "description": "The stored value (null if not found)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetStateResponse",
+    "$defs": {
+        "GetStateResponse": {
+            "description": "Response containing a retrieved state value with its metadata and ETag",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "value": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "nullable": true,
+                    "description": "The stored value (null if not found)"
+                },
+                "etag": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ETag for optimistic concurrency"
+                },
+                "metadata": {
+                    "$ref": "#/$defs/StateMetadata",
+                    "description": "Metadata about the state entry including timestamps and version"
+                }
+            }
         },
-        "etag": {
-          "type": "string",
-          "nullable": true,
-          "description": "ETag for optimistic concurrency"
-        },
-        "metadata": {
-          "$ref": "#/$defs/StateMetadata",
-          "description": "Metadata about the state entry including timestamps and version"
+        "StateMetadata": {
+            "description": "Metadata associated with a state entry including creation time, last update time, and version",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the state was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the state was last updated"
+                },
+                "version": {
+                    "type": "integer",
+                    "description": "Version number for optimistic concurrency"
+                }
+            }
         }
-      }
-    },
-    "StateMetadata": {
-      "description": "Metadata associated with a state entry including creation time, last update time, and version",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the state was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the state was last updated"
-        },
-        "version": {
-          "type": "integer",
-          "description": "Version number for optimistic concurrency"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetState_Info = """
 {
-  "summary": "Get state value by key",
-  "description": "",
-  "tags": [
-    "State"
-  ],
-  "deprecated": false,
-  "operationId": "getState"
+    "summary": "Get state value by key",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "getState"
 }
 """;
 
@@ -355,101 +355,101 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _SaveState_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SaveStateRequest",
-  "$defs": {
-    "SaveStateRequest": {
-      "description": "Request to save a state value to a state store with optional TTL and consistency settings",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "storeName",
-        "key",
-        "value"
-      ],
-      "properties": {
-        "storeName": {
-          "type": "string",
-          "description": "Name of the state store"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SaveStateRequest",
+    "$defs": {
+        "SaveStateRequest": {
+            "description": "Request to save a state value to a state store with optional TTL and consistency settings",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "key",
+                "value"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "Key to save"
+                },
+                "value": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "Value to store"
+                },
+                "options": {
+                    "$ref": "#/$defs/StateOptions",
+                    "description": "Optional settings for the save operation including TTL and consistency"
+                }
+            }
         },
-        "key": {
-          "type": "string",
-          "description": "Key to save"
-        },
-        "value": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "Value to store"
-        },
-        "options": {
-          "$ref": "#/$defs/StateOptions",
-          "description": "Optional settings for the save operation including TTL and consistency"
+        "StateOptions": {
+            "description": "Configuration options for state save operations including TTL, consistency level, and optimistic concurrency",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "ttl": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "TTL in seconds (Redis only)"
+                },
+                "consistency": {
+                    "type": "string",
+                    "enum": [
+                        "strong",
+                        "eventual"
+                    ],
+                    "default": "strong",
+                    "description": "Consistency level"
+                },
+                "etag": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optimistic concurrency check - save fails if ETag mismatch"
+                }
+            }
         }
-      }
-    },
-    "StateOptions": {
-      "description": "Configuration options for state save operations including TTL, consistency level, and optimistic concurrency",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "ttl": {
-          "type": "integer",
-          "nullable": true,
-          "description": "TTL in seconds (Redis only)"
-        },
-        "consistency": {
-          "type": "string",
-          "enum": [
-            "strong",
-            "eventual"
-          ],
-          "default": "strong",
-          "description": "Consistency level"
-        },
-        "etag": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optimistic concurrency check - save fails if ETag mismatch"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _SaveState_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SaveStateResponse",
-  "$defs": {
-    "SaveStateResponse": {
-      "description": "Response from a save operation containing the new ETag and success status",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "etag": {
-          "type": "string",
-          "description": "New ETag after save"
-        },
-        "success": {
-          "type": "boolean",
-          "description": "Whether the save succeeded"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SaveStateResponse",
+    "$defs": {
+        "SaveStateResponse": {
+            "description": "Response from a save operation containing the new ETag and success status",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "etag": {
+                    "type": "string",
+                    "description": "New ETag after save"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the save succeeded"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _SaveState_Info = """
 {
-  "summary": "Save state value",
-  "description": "",
-  "tags": [
-    "State"
-  ],
-  "deprecated": false,
-  "operationId": "saveState"
+    "summary": "Save state value",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "saveState"
 }
 """;
 
@@ -499,61 +499,61 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _DeleteState_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteStateRequest",
-  "$defs": {
-    "DeleteStateRequest": {
-      "description": "Request to delete a state value by key from a state store",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "storeName",
-        "key"
-      ],
-      "properties": {
-        "storeName": {
-          "type": "string",
-          "description": "Name of the state store"
-        },
-        "key": {
-          "type": "string",
-          "description": "Key to delete"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteStateRequest",
+    "$defs": {
+        "DeleteStateRequest": {
+            "description": "Request to delete a state value by key from a state store",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "key"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store"
+                },
+                "key": {
+                    "type": "string",
+                    "description": "Key to delete"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteState_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteStateResponse",
-  "$defs": {
-    "DeleteStateResponse": {
-      "description": "Response from a delete operation indicating whether the key was removed",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "deleted": {
-          "type": "boolean",
-          "description": "Whether the key was deleted (false if not found)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteStateResponse",
+    "$defs": {
+        "DeleteStateResponse": {
+            "description": "Response from a delete operation indicating whether the key was removed",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deleted": {
+                    "type": "boolean",
+                    "description": "Whether the key was deleted (false if not found)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteState_Info = """
 {
-  "summary": "Delete state value",
-  "description": "",
-  "tags": [
-    "State"
-  ],
-  "deprecated": false,
-  "operationId": "deleteState"
+    "summary": "Delete state value",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "deleteState"
 }
 """;
 
@@ -603,126 +603,126 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _QueryState_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/QueryStateRequest",
-  "$defs": {
-    "QueryStateRequest": {
-      "description": "Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis backends",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "storeName"
-      ],
-      "properties": {
-        "storeName": {
-          "type": "string",
-          "description": "Name of the state store (MySQL or Redis with search enabled)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryStateRequest",
+    "$defs": {
+        "QueryStateRequest": {
+            "description": "Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis backends",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store (MySQL or Redis with search enabled)"
+                },
+                "filter": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "nullable": true,
+                    "description": "Filter expression. Format depends on backend:\n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
+                },
+                "indexName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Redis search index name. Defaults to \"{storeName}-idx\".\nOnly used for Redis stores with search enabled.\n"
+                },
+                "query": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "RedisSearch query string (e.g., \"@name:John\", \"@age:[18 +inf]\", \"*\").\nDefaults to \"*\" (match all). Only used for Redis stores with search enabled.\n"
+                },
+                "sort": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SortField"
+                    },
+                    "nullable": true,
+                    "description": "Sort order (first field only is used) (null for default ordering)"
+                },
+                "page": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Page number (0-indexed)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Items per page (max 1000)"
+                }
+            }
         },
-        "filter": {
-          "type": "object",
-          "additionalProperties": false,
-          "nullable": true,
-          "description": "Filter expression. Format depends on backend:\ n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
-        },
-        "indexName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Redis search index name. Defaults to \"{storeName}-idx\".\nOnly used for Redis stores with search enabled.\n"
-        },
-        "query": {
-          "type": "string",
-          "nullable": true,
-          "description": "RedisSearch query string (e.g., \"@name:John\", \"@age:[18 +inf]\", \"*\").\nDefaults to \"*\" (match all). Only used for Redis stores with search enabled.\n"
-        },
-        "sort": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SortField"
-          },
-          "nullable": true,
-          "description": "Sort order (first field only is used) (null for default ordering)"
-        },
-        "page": {
-          "type": "integer",
-          "default": 0,
-          "description": "Page number (0-indexed)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "default": 100,
-          "description": "Items per page (max 1000)"
+        "SortField": {
+            "description": "Specifies a field and direction for sorting query results",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "field": {
+                    "type": "string",
+                    "description": "Field name to sort by (JSON path for MySQL, field name for Redis)"
+                },
+                "order": {
+                    "type": "string",
+                    "enum": [
+                        "asc",
+                        "desc"
+                    ],
+                    "default": "asc",
+                    "description": "Sort direction"
+                }
+            }
         }
-      }
-    },
-    "SortField": {
-      "description": "Specifies a field and direction for sorting query results",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "field": {
-          "type": "string",
-          "description": "Field name to sort by (JSON path for MySQL, field name for Redis)"
-        },
-        "order": {
-          "type": "string",
-          "enum": [
-            "asc",
-            "desc"
-          ],
-          "default": "asc",
-          "description": "Sort direction"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _QueryState_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/QueryStateResponse",
-  "$defs": {
-    "QueryStateResponse": {
-      "description": "Response containing paginated query results with total count information",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "results": {
-          "type": "array",
-          "items": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryStateResponse",
+    "$defs": {
+        "QueryStateResponse": {
+            "description": "Response containing paginated query results with total count information",
             "type": "object",
-            "additionalProperties": false
-          },
-          "description": "Query results"
-        },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total matching items (for pagination)"
-        },
-        "page": {
-          "type": "integer",
-          "description": "Current page number"
-        },
-        "pageSize": {
-          "type": "integer",
-          "description": "Items per page"
+            "additionalProperties": false,
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "description": "Query results"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total matching items (for pagination)"
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Items per page"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _QueryState_Info = """
 {
-  "summary": "Query state (MySQL JSON queries or Redis with search enabled)",
-  "description": "",
-  "tags": [
-    "State"
-  ],
-  "deprecated": false,
-  "operationId": "queryState"
+    "summary": "Query state (MySQL JSON queries or Redis with search enabled)",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "queryState"
 }
 """;
 
@@ -772,93 +772,93 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _BulkGetState_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BulkGetStateRequest",
-  "$defs": {
-    "BulkGetStateRequest": {
-      "description": "Request to retrieve multiple state values by key in a single operation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "storeName",
-        "keys"
-      ],
-      "properties": {
-        "storeName": {
-          "type": "string",
-          "description": "Name of the state store"
-        },
-        "keys": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Keys to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkGetStateRequest",
+    "$defs": {
+        "BulkGetStateRequest": {
+            "description": "Request to retrieve multiple state values by key in a single operation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "keys"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the state store"
+                },
+                "keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keys to retrieve"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _BulkGetState_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BulkGetStateResponse",
-  "$defs": {
-    "BulkGetStateResponse": {
-      "description": "Response containing the results of a bulk get operation for multiple keys",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/BulkStateItem"
-          },
-          "description": "Results for each key"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BulkGetStateResponse",
+    "$defs": {
+        "BulkGetStateResponse": {
+            "description": "Response containing the results of a bulk get operation for multiple keys",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BulkStateItem"
+                    },
+                    "description": "Results for each key"
+                }
+            }
+        },
+        "BulkStateItem": {
+            "description": "A single item result from a bulk get operation including the key, value, ETag, and found status",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "description": "The key"
+                },
+                "value": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "nullable": true,
+                    "description": "The value (null if not found)"
+                },
+                "etag": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ETag for this item"
+                },
+                "found": {
+                    "type": "boolean",
+                    "description": "Whether the key was found"
+                }
+            }
         }
-      }
-    },
-    "BulkStateItem": {
-      "description": "A single item result from a bulk get operation including the key, value, ETag, and found status",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "key": {
-          "type": "string",
-          "description": "The key"
-        },
-        "value": {
-          "type": "object",
-          "additionalProperties": false,
-          "nullable": true,
-          "description": "The value (null if not found)"
-        },
-        "etag": {
-          "type": "string",
-          "nullable": true,
-          "description": "ETag for this item"
-        },
-        "found": {
-          "type": "boolean",
-          "description": "Whether the key was found"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _BulkGetState_Info = """
 {
-  "summary": "Bulk get multiple keys",
-  "description": "",
-  "tags": [
-    "State"
-  ],
-  "deprecated": false,
-  "operationId": "bulkGetState"
+    "summary": "Bulk get multiple keys",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "bulkGetState"
 }
 """;
 
@@ -908,90 +908,90 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ListStores_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListStoresRequest",
-  "$defs": {
-    "ListStoresRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Optional filters for store listing (empty object returns all)",
-      "properties": {
-        "backendFilter": {
-          "type": "string",
-          "enum": [
-            "redis",
-            "mysql"
-          ],
-          "nullable": true,
-          "description": "Filter stores by backend type"
-        },
-        "includeStats": {
-          "type": "boolean",
-          "default": false,
-          "description": "Include key counts (may be slow for large stores)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListStoresRequest",
+    "$defs": {
+        "ListStoresRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Optional filters for store listing (empty object returns all)",
+            "properties": {
+                "backendFilter": {
+                    "type": "string",
+                    "enum": [
+                        "redis",
+                        "mysql"
+                    ],
+                    "nullable": true,
+                    "description": "Filter stores by backend type"
+                },
+                "includeStats": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include key counts (may be slow for large stores)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListStores_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListStoresResponse",
-  "$defs": {
-    "ListStoresResponse": {
-      "description": "Response containing the list of configured state stores",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "stores": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/StoreInfo"
-          },
-          "description": "List of configured stores"
-        }
-      }
-    },
-    "StoreInfo": {
-      "description": "Information about a configured state store including its name, backend type, and optional key count",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Store name"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListStoresResponse",
+    "$defs": {
+        "ListStoresResponse": {
+            "description": "Response containing the list of configured state stores",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "stores": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/StoreInfo"
+                    },
+                    "description": "List of configured stores"
+                }
+            }
         },
-        "backend": {
-          "type": "string",
-          "enum": [
-            "redis",
-            "mysql"
-          ],
-          "description": "Backend type"
-        },
-        "keyCount": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Number of keys (only if includeStats=true)"
+        "StoreInfo": {
+            "description": "Information about a configured state store including its name, backend type, and optional key count",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Store name"
+                },
+                "backend": {
+                    "type": "string",
+                    "enum": [
+                        "redis",
+                        "mysql"
+                    ],
+                    "description": "Backend type"
+                },
+                "keyCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Number of keys (only if includeStats=true)"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListStores_Info = """
 {
-  "summary": "List configured state stores",
-  "description": "",
-  "tags": [
-    "State"
-  ],
-  "deprecated": false,
-  "operationId": "listStores"
+    "summary": "List configured state stores",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "listStores"
 }
 """;
 

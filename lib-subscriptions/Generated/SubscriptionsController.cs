@@ -287,154 +287,154 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _GetAccountSubscriptions_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAccountSubscriptionsRequest",
-  "$defs": {
-    "GetAccountSubscriptionsRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to get subscriptions for an account",
-      "required": [
-        "accountId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to get subscriptions for"
-        },
-        "includeInactive": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, include cancelled subscriptions"
-        },
-        "includeExpired": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, include expired subscriptions"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAccountSubscriptionsRequest",
+    "$defs": {
+        "GetAccountSubscriptionsRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get subscriptions for an account",
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to get subscriptions for"
+                },
+                "includeInactive": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, include cancelled subscriptions"
+                },
+                "includeExpired": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, include expired subscriptions"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountSubscriptions_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SubscriptionListResponse",
-  "$defs": {
-    "SubscriptionListResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing list of subscriptions",
-      "required": [
-        "subscriptions",
-        "totalCount"
-      ],
-      "properties": {
-        "subscriptions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SubscriptionInfo"
-          },
-          "description": "List of subscriptions matching the filter criteria"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SubscriptionListResponse",
+    "$defs": {
+        "SubscriptionListResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing list of subscriptions",
+            "required": [
+                "subscriptions",
+                "totalCount"
+            ],
+            "properties": {
+                "subscriptions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SubscriptionInfo"
+                    },
+                    "description": "List of subscriptions matching the filter criteria"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of subscriptions matching the filter"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of subscriptions matching the filter"
+        "SubscriptionInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a subscription",
+            "required": [
+                "subscriptionId",
+                "accountId",
+                "serviceId",
+                "stubName",
+                "startDate",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the subscription"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account this subscription belongs to"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscribed service (game)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "Stub name of the service (denormalized for efficiency)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the service (denormalized for efficiency)"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription started"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the subscription is currently active"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was cancelled (if applicable)"
+                },
+                "cancellationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation (if applicable)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was last updated"
+                }
+            }
         }
-      }
-    },
-    "SubscriptionInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a subscription",
-      "required": [
-        "subscriptionId",
-        "accountId",
-        "serviceId",
-        "stubName",
-        "startDate",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the subscription"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account this subscription belongs to"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscribed service (game)"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "Stub name of the service (denormalized for efficiency)"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the service (denormalized for efficiency)"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription started"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active"
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was cancelled (if applicable)"
-        },
-        "cancellationReason": {
-          "type": "string",
-          "nullable": true,
-          "description": "Reason for cancellation (if applicable)"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was last updated"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountSubscriptions_Info = """
 {
-  "summary": "Get subscriptions for an account",
-  "description": "Returns all subscriptions for a given account, with optional filtering.",
-  "tags": [
-    "Subscription Management"
-  ],
-  "deprecated": false,
-  "operationId": "getAccountSubscriptions"
+    "summary": "Get subscriptions for an account",
+    "description": "Returns all subscriptions for a given account, with optional filtering.",
+    "tags": [
+        "Subscription Management"
+    ],
+    "deprecated": false,
+    "operationId": "getAccountSubscriptions"
 }
 """;
 
@@ -484,155 +484,155 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _QueryCurrentSubscriptions_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/QueryCurrentSubscriptionsRequest",
-  "$defs": {
-    "QueryCurrentSubscriptionsRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to query current active subscriptions.\nProvide accountId to get subscriptions for a specific account,\nor stubName to get all accounts subscribed to a specific service,\nor both to check if a specific account is subscribed to a specific service.\nAt least one of accountId or stubName must be provided.\n",
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "ID of the account to get current subscriptions for. Optional if stubName is provided."
-        },
-        "stubName": {
-          "type": "string",
-          "nullable": true,
-          "description": "Stub name of the service to filter by (e.g., \"arcadia\"). Returns all accounts subscribed to this service."
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryCurrentSubscriptionsRequest",
+    "$defs": {
+        "QueryCurrentSubscriptionsRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to query current active subscriptions.\ nProvide accountId to get subscriptions for a specific account,\nor stubName to get all accounts subscribed to a specific service,\nor both to check if a specific account is subscribed to a specific service.\nAt least one of accountId or stubName must be provided.\n",
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the account to get current subscriptions for. Optional if stubName is provided."
+                },
+                "stubName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Stub name of the service to filter by (e.g., \"arcadia\"). Returns all accounts subscribed to this service."
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _QueryCurrentSubscriptions_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/QuerySubscriptionsResponse",
-  "$defs": {
-    "QuerySubscriptionsResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response from querying current subscriptions.\nReturns subscriptions matching the query criteria (by account, by stub, or both).\n",
-      "required": [
-        "subscriptions",
-        "totalCount"
-      ],
-      "properties": {
-        "subscriptions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SubscriptionInfo"
-          },
-          "description": "List of active subscriptions matching the query"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QuerySubscriptionsResponse",
+    "$defs": {
+        "QuerySubscriptionsResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response from querying current subscriptions.\nReturns subscriptions matching the query criteria (by account, by stub, or both).\n",
+            "required": [
+                "subscriptions",
+                "totalCount"
+            ],
+            "properties": {
+                "subscriptions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/SubscriptionInfo"
+                    },
+                    "description": "List of active subscriptions matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of subscriptions returned"
+                },
+                "accountIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Unique account IDs in the result set (useful when querying by stubName)"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of subscriptions returned"
-        },
-        "accountIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "description": "Unique account IDs in the result set (useful when querying by stubName)"
+        "SubscriptionInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a subscription",
+            "required": [
+                "subscriptionId",
+                "accountId",
+                "serviceId",
+                "stubName",
+                "startDate",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the subscription"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account this subscription belongs to"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscribed service (game)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "Stub name of the service (denormalized for efficiency)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the service (denormalized for efficiency)"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription started"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the subscription is currently active"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was cancelled (if applicable)"
+                },
+                "cancellationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation (if applicable)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was last updated"
+                }
+            }
         }
-      }
-    },
-    "SubscriptionInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a subscription",
-      "required": [
-        "subscriptionId",
-        "accountId",
-        "serviceId",
-        "stubName",
-        "startDate",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the subscription"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account this subscription belongs to"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscribed service (game)"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "Stub name of the service (denormalized for efficiency)"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the service (denormalized for efficiency)"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription started"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active"
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was cancelled (if applicable)"
-        },
-        "cancellationReason": {
-          "type": "string",
-          "nullable": true,
-          "description": "Reason for cancellation (if applicable)"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was last updated"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _QueryCurrentSubscriptions_Info = """
 {
-  "summary": "Query current (active, non-expired) subscriptions",
-  "description": "Returns active, non-expired subscriptions. Can query by:\n- accountId: Get subscriptions for a specific account\ n- stubName: Get all accounts subscribed to a specific service\n- Both: Check if a specific account is subscribed to a specific service\nAt least one of accountId or stubName must be provided.\nUsed by Auth service during session creation and GameSession service for subscriber discovery.\n",
-  "tags": [
-    "Subscription Management"
-  ],
-  "deprecated": false,
-  "operationId": "queryCurrentSubscriptions"
+    "summary": "Query current (active, non-expired) subscriptions",
+    "description": "Returns active, non-expired subscriptions. Can query by:\n- accountId: Get subscriptions for a specific account\ n- stubName: Get all accounts subscribed to a specific service\n- Both: Check if a specific account is subscribed to a specific service\nAt least one of accountId or stubName must be provided.\nUsed by Auth service during session creation and GameSession service for subscriber discovery.\n",
+    "tags": [
+        "Subscription Management"
+    ],
+    "deprecated": false,
+    "operationId": "queryCurrentSubscriptions"
 }
 """;
 
@@ -682,122 +682,122 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _GetSubscription_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetSubscriptionRequest",
-  "$defs": {
-    "GetSubscriptionRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to get a specific subscription",
-      "required": [
-        "subscriptionId"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscription to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetSubscriptionRequest",
+    "$defs": {
+        "GetSubscriptionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get a specific subscription",
+            "required": [
+                "subscriptionId"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscription to retrieve"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SubscriptionInfo",
-  "$defs": {
-    "SubscriptionInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a subscription",
-      "required": [
-        "subscriptionId",
-        "accountId",
-        "serviceId",
-        "stubName",
-        "startDate",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the subscription"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account this subscription belongs to"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscribed service (game)"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "Stub name of the service (denormalized for efficiency)"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the service (denormalized for efficiency)"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription started"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active"
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was cancelled (if applicable)"
-        },
-        "cancellationReason": {
-          "type": "string",
-          "nullable": true,
-          "description": "Reason for cancellation (if applicable)"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SubscriptionInfo",
+    "$defs": {
+        "SubscriptionInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a subscription",
+            "required": [
+                "subscriptionId",
+                "accountId",
+                "serviceId",
+                "stubName",
+                "startDate",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the subscription"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account this subscription belongs to"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscribed service (game)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "Stub name of the service (denormalized for efficiency)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the service (denormalized for efficiency)"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription started"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the subscription is currently active"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was cancelled (if applicable)"
+                },
+                "cancellationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation (if applicable)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetSubscription_Info = """
 {
-  "summary": "Get a specific subscription by ID",
-  "description": "",
-  "tags": [
-    "Subscription Management"
-  ],
-  "deprecated": false,
-  "operationId": "getSubscription"
+    "summary": "Get a specific subscription by ID",
+    "description": "",
+    "tags": [
+        "Subscription Management"
+    ],
+    "deprecated": false,
+    "operationId": "getSubscription"
 }
 """;
 
@@ -847,145 +847,145 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _CreateSubscription_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateSubscriptionRequest",
-  "$defs": {
-    "CreateSubscriptionRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to create a new subscription",
-      "required": [
-        "accountId",
-        "serviceId"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account to create subscription for"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the service (game) to subscribe to"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription starts (defaults to now)"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "durationDays": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Alternative to expirationDate - number of days from startDate"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateSubscriptionRequest",
+    "$defs": {
+        "CreateSubscriptionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to create a new subscription",
+            "required": [
+                "accountId",
+                "serviceId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to create subscription for"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the service (game) to subscribe to"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription starts (defaults to now)"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "durationDays": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Alternative to expirationDate - number of days from startDate"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SubscriptionInfo",
-  "$defs": {
-    "SubscriptionInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a subscription",
-      "required": [
-        "subscriptionId",
-        "accountId",
-        "serviceId",
-        "stubName",
-        "startDate",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the subscription"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account this subscription belongs to"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscribed service (game)"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "Stub name of the service (denormalized for efficiency)"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the service (denormalized for efficiency)"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription started"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active"
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was cancelled (if applicable)"
-        },
-        "cancellationReason": {
-          "type": "string",
-          "nullable": true,
-          "description": "Reason for cancellation (if applicable)"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SubscriptionInfo",
+    "$defs": {
+        "SubscriptionInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a subscription",
+            "required": [
+                "subscriptionId",
+                "accountId",
+                "serviceId",
+                "stubName",
+                "startDate",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the subscription"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account this subscription belongs to"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscribed service (game)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "Stub name of the service (denormalized for efficiency)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the service (denormalized for efficiency)"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription started"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the subscription is currently active"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was cancelled (if applicable)"
+                },
+                "cancellationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation (if applicable)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateSubscription_Info = """
 {
-  "summary": "Create a new subscription",
-  "description": "Admin-only endpoint to create a new subscription for an account.",
-  "tags": [
-    "Subscription Management"
-  ],
-  "deprecated": false,
-  "operationId": "createSubscription"
+    "summary": "Create a new subscription",
+    "description": "Admin-only endpoint to create a new subscription for an account.",
+    "tags": [
+        "Subscription Management"
+    ],
+    "deprecated": false,
+    "operationId": "createSubscription"
 }
 """;
 
@@ -1035,133 +1035,133 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _UpdateSubscription_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateSubscriptionRequest",
-  "$defs": {
-    "UpdateSubscriptionRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to update an existing subscription",
-      "required": [
-        "subscriptionId"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscription to update"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "New expiration date"
-        },
-        "isActive": {
-          "type": "boolean",
-          "nullable": true,
-          "description": "New active status"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateSubscriptionRequest",
+    "$defs": {
+        "UpdateSubscriptionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update an existing subscription",
+            "required": [
+                "subscriptionId"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscription to update"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "New expiration date"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "New active status"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SubscriptionInfo",
-  "$defs": {
-    "SubscriptionInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a subscription",
-      "required": [
-        "subscriptionId",
-        "accountId",
-        "serviceId",
-        "stubName",
-        "startDate",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the subscription"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account this subscription belongs to"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscribed service (game)"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "Stub name of the service (denormalized for efficiency)"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the service (denormalized for efficiency)"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription started"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active"
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was cancelled (if applicable)"
-        },
-        "cancellationReason": {
-          "type": "string",
-          "nullable": true,
-          "description": "Reason for cancellation (if applicable)"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SubscriptionInfo",
+    "$defs": {
+        "SubscriptionInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a subscription",
+            "required": [
+                "subscriptionId",
+                "accountId",
+                "serviceId",
+                "stubName",
+                "startDate",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the subscription"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account this subscription belongs to"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscribed service (game)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "Stub name of the service (denormalized for efficiency)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the service (denormalized for efficiency)"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription started"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the subscription is currently active"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was cancelled (if applicable)"
+                },
+                "cancellationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation (if applicable)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSubscription_Info = """
 {
-  "summary": "Update a subscription",
-  "description": "Admin-only endpoint to update an existing subscription.",
-  "tags": [
-    "Subscription Management"
-  ],
-  "deprecated": false,
-  "operationId": "updateSubscription"
+    "summary": "Update a subscription",
+    "description": "Admin-only endpoint to update an existing subscription.",
+    "tags": [
+        "Subscription Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateSubscription"
 }
 """;
 
@@ -1211,128 +1211,128 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _CancelSubscription_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CancelSubscriptionRequest",
-  "$defs": {
-    "CancelSubscriptionRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to cancel a subscription",
-      "required": [
-        "subscriptionId"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscription to cancel"
-        },
-        "reason": {
-          "type": "string",
-          "nullable": true,
-          "maxLength": 500,
-          "description": "Optional reason for cancellation"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CancelSubscriptionRequest",
+    "$defs": {
+        "CancelSubscriptionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to cancel a subscription",
+            "required": [
+                "subscriptionId"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscription to cancel"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Optional reason for cancellation"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CancelSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SubscriptionInfo",
-  "$defs": {
-    "SubscriptionInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a subscription",
-      "required": [
-        "subscriptionId",
-        "accountId",
-        "serviceId",
-        "stubName",
-        "startDate",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the subscription"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account this subscription belongs to"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscribed service (game)"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "Stub name of the service (denormalized for efficiency)"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the service (denormalized for efficiency)"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription started"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active"
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was cancelled (if applicable)"
-        },
-        "cancellationReason": {
-          "type": "string",
-          "nullable": true,
-          "description": "Reason for cancellation (if applicable)"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SubscriptionInfo",
+    "$defs": {
+        "SubscriptionInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a subscription",
+            "required": [
+                "subscriptionId",
+                "accountId",
+                "serviceId",
+                "stubName",
+                "startDate",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the subscription"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account this subscription belongs to"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscribed service (game)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "Stub name of the service (denormalized for efficiency)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the service (denormalized for efficiency)"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription started"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the subscription is currently active"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was cancelled (if applicable)"
+                },
+                "cancellationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation (if applicable)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CancelSubscription_Info = """
 {
-  "summary": "Cancel a subscription",
-  "description": "Cancels a subscription. Users can cancel their own subscriptions,\nadmins can cancel any subscription.\n",
-  "tags": [
-    "Subscription Management"
-  ],
-  "deprecated": false,
-  "operationId": "cancelSubscription"
+    "summary": "Cancel a subscription",
+    "description": "Cancels a subscription. Users can cancel their own subscriptions,\nadmins can cancel any subscription.\n",
+    "tags": [
+        "Subscription Management"
+    ],
+    "deprecated": false,
+    "operationId": "cancelSubscription"
 }
 """;
 
@@ -1382,132 +1382,132 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
 
     private static readonly string _RenewSubscription_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/RenewSubscriptionRequest",
-  "$defs": {
-    "RenewSubscriptionRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to renew or extend a subscription",
-      "required": [
-        "subscriptionId"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscription to renew"
-        },
-        "extensionDays": {
-          "type": "integer",
-          "description": "Number of days to extend the subscription"
-        },
-        "newExpirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Alternative to extensionDays - set specific new expiration"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RenewSubscriptionRequest",
+    "$defs": {
+        "RenewSubscriptionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to renew or extend a subscription",
+            "required": [
+                "subscriptionId"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscription to renew"
+                },
+                "extensionDays": {
+                    "type": "integer",
+                    "description": "Number of days to extend the subscription"
+                },
+                "newExpirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Alternative to extensionDays - set specific new expiration"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RenewSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SubscriptionInfo",
-  "$defs": {
-    "SubscriptionInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Information about a subscription",
-      "required": [
-        "subscriptionId",
-        "accountId",
-        "serviceId",
-        "stubName",
-        "startDate",
-        "isActive",
-        "createdAt"
-      ],
-      "properties": {
-        "subscriptionId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the subscription"
-        },
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the account this subscription belongs to"
-        },
-        "serviceId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the subscribed service (game)"
-        },
-        "stubName": {
-          "type": "string",
-          "description": "Stub name of the service (denormalized for efficiency)"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the service (denormalized for efficiency)"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription started"
-        },
-        "expirationDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription expires (null for unlimited)"
-        },
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active"
-        },
-        "cancelledAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was cancelled (if applicable)"
-        },
-        "cancellationReason": {
-          "type": "string",
-          "nullable": true,
-          "description": "Reason for cancellation (if applicable)"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "When the subscription was last updated"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SubscriptionInfo",
+    "$defs": {
+        "SubscriptionInfo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Information about a subscription",
+            "required": [
+                "subscriptionId",
+                "accountId",
+                "serviceId",
+                "stubName",
+                "startDate",
+                "isActive",
+                "createdAt"
+            ],
+            "properties": {
+                "subscriptionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the subscription"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account this subscription belongs to"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the subscribed service (game)"
+                },
+                "stubName": {
+                    "type": "string",
+                    "description": "Stub name of the service (denormalized for efficiency)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the service (denormalized for efficiency)"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription started"
+                },
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription expires (null for unlimited)"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the subscription is currently active"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was cancelled (if applicable)"
+                },
+                "cancellationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for cancellation (if applicable)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the subscription was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the subscription was last updated"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RenewSubscription_Info = """
 {
-  "summary": "Renew or extend a subscription",
-  "description": "Admin-only endpoint to renew or extend an existing subscription.",
-  "tags": [
-    "Subscription Management"
-  ],
-  "deprecated": false,
-  "operationId": "renewSubscription"
+    "summary": "Renew or extend a subscription",
+    "description": "Admin-only endpoint to renew or extend an existing subscription.",
+    "tags": [
+        "Subscription Management"
+    ],
+    "deprecated": false,
+    "operationId": "renewSubscription"
 }
 """;
 

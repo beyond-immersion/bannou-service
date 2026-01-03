@@ -43,8 +43,13 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ASSET_AUDIO_BITRATE_KBPS` | int | `192` | Default audio bitrate in kbps |
+| `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format (mp3, opus, aac) |
+| `ASSET_AUDIO_PRESERVE_LOSSLESS` | bool | `true` | Keep original lossless file alongside transcoded version |
 | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | string | `lz4` | Default compression for bundles (lz4, lzma, none) |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
+| `ASSET_FFMPEG_PATH` | string | **REQUIRED** | Path to FFmpeg binary (empty = use system PATH) |
+| `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
 | `ASSET_MAX_UPLOAD_SIZE_MB` | int | `500` | Maximum upload size in megabytes |
 | `ASSET_MINIO_WEBHOOK_SECRET` | string | **REQUIRED** | Secret for validating MinIO webhook requests |
@@ -328,9 +333,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 204
-- **Required (no default)**: 35
-- **Optional (has default)**: 169
+- **Total properties**: 209
+- **Required (no default)**: 36
+- **Optional (has default)**: 173
 
 ## Environment Variable Naming Convention
 

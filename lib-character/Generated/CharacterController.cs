@@ -217,153 +217,153 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _CreateCharacter_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateCharacterRequest",
-  "$defs": {
-    "CreateCharacterRequest": {
-      "description": "Request payload for creating a new character in the game world",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "realmId",
-        "speciesId",
-        "birthDate"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 100,
-          "description": "Character name"
-        },
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Realm ID (foreign key to future Realm service, partition key)"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Species ID (foreign key to future Species service)"
-        },
-        "birthDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "In-game birth timestamp"
-        },
-        "status": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/CharacterStatus"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateCharacterRequest",
+    "$defs": {
+        "CreateCharacterRequest": {
+            "description": "Request payload for creating a new character in the game world",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Character name"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (foreign key to future Realm service, partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to future Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
+                    "default": "alive",
+                    "description": "Initial lifecycle status for the character"
+                }
             }
-          ],
-          "default": "alive",
-          "description": "Initial lifecycle status for the character"
+        },
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _CreateCharacter_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CharacterResponse",
-  "$defs": {
-    "CharacterResponse": {
-      "description": "Complete character data returned from character operations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId",
-        "name",
-        "realmId",
-        "speciesId",
-        "birthDate",
-        "status",
-        "createdAt"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the character"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterResponse",
+    "$defs": {
+        "CharacterResponse": {
+            "description": "Complete character data returned from character operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "status",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status of the character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
         },
-        "name": {
-          "type": "string",
-          "description": "Display name of the character"
-        },
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Realm ID (partition key)"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Species ID (foreign key to Species service)"
-        },
-        "birthDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "In-game birth timestamp"
-        },
-        "deathDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "In-game death timestamp"
-        },
-        "status": {
-          "$ref": "#/$defs/CharacterStatus",
-          "description": "Current lifecycle status of the character"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Real-world creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Real-world last update timestamp"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _CreateCharacter_Info = """
 {
-  "summary": "Create new character",
-  "description": "",
-  "tags": [
-    "Character Management"
-  ],
-  "deprecated": false,
-  "operationId": "createCharacter"
+    "summary": "Create new character",
+    "description": "",
+    "tags": [
+        "Character Management"
+    ],
+    "deprecated": false,
+    "operationId": "createCharacter"
 }
 """;
 
@@ -413,116 +413,116 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _GetCharacter_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetCharacterRequest",
-  "$defs": {
-    "GetCharacterRequest": {
-      "description": "Request payload for retrieving a single character by ID",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the character to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCharacterRequest",
+    "$defs": {
+        "GetCharacterRequest": {
+            "description": "Request payload for retrieving a single character by ID",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to retrieve"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetCharacter_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CharacterResponse",
-  "$defs": {
-    "CharacterResponse": {
-      "description": "Complete character data returned from character operations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId",
-        "name",
-        "realmId",
-        "speciesId",
-        "birthDate",
-        "status",
-        "createdAt"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the character"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterResponse",
+    "$defs": {
+        "CharacterResponse": {
+            "description": "Complete character data returned from character operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "status",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status of the character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
         },
-        "name": {
-          "type": "string",
-          "description": "Display name of the character"
-        },
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Realm ID (partition key)"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Species ID (foreign key to Species service)"
-        },
-        "birthDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "In-game birth timestamp"
-        },
-        "deathDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "In-game death timestamp"
-        },
-        "status": {
-          "$ref": "#/$defs/CharacterStatus",
-          "description": "Current lifecycle status of the character"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Real-world creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Real-world last update timestamp"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetCharacter_Info = """
 {
-  "summary": "Get character by ID",
-  "description": "",
-  "tags": [
-    "Character Management"
-  ],
-  "deprecated": false,
-  "operationId": "getCharacter"
+    "summary": "Get character by ID",
+    "description": "",
+    "tags": [
+        "Character Management"
+    ],
+    "deprecated": false,
+    "operationId": "getCharacter"
 }
 """;
 
@@ -572,153 +572,153 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _UpdateCharacter_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateCharacterRequest",
-  "$defs": {
-    "UpdateCharacterRequest": {
-      "description": "Request payload for updating an existing character's properties",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the character to update"
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 100,
-          "nullable": true,
-          "description": "New name for the character"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Update character's species (used for species merge migrations)"
-        },
-        "status": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/CharacterStatus"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateCharacterRequest",
+    "$defs": {
+        "UpdateCharacterRequest": {
+            "description": "Request payload for updating an existing character's properties",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to update"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "New name for the character"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Update character's species (used for species merge migrations)"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "New lifecycle status for the character"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp (sets status to dead)"
+                }
             }
-          ],
-          "nullable": true,
-          "description": "New lifecycle status for the character"
         },
-        "deathDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "In-game death timestamp (sets status to dead)"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _UpdateCharacter_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CharacterResponse",
-  "$defs": {
-    "CharacterResponse": {
-      "description": "Complete character data returned from character operations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId",
-        "name",
-        "realmId",
-        "speciesId",
-        "birthDate",
-        "status",
-        "createdAt"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the character"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterResponse",
+    "$defs": {
+        "CharacterResponse": {
+            "description": "Complete character data returned from character operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "status",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status of the character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
         },
-        "name": {
-          "type": "string",
-          "description": "Display name of the character"
-        },
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Realm ID (partition key)"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Species ID (foreign key to Species service)"
-        },
-        "birthDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "In-game birth timestamp"
-        },
-        "deathDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "In-game death timestamp"
-        },
-        "status": {
-          "$ref": "#/$defs/CharacterStatus",
-          "description": "Current lifecycle status of the character"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Real-world creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Real-world last update timestamp"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _UpdateCharacter_Info = """
 {
-  "summary": "Update character",
-  "description": "",
-  "tags": [
-    "Character Management"
-  ],
-  "deprecated": false,
-  "operationId": "updateCharacter"
+    "summary": "Update character",
+    "description": "",
+    "tags": [
+        "Character Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateCharacter"
 }
 """;
 
@@ -768,25 +768,25 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _DeleteCharacter_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteCharacterRequest",
-  "$defs": {
-    "DeleteCharacterRequest": {
-      "description": "Request payload for permanently deleting a character",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the character to delete"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteCharacterRequest",
+    "$defs": {
+        "DeleteCharacterRequest": {
+            "description": "Request payload for permanently deleting a character",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to delete"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
@@ -796,13 +796,13 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _DeleteCharacter_Info = """
 {
-  "summary": "Delete character (permanent removal)",
-  "description": "",
-  "tags": [
-    "Character Management"
-  ],
-  "deprecated": false,
-  "operationId": "deleteCharacter"
+    "summary": "Delete character (permanent removal)",
+    "description": "",
+    "tags": [
+        "Character Management"
+    ],
+    "deprecated": false,
+    "operationId": "deleteCharacter"
 }
 """;
 
@@ -852,191 +852,191 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _ListCharacters_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListCharactersRequest",
-  "$defs": {
-    "ListCharactersRequest": {
-      "description": "Request payload for listing characters with optional filtering and pagination",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Filter by realm"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Filter by species"
-        },
-        "status": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/CharacterStatus"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListCharactersRequest",
+    "$defs": {
+        "ListCharactersRequest": {
+            "description": "Request payload for listing characters with optional filtering and pagination",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Filter by realm"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Filter by species"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Filter by status"
+                },
+                "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Page number for pagination (1-based)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Number of results per page"
+                }
             }
-          ],
-          "nullable": true,
-          "description": "Filter by status"
         },
-        "page": {
-          "type": "integer",
-          "minimum": 1,
-          "default": 1,
-          "description": "Page number for pagination (1-based)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "default": 20,
-          "description": "Number of results per page"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _ListCharacters_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CharacterListResponse",
-  "$defs": {
-    "CharacterListResponse": {
-      "description": "Paginated list of characters with metadata for navigation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characters",
-        "totalCount",
-        "page",
-        "pageSize"
-      ],
-      "properties": {
-        "characters": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/CharacterResponse"
-          },
-          "description": "List of characters matching the query"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterListResponse",
+    "$defs": {
+        "CharacterListResponse": {
+            "description": "Paginated list of characters with metadata for navigation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characters",
+                "totalCount",
+                "page",
+                "pageSize"
+            ],
+            "properties": {
+                "characters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CharacterResponse"
+                    },
+                    "description": "List of characters matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of characters matching the filter criteria"
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number (1-based)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Number of results per page"
+                },
+                "hasNextPage": {
+                    "type": "boolean",
+                    "description": "Whether there are more results after this page"
+                },
+                "hasPreviousPage": {
+                    "type": "boolean",
+                    "description": "Whether there are results before this page"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of characters matching the filter criteria"
+        "CharacterResponse": {
+            "description": "Complete character data returned from character operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "status",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status of the character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
         },
-        "page": {
-          "type": "integer",
-          "description": "Current page number (1-based)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "description": "Number of results per page"
-        },
-        "hasNextPage": {
-          "type": "boolean",
-          "description": "Whether there are more results after this page"
-        },
-        "hasPreviousPage": {
-          "type": "boolean",
-          "description": "Whether there are results before this page"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterResponse": {
-      "description": "Complete character data returned from character operations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId",
-        "name",
-        "realmId",
-        "speciesId",
-        "birthDate",
-        "status",
-        "createdAt"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the character"
-        },
-        "name": {
-          "type": "string",
-          "description": "Display name of the character"
-        },
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Realm ID (partition key)"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Species ID (foreign key to Species service)"
-        },
-        "birthDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "In-game birth timestamp"
-        },
-        "deathDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "In-game death timestamp"
-        },
-        "status": {
-          "$ref": "#/$defs/CharacterStatus",
-          "description": "Current lifecycle status of the character"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Real-world creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Real-world last update timestamp"
-        }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _ListCharacters_Info = """
 {
-  "summary": "List characters with filtering",
-  "description": "",
-  "tags": [
-    "Character Management"
-  ],
-  "deprecated": false,
-  "operationId": "listCharacters"
+    "summary": "List characters with filtering",
+    "description": "",
+    "tags": [
+        "Character Management"
+    ],
+    "deprecated": false,
+    "operationId": "listCharacters"
 }
 """;
 
@@ -1086,193 +1086,193 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
 
     private static readonly string _GetCharactersByRealm_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetCharactersByRealmRequest",
-  "$defs": {
-    "GetCharactersByRealmRequest": {
-      "description": "Request payload for retrieving all characters within a specific realm",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "realmId"
-      ],
-      "properties": {
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Realm ID to query (uses partition key for efficiency)"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Filter by species"
-        },
-        "status": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/CharacterStatus"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCharactersByRealmRequest",
+    "$defs": {
+        "GetCharactersByRealmRequest": {
+            "description": "Request payload for retrieving all characters within a specific realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "realmId"
+            ],
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID to query (uses partition key for efficiency)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Filter by species"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional status filter"
+                },
+                "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Page number for pagination (1-based)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Number of results per page"
+                }
             }
-          ],
-          "nullable": true,
-          "description": "Optional status filter"
         },
-        "page": {
-          "type": "integer",
-          "minimum": 1,
-          "default": 1,
-          "description": "Page number for pagination (1-based)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "default": 20,
-          "description": "Number of results per page"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetCharactersByRealm_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CharacterListResponse",
-  "$defs": {
-    "CharacterListResponse": {
-      "description": "Paginated list of characters with metadata for navigation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characters",
-        "totalCount",
-        "page",
-        "pageSize"
-      ],
-      "properties": {
-        "characters": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/CharacterResponse"
-          },
-          "description": "List of characters matching the query"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterListResponse",
+    "$defs": {
+        "CharacterListResponse": {
+            "description": "Paginated list of characters with metadata for navigation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characters",
+                "totalCount",
+                "page",
+                "pageSize"
+            ],
+            "properties": {
+                "characters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CharacterResponse"
+                    },
+                    "description": "List of characters matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of characters matching the filter criteria"
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number (1-based)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Number of results per page"
+                },
+                "hasNextPage": {
+                    "type": "boolean",
+                    "description": "Whether there are more results after this page"
+                },
+                "hasPreviousPage": {
+                    "type": "boolean",
+                    "description": "Whether there are results before this page"
+                }
+            }
         },
-        "totalCount": {
-          "type": "integer",
-          "description": "Total number of characters matching the filter criteria"
+        "CharacterResponse": {
+            "description": "Complete character data returned from character operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "status",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status of the character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
         },
-        "page": {
-          "type": "integer",
-          "description": "Current page number (1-based)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "description": "Number of results per page"
-        },
-        "hasNextPage": {
-          "type": "boolean",
-          "description": "Whether there are more results after this page"
-        },
-        "hasPreviousPage": {
-          "type": "boolean",
-          "description": "Whether there are results before this page"
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
         }
-      }
-    },
-    "CharacterResponse": {
-      "description": "Complete character data returned from character operations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId",
-        "name",
-        "realmId",
-        "speciesId",
-        "birthDate",
-        "status",
-        "createdAt"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the character"
-        },
-        "name": {
-          "type": "string",
-          "description": "Display name of the character"
-        },
-        "realmId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Realm ID (partition key)"
-        },
-        "speciesId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Species ID (foreign key to Species service)"
-        },
-        "birthDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "In-game birth timestamp"
-        },
-        "deathDate": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "In-game death timestamp"
-        },
-        "status": {
-          "$ref": "#/$defs/CharacterStatus",
-          "description": "Current lifecycle status of the character"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Real-world creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Real-world last update timestamp"
-        }
-      }
-    },
-    "CharacterStatus": {
-      "type": "string",
-      "description": "Character lifecycle status",
-      "enum": [
-        "alive",
-        "dead",
-        "dormant"
-      ]
     }
-  }
 }
 """;
 
     private static readonly string _GetCharactersByRealm_Info = """
 {
-  "summary": "Get all characters in a realm (primary query pattern)",
-  "description": "",
-  "tags": [
-    "Character Lookup"
-  ],
-  "deprecated": false,
-  "operationId": "getCharactersByRealm"
+    "summary": "Get all characters in a realm (primary query pattern)",
+    "description": "",
+    "tags": [
+        "Character Lookup"
+    ],
+    "deprecated": false,
+    "operationId": "getCharactersByRealm"
 }
 """;
 

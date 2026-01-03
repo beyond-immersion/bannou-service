@@ -26,19 +26,21 @@ paths:
                 $ref: '#/components/schemas/StatusResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/StatusResponse\"\
-        ,\n  \"$defs\": {\n    \"StatusResponse\": {\n      \"description\": \"Health and version status information for the
-        website service\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n \
-        \       \"status\",\n        \"version\",\n        \"uptime\"\n      ],\n      \"properties\": {\n        \"status\"\
-        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"healthy\",\n            \"degraded\",\n\
-        \            \"maintenance\"\n          ],\n          \"description\": \"Current health status of the website service\"\
-        \n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"example\": \"1.0.0\",\n       \
-        \   \"description\": \"Current version of the website service\"\n        },\n        \"uptime\": {\n          \"type\"\
-        : \"integer\",\n          \"description\": \"Uptime in seconds\"\n        },\n        \"maintenanceMessage\": {\n\
-        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Message displayed during
-        maintenance mode\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get website status and version\",\n  \"description\": \"\",\n  \"tags\":
-        [\n    \"Status\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getStatus\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusResponse\"\
+        ,\n    \"$defs\": {\n        \"StatusResponse\": {\n            \"description\": \"Health and version status information
+        for the website service\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"status\",\n                \"version\",\n                \"uptime\"\n\
+        \            ],\n            \"properties\": {\n                \"status\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"healthy\",\n                        \"degraded\",\n\
+        \                        \"maintenance\"\n                    ],\n                    \"description\": \"Current health
+        status of the website service\"\n                },\n                \"version\": {\n                    \"type\"\
+        : \"string\",\n                    \"example\": \"1.0.0\",\n                    \"description\": \"Current version
+        of the website service\"\n                },\n                \"uptime\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Uptime in seconds\"\n                },\n                \"maintenanceMessage\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Message displayed during maintenance mode\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get website status and version\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Status\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getStatus\"\n}"
   /website/content/{slug}:
     get:
       summary: Get dynamic page content from CMS
@@ -71,40 +73,47 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PageContent\"\
-        ,\n  \"$defs\": {\n    \"PageContent\": {\n      \"description\": \"Full content and metadata for a CMS-managed page\"\
-        ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"slug\",\n\
-        \        \"title\",\n        \"content\",\n        \"contentType\",\n        \"published\"\n      ],\n      \"properties\"\
-        : {\n        \"slug\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"\
-        description\": \"URL-friendly identifier for the page\"\n        },\n        \"title\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Display title of the page\"\n        },\n        \"content\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"HTML, Markdown, or custom template content\"\n        },\n\
-        \        \"contentType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"html\",\n     \
-        \       \"markdown\",\n            \"blazor\"\n          ],\n          \"description\": \"Format of the page content\"\
-        \n        },\n        \"template\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Template name for custom layouts\"\n        },\n        \"published\": {\n          \"type\": \"\
-        boolean\",\n          \"description\": \"Whether the page is publicly visible\"\n        },\n        \"publishedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Date and time when the page was published\"\n        },\n        \"lastModified\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Date and time of
-        the last modification\"\n        },\n        \"author\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Name or identifier of the page author\"\n        },\n        \"metadata\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Custom metadata
-        for the page\"\n        },\n        \"seo\": {\n          \"$ref\": \"#/$defs/SEOMetadata\",\n          \"description\"\
-        : \"Search engine optimization settings for the page\"\n        }\n      }\n    },\n    \"SEOMetadata\": {\n     \
-        \ \"description\": \"Search engine optimization and social media sharing metadata\",\n      \"type\": \"object\",\n\
-        \      \"additionalProperties\": false,\n      \"properties\": {\n        \"description\": {\n          \"type\":
-        \"string\",\n          \"nullable\": true,\n          \"description\": \"Meta description for search engines\"\n \
-        \       },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Keywords for search engine indexing\"\n        },\n     \
-        \   \"ogTitle\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"\
-        Open Graph title for social media sharing\"\n        },\n        \"ogDescription\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Open Graph description for social media sharing\"\n\
-        \        },\n        \"ogImage\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        nullable\": true,\n          \"description\": \"Open Graph image URL for social media sharing\"\n        }\n     \
-        \ }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get dynamic page content from CMS\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"Content\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getPageContent\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PageContent\"\
+        ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
+        page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
+        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
+        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
+        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
+        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
+        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
+        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
+        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
+        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
+        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
+        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
+        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
+        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
+        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
+        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
+        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
+        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get dynamic page content from CMS\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"Content\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getPageContent\"\n}"
   /website/news:
     get:
       summary: Get latest news and announcements
@@ -139,31 +148,37 @@ paths:
                 $ref: '#/components/schemas/NewsResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/NewsResponse\"\
-        ,\n  \"$defs\": {\n    \"NewsResponse\": {\n      \"description\": \"Paginated list of news items with total count\"\
-        ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"items\",\n\
-        \        \"total\"\n      ],\n      \"properties\": {\n        \"items\": {\n          \"type\": \"array\",\n    \
-        \      \"items\": {\n            \"$ref\": \"#/$defs/NewsItem\"\n          },\n          \"description\": \"List of
-        news items for the current page\"\n        },\n        \"total\": {\n          \"type\": \"integer\",\n          \"\
-        description\": \"Total number of news items available\"\n        },\n        \"hasMore\": {\n          \"type\": \"\
-        boolean\",\n          \"description\": \"Whether more news items are available beyond this page\"\n        }\n   \
-        \   }\n    },\n    \"NewsItem\": {\n      \"description\": \"A single news article or announcement entry\",\n    \
-        \  \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"id\",\n       \
-        \ \"title\",\n        \"summary\",\n        \"publishedAt\"\n      ],\n      \"properties\": {\n        \"id\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier
-        for the news item\"\n        },\n        \"title\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Headline of the news item\"\n        },\n        \"summary\": {\n          \"type\": \"string\",\n          \"\
-        description\": \"Brief summary or excerpt of the news content\"\n        },\n        \"content\": {\n          \"\
-        type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Full content body of the news item\"\
-        \n        },\n        \"author\": {\n          \"type\": \"string\",\n          \"description\": \"Name of the news
-        item author\"\n        },\n        \"publishedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        ,\n          \"description\": \"Date and time when the news was published\"\n        },\n        \"tags\": {\n   \
-        \       \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"\
-        description\": \"Category tags associated with the news item\"\n        },\n        \"imageUrl\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"uri\",\n          \"nullable\": true,\n          \"description\": \"\
-        URL of the featured image for the news item\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get latest news and announcements\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"Content\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getNews\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/NewsResponse\"\
+        ,\n    \"$defs\": {\n        \"NewsResponse\": {\n            \"description\": \"Paginated list of news items with
+        total count\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"items\",\n                \"total\"\n            ],\n            \"properties\": {\n      \
+        \          \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/NewsItem\"\n                    },\n                    \"description\": \"List of
+        news items for the current page\"\n                },\n                \"total\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Total number of news items available\"\n                },\n\
+        \                \"hasMore\": {\n                    \"type\": \"boolean\",\n                    \"description\":
+        \"Whether more news items are available beyond this page\"\n                }\n            }\n        },\n       \
+        \ \"NewsItem\": {\n            \"description\": \"A single news article or announcement entry\",\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"id\",\n\
+        \                \"title\",\n                \"summary\",\n                \"publishedAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"id\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the news item\"\n       \
+        \         },\n                \"title\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Headline of the news item\"\n                },\n                \"summary\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Brief summary or excerpt of the news content\"\n           \
+        \     },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Full content body of the news item\"\n                },\n       \
+        \         \"author\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name of
+        the news item author\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Date and time when the news
+        was published\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n     \
+        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
+        \       \"description\": \"Category tags associated with the news item\"\n                },\n                \"imageUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"URL of the featured image for the news item\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get latest news and announcements\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"Content\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getNews\"\n}"
   /website/server-status:
     get:
       summary: Get game server status for all realms
@@ -182,30 +197,37 @@ paths:
                 $ref: '#/components/schemas/ServerStatusResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ServerStatusResponse\"\
-        ,\n  \"$defs\": {\n    \"ServerStatusResponse\": {\n      \"description\": \"Aggregated status of all game server
-        realms\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"\
-        realms\",\n        \"globalStatus\"\n      ],\n      \"properties\": {\n        \"globalStatus\": {\n          \"\
-        type\": \"string\",\n          \"enum\": [\n            \"online\",\n            \"partial\",\n            \"offline\"\
-        ,\n            \"maintenance\"\n          ],\n          \"description\": \"Overall status across all game realms\"\
-        \n        },\n        \"realms\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\"\
-        : \"#/$defs/RealmStatus\"\n          },\n          \"description\": \"Status information for each game realm\"\n \
-        \       }\n      }\n    },\n    \"RealmStatus\": {\n      \"description\": \"Status and population information for
-        a single game realm\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n\
-        \        \"realmId\",\n        \"name\",\n        \"status\",\n        \"population\"\n      ],\n      \"properties\"\
-        : {\n        \"realmId\": {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the
-        game realm\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display
-        name of the game realm\"\n        },\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\":
-        [\n            \"online\",\n            \"offline\",\n            \"maintenance\",\n            \"full\"\n       \
-        \   ],\n          \"description\": \"Current operational status of the realm\"\n        },\n        \"population\"\
-        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"low\",\n            \"medium\",\n     \
-        \       \"high\",\n            \"full\"\n          ],\n          \"description\": \"Current player population level\"\
-        \n        },\n        \"playerCount\": {\n          \"type\": \"integer\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Current number of players online\"\n        },\n        \"ping\": {\n          \"type\": \"\
-        integer\",\n          \"description\": \"Latency in milliseconds\",\n          \"nullable\": true\n        }\n   \
-        \   }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get game server status for all realms\",\n  \"description\": \"\",\n  \"\
-        tags\": [\n    \"Status\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getServerStatus\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ServerStatusResponse\"\
+        ,\n    \"$defs\": {\n        \"ServerStatusResponse\": {\n            \"description\": \"Aggregated status of all
+        game server realms\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"realms\",\n                \"globalStatus\"\n            ],\n            \"\
+        properties\": {\n                \"globalStatus\": {\n                    \"type\": \"string\",\n                \
+        \    \"enum\": [\n                        \"online\",\n                        \"partial\",\n                    \
+        \    \"offline\",\n                        \"maintenance\"\n                    ],\n                    \"description\"\
+        : \"Overall status across all game realms\"\n                },\n                \"realms\": {\n                 \
+        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmStatus\"\
+        \n                    },\n                    \"description\": \"Status information for each game realm\"\n      \
+        \          }\n            }\n        },\n        \"RealmStatus\": {\n            \"description\": \"Status and population
+        information for a single game realm\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"realmId\",\n                \"name\",\n                \"status\"\
+        ,\n                \"population\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the game
+        realm\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"Display name of the game realm\"\n                },\n                \"status\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"online\",\n\
+        \                        \"offline\",\n                        \"maintenance\",\n                        \"full\"\n\
+        \                    ],\n                    \"description\": \"Current operational status of the realm\"\n      \
+        \          },\n                \"population\": {\n                    \"type\": \"string\",\n                    \"\
+        enum\": [\n                        \"low\",\n                        \"medium\",\n                        \"high\"\
+        ,\n                        \"full\"\n                    ],\n                    \"description\": \"Current player
+        population level\"\n                },\n                \"playerCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Current number of players online\"\
+        \n                },\n                \"ping\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"description\": \"Latency in milliseconds\",\n                    \"nullable\": true\n                }\n    \
+        \        }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get game server status for all realms\",\n    \"description\": \"\",\n\
+        \    \"tags\": [\n        \"Status\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getServerStatus\"\
+        \n}"
   /website/downloads:
     get:
       summary: Get download links for game clients
@@ -231,27 +253,33 @@ paths:
                 $ref: '#/components/schemas/DownloadsResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DownloadsResponse\"\
-        ,\n  \"$defs\": {\n    \"DownloadsResponse\": {\n      \"description\": \"Collection of available game client downloads
-        by platform\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n     \
-        \   \"clients\"\n      ],\n      \"properties\": {\n        \"clients\": {\n          \"type\": \"array\",\n     \
-        \     \"items\": {\n            \"$ref\": \"#/$defs/DownloadInfo\"\n          },\n          \"description\": \"Available
-        game client downloads\"\n        }\n      }\n    },\n    \"DownloadInfo\": {\n      \"description\": \"Download details
-        for a specific game client version and platform\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n\
-        \      \"required\": [\n        \"platform\",\n        \"version\",\n        \"url\",\n        \"size\",\n       \
-        \ \"checksum\"\n      ],\n      \"properties\": {\n        \"platform\": {\n          \"type\": \"string\",\n    \
-        \      \"enum\": [\n            \"windows\",\n            \"macos\",\n            \"linux\"\n          ],\n      \
-        \    \"description\": \"Target operating system platform\"\n        },\n        \"version\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"Version number of the game client\"\n        },\n        \"url\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"Download URL for the
-        game client\"\n        },\n        \"size\": {\n          \"type\": \"integer\",\n          \"description\": \"File
-        size in bytes\"\n        },\n        \"checksum\": {\n          \"type\": \"string\",\n          \"description\":
-        \"SHA256 checksum\"\n        },\n        \"releaseNotes\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Release notes or changelog for this version\"\n        },\n        \"minimumRequirements\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Minimum
-        system requirements for the client\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get download links for game clients\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"Downloads\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getDownloads\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DownloadsResponse\"\
+        ,\n    \"$defs\": {\n        \"DownloadsResponse\": {\n            \"description\": \"Collection of available game
+        client downloads by platform\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"clients\"\n            ],\n            \"properties\": {\n       \
+        \         \"clients\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"$ref\": \"#/$defs/DownloadInfo\"\n                    },\n                    \"description\": \"\
+        Available game client downloads\"\n                }\n            }\n        },\n        \"DownloadInfo\": {\n   \
+        \         \"description\": \"Download details for a specific game client version and platform\",\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"platform\"\
+        ,\n                \"version\",\n                \"url\",\n                \"size\",\n                \"checksum\"\
+        \n            ],\n            \"properties\": {\n                \"platform\": {\n                    \"type\": \"\
+        string\",\n                    \"enum\": [\n                        \"windows\",\n                        \"macos\"\
+        ,\n                        \"linux\"\n                    ],\n                    \"description\": \"Target operating
+        system platform\"\n                },\n                \"version\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Version number of the game client\"\n                },\n                \"\
+        url\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                  \
+        \  \"description\": \"Download URL for the game client\"\n                },\n                \"size\": {\n      \
+        \              \"type\": \"integer\",\n                    \"description\": \"File size in bytes\"\n             \
+        \   },\n                \"checksum\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"SHA256 checksum\"\n                },\n                \"releaseNotes\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Release notes or changelog for
+        this version\"\n                },\n                \"minimumRequirements\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Minimum system requirements
+        for the client\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get download links for game clients\",\n    \"description\": \"\",\n  \
+        \  \"tags\": [\n        \"Downloads\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getDownloads\"\n\
+        }"
   /website/contact:
     post:
       summary: Submit contact form
@@ -287,30 +315,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ContactRequest\"\
-        ,\n  \"$defs\": {\n    \"ContactRequest\": {\n      \"description\": \"User-submitted contact form data\",\n     \
-        \ \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"email\",\n     \
-        \   \"subject\",\n        \"message\"\n      ],\n      \"properties\": {\n        \"email\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"email\",\n          \"description\": \"Sender email address for replies\"\n\
-        \        },\n        \"name\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Name of the person submitting the form\"\n        },\n        \"subject\": {\n          \"type\": \"string\",\n\
-        \          \"minLength\": 5,\n          \"maxLength\": 200,\n          \"description\": \"Subject line of the contact
-        message\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"minLength\": 10,\n   \
-        \       \"maxLength\": 2000,\n          \"description\": \"Body content of the contact message\"\n        },\n   \
-        \     \"category\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"general\",\n        \
-        \    \"support\",\n            \"bug\",\n            \"feedback\",\n            \"business\"\n          ],\n     \
-        \     \"default\": \"general\",\n          \"description\": \"Category to route the contact request\"\n        }\n\
-        \      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ContactResponse\"\
-        ,\n  \"$defs\": {\n    \"ContactResponse\": {\n      \"description\": \"Confirmation response after submitting a contact
-        form\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"ticketId\"\
-        ,\n        \"message\"\n      ],\n      \"properties\": {\n        \"ticketId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for the created support ticket\"\
-        \n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"default\": \"Thank you for contacting
-        us. We will respond within 24-48 hours.\",\n          \"description\": \"Confirmation message displayed to the user\"\
-        \n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Submit contact form\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Contact\"\
-        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"submitContact\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContactRequest\"\
+        ,\n    \"$defs\": {\n        \"ContactRequest\": {\n            \"description\": \"User-submitted contact form data\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"email\",\n                \"subject\",\n                \"message\"\n            ],\n         \
+        \   \"properties\": {\n                \"email\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"email\",\n                    \"description\": \"Sender email address for replies\"\n          \
+        \      },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Name of the person submitting the form\"\n                },\n   \
+        \             \"subject\": {\n                    \"type\": \"string\",\n                    \"minLength\": 5,\n \
+        \                   \"maxLength\": 200,\n                    \"description\": \"Subject line of the contact message\"\
+        \n                },\n                \"message\": {\n                    \"type\": \"string\",\n                \
+        \    \"minLength\": 10,\n                    \"maxLength\": 2000,\n                    \"description\": \"Body content
+        of the contact message\"\n                },\n                \"category\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"general\",\n                        \"support\",\n \
+        \                       \"bug\",\n                        \"feedback\",\n                        \"business\"\n  \
+        \                  ],\n                    \"default\": \"general\",\n                    \"description\": \"Category
+        to route the contact request\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContactResponse\"\
+        ,\n    \"$defs\": {\n        \"ContactResponse\": {\n            \"description\": \"Confirmation response after submitting
+        a contact form\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"ticketId\",\n                \"message\"\n            ],\n            \"properties\"\
+        : {\n                \"ticketId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for the created support ticket\"\n             \
+        \   },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"default\"\
+        : \"Thank you for contacting us. We will respond within 24-48 hours.\",\n                    \"description\": \"Confirmation
+        message displayed to the user\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Submit contact form\",\n    \"description\": \"\",\n    \"tags\": [\n \
+        \       \"Contact\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"submitContact\"\n}"
   /website/account/profile:
     get:
       summary: Get account profile for logged-in user
@@ -337,23 +369,27 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AccountProfile\"\
-        ,\n  \"$defs\": {\n    \"AccountProfile\": {\n      \"description\": \"User account information displayed on the website
-        profile page\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n    \
-        \    \"accountId\",\n        \"email\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n        \"accountId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier
-        for the account\"\n        },\n        \"email\": {\n          \"type\": \"string\",\n          \"format\": \"email\"\
-        ,\n          \"description\": \"Email address associated with the account\"\n        },\n        \"displayName\":
-        {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"User-chosen display
-        name\"\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        ,\n          \"description\": \"Date and time when the account was created\"\n        },\n        \"lastLogin\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"\
-        description\": \"Date and time of the last successful login\"\n        },\n        \"characterSlots\": {\n       \
-        \   \"type\": \"integer\",\n          \"description\": \"Total number of character slots available\"\n        },\n\
-        \        \"usedSlots\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of character slots
-        currently in use\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get account profile for logged-in user\",\n  \"description\": \"\",\n  \"\
-        tags\": [\n    \"Account\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getAccountProfile\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountProfile\"\
+        ,\n    \"$defs\": {\n        \"AccountProfile\": {\n            \"description\": \"User account information displayed
+        on the website profile page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\",\n                \"email\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"email\",\n                    \"description\": \"Email address associated with the account\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"User-chosen display name\"\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Date and time when the account was created\"\n                },\n     \
+        \           \"lastLogin\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time of the last successful
+        login\"\n                },\n                \"characterSlots\": {\n                    \"type\": \"integer\",\n \
+        \                   \"description\": \"Total number of character slots available\"\n                },\n         \
+        \       \"usedSlots\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of character slots currently in use\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get account profile for logged-in user\",\n    \"description\": \"\",\n\
+        \    \"tags\": [\n        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountProfile\"\
+        \n}"
   /website/account/characters:
     get:
       summary: Get character list for logged-in user
@@ -380,25 +416,30 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CharacterListResponse\"\
-        ,\n  \"$defs\": {\n    \"CharacterListResponse\": {\n      \"description\": \"List of all characters belonging to
-        an account\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n      \
-        \  \"characters\"\n      ],\n      \"properties\": {\n        \"characters\": {\n          \"type\": \"array\",\n\
-        \          \"items\": {\n            \"$ref\": \"#/$defs/CharacterSummary\"\n          },\n          \"description\"\
-        : \"List of characters owned by the account\"\n        }\n      }\n    },\n    \"CharacterSummary\": {\n      \"description\"\
-        : \"Brief overview of a character for display in character lists\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"required\": [\n        \"characterId\",\n        \"name\",\n        \"realm\",\n        \"level\"\
-        \n      ],\n      \"properties\": {\n        \"characterId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"description\": \"Unique identifier for the character\"\n        },\n        \"name\": {\n\
-        \          \"type\": \"string\",\n          \"description\": \"Name of the character\"\n        },\n        \"realm\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Name of the realm the character belongs to\"\n\
-        \        },\n        \"level\": {\n          \"type\": \"integer\",\n          \"description\": \"Current level of
-        the character\"\n        },\n        \"class\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Character class or profession\"\n        },\n        \"lastPlayed\": {\n          \"\
-        type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Date and time of last gameplay session\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get character list for logged-in user\",\n  \"description\": \"\",\n  \"\
-        tags\": [\n    \"Account\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getAccountCharacters\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
+        ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"List of all characters belonging
+        to an account\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"characters\"\n            ],\n            \"properties\": {\n                \"characters\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/CharacterSummary\"\n                    },\n                    \"description\": \"List of characters
+        owned by the account\"\n                }\n            }\n        },\n        \"CharacterSummary\": {\n          \
+        \  \"description\": \"Brief overview of a character for display in character lists\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n \
+        \               \"name\",\n                \"realm\",\n                \"level\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier for the character\"\n                },\n  \
+        \              \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name
+        of the character\"\n                },\n                \"realm\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Name of the realm the character belongs to\"\n                },\n       \
+        \         \"level\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current
+        level of the character\"\n                },\n                \"class\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Character class or profession\"\
+        \n                },\n                \"lastPlayed\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Date and time of last gameplay session\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get character list for logged-in user\",\n    \"description\": \"\",\n\
+        \    \"tags\": [\n        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountCharacters\"\
+        \n}"
   /website/cms/pages:
     get:
       summary: List all CMS pages
@@ -426,21 +467,24 @@ paths:
                 items:
                   $ref: '#/components/schemas/PageMetadata'
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"array\",\n  \"\
-        items\": {\n    \"$ref\": \"#/$defs/PageMetadata\"\n  },\n  \"$defs\": {\n    \"PageMetadata\": {\n      \"description\"\
-        : \"Summary metadata for a CMS page without full content\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"required\": [\n        \"slug\",\n        \"title\",\n        \"published\"\n      ],\n      \"\
-        properties\": {\n        \"slug\": {\n          \"type\": \"string\",\n          \"description\": \"URL-friendly identifier
-        for the page\"\n        },\n        \"title\": {\n          \"type\": \"string\",\n          \"description\": \"Display
-        title of the page\"\n        },\n        \"published\": {\n          \"type\": \"boolean\",\n          \"description\"\
-        : \"Whether the page is publicly visible\"\n        },\n        \"publishedAt\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Date and time
-        when the page was published\"\n        },\n        \"lastModified\": {\n          \"type\": \"string\",\n        \
-        \  \"format\": \"date-time\",\n          \"description\": \"Date and time of the last modification\"\n        },\n\
-        \        \"author\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Name or identifier of the page author\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"List all CMS pages\",\n  \"description\": \"\",\n  \"tags\": [\n    \"CMS\"\
-        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listPages\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"array\",\n\
+        \    \"items\": {\n        \"$ref\": \"#/$defs/PageMetadata\"\n    },\n    \"$defs\": {\n        \"PageMetadata\"\
+        : {\n            \"description\": \"Summary metadata for a CMS page without full content\",\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"slug\"\
+        ,\n                \"title\",\n                \"published\"\n            ],\n            \"properties\": {\n    \
+        \            \"slug\": {\n                    \"type\": \"string\",\n                    \"description\": \"URL-friendly
+        identifier for the page\"\n                },\n                \"title\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Display title of the page\"\n                },\n                \"published\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the page is publicly
+        visible\"\n                },\n                \"publishedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Date and time when the page was published\"\n                },\n                \"lastModified\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Date and time of the last modification\"\n                },\n                \"author\": {\n                \
+        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name or
+        identifier of the page author\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List all CMS pages\",\n    \"description\": \"\",\n    \"tags\": [\n  \
+        \      \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listPages\"\n}"
     post:
       summary: Create new CMS page
       operationId: createPage
@@ -465,72 +509,86 @@ paths:
               schema:
                 $ref: '#/components/schemas/PageContent'
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PageContent\"\
-        ,\n  \"$defs\": {\n    \"PageContent\": {\n      \"description\": \"Full content and metadata for a CMS-managed page\"\
-        ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"slug\",\n\
-        \        \"title\",\n        \"content\",\n        \"contentType\",\n        \"published\"\n      ],\n      \"properties\"\
-        : {\n        \"slug\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"\
-        description\": \"URL-friendly identifier for the page\"\n        },\n        \"title\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Display title of the page\"\n        },\n        \"content\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"HTML, Markdown, or custom template content\"\n        },\n\
-        \        \"contentType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"html\",\n     \
-        \       \"markdown\",\n            \"blazor\"\n          ],\n          \"description\": \"Format of the page content\"\
-        \n        },\n        \"template\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Template name for custom layouts\"\n        },\n        \"published\": {\n          \"type\": \"\
-        boolean\",\n          \"description\": \"Whether the page is publicly visible\"\n        },\n        \"publishedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Date and time when the page was published\"\n        },\n        \"lastModified\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Date and time of
-        the last modification\"\n        },\n        \"author\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Name or identifier of the page author\"\n        },\n        \"metadata\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Custom metadata
-        for the page\"\n        },\n        \"seo\": {\n          \"$ref\": \"#/$defs/SEOMetadata\",\n          \"description\"\
-        : \"Search engine optimization settings for the page\"\n        }\n      }\n    },\n    \"SEOMetadata\": {\n     \
-        \ \"description\": \"Search engine optimization and social media sharing metadata\",\n      \"type\": \"object\",\n\
-        \      \"additionalProperties\": false,\n      \"properties\": {\n        \"description\": {\n          \"type\":
-        \"string\",\n          \"nullable\": true,\n          \"description\": \"Meta description for search engines\"\n \
-        \       },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Keywords for search engine indexing\"\n        },\n     \
-        \   \"ogTitle\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"\
-        Open Graph title for social media sharing\"\n        },\n        \"ogDescription\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Open Graph description for social media sharing\"\n\
-        \        },\n        \"ogImage\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        nullable\": true,\n          \"description\": \"Open Graph image URL for social media sharing\"\n        }\n     \
-        \ }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PageContent\"\
-        ,\n  \"$defs\": {\n    \"PageContent\": {\n      \"description\": \"Full content and metadata for a CMS-managed page\"\
-        ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"slug\",\n\
-        \        \"title\",\n        \"content\",\n        \"contentType\",\n        \"published\"\n      ],\n      \"properties\"\
-        : {\n        \"slug\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"\
-        description\": \"URL-friendly identifier for the page\"\n        },\n        \"title\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Display title of the page\"\n        },\n        \"content\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"HTML, Markdown, or custom template content\"\n        },\n\
-        \        \"contentType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"html\",\n     \
-        \       \"markdown\",\n            \"blazor\"\n          ],\n          \"description\": \"Format of the page content\"\
-        \n        },\n        \"template\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Template name for custom layouts\"\n        },\n        \"published\": {\n          \"type\": \"\
-        boolean\",\n          \"description\": \"Whether the page is publicly visible\"\n        },\n        \"publishedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Date and time when the page was published\"\n        },\n        \"lastModified\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Date and time of
-        the last modification\"\n        },\n        \"author\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Name or identifier of the page author\"\n        },\n        \"metadata\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Custom metadata
-        for the page\"\n        },\n        \"seo\": {\n          \"$ref\": \"#/$defs/SEOMetadata\",\n          \"description\"\
-        : \"Search engine optimization settings for the page\"\n        }\n      }\n    },\n    \"SEOMetadata\": {\n     \
-        \ \"description\": \"Search engine optimization and social media sharing metadata\",\n      \"type\": \"object\",\n\
-        \      \"additionalProperties\": false,\n      \"properties\": {\n        \"description\": {\n          \"type\":
-        \"string\",\n          \"nullable\": true,\n          \"description\": \"Meta description for search engines\"\n \
-        \       },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Keywords for search engine indexing\"\n        },\n     \
-        \   \"ogTitle\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"\
-        Open Graph title for social media sharing\"\n        },\n        \"ogDescription\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Open Graph description for social media sharing\"\n\
-        \        },\n        \"ogImage\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        nullable\": true,\n          \"description\": \"Open Graph image URL for social media sharing\"\n        }\n     \
-        \ }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Create new CMS page\",\n  \"description\": \"\",\n  \"tags\": [\n    \"CMS\"\
-        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createPage\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PageContent\"\
+        ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
+        page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
+        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
+        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
+        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
+        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
+        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
+        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
+        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
+        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
+        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
+        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
+        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
+        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
+        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
+        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
+        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
+        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PageContent\"\
+        ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
+        page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
+        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
+        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
+        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
+        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
+        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
+        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
+        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
+        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
+        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
+        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
+        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
+        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
+        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
+        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
+        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
+        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create new CMS page\",\n    \"description\": \"\",\n    \"tags\": [\n \
+        \       \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createPage\"\n}"
   /website/cms/pages/{slug}:
     put:
       summary: Update CMS page
@@ -561,72 +619,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageContent'
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PageContent\"\
-        ,\n  \"$defs\": {\n    \"PageContent\": {\n      \"description\": \"Full content and metadata for a CMS-managed page\"\
-        ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"slug\",\n\
-        \        \"title\",\n        \"content\",\n        \"contentType\",\n        \"published\"\n      ],\n      \"properties\"\
-        : {\n        \"slug\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"\
-        description\": \"URL-friendly identifier for the page\"\n        },\n        \"title\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Display title of the page\"\n        },\n        \"content\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"HTML, Markdown, or custom template content\"\n        },\n\
-        \        \"contentType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"html\",\n     \
-        \       \"markdown\",\n            \"blazor\"\n          ],\n          \"description\": \"Format of the page content\"\
-        \n        },\n        \"template\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Template name for custom layouts\"\n        },\n        \"published\": {\n          \"type\": \"\
-        boolean\",\n          \"description\": \"Whether the page is publicly visible\"\n        },\n        \"publishedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Date and time when the page was published\"\n        },\n        \"lastModified\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Date and time of
-        the last modification\"\n        },\n        \"author\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Name or identifier of the page author\"\n        },\n        \"metadata\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Custom metadata
-        for the page\"\n        },\n        \"seo\": {\n          \"$ref\": \"#/$defs/SEOMetadata\",\n          \"description\"\
-        : \"Search engine optimization settings for the page\"\n        }\n      }\n    },\n    \"SEOMetadata\": {\n     \
-        \ \"description\": \"Search engine optimization and social media sharing metadata\",\n      \"type\": \"object\",\n\
-        \      \"additionalProperties\": false,\n      \"properties\": {\n        \"description\": {\n          \"type\":
-        \"string\",\n          \"nullable\": true,\n          \"description\": \"Meta description for search engines\"\n \
-        \       },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Keywords for search engine indexing\"\n        },\n     \
-        \   \"ogTitle\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"\
-        Open Graph title for social media sharing\"\n        },\n        \"ogDescription\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Open Graph description for social media sharing\"\n\
-        \        },\n        \"ogImage\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        nullable\": true,\n          \"description\": \"Open Graph image URL for social media sharing\"\n        }\n     \
-        \ }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PageContent\"\
-        ,\n  \"$defs\": {\n    \"PageContent\": {\n      \"description\": \"Full content and metadata for a CMS-managed page\"\
-        ,\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n        \"slug\",\n\
-        \        \"title\",\n        \"content\",\n        \"contentType\",\n        \"published\"\n      ],\n      \"properties\"\
-        : {\n        \"slug\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"\
-        description\": \"URL-friendly identifier for the page\"\n        },\n        \"title\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Display title of the page\"\n        },\n        \"content\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"HTML, Markdown, or custom template content\"\n        },\n\
-        \        \"contentType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"html\",\n     \
-        \       \"markdown\",\n            \"blazor\"\n          ],\n          \"description\": \"Format of the page content\"\
-        \n        },\n        \"template\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"\
-        description\": \"Template name for custom layouts\"\n        },\n        \"published\": {\n          \"type\": \"\
-        boolean\",\n          \"description\": \"Whether the page is publicly visible\"\n        },\n        \"publishedAt\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"Date and time when the page was published\"\n        },\n        \"lastModified\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Date and time of
-        the last modification\"\n        },\n        \"author\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Name or identifier of the page author\"\n        },\n        \"metadata\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Custom metadata
-        for the page\"\n        },\n        \"seo\": {\n          \"$ref\": \"#/$defs/SEOMetadata\",\n          \"description\"\
-        : \"Search engine optimization settings for the page\"\n        }\n      }\n    },\n    \"SEOMetadata\": {\n     \
-        \ \"description\": \"Search engine optimization and social media sharing metadata\",\n      \"type\": \"object\",\n\
-        \      \"additionalProperties\": false,\n      \"properties\": {\n        \"description\": {\n          \"type\":
-        \"string\",\n          \"nullable\": true,\n          \"description\": \"Meta description for search engines\"\n \
-        \       },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Keywords for search engine indexing\"\n        },\n     \
-        \   \"ogTitle\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"\
-        Open Graph title for social media sharing\"\n        },\n        \"ogDescription\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Open Graph description for social media sharing\"\n\
-        \        },\n        \"ogImage\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        nullable\": true,\n          \"description\": \"Open Graph image URL for social media sharing\"\n        }\n     \
-        \ }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Update CMS page\",\n  \"description\": \"\",\n  \"tags\": [\n    \"CMS\"\n\
-        \  ],\n  \"deprecated\": false,\n  \"operationId\": \"updatePage\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PageContent\"\
+        ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
+        page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
+        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
+        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
+        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
+        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
+        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
+        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
+        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
+        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
+        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
+        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
+        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
+        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
+        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
+        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
+        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
+        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PageContent\"\
+        ,\n    \"$defs\": {\n        \"PageContent\": {\n            \"description\": \"Full content and metadata for a CMS-managed
+        page\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"slug\",\n                \"title\",\n                \"content\",\n                \"contentType\"\
+        ,\n                \"published\"\n            ],\n            \"properties\": {\n                \"slug\": {\n   \
+        \                 \"type\": \"string\",\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"\
+        description\": \"URL-friendly identifier for the page\"\n                },\n                \"title\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Display title of the page\"\n       \
+        \         },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"HTML, Markdown, or custom template content\"\n                },\n                \"contentType\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"html\",\n        \
+        \                \"markdown\",\n                        \"blazor\"\n                    ],\n                    \"\
+        description\": \"Format of the page content\"\n                },\n                \"template\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Template
+        name for custom layouts\"\n                },\n                \"published\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether the page is publicly visible\"\n                },\n  \
+        \              \"publishedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Date and time when the page was
+        published\"\n                },\n                \"lastModified\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Date and time of the last
+        modification\"\n                },\n                \"author\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Name or identifier of the page author\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"description\": \"Custom metadata for the page\"\n   \
+        \             },\n                \"seo\": {\n                    \"$ref\": \"#/$defs/SEOMetadata\",\n           \
+        \         \"description\": \"Search engine optimization settings for the page\"\n                }\n            }\n\
+        \        },\n        \"SEOMetadata\": {\n            \"description\": \"Search engine optimization and social media
+        sharing metadata\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"properties\": {\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Meta description for search engines\"\n      \
+        \          },\n                \"keywords\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Keywords for search engine indexing\"\n                },\n                \"ogTitle\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph title
+        for social media sharing\"\n                },\n                \"ogDescription\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Open Graph description
+        for social media sharing\"\n                },\n                \"ogImage\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Open Graph image URL for social media sharing\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update CMS page\",\n    \"description\": \"\",\n    \"tags\": [\n     \
+        \   \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updatePage\"\n}"
     delete:
       summary: Delete CMS page
       operationId: deletePage
@@ -649,8 +721,8 @@ paths:
 
       x-request-schema-json: '{}'
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Delete CMS page\",\n  \"description\": \"\",\n  \"tags\": [\n    \"CMS\"\n\
-        \  ],\n  \"deprecated\": false,\n  \"operationId\": \"deletePage\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete CMS page\",\n    \"description\": \"\",\n    \"tags\": [\n     \
+        \   \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deletePage\"\n}"
   /website/cms/site-settings:
     get:
       summary: Get site configuration
@@ -668,42 +740,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/SiteSettings'
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SiteSettings\"\
-        ,\n  \"$defs\": {\n    \"SiteSettings\": {\n      \"description\": \"Global website configuration including branding,
-        languages, and integrations\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"siteName\",\n        \"siteUrl\",\n        \"defaultLanguage\"\n      ],\n      \"properties\": {\n\
-        \        \"siteName\": {\n          \"type\": \"string\",\n          \"description\": \"Display name of the website\"\
-        \n        },\n        \"siteUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        description\": \"Base URL of the website\"\n        },\n        \"tagline\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Short slogan or description of the site\"\n        },\n\
-        \        \"defaultLanguage\": {\n          \"type\": \"string\",\n          \"default\": \"en\",\n          \"description\"\
-        : \"Default language code for the website\"\n        },\n        \"supportedLanguages\": {\n          \"type\": \"\
-        array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List
-        of supported language codes\"\n        },\n        \"maintenanceMode\": {\n          \"type\": \"boolean\",\n    \
-        \      \"default\": false,\n          \"description\": \"Whether the site is in maintenance mode\"\n        },\n \
-        \       \"maintenanceMessage\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Message displayed during maintenance mode\"\n        },\n        \"contactEmail\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"email\",\n          \"description\": \"Primary contact email address for the site\"\n \
-        \       },\n        \"socialLinks\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n \
-        \           \"type\": \"string\",\n            \"format\": \"uri\"\n          },\n          \"description\": \"Map
-        of social media platform names to profile URLs\"\n        },\n        \"analytics\": {\n          \"description\"\
-        : \"Analytics and tracking service configuration\",\n          \"$ref\": \"#/$defs/Analytics\"\n        },\n     \
-        \   \"customScripts\": {\n          \"description\": \"Custom JavaScript scripts to inject into pages\",\n       \
-        \   \"$ref\": \"#/$defs/CustomScripts\"\n        }\n      }\n    },\n    \"Analytics\": {\n      \"description\":
-        \"Analytics and tracking configuration for website visitor metrics\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"properties\": {\n        \"googleAnalyticsId\": {\n          \"type\": \"string\",\n          \"\
-        nullable\": true,\n          \"description\": \"Google Analytics tracking ID\"\n        },\n        \"otherTrackers\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Configuration
-        for other analytics trackers\"\n        }\n      }\n    },\n    \"CustomScripts\": {\n      \"description\": \"Custom
-        script injection configuration for adding JavaScript to pages\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"properties\": {\n        \"head\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Custom scripts to inject in the HTML head\"\n        },\n        \"bodyStart\": {\n\
-        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Custom scripts to inject
-        at the start of the body\"\n        },\n        \"bodyEnd\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Custom scripts to inject at the end of the body\"\n        }\n      }\n    }\n\
-        \  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get site configuration\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
-        CMS\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getSiteSettings\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SiteSettings\"\
+        ,\n    \"$defs\": {\n        \"SiteSettings\": {\n            \"description\": \"Global website configuration including
+        branding, languages, and integrations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"siteName\",\n                \"siteUrl\",\n             \
+        \   \"defaultLanguage\"\n            ],\n            \"properties\": {\n                \"siteName\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Display name of the website\"\n       \
+        \         },\n                \"siteUrl\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uri\",\n                    \"description\": \"Base URL of the website\"\n                },\n               \
+        \ \"tagline\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Short slogan or description of the site\"\n                },\n                \"defaultLanguage\"\
+        : {\n                    \"type\": \"string\",\n                    \"default\": \"en\",\n                    \"description\"\
+        : \"Default language code for the website\"\n                },\n                \"supportedLanguages\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"List of supported language codes\"\n            \
+        \    },\n                \"maintenanceMode\": {\n                    \"type\": \"boolean\",\n                    \"\
+        default\": false,\n                    \"description\": \"Whether the site is in maintenance mode\"\n            \
+        \    },\n                \"maintenanceMessage\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Message displayed during maintenance mode\"\n     \
+        \           },\n                \"contactEmail\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"email\",\n                    \"description\": \"Primary contact email address for the site\"\n\
+        \                },\n                \"socialLinks\": {\n                    \"type\": \"object\",\n             \
+        \       \"additionalProperties\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uri\"\n                    },\n                    \"description\": \"Map of social media platform names to profile
+        URLs\"\n                },\n                \"analytics\": {\n                    \"description\": \"Analytics and
+        tracking service configuration\",\n                    \"$ref\": \"#/$defs/Analytics\"\n                },\n     \
+        \           \"customScripts\": {\n                    \"description\": \"Custom JavaScript scripts to inject into
+        pages\",\n                    \"$ref\": \"#/$defs/CustomScripts\"\n                }\n            }\n        },\n\
+        \        \"Analytics\": {\n            \"description\": \"Analytics and tracking configuration for website visitor
+        metrics\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"googleAnalyticsId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Google Analytics tracking ID\"\n                },\n             \
+        \   \"otherTrackers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Configuration for other analytics trackers\"\n                }\n\
+        \            }\n        },\n        \"CustomScripts\": {\n            \"description\": \"Custom script injection configuration
+        for adding JavaScript to pages\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"head\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Custom scripts to inject in the HTML head\"\
+        \n                },\n                \"bodyStart\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Custom scripts to inject at the start of the body\"\
+        \n                },\n                \"bodyEnd\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Custom scripts to inject at the end of the body\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get site configuration\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSiteSettings\"\n}"
     put:
       summary: Update site configuration
       operationId: updateSiteSettings
@@ -728,76 +808,92 @@ paths:
               schema:
                 $ref: '#/components/schemas/SiteSettings'
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SiteSettings\"\
-        ,\n  \"$defs\": {\n    \"SiteSettings\": {\n      \"description\": \"Global website configuration including branding,
-        languages, and integrations\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"siteName\",\n        \"siteUrl\",\n        \"defaultLanguage\"\n      ],\n      \"properties\": {\n\
-        \        \"siteName\": {\n          \"type\": \"string\",\n          \"description\": \"Display name of the website\"\
-        \n        },\n        \"siteUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        description\": \"Base URL of the website\"\n        },\n        \"tagline\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Short slogan or description of the site\"\n        },\n\
-        \        \"defaultLanguage\": {\n          \"type\": \"string\",\n          \"default\": \"en\",\n          \"description\"\
-        : \"Default language code for the website\"\n        },\n        \"supportedLanguages\": {\n          \"type\": \"\
-        array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List
-        of supported language codes\"\n        },\n        \"maintenanceMode\": {\n          \"type\": \"boolean\",\n    \
-        \      \"default\": false,\n          \"description\": \"Whether the site is in maintenance mode\"\n        },\n \
-        \       \"maintenanceMessage\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Message displayed during maintenance mode\"\n        },\n        \"contactEmail\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"email\",\n          \"description\": \"Primary contact email address for the site\"\n \
-        \       },\n        \"socialLinks\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n \
-        \           \"type\": \"string\",\n            \"format\": \"uri\"\n          },\n          \"description\": \"Map
-        of social media platform names to profile URLs\"\n        },\n        \"analytics\": {\n          \"description\"\
-        : \"Analytics and tracking service configuration\",\n          \"$ref\": \"#/$defs/Analytics\"\n        },\n     \
-        \   \"customScripts\": {\n          \"description\": \"Custom JavaScript scripts to inject into pages\",\n       \
-        \   \"$ref\": \"#/$defs/CustomScripts\"\n        }\n      }\n    },\n    \"Analytics\": {\n      \"description\":
-        \"Analytics and tracking configuration for website visitor metrics\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"properties\": {\n        \"googleAnalyticsId\": {\n          \"type\": \"string\",\n          \"\
-        nullable\": true,\n          \"description\": \"Google Analytics tracking ID\"\n        },\n        \"otherTrackers\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Configuration
-        for other analytics trackers\"\n        }\n      }\n    },\n    \"CustomScripts\": {\n      \"description\": \"Custom
-        script injection configuration for adding JavaScript to pages\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"properties\": {\n        \"head\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Custom scripts to inject in the HTML head\"\n        },\n        \"bodyStart\": {\n\
-        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Custom scripts to inject
-        at the start of the body\"\n        },\n        \"bodyEnd\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Custom scripts to inject at the end of the body\"\n        }\n      }\n    }\n\
-        \  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SiteSettings\"\
-        ,\n  \"$defs\": {\n    \"SiteSettings\": {\n      \"description\": \"Global website configuration including branding,
-        languages, and integrations\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"siteName\",\n        \"siteUrl\",\n        \"defaultLanguage\"\n      ],\n      \"properties\": {\n\
-        \        \"siteName\": {\n          \"type\": \"string\",\n          \"description\": \"Display name of the website\"\
-        \n        },\n        \"siteUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        description\": \"Base URL of the website\"\n        },\n        \"tagline\": {\n          \"type\": \"string\",\n\
-        \          \"nullable\": true,\n          \"description\": \"Short slogan or description of the site\"\n        },\n\
-        \        \"defaultLanguage\": {\n          \"type\": \"string\",\n          \"default\": \"en\",\n          \"description\"\
-        : \"Default language code for the website\"\n        },\n        \"supportedLanguages\": {\n          \"type\": \"\
-        array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List
-        of supported language codes\"\n        },\n        \"maintenanceMode\": {\n          \"type\": \"boolean\",\n    \
-        \      \"default\": false,\n          \"description\": \"Whether the site is in maintenance mode\"\n        },\n \
-        \       \"maintenanceMessage\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Message displayed during maintenance mode\"\n        },\n        \"contactEmail\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"email\",\n          \"description\": \"Primary contact email address for the site\"\n \
-        \       },\n        \"socialLinks\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n \
-        \           \"type\": \"string\",\n            \"format\": \"uri\"\n          },\n          \"description\": \"Map
-        of social media platform names to profile URLs\"\n        },\n        \"analytics\": {\n          \"description\"\
-        : \"Analytics and tracking service configuration\",\n          \"$ref\": \"#/$defs/Analytics\"\n        },\n     \
-        \   \"customScripts\": {\n          \"description\": \"Custom JavaScript scripts to inject into pages\",\n       \
-        \   \"$ref\": \"#/$defs/CustomScripts\"\n        }\n      }\n    },\n    \"Analytics\": {\n      \"description\":
-        \"Analytics and tracking configuration for website visitor metrics\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"properties\": {\n        \"googleAnalyticsId\": {\n          \"type\": \"string\",\n          \"\
-        nullable\": true,\n          \"description\": \"Google Analytics tracking ID\"\n        },\n        \"otherTrackers\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Configuration
-        for other analytics trackers\"\n        }\n      }\n    },\n    \"CustomScripts\": {\n      \"description\": \"Custom
-        script injection configuration for adding JavaScript to pages\",\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : false,\n      \"properties\": {\n        \"head\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Custom scripts to inject in the HTML head\"\n        },\n        \"bodyStart\": {\n\
-        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Custom scripts to inject
-        at the start of the body\"\n        },\n        \"bodyEnd\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true,\n          \"description\": \"Custom scripts to inject at the end of the body\"\n        }\n      }\n    }\n\
-        \  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Update site configuration\",\n  \"description\": \"\",\n  \"tags\": [\n \
-        \   \"CMS\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"updateSiteSettings\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SiteSettings\"\
+        ,\n    \"$defs\": {\n        \"SiteSettings\": {\n            \"description\": \"Global website configuration including
+        branding, languages, and integrations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"siteName\",\n                \"siteUrl\",\n             \
+        \   \"defaultLanguage\"\n            ],\n            \"properties\": {\n                \"siteName\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Display name of the website\"\n       \
+        \         },\n                \"siteUrl\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uri\",\n                    \"description\": \"Base URL of the website\"\n                },\n               \
+        \ \"tagline\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Short slogan or description of the site\"\n                },\n                \"defaultLanguage\"\
+        : {\n                    \"type\": \"string\",\n                    \"default\": \"en\",\n                    \"description\"\
+        : \"Default language code for the website\"\n                },\n                \"supportedLanguages\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"List of supported language codes\"\n            \
+        \    },\n                \"maintenanceMode\": {\n                    \"type\": \"boolean\",\n                    \"\
+        default\": false,\n                    \"description\": \"Whether the site is in maintenance mode\"\n            \
+        \    },\n                \"maintenanceMessage\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Message displayed during maintenance mode\"\n     \
+        \           },\n                \"contactEmail\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"email\",\n                    \"description\": \"Primary contact email address for the site\"\n\
+        \                },\n                \"socialLinks\": {\n                    \"type\": \"object\",\n             \
+        \       \"additionalProperties\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uri\"\n                    },\n                    \"description\": \"Map of social media platform names to profile
+        URLs\"\n                },\n                \"analytics\": {\n                    \"description\": \"Analytics and
+        tracking service configuration\",\n                    \"$ref\": \"#/$defs/Analytics\"\n                },\n     \
+        \           \"customScripts\": {\n                    \"description\": \"Custom JavaScript scripts to inject into
+        pages\",\n                    \"$ref\": \"#/$defs/CustomScripts\"\n                }\n            }\n        },\n\
+        \        \"Analytics\": {\n            \"description\": \"Analytics and tracking configuration for website visitor
+        metrics\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"googleAnalyticsId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Google Analytics tracking ID\"\n                },\n             \
+        \   \"otherTrackers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Configuration for other analytics trackers\"\n                }\n\
+        \            }\n        },\n        \"CustomScripts\": {\n            \"description\": \"Custom script injection configuration
+        for adding JavaScript to pages\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"head\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Custom scripts to inject in the HTML head\"\
+        \n                },\n                \"bodyStart\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Custom scripts to inject at the start of the body\"\
+        \n                },\n                \"bodyEnd\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Custom scripts to inject at the end of the body\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SiteSettings\"\
+        ,\n    \"$defs\": {\n        \"SiteSettings\": {\n            \"description\": \"Global website configuration including
+        branding, languages, and integrations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"siteName\",\n                \"siteUrl\",\n             \
+        \   \"defaultLanguage\"\n            ],\n            \"properties\": {\n                \"siteName\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Display name of the website\"\n       \
+        \         },\n                \"siteUrl\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uri\",\n                    \"description\": \"Base URL of the website\"\n                },\n               \
+        \ \"tagline\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Short slogan or description of the site\"\n                },\n                \"defaultLanguage\"\
+        : {\n                    \"type\": \"string\",\n                    \"default\": \"en\",\n                    \"description\"\
+        : \"Default language code for the website\"\n                },\n                \"supportedLanguages\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"List of supported language codes\"\n            \
+        \    },\n                \"maintenanceMode\": {\n                    \"type\": \"boolean\",\n                    \"\
+        default\": false,\n                    \"description\": \"Whether the site is in maintenance mode\"\n            \
+        \    },\n                \"maintenanceMessage\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Message displayed during maintenance mode\"\n     \
+        \           },\n                \"contactEmail\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"email\",\n                    \"description\": \"Primary contact email address for the site\"\n\
+        \                },\n                \"socialLinks\": {\n                    \"type\": \"object\",\n             \
+        \       \"additionalProperties\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uri\"\n                    },\n                    \"description\": \"Map of social media platform names to profile
+        URLs\"\n                },\n                \"analytics\": {\n                    \"description\": \"Analytics and
+        tracking service configuration\",\n                    \"$ref\": \"#/$defs/Analytics\"\n                },\n     \
+        \           \"customScripts\": {\n                    \"description\": \"Custom JavaScript scripts to inject into
+        pages\",\n                    \"$ref\": \"#/$defs/CustomScripts\"\n                }\n            }\n        },\n\
+        \        \"Analytics\": {\n            \"description\": \"Analytics and tracking configuration for website visitor
+        metrics\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"googleAnalyticsId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Google Analytics tracking ID\"\n                },\n             \
+        \   \"otherTrackers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Configuration for other analytics trackers\"\n                }\n\
+        \            }\n        },\n        \"CustomScripts\": {\n            \"description\": \"Custom script injection configuration
+        for adding JavaScript to pages\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"head\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Custom scripts to inject in the HTML head\"\
+        \n                },\n                \"bodyStart\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Custom scripts to inject at the start of the body\"\
+        \n                },\n                \"bodyEnd\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Custom scripts to inject at the end of the body\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update site configuration\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateSiteSettings\"\n}"
   /website/cms/theme:
     get:
       summary: Get current theme configuration
@@ -815,43 +911,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/ThemeConfig'
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ThemeConfig\"\
-        ,\n  \"$defs\": {\n    \"ThemeConfig\": {\n      \"description\": \"Visual theme configuration including colors, fonts,
-        and navigation\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n  \
-        \      \"themeName\",\n        \"primaryColor\"\n      ],\n      \"properties\": {\n        \"themeName\": {\n   \
-        \       \"type\": \"string\",\n          \"description\": \"Name of the active theme\"\n        },\n        \"primaryColor\"\
-        : {\n          \"type\": \"string\",\n          \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n          \"description\": \"\
-        Primary brand color in hex format\"\n        },\n        \"secondaryColor\": {\n          \"type\": \"string\",\n\
-        \          \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n          \"description\": \"Secondary brand color in hex format\"\
-        \n        },\n        \"backgroundColor\": {\n          \"type\": \"string\",\n          \"pattern\": \"^#[0-9A-Fa-f]{6}$\"\
-        ,\n          \"description\": \"Default background color in hex format\"\n        },\n        \"textColor\": {\n \
-        \         \"type\": \"string\",\n          \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n          \"description\": \"Default
-        text color in hex format\"\n        },\n        \"fontFamily\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Primary font family for the site\"\n        },\n        \"customCSS\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true,\n          \"description\": \"Additional custom CSS styles\"\n        },\n        \"\
-        logo\": {\n          \"description\": \"Site logo configuration for branding\",\n          \"$ref\": \"#/$defs/Logo\"\
-        \n        },\n        \"favicon\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        nullable\": true,\n          \"description\": \"URL of the site favicon\"\n        },\n        \"navigation\": {\n\
-        \          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/NavigationItem\"\n      \
-        \    },\n          \"description\": \"Main navigation menu items\"\n        }\n      }\n    },\n    \"Logo\": {\n\
-        \      \"description\": \"Site logo configuration including image URL and accessibility text\",\n      \"type\": \"\
-        object\",\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"url\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uri\",\n          \"description\": \"URL of the site logo image\"\n       \
-        \ },\n        \"alt\": {\n          \"type\": \"string\",\n          \"description\": \"Alt text for the logo image\"\
-        \n        }\n      }\n    },\n    \"NavigationItem\": {\n      \"description\": \"A navigation menu entry with optional
-        nested children for dropdowns\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"label\",\n        \"url\",\n        \"order\"\n      ],\n      \"properties\": {\n        \"label\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Display text for the navigation link\"\n      \
-        \  },\n        \"url\": {\n          \"type\": \"string\",\n          \"description\": \"Target URL or path for the
-        navigation link\"\n        },\n        \"order\": {\n          \"type\": \"integer\",\n          \"description\":
-        \"Sort order for the navigation item\"\n        },\n        \"target\": {\n          \"type\": \"string\",\n     \
-        \     \"enum\": [\n            \"_self\",\n            \"_blank\"\n          ],\n          \"default\": \"_self\"\
-        ,\n          \"description\": \"Link target attribute for opening behavior\"\n        },\n        \"children\": {\n\
-        \          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/NavigationItem\"\n      \
-        \    },\n          \"description\": \"Nested child navigation items for dropdowns\"\n        }\n      }\n    }\n \
-        \ }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get current theme configuration\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"CMS\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getTheme\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ThemeConfig\"\
+        ,\n    \"$defs\": {\n        \"ThemeConfig\": {\n            \"description\": \"Visual theme configuration including
+        colors, fonts, and navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"themeName\",\n                \"primaryColor\"\n            ],\n \
+        \           \"properties\": {\n                \"themeName\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"Name of the active theme\"\n                },\n                \"primaryColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Primary brand color in hex format\"\n                },\n                \"secondaryColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Secondary brand color in hex format\"\n                },\n                \"backgroundColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Default background color in hex format\"\n                },\n                \"textColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Default text color in hex format\"\n                },\n                \"fontFamily\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Primary font family for the
+        site\"\n                },\n                \"customCSS\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Additional custom CSS styles\"\n        \
+        \        },\n                \"logo\": {\n                    \"description\": \"Site logo configuration for branding\"\
+        ,\n                    \"$ref\": \"#/$defs/Logo\"\n                },\n                \"favicon\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"URL of the site favicon\"\n                },\n                \"navigation\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/NavigationItem\"\n                    },\n                    \"description\": \"Main navigation menu
+        items\"\n                }\n            }\n        },\n        \"Logo\": {\n            \"description\": \"Site logo
+        configuration including image URL and accessibility text\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"url\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"uri\",\n                    \"description\": \"URL of the site logo image\"\n  \
+        \              },\n                \"alt\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Alt text for the logo image\"\n                }\n            }\n        },\n        \"NavigationItem\": {\n \
+        \           \"description\": \"A navigation menu entry with optional nested children for dropdowns\",\n          \
+        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"label\",\n                \"url\",\n                \"order\"\n            ],\n            \"properties\":
+        {\n                \"label\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Display text for the navigation link\"\n                },\n                \"url\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Target URL or path for the navigation link\"\n             \
+        \   },\n                \"order\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Sort order for the navigation item\"\n                },\n                \"target\": {\n                    \"\
+        type\": \"string\",\n                    \"enum\": [\n                        \"_self\",\n                       \
+        \ \"_blank\"\n                    ],\n                    \"default\": \"_self\",\n                    \"description\"\
+        : \"Link target attribute for opening behavior\"\n                },\n                \"children\": {\n          \
+        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NavigationItem\"\
+        \n                    },\n                    \"description\": \"Nested child navigation items for dropdowns\"\n \
+        \               }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get current theme configuration\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getTheme\"\n}"
     put:
       summary: Update theme configuration
       operationId: updateTheme
@@ -872,44 +976,52 @@ paths:
         '200':
           description: Theme updated
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ThemeConfig\"\
-        ,\n  \"$defs\": {\n    \"ThemeConfig\": {\n      \"description\": \"Visual theme configuration including colors, fonts,
-        and navigation\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\": [\n  \
-        \      \"themeName\",\n        \"primaryColor\"\n      ],\n      \"properties\": {\n        \"themeName\": {\n   \
-        \       \"type\": \"string\",\n          \"description\": \"Name of the active theme\"\n        },\n        \"primaryColor\"\
-        : {\n          \"type\": \"string\",\n          \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n          \"description\": \"\
-        Primary brand color in hex format\"\n        },\n        \"secondaryColor\": {\n          \"type\": \"string\",\n\
-        \          \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n          \"description\": \"Secondary brand color in hex format\"\
-        \n        },\n        \"backgroundColor\": {\n          \"type\": \"string\",\n          \"pattern\": \"^#[0-9A-Fa-f]{6}$\"\
-        ,\n          \"description\": \"Default background color in hex format\"\n        },\n        \"textColor\": {\n \
-        \         \"type\": \"string\",\n          \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n          \"description\": \"Default
-        text color in hex format\"\n        },\n        \"fontFamily\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Primary font family for the site\"\n        },\n        \"customCSS\": {\n          \"type\": \"string\",\n  \
-        \        \"nullable\": true,\n          \"description\": \"Additional custom CSS styles\"\n        },\n        \"\
-        logo\": {\n          \"description\": \"Site logo configuration for branding\",\n          \"$ref\": \"#/$defs/Logo\"\
-        \n        },\n        \"favicon\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"\
-        nullable\": true,\n          \"description\": \"URL of the site favicon\"\n        },\n        \"navigation\": {\n\
-        \          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/NavigationItem\"\n      \
-        \    },\n          \"description\": \"Main navigation menu items\"\n        }\n      }\n    },\n    \"Logo\": {\n\
-        \      \"description\": \"Site logo configuration including image URL and accessibility text\",\n      \"type\": \"\
-        object\",\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"url\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uri\",\n          \"description\": \"URL of the site logo image\"\n       \
-        \ },\n        \"alt\": {\n          \"type\": \"string\",\n          \"description\": \"Alt text for the logo image\"\
-        \n        }\n      }\n    },\n    \"NavigationItem\": {\n      \"description\": \"A navigation menu entry with optional
-        nested children for dropdowns\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"label\",\n        \"url\",\n        \"order\"\n      ],\n      \"properties\": {\n        \"label\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Display text for the navigation link\"\n      \
-        \  },\n        \"url\": {\n          \"type\": \"string\",\n          \"description\": \"Target URL or path for the
-        navigation link\"\n        },\n        \"order\": {\n          \"type\": \"integer\",\n          \"description\":
-        \"Sort order for the navigation item\"\n        },\n        \"target\": {\n          \"type\": \"string\",\n     \
-        \     \"enum\": [\n            \"_self\",\n            \"_blank\"\n          ],\n          \"default\": \"_self\"\
-        ,\n          \"description\": \"Link target attribute for opening behavior\"\n        },\n        \"children\": {\n\
-        \          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/NavigationItem\"\n      \
-        \    },\n          \"description\": \"Nested child navigation items for dropdowns\"\n        }\n      }\n    }\n \
-        \ }\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ThemeConfig\"\
+        ,\n    \"$defs\": {\n        \"ThemeConfig\": {\n            \"description\": \"Visual theme configuration including
+        colors, fonts, and navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"themeName\",\n                \"primaryColor\"\n            ],\n \
+        \           \"properties\": {\n                \"themeName\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"Name of the active theme\"\n                },\n                \"primaryColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Primary brand color in hex format\"\n                },\n                \"secondaryColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Secondary brand color in hex format\"\n                },\n                \"backgroundColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Default background color in hex format\"\n                },\n                \"textColor\"\
+        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^#[0-9A-Fa-f]{6}$\",\n        \
+        \            \"description\": \"Default text color in hex format\"\n                },\n                \"fontFamily\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Primary font family for the
+        site\"\n                },\n                \"customCSS\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Additional custom CSS styles\"\n        \
+        \        },\n                \"logo\": {\n                    \"description\": \"Site logo configuration for branding\"\
+        ,\n                    \"$ref\": \"#/$defs/Logo\"\n                },\n                \"favicon\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"URL of the site favicon\"\n                },\n                \"navigation\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/NavigationItem\"\n                    },\n                    \"description\": \"Main navigation menu
+        items\"\n                }\n            }\n        },\n        \"Logo\": {\n            \"description\": \"Site logo
+        configuration including image URL and accessibility text\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"url\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"uri\",\n                    \"description\": \"URL of the site logo image\"\n  \
+        \              },\n                \"alt\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Alt text for the logo image\"\n                }\n            }\n        },\n        \"NavigationItem\": {\n \
+        \           \"description\": \"A navigation menu entry with optional nested children for dropdowns\",\n          \
+        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"label\",\n                \"url\",\n                \"order\"\n            ],\n            \"properties\":
+        {\n                \"label\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Display text for the navigation link\"\n                },\n                \"url\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Target URL or path for the navigation link\"\n             \
+        \   },\n                \"order\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Sort order for the navigation item\"\n                },\n                \"target\": {\n                    \"\
+        type\": \"string\",\n                    \"enum\": [\n                        \"_self\",\n                       \
+        \ \"_blank\"\n                    ],\n                    \"default\": \"_self\",\n                    \"description\"\
+        : \"Link target attribute for opening behavior\"\n                },\n                \"children\": {\n          \
+        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NavigationItem\"\
+        \n                    },\n                    \"description\": \"Nested child navigation items for dropdowns\"\n \
+        \               }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Update theme configuration\",\n  \"description\": \"\",\n  \"tags\": [\n\
-        \    \"CMS\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"updateTheme\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update theme configuration\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"CMS\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateTheme\"\n}"
   /website/account/subscription:
     get:
       summary: Get subscription status
@@ -936,22 +1048,26 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
       x-request-schema-json: '{}'
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SubscriptionResponse\"\
-        ,\n  \"$defs\": {\n    \"SubscriptionResponse\": {\n      \"description\": \"Current subscription status and plan
-        details for an account\",\n      \"type\": \"object\",\n      \"additionalProperties\": false,\n      \"required\"\
-        : [\n        \"status\",\n        \"type\"\n      ],\n      \"properties\": {\n        \"status\": {\n          \"\
-        type\": \"string\",\n          \"enum\": [\n            \"active\",\n            \"inactive\",\n            \"trial\"\
-        ,\n            \"expired\"\n          ],\n          \"description\": \"Current state of the subscription\"\n     \
-        \   },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"free\",\n     \
-        \       \"basic\",\n            \"premium\",\n            \"lifetime\"\n          ],\n          \"description\": \"\
-        Subscription tier or plan type\"\n        },\n        \"expiresAt\": {\n          \"type\": \"string\",\n        \
-        \  \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Date and time when the
-        subscription expires\"\n        },\n        \"autoRenew\": {\n          \"type\": \"boolean\",\n          \"description\"\
-        : \"Whether automatic renewal is enabled\"\n        },\n        \"benefits\": {\n          \"type\": \"array\",\n\
-        \          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List of benefits
-        included in the subscription\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get subscription status\",\n  \"description\": \"\",\n  \"tags\": [\n   \
-        \ \"Account\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getSubscription\"\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubscriptionResponse\"\
+        ,\n    \"$defs\": {\n        \"SubscriptionResponse\": {\n            \"description\": \"Current subscription status
+        and plan details for an account\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"status\",\n                \"type\"\n            ],\n            \"\
+        properties\": {\n                \"status\": {\n                    \"type\": \"string\",\n                    \"\
+        enum\": [\n                        \"active\",\n                        \"inactive\",\n                        \"\
+        trial\",\n                        \"expired\"\n                    ],\n                    \"description\": \"Current
+        state of the subscription\"\n                },\n                \"type\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"free\",\n                        \"basic\",\n      \
+        \                  \"premium\",\n                        \"lifetime\"\n                    ],\n                  \
+        \  \"description\": \"Subscription tier or plan type\"\n                },\n                \"expiresAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Date and time when the subscription expires\"\n                },\n\
+        \                \"autoRenew\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether automatic renewal is enabled\"\n                },\n                \"benefits\": {\n                \
+        \    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n      \
+        \              },\n                    \"description\": \"List of benefits included in the subscription\"\n      \
+        \          }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get subscription status\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"Account\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSubscription\"\n}"
 components:
   securitySchemes:
     BearerAuth:

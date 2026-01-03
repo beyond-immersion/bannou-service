@@ -329,204 +329,204 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _RequestUpload_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UploadRequest",
-  "$defs": {
-    "UploadRequest": {
-      "description": "Request to initiate an asset upload and receive a pre-signed URL",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "filename",
-        "size",
-        "contentType",
-        "owner"
-      ],
-      "properties": {
-        "owner": {
-          "type": "string",
-          "description": "Owner of this asset operation. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UploadRequest",
+    "$defs": {
+        "UploadRequest": {
+            "description": "Request to initiate an asset upload and receive a pre-signed URL",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "filename",
+                "size",
+                "contentType",
+                "owner"
+            ],
+            "properties": {
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this asset operation. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Original filename with extension"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "File size in bytes"
+                },
+                "contentType": {
+                    "type": "string",
+                    "description": "MIME content type (e.g., image/png, model/gltf-binary)"
+                },
+                "metadata": {
+                    "$ref": "#/$defs/AssetMetadataInput",
+                    "description": "Optional metadata for asset categorization"
+                }
+            }
         },
-        "filename": {
-          "type": "string",
-          "description": "Original filename with extension"
+        "AssetMetadataInput": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "User-provided metadata for asset categorization",
+            "properties": {
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type classification for the asset"
+                },
+                "realm": {
+                    "$ref": "#/$defs/Realm",
+                    "description": "Game realm the asset belongs to"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Searchable tags for the asset"
+                }
+            }
         },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "File size in bytes"
+        "AssetType": {
+            "type": "string",
+            "enum": [
+                "texture",
+                "model",
+                "audio",
+                "behavior",
+                "bundle",
+                "prefab",
+                "other"
+            ],
+            "description": "Type classification for assets"
         },
-        "contentType": {
-          "type": "string",
-          "description": "MIME content type (e.g., image/png, model/gltf-binary)"
-        },
-        "metadata": {
-          "$ref": "#/$defs/AssetMetadataInput",
-          "description": "Optional metadata for asset categorization"
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
         }
-      }
-    },
-    "AssetMetadataInput": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "User-provided metadata for asset categorization",
-      "properties": {
-        "assetType": {
-          "$ref": "#/$defs/AssetType",
-          "description": "Type classification for the asset"
-        },
-        "realm": {
-          "$ref": "#/$defs/Realm",
-          "description": "Game realm the asset belongs to"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Searchable tags for the asset"
-        }
-      }
-    },
-    "AssetType": {
-      "type": "string",
-      "enum": [
-        "texture",
-        "model",
-        "audio",
-        "behavior",
-        "bundle",
-        "prefab",
-        "other"
-      ],
-      "description": "Type classification for assets"
-    },
-    "Realm": {
-      "type": "string",
-      "enum": [
-        "omega",
-        "arcadia",
-        "fantasia",
-        "shared"
-      ],
-      "description": "Game realm the asset belongs to"
     }
-  }
 }
 """;
 
     private static readonly string _RequestUpload_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UploadResponse",
-  "$defs": {
-    "UploadResponse": {
-      "description": "Response containing pre-signed URL and configuration for uploading an asset",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "uploadId",
-        "uploadUrl",
-        "expiresAt"
-      ],
-      "properties": {
-        "uploadId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique upload session identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UploadResponse",
+    "$defs": {
+        "UploadResponse": {
+            "description": "Response containing pre-signed URL and configuration for uploading an asset",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "uploadId",
+                "uploadUrl",
+                "expiresAt"
+            ],
+            "properties": {
+                "uploadId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique upload session identifier"
+                },
+                "uploadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Pre-signed URL for uploading the file"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the upload URL expires"
+                },
+                "multipart": {
+                    "$ref": "#/$defs/MultipartConfig",
+                    "description": "Configuration for multipart uploads if file size requires it"
+                },
+                "requiredHeaders": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Headers the client must include when uploading to the pre-signed URL"
+                }
+            }
         },
-        "uploadUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Pre-signed URL for uploading the file"
+        "MultipartConfig": {
+            "description": "Configuration for multipart uploads of large files",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "required": {
+                    "type": "boolean",
+                    "description": "Whether multipart upload is required for this file size"
+                },
+                "partSize": {
+                    "type": "integer",
+                    "description": "Size of each part in bytes"
+                },
+                "maxParts": {
+                    "type": "integer",
+                    "description": "Maximum number of parts"
+                },
+                "uploadUrls": {
+                    "type": "array",
+                    "description": "Pre-signed URLs for each part of the multipart upload",
+                    "items": {
+                        "$ref": "#/$defs/PartUploadInfo"
+                    }
+                }
+            }
         },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the upload URL expires"
-        },
-        "multipart": {
-          "$ref": "#/$defs/MultipartConfig",
-          "description": "Configuration for multipart uploads if file size requires it"
-        },
-        "requiredHeaders": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Headers the client must include when uploading to the pre-signed URL"
+        "PartUploadInfo": {
+            "description": "Upload information for a single part in a multipart upload",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "partNumber",
+                "uploadUrl"
+            ],
+            "properties": {
+                "partNumber": {
+                    "type": "integer",
+                    "description": "Part number (1-based)"
+                },
+                "uploadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Pre-signed URL for uploading this part"
+                },
+                "minSize": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Minimum size for this part"
+                },
+                "maxSize": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Maximum size for this part"
+                }
+            }
         }
-      }
-    },
-    "MultipartConfig": {
-      "description": "Configuration for multipart uploads of large files",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "required": {
-          "type": "boolean",
-          "description": "Whether multipart upload is required for this file size"
-        },
-        "partSize": {
-          "type": "integer",
-          "description": "Size of each part in bytes"
-        },
-        "maxParts": {
-          "type": "integer",
-          "description": "Maximum number of parts"
-        },
-        "uploadUrls": {
-          "type": "array",
-          "description": "Pre-signed URLs for each part of the multipart upload",
-          "items": {
-            "$ref": "#/$defs/PartUploadInfo"
-          }
-        }
-      }
-    },
-    "PartUploadInfo": {
-      "description": "Upload information for a single part in a multipart upload",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "partNumber",
-        "uploadUrl"
-      ],
-      "properties": {
-        "partNumber": {
-          "type": "integer",
-          "description": "Part number (1-based)"
-        },
-        "uploadUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Pre-signed URL for uploading this part"
-        },
-        "minSize": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Minimum size for this part"
-        },
-        "maxSize": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Maximum size for this part"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RequestUpload_Info = """
 {
-  "summary": "Request upload URL for a new asset",
-  "description": "Generate a pre-signed URL for uploading a new asset directly to storage.\nFor large files (>50MB), returns multipart upload configuration.\n",
-  "tags": [
-    "Assets"
-  ],
-  "deprecated": false,
-  "operationId": "requestUpload"
+    "summary": "Request upload URL for a new asset",
+    "description": "Generate a pre-signed URL for uploading a new asset directly to storage.\nFor large files (>50MB), returns multipart upload configuration.\n",
+    "tags": [
+        "Assets"
+    ],
+    "deprecated": false,
+    "operationId": "requestUpload"
 }
 """;
 
@@ -576,168 +576,168 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _CompleteUpload_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CompleteUploadRequest",
-  "$defs": {
-    "CompleteUploadRequest": {
-      "description": "Request to finalize an upload and trigger asset processing",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "uploadId"
-      ],
-      "properties": {
-        "uploadId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Upload session ID from requestUpload"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CompleteUploadRequest",
+    "$defs": {
+        "CompleteUploadRequest": {
+            "description": "Request to finalize an upload and trigger asset processing",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "uploadId"
+            ],
+            "properties": {
+                "uploadId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Upload session ID from requestUpload"
+                },
+                "parts": {
+                    "type": "array",
+                    "nullable": true,
+                    "description": "For multipart uploads - ETags of completed parts (null for single-file uploads)",
+                    "items": {
+                        "$ref": "#/$defs/CompletedPart"
+                    }
+                }
+            }
         },
-        "parts": {
-          "type": "array",
-          "nullable": true,
-          "description": "For multipart uploads - ETags of completed parts (null for single-file uploads)",
-          "items": {
-            "$ref": "#/$defs/CompletedPart"
-          }
+        "CompletedPart": {
+            "description": "Information about a completed part in a multipart upload",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "partNumber",
+                "etag"
+            ],
+            "properties": {
+                "partNumber": {
+                    "type": "integer",
+                    "description": "Part number (1-based)"
+                },
+                "etag": {
+                    "type": "string",
+                    "description": "ETag returned from part upload"
+                }
+            }
         }
-      }
-    },
-    "CompletedPart": {
-      "description": "Information about a completed part in a multipart upload",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "partNumber",
-        "etag"
-      ],
-      "properties": {
-        "partNumber": {
-          "type": "integer",
-          "description": "Part number (1-based)"
-        },
-        "etag": {
-          "type": "string",
-          "description": "ETag returned from part upload"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CompleteUpload_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AssetMetadata",
-  "$defs": {
-    "AssetMetadata": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Complete asset metadata including system-generated fields",
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "Unique asset identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AssetMetadata",
+    "$defs": {
+        "AssetMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Complete asset metadata including system-generated fields",
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Unique asset identifier"
+                },
+                "contentHash": {
+                    "type": "string",
+                    "description": "SHA256 hash of file contents"
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Original filename"
+                },
+                "contentType": {
+                    "type": "string",
+                    "description": "MIME content type"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "File size in bytes"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type classification for the asset"
+                },
+                "realm": {
+                    "$ref": "#/$defs/Realm",
+                    "description": "Game realm the asset belongs to"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Searchable tags for the asset"
+                },
+                "processingStatus": {
+                    "$ref": "#/$defs/ProcessingStatus",
+                    "description": "Current status of asset processing pipeline"
+                },
+                "isArchived": {
+                    "type": "boolean",
+                    "description": "Whether the asset is in cold/archival storage",
+                    "default": false
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the asset was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the asset was last updated"
+                }
+            }
         },
-        "contentHash": {
-          "type": "string",
-          "description": "SHA256 hash of file contents"
+        "AssetType": {
+            "type": "string",
+            "enum": [
+                "texture",
+                "model",
+                "audio",
+                "behavior",
+                "bundle",
+                "prefab",
+                "other"
+            ],
+            "description": "Type classification for assets"
         },
-        "filename": {
-          "type": "string",
-          "description": "Original filename"
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
         },
-        "contentType": {
-          "type": "string",
-          "description": "MIME content type"
-        },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "File size in bytes"
-        },
-        "assetType": {
-          "$ref": "#/$defs/AssetType",
-          "description": "Type classification for the asset"
-        },
-        "realm": {
-          "$ref": "#/$defs/Realm",
-          "description": "Game realm the asset belongs to"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Searchable tags for the asset"
-        },
-        "processingStatus": {
-          "$ref": "#/$defs/ProcessingStatus",
-          "description": "Current status of asset processing pipeline"
-        },
-        "isArchived": {
-          "type": "boolean",
-          "description": "Whether the asset is in cold/archival storage",
-          "default": false
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the asset was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the asset was last updated"
+        "ProcessingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "processing",
+                "complete",
+                "failed"
+            ],
+            "description": "Asset processing pipeline status"
         }
-      }
-    },
-    "AssetType": {
-      "type": "string",
-      "enum": [
-        "texture",
-        "model",
-        "audio",
-        "behavior",
-        "bundle",
-        "prefab",
-        "other"
-      ],
-      "description": "Type classification for assets"
-    },
-    "Realm": {
-      "type": "string",
-      "enum": [
-        "omega",
-        "arcadia",
-        "fantasia",
-        "shared"
-      ],
-      "description": "Game realm the asset belongs to"
-    },
-    "ProcessingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "processing",
-        "complete",
-        "failed"
-      ],
-      "description": "Asset processing pipeline status"
     }
-  }
 }
 """;
 
     private static readonly string _CompleteUpload_Info = """
 {
-  "summary": "Mark upload as complete, trigger processing",
-  "description": "Called after the client has uploaded the file to the pre-signed URL.\nTriggers the asset processing pipeline (texture conversion, model validation, etc.)\nand emits completion events via WebSocket.\n",
-  "tags": [
-    "Assets"
-  ],
-  "deprecated": false,
-  "operationId": "completeUpload"
+    "summary": "Mark upload as complete, trigger processing",
+    "description": "Called after the client has uploaded the file to the pre-signed URL.\nTriggers the asset processing pipeline (texture conversion, model validation, etc.)\nand emits completion events via WebSocket.\n",
+    "tags": [
+        "Assets"
+    ],
+    "deprecated": false,
+    "operationId": "completeUpload"
 }
 """;
 
@@ -787,187 +787,187 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetAsset_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetAssetRequest",
-  "$defs": {
-    "GetAssetRequest": {
-      "description": "Request to retrieve asset metadata and download URL",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "assetId"
-      ],
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "Asset identifier"
-        },
-        "version": {
-          "type": "string",
-          "default": "latest",
-          "description": "Version ID or 'latest'"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetAssetRequest",
+    "$defs": {
+        "GetAssetRequest": {
+            "description": "Request to retrieve asset metadata and download URL",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "assetId"
+            ],
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Asset identifier"
+                },
+                "version": {
+                    "type": "string",
+                    "default": "latest",
+                    "description": "Version ID or 'latest'"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAsset_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AssetWithDownloadUrl",
-  "$defs": {
-    "AssetWithDownloadUrl": {
-      "description": "Asset metadata combined with a pre-signed download URL",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "Unique asset identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AssetWithDownloadUrl",
+    "$defs": {
+        "AssetWithDownloadUrl": {
+            "description": "Asset metadata combined with a pre-signed download URL",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Unique asset identifier"
+                },
+                "versionId": {
+                    "type": "string",
+                    "description": "Version identifier for this specific asset version"
+                },
+                "downloadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Pre-signed download URL"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the download URL expires"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "File size in bytes"
+                },
+                "contentHash": {
+                    "type": "string",
+                    "description": "SHA256 hash of file contents"
+                },
+                "contentType": {
+                    "type": "string",
+                    "description": "MIME content type"
+                },
+                "metadata": {
+                    "$ref": "#/$defs/AssetMetadata",
+                    "description": "Complete asset metadata"
+                }
+            }
         },
-        "versionId": {
-          "type": "string",
-          "description": "Version identifier for this specific asset version"
+        "AssetMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Complete asset metadata including system-generated fields",
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Unique asset identifier"
+                },
+                "contentHash": {
+                    "type": "string",
+                    "description": "SHA256 hash of file contents"
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Original filename"
+                },
+                "contentType": {
+                    "type": "string",
+                    "description": "MIME content type"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "File size in bytes"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type classification for the asset"
+                },
+                "realm": {
+                    "$ref": "#/$defs/Realm",
+                    "description": "Game realm the asset belongs to"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Searchable tags for the asset"
+                },
+                "processingStatus": {
+                    "$ref": "#/$defs/ProcessingStatus",
+                    "description": "Current status of asset processing pipeline"
+                },
+                "isArchived": {
+                    "type": "boolean",
+                    "description": "Whether the asset is in cold/archival storage",
+                    "default": false
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the asset was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the asset was last updated"
+                }
+            }
         },
-        "downloadUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Pre-signed download URL"
+        "AssetType": {
+            "type": "string",
+            "enum": [
+                "texture",
+                "model",
+                "audio",
+                "behavior",
+                "bundle",
+                "prefab",
+                "other"
+            ],
+            "description": "Type classification for assets"
         },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the download URL expires"
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
         },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "File size in bytes"
-        },
-        "contentHash": {
-          "type": "string",
-          "description": "SHA256 hash of file contents"
-        },
-        "contentType": {
-          "type": "string",
-          "description": "MIME content type"
-        },
-        "metadata": {
-          "$ref": "#/$defs/AssetMetadata",
-          "description": "Complete asset metadata"
+        "ProcessingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "processing",
+                "complete",
+                "failed"
+            ],
+            "description": "Asset processing pipeline status"
         }
-      }
-    },
-    "AssetMetadata": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Complete asset metadata including system-generated fields",
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "Unique asset identifier"
-        },
-        "contentHash": {
-          "type": "string",
-          "description": "SHA256 hash of file contents"
-        },
-        "filename": {
-          "type": "string",
-          "description": "Original filename"
-        },
-        "contentType": {
-          "type": "string",
-          "description": "MIME content type"
-        },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "File size in bytes"
-        },
-        "assetType": {
-          "$ref": "#/$defs/AssetType",
-          "description": "Type classification for the asset"
-        },
-        "realm": {
-          "$ref": "#/$defs/Realm",
-          "description": "Game realm the asset belongs to"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Searchable tags for the asset"
-        },
-        "processingStatus": {
-          "$ref": "#/$defs/ProcessingStatus",
-          "description": "Current status of asset processing pipeline"
-        },
-        "isArchived": {
-          "type": "boolean",
-          "description": "Whether the asset is in cold/archival storage",
-          "default": false
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the asset was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the asset was last updated"
-        }
-      }
-    },
-    "AssetType": {
-      "type": "string",
-      "enum": [
-        "texture",
-        "model",
-        "audio",
-        "behavior",
-        "bundle",
-        "prefab",
-        "other"
-      ],
-      "description": "Type classification for assets"
-    },
-    "Realm": {
-      "type": "string",
-      "enum": [
-        "omega",
-        "arcadia",
-        "fantasia",
-        "shared"
-      ],
-      "description": "Game realm the asset belongs to"
-    },
-    "ProcessingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "processing",
-        "complete",
-        "failed"
-      ],
-      "description": "Asset processing pipeline status"
     }
-  }
 }
 """;
 
     private static readonly string _GetAsset_Info = """
 {
-  "summary": "Get asset metadata and download URL",
-  "description": "Retrieve asset metadata and generate a pre-signed download URL.\nSpecify version to download a specific version, or omit for latest.\n",
-  "tags": [
-    "Assets"
-  ],
-  "deprecated": false,
-  "operationId": "getAsset"
+    "summary": "Get asset metadata and download URL",
+    "description": "Retrieve asset metadata and generate a pre-signed download URL.\nSpecify version to download a specific version, or omit for latest.\n",
+    "tags": [
+        "Assets"
+    ],
+    "deprecated": false,
+    "operationId": "getAsset"
 }
 """;
 
@@ -1017,110 +1017,110 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ListAssetVersions_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListVersionsRequest",
-  "$defs": {
-    "ListVersionsRequest": {
-      "description": "Request to list all versions of an asset with pagination",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "assetId"
-      ],
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "Asset identifier to list versions for"
-        },
-        "limit": {
-          "type": "integer",
-          "default": 50,
-          "description": "Maximum number of versions to return"
-        },
-        "offset": {
-          "type": "integer",
-          "default": 0,
-          "description": "Number of versions to skip for pagination"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListVersionsRequest",
+    "$defs": {
+        "ListVersionsRequest": {
+            "description": "Request to list all versions of an asset with pagination",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "assetId"
+            ],
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Asset identifier to list versions for"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Maximum number of versions to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Number of versions to skip for pagination"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListAssetVersions_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AssetVersionList",
-  "$defs": {
-    "AssetVersionList": {
-      "description": "Paginated list of asset versions",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "Asset identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AssetVersionList",
+    "$defs": {
+        "AssetVersionList": {
+            "description": "Paginated list of asset versions",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Asset identifier"
+                },
+                "versions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetVersion"
+                    },
+                    "description": "List of asset versions"
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of versions available"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of versions returned per page"
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Number of versions skipped"
+                }
+            }
         },
-        "versions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AssetVersion"
-          },
-          "description": "List of asset versions"
-        },
-        "total": {
-          "type": "integer",
-          "description": "Total number of versions available"
-        },
-        "limit": {
-          "type": "integer",
-          "description": "Maximum number of versions returned per page"
-        },
-        "offset": {
-          "type": "integer",
-          "description": "Number of versions skipped"
+        "AssetVersion": {
+            "description": "Metadata for a specific version of an asset",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "versionId": {
+                    "type": "string",
+                    "description": "Unique version identifier"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when this version was created"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "File size in bytes for this version"
+                },
+                "isArchived": {
+                    "type": "boolean",
+                    "description": "Whether this version is in cold storage"
+                }
+            }
         }
-      }
-    },
-    "AssetVersion": {
-      "description": "Metadata for a specific version of an asset",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "versionId": {
-          "type": "string",
-          "description": "Unique version identifier"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when this version was created"
-        },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "File size in bytes for this version"
-        },
-        "isArchived": {
-          "type": "boolean",
-          "description": "Whether this version is in cold storage"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListAssetVersions_Info = """
 {
-  "summary": "List all versions of an asset",
-  "description": "Retrieve version history for an asset with pagination.\nIncludes version IDs, creation timestamps, and archive status.\n",
-  "tags": [
-    "Assets"
-  ],
-  "deprecated": false,
-  "operationId": "listAssetVersions"
+    "summary": "List all versions of an asset",
+    "description": "Retrieve version history for an asset with pagination.\nIncludes version IDs, creation timestamps, and archive status.\n",
+    "tags": [
+        "Assets"
+    ],
+    "deprecated": false,
+    "operationId": "listAssetVersions"
 }
 """;
 
@@ -1170,217 +1170,217 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _SearchAssets_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AssetSearchRequest",
-  "$defs": {
-    "AssetSearchRequest": {
-      "description": "Search criteria for filtering assets with pagination",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "assetType",
-        "realm"
-      ],
-      "properties": {
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "nullable": true,
-          "description": "Filter by tags (assets must have all specified tags) (null to skip tag filtering)"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AssetSearchRequest",
+    "$defs": {
+        "AssetSearchRequest": {
+            "description": "Search criteria for filtering assets with pagination",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "assetType",
+                "realm"
+            ],
+            "properties": {
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Filter by tags (assets must have all specified tags) (null to skip tag filtering)"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Filter by asset type"
+                },
+                "realm": {
+                    "$ref": "#/$defs/Realm",
+                    "description": "Filter by game realm"
+                },
+                "contentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "MIME content type filter (null to skip content type filtering)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Maximum number of results to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Number of results to skip for pagination"
+                }
+            }
         },
-        "assetType": {
-          "$ref": "#/$defs/AssetType",
-          "description": "Filter by asset type"
+        "AssetType": {
+            "type": "string",
+            "enum": [
+                "texture",
+                "model",
+                "audio",
+                "behavior",
+                "bundle",
+                "prefab",
+                "other"
+            ],
+            "description": "Type classification for assets"
         },
-        "realm": {
-          "$ref": "#/$defs/Realm",
-          "description": "Filter by game realm"
-        },
-        "contentType": {
-          "type": "string",
-          "nullable": true,
-          "description": "MIME content type filter (null to skip content type filtering)"
-        },
-        "limit": {
-          "type": "integer",
-          "default": 50,
-          "description": "Maximum number of results to return"
-        },
-        "offset": {
-          "type": "integer",
-          "default": 0,
-          "description": "Number of results to skip for pagination"
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
         }
-      }
-    },
-    "AssetType": {
-      "type": "string",
-      "enum": [
-        "texture",
-        "model",
-        "audio",
-        "behavior",
-        "bundle",
-        "prefab",
-        "other"
-      ],
-      "description": "Type classification for assets"
-    },
-    "Realm": {
-      "type": "string",
-      "enum": [
-        "omega",
-        "arcadia",
-        "fantasia",
-        "shared"
-      ],
-      "description": "Game realm the asset belongs to"
     }
-  }
 }
 """;
 
     private static readonly string _SearchAssets_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AssetSearchResult",
-  "$defs": {
-    "AssetSearchResult": {
-      "description": "Paginated results from an asset search query",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "assets": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AssetMetadata"
-          },
-          "description": "List of matching assets"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AssetSearchResult",
+    "$defs": {
+        "AssetSearchResult": {
+            "description": "Paginated results from an asset search query",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetMetadata"
+                    },
+                    "description": "List of matching assets"
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of matching assets"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of results returned per page"
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Number of results skipped"
+                }
+            }
         },
-        "total": {
-          "type": "integer",
-          "description": "Total number of matching assets"
+        "AssetMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Complete asset metadata including system-generated fields",
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Unique asset identifier"
+                },
+                "contentHash": {
+                    "type": "string",
+                    "description": "SHA256 hash of file contents"
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Original filename"
+                },
+                "contentType": {
+                    "type": "string",
+                    "description": "MIME content type"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "File size in bytes"
+                },
+                "assetType": {
+                    "$ref": "#/$defs/AssetType",
+                    "description": "Type classification for the asset"
+                },
+                "realm": {
+                    "$ref": "#/$defs/Realm",
+                    "description": "Game realm the asset belongs to"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Searchable tags for the asset"
+                },
+                "processingStatus": {
+                    "$ref": "#/$defs/ProcessingStatus",
+                    "description": "Current status of asset processing pipeline"
+                },
+                "isArchived": {
+                    "type": "boolean",
+                    "description": "Whether the asset is in cold/archival storage",
+                    "default": false
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the asset was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the asset was last updated"
+                }
+            }
         },
-        "limit": {
-          "type": "integer",
-          "description": "Maximum number of results returned per page"
+        "AssetType": {
+            "type": "string",
+            "enum": [
+                "texture",
+                "model",
+                "audio",
+                "behavior",
+                "bundle",
+                "prefab",
+                "other"
+            ],
+            "description": "Type classification for assets"
         },
-        "offset": {
-          "type": "integer",
-          "description": "Number of results skipped"
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
+        },
+        "ProcessingStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "processing",
+                "complete",
+                "failed"
+            ],
+            "description": "Asset processing pipeline status"
         }
-      }
-    },
-    "AssetMetadata": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Complete asset metadata including system-generated fields",
-      "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "Unique asset identifier"
-        },
-        "contentHash": {
-          "type": "string",
-          "description": "SHA256 hash of file contents"
-        },
-        "filename": {
-          "type": "string",
-          "description": "Original filename"
-        },
-        "contentType": {
-          "type": "string",
-          "description": "MIME content type"
-        },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "File size in bytes"
-        },
-        "assetType": {
-          "$ref": "#/$defs/AssetType",
-          "description": "Type classification for the asset"
-        },
-        "realm": {
-          "$ref": "#/$defs/Realm",
-          "description": "Game realm the asset belongs to"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Searchable tags for the asset"
-        },
-        "processingStatus": {
-          "$ref": "#/$defs/ProcessingStatus",
-          "description": "Current status of asset processing pipeline"
-        },
-        "isArchived": {
-          "type": "boolean",
-          "description": "Whether the asset is in cold/archival storage",
-          "default": false
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the asset was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the asset was last updated"
-        }
-      }
-    },
-    "AssetType": {
-      "type": "string",
-      "enum": [
-        "texture",
-        "model",
-        "audio",
-        "behavior",
-        "bundle",
-        "prefab",
-        "other"
-      ],
-      "description": "Type classification for assets"
-    },
-    "Realm": {
-      "type": "string",
-      "enum": [
-        "omega",
-        "arcadia",
-        "fantasia",
-        "shared"
-      ],
-      "description": "Game realm the asset belongs to"
-    },
-    "ProcessingStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "processing",
-        "complete",
-        "failed"
-      ],
-      "description": "Asset processing pipeline status"
     }
-  }
 }
 """;
 
     private static readonly string _SearchAssets_Info = """
 {
-  "summary": "Search assets by tags, type, or realm",
-  "description": "Search assets using various filters with pagination.\nAll filters are optional and combine with AND logic.\n",
-  "tags": [
-    "Assets"
-  ],
-  "deprecated": false,
-  "operationId": "searchAssets"
+    "summary": "Search assets by tags, type, or realm",
+    "description": "Search assets using various filters with pagination.\nAll filters are optional and combine with AND logic.\n",
+    "tags": [
+        "Assets"
+    ],
+    "deprecated": false,
+    "operationId": "searchAssets"
 }
 """;
 
@@ -1430,108 +1430,108 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _CreateBundle_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateBundleRequest",
-  "$defs": {
-    "CreateBundleRequest": {
-      "description": "Request to create a new asset bundle from multiple assets",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bundleId",
-        "assetIds",
-        "owner"
-      ],
-      "properties": {
-        "owner": {
-          "type": "string",
-          "description": "Owner of this bundle. NOT a session ID.\nFor user-initiated bundles: the accountId (UUID format).\nFor service-initiated bundles: the service name (e.g., \"orchestrator\").\n"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateBundleRequest",
+    "$defs": {
+        "CreateBundleRequest": {
+            "description": "Request to create a new asset bundle from multiple assets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bundleId",
+                "assetIds",
+                "owner"
+            ],
+            "properties": {
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this bundle. NOT a session ID.\nFor user-initiated bundles: the accountId (UUID format).\nFor service-initiated bundles: the service name (e.g., \"orchestrator\").\n"
+                },
+                "bundleId": {
+                    "type": "string",
+                    "description": "Unique bundle identifier"
+                },
+                "version": {
+                    "type": "string",
+                    "default": "1.0.0",
+                    "description": "Bundle version string"
+                },
+                "assetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of asset IDs to include in the bundle"
+                },
+                "compression": {
+                    "$ref": "#/$defs/CompressionType",
+                    "description": "Compression algorithm to use for the bundle"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata for the bundle (null if none)"
+                }
+            }
         },
-        "bundleId": {
-          "type": "string",
-          "description": "Unique bundle identifier"
-        },
-        "version": {
-          "type": "string",
-          "default": "1.0.0",
-          "description": "Bundle version string"
-        },
-        "assetIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of asset IDs to include in the bundle"
-        },
-        "compression": {
-          "$ref": "#/$defs/CompressionType",
-          "description": "Compression algorithm to use for the bundle"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Custom metadata for the bundle (null if none)"
+        "CompressionType": {
+            "type": "string",
+            "enum": [
+                "lz4",
+                "lzma",
+                "none"
+            ],
+            "description": "Compression algorithm for bundles"
         }
-      }
-    },
-    "CompressionType": {
-      "type": "string",
-      "enum": [
-        "lz4",
-        "lzma",
-        "none"
-      ],
-      "description": "Compression algorithm for bundles"
     }
-  }
 }
 """;
 
     private static readonly string _CreateBundle_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateBundleResponse",
-  "$defs": {
-    "CreateBundleResponse": {
-      "description": "Response with bundle creation status and estimated size",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "bundleId": {
-          "type": "string",
-          "description": "Unique bundle identifier"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "queued",
-            "processing",
-            "ready",
-            "failed"
-          ],
-          "description": "Bundle creation status"
-        },
-        "estimatedSize": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Estimated bundle size in bytes"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateBundleResponse",
+    "$defs": {
+        "CreateBundleResponse": {
+            "description": "Response with bundle creation status and estimated size",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Unique bundle identifier"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "queued",
+                        "processing",
+                        "ready",
+                        "failed"
+                    ],
+                    "description": "Bundle creation status"
+                },
+                "estimatedSize": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Estimated bundle size in bytes"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateBundle_Info = """
 {
-  "summary": "Create asset bundle from multiple assets",
-  "description": "Create a .bannou bundle containing multiple assets.\nFor large bundles, processing is delegated to the processing pool.\ nCompletion notification sent via WebSocket event.\n",
-  "tags": [
-    "Bundles"
-  ],
-  "deprecated": false,
-  "operationId": "createBundle"
+    "summary": "Create asset bundle from multiple assets",
+    "description": "Create a .bannou bundle containing multiple assets.\nFor large bundles, processing is delegated to the processing pool.\ nCompletion notification sent via WebSocket event.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "createBundle"
 }
 """;
 
@@ -1581,107 +1581,107 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetBundle_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetBundleRequest",
-  "$defs": {
-    "GetBundleRequest": {
-      "description": "Request to retrieve bundle metadata and download URL",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bundleId"
-      ],
-      "properties": {
-        "bundleId": {
-          "type": "string",
-          "description": "Bundle identifier to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetBundleRequest",
+    "$defs": {
+        "GetBundleRequest": {
+            "description": "Request to retrieve bundle metadata and download URL",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bundleId"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle identifier to retrieve"
+                },
+                "format": {
+                    "$ref": "#/$defs/BundleFormat",
+                    "description": "Desired download format (bannou or zip)"
+                }
+            }
         },
-        "format": {
-          "$ref": "#/$defs/BundleFormat",
-          "description": "Desired download format (bannou or zip)"
+        "BundleFormat": {
+            "type": "string",
+            "enum": [
+                "bannou",
+                "zip"
+            ],
+            "description": "Bundle file format"
         }
-      }
-    },
-    "BundleFormat": {
-      "type": "string",
-      "enum": [
-        "bannou",
-        "zip"
-      ],
-      "description": "Bundle file format"
     }
-  }
 }
 """;
 
     private static readonly string _GetBundle_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BundleWithDownloadUrl",
-  "$defs": {
-    "BundleWithDownloadUrl": {
-      "description": "Bundle metadata combined with a pre-signed download URL",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "bundleId": {
-          "type": "string",
-          "description": "Unique bundle identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BundleWithDownloadUrl",
+    "$defs": {
+        "BundleWithDownloadUrl": {
+            "description": "Bundle metadata combined with a pre-signed download URL",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Unique bundle identifier"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Bundle version string"
+                },
+                "downloadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Pre-signed URL for downloading the bundle"
+                },
+                "format": {
+                    "$ref": "#/$defs/BundleFormat",
+                    "description": "Format of the downloadable bundle"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the download URL expires"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Bundle file size in bytes"
+                },
+                "assetCount": {
+                    "type": "integer",
+                    "description": "Number of assets contained in the bundle"
+                },
+                "fromCache": {
+                    "type": "boolean",
+                    "description": "True if ZIP format was served from conversion cache"
+                }
+            }
         },
-        "version": {
-          "type": "string",
-          "description": "Bundle version string"
-        },
-        "downloadUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Pre-signed URL for downloading the bundle"
-        },
-        "format": {
-          "$ref": "#/$defs/BundleFormat",
-          "description": "Format of the downloadable bundle"
-        },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the download URL expires"
-        },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Bundle file size in bytes"
-        },
-        "assetCount": {
-          "type": "integer",
-          "description": "Number of assets contained in the bundle"
-        },
-        "fromCache": {
-          "type": "boolean",
-          "description": "True if ZIP format was served from conversion cache"
+        "BundleFormat": {
+            "type": "string",
+            "enum": [
+                "bannou",
+                "zip"
+            ],
+            "description": "Bundle file format"
         }
-      }
-    },
-    "BundleFormat": {
-      "type": "string",
-      "enum": [
-        "bannou",
-        "zip"
-      ],
-      "description": "Bundle file format"
     }
-  }
 }
 """;
 
     private static readonly string _GetBundle_Info = """
 {
-  "summary": "Get bundle manifest and download URL",
-  "description": "Retrieve bundle metadata and generate a pre-signed download URL.\nSupports both native .bannou format and ZIP conversion (cached).\n",
-  "tags": [
-    "Bundles"
-  ],
-  "deprecated": false,
-  "operationId": "getBundle"
+    "summary": "Get bundle manifest and download URL",
+    "description": "Retrieve bundle metadata and generate a pre-signed download URL.\nSupports both native .bannou format and ZIP conversion (cached).\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "getBundle"
 }
 """;
 
@@ -1731,178 +1731,178 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _RequestBundleUpload_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/BundleUploadRequest",
-  "$defs": {
-    "BundleUploadRequest": {
-      "description": "Request to upload a pre-built asset bundle file",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "filename",
-        "size",
-        "owner"
-      ],
-      "properties": {
-        "owner": {
-          "type": "string",
-          "description": "Owner of this bundle upload. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"orchestrator\").\n"
-        },
-        "filename": {
-          "type": "string",
-          "description": "Must end with .bannou or .zip"
-        },
-        "size": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Bundle file size in bytes"
-        },
-        "manifestPreview": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/BundleManifestPreview"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BundleUploadRequest",
+    "$defs": {
+        "BundleUploadRequest": {
+            "description": "Request to upload a pre-built asset bundle file",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "filename",
+                "size",
+                "owner"
+            ],
+            "properties": {
+                "owner": {
+                    "type": "string",
+                    "description": "Owner of this bundle upload. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"orchestrator\").\n"
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Must end with .bannou or .zip"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Bundle file size in bytes"
+                },
+                "manifestPreview": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BundleManifestPreview"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional preview of bundle manifest for validation"
+                }
             }
-          ],
-          "nullable": true,
-          "description": "Optional preview of bundle manifest for validation"
-        }
-      }
-    },
-    "BundleManifestPreview": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Preview of bundle manifest for validation",
-      "properties": {
-        "bundleId": {
-          "type": "string",
-          "description": "Bundle identifier from the manifest"
         },
-        "version": {
-          "type": "string",
-          "description": "Bundle version from the manifest"
-        },
-        "assetCount": {
-          "type": "integer",
-          "description": "Number of assets declared in the manifest"
+        "BundleManifestPreview": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Preview of bundle manifest for validation",
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle identifier from the manifest"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Bundle version from the manifest"
+                },
+                "assetCount": {
+                    "type": "integer",
+                    "description": "Number of assets declared in the manifest"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RequestBundleUpload_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UploadResponse",
-  "$defs": {
-    "UploadResponse": {
-      "description": "Response containing pre-signed URL and configuration for uploading an asset",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "uploadId",
-        "uploadUrl",
-        "expiresAt"
-      ],
-      "properties": {
-        "uploadId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique upload session identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UploadResponse",
+    "$defs": {
+        "UploadResponse": {
+            "description": "Response containing pre-signed URL and configuration for uploading an asset",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "uploadId",
+                "uploadUrl",
+                "expiresAt"
+            ],
+            "properties": {
+                "uploadId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique upload session identifier"
+                },
+                "uploadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Pre-signed URL for uploading the file"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the upload URL expires"
+                },
+                "multipart": {
+                    "$ref": "#/$defs/MultipartConfig",
+                    "description": "Configuration for multipart uploads if file size requires it"
+                },
+                "requiredHeaders": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Headers the client must include when uploading to the pre-signed URL"
+                }
+            }
         },
-        "uploadUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Pre-signed URL for uploading the file"
+        "MultipartConfig": {
+            "description": "Configuration for multipart uploads of large files",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "required": {
+                    "type": "boolean",
+                    "description": "Whether multipart upload is required for this file size"
+                },
+                "partSize": {
+                    "type": "integer",
+                    "description": "Size of each part in bytes"
+                },
+                "maxParts": {
+                    "type": "integer",
+                    "description": "Maximum number of parts"
+                },
+                "uploadUrls": {
+                    "type": "array",
+                    "description": "Pre-signed URLs for each part of the multipart upload",
+                    "items": {
+                        "$ref": "#/$defs/PartUploadInfo"
+                    }
+                }
+            }
         },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the upload URL expires"
-        },
-        "multipart": {
-          "$ref": "#/$defs/MultipartConfig",
-          "description": "Configuration for multipart uploads if file size requires it"
-        },
-        "requiredHeaders": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Headers the client must include when uploading to the pre-signed URL"
+        "PartUploadInfo": {
+            "description": "Upload information for a single part in a multipart upload",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "partNumber",
+                "uploadUrl"
+            ],
+            "properties": {
+                "partNumber": {
+                    "type": "integer",
+                    "description": "Part number (1-based)"
+                },
+                "uploadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Pre-signed URL for uploading this part"
+                },
+                "minSize": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Minimum size for this part"
+                },
+                "maxSize": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Maximum size for this part"
+                }
+            }
         }
-      }
-    },
-    "MultipartConfig": {
-      "description": "Configuration for multipart uploads of large files",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "required": {
-          "type": "boolean",
-          "description": "Whether multipart upload is required for this file size"
-        },
-        "partSize": {
-          "type": "integer",
-          "description": "Size of each part in bytes"
-        },
-        "maxParts": {
-          "type": "integer",
-          "description": "Maximum number of parts"
-        },
-        "uploadUrls": {
-          "type": "array",
-          "description": "Pre-signed URLs for each part of the multipart upload",
-          "items": {
-            "$ref": "#/$defs/PartUploadInfo"
-          }
-        }
-      }
-    },
-    "PartUploadInfo": {
-      "description": "Upload information for a single part in a multipart upload",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "partNumber",
-        "uploadUrl"
-      ],
-      "properties": {
-        "partNumber": {
-          "type": "integer",
-          "description": "Part number (1-based)"
-        },
-        "uploadUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Pre-signed URL for uploading this part"
-        },
-        "minSize": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Minimum size for this part"
-        },
-        "maxSize": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Maximum size for this part"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _RequestBundleUpload_Info = """
 {
-  "summary": "Request upload URL for a pre-made bundle",
-  "description": "Upload a pre-built bundle (.bannou or .zip format).\nAfter upload, the bundle undergoes validation before registration.\n",
-  "tags": [
-    "Bundles"
-  ],
-  "deprecated": false,
-  "operationId": "requestBundleUpload"
+    "summary": "Request upload URL for a pre-made bundle",
+    "description": "Upload a pre-built bundle (.bannou or .zip format).\nAfter upload, the bundle undergoes validation before registration.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "requestBundleUpload"
 }
 """;
 

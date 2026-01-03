@@ -325,169 +325,169 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _CreateActorTemplate_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CreateActorTemplateRequest",
-  "$defs": {
-    "CreateActorTemplateRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to create a new actor template definition",
-      "required": [
-        "category",
-        "behaviorRef"
-      ],
-      "properties": {
-        "category": {
-          "type": "string",
-          "description": "Category identifier (e.g., \"npc-brain\", \"world-admin\", \"cron-cleanup\")"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateActorTemplateRequest",
+    "$defs": {
+        "CreateActorTemplateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to create a new actor template definition",
+            "required": [
+                "category",
+                "behaviorRef"
+            ],
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "Category identifier (e.g., \"npc-brain\", \"world-admin\", \"cron-cleanup\")"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "description": "Reference to behavior in lib-assets (e.g., \"asset://behaviors/npc-brain-v1\")"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Default configuration passed to behavior execution"
+                },
+                "autoSpawn": {
+                    "description": "Auto-spawn configuration for instantiate-on-access",
+                    "$ref": "#/$defs/AutoSpawnConfig"
+                },
+                "tickIntervalMs": {
+                    "type": "integer",
+                    "default": 1000,
+                    "description": "Milliseconds between behavior loop iterations"
+                },
+                "autoSaveIntervalSeconds": {
+                    "type": "integer",
+                    "default": 60,
+                    "description": "Seconds between automatic state saves (0 to disable)"
+                },
+                "maxInstancesPerNode": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Maximum actors of this category per pool node"
+                }
+            }
         },
-        "behaviorRef": {
-          "type": "string",
-          "description": "Reference to behavior in lib-assets (e.g., \"asset://behaviors/npc-brain-v1\")"
-        },
-        "configuration": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Default configuration passed to behavior execution"
-        },
-        "autoSpawn": {
-          "description": "Auto-spawn configuration for instantiate-on-access",
-          "$ref": "#/$defs/AutoSpawnConfig"
-        },
-        "tickIntervalMs": {
-          "type": "integer",
-          "default": 1000,
-          "description": "Milliseconds between behavior loop iterations"
-        },
-        "autoSaveIntervalSeconds": {
-          "type": "integer",
-          "default": 60,
-          "description": "Seconds between automatic state saves (0 to disable)"
-        },
-        "maxInstancesPerNode": {
-          "type": "integer",
-          "default": 100,
-          "description": "Maximum actors of this category per pool node"
+        "AutoSpawnConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configuration for instantiate-on-access behavior",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, accessing a non-existent actor creates it"
+                },
+                "idPattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+                },
+                "maxInstances": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum auto-spawned instances (0 = unlimited)"
+                }
+            }
         }
-      }
-    },
-    "AutoSpawnConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Configuration for instantiate-on-access behavior",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, accessing a non-existent actor creates it"
-        },
-        "idPattern": {
-          "type": "string",
-          "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
-        },
-        "maxInstances": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Maximum auto-spawned instances (0 = unlimited)"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateActorTemplate_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ActorTemplateResponse",
-  "$defs": {
-    "ActorTemplateResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing actor template details",
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique template identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ActorTemplateResponse",
+    "$defs": {
+        "ActorTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor template details",
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique template identifier"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category identifier"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "description": "Reference to behavior in lib-assets"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Default configuration passed to behavior execution"
+                },
+                "autoSpawn": {
+                    "description": "Auto-spawn configuration for instantiate-on-access",
+                    "$ref": "#/$defs/AutoSpawnConfig"
+                },
+                "tickIntervalMs": {
+                    "type": "integer",
+                    "description": "Milliseconds between behavior loop iterations"
+                },
+                "autoSaveIntervalSeconds": {
+                    "type": "integer",
+                    "description": "Seconds between automatic state saves"
+                },
+                "maxInstancesPerNode": {
+                    "type": "integer",
+                    "description": "Maximum actors of this category per pool node"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was last updated"
+                }
+            }
         },
-        "category": {
-          "type": "string",
-          "description": "Category identifier"
-        },
-        "behaviorRef": {
-          "type": "string",
-          "description": "Reference to behavior in lib-assets"
-        },
-        "configuration": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Default configuration passed to behavior execution"
-        },
-        "autoSpawn": {
-          "description": "Auto-spawn configuration for instantiate-on-access",
-          "$ref": "#/$defs/AutoSpawnConfig"
-        },
-        "tickIntervalMs": {
-          "type": "integer",
-          "description": "Milliseconds between behavior loop iterations"
-        },
-        "autoSaveIntervalSeconds": {
-          "type": "integer",
-          "description": "Seconds between automatic state saves"
-        },
-        "maxInstancesPerNode": {
-          "type": "integer",
-          "description": "Maximum actors of this category per pool node"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was last updated"
+        "AutoSpawnConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configuration for instantiate-on-access behavior",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, accessing a non-existent actor creates it"
+                },
+                "idPattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+                },
+                "maxInstances": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum auto-spawned instances (0 = unlimited)"
+                }
+            }
         }
-      }
-    },
-    "AutoSpawnConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Configuration for instantiate-on-access behavior",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, accessing a non-existent actor creates it"
-        },
-        "idPattern": {
-          "type": "string",
-          "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
-        },
-        "maxInstances": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Maximum auto-spawned instances (0 = unlimited)"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreateActorTemplate_Info = """
 {
-  "summary": "Create an actor template (category definition)",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "CreateActorTemplate"
+    "summary": "Create an actor template (category definition)",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "CreateActorTemplate"
 }
 """;
 
@@ -537,121 +537,121 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetActorTemplate_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetActorTemplateRequest",
-  "$defs": {
-    "GetActorTemplateRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to get an actor template by ID or category",
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Template ID to retrieve"
-        },
-        "category": {
-          "type": "string",
-          "nullable": true,
-          "description": "Or retrieve by category name"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetActorTemplateRequest",
+    "$defs": {
+        "GetActorTemplateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get an actor template by ID or category",
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Template ID to retrieve"
+                },
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Or retrieve by category name"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetActorTemplate_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ActorTemplateResponse",
-  "$defs": {
-    "ActorTemplateResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing actor template details",
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique template identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ActorTemplateResponse",
+    "$defs": {
+        "ActorTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor template details",
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique template identifier"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category identifier"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "description": "Reference to behavior in lib-assets"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Default configuration passed to behavior execution"
+                },
+                "autoSpawn": {
+                    "description": "Auto-spawn configuration for instantiate-on-access",
+                    "$ref": "#/$defs/AutoSpawnConfig"
+                },
+                "tickIntervalMs": {
+                    "type": "integer",
+                    "description": "Milliseconds between behavior loop iterations"
+                },
+                "autoSaveIntervalSeconds": {
+                    "type": "integer",
+                    "description": "Seconds between automatic state saves"
+                },
+                "maxInstancesPerNode": {
+                    "type": "integer",
+                    "description": "Maximum actors of this category per pool node"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was last updated"
+                }
+            }
         },
-        "category": {
-          "type": "string",
-          "description": "Category identifier"
-        },
-        "behaviorRef": {
-          "type": "string",
-          "description": "Reference to behavior in lib-assets"
-        },
-        "configuration": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Default configuration passed to behavior execution"
-        },
-        "autoSpawn": {
-          "description": "Auto-spawn configuration for instantiate-on-access",
-          "$ref": "#/$defs/AutoSpawnConfig"
-        },
-        "tickIntervalMs": {
-          "type": "integer",
-          "description": "Milliseconds between behavior loop iterations"
-        },
-        "autoSaveIntervalSeconds": {
-          "type": "integer",
-          "description": "Seconds between automatic state saves"
-        },
-        "maxInstancesPerNode": {
-          "type": "integer",
-          "description": "Maximum actors of this category per pool node"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was last updated"
+        "AutoSpawnConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configuration for instantiate-on-access behavior",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, accessing a non-existent actor creates it"
+                },
+                "idPattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+                },
+                "maxInstances": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum auto-spawned instances (0 = unlimited)"
+                }
+            }
         }
-      }
-    },
-    "AutoSpawnConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Configuration for instantiate-on-access behavior",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, accessing a non-existent actor creates it"
-        },
-        "idPattern": {
-          "type": "string",
-          "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
-        },
-        "maxInstances": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Maximum auto-spawned instances (0 = unlimited)"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetActorTemplate_Info = """
 {
-  "summary": "Get an actor template by ID or category",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "GetActorTemplate"
+    "summary": "Get an actor template by ID or category",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "GetActorTemplate"
 }
 """;
 
@@ -701,138 +701,138 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ListActorTemplates_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListActorTemplatesRequest",
-  "$defs": {
-    "ListActorTemplatesRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to list actor templates with pagination",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "default": 100,
-          "description": "Maximum number of templates to return"
-        },
-        "offset": {
-          "type": "integer",
-          "default": 0,
-          "description": "Number of templates to skip"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListActorTemplatesRequest",
+    "$defs": {
+        "ListActorTemplatesRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list actor templates with pagination",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Maximum number of templates to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Number of templates to skip"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListActorTemplates_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListActorTemplatesResponse",
-  "$defs": {
-    "ListActorTemplatesResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing a list of actor templates",
-      "properties": {
-        "templates": {
-          "type": "array",
-          "description": "List of actor templates",
-          "items": {
-            "$ref": "#/$defs/ActorTemplateResponse"
-          }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListActorTemplatesResponse",
+    "$defs": {
+        "ListActorTemplatesResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing a list of actor templates",
+            "properties": {
+                "templates": {
+                    "type": "array",
+                    "description": "List of actor templates",
+                    "items": {
+                        "$ref": "#/$defs/ActorTemplateResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of templates available"
+                }
+            }
         },
-        "total": {
-          "type": "integer",
-          "description": "Total number of templates available"
+        "ActorTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor template details",
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique template identifier"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category identifier"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "description": "Reference to behavior in lib-assets"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Default configuration passed to behavior execution"
+                },
+                "autoSpawn": {
+                    "description": "Auto-spawn configuration for instantiate-on-access",
+                    "$ref": "#/$defs/AutoSpawnConfig"
+                },
+                "tickIntervalMs": {
+                    "type": "integer",
+                    "description": "Milliseconds between behavior loop iterations"
+                },
+                "autoSaveIntervalSeconds": {
+                    "type": "integer",
+                    "description": "Seconds between automatic state saves"
+                },
+                "maxInstancesPerNode": {
+                    "type": "integer",
+                    "description": "Maximum actors of this category per pool node"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was last updated"
+                }
+            }
+        },
+        "AutoSpawnConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configuration for instantiate-on-access behavior",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, accessing a non-existent actor creates it"
+                },
+                "idPattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+                },
+                "maxInstances": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum auto-spawned instances (0 = unlimited)"
+                }
+            }
         }
-      }
-    },
-    "ActorTemplateResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing actor template details",
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique template identifier"
-        },
-        "category": {
-          "type": "string",
-          "description": "Category identifier"
-        },
-        "behaviorRef": {
-          "type": "string",
-          "description": "Reference to behavior in lib-assets"
-        },
-        "configuration": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Default configuration passed to behavior execution"
-        },
-        "autoSpawn": {
-          "description": "Auto-spawn configuration for instantiate-on-access",
-          "$ref": "#/$defs/AutoSpawnConfig"
-        },
-        "tickIntervalMs": {
-          "type": "integer",
-          "description": "Milliseconds between behavior loop iterations"
-        },
-        "autoSaveIntervalSeconds": {
-          "type": "integer",
-          "description": "Seconds between automatic state saves"
-        },
-        "maxInstancesPerNode": {
-          "type": "integer",
-          "description": "Maximum actors of this category per pool node"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was last updated"
-        }
-      }
-    },
-    "AutoSpawnConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Configuration for instantiate-on-access behavior",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, accessing a non-existent actor creates it"
-        },
-        "idPattern": {
-          "type": "string",
-          "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
-        },
-        "maxInstances": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Maximum auto-spawned instances (0 = unlimited)"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListActorTemplates_Info = """
 {
-  "summary": "List all actor templates",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "ListActorTemplates"
+    "summary": "List all actor templates",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "ListActorTemplates"
 }
 """;
 
@@ -882,165 +882,165 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _UpdateActorTemplate_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/UpdateActorTemplateRequest",
-  "$defs": {
-    "UpdateActorTemplateRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to update an existing actor template",
-      "required": [
-        "templateId"
-      ],
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the template to update"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateActorTemplateRequest",
+    "$defs": {
+        "UpdateActorTemplateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update an existing actor template",
+            "required": [
+                "templateId"
+            ],
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the template to update"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New behavior reference (triggers behavior.updated subscription)"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Updated configuration settings"
+                },
+                "autoSpawn": {
+                    "description": "Updated auto-spawn configuration",
+                    "$ref": "#/$defs/AutoSpawnConfig"
+                },
+                "tickIntervalMs": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Updated tick interval in milliseconds"
+                },
+                "autoSaveIntervalSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Updated auto-save interval in seconds"
+                }
+            }
         },
-        "behaviorRef": {
-          "type": "string",
-          "nullable": true,
-          "description": "New behavior reference (triggers behavior.updated subscription)"
-        },
-        "configuration": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Updated configuration settings"
-        },
-        "autoSpawn": {
-          "description": "Updated auto-spawn configuration",
-          "$ref": "#/$defs/AutoSpawnConfig"
-        },
-        "tickIntervalMs": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Updated tick interval in milliseconds"
-        },
-        "autoSaveIntervalSeconds": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Updated auto-save interval in seconds"
+        "AutoSpawnConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configuration for instantiate-on-access behavior",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, accessing a non-existent actor creates it"
+                },
+                "idPattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+                },
+                "maxInstances": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum auto-spawned instances (0 = unlimited)"
+                }
+            }
         }
-      }
-    },
-    "AutoSpawnConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Configuration for instantiate-on-access behavior",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, accessing a non-existent actor creates it"
-        },
-        "idPattern": {
-          "type": "string",
-          "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
-        },
-        "maxInstances": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Maximum auto-spawned instances (0 = unlimited)"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateActorTemplate_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ActorTemplateResponse",
-  "$defs": {
-    "ActorTemplateResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing actor template details",
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique template identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ActorTemplateResponse",
+    "$defs": {
+        "ActorTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor template details",
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique template identifier"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category identifier"
+                },
+                "behaviorRef": {
+                    "type": "string",
+                    "description": "Reference to behavior in lib-assets"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Default configuration passed to behavior execution"
+                },
+                "autoSpawn": {
+                    "description": "Auto-spawn configuration for instantiate-on-access",
+                    "$ref": "#/$defs/AutoSpawnConfig"
+                },
+                "tickIntervalMs": {
+                    "type": "integer",
+                    "description": "Milliseconds between behavior loop iterations"
+                },
+                "autoSaveIntervalSeconds": {
+                    "type": "integer",
+                    "description": "Seconds between automatic state saves"
+                },
+                "maxInstancesPerNode": {
+                    "type": "integer",
+                    "description": "Maximum actors of this category per pool node"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the template was last updated"
+                }
+            }
         },
-        "category": {
-          "type": "string",
-          "description": "Category identifier"
-        },
-        "behaviorRef": {
-          "type": "string",
-          "description": "Reference to behavior in lib-assets"
-        },
-        "configuration": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Default configuration passed to behavior execution"
-        },
-        "autoSpawn": {
-          "description": "Auto-spawn configuration for instantiate-on-access",
-          "$ref": "#/$defs/AutoSpawnConfig"
-        },
-        "tickIntervalMs": {
-          "type": "integer",
-          "description": "Milliseconds between behavior loop iterations"
-        },
-        "autoSaveIntervalSeconds": {
-          "type": "integer",
-          "description": "Seconds between automatic state saves"
-        },
-        "maxInstancesPerNode": {
-          "type": "integer",
-          "description": "Maximum actors of this category per pool node"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was created"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the template was last updated"
+        "AutoSpawnConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configuration for instantiate-on-access behavior",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, accessing a non-existent actor creates it"
+                },
+                "idPattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
+                },
+                "maxInstances": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum auto-spawned instances (0 = unlimited)"
+                }
+            }
         }
-      }
-    },
-    "AutoSpawnConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Configuration for instantiate-on-access behavior",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, accessing a non-existent actor creates it"
-        },
-        "idPattern": {
-          "type": "string",
-          "nullable": true,
-          "description": "Regex pattern for actor IDs that trigger auto-spawn.\nExamples: \"npc-.*\" matches \"npc-grok\", \"npc-merchant-123\"\n"
-        },
-        "maxInstances": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Maximum auto-spawned instances (0 = unlimited)"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateActorTemplate_Info = """
 {
-  "summary": "Update an actor template",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "UpdateActorTemplate"
+    "summary": "Update an actor template",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "UpdateActorTemplate"
 }
 """;
 
@@ -1090,64 +1090,64 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _DeleteActorTemplate_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteActorTemplateRequest",
-  "$defs": {
-    "DeleteActorTemplateRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to delete an actor template",
-      "required": [
-        "templateId"
-      ],
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "ID of the template to delete"
-        },
-        "forceStopActors": {
-          "type": "boolean",
-          "default": false,
-          "description": "If true, stops all running actors using this template"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteActorTemplateRequest",
+    "$defs": {
+        "DeleteActorTemplateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to delete an actor template",
+            "required": [
+                "templateId"
+            ],
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the template to delete"
+                },
+                "forceStopActors": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, stops all running actors using this template"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteActorTemplate_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DeleteActorTemplateResponse",
-  "$defs": {
-    "DeleteActorTemplateResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response confirming template deletion",
-      "properties": {
-        "deleted": {
-          "type": "boolean",
-          "description": "Whether the template was successfully deleted"
-        },
-        "stoppedActorCount": {
-          "type": "integer",
-          "description": "Number of running actors that were stopped"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteActorTemplateResponse",
+    "$defs": {
+        "DeleteActorTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response confirming template deletion",
+            "properties": {
+                "deleted": {
+                    "type": "boolean",
+                    "description": "Whether the template was successfully deleted"
+                },
+                "stoppedActorCount": {
+                    "type": "integer",
+                    "description": "Number of running actors that were stopped"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _DeleteActorTemplate_Info = """
 {
-  "summary": "Delete an actor template",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "DeleteActorTemplate"
+    "summary": "Delete an actor template",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "DeleteActorTemplate"
 }
 """;
 
@@ -1197,136 +1197,136 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _SpawnActor_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SpawnActorRequest",
-  "$defs": {
-    "SpawnActorRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to spawn a new actor from a template",
-      "required": [
-        "templateId"
-      ],
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Template to instantiate from"
-        },
-        "actorId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Optional custom actor ID (auto-generated if not provided)"
-        },
-        "configurationOverrides": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Override template defaults"
-        },
-        "initialState": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Initial state passed to behavior"
-        },
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Optional character ID for NPC brain actors"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SpawnActorRequest",
+    "$defs": {
+        "SpawnActorRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to spawn a new actor from a template",
+            "required": [
+                "templateId"
+            ],
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template to instantiate from"
+                },
+                "actorId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional custom actor ID (auto-generated if not provided)"
+                },
+                "configurationOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Override template defaults"
+                },
+                "initialState": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Initial state passed to behavior"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Optional character ID for NPC brain actors"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _SpawnActor_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ActorInstanceResponse",
-  "$defs": {
-    "ActorInstanceResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing actor instance details",
-      "properties": {
-        "actorId": {
-          "type": "string",
-          "description": "Unique actor identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ActorInstanceResponse",
+    "$defs": {
+        "ActorInstanceResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor instance details",
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "Unique actor identifier"
+                },
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template this actor was instantiated from"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Actor category from template"
+                },
+                "nodeId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node running this actor (null in bannou mode)"
+                },
+                "nodeAppId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node's app-id for direct messaging"
+                },
+                "status": {
+                    "description": "Current actor lifecycle state",
+                    "$ref": "#/$defs/ActorStatus"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated character ID (for NPC brains)"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the actor started running"
+                },
+                "lastHeartbeat": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp from the actor"
+                },
+                "loopIterations": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Number of behavior loop iterations executed"
+                }
+            }
         },
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Template this actor was instantiated from"
-        },
-        "category": {
-          "type": "string",
-          "description": "Actor category from template"
-        },
-        "nodeId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Pool node running this actor (null in bannou mode)"
-        },
-        "nodeAppId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Pool node's app-id for direct messaging"
-        },
-        "status": {
-          "description": "Current actor lifecycle state",
-          "$ref": "#/$defs/ActorStatus"
-        },
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Associated character ID (for NPC brains)"
-        },
-        "startedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the actor started running"
-        },
-        "lastHeartbeat": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Last heartbeat timestamp from the actor"
-        },
-        "loopIterations": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Number of behavior loop iterations executed"
+        "ActorStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "starting",
+                "running",
+                "paused",
+                "stopping",
+                "stopped",
+                "error"
+            ],
+            "description": "Current actor lifecycle state"
         }
-      }
-    },
-    "ActorStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "starting",
-        "running",
-        "paused",
-        "stopping",
-        "stopped",
-        "error"
-      ],
-      "description": "Current actor lifecycle state"
     }
-  }
 }
 """;
 
     private static readonly string _SpawnActor_Info = """
 {
-  "summary": "Spawn a new actor from a template",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "SpawnActor"
+    "summary": "Spawn a new actor from a template",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "SpawnActor"
 }
 """;
 
@@ -1376,112 +1376,112 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetActor_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/GetActorRequest",
-  "$defs": {
-    "GetActorRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to get an actor instance by ID",
-      "required": [
-        "actorId"
-      ],
-      "properties": {
-        "actorId": {
-          "type": "string",
-          "description": "Actor ID to retrieve"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetActorRequest",
+    "$defs": {
+        "GetActorRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get an actor instance by ID",
+            "required": [
+                "actorId"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "Actor ID to retrieve"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetActor_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ActorInstanceResponse",
-  "$defs": {
-    "ActorInstanceResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing actor instance details",
-      "properties": {
-        "actorId": {
-          "type": "string",
-          "description": "Unique actor identifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ActorInstanceResponse",
+    "$defs": {
+        "ActorInstanceResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor instance details",
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "Unique actor identifier"
+                },
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template this actor was instantiated from"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Actor category from template"
+                },
+                "nodeId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node running this actor (null in bannou mode)"
+                },
+                "nodeAppId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node's app-id for direct messaging"
+                },
+                "status": {
+                    "description": "Current actor lifecycle state",
+                    "$ref": "#/$defs/ActorStatus"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated character ID (for NPC brains)"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the actor started running"
+                },
+                "lastHeartbeat": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp from the actor"
+                },
+                "loopIterations": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Number of behavior loop iterations executed"
+                }
+            }
         },
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Template this actor was instantiated from"
-        },
-        "category": {
-          "type": "string",
-          "description": "Actor category from template"
-        },
-        "nodeId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Pool node running this actor (null in bannou mode)"
-        },
-        "nodeAppId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Pool node's app-id for direct messaging"
-        },
-        "status": {
-          "description": "Current actor lifecycle state",
-          "$ref": "#/$defs/ActorStatus"
-        },
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Associated character ID (for NPC brains)"
-        },
-        "startedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the actor started running"
-        },
-        "lastHeartbeat": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Last heartbeat timestamp from the actor"
-        },
-        "loopIterations": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Number of behavior loop iterations executed"
+        "ActorStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "starting",
+                "running",
+                "paused",
+                "stopping",
+                "stopped",
+                "error"
+            ],
+            "description": "Current actor lifecycle state"
         }
-      }
-    },
-    "ActorStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "starting",
-        "running",
-        "paused",
-        "stopping",
-        "stopped",
-        "error"
-      ],
-      "description": "Current actor lifecycle state"
     }
-  }
 }
 """;
 
     private static readonly string _GetActor_Info = """
 {
-  "summary": "Get actor instance (instantiate-on-access if template allows)",
-  "description": "If the actor exists, returns its current state.\nIf the actor doesn't exist but a matching template has auto-spawn enabled,\ninstantiates the actor and returns it.\n",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "GetActor"
+    "summary": "Get actor instance (instantiate-on-access if template allows)",
+    "description": "If the actor exists, returns its current state.\nIf the actor doesn't exist but a matching template has auto-spawn enabled,\ninstantiates the actor and returns it.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "GetActor"
 }
 """;
 
@@ -1531,76 +1531,76 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _StopActor_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/StopActorRequest",
-  "$defs": {
-    "StopActorRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to stop a running actor",
-      "required": [
-        "actorId"
-      ],
-      "properties": {
-        "actorId": {
-          "type": "string",
-          "description": "ID of the actor to stop"
-        },
-        "graceful": {
-          "type": "boolean",
-          "default": true,
-          "description": "If true, allows behavior to complete current iteration"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StopActorRequest",
+    "$defs": {
+        "StopActorRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to stop a running actor",
+            "required": [
+                "actorId"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the actor to stop"
+                },
+                "graceful": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "If true, allows behavior to complete current iteration"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _StopActor_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/StopActorResponse",
-  "$defs": {
-    "StopActorResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response confirming actor stop operation",
-      "properties": {
-        "stopped": {
-          "type": "boolean",
-          "description": "Whether the actor was successfully stopped"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StopActorResponse",
+    "$defs": {
+        "StopActorResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response confirming actor stop operation",
+            "properties": {
+                "stopped": {
+                    "type": "boolean",
+                    "description": "Whether the actor was successfully stopped"
+                },
+                "finalStatus": {
+                    "description": "Final status of the actor after stopping",
+                    "$ref": "#/$defs/ActorStatus"
+                }
+            }
         },
-        "finalStatus": {
-          "description": "Final status of the actor after stopping",
-          "$ref": "#/$defs/ActorStatus"
+        "ActorStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "starting",
+                "running",
+                "paused",
+                "stopping",
+                "stopped",
+                "error"
+            ],
+            "description": "Current actor lifecycle state"
         }
-      }
-    },
-    "ActorStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "starting",
-        "running",
-        "paused",
-        "stopping",
-        "stopped",
-        "error"
-      ],
-      "description": "Current actor lifecycle state"
     }
-  }
 }
 """;
 
     private static readonly string _StopActor_Info = """
 {
-  "summary": "Stop a running actor",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "StopActor"
+    "summary": "Stop a running actor",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "StopActor"
 }
 """;
 
@@ -1650,166 +1650,166 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ListActors_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListActorsRequest",
-  "$defs": {
-    "ListActorsRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to list actor instances with optional filters",
-      "properties": {
-        "category": {
-          "type": "string",
-          "nullable": true,
-          "description": "Filter by category"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListActorsRequest",
+    "$defs": {
+        "ListActorsRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list actor instances with optional filters",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by category"
+                },
+                "nodeId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by pool node"
+                },
+                "status": {
+                    "description": "Filter by actor status",
+                    "$ref": "#/$defs/ActorStatus"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Filter by associated character"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Maximum number of actors to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Number of actors to skip"
+                }
+            }
         },
-        "nodeId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Filter by pool node"
-        },
-        "status": {
-          "description": "Filter by actor status",
-          "$ref": "#/$defs/ActorStatus"
-        },
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Filter by associated character"
-        },
-        "limit": {
-          "type": "integer",
-          "default": 100,
-          "description": "Maximum number of actors to return"
-        },
-        "offset": {
-          "type": "integer",
-          "default": 0,
-          "description": "Number of actors to skip"
+        "ActorStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "starting",
+                "running",
+                "paused",
+                "stopping",
+                "stopped",
+                "error"
+            ],
+            "description": "Current actor lifecycle state"
         }
-      }
-    },
-    "ActorStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "starting",
-        "running",
-        "paused",
-        "stopping",
-        "stopped",
-        "error"
-      ],
-      "description": "Current actor lifecycle state"
     }
-  }
 }
 """;
 
     private static readonly string _ListActors_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ListActorsResponse",
-  "$defs": {
-    "ListActorsResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing a list of actor instances",
-      "properties": {
-        "actors": {
-          "type": "array",
-          "description": "List of actor instances",
-          "items": {
-            "$ref": "#/$defs/ActorInstanceResponse"
-          }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListActorsResponse",
+    "$defs": {
+        "ListActorsResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing a list of actor instances",
+            "properties": {
+                "actors": {
+                    "type": "array",
+                    "description": "List of actor instances",
+                    "items": {
+                        "$ref": "#/$defs/ActorInstanceResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of actors matching the filter"
+                }
+            }
         },
-        "total": {
-          "type": "integer",
-          "description": "Total number of actors matching the filter"
+        "ActorInstanceResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor instance details",
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "Unique actor identifier"
+                },
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template this actor was instantiated from"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Actor category from template"
+                },
+                "nodeId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node running this actor (null in bannou mode)"
+                },
+                "nodeAppId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node's app-id for direct messaging"
+                },
+                "status": {
+                    "description": "Current actor lifecycle state",
+                    "$ref": "#/$defs/ActorStatus"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated character ID (for NPC brains)"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the actor started running"
+                },
+                "lastHeartbeat": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp from the actor"
+                },
+                "loopIterations": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Number of behavior loop iterations executed"
+                }
+            }
+        },
+        "ActorStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "starting",
+                "running",
+                "paused",
+                "stopping",
+                "stopped",
+                "error"
+            ],
+            "description": "Current actor lifecycle state"
         }
-      }
-    },
-    "ActorInstanceResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response containing actor instance details",
-      "properties": {
-        "actorId": {
-          "type": "string",
-          "description": "Unique actor identifier"
-        },
-        "templateId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Template this actor was instantiated from"
-        },
-        "category": {
-          "type": "string",
-          "description": "Actor category from template"
-        },
-        "nodeId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Pool node running this actor (null in bannou mode)"
-        },
-        "nodeAppId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Pool node's app-id for direct messaging"
-        },
-        "status": {
-          "description": "Current actor lifecycle state",
-          "$ref": "#/$defs/ActorStatus"
-        },
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "nullable": true,
-          "description": "Associated character ID (for NPC brains)"
-        },
-        "startedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the actor started running"
-        },
-        "lastHeartbeat": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Last heartbeat timestamp from the actor"
-        },
-        "loopIterations": {
-          "type": "integer",
-          "format": "int64",
-          "description": "Number of behavior loop iterations executed"
-        }
-      }
-    },
-    "ActorStatus": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "starting",
-        "running",
-        "paused",
-        "stopping",
-        "stopped",
-        "error"
-      ],
-      "description": "Current actor lifecycle state"
     }
-  }
 }
 """;
 
     private static readonly string _ListActors_Info = """
 {
-  "summary": "List actors with optional filters",
-  "description": "",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "ListActors"
+    "summary": "List actors with optional filters",
+    "description": "",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "ListActors"
 }
 """;
 
@@ -1859,101 +1859,101 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _InjectPerception_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/InjectPerceptionRequest",
-  "$defs": {
-    "InjectPerceptionRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Request to inject a perception event into an actor's queue",
-      "required": [
-        "actorId",
-        "perception"
-      ],
-      "properties": {
-        "actorId": {
-          "type": "string",
-          "description": "Target actor to inject perception into"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/InjectPerceptionRequest",
+    "$defs": {
+        "InjectPerceptionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to inject a perception event into an actor's queue",
+            "required": [
+                "actorId",
+                "perception"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "Target actor to inject perception into"
+                },
+                "perception": {
+                    "description": "Perception data to inject",
+                    "$ref": "#/$defs/PerceptionData"
+                }
+            }
         },
-        "perception": {
-          "description": "Perception data to inject",
-          "$ref": "#/$defs/PerceptionData"
+        "PerceptionData": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Data representing a perception event for an actor",
+            "required": [
+                "perceptionType",
+                "sourceId"
+            ],
+            "properties": {
+                "perceptionType": {
+                    "type": "string",
+                    "description": "Perception type (visual, auditory, tactile, etc.)"
+                },
+                "sourceId": {
+                    "type": "string",
+                    "description": "ID of the entity causing this perception"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of source (character, npc, object, environment)"
+                },
+                "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Perception-specific data"
+                },
+                "urgency": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "default": 0.5,
+                    "description": "How urgent this perception is (0-1)"
+                }
+            }
         }
-      }
-    },
-    "PerceptionData": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Data representing a perception event for an actor",
-      "required": [
-        "perceptionType",
-        "sourceId"
-      ],
-      "properties": {
-        "perceptionType": {
-          "type": "string",
-          "description": "Perception type (visual, auditory, tactile, etc.)"
-        },
-        "sourceId": {
-          "type": "string",
-          "description": "ID of the entity causing this perception"
-        },
-        "sourceType": {
-          "type": "string",
-          "nullable": true,
-          "description": "Type of source (character, npc, object, environment)"
-        },
-        "data": {
-          "type": "object",
-          "additionalProperties": true,
-          "nullable": true,
-          "description": "Perception-specific data"
-        },
-        "urgency": {
-          "type": "number",
-          "format": "float",
-          "minimum": 0,
-          "maximum": 1,
-          "default": 0.5,
-          "description": "How urgent this perception is (0-1)"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _InjectPerception_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/InjectPerceptionResponse",
-  "$defs": {
-    "InjectPerceptionResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Response confirming perception injection",
-      "properties": {
-        "queued": {
-          "type": "boolean",
-          "description": "Whether the perception was successfully queued"
-        },
-        "queueDepth": {
-          "type": "integer",
-          "description": "Current depth of the perception queue"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/InjectPerceptionResponse",
+    "$defs": {
+        "InjectPerceptionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response confirming perception injection",
+            "properties": {
+                "queued": {
+                    "type": "boolean",
+                    "description": "Whether the perception was successfully queued"
+                },
+                "queueDepth": {
+                    "type": "integer",
+                    "description": "Current depth of the perception queue"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _InjectPerception_Info = """
 {
-  "summary": "Inject a perception event into an actor's queue (testing)",
-  "description": "Injects a perception event directly into the actor's perception queue\nfor testing purposes. Useful for testing actor behavior without a\nfull game server setup.\n",
-  "tags": [],
-  "deprecated": false,
-  "operationId": "InjectPerception"
+    "summary": "Inject a perception event into an actor's queue (testing)",
+    "description": "Injects a perception event directly into the actor's perception queue\nfor testing purposes. Useful for testing actor behavior without a\nfull game server setup.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "InjectPerception"
 }
 """;
 

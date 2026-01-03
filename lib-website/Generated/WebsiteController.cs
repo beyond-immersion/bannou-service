@@ -465,57 +465,57 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetStatus_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/StatusResponse",
-  "$defs": {
-    "StatusResponse": {
-      "description": "Health and version status information for the website service",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "version",
-        "uptime"
-      ],
-      "properties": {
-        "status": {
-          "type": "string",
-          "enum": [
-            "healthy",
-            "degraded",
-            "maintenance"
-          ],
-          "description": "Current health status of the website service"
-        },
-        "version": {
-          "type": "string",
-          "example": "1.0.0",
-          "description": "Current version of the website service"
-        },
-        "uptime": {
-          "type": "integer",
-          "description": "Uptime in seconds"
-        },
-        "maintenanceMessage": {
-          "type": "string",
-          "nullable": true,
-          "description": "Message displayed during maintenance mode"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StatusResponse",
+    "$defs": {
+        "StatusResponse": {
+            "description": "Health and version status information for the website service",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "status",
+                "version",
+                "uptime"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "healthy",
+                        "degraded",
+                        "maintenance"
+                    ],
+                    "description": "Current health status of the website service"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0",
+                    "description": "Current version of the website service"
+                },
+                "uptime": {
+                    "type": "integer",
+                    "description": "Uptime in seconds"
+                },
+                "maintenanceMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Message displayed during maintenance mode"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetStatus_Info = """
 {
-  "summary": "Get website status and version",
-  "description": "",
-  "tags": [
-    "Status"
-  ],
-  "deprecated": false,
-  "operationId": "getStatus"
+    "summary": "Get website status and version",
+    "description": "",
+    "tags": [
+        "Status"
+    ],
+    "deprecated": false,
+    "operationId": "getStatus"
 }
 """;
 
@@ -569,127 +569,127 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetPageContent_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PageContent",
-  "$defs": {
-    "PageContent": {
-      "description": "Full content and metadata for a CMS-managed page",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "title",
-        "content",
-        "contentType",
-        "published"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "description": "URL-friendly identifier for the page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PageContent",
+    "$defs": {
+        "PageContent": {
+            "description": "Full content and metadata for a CMS-managed page",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "title",
+                "content",
+                "contentType",
+                "published"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "description": "URL-friendly identifier for the page"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the page"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "HTML, Markdown, or custom template content"
+                },
+                "contentType": {
+                    "type": "string",
+                    "enum": [
+                        "html",
+                        "markdown",
+                        "blazor"
+                    ],
+                    "description": "Format of the page content"
+                },
+                "template": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Template name for custom layouts"
+                },
+                "published": {
+                    "type": "boolean",
+                    "description": "Whether the page is publicly visible"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time when the page was published"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last modification"
+                },
+                "author": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name or identifier of the page author"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Custom metadata for the page"
+                },
+                "seo": {
+                    "$ref": "#/$defs/SEOMetadata",
+                    "description": "Search engine optimization settings for the page"
+                }
+            }
         },
-        "title": {
-          "type": "string",
-          "description": "Display title of the page"
-        },
-        "content": {
-          "type": "string",
-          "description": "HTML, Markdown, or custom template content"
-        },
-        "contentType": {
-          "type": "string",
-          "enum": [
-            "html",
-            "markdown",
-            "blazor"
-          ],
-          "description": "Format of the page content"
-        },
-        "template": {
-          "type": "string",
-          "nullable": true,
-          "description": "Template name for custom layouts"
-        },
-        "published": {
-          "type": "boolean",
-          "description": "Whether the page is publicly visible"
-        },
-        "publishedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time when the page was published"
-        },
-        "lastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time of the last modification"
-        },
-        "author": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name or identifier of the page author"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Custom metadata for the page"
-        },
-        "seo": {
-          "$ref": "#/$defs/SEOMetadata",
-          "description": "Search engine optimization settings for the page"
+        "SEOMetadata": {
+            "description": "Search engine optimization and social media sharing metadata",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Meta description for search engines"
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keywords for search engine indexing"
+                },
+                "ogTitle": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph title for social media sharing"
+                },
+                "ogDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph description for social media sharing"
+                },
+                "ogImage": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Open Graph image URL for social media sharing"
+                }
+            }
         }
-      }
-    },
-    "SEOMetadata": {
-      "description": "Search engine optimization and social media sharing metadata",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Meta description for search engines"
-        },
-        "keywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Keywords for search engine indexing"
-        },
-        "ogTitle": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph title for social media sharing"
-        },
-        "ogDescription": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph description for social media sharing"
-        },
-        "ogImage": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "Open Graph image URL for social media sharing"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetPageContent_Info = """
 {
-  "summary": "Get dynamic page content from CMS",
-  "description": "",
-  "tags": [
-    "Content"
-  ],
-  "deprecated": false,
-  "operationId": "getPageContent"
+    "summary": "Get dynamic page content from CMS",
+    "description": "",
+    "tags": [
+        "Content"
+    ],
+    "deprecated": false,
+    "operationId": "getPageContent"
 }
 """;
 
@@ -743,101 +743,101 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetNews_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/NewsResponse",
-  "$defs": {
-    "NewsResponse": {
-      "description": "Paginated list of news items with total count",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "items",
-        "total"
-      ],
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/NewsItem"
-          },
-          "description": "List of news items for the current page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/NewsResponse",
+    "$defs": {
+        "NewsResponse": {
+            "description": "Paginated list of news items with total count",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "items",
+                "total"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/NewsItem"
+                    },
+                    "description": "List of news items for the current page"
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total number of news items available"
+                },
+                "hasMore": {
+                    "type": "boolean",
+                    "description": "Whether more news items are available beyond this page"
+                }
+            }
         },
-        "total": {
-          "type": "integer",
-          "description": "Total number of news items available"
-        },
-        "hasMore": {
-          "type": "boolean",
-          "description": "Whether more news items are available beyond this page"
+        "NewsItem": {
+            "description": "A single news article or announcement entry",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "title",
+                "summary",
+                "publishedAt"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the news item"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Headline of the news item"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "Brief summary or excerpt of the news content"
+                },
+                "content": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Full content body of the news item"
+                },
+                "author": {
+                    "type": "string",
+                    "description": "Name of the news item author"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time when the news was published"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Category tags associated with the news item"
+                },
+                "imageUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "URL of the featured image for the news item"
+                }
+            }
         }
-      }
-    },
-    "NewsItem": {
-      "description": "A single news article or announcement entry",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "title",
-        "summary",
-        "publishedAt"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the news item"
-        },
-        "title": {
-          "type": "string",
-          "description": "Headline of the news item"
-        },
-        "summary": {
-          "type": "string",
-          "description": "Brief summary or excerpt of the news content"
-        },
-        "content": {
-          "type": "string",
-          "nullable": true,
-          "description": "Full content body of the news item"
-        },
-        "author": {
-          "type": "string",
-          "description": "Name of the news item author"
-        },
-        "publishedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time when the news was published"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Category tags associated with the news item"
-        },
-        "imageUrl": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "URL of the featured image for the news item"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetNews_Info = """
 {
-  "summary": "Get latest news and announcements",
-  "description": "",
-  "tags": [
-    "Content"
-  ],
-  "deprecated": false,
-  "operationId": "getNews"
+    "summary": "Get latest news and announcements",
+    "description": "",
+    "tags": [
+        "Content"
+    ],
+    "deprecated": false,
+    "operationId": "getNews"
 }
 """;
 
@@ -891,101 +891,101 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetServerStatus_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ServerStatusResponse",
-  "$defs": {
-    "ServerStatusResponse": {
-      "description": "Aggregated status of all game server realms",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "realms",
-        "globalStatus"
-      ],
-      "properties": {
-        "globalStatus": {
-          "type": "string",
-          "enum": [
-            "online",
-            "partial",
-            "offline",
-            "maintenance"
-          ],
-          "description": "Overall status across all game realms"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ServerStatusResponse",
+    "$defs": {
+        "ServerStatusResponse": {
+            "description": "Aggregated status of all game server realms",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "realms",
+                "globalStatus"
+            ],
+            "properties": {
+                "globalStatus": {
+                    "type": "string",
+                    "enum": [
+                        "online",
+                        "partial",
+                        "offline",
+                        "maintenance"
+                    ],
+                    "description": "Overall status across all game realms"
+                },
+                "realms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RealmStatus"
+                    },
+                    "description": "Status information for each game realm"
+                }
+            }
         },
-        "realms": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/RealmStatus"
-          },
-          "description": "Status information for each game realm"
+        "RealmStatus": {
+            "description": "Status and population information for a single game realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "realmId",
+                "name",
+                "status",
+                "population"
+            ],
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "description": "Unique identifier for the game realm"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the game realm"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "online",
+                        "offline",
+                        "maintenance",
+                        "full"
+                    ],
+                    "description": "Current operational status of the realm"
+                },
+                "population": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "full"
+                    ],
+                    "description": "Current player population level"
+                },
+                "playerCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Current number of players online"
+                },
+                "ping": {
+                    "type": "integer",
+                    "description": "Latency in milliseconds",
+                    "nullable": true
+                }
+            }
         }
-      }
-    },
-    "RealmStatus": {
-      "description": "Status and population information for a single game realm",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "realmId",
-        "name",
-        "status",
-        "population"
-      ],
-      "properties": {
-        "realmId": {
-          "type": "string",
-          "description": "Unique identifier for the game realm"
-        },
-        "name": {
-          "type": "string",
-          "description": "Display name of the game realm"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "online",
-            "offline",
-            "maintenance",
-            "full"
-          ],
-          "description": "Current operational status of the realm"
-        },
-        "population": {
-          "type": "string",
-          "enum": [
-            "low",
-            "medium",
-            "high",
-            "full"
-          ],
-          "description": "Current player population level"
-        },
-        "playerCount": {
-          "type": "integer",
-          "nullable": true,
-          "description": "Current number of players online"
-        },
-        "ping": {
-          "type": "integer",
-          "description": "Latency in milliseconds",
-          "nullable": true
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetServerStatus_Info = """
 {
-  "summary": "Get game server status for all realms",
-  "description": "",
-  "tags": [
-    "Status"
-  ],
-  "deprecated": false,
-  "operationId": "getServerStatus"
+    "summary": "Get game server status for all realms",
+    "description": "",
+    "tags": [
+        "Status"
+    ],
+    "deprecated": false,
+    "operationId": "getServerStatus"
 }
 """;
 
@@ -1039,89 +1039,89 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetDownloads_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/DownloadsResponse",
-  "$defs": {
-    "DownloadsResponse": {
-      "description": "Collection of available game client downloads by platform",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "clients"
-      ],
-      "properties": {
-        "clients": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/DownloadInfo"
-          },
-          "description": "Available game client downloads"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DownloadsResponse",
+    "$defs": {
+        "DownloadsResponse": {
+            "description": "Collection of available game client downloads by platform",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "clients"
+            ],
+            "properties": {
+                "clients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DownloadInfo"
+                    },
+                    "description": "Available game client downloads"
+                }
+            }
+        },
+        "DownloadInfo": {
+            "description": "Download details for a specific game client version and platform",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "platform",
+                "version",
+                "url",
+                "size",
+                "checksum"
+            ],
+            "properties": {
+                "platform": {
+                    "type": "string",
+                    "enum": [
+                        "windows",
+                        "macos",
+                        "linux"
+                    ],
+                    "description": "Target operating system platform"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Version number of the game client"
+                },
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Download URL for the game client"
+                },
+                "size": {
+                    "type": "integer",
+                    "description": "File size in bytes"
+                },
+                "checksum": {
+                    "type": "string",
+                    "description": "SHA256 checksum"
+                },
+                "releaseNotes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Release notes or changelog for this version"
+                },
+                "minimumRequirements": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Minimum system requirements for the client"
+                }
+            }
         }
-      }
-    },
-    "DownloadInfo": {
-      "description": "Download details for a specific game client version and platform",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "platform",
-        "version",
-        "url",
-        "size",
-        "checksum"
-      ],
-      "properties": {
-        "platform": {
-          "type": "string",
-          "enum": [
-            "windows",
-            "macos",
-            "linux"
-          ],
-          "description": "Target operating system platform"
-        },
-        "version": {
-          "type": "string",
-          "description": "Version number of the game client"
-        },
-        "url": {
-          "type": "string",
-          "format": "uri",
-          "description": "Download URL for the game client"
-        },
-        "size": {
-          "type": "integer",
-          "description": "File size in bytes"
-        },
-        "checksum": {
-          "type": "string",
-          "description": "SHA256 checksum"
-        },
-        "releaseNotes": {
-          "type": "string",
-          "nullable": true,
-          "description": "Release notes or changelog for this version"
-        },
-        "minimumRequirements": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Minimum system requirements for the client"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetDownloads_Info = """
 {
-  "summary": "Get download links for game clients",
-  "description": "",
-  "tags": [
-    "Downloads"
-  ],
-  "deprecated": false,
-  "operationId": "getDownloads"
+    "summary": "Get download links for game clients",
+    "description": "",
+    "tags": [
+        "Downloads"
+    ],
+    "deprecated": false,
+    "operationId": "getDownloads"
 }
 """;
 
@@ -1171,98 +1171,98 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _SubmitContact_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ContactRequest",
-  "$defs": {
-    "ContactRequest": {
-      "description": "User-submitted contact form data",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "email",
-        "subject",
-        "message"
-      ],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Sender email address for replies"
-        },
-        "name": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name of the person submitting the form"
-        },
-        "subject": {
-          "type": "string",
-          "minLength": 5,
-          "maxLength": 200,
-          "description": "Subject line of the contact message"
-        },
-        "message": {
-          "type": "string",
-          "minLength": 10,
-          "maxLength": 2000,
-          "description": "Body content of the contact message"
-        },
-        "category": {
-          "type": "string",
-          "enum": [
-            "general",
-            "support",
-            "bug",
-            "feedback",
-            "business"
-          ],
-          "default": "general",
-          "description": "Category to route the contact request"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ContactRequest",
+    "$defs": {
+        "ContactRequest": {
+            "description": "User-submitted contact form data",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "email",
+                "subject",
+                "message"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Sender email address for replies"
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name of the person submitting the form"
+                },
+                "subject": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 200,
+                    "description": "Subject line of the contact message"
+                },
+                "message": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 2000,
+                    "description": "Body content of the contact message"
+                },
+                "category": {
+                    "type": "string",
+                    "enum": [
+                        "general",
+                        "support",
+                        "bug",
+                        "feedback",
+                        "business"
+                    ],
+                    "default": "general",
+                    "description": "Category to route the contact request"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _SubmitContact_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ContactResponse",
-  "$defs": {
-    "ContactResponse": {
-      "description": "Confirmation response after submitting a contact form",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "ticketId",
-        "message"
-      ],
-      "properties": {
-        "ticketId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the created support ticket"
-        },
-        "message": {
-          "type": "string",
-          "default": "Thank you for contacting us. We will respond within 24-48 hours.",
-          "description": "Confirmation message displayed to the user"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ContactResponse",
+    "$defs": {
+        "ContactResponse": {
+            "description": "Confirmation response after submitting a contact form",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "ticketId",
+                "message"
+            ],
+            "properties": {
+                "ticketId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the created support ticket"
+                },
+                "message": {
+                    "type": "string",
+                    "default": "Thank you for contacting us. We will respond within 24-48 hours.",
+                    "description": "Confirmation message displayed to the user"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _SubmitContact_Info = """
 {
-  "summary": "Submit contact form",
-  "description": "",
-  "tags": [
-    "Contact"
-  ],
-  "deprecated": false,
-  "operationId": "submitContact"
+    "summary": "Submit contact form",
+    "description": "",
+    "tags": [
+        "Contact"
+    ],
+    "deprecated": false,
+    "operationId": "submitContact"
 }
 """;
 
@@ -1316,68 +1316,68 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetAccountProfile_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/AccountProfile",
-  "$defs": {
-    "AccountProfile": {
-      "description": "User account information displayed on the website profile page",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "email",
-        "createdAt"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the account"
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Email address associated with the account"
-        },
-        "displayName": {
-          "type": "string",
-          "nullable": true,
-          "description": "User-chosen display name"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time when the account was created"
-        },
-        "lastLogin": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time of the last successful login"
-        },
-        "characterSlots": {
-          "type": "integer",
-          "description": "Total number of character slots available"
-        },
-        "usedSlots": {
-          "type": "integer",
-          "description": "Number of character slots currently in use"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountProfile",
+    "$defs": {
+        "AccountProfile": {
+            "description": "User account information displayed on the website profile page",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "email",
+                "createdAt"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the account"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "User-chosen display name"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time when the account was created"
+                },
+                "lastLogin": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time of the last successful login"
+                },
+                "characterSlots": {
+                    "type": "integer",
+                    "description": "Total number of character slots available"
+                },
+                "usedSlots": {
+                    "type": "integer",
+                    "description": "Number of character slots currently in use"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountProfile_Info = """
 {
-  "summary": "Get account profile for logged-in user",
-  "description": "",
-  "tags": [
-    "Account"
-  ],
-  "deprecated": false,
-  "operationId": "getAccountProfile"
+    "summary": "Get account profile for logged-in user",
+    "description": "",
+    "tags": [
+        "Account"
+    ],
+    "deprecated": false,
+    "operationId": "getAccountProfile"
 }
 """;
 
@@ -1431,80 +1431,80 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetAccountCharacters_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/CharacterListResponse",
-  "$defs": {
-    "CharacterListResponse": {
-      "description": "List of all characters belonging to an account",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characters"
-      ],
-      "properties": {
-        "characters": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/CharacterSummary"
-          },
-          "description": "List of characters owned by the account"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterListResponse",
+    "$defs": {
+        "CharacterListResponse": {
+            "description": "List of all characters belonging to an account",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characters"
+            ],
+            "properties": {
+                "characters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CharacterSummary"
+                    },
+                    "description": "List of characters owned by the account"
+                }
+            }
+        },
+        "CharacterSummary": {
+            "description": "Brief overview of a character for display in character lists",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realm",
+                "level"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the character"
+                },
+                "realm": {
+                    "type": "string",
+                    "description": "Name of the realm the character belongs to"
+                },
+                "level": {
+                    "type": "integer",
+                    "description": "Current level of the character"
+                },
+                "class": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Character class or profession"
+                },
+                "lastPlayed": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time of last gameplay session"
+                }
+            }
         }
-      }
-    },
-    "CharacterSummary": {
-      "description": "Brief overview of a character for display in character lists",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "characterId",
-        "name",
-        "realm",
-        "level"
-      ],
-      "properties": {
-        "characterId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique identifier for the character"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the character"
-        },
-        "realm": {
-          "type": "string",
-          "description": "Name of the realm the character belongs to"
-        },
-        "level": {
-          "type": "integer",
-          "description": "Current level of the character"
-        },
-        "class": {
-          "type": "string",
-          "nullable": true,
-          "description": "Character class or profession"
-        },
-        "lastPlayed": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time of last gameplay session"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetAccountCharacters_Info = """
 {
-  "summary": "Get character list for logged-in user",
-  "description": "",
-  "tags": [
-    "Account"
-  ],
-  "deprecated": false,
-  "operationId": "getAccountCharacters"
+    "summary": "Get character list for logged-in user",
+    "description": "",
+    "tags": [
+        "Account"
+    ],
+    "deprecated": false,
+    "operationId": "getAccountCharacters"
 }
 """;
 
@@ -1558,65 +1558,65 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _ListPages_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "array",
-  "items": {
-    "$ref": "#/$defs/PageMetadata"
-  },
-  "$defs": {
-    "PageMetadata": {
-      "description": "Summary metadata for a CMS page without full content",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "title",
-        "published"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly identifier for the page"
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title of the page"
-        },
-        "published": {
-          "type": "boolean",
-          "description": "Whether the page is publicly visible"
-        },
-        "publishedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time when the page was published"
-        },
-        "lastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time of the last modification"
-        },
-        "author": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name or identifier of the page author"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "array",
+    "items": {
+        "$ref": "#/$defs/PageMetadata"
+    },
+    "$defs": {
+        "PageMetadata": {
+            "description": "Summary metadata for a CMS page without full content",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "title",
+                "published"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "description": "URL-friendly identifier for the page"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the page"
+                },
+                "published": {
+                    "type": "boolean",
+                    "description": "Whether the page is publicly visible"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time when the page was published"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last modification"
+                },
+                "author": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name or identifier of the page author"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _ListPages_Info = """
 {
-  "summary": "List all CMS pages",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "listPages"
+    "summary": "List all CMS pages",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "listPages"
 }
 """;
 
@@ -1666,241 +1666,241 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _CreatePage_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PageContent",
-  "$defs": {
-    "PageContent": {
-      "description": "Full content and metadata for a CMS-managed page",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "title",
-        "content",
-        "contentType",
-        "published"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "description": "URL-friendly identifier for the page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PageContent",
+    "$defs": {
+        "PageContent": {
+            "description": "Full content and metadata for a CMS-managed page",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "title",
+                "content",
+                "contentType",
+                "published"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "description": "URL-friendly identifier for the page"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the page"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "HTML, Markdown, or custom template content"
+                },
+                "contentType": {
+                    "type": "string",
+                    "enum": [
+                        "html",
+                        "markdown",
+                        "blazor"
+                    ],
+                    "description": "Format of the page content"
+                },
+                "template": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Template name for custom layouts"
+                },
+                "published": {
+                    "type": "boolean",
+                    "description": "Whether the page is publicly visible"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time when the page was published"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last modification"
+                },
+                "author": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name or identifier of the page author"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Custom metadata for the page"
+                },
+                "seo": {
+                    "$ref": "#/$defs/SEOMetadata",
+                    "description": "Search engine optimization settings for the page"
+                }
+            }
         },
-        "title": {
-          "type": "string",
-          "description": "Display title of the page"
-        },
-        "content": {
-          "type": "string",
-          "description": "HTML, Markdown, or custom template content"
-        },
-        "contentType": {
-          "type": "string",
-          "enum": [
-            "html",
-            "markdown",
-            "blazor"
-          ],
-          "description": "Format of the page content"
-        },
-        "template": {
-          "type": "string",
-          "nullable": true,
-          "description": "Template name for custom layouts"
-        },
-        "published": {
-          "type": "boolean",
-          "description": "Whether the page is publicly visible"
-        },
-        "publishedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time when the page was published"
-        },
-        "lastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time of the last modification"
-        },
-        "author": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name or identifier of the page author"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Custom metadata for the page"
-        },
-        "seo": {
-          "$ref": "#/$defs/SEOMetadata",
-          "description": "Search engine optimization settings for the page"
+        "SEOMetadata": {
+            "description": "Search engine optimization and social media sharing metadata",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Meta description for search engines"
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keywords for search engine indexing"
+                },
+                "ogTitle": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph title for social media sharing"
+                },
+                "ogDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph description for social media sharing"
+                },
+                "ogImage": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Open Graph image URL for social media sharing"
+                }
+            }
         }
-      }
-    },
-    "SEOMetadata": {
-      "description": "Search engine optimization and social media sharing metadata",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Meta description for search engines"
-        },
-        "keywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Keywords for search engine indexing"
-        },
-        "ogTitle": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph title for social media sharing"
-        },
-        "ogDescription": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph description for social media sharing"
-        },
-        "ogImage": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "Open Graph image URL for social media sharing"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreatePage_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PageContent",
-  "$defs": {
-    "PageContent": {
-      "description": "Full content and metadata for a CMS-managed page",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "title",
-        "content",
-        "contentType",
-        "published"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "description": "URL-friendly identifier for the page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PageContent",
+    "$defs": {
+        "PageContent": {
+            "description": "Full content and metadata for a CMS-managed page",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "title",
+                "content",
+                "contentType",
+                "published"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "description": "URL-friendly identifier for the page"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the page"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "HTML, Markdown, or custom template content"
+                },
+                "contentType": {
+                    "type": "string",
+                    "enum": [
+                        "html",
+                        "markdown",
+                        "blazor"
+                    ],
+                    "description": "Format of the page content"
+                },
+                "template": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Template name for custom layouts"
+                },
+                "published": {
+                    "type": "boolean",
+                    "description": "Whether the page is publicly visible"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time when the page was published"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last modification"
+                },
+                "author": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name or identifier of the page author"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Custom metadata for the page"
+                },
+                "seo": {
+                    "$ref": "#/$defs/SEOMetadata",
+                    "description": "Search engine optimization settings for the page"
+                }
+            }
         },
-        "title": {
-          "type": "string",
-          "description": "Display title of the page"
-        },
-        "content": {
-          "type": "string",
-          "description": "HTML, Markdown, or custom template content"
-        },
-        "contentType": {
-          "type": "string",
-          "enum": [
-            "html",
-            "markdown",
-            "blazor"
-          ],
-          "description": "Format of the page content"
-        },
-        "template": {
-          "type": "string",
-          "nullable": true,
-          "description": "Template name for custom layouts"
-        },
-        "published": {
-          "type": "boolean",
-          "description": "Whether the page is publicly visible"
-        },
-        "publishedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time when the page was published"
-        },
-        "lastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time of the last modification"
-        },
-        "author": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name or identifier of the page author"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Custom metadata for the page"
-        },
-        "seo": {
-          "$ref": "#/$defs/SEOMetadata",
-          "description": "Search engine optimization settings for the page"
+        "SEOMetadata": {
+            "description": "Search engine optimization and social media sharing metadata",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Meta description for search engines"
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keywords for search engine indexing"
+                },
+                "ogTitle": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph title for social media sharing"
+                },
+                "ogDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph description for social media sharing"
+                },
+                "ogImage": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Open Graph image URL for social media sharing"
+                }
+            }
         }
-      }
-    },
-    "SEOMetadata": {
-      "description": "Search engine optimization and social media sharing metadata",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Meta description for search engines"
-        },
-        "keywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Keywords for search engine indexing"
-        },
-        "ogTitle": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph title for social media sharing"
-        },
-        "ogDescription": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph description for social media sharing"
-        },
-        "ogImage": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "Open Graph image URL for social media sharing"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _CreatePage_Info = """
 {
-  "summary": "Create new CMS page",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "createPage"
+    "summary": "Create new CMS page",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "createPage"
 }
 """;
 
@@ -1950,241 +1950,241 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _UpdatePage_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PageContent",
-  "$defs": {
-    "PageContent": {
-      "description": "Full content and metadata for a CMS-managed page",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "title",
-        "content",
-        "contentType",
-        "published"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "description": "URL-friendly identifier for the page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PageContent",
+    "$defs": {
+        "PageContent": {
+            "description": "Full content and metadata for a CMS-managed page",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "title",
+                "content",
+                "contentType",
+                "published"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "description": "URL-friendly identifier for the page"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the page"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "HTML, Markdown, or custom template content"
+                },
+                "contentType": {
+                    "type": "string",
+                    "enum": [
+                        "html",
+                        "markdown",
+                        "blazor"
+                    ],
+                    "description": "Format of the page content"
+                },
+                "template": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Template name for custom layouts"
+                },
+                "published": {
+                    "type": "boolean",
+                    "description": "Whether the page is publicly visible"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time when the page was published"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last modification"
+                },
+                "author": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name or identifier of the page author"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Custom metadata for the page"
+                },
+                "seo": {
+                    "$ref": "#/$defs/SEOMetadata",
+                    "description": "Search engine optimization settings for the page"
+                }
+            }
         },
-        "title": {
-          "type": "string",
-          "description": "Display title of the page"
-        },
-        "content": {
-          "type": "string",
-          "description": "HTML, Markdown, or custom template content"
-        },
-        "contentType": {
-          "type": "string",
-          "enum": [
-            "html",
-            "markdown",
-            "blazor"
-          ],
-          "description": "Format of the page content"
-        },
-        "template": {
-          "type": "string",
-          "nullable": true,
-          "description": "Template name for custom layouts"
-        },
-        "published": {
-          "type": "boolean",
-          "description": "Whether the page is publicly visible"
-        },
-        "publishedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time when the page was published"
-        },
-        "lastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time of the last modification"
-        },
-        "author": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name or identifier of the page author"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Custom metadata for the page"
-        },
-        "seo": {
-          "$ref": "#/$defs/SEOMetadata",
-          "description": "Search engine optimization settings for the page"
+        "SEOMetadata": {
+            "description": "Search engine optimization and social media sharing metadata",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Meta description for search engines"
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keywords for search engine indexing"
+                },
+                "ogTitle": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph title for social media sharing"
+                },
+                "ogDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph description for social media sharing"
+                },
+                "ogImage": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Open Graph image URL for social media sharing"
+                }
+            }
         }
-      }
-    },
-    "SEOMetadata": {
-      "description": "Search engine optimization and social media sharing metadata",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Meta description for search engines"
-        },
-        "keywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Keywords for search engine indexing"
-        },
-        "ogTitle": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph title for social media sharing"
-        },
-        "ogDescription": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph description for social media sharing"
-        },
-        "ogImage": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "Open Graph image URL for social media sharing"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdatePage_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/PageContent",
-  "$defs": {
-    "PageContent": {
-      "description": "Full content and metadata for a CMS-managed page",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "slug",
-        "title",
-        "content",
-        "contentType",
-        "published"
-      ],
-      "properties": {
-        "slug": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "description": "URL-friendly identifier for the page"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PageContent",
+    "$defs": {
+        "PageContent": {
+            "description": "Full content and metadata for a CMS-managed page",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "slug",
+                "title",
+                "content",
+                "contentType",
+                "published"
+            ],
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "description": "URL-friendly identifier for the page"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Display title of the page"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "HTML, Markdown, or custom template content"
+                },
+                "contentType": {
+                    "type": "string",
+                    "enum": [
+                        "html",
+                        "markdown",
+                        "blazor"
+                    ],
+                    "description": "Format of the page content"
+                },
+                "template": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Template name for custom layouts"
+                },
+                "published": {
+                    "type": "boolean",
+                    "description": "Whether the page is publicly visible"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time when the page was published"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last modification"
+                },
+                "author": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name or identifier of the page author"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Custom metadata for the page"
+                },
+                "seo": {
+                    "$ref": "#/$defs/SEOMetadata",
+                    "description": "Search engine optimization settings for the page"
+                }
+            }
         },
-        "title": {
-          "type": "string",
-          "description": "Display title of the page"
-        },
-        "content": {
-          "type": "string",
-          "description": "HTML, Markdown, or custom template content"
-        },
-        "contentType": {
-          "type": "string",
-          "enum": [
-            "html",
-            "markdown",
-            "blazor"
-          ],
-          "description": "Format of the page content"
-        },
-        "template": {
-          "type": "string",
-          "nullable": true,
-          "description": "Template name for custom layouts"
-        },
-        "published": {
-          "type": "boolean",
-          "description": "Whether the page is publicly visible"
-        },
-        "publishedAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time when the page was published"
-        },
-        "lastModified": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date and time of the last modification"
-        },
-        "author": {
-          "type": "string",
-          "nullable": true,
-          "description": "Name or identifier of the page author"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Custom metadata for the page"
-        },
-        "seo": {
-          "$ref": "#/$defs/SEOMetadata",
-          "description": "Search engine optimization settings for the page"
+        "SEOMetadata": {
+            "description": "Search engine optimization and social media sharing metadata",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Meta description for search engines"
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Keywords for search engine indexing"
+                },
+                "ogTitle": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph title for social media sharing"
+                },
+                "ogDescription": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Open Graph description for social media sharing"
+                },
+                "ogImage": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Open Graph image URL for social media sharing"
+                }
+            }
         }
-      }
-    },
-    "SEOMetadata": {
-      "description": "Search engine optimization and social media sharing metadata",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "description": {
-          "type": "string",
-          "nullable": true,
-          "description": "Meta description for search engines"
-        },
-        "keywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Keywords for search engine indexing"
-        },
-        "ogTitle": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph title for social media sharing"
-        },
-        "ogDescription": {
-          "type": "string",
-          "nullable": true,
-          "description": "Open Graph description for social media sharing"
-        },
-        "ogImage": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "Open Graph image URL for social media sharing"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdatePage_Info = """
 {
-  "summary": "Update CMS page",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "updatePage"
+    "summary": "Update CMS page",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "updatePage"
 }
 """;
 
@@ -2242,13 +2242,13 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _DeletePage_Info = """
 {
-  "summary": "Delete CMS page",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "deletePage"
+    "summary": "Delete CMS page",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "deletePage"
 }
 """;
 
@@ -2302,130 +2302,130 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetSiteSettings_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SiteSettings",
-  "$defs": {
-    "SiteSettings": {
-      "description": "Global website configuration including branding, languages, and integrations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "siteName",
-        "siteUrl",
-        "defaultLanguage"
-      ],
-      "properties": {
-        "siteName": {
-          "type": "string",
-          "description": "Display name of the website"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SiteSettings",
+    "$defs": {
+        "SiteSettings": {
+            "description": "Global website configuration including branding, languages, and integrations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "siteName",
+                "siteUrl",
+                "defaultLanguage"
+            ],
+            "properties": {
+                "siteName": {
+                    "type": "string",
+                    "description": "Display name of the website"
+                },
+                "siteUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Base URL of the website"
+                },
+                "tagline": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Short slogan or description of the site"
+                },
+                "defaultLanguage": {
+                    "type": "string",
+                    "default": "en",
+                    "description": "Default language code for the website"
+                },
+                "supportedLanguages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of supported language codes"
+                },
+                "maintenanceMode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the site is in maintenance mode"
+                },
+                "maintenanceMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Message displayed during maintenance mode"
+                },
+                "contactEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Primary contact email address for the site"
+                },
+                "socialLinks": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "description": "Map of social media platform names to profile URLs"
+                },
+                "analytics": {
+                    "description": "Analytics and tracking service configuration",
+                    "$ref": "#/$defs/Analytics"
+                },
+                "customScripts": {
+                    "description": "Custom JavaScript scripts to inject into pages",
+                    "$ref": "#/$defs/CustomScripts"
+                }
+            }
         },
-        "siteUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Base URL of the website"
+        "Analytics": {
+            "description": "Analytics and tracking configuration for website visitor metrics",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "googleAnalyticsId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Google Analytics tracking ID"
+                },
+                "otherTrackers": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Configuration for other analytics trackers"
+                }
+            }
         },
-        "tagline": {
-          "type": "string",
-          "nullable": true,
-          "description": "Short slogan or description of the site"
-        },
-        "defaultLanguage": {
-          "type": "string",
-          "default": "en",
-          "description": "Default language code for the website"
-        },
-        "supportedLanguages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of supported language codes"
-        },
-        "maintenanceMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the site is in maintenance mode"
-        },
-        "maintenanceMessage": {
-          "type": "string",
-          "nullable": true,
-          "description": "Message displayed during maintenance mode"
-        },
-        "contactEmail": {
-          "type": "string",
-          "format": "email",
-          "description": "Primary contact email address for the site"
-        },
-        "socialLinks": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "uri"
-          },
-          "description": "Map of social media platform names to profile URLs"
-        },
-        "analytics": {
-          "description": "Analytics and tracking service configuration",
-          "$ref": "#/$defs/Analytics"
-        },
-        "customScripts": {
-          "description": "Custom JavaScript scripts to inject into pages",
-          "$ref": "#/$defs/CustomScripts"
+        "CustomScripts": {
+            "description": "Custom script injection configuration for adding JavaScript to pages",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "head": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject in the HTML head"
+                },
+                "bodyStart": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject at the start of the body"
+                },
+                "bodyEnd": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject at the end of the body"
+                }
+            }
         }
-      }
-    },
-    "Analytics": {
-      "description": "Analytics and tracking configuration for website visitor metrics",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "googleAnalyticsId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Google Analytics tracking ID"
-        },
-        "otherTrackers": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Configuration for other analytics trackers"
-        }
-      }
-    },
-    "CustomScripts": {
-      "description": "Custom script injection configuration for adding JavaScript to pages",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "head": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject in the HTML head"
-        },
-        "bodyStart": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject at the start of the body"
-        },
-        "bodyEnd": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject at the end of the body"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetSiteSettings_Info = """
 {
-  "summary": "Get site configuration",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "getSiteSettings"
+    "summary": "Get site configuration",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "getSiteSettings"
 }
 """;
 
@@ -2475,247 +2475,247 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _UpdateSiteSettings_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SiteSettings",
-  "$defs": {
-    "SiteSettings": {
-      "description": "Global website configuration including branding, languages, and integrations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "siteName",
-        "siteUrl",
-        "defaultLanguage"
-      ],
-      "properties": {
-        "siteName": {
-          "type": "string",
-          "description": "Display name of the website"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SiteSettings",
+    "$defs": {
+        "SiteSettings": {
+            "description": "Global website configuration including branding, languages, and integrations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "siteName",
+                "siteUrl",
+                "defaultLanguage"
+            ],
+            "properties": {
+                "siteName": {
+                    "type": "string",
+                    "description": "Display name of the website"
+                },
+                "siteUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Base URL of the website"
+                },
+                "tagline": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Short slogan or description of the site"
+                },
+                "defaultLanguage": {
+                    "type": "string",
+                    "default": "en",
+                    "description": "Default language code for the website"
+                },
+                "supportedLanguages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of supported language codes"
+                },
+                "maintenanceMode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the site is in maintenance mode"
+                },
+                "maintenanceMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Message displayed during maintenance mode"
+                },
+                "contactEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Primary contact email address for the site"
+                },
+                "socialLinks": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "description": "Map of social media platform names to profile URLs"
+                },
+                "analytics": {
+                    "description": "Analytics and tracking service configuration",
+                    "$ref": "#/$defs/Analytics"
+                },
+                "customScripts": {
+                    "description": "Custom JavaScript scripts to inject into pages",
+                    "$ref": "#/$defs/CustomScripts"
+                }
+            }
         },
-        "siteUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Base URL of the website"
+        "Analytics": {
+            "description": "Analytics and tracking configuration for website visitor metrics",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "googleAnalyticsId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Google Analytics tracking ID"
+                },
+                "otherTrackers": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Configuration for other analytics trackers"
+                }
+            }
         },
-        "tagline": {
-          "type": "string",
-          "nullable": true,
-          "description": "Short slogan or description of the site"
-        },
-        "defaultLanguage": {
-          "type": "string",
-          "default": "en",
-          "description": "Default language code for the website"
-        },
-        "supportedLanguages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of supported language codes"
-        },
-        "maintenanceMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the site is in maintenance mode"
-        },
-        "maintenanceMessage": {
-          "type": "string",
-          "nullable": true,
-          "description": "Message displayed during maintenance mode"
-        },
-        "contactEmail": {
-          "type": "string",
-          "format": "email",
-          "description": "Primary contact email address for the site"
-        },
-        "socialLinks": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "uri"
-          },
-          "description": "Map of social media platform names to profile URLs"
-        },
-        "analytics": {
-          "description": "Analytics and tracking service configuration",
-          "$ref": "#/$defs/Analytics"
-        },
-        "customScripts": {
-          "description": "Custom JavaScript scripts to inject into pages",
-          "$ref": "#/$defs/CustomScripts"
+        "CustomScripts": {
+            "description": "Custom script injection configuration for adding JavaScript to pages",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "head": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject in the HTML head"
+                },
+                "bodyStart": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject at the start of the body"
+                },
+                "bodyEnd": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject at the end of the body"
+                }
+            }
         }
-      }
-    },
-    "Analytics": {
-      "description": "Analytics and tracking configuration for website visitor metrics",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "googleAnalyticsId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Google Analytics tracking ID"
-        },
-        "otherTrackers": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Configuration for other analytics trackers"
-        }
-      }
-    },
-    "CustomScripts": {
-      "description": "Custom script injection configuration for adding JavaScript to pages",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "head": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject in the HTML head"
-        },
-        "bodyStart": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject at the start of the body"
-        },
-        "bodyEnd": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject at the end of the body"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSiteSettings_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SiteSettings",
-  "$defs": {
-    "SiteSettings": {
-      "description": "Global website configuration including branding, languages, and integrations",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "siteName",
-        "siteUrl",
-        "defaultLanguage"
-      ],
-      "properties": {
-        "siteName": {
-          "type": "string",
-          "description": "Display name of the website"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SiteSettings",
+    "$defs": {
+        "SiteSettings": {
+            "description": "Global website configuration including branding, languages, and integrations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "siteName",
+                "siteUrl",
+                "defaultLanguage"
+            ],
+            "properties": {
+                "siteName": {
+                    "type": "string",
+                    "description": "Display name of the website"
+                },
+                "siteUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Base URL of the website"
+                },
+                "tagline": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Short slogan or description of the site"
+                },
+                "defaultLanguage": {
+                    "type": "string",
+                    "default": "en",
+                    "description": "Default language code for the website"
+                },
+                "supportedLanguages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of supported language codes"
+                },
+                "maintenanceMode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the site is in maintenance mode"
+                },
+                "maintenanceMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Message displayed during maintenance mode"
+                },
+                "contactEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Primary contact email address for the site"
+                },
+                "socialLinks": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "description": "Map of social media platform names to profile URLs"
+                },
+                "analytics": {
+                    "description": "Analytics and tracking service configuration",
+                    "$ref": "#/$defs/Analytics"
+                },
+                "customScripts": {
+                    "description": "Custom JavaScript scripts to inject into pages",
+                    "$ref": "#/$defs/CustomScripts"
+                }
+            }
         },
-        "siteUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "Base URL of the website"
+        "Analytics": {
+            "description": "Analytics and tracking configuration for website visitor metrics",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "googleAnalyticsId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Google Analytics tracking ID"
+                },
+                "otherTrackers": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Configuration for other analytics trackers"
+                }
+            }
         },
-        "tagline": {
-          "type": "string",
-          "nullable": true,
-          "description": "Short slogan or description of the site"
-        },
-        "defaultLanguage": {
-          "type": "string",
-          "default": "en",
-          "description": "Default language code for the website"
-        },
-        "supportedLanguages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of supported language codes"
-        },
-        "maintenanceMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the site is in maintenance mode"
-        },
-        "maintenanceMessage": {
-          "type": "string",
-          "nullable": true,
-          "description": "Message displayed during maintenance mode"
-        },
-        "contactEmail": {
-          "type": "string",
-          "format": "email",
-          "description": "Primary contact email address for the site"
-        },
-        "socialLinks": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "uri"
-          },
-          "description": "Map of social media platform names to profile URLs"
-        },
-        "analytics": {
-          "description": "Analytics and tracking service configuration",
-          "$ref": "#/$defs/Analytics"
-        },
-        "customScripts": {
-          "description": "Custom JavaScript scripts to inject into pages",
-          "$ref": "#/$defs/CustomScripts"
+        "CustomScripts": {
+            "description": "Custom script injection configuration for adding JavaScript to pages",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "head": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject in the HTML head"
+                },
+                "bodyStart": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject at the start of the body"
+                },
+                "bodyEnd": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom scripts to inject at the end of the body"
+                }
+            }
         }
-      }
-    },
-    "Analytics": {
-      "description": "Analytics and tracking configuration for website visitor metrics",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "googleAnalyticsId": {
-          "type": "string",
-          "nullable": true,
-          "description": "Google Analytics tracking ID"
-        },
-        "otherTrackers": {
-          "type": "object",
-          "additionalProperties": true,
-          "description": "Configuration for other analytics trackers"
-        }
-      }
-    },
-    "CustomScripts": {
-      "description": "Custom script injection configuration for adding JavaScript to pages",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "head": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject in the HTML head"
-        },
-        "bodyStart": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject at the start of the body"
-        },
-        "bodyEnd": {
-          "type": "string",
-          "nullable": true,
-          "description": "Custom scripts to inject at the end of the body"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _UpdateSiteSettings_Info = """
 {
-  "summary": "Update site configuration",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "updateSiteSettings"
+    "summary": "Update site configuration",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "updateSiteSettings"
 }
 """;
 
@@ -2769,139 +2769,139 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetTheme_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ThemeConfig",
-  "$defs": {
-    "ThemeConfig": {
-      "description": "Visual theme configuration including colors, fonts, and navigation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "themeName",
-        "primaryColor"
-      ],
-      "properties": {
-        "themeName": {
-          "type": "string",
-          "description": "Name of the active theme"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ThemeConfig",
+    "$defs": {
+        "ThemeConfig": {
+            "description": "Visual theme configuration including colors, fonts, and navigation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "themeName",
+                "primaryColor"
+            ],
+            "properties": {
+                "themeName": {
+                    "type": "string",
+                    "description": "Name of the active theme"
+                },
+                "primaryColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Primary brand color in hex format"
+                },
+                "secondaryColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Secondary brand color in hex format"
+                },
+                "backgroundColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Default background color in hex format"
+                },
+                "textColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Default text color in hex format"
+                },
+                "fontFamily": {
+                    "type": "string",
+                    "description": "Primary font family for the site"
+                },
+                "customCSS": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Additional custom CSS styles"
+                },
+                "logo": {
+                    "description": "Site logo configuration for branding",
+                    "$ref": "#/$defs/Logo"
+                },
+                "favicon": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "URL of the site favicon"
+                },
+                "navigation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/NavigationItem"
+                    },
+                    "description": "Main navigation menu items"
+                }
+            }
         },
-        "primaryColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Primary brand color in hex format"
+        "Logo": {
+            "description": "Site logo configuration including image URL and accessibility text",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL of the site logo image"
+                },
+                "alt": {
+                    "type": "string",
+                    "description": "Alt text for the logo image"
+                }
+            }
         },
-        "secondaryColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Secondary brand color in hex format"
-        },
-        "backgroundColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Default background color in hex format"
-        },
-        "textColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Default text color in hex format"
-        },
-        "fontFamily": {
-          "type": "string",
-          "description": "Primary font family for the site"
-        },
-        "customCSS": {
-          "type": "string",
-          "nullable": true,
-          "description": "Additional custom CSS styles"
-        },
-        "logo": {
-          "description": "Site logo configuration for branding",
-          "$ref": "#/$defs/Logo"
-        },
-        "favicon": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "URL of the site favicon"
-        },
-        "navigation": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/NavigationItem"
-          },
-          "description": "Main navigation menu items"
+        "NavigationItem": {
+            "description": "A navigation menu entry with optional nested children for dropdowns",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "label",
+                "url",
+                "order"
+            ],
+            "properties": {
+                "label": {
+                    "type": "string",
+                    "description": "Display text for the navigation link"
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Target URL or path for the navigation link"
+                },
+                "order": {
+                    "type": "integer",
+                    "description": "Sort order for the navigation item"
+                },
+                "target": {
+                    "type": "string",
+                    "enum": [
+                        "_self",
+                        "_blank"
+                    ],
+                    "default": "_self",
+                    "description": "Link target attribute for opening behavior"
+                },
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/NavigationItem"
+                    },
+                    "description": "Nested child navigation items for dropdowns"
+                }
+            }
         }
-      }
-    },
-    "Logo": {
-      "description": "Site logo configuration including image URL and accessibility text",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "url": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL of the site logo image"
-        },
-        "alt": {
-          "type": "string",
-          "description": "Alt text for the logo image"
-        }
-      }
-    },
-    "NavigationItem": {
-      "description": "A navigation menu entry with optional nested children for dropdowns",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "label",
-        "url",
-        "order"
-      ],
-      "properties": {
-        "label": {
-          "type": "string",
-          "description": "Display text for the navigation link"
-        },
-        "url": {
-          "type": "string",
-          "description": "Target URL or path for the navigation link"
-        },
-        "order": {
-          "type": "integer",
-          "description": "Sort order for the navigation item"
-        },
-        "target": {
-          "type": "string",
-          "enum": [
-            "_self",
-            "_blank"
-          ],
-          "default": "_self",
-          "description": "Link target attribute for opening behavior"
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/NavigationItem"
-          },
-          "description": "Nested child navigation items for dropdowns"
-        }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetTheme_Info = """
 {
-  "summary": "Get current theme configuration",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "getTheme"
+    "summary": "Get current theme configuration",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "getTheme"
 }
 """;
 
@@ -2951,127 +2951,127 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _UpdateTheme_RequestSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/ThemeConfig",
-  "$defs": {
-    "ThemeConfig": {
-      "description": "Visual theme configuration including colors, fonts, and navigation",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "themeName",
-        "primaryColor"
-      ],
-      "properties": {
-        "themeName": {
-          "type": "string",
-          "description": "Name of the active theme"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ThemeConfig",
+    "$defs": {
+        "ThemeConfig": {
+            "description": "Visual theme configuration including colors, fonts, and navigation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "themeName",
+                "primaryColor"
+            ],
+            "properties": {
+                "themeName": {
+                    "type": "string",
+                    "description": "Name of the active theme"
+                },
+                "primaryColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Primary brand color in hex format"
+                },
+                "secondaryColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Secondary brand color in hex format"
+                },
+                "backgroundColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Default background color in hex format"
+                },
+                "textColor": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "description": "Default text color in hex format"
+                },
+                "fontFamily": {
+                    "type": "string",
+                    "description": "Primary font family for the site"
+                },
+                "customCSS": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Additional custom CSS styles"
+                },
+                "logo": {
+                    "description": "Site logo configuration for branding",
+                    "$ref": "#/$defs/Logo"
+                },
+                "favicon": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "URL of the site favicon"
+                },
+                "navigation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/NavigationItem"
+                    },
+                    "description": "Main navigation menu items"
+                }
+            }
         },
-        "primaryColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Primary brand color in hex format"
+        "Logo": {
+            "description": "Site logo configuration including image URL and accessibility text",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL of the site logo image"
+                },
+                "alt": {
+                    "type": "string",
+                    "description": "Alt text for the logo image"
+                }
+            }
         },
-        "secondaryColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Secondary brand color in hex format"
-        },
-        "backgroundColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Default background color in hex format"
-        },
-        "textColor": {
-          "type": "string",
-          "pattern": "^#[0-9A-Fa-f]{6}$",
-          "description": "Default text color in hex format"
-        },
-        "fontFamily": {
-          "type": "string",
-          "description": "Primary font family for the site"
-        },
-        "customCSS": {
-          "type": "string",
-          "nullable": true,
-          "description": "Additional custom CSS styles"
-        },
-        "logo": {
-          "description": "Site logo configuration for branding",
-          "$ref": "#/$defs/Logo"
-        },
-        "favicon": {
-          "type": "string",
-          "format": "uri",
-          "nullable": true,
-          "description": "URL of the site favicon"
-        },
-        "navigation": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/NavigationItem"
-          },
-          "description": "Main navigation menu items"
+        "NavigationItem": {
+            "description": "A navigation menu entry with optional nested children for dropdowns",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "label",
+                "url",
+                "order"
+            ],
+            "properties": {
+                "label": {
+                    "type": "string",
+                    "description": "Display text for the navigation link"
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Target URL or path for the navigation link"
+                },
+                "order": {
+                    "type": "integer",
+                    "description": "Sort order for the navigation item"
+                },
+                "target": {
+                    "type": "string",
+                    "enum": [
+                        "_self",
+                        "_blank"
+                    ],
+                    "default": "_self",
+                    "description": "Link target attribute for opening behavior"
+                },
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/NavigationItem"
+                    },
+                    "description": "Nested child navigation items for dropdowns"
+                }
+            }
         }
-      }
-    },
-    "Logo": {
-      "description": "Site logo configuration including image URL and accessibility text",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "url": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL of the site logo image"
-        },
-        "alt": {
-          "type": "string",
-          "description": "Alt text for the logo image"
-        }
-      }
-    },
-    "NavigationItem": {
-      "description": "A navigation menu entry with optional nested children for dropdowns",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "label",
-        "url",
-        "order"
-      ],
-      "properties": {
-        "label": {
-          "type": "string",
-          "description": "Display text for the navigation link"
-        },
-        "url": {
-          "type": "string",
-          "description": "Target URL or path for the navigation link"
-        },
-        "order": {
-          "type": "integer",
-          "description": "Sort order for the navigation item"
-        },
-        "target": {
-          "type": "string",
-          "enum": [
-            "_self",
-            "_blank"
-          ],
-          "default": "_self",
-          "description": "Link target attribute for opening behavior"
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/NavigationItem"
-          },
-          "description": "Nested child navigation items for dropdowns"
-        }
-      }
     }
-  }
 }
 """;
 
@@ -3081,13 +3081,13 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _UpdateTheme_Info = """
 {
-  "summary": "Update theme configuration",
-  "description": "",
-  "tags": [
-    "CMS"
-  ],
-  "deprecated": false,
-  "operationId": "updateTheme"
+    "summary": "Update theme configuration",
+    "description": "",
+    "tags": [
+        "CMS"
+    ],
+    "deprecated": false,
+    "operationId": "updateTheme"
 }
 """;
 
@@ -3141,70 +3141,70 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _GetSubscription_ResponseSchema = """
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/$defs/SubscriptionResponse",
-  "$defs": {
-    "SubscriptionResponse": {
-      "description": "Current subscription status and plan details for an account",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "type"
-      ],
-      "properties": {
-        "status": {
-          "type": "string",
-          "enum": [
-            "active",
-            "inactive",
-            "trial",
-            "expired"
-          ],
-          "description": "Current state of the subscription"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "free",
-            "basic",
-            "premium",
-            "lifetime"
-          ],
-          "description": "Subscription tier or plan type"
-        },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "nullable": true,
-          "description": "Date and time when the subscription expires"
-        },
-        "autoRenew": {
-          "type": "boolean",
-          "description": "Whether automatic renewal is enabled"
-        },
-        "benefits": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of benefits included in the subscription"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SubscriptionResponse",
+    "$defs": {
+        "SubscriptionResponse": {
+            "description": "Current subscription status and plan details for an account",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "status",
+                "type"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "inactive",
+                        "trial",
+                        "expired"
+                    ],
+                    "description": "Current state of the subscription"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "free",
+                        "basic",
+                        "premium",
+                        "lifetime"
+                    ],
+                    "description": "Subscription tier or plan type"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Date and time when the subscription expires"
+                },
+                "autoRenew": {
+                    "type": "boolean",
+                    "description": "Whether automatic renewal is enabled"
+                },
+                "benefits": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of benefits included in the subscription"
+                }
+            }
         }
-      }
     }
-  }
 }
 """;
 
     private static readonly string _GetSubscription_Info = """
 {
-  "summary": "Get subscription status",
-  "description": "",
-  "tags": [
-    "Account"
-  ],
-  "deprecated": false,
-  "operationId": "getSubscription"
+    "summary": "Get subscription status",
+    "description": "",
+    "tags": [
+        "Account"
+    ],
+    "deprecated": false,
+    "operationId": "getSubscription"
 }
 """;
 
