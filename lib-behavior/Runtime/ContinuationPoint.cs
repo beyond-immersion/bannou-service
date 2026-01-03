@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Behavior.Runtime;
 
 /// <summary>
 /// Defines a point in execution where the interpreter pauses for possible extension attachment.
-/// Used for streaming composition in cinematics (THE_DREAM pattern).
+/// Used for streaming composition in cinematics.
 /// </summary>
 /// <remarks>
 /// <para>

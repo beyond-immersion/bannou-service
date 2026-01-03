@@ -128,6 +128,7 @@ public partial class DocumentationService : IDocumentationService
             }
 
             // Render markdown to HTML for browser display
+            // Coalesce null to empty for display safety if markdown renderer fails
             var htmlContent = RenderMarkdownToHtml(storedDoc.Content) ?? string.Empty;
 
             // Build simple HTML page (in production, use proper templating)
@@ -220,8 +221,8 @@ public partial class DocumentationService : IDocumentationService
                         Slug = doc.Slug,
                         Title = doc.Title,
                         Category = ParseDocumentCategory(doc.Category),
-                        Summary = doc.Summary ?? string.Empty,
-                        VoiceSummary = doc.VoiceSummary ?? string.Empty,
+                        Summary = doc.Summary,
+                        VoiceSummary = doc.VoiceSummary,
                         RelevanceScore = (float)result.RelevanceScore
                     });
                 }
@@ -309,8 +310,8 @@ public partial class DocumentationService : IDocumentationService
                 Slug = storedDoc.Slug,
                 Title = storedDoc.Title,
                 Category = ParseDocumentCategory(storedDoc.Category),
-                Summary = storedDoc.Summary ?? string.Empty,
-                VoiceSummary = storedDoc.VoiceSummary ?? string.Empty,
+                Summary = storedDoc.Summary,
+                VoiceSummary = storedDoc.VoiceSummary,
                 Tags = storedDoc.Tags,
                 RelatedDocuments = storedDoc.RelatedDocuments,
                 Metadata = storedDoc.Metadata ?? new object(),
@@ -319,6 +320,8 @@ public partial class DocumentationService : IDocumentationService
             };
 
             // Include content if requested
+            // TODO: Content should never be null - if it is, that's a data integrity issue
+            // Currently defensive to avoid breaking API response; consider throwing instead
             if (body.IncludeContent)
             {
                 doc.Content = (body.RenderHtml ? RenderMarkdownToHtml(storedDoc.Content) : storedDoc.Content) ?? string.Empty;
@@ -401,8 +404,8 @@ public partial class DocumentationService : IDocumentationService
                         Slug = doc.Slug,
                         Title = doc.Title,
                         Category = ParseDocumentCategory(doc.Category),
-                        Summary = doc.Summary ?? string.Empty,
-                        VoiceSummary = doc.VoiceSummary ?? string.Empty,
+                        Summary = doc.Summary,
+                        VoiceSummary = doc.VoiceSummary,
                         RelevanceScore = (float)result.RelevanceScore,
                         MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm) }
                     });
@@ -477,8 +480,8 @@ public partial class DocumentationService : IDocumentationService
                         Slug = doc.Slug,
                         Title = doc.Title,
                         Category = ParseDocumentCategory(doc.Category),
-                        Summary = doc.Summary ?? string.Empty,
-                        VoiceSummary = doc.VoiceSummary ?? string.Empty,
+                        Summary = doc.Summary,
+                        VoiceSummary = doc.VoiceSummary,
                         Tags = doc.Tags
                     });
                 }
@@ -1731,8 +1734,8 @@ public partial class DocumentationService : IDocumentationService
                     Slug = doc.Slug,
                     Title = doc.Title,
                     Category = ParseDocumentCategory(doc.Category),
-                    Summary = doc.Summary ?? string.Empty,
-                    VoiceSummary = doc.VoiceSummary ?? string.Empty,
+                    Summary = doc.Summary,
+                    VoiceSummary = doc.VoiceSummary,
                     Tags = doc.Tags
                 });
             }
@@ -2069,7 +2072,7 @@ public partial class DocumentationService : IDocumentationService
             {
                 SyncId = result.SyncId,
                 Status = MapSyncStatus(result.Status),
-                CommitHash = result.CommitHash ?? string.Empty,
+                CommitHash = result.CommitHash,
                 DocumentsCreated = result.DocumentsCreated,
                 DocumentsUpdated = result.DocumentsUpdated,
                 DocumentsDeleted = result.DocumentsDeleted,
@@ -2114,7 +2117,7 @@ public partial class DocumentationService : IDocumentationService
                     TriggeredBy = SyncTrigger.Scheduled,
                     StartedAt = binding.LastSyncAt.Value,
                     CompletedAt = binding.LastSyncAt.Value,
-                    CommitHash = binding.LastCommitHash ?? string.Empty,
+                    CommitHash = binding.LastCommitHash,
                     DocumentsProcessed = binding.DocumentCount
                 };
             }
@@ -2364,8 +2367,8 @@ public partial class DocumentationService : IDocumentationService
                     Owner = a.Owner,
                     DocumentCount = a.DocumentCount,
                     SizeBytes = (int)Math.Min(a.SizeBytes, int.MaxValue),
-                    Description = a.Description ?? string.Empty,
-                    CommitHash = a.CommitHash ?? string.Empty
+                    Description = a.Description,
+                    CommitHash = a.CommitHash
                 })
                 .ToList();
 
@@ -2643,7 +2646,7 @@ public partial class DocumentationService : IDocumentationService
             if (!force && binding.LastCommitHash == gitResult.CommitHash)
             {
                 _logger.LogDebug("Repository unchanged, skipping sync for namespace {Namespace}", binding.Namespace);
-                var noChangeResult = Models.SyncResult.Success(syncId, gitResult.CommitHash ?? string.Empty, 0, 0, 0, startedAt);
+                var noChangeResult = Models.SyncResult.Success(syncId, gitResult.CommitHash, 0, 0, 0, startedAt);
                 binding.Status = Models.BindingStatusInternal.Synced;
                 binding.LastSyncAt = DateTimeOffset.UtcNow;
                 await SaveBindingAsync(binding, cancellationToken);
@@ -2726,7 +2729,7 @@ public partial class DocumentationService : IDocumentationService
 
             var successResult = Models.SyncResult.Success(
                 syncId,
-                gitResult.CommitHash ?? string.Empty,
+                gitResult.CommitHash,
                 documentsCreated,
                 documentsUpdated,
                 documentsDeleted,
@@ -3095,7 +3098,7 @@ public partial class DocumentationService : IDocumentationService
                 BindingId = binding.BindingId,
                 SyncId = syncId,
                 Status = status,
-                CommitHash = result.CommitHash ?? string.Empty,
+                CommitHash = result.CommitHash,
                 DocumentsCreated = result.DocumentsCreated,
                 DocumentsUpdated = result.DocumentsUpdated,
                 DocumentsDeleted = result.DocumentsDeleted,
@@ -3155,6 +3158,8 @@ public partial class DocumentationService : IDocumentationService
             Version = "1.0",
             Namespace = namespaceId,
             CreatedAt = DateTimeOffset.UtcNow,
+            // TODO: Content should never be null - if it is, that's a data integrity issue
+            // Currently defensive to avoid breaking bundle creation; consider filtering/warning instead
             Documents = documents.Select(d => new BundledDocument
             {
                 DocumentId = d.DocumentId,

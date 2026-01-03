@@ -30,7 +30,7 @@ public class Serialization : IClassFixture<CollectionFixture>
     {
         public Guid AccountId { get; set; }
         public string Email { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
+        public string? DisplayName { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
 

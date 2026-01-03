@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
+// YamlMember is used for snake_case YAML field mapping
+
 namespace BeyondImmersion.BannouService.Orchestrator;
 
 /// <summary>
@@ -231,6 +233,72 @@ public class PresetDefinition
     /// Required backends for this preset.
     /// </summary>
     public List<string>? RequiredBackends { get; set; }
+
+    /// <summary>
+    /// Processing pools configuration for on-demand worker containers.
+    /// Used by actor pools, asset processors, etc.
+    /// </summary>
+    [YamlMember(Alias = "processing_pools")]
+    public List<PresetProcessingPool>? ProcessingPools { get; set; }
+}
+
+/// <summary>
+/// Processing pool configuration for on-demand worker containers.
+/// These are NOT topology nodes - they're spawned individually by the control plane.
+/// </summary>
+public class PresetProcessingPool
+{
+    /// <summary>
+    /// Pool type identifier (e.g., "actor-shared", "asset-image").
+    /// </summary>
+    [YamlMember(Alias = "pool_type")]
+    public string PoolType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Service/plugin name to enable on pool workers (e.g., "actor", "asset").
+    /// Maps to {PLUGIN}_SERVICE_ENABLED environment variable.
+    /// </summary>
+    public string Plugin { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Docker image to use for pool workers. If empty, uses default bannou image.
+    /// </summary>
+    public string? Image { get; set; }
+
+    /// <summary>
+    /// Minimum number of instances to maintain.
+    /// </summary>
+    [YamlMember(Alias = "min_instances")]
+    public int MinInstances { get; set; } = 1;
+
+    /// <summary>
+    /// Maximum number of instances allowed.
+    /// </summary>
+    [YamlMember(Alias = "max_instances")]
+    public int MaxInstances { get; set; } = 5;
+
+    /// <summary>
+    /// Scale up when utilization exceeds this threshold (0.0-1.0).
+    /// </summary>
+    [YamlMember(Alias = "scale_up_threshold")]
+    public double ScaleUpThreshold { get; set; } = 0.8;
+
+    /// <summary>
+    /// Scale down when utilization drops below this threshold (0.0-1.0).
+    /// </summary>
+    [YamlMember(Alias = "scale_down_threshold")]
+    public double ScaleDownThreshold { get; set; } = 0.2;
+
+    /// <summary>
+    /// Time in minutes before idle workers are cleaned up.
+    /// </summary>
+    [YamlMember(Alias = "idle_timeout_minutes")]
+    public int IdleTimeoutMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Environment variables for pool worker containers.
+    /// </summary>
+    public Dictionary<string, string>? Environment { get; set; }
 }
 
 /// <summary>

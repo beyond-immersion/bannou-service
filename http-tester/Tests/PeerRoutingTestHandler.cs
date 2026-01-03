@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// <summary>
 /// HTTP tests for peer-to-peer routing infrastructure.
 ///
-/// ## Architecture Context (from ACTORS_PLUGIN_V3 Section 9.4)
+/// ## Architecture Context
 ///
 /// Bannou deploys Connect nodes in two modes:
 ///

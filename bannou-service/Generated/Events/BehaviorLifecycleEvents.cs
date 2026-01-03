@@ -57,18 +57,22 @@ public partial class BehaviorCreatedEvent : BaseServiceEvent
     /// Category classification for the behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
     /// <summary>
-    /// Identifier of the bundle this behavior belongs to
+    /// Identifier of the bundle this behavior belongs to. Null if not bundled.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string BundleId { get; set; } = default!;
+    public string? BundleId { get; set; } = default!;
 
     /// <summary>
     /// Identifier of the asset associated with this behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -134,18 +138,22 @@ public partial class BehaviorUpdatedEvent : BaseServiceEvent
     /// Category classification for the behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
     /// <summary>
-    /// Identifier of the bundle this behavior belongs to
+    /// Identifier of the bundle this behavior belongs to. Null if not bundled.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string BundleId { get; set; } = default!;
+    public string? BundleId { get; set; } = default!;
 
     /// <summary>
     /// Identifier of the asset associated with this behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -219,18 +227,22 @@ public partial class BehaviorDeletedEvent : BaseServiceEvent
     /// Category classification for the behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
     /// <summary>
-    /// Identifier of the bundle this behavior belongs to
+    /// Identifier of the bundle this behavior belongs to. Null if not bundled.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string BundleId { get; set; } = default!;
+    public string? BundleId { get; set; } = default!;
 
     /// <summary>
     /// Identifier of the asset associated with this behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>

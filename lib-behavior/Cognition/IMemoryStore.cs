@@ -176,14 +176,23 @@ public sealed class Perception
     /// </summary>
     /// <param name="data">Dictionary containing perception data.</param>
     /// <returns>A new Perception instance.</returns>
+    /// <exception cref="ArgumentException">Thrown when content is missing or empty.</exception>
     public static Perception FromDictionary(IReadOnlyDictionary<string, object?> data)
     {
+        // Content is required - a perception without content is meaningless
+        var contentValue = data.TryGetValue("content", out var content) ? content?.ToString() : null;
+        if (string.IsNullOrEmpty(contentValue))
+        {
+            throw new ArgumentException("Perception requires non-empty 'content' field", nameof(data));
+        }
+
         return new Perception
         {
             Id = data.TryGetValue("id", out var id) ? id?.ToString() ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString(),
             Category = data.TryGetValue("category", out var cat) ? cat?.ToString() ?? "routine" : "routine",
-            Content = data.TryGetValue("content", out var content) ? content?.ToString() ?? string.Empty : string.Empty,
+            Content = contentValue,
             Urgency = data.TryGetValue("urgency", out var urg) && urg is float urgFloat ? urgFloat : 0f,
+            // Source can be empty for perceptions from unknown/implicit sources
             Source = data.TryGetValue("source", out var src) ? src?.ToString() ?? string.Empty : string.Empty,
             Timestamp = data.TryGetValue("timestamp", out var ts) && ts is DateTimeOffset dto ? dto : DateTimeOffset.UtcNow,
             Data = data.Where(kv => kv.Value != null)

@@ -1059,7 +1059,7 @@ public partial class AuthService : IAuthService
     {
         public Guid AccountId { get; set; }
         public string Email { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
+        public string? DisplayName { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
         public List<string> Authorizations { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
@@ -1161,7 +1161,7 @@ public partial class AuthService : IAuthService
         {
             AccountId = account.AccountId,
             Email = account.Email,
-            DisplayName = account.DisplayName ?? string.Empty,
+            DisplayName = account.DisplayName,
             Roles = account.Roles?.ToList() ?? new List<string>(),
             Authorizations = authorizations,
             SessionId = sessionId,

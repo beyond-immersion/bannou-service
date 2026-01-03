@@ -311,7 +311,8 @@ components:
           description: Final status of the sync operation
         commitHash:
           type: string
-          description: Git commit hash that was synced
+          nullable: true
+          description: Git commit hash that was synced (null if sync failed or repo is empty)
         documentsCreated:
           type: integer
           description: Number of new documents created during sync

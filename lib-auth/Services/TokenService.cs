@@ -106,7 +106,7 @@ public class TokenService : ITokenService
         {
             AccountId = account.AccountId,
             Email = account.Email,
-            DisplayName = account.DisplayName ?? string.Empty,
+            DisplayName = account.DisplayName,
             Roles = account.Roles?.ToList() ?? new List<string>(),
             Authorizations = authorizations,
             SessionId = sessionId,

@@ -19,6 +19,8 @@ components:
       - timestamp
       - behaviorId
       - name
+      - category
+      - assetId
       - createdAt
       properties:
         eventName:
@@ -36,7 +38,8 @@ components:
           description: "Category classification for the behavior"
         bundleId: &id004
           type: string
-          description: "Identifier of the bundle this behavior belongs to"
+          nullable: true
+          description: "Identifier of the bundle this behavior belongs to. Null if not bundled."
         assetId: &id005
           type: string
           description: "Identifier of the asset associated with this behavior"
@@ -67,6 +70,8 @@ components:
       - timestamp
       - behaviorId
       - name
+      - category
+      - assetId
       - createdAt
       - changedFields
       properties:
@@ -100,6 +105,8 @@ components:
       - timestamp
       - behaviorId
       - name
+      - category
+      - assetId
       - createdAt
       properties:
         eventName:

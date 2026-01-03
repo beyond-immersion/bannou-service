@@ -2736,35 +2736,35 @@ public partial class ConnectService : IConnectService
 
             if (hasMetadata)
             {
-                // Parse name
+                // Parse name (optional metadata - coalesce null to empty for non-nullable property)
                 if (metadataElement.TryGetProperty("name", out var nameElement) ||
                     metadataElement.TryGetProperty("Name", out nameElement))
                 {
                     shortcutData.Name = nameElement.GetString() ?? string.Empty;
                 }
 
-                // Parse sourceService
+                // Parse sourceService (optional metadata - coalesce null to empty for non-nullable property)
                 if (metadataElement.TryGetProperty("sourceService", out var sourceElement))
                 {
                     shortcutData.SourceService = sourceElement.GetString() ?? string.Empty;
                 }
 
-                // Parse targetService (required for shortcut-only endpoints)
+                // Parse targetService (required - validation at end catches null/empty)
                 if (metadataElement.TryGetProperty("targetService", out var targetServiceElement))
                 {
-                    shortcutData.TargetService = targetServiceElement.GetString() ?? string.Empty;
+                    shortcutData.TargetService = targetServiceElement.GetString();
                 }
 
-                // Parse targetMethod (required for routing, e.g., "POST")
+                // Parse targetMethod (required - validation at end catches null/empty)
                 if (metadataElement.TryGetProperty("targetMethod", out var targetMethodElement))
                 {
-                    shortcutData.TargetMethod = targetMethodElement.GetString() ?? string.Empty;
+                    shortcutData.TargetMethod = targetMethodElement.GetString();
                 }
 
-                // Parse targetEndpoint (required for routing, e.g., "/sessions/join")
+                // Parse targetEndpoint (required - validation at end catches null/empty)
                 if (metadataElement.TryGetProperty("targetEndpoint", out var targetEndpointElement))
                 {
-                    shortcutData.TargetEndpoint = targetEndpointElement.GetString() ?? string.Empty;
+                    shortcutData.TargetEndpoint = targetEndpointElement.GetString();
                 }
 
                 // Parse optional fields

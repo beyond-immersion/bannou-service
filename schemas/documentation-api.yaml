@@ -189,20 +189,21 @@ paths:
         \                    \"description\": \"Display title of the document\"\n                },\n                \"category\"\
         : {\n                    \"$ref\": \"#/$defs/DocumentCategory\",\n                    \"description\": \"Category
         of the document\"\n                },\n                \"summary\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Brief text summary of the document\"\n                },\n               \
-        \ \"voiceSummary\": {\n                    \"type\": \"string\",\n                    \"description\": \"Concise summary
-        optimized for voice AI\"\n                },\n                \"content\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Full document content if requested\"\n                },\n             \
-        \   \"relevanceScore\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n\
-        \                    \"description\": \"Relevance score from 0.0 to 1.0\"\n                },\n                \"\
-        matchHighlights\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"type\": \"string\"\n                    },\n                    \"description\": \"Text snippets showing
-        where matches occurred\"\n                }\n            }\n        },\n        \"DocumentCategory\": {\n        \
-        \    \"type\": \"string\",\n            \"enum\": [\n                \"getting-started\",\n                \"api-reference\"\
-        ,\n                \"architecture\",\n                \"deployment\",\n                \"troubleshooting\",\n    \
-        \            \"tutorials\",\n                \"game-systems\",\n                \"world-lore\",\n                \"\
-        npc-ai\",\n                \"other\"\n            ],\n            \"description\": \"Fixed categories for type-safe
-        filtering\"\n        }\n    }\n}"
+        \                    \"nullable\": true,\n                    \"description\": \"Brief text summary of the document\"\
+        \n                },\n                \"voiceSummary\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Concise summary optimized for voice AI\"\n \
+        \               },\n                \"content\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Full document content if requested\"\n            \
+        \    },\n                \"relevanceScore\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Relevance score from 0.0 to 1.0\"\n                },\n\
+        \                \"matchHighlights\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"Text
+        snippets showing where matches occurred\"\n                }\n            }\n        },\n        \"DocumentCategory\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"getting-started\",\n          \
+        \      \"api-reference\",\n                \"architecture\",\n                \"deployment\",\n                \"\
+        troubleshooting\",\n                \"tutorials\",\n                \"game-systems\",\n                \"world-lore\"\
+        ,\n                \"npc-ai\",\n                \"other\"\n            ],\n            \"description\": \"Fixed categories
+        for type-safe filtering\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Natural language documentation search\",\n    \"description\": \"Search
         documentation using natural language queries.\\nReturns the most relevant documents with voice-friendly summaries.\\\
         n\",\n    \"tags\": [\n        \"Search\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryDocumentation\"\
@@ -285,41 +286,43 @@ paths:
         \          \"category\": {\n                    \"$ref\": \"#/$defs/DocumentCategory\",\n                    \"description\"\
         : \"Category for organizing the document\"\n                },\n                \"content\": {\n                 \
         \   \"type\": \"string\",\n                    \"description\": \"Full markdown content of the document\"\n      \
-        \          },\n                \"summary\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Brief text summary of the document\"\n                },\n                \"voiceSummary\": {\n              \
-        \      \"type\": \"string\",\n                    \"description\": \"Concise summary optimized for voice AI\"\n  \
-        \              },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Tags for filtering and search\"\n                },\n                \"relatedDocuments\": {\n                   \
-        \ \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n        \
-        \                \"format\": \"uuid\"\n                    },\n                    \"description\": \"IDs of related
-        documents\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n    \
-        \                \"additionalProperties\": true,\n                    \"description\": \"Custom metadata key-value
-        pairs\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the document was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the document was last updated\"\
-        \n                }\n            }\n        },\n        \"DocumentCategory\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"getting-started\",\n                \"api-reference\",\n           \
-        \     \"architecture\",\n                \"deployment\",\n                \"troubleshooting\",\n                \"\
-        tutorials\",\n                \"game-systems\",\n                \"world-lore\",\n                \"npc-ai\",\n  \
-        \              \"other\"\n            ],\n            \"description\": \"Fixed categories for type-safe filtering\"\
-        \n        },\n        \"DocumentSummary\": {\n            \"description\": \"Lightweight document representation for
-        listings and references\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"documentId\",\n                \"slug\",\n                \"title\",\n\
-        \                \"category\"\n            ],\n            \"properties\": {\n                \"documentId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier of the document\"\n                },\n                \"slug\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"URL-friendly unique identifier\"\n                },\n     \
-        \           \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        title of the document\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/DocumentCategory\"\
+        \          },\n                \"summary\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Brief text summary of the document\"\n                },\n       \
+        \         \"voiceSummary\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Concise summary optimized for voice AI\"\n                },\n           \
+        \     \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"Tags for filtering and
+        search\"\n                },\n                \"relatedDocuments\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"description\": \"IDs of related documents\"\n          \
+        \      },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Custom metadata key-value pairs\"\n                },\n          \
+        \      \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the document was created\"\n                },\n        \
+        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the document was last updated\"\n                }\n    \
+        \        }\n        },\n        \"DocumentCategory\": {\n            \"type\": \"string\",\n            \"enum\":
+        [\n                \"getting-started\",\n                \"api-reference\",\n                \"architecture\",\n \
+        \               \"deployment\",\n                \"troubleshooting\",\n                \"tutorials\",\n          \
+        \      \"game-systems\",\n                \"world-lore\",\n                \"npc-ai\",\n                \"other\"\n\
+        \            ],\n            \"description\": \"Fixed categories for type-safe filtering\"\n        },\n        \"\
+        DocumentSummary\": {\n            \"description\": \"Lightweight document representation for listings and references\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"documentId\",\n                \"slug\",\n                \"title\",\n                \"category\"\
+        \n            ],\n            \"properties\": {\n                \"documentId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
+        the document\"\n                },\n                \"slug\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"URL-friendly unique identifier\"\n                },\n                \"title\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display title of the document\"\
+        \n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/DocumentCategory\"\
         ,\n                    \"description\": \"Category of the document\"\n                },\n                \"summary\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Brief text summary of the document\"\
-        \n                },\n                \"voiceSummary\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"Concise summary optimized for voice AI\"\n                },\n                \"tags\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"description\": \"Tags associated with the document\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Brief text summary of the document\"\n                },\n                \"voiceSummary\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Concise
+        summary optimized for voice AI\"\n                },\n                \"tags\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Tags associated with the document\"\n                }\n            }\n  \
+        \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get specific document by ID or slug\",\n    \"description\": \"Retrieve
         a specific document by its unique identifier or slug.\\nReturns full content with metadata.\\n\",\n    \"tags\": [\n\
         \        \"Documents\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getDocument\"\n}"
@@ -403,11 +406,12 @@ paths:
         \          },\n                \"title\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Display title of the document\"\n                },\n                \"category\": {\n                    \"$ref\"\
         : \"#/$defs/DocumentCategory\",\n                    \"description\": \"Category of the document\"\n             \
-        \   },\n                \"summary\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Brief text summary of the document\"\n                },\n                \"voiceSummary\": {\n              \
-        \      \"type\": \"string\",\n                    \"description\": \"Concise summary optimized for voice AI\"\n  \
-        \              },\n                \"content\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Full document content if requested\"\n                },\n                \"relevanceScore\"\
+        \   },\n                \"summary\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Brief text summary of the document\"\n                },\n       \
+        \         \"voiceSummary\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Concise summary optimized for voice AI\"\n                },\n           \
+        \     \"content\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Full document content if requested\"\n                },\n                \"relevanceScore\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
         description\": \"Relevance score from 0.0 to 1.0\"\n                },\n                \"matchHighlights\": {\n \
         \                   \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
@@ -513,17 +517,17 @@ paths:
         \           \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
         title of the document\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/DocumentCategory\"\
         ,\n                    \"description\": \"Category of the document\"\n                },\n                \"summary\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Brief text summary of the document\"\
-        \n                },\n                \"voiceSummary\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"Concise summary optimized for voice AI\"\n                },\n                \"tags\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"description\": \"Tags associated with the document\"\n\
-        \                }\n            }\n        },\n        \"DocumentCategory\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"getting-started\",\n                \"api-reference\",\n             \
-        \   \"architecture\",\n                \"deployment\",\n                \"troubleshooting\",\n                \"tutorials\"\
-        ,\n                \"game-systems\",\n                \"world-lore\",\n                \"npc-ai\",\n             \
-        \   \"other\"\n            ],\n            \"description\": \"Fixed categories for type-safe filtering\"\n       \
-        \ }\n    }\n}"
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Brief text summary of the document\"\n                },\n                \"voiceSummary\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Concise
+        summary optimized for voice AI\"\n                },\n                \"tags\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Tags associated with the document\"\n                }\n            }\n  \
+        \      },\n        \"DocumentCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
+        \       \"getting-started\",\n                \"api-reference\",\n                \"architecture\",\n            \
+        \    \"deployment\",\n                \"troubleshooting\",\n                \"tutorials\",\n                \"game-systems\"\
+        ,\n                \"world-lore\",\n                \"npc-ai\",\n                \"other\"\n            ],\n     \
+        \       \"description\": \"Fixed categories for type-safe filtering\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List documents by category\",\n    \"description\": \"List all documents
         in a specific category or all categories.\\nSupports pagination for large result sets.\\n\",\n    \"tags\": [\n  \
         \      \"Documents\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listDocuments\"\n}"
@@ -1429,20 +1433,21 @@ paths:
         \   \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of this sync operation\"\n   \
         \             },\n                \"status\": {\n                    \"$ref\": \"#/$defs/SyncStatus\",\n         \
         \           \"description\": \"Result status of the sync\"\n                },\n                \"commitHash\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Git commit hash that was synced\"\
-        \n                },\n                \"documentsCreated\": {\n                    \"type\": \"integer\",\n      \
-        \              \"description\": \"Number of new documents created\"\n                },\n                \"documentsUpdated\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of existing documents
-        updated\"\n                },\n                \"documentsDeleted\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of documents deleted\"\n                },\n                \"documentsFailed\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of documents that failed
-        to process\"\n                },\n                \"durationMs\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Time taken for sync in milliseconds\"\n                },\n              \
-        \  \"errorMessage\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Error message if sync failed\"\n                }\n            }\n        },\n\
-        \        \"SyncStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"success\"\
-        ,\n                \"partial\",\n                \"failed\"\n            ],\n            \"description\": \"Result
-        status of a sync operation\"\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Git commit hash that was synced (null if sync failed or repo is empty)\"\n                },\n               \
+        \ \"documentsCreated\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of new documents created\"\n                },\n                \"documentsUpdated\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Number of existing documents updated\"\n                },\n\
+        \                \"documentsDeleted\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of documents deleted\"\n                },\n                \"documentsFailed\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"description\": \"Number of documents that failed to process\"\n \
+        \               },\n                \"durationMs\": {\n                    \"type\": \"integer\",\n              \
+        \      \"description\": \"Time taken for sync in milliseconds\"\n                },\n                \"errorMessage\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Error message if sync failed\"\n                }\n            }\n        },\n        \"SyncStatus\": {\n    \
+        \        \"type\": \"string\",\n            \"enum\": [\n                \"success\",\n                \"partial\"\
+        ,\n                \"failed\"\n            ],\n            \"description\": \"Result status of a sync operation\"\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually trigger repository sync\",\n    \"description\": \"Manually trigger
         synchronization of a bound repository.\\nIf force=true, performs full re-sync regardless of commit hash.\\n\",\n \
         \   \"tags\": [\n        \"Repository\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"syncRepository\"\
@@ -1523,14 +1528,14 @@ paths:
         description\": \"Timestamp when sync started\"\n                },\n                \"completedAt\": {\n         \
         \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
         : \"Timestamp when sync completed\"\n                },\n                \"commitHash\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Git commit hash that was synced\"\n                },\n\
-        \                \"documentsProcessed\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Total documents processed in sync\"\n                }\n            }\n        },\n        \"SyncStatus\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"success\",\n                \"partial\"\
-        ,\n                \"failed\"\n            ],\n            \"description\": \"Result status of a sync operation\"\n\
-        \        },\n        \"SyncTrigger\": {\n            \"type\": \"string\",\n            \"enum\": [\n            \
-        \    \"manual\",\n                \"scheduled\"\n            ],\n            \"description\": \"What triggered the
-        sync operation\"\n        }\n    }\n}"
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Git commit hash
+        that was synced (null if sync failed or repo is empty)\"\n                },\n                \"documentsProcessed\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total documents processed
+        in sync\"\n                }\n            }\n        },\n        \"SyncStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"success\",\n                \"partial\",\n                \"failed\"\
+        \n            ],\n            \"description\": \"Result status of a sync operation\"\n        },\n        \"SyncTrigger\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"manual\",\n                \"scheduled\"\
+        \n            ],\n            \"description\": \"What triggered the sync operation\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get repository binding status\",\n    \"description\": \"Get current status
         of a repository binding including sync state and statistics.\\n\",\n    \"tags\": [\n        \"Repository\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"getRepositoryStatus\"\n}"
@@ -1813,18 +1818,18 @@ paths:
         \                   \"description\": \"Namespace the archive belongs to\"\n                },\n                \"\
         bundleAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
         \             \"description\": \"Asset ID in Asset Service\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the archive\"\
-        \n                },\n                \"documentCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of documents in the archive\"\n                },\n                \"sizeBytes\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total size of the archive
-        in bytes\"\n                },\n                \"commitHash\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Git commit hash if namespace was bound
-        at archive time\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the archive
-        was created\"\n                },\n                \"owner\": {\n                    \"type\": \"string\",\n     \
-        \               \"description\": \"Owner of this archive. NOT a session ID.\\nContains either an accountId (UUID format)
-        for user-initiated archives\\nor a service name for service-initiated archives.\\n\"\n                }\n        \
-        \    }\n        }\n    }\n}"
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description of the archive\"\n                },\n                \"documentCount\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Number of documents in the archive\"\n              \
+        \  },\n                \"sizeBytes\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total size of the archive in bytes\"\n                },\n                \"commitHash\": {\n                \
+        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Git commit
+        hash if namespace was bound at archive time\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the archive was created\"\n                },\n                \"owner\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Owner of this archive. NOT a session ID.\\nContains
+        either an accountId (UUID format) for user-initiated archives\\nor a service name for service-initiated archives.\\\
+        n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List documentation archives\",\n    \"description\": \"List all archives
         for a namespace.\\n\",\n    \"tags\": [\n        \"Archive\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listDocumentationArchives\"\n}"
@@ -3034,9 +3039,11 @@ components:
           description: Full markdown content of the document
         summary:
           type: string
+          nullable: true
           description: Brief text summary of the document
         voiceSummary:
           type: string
+          nullable: true
           description: Concise summary optimized for voice AI
         tags:
           type: array
@@ -3087,9 +3094,11 @@ components:
           description: Category of the document
         summary:
           type: string
+          nullable: true
           description: Brief text summary of the document
         voiceSummary:
           type: string
+          nullable: true
           description: Concise summary optimized for voice AI
         tags:
           type: array
@@ -3122,12 +3131,15 @@ components:
           description: Category of the document
         summary:
           type: string
+          nullable: true
           description: Brief text summary of the document
         voiceSummary:
           type: string
+          nullable: true
           description: Concise summary optimized for voice AI
         content:
           type: string
+          nullable: true
           description: Full document content if requested
         relevanceScore:
           type: number
@@ -3324,7 +3336,8 @@ components:
           description: Result status of the sync
         commitHash:
           type: string
-          description: Git commit hash that was synced
+          nullable: true
+          description: Git commit hash that was synced (null if sync failed or repo is empty)
         documentsCreated:
           type: integer
           description: Number of new documents created
@@ -3441,7 +3454,8 @@ components:
           description: Timestamp when sync completed
         commitHash:
           type: string
-          description: Git commit hash that was synced
+          nullable: true
+          description: Git commit hash that was synced (null if sync failed or repo is empty)
         documentsProcessed:
           type: integer
           description: Total documents processed in sync
@@ -3664,6 +3678,7 @@ components:
           description: Asset ID in Asset Service
         description:
           type: string
+          nullable: true
           description: Description of the archive
         documentCount:
           type: integer

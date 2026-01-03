@@ -141,9 +141,9 @@ public class SessionDataModel
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// The account display name.
+    /// The account display name. Null if user hasn't set one.
     /// </summary>
-    public string DisplayName { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
 
     /// <summary>
     /// List of roles assigned to this session.

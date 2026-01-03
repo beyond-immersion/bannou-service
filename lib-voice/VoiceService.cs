@@ -617,6 +617,7 @@ public partial class VoiceService : IVoiceService
         CancellationToken cancellationToken)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
+        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != newPeerSessionId)
             .Select(p => p.SessionId ?? string.Empty)
@@ -679,6 +680,7 @@ public partial class VoiceService : IVoiceService
         CancellationToken cancellationToken)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
+        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId))
             .Select(p => p.SessionId ?? string.Empty)
@@ -714,6 +716,7 @@ public partial class VoiceService : IVoiceService
         CancellationToken cancellationToken)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
+        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != updatedPeerSessionId)
             .Select(p => p.SessionId ?? string.Empty)
@@ -752,6 +755,7 @@ public partial class VoiceService : IVoiceService
         string reason,
         CancellationToken cancellationToken)
     {
+        // Where clause filters out null/empty SessionIds; coalesce satisfies compiler for nullable string
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId))
             .Select(p => p.SessionId ?? string.Empty)

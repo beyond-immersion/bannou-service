@@ -187,25 +187,26 @@ paths:
         ,\n                    \"description\": \"The compiled behavior data including behavior tree and metadata\"\n    \
         \            },\n                \"compilationTimeMs\": {\n                    \"type\": \"integer\",\n          \
         \          \"description\": \"Time taken to compile the behavior in milliseconds\"\n                },\n         \
-        \       \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Asset service
-        ID where the compiled bytecode is stored\"\n                },\n                \"bundleId\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"Bundle ID if the behavior was added to a bundle\"\
-        \n                },\n                \"isUpdate\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"True if this replaced an existing behavior with the same content hash\"\n              \
-        \  },\n                \"warnings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Non-fatal
-        warnings during compilation\"\n                }\n            }\n        },\n        \"CompiledBehavior\": {\n   \
-        \         \"description\": \"Compiled behavior containing behavior tree, context schema, and GOAP integration data\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"behaviorTree\",\n                \"contextSchema\"\n            ],\n            \"properties\"\
-        : {\n                \"behaviorTree\": {\n                    \"$ref\": \"#/$defs/BehaviorTreeData\",\n          \
-        \          \"description\": \"Compiled behavior tree data with bytecode or download reference\"\n                },\n\
-        \                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\",\n            \
-        \        \"description\": \"Schema defining required context variables for execution\"\n                },\n     \
-        \           \"serviceDependencies\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"List
-        of required services for this behavior\"\n                },\n                \"goapGoals\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GoapGoal\"\
+        \       \"assetId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Asset service ID where the compiled bytecode is stored. Null only when caching
+        is explicitly disabled.\"\n                },\n                \"bundleId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Bundle ID if the behavior was added
+        to a bundle. Null if not bundled.\"\n                },\n                \"isUpdate\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if this replaced an existing behavior with the same content
+        hash\"\n                },\n                \"warnings\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"type\": \"string\"\n                    },\n                  \
+        \  \"description\": \"Non-fatal warnings during compilation\"\n                }\n            }\n        },\n    \
+        \    \"CompiledBehavior\": {\n            \"description\": \"Compiled behavior containing behavior tree, context schema,
+        and GOAP integration data\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"behaviorTree\",\n                \"contextSchema\"\n            ],\n\
+        \            \"properties\": {\n                \"behaviorTree\": {\n                    \"$ref\": \"#/$defs/BehaviorTreeData\"\
+        ,\n                    \"description\": \"Compiled behavior tree data with bytecode or download reference\"\n    \
+        \            },\n                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\"\
+        ,\n                    \"description\": \"Schema defining required context variables for execution\"\n           \
+        \     },\n                \"serviceDependencies\": {\n                    \"type\": \"array\",\n                 \
+        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of required services for this behavior\"\n                },\n                \"goapGoals\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GoapGoal\"\
         \n                    },\n                    \"description\": \"GOAP goals extracted from the behavior\"\n      \
         \          },\n                \"executionMetadata\": {\n                    \"$ref\": \"#/$defs/ExecutionMetadata\"\
         ,\n                    \"description\": \"Metadata for behavior execution including performance hints and resource
@@ -370,25 +371,26 @@ paths:
         ,\n                    \"description\": \"The compiled behavior data including behavior tree and metadata\"\n    \
         \            },\n                \"compilationTimeMs\": {\n                    \"type\": \"integer\",\n          \
         \          \"description\": \"Time taken to compile the behavior in milliseconds\"\n                },\n         \
-        \       \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Asset service
-        ID where the compiled bytecode is stored\"\n                },\n                \"bundleId\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"Bundle ID if the behavior was added to a bundle\"\
-        \n                },\n                \"isUpdate\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"True if this replaced an existing behavior with the same content hash\"\n              \
-        \  },\n                \"warnings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Non-fatal
-        warnings during compilation\"\n                }\n            }\n        },\n        \"CompiledBehavior\": {\n   \
-        \         \"description\": \"Compiled behavior containing behavior tree, context schema, and GOAP integration data\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"behaviorTree\",\n                \"contextSchema\"\n            ],\n            \"properties\"\
-        : {\n                \"behaviorTree\": {\n                    \"$ref\": \"#/$defs/BehaviorTreeData\",\n          \
-        \          \"description\": \"Compiled behavior tree data with bytecode or download reference\"\n                },\n\
-        \                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\",\n            \
-        \        \"description\": \"Schema defining required context variables for execution\"\n                },\n     \
-        \           \"serviceDependencies\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"List
-        of required services for this behavior\"\n                },\n                \"goapGoals\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GoapGoal\"\
+        \       \"assetId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Asset service ID where the compiled bytecode is stored. Null only when caching
+        is explicitly disabled.\"\n                },\n                \"bundleId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Bundle ID if the behavior was added
+        to a bundle. Null if not bundled.\"\n                },\n                \"isUpdate\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if this replaced an existing behavior with the same content
+        hash\"\n                },\n                \"warnings\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"type\": \"string\"\n                    },\n                  \
+        \  \"description\": \"Non-fatal warnings during compilation\"\n                }\n            }\n        },\n    \
+        \    \"CompiledBehavior\": {\n            \"description\": \"Compiled behavior containing behavior tree, context schema,
+        and GOAP integration data\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"behaviorTree\",\n                \"contextSchema\"\n            ],\n\
+        \            \"properties\": {\n                \"behaviorTree\": {\n                    \"$ref\": \"#/$defs/BehaviorTreeData\"\
+        ,\n                    \"description\": \"Compiled behavior tree data with bytecode or download reference\"\n    \
+        \            },\n                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\"\
+        ,\n                    \"description\": \"Schema defining required context variables for execution\"\n           \
+        \     },\n                \"serviceDependencies\": {\n                    \"type\": \"array\",\n                 \
+        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of required services for this behavior\"\n                },\n                \"goapGoals\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GoapGoal\"\
         \n                    },\n                    \"description\": \"GOAP goals extracted from the behavior\"\n      \
         \          },\n                \"executionMetadata\": {\n                    \"$ref\": \"#/$defs/ExecutionMetadata\"\
         ,\n                    \"description\": \"Metadata for behavior execution including performance hints and resource
@@ -928,8 +930,9 @@ paths:
         \               ],\n                    \"description\": \"Suggested action based on validation\"\n              \
         \  },\n                \"invalidatedAtIndex\": {\n                    \"type\": \"integer\",\n                   \
         \ \"description\": \"Index where plan became invalid (if applicable)\"\n                },\n                \"message\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Additional details about the
-        validation result\"\n                }\n            }\n        }\n    }\n}"
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional details about the validation result. Null when no additional context is needed.\"\n               \
+        \ }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate existing GOAP plan\",\n    \"description\": \"Validates an existing
         GOAP plan against the current world state.\\nReturns whether the plan is still valid or needs replanning.\\n\",\n\
         \    \"tags\": [\n        \"GOAP\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ValidateGoapPlan\"\n\
@@ -1087,10 +1090,13 @@ components:
           description: Time taken to compile the behavior in milliseconds
         assetId:
           type: string
-          description: Asset service ID where the compiled bytecode is stored
+          nullable: true
+          description: Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly 
+            disabled.
         bundleId:
           type: string
-          description: Bundle ID if the behavior was added to a bundle
+          nullable: true
+          description: Bundle ID if the behavior was added to a bundle. Null if not bundled.
         isUpdate:
           type: boolean
           description: True if this replaced an existing behavior with the same content hash
@@ -1532,7 +1538,8 @@ components:
           description: Index where plan became invalid (if applicable)
         message:
           type: string
-          description: Additional details about the validation result
+          nullable: true
+          description: Additional details about the validation result. Null when no additional context is needed.
 
     GoapPlanningOptions:
       description: Options controlling the GOAP planning process including depth and timeout limits

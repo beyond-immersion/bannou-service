@@ -1399,8 +1399,8 @@
             3. If timeout expires, executes DefaultFlow
             </para>
             <para>
-            This enables THE_DREAM pattern: game server receives complete cinematic,
-            starts executing, and Event Brain can optionally extend mid-execution.
+            This enables streaming composition: game server receives complete cinematic,
+            starts executing, and can optionally receive extensions mid-execution.
             </para>
             </remarks>
             <param name="Name">Unique name for this continuation point.</param>
@@ -1420,8 +1420,8 @@
             3. If timeout expires, executes DefaultFlow
             </para>
             <para>
-            This enables THE_DREAM pattern: game server receives complete cinematic,
-            starts executing, and Event Brain can optionally extend mid-execution.
+            This enables streaming composition: game server receives complete cinematic,
+            starts executing, and can optionally receive extensions mid-execution.
             </para>
             </remarks>
             <param name="Name">Unique name for this continuation point.</param>
@@ -7070,7 +7070,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.BundleId">
             <summary>
-            Identifier of the bundle this behavior belongs to
+            Identifier of the bundle this behavior belongs to. Null if not bundled.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.AssetId">
@@ -7125,7 +7125,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.BundleId">
             <summary>
-            Identifier of the bundle this behavior belongs to
+            Identifier of the bundle this behavior belongs to. Null if not bundled.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.AssetId">
@@ -7185,7 +7185,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.BundleId">
             <summary>
-            Identifier of the bundle this behavior belongs to
+            Identifier of the bundle this behavior belongs to. Null if not bundled.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.AssetId">
@@ -7595,7 +7595,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentationSyncCompletedEvent.CommitHash">
             <summary>
-            Git commit hash that was synced
+            Git commit hash that was synced (null if sync failed or repo is empty)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentationSyncCompletedEvent.DocumentsCreated">
@@ -13361,12 +13361,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.AssetId">
             <summary>
-            Asset service ID where the compiled bytecode is stored
+            Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BundleId">
             <summary>
-            Bundle ID if the behavior was added to a bundle
+            Bundle ID if the behavior was added to a bundle. Null if not bundled.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.IsUpdate">
@@ -13826,7 +13826,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Message">
             <summary>
-            Additional details about the validation result
+            Additional details about the validation result. Null when no additional context is needed.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions">
@@ -17619,7 +17619,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncRepositoryResponse.CommitHash">
             <summary>
-            Git commit hash that was synced
+            Git commit hash that was synced (null if sync failed or repo is empty)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncRepositoryResponse.DocumentsCreated">
@@ -17767,7 +17767,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncInfo.CommitHash">
             <summary>
-            Git commit hash that was synced
+            Git commit hash that was synced (null if sync failed or repo is empty)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.SyncInfo.DocumentsProcessed">

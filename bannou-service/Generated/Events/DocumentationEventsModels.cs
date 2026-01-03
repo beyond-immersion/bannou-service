@@ -357,10 +357,10 @@ public partial class DocumentationSyncCompletedEvent
     public DocumentationSyncCompletedEventStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// Git commit hash that was synced
+    /// Git commit hash that was synced (null if sync failed or repo is empty)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
-    public string CommitHash { get; set; } = default!;
+    public string? CommitHash { get; set; } = default!;
 
     /// <summary>
     /// Number of new documents created during sync

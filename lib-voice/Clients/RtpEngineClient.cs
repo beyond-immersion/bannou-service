@@ -298,6 +298,7 @@ public class RtpEngineClient : IRtpEngineClient
             string[] arr => EncodeList(arr),
             IEnumerable<string> enumerable => EncodeList(enumerable.ToArray()),
             Dictionary<string, object> dict => EncodeBencode(dict),
+            // Defensive: some object ToString() can return null; empty string is safe for bencode
             _ => EncodeString(value?.ToString() ?? string.Empty)
         };
     }

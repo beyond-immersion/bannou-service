@@ -30,9 +30,9 @@ x-lifecycle:
     model:
       behaviorId: { type: string, primary: true, required: true, description: "Unique identifier for the behavior" }
       name: { type: string, required: true, description: "Human-readable name of the behavior" }
-      category: { type: string, description: "Category classification for the behavior" }
-      bundleId: { type: string, description: "Identifier of the bundle this behavior belongs to" }
-      assetId: { type: string, description: "Identifier of the asset associated with this behavior" }
+      category: { type: string, required: true, description: "Category classification for the behavior" }
+      bundleId: { type: string, nullable: true, description: "Identifier of the bundle this behavior belongs to. Null if not bundled." }
+      assetId: { type: string, required: true, description: "Identifier of the asset associated with this behavior" }
       bytecodeSize: { type: integer, format: int32, description: "Size of the compiled bytecode in bytes" }
       schemaVersion: { type: string, description: "Version of the schema used for this behavior" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the behavior was created" }

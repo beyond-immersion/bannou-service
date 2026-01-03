@@ -540,6 +540,15 @@ public partial class OrchestratorService : IOrchestratorService
                 _logger.LogInformation(
                     "Loaded preset '{Preset}' with {NodeCount} nodes",
                     body.Preset, nodesToDeploy.Count);
+
+                // Initialize processing pools if present in preset
+                if (preset.ProcessingPools != null && preset.ProcessingPools.Count > 0)
+                {
+                    await InitializePoolConfigurationsAsync(preset.ProcessingPools, cancellationToken);
+                    _logger.LogInformation(
+                        "Initialized {Count} processing pool configurations from preset",
+                        preset.ProcessingPools.Count);
+                }
             }
             else if (body.Topology?.Nodes != null && body.Topology.Nodes.Count > 0)
             {
@@ -2600,6 +2609,25 @@ public partial class OrchestratorService : IOrchestratorService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Load pool configuration - required to know how to deploy workers
+            var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
+            var poolConfig = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+            if (poolConfig == null)
+            {
+                _logger.LogWarning("ScalePool: No configuration found for pool {PoolType}", body.PoolType);
+                return (StatusCodes.NotFound, new ScalePoolResponse
+                {
+                    PoolType = body.PoolType,
+                    PreviousInstances = 0,
+                    CurrentInstances = 0,
+                    ScaledUp = 0,
+                    ScaledDown = 0
+                });
+            }
+
+            // Get container orchestrator backend
+            var orchestrator = await GetOrchestratorAsync(cancellationToken);
+
             var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
             var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
             var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
@@ -2612,75 +2640,160 @@ public partial class OrchestratorService : IOrchestratorService
             var previousCount = currentInstances.Count;
             var scaledUp = 0;
             var scaledDown = 0;
+            var deployErrors = new List<string>();
 
             if (body.TargetInstances > previousCount)
             {
-                // Scale up - add new instances
-                scaledUp = body.TargetInstances - previousCount;
+                // Scale up - deploy new worker containers
+                var toSpawn = body.TargetInstances - previousCount;
 
-                for (int i = 0; i < scaledUp; i++)
+                for (int i = 0; i < toSpawn; i++)
                 {
                     var processorId = $"{body.PoolType}-{Guid.NewGuid():N}";
-                    var appId = $"bannou-processor-{body.PoolType}-{currentInstances.Count + 1}";
+                    var appId = $"bannou-pool-{body.PoolType}-{processorId[^8..]}";
 
-                    var newInstance = new ProcessorInstance
+                    // Build environment for this pool worker
+                    var workerEnv = new Dictionary<string, string>();
+
+                    // Include base pool configuration environment
+                    if (poolConfig.Environment != null)
                     {
-                        ProcessorId = processorId,
-                        AppId = appId,
-                        PoolType = body.PoolType,
-                        Status = "available",
-                        CreatedAt = DateTimeOffset.UtcNow,
-                        LastUpdated = DateTimeOffset.UtcNow
-                    };
+                        foreach (var kvp in poolConfig.Environment)
+                        {
+                            workerEnv[kvp.Key] = kvp.Value;
+                        }
+                    }
 
-                    currentInstances.Add(newInstance);
-                    availableInstances.Add(newInstance);
+                    // Set the unique identifiers for this worker
+                    // APP_ID is the standard mesh routing identifier
+                    workerEnv["APP_ID"] = appId;
+
+                    // ActorPoolNodeWorker uses these specific variables for self-registration
+                    workerEnv["ACTOR_POOL_NODE_ID"] = processorId;
+                    workerEnv["ACTOR_POOL_NODE_APP_ID"] = appId;
+
+                    // Service name defaults to "bannou" if not specified in pool config
+                    var serviceName = poolConfig.ServiceName;
+                    if (string.IsNullOrEmpty(serviceName))
+                    {
+                        serviceName = AppConstants.DEFAULT_APP_NAME;
+                    }
+
+                    // Deploy the worker container
+                    _logger.LogInformation(
+                        "ScalePool: Deploying worker {ProcessorId} with app-id {AppId} for pool {PoolType}",
+                        processorId, appId, body.PoolType);
+
+                    var deployResult = await orchestrator.DeployServiceAsync(
+                        serviceName,
+                        appId,
+                        workerEnv,
+                        cancellationToken);
+
+                    if (deployResult.Success)
+                    {
+                        // Create instance record - initially pending until self-registration
+                        var newInstance = new ProcessorInstance
+                        {
+                            ProcessorId = processorId,
+                            AppId = appId,
+                            PoolType = body.PoolType,
+                            Status = "pending", // Will become "available" after self-registration
+                            CreatedAt = DateTimeOffset.UtcNow,
+                            LastUpdated = DateTimeOffset.UtcNow
+                        };
+
+                        currentInstances.Add(newInstance);
+                        scaledUp++;
+
+                        _logger.LogInformation(
+                            "ScalePool: Deployed worker {ProcessorId} successfully",
+                            processorId);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "ScalePool: Failed to deploy worker {ProcessorId}: {Message}",
+                            processorId, deployResult.Message);
+                        deployErrors.Add($"{processorId}: {deployResult.Message}");
+                    }
                 }
 
-                _logger.LogInformation("ScalePool: Scaled up pool {PoolType} by {Count} instances", body.PoolType, scaledUp);
+                _logger.LogInformation(
+                    "ScalePool: Scaled up pool {PoolType} by {Count} instances (target was {Target})",
+                    body.PoolType, scaledUp, toSpawn);
             }
             else if (body.TargetInstances < previousCount)
             {
-                // Scale down - remove instances (prefer idle ones)
+                // Scale down - teardown worker containers
                 var toRemove = previousCount - body.TargetInstances;
 
                 // Can only remove available instances (unless force)
                 var maxRemovable = body.Force ? previousCount : availableInstances.Count;
-                scaledDown = Math.Min(toRemove, maxRemovable);
+                var actualToRemove = Math.Min(toRemove, maxRemovable);
 
-                if (scaledDown > 0)
+                if (actualToRemove > 0)
                 {
-                    // Remove from available first
-                    var removedIds = new HashSet<string>();
-                    for (int i = 0; i < Math.Min(scaledDown, availableInstances.Count); i++)
+                    // Collect instances to remove (prefer available/idle ones first)
+                    var instancesToRemove = new List<ProcessorInstance>();
+
+                    // First take from available
+                    for (int i = 0; i < Math.Min(actualToRemove, availableInstances.Count); i++)
                     {
-                        removedIds.Add(availableInstances[i].ProcessorId);
+                        instancesToRemove.Add(availableInstances[i]);
                     }
 
-                    availableInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
-                    currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
-
-                    // If force and still need to remove more, remove busy instances
-                    if (body.Force && removedIds.Count < scaledDown)
+                    // If force and still need more, take from busy instances
+                    if (body.Force && instancesToRemove.Count < actualToRemove)
                     {
-                        var busyToRemove = scaledDown - removedIds.Count;
-                        var busyInstances = currentInstances.Take(busyToRemove).ToList();
-                        foreach (var instance in busyInstances)
+                        var busyToRemove = actualToRemove - instancesToRemove.Count;
+                        var busyInstances = currentInstances
+                            .Where(i => !instancesToRemove.Any(r => r.ProcessorId == i.ProcessorId))
+                            .Take(busyToRemove);
+                        instancesToRemove.AddRange(busyInstances);
+                    }
+
+                    // Teardown each worker container
+                    foreach (var instance in instancesToRemove)
+                    {
+                        _logger.LogInformation(
+                            "ScalePool: Tearing down worker {ProcessorId} with app-id {AppId}",
+                            instance.ProcessorId, instance.AppId);
+
+                        var teardownResult = await orchestrator.TeardownServiceAsync(
+                            instance.AppId,
+                            removeVolumes: false,
+                            cancellationToken);
+
+                        if (teardownResult.Success)
                         {
-                            removedIds.Add(instance.ProcessorId);
-                            // Also release their leases
+                            // Release any lease for this processor
                             var leaseToRemove = leases.FirstOrDefault(l => l.Value.ProcessorId == instance.ProcessorId);
                             if (leaseToRemove.Key != null)
                             {
                                 leases.Remove(leaseToRemove.Key);
                             }
-                        }
 
-                        currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+                            availableInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                            currentInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                            scaledDown++;
+
+                            _logger.LogInformation(
+                                "ScalePool: Torn down worker {ProcessorId} successfully",
+                                instance.ProcessorId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "ScalePool: Failed to teardown worker {ProcessorId}: {Message}",
+                                instance.ProcessorId, teardownResult.Message);
+                        }
                     }
                 }
 
-                _logger.LogInformation("ScalePool: Scaled down pool {PoolType} by {Count} instances", body.PoolType, scaledDown);
+                _logger.LogInformation(
+                    "ScalePool: Scaled down pool {PoolType} by {Count} instances",
+                    body.PoolType, scaledDown);
             }
 
             // Save updated state
@@ -2784,14 +2897,94 @@ public partial class OrchestratorService : IOrchestratorService
     }
 
     /// <summary>
+    /// Initializes pool configurations in Redis from preset processing_pools definitions.
+    /// Called when a preset with processing pools is deployed.
+    /// </summary>
+    /// <param name="processingPools">Processing pool definitions from the preset.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task InitializePoolConfigurationsAsync(
+        List<PresetProcessingPool> processingPools,
+        CancellationToken cancellationToken)
+    {
+        foreach (var pool in processingPools)
+        {
+            if (string.IsNullOrEmpty(pool.PoolType))
+            {
+                _logger.LogWarning("Skipping pool with empty pool_type");
+                continue;
+            }
+
+            var configKey = string.Format(POOL_CONFIG_KEY, pool.PoolType);
+
+            // Build the pool worker environment variables
+            var poolEnvironment = new Dictionary<string, string>();
+
+            // Enable only the specified plugin
+            if (!string.IsNullOrEmpty(pool.Plugin))
+            {
+                poolEnvironment["SERVICES_ENABLED"] = "false";
+                var envVarName = pool.Plugin.ToUpperInvariant().Replace("-", "_") + "_SERVICE_ENABLED";
+                poolEnvironment[envVarName] = "true";
+            }
+
+            // Merge custom environment from preset
+            if (pool.Environment != null)
+            {
+                foreach (var kvp in pool.Environment)
+                {
+                    poolEnvironment[kvp.Key] = kvp.Value;
+                }
+            }
+
+            var config = new PoolConfiguration
+            {
+                PoolType = pool.PoolType,
+                ServiceName = pool.Plugin,
+                Image = pool.Image,
+                Environment = poolEnvironment,
+                MinInstances = pool.MinInstances,
+                MaxInstances = pool.MaxInstances,
+                ScaleUpThreshold = pool.ScaleUpThreshold,
+                ScaleDownThreshold = pool.ScaleDownThreshold,
+                IdleTimeoutMinutes = pool.IdleTimeoutMinutes
+            };
+
+            await _stateManager.SetValueAsync(configKey, config);
+
+            _logger.LogInformation(
+                "Initialized pool configuration: PoolType={PoolType}, Plugin={Plugin}, Min={Min}, Max={Max}",
+                pool.PoolType, pool.Plugin, pool.MinInstances, pool.MaxInstances);
+
+            // Register this pool type in the known pools list
+            await RegisterPoolTypeAsync(pool.PoolType, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Registers a pool type in the known pools list stored in Redis.
+    /// </summary>
+    /// <param name="poolType">The pool type to register.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task RegisterPoolTypeAsync(string poolType, CancellationToken cancellationToken)
+    {
+        var knownPoolsKey = "orchestrator:pools:known";
+        var knownPools = await _stateManager.GetListAsync<string>(knownPoolsKey) ?? new List<string>();
+
+        if (!knownPools.Contains(poolType))
+        {
+            knownPools.Add(poolType);
+            await _stateManager.SetListAsync(knownPoolsKey, knownPools);
+        }
+    }
+
+    /// <summary>
     /// Gets a list of known pool types from Redis.
     /// </summary>
     private async Task<List<string>> GetKnownPoolTypesAsync()
     {
-        // For now, we'll use a hardcoded list of known pool types
-        // In a full implementation, we'd scan Redis keys or maintain a registry
-        await Task.CompletedTask;
-        return new List<string> { "asset-processor", "texture-processor", "model-processor", "audio-processor" };
+        var knownPoolsKey = "orchestrator:pools:known";
+        var knownPools = await _stateManager.GetListAsync<string>(knownPoolsKey);
+        return knownPools ?? new List<string>();
     }
 
     /// <summary>
@@ -2848,14 +3041,36 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Pool configuration stored in Redis.
+    /// Contains all settings needed to spawn pool worker containers.
     /// </summary>
     internal sealed class PoolConfiguration
     {
+        /// <summary>Pool type identifier (e.g., "actor-shared", "asset-image").</summary>
         public string PoolType { get; set; } = string.Empty;
+
+        /// <summary>Service/plugin name to enable on pool workers.</summary>
+        public string ServiceName { get; set; } = string.Empty;
+
+        /// <summary>Docker image for pool workers. If empty, uses default bannou image.</summary>
+        public string? Image { get; set; }
+
+        /// <summary>Environment variables for pool worker containers.</summary>
+        public Dictionary<string, string>? Environment { get; set; }
+
+        /// <summary>Minimum number of instances to maintain.</summary>
         public int MinInstances { get; set; } = 1;
+
+        /// <summary>Maximum number of instances allowed.</summary>
         public int MaxInstances { get; set; } = 5;
+
+        /// <summary>Scale up when utilization exceeds this threshold (0.0-1.0).</summary>
         public double ScaleUpThreshold { get; set; } = 0.8;
+
+        /// <summary>Scale down when utilization drops below this threshold (0.0-1.0).</summary>
         public double ScaleDownThreshold { get; set; } = 0.2;
+
+        /// <summary>Time in minutes before idle workers are cleaned up.</summary>
+        public int IdleTimeoutMinutes { get; set; } = 5;
     }
 
     /// <summary>

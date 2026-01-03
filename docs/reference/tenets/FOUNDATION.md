@@ -76,7 +76,7 @@ Path parameters (e.g., `/accounts/{id}`) cannot map to static GUIDs for zero-cop
 
 #### 1. Binary Format Specifications (ABML Bytecode)
 
-The ABML Local Runtime uses a binary bytecode format for client-side behavior model execution. This format is specified in dedicated documentation (`docs/planning/UPCOMING_-_ABML_LOCAL_RUNTIME.md`) rather than OpenAPI because:
+The ABML Local Runtime uses a binary bytecode format for client-side behavior model execution. This format is specified in dedicated documentation rather than OpenAPI because:
 - Binary formats are not HTTP APIs - OpenAPI is designed for REST/HTTP specifications
 - Bytecode is a compiler output, not a request/response contract
 - The specification document serves as the "schema" defining format, opcodes, and semantics

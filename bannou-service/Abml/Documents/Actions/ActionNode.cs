@@ -209,8 +209,8 @@ public sealed record SyncAction(string Point) : ActionNode;
 /// 3. If timeout expires, executes DefaultFlow
 /// </para>
 /// <para>
-/// This enables THE_DREAM pattern: game server receives complete cinematic,
-/// starts executing, and Event Brain can optionally extend mid-execution.
+/// This enables streaming composition: game server receives complete cinematic,
+/// starts executing, and can optionally receive extensions mid-execution.
 /// </para>
 /// </remarks>
 /// <param name="Name">Unique name for this continuation point.</param>

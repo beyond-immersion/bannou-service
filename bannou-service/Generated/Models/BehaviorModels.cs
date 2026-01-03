@@ -232,16 +232,16 @@ public partial class CompileBehaviorResponse
     public int CompilationTimeMs { get; set; } = default!;
 
     /// <summary>
-    /// Asset service ID where the compiled bytecode is stored
+    /// Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    public string AssetId { get; set; } = default!;
+    public string? AssetId { get; set; } = default!;
 
     /// <summary>
-    /// Bundle ID if the behavior was added to a bundle
+    /// Bundle ID if the behavior was added to a bundle. Null if not bundled.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string BundleId { get; set; } = default!;
+    public string? BundleId { get; set; } = default!;
 
     /// <summary>
     /// True if this replaced an existing behavior with the same content hash
@@ -894,10 +894,10 @@ public partial class ValidateGoapPlanResponse
     public int InvalidatedAtIndex { get; set; } = default!;
 
     /// <summary>
-    /// Additional details about the validation result
+    /// Additional details about the validation result. Null when no additional context is needed.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public string? Message { get; set; } = default!;
 
 }
 

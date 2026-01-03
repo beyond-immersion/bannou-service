@@ -141,43 +141,55 @@ public partial class BehaviorService : IBehaviorService
             // Store the compiled model as an asset if caching is enabled
             string? assetId = null;
             bool isUpdate = false;
-            if (body.CompilationOptions?.CacheCompiledResult != false)
+            var cachingEnabled = body.CompilationOptions?.CacheCompiledResult != false;
+            if (cachingEnabled)
             {
                 assetId = await StoreCompiledModelAsync(behaviorId, bytecode, cancellationToken);
 
-                if (assetId != null)
+                // If caching was enabled but storage failed, the behavior is inaccessible - this is an error
+                if (assetId == null)
                 {
-                    // Record in bundle manager and determine if this is new or update
-                    var metadata = new BehaviorMetadata
-                    {
-                        Name = behaviorName,
-                        Category = category,
-                        BundleId = body.BundleId,
-                        BytecodeSize = bytecode.Length,
-                        SchemaVersion = AbmlSchemaVersion
-                    };
-
-                    isUpdate = !await _bundleManager.RecordBehaviorAsync(
-                        behaviorId,
-                        assetId,
-                        body.BundleId,
-                        metadata,
-                        cancellationToken);
-
-                    // Extract and cache GOAP metadata if present
-                    await ExtractAndCacheGoapMetadataAsync(behaviorId, body.AbmlContent, cancellationToken);
-
-                    // Publish lifecycle event
-                    await PublishBehaviorEventAsync(
-                        behaviorId,
-                        behaviorName,
-                        category,
-                        body.BundleId,
-                        assetId,
-                        bytecode.Length,
-                        isUpdate,
-                        cancellationToken);
+                    _logger.LogError("Failed to store compiled behavior {BehaviorId} - storage returned null", behaviorId);
+                    await _messageBus.TryPublishErrorAsync(
+                        serviceName: "behavior",
+                        operation: "CompileAbmlBehavior",
+                        errorType: "StorageFailure",
+                        message: "Failed to store compiled behavior in asset service",
+                        details: new { behaviorId },
+                        cancellationToken: cancellationToken);
+                    return (StatusCodes.InternalServerError, null);
                 }
+
+                // Record in bundle manager and determine if this is new or update
+                var metadata = new BehaviorMetadata
+                {
+                    Name = behaviorName,
+                    Category = category,
+                    BundleId = body.BundleId,
+                    BytecodeSize = bytecode.Length,
+                    SchemaVersion = AbmlSchemaVersion
+                };
+
+                isUpdate = !await _bundleManager.RecordBehaviorAsync(
+                    behaviorId,
+                    assetId,
+                    body.BundleId,
+                    metadata,
+                    cancellationToken);
+
+                // Extract and cache GOAP metadata if present
+                await ExtractAndCacheGoapMetadataAsync(behaviorId, body.AbmlContent, cancellationToken);
+
+                // Publish lifecycle event
+                await PublishBehaviorEventAsync(
+                    behaviorId,
+                    behaviorName,
+                    category,
+                    body.BundleId,
+                    assetId,
+                    bytecode.Length,
+                    isUpdate,
+                    cancellationToken);
             }
 
             stopwatch.Stop();
@@ -199,7 +211,8 @@ public partial class BehaviorService : IBehaviorService
                     ContextSchema = new ContextSchemaData()
                 },
                 CompilationTimeMs = (int)stopwatch.ElapsedMilliseconds,
-                AssetId = assetId ?? string.Empty,
+                // assetId is null only when caching is explicitly disabled; otherwise storage failure returns error above
+                AssetId = assetId,
                 BundleId = body.BundleId,
                 IsUpdate = isUpdate,
                 Warnings = new List<string>()
@@ -242,8 +255,10 @@ public partial class BehaviorService : IBehaviorService
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
-                Category = category ?? string.Empty,
-                BundleId = bundleId ?? string.Empty,
+                // Category is required - use "uncategorized" as fallback when not specified
+                Category = category ?? "uncategorized",
+                // BundleId is nullable - behaviors don't require bundling
+                BundleId = bundleId,
                 AssetId = assetId,
                 BytecodeSize = bytecodeSize,
                 SchemaVersion = AbmlSchemaVersion,
@@ -262,8 +277,10 @@ public partial class BehaviorService : IBehaviorService
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
-                Category = category ?? string.Empty,
-                BundleId = bundleId ?? string.Empty,
+                // Category is required - use "uncategorized" as fallback when not specified
+                Category = category ?? "uncategorized",
+                // BundleId is nullable - behaviors don't require bundling
+                BundleId = bundleId,
                 AssetId = assetId,
                 BytecodeSize = bytecodeSize,
                 SchemaVersion = AbmlSchemaVersion,
@@ -579,6 +596,20 @@ public partial class BehaviorService : IBehaviorService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Validate that we have a download URL - it's required for accessing the behavior
+            if (asset.DownloadUrl == null)
+            {
+                _logger.LogError("Asset {AssetId} for behavior {BehaviorId} has no download URL", body.BehaviorId, body.BehaviorId);
+                await _messageBus.TryPublishErrorAsync(
+                    serviceName: "behavior",
+                    operation: "GetCachedBehavior",
+                    errorType: "MissingDownloadUrl",
+                    message: "Asset has no download URL - behavior is inaccessible",
+                    details: new { BehaviorId = body.BehaviorId },
+                    cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+
             // Download the bytecode to include in response
             byte[]? bytecode = null;
             try
@@ -600,7 +631,8 @@ public partial class BehaviorService : IBehaviorService
                 }
                 : new BehaviorTreeData
                 {
-                    DownloadUrl = asset.DownloadUrl?.ToString() ?? string.Empty,
+                    // DownloadUrl is validated above - this won't be null
+                    DownloadUrl = asset.DownloadUrl.ToString(),
                     BytecodeSize = 0 // Unknown size when using download URL
                 };
 
@@ -753,8 +785,10 @@ public partial class BehaviorService : IBehaviorService
             Timestamp = now,
             BehaviorId = metadata.BehaviorId,
             Name = metadata.Name,
-            Category = metadata.Category ?? string.Empty,
-            BundleId = metadata.BundleId ?? string.Empty,
+            // Category is required - use "uncategorized" as fallback when not specified
+            Category = metadata.Category ?? "uncategorized",
+            // BundleId is nullable - behaviors don't require bundling
+            BundleId = metadata.BundleId,
             AssetId = metadata.AssetId,
             BytecodeSize = metadata.BytecodeSize,
             SchemaVersion = metadata.SchemaVersion,
@@ -954,7 +988,8 @@ public partial class BehaviorService : IBehaviorService
                 Reason = ConvertToApiReplanReason(result.Reason),
                 SuggestedAction = ConvertToApiSuggestion(result.Suggestion),
                 InvalidatedAtIndex = result.InvalidatedAtIndex,
-                Message = result.Message ?? string.Empty
+                // Message is nullable - null means no additional context needed
+                Message = result.Message
             };
 
             return (StatusCodes.OK, response);
@@ -1025,7 +1060,11 @@ public partial class BehaviorService : IBehaviorService
                 System.Text.Json.JsonValueKind.Number => worldState.SetNumeric(property.Name, property.Value.GetSingle()),
                 System.Text.Json.JsonValueKind.True => worldState.SetBoolean(property.Name, true),
                 System.Text.Json.JsonValueKind.False => worldState.SetBoolean(property.Name, false),
+                // GetString() returns string? but cannot return null when ValueKind is String;
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 System.Text.Json.JsonValueKind.String => worldState.SetString(property.Name, property.Value.GetString() ?? string.Empty),
+                // Default case handles Null, Object, Array, Undefined - these are intentionally ignored
+                // as WorldState only supports primitive types (bool, number, string)
                 _ => worldState
             };
         }

@@ -49,25 +49,10 @@ processing_pools:
       ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
       ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
 
-topology:
-  nodes:
-    - name: bannou-actor-control
-      services:
-        - actor
-        - behavior
-        - asset
-      replicas: 1
-      environment:
-        ASPNETCORE_ENVIRONMENT: Production
-        ACTOR_DEPLOYMENT_MODE: shared-pool
-
-  infrastructure:
-    redis:
-      enabled: true
-      version: "7"
-    rabbitmq:
-      enabled: true
-      version: "4"
+# NOTE: This preset only defines processing pools, NOT topology.
+# Actor pools are NOT topology nodes - they are worker containers spawned
+# on-demand by the control plane (similar to asset processors).
+# The control plane runs on the main bannou deployment topology.
 
 environment:
   APP_LOGGING_LEVEL: Information

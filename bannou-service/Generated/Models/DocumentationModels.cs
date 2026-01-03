@@ -1690,13 +1690,13 @@ public partial class Document
     /// Brief text summary of the document
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
-    public string Summary { get; set; } = default!;
+    public string? Summary { get; set; } = default!;
 
     /// <summary>
     /// Concise summary optimized for voice AI
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
-    public string VoiceSummary { get; set; } = default!;
+    public string? VoiceSummary { get; set; } = default!;
 
     /// <summary>
     /// Tags for filtering and search
@@ -1778,13 +1778,13 @@ public partial class DocumentSummary
     /// Brief text summary of the document
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
-    public string Summary { get; set; } = default!;
+    public string? Summary { get; set; } = default!;
 
     /// <summary>
     /// Concise summary optimized for voice AI
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
-    public string VoiceSummary { get; set; } = default!;
+    public string? VoiceSummary { get; set; } = default!;
 
     /// <summary>
     /// Tags associated with the document
@@ -1836,19 +1836,19 @@ public partial class DocumentResult
     /// Brief text summary of the document
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
-    public string Summary { get; set; } = default!;
+    public string? Summary { get; set; } = default!;
 
     /// <summary>
     /// Concise summary optimized for voice AI
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
-    public string VoiceSummary { get; set; } = default!;
+    public string? VoiceSummary { get; set; } = default!;
 
     /// <summary>
     /// Full document content if requested
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
-    public string Content { get; set; } = default!;
+    public string? Content { get; set; } = default!;
 
     /// <summary>
     /// Relevance score from 0.0 to 1.0
@@ -2165,10 +2165,10 @@ public partial class SyncRepositoryResponse
     public SyncStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// Git commit hash that was synced
+    /// Git commit hash that was synced (null if sync failed or repo is empty)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
-    public string CommitHash { get; set; } = default!;
+    public string? CommitHash { get; set; } = default!;
 
     /// <summary>
     /// Number of new documents created
@@ -2369,10 +2369,10 @@ public partial class SyncInfo
     public System.DateTimeOffset CompletedAt { get; set; } = default!;
 
     /// <summary>
-    /// Git commit hash that was synced
+    /// Git commit hash that was synced (null if sync failed or repo is empty)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
-    public string CommitHash { get; set; } = default!;
+    public string? CommitHash { get; set; } = default!;
 
     /// <summary>
     /// Total documents processed in sync
@@ -2702,7 +2702,7 @@ public partial class ArchiveInfo
     /// Description of the archive
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Number of documents in the archive

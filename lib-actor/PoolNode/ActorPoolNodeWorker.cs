@@ -41,6 +41,14 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     private readonly ILogger<ActorPoolNodeWorker> _logger;
 
     /// <summary>
+    /// Gets the validated PoolNodeId, throwing if not configured.
+    /// ExecuteAsync validates this at startup, so this should never throw in normal operation.
+    /// </summary>
+    private string ValidatedNodeId => !string.IsNullOrEmpty(_configuration.PoolNodeId)
+        ? _configuration.PoolNodeId
+        : throw new InvalidOperationException("PoolNodeId must be configured for pool node mode - this indicates a bug in startup validation");
+
+    /// <summary>
     /// Creates a new ActorPoolNodeWorker.
     /// </summary>
     public ActorPoolNodeWorker(
@@ -224,7 +232,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ActorId = command.ActorId,
-                NodeId = _configuration.PoolNodeId ?? string.Empty,
+                NodeId = ValidatedNodeId,
                 ExitReason = ActorCompletedEventExitReason.External_stop,
                 ExitMessage = "Stopped via control plane command",
                 LoopIterations = runner.LoopIterations,
@@ -258,7 +266,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ActorId = actorId,
-            NodeId = _configuration.PoolNodeId ?? string.Empty,
+            NodeId = ValidatedNodeId,
             PreviousStatus = previousStatus,
             NewStatus = newStatus
         };

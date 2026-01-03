@@ -379,10 +379,11 @@ public class GitSyncService : IGitSyncService
             Repository.Clone(repositoryUrl, localPath, cloneOptions);
 
             using var repo = new Repository(localPath);
-            var commitHash = repo.Head.Tip?.Sha ?? string.Empty;
+            // Head.Tip can be null for an empty repository with no commits
+            var commitHash = repo.Head.Tip?.Sha;
 
             _logger.LogInformation("Successfully cloned repository to {Path}, HEAD: {Commit}",
-                localPath, commitHash[..Math.Min(8, commitHash.Length)]);
+                localPath, commitHash?[..Math.Min(8, commitHash.Length)] ?? "(empty)");
 
             return GitSyncResult.Succeeded(commitHash, isClone: true);
         }
@@ -450,10 +451,11 @@ public class GitSyncService : IGitSyncService
                 }
             }
 
-            var commitHash = repo.Head.Tip?.Sha ?? string.Empty;
+            // Head.Tip can be null for an empty repository with no commits
+            var commitHash = repo.Head.Tip?.Sha;
 
             _logger.LogInformation("Successfully pulled repository at {Path}, HEAD: {Commit}",
-                localPath, commitHash[..Math.Min(8, commitHash.Length)]);
+                localPath, commitHash?[..Math.Min(8, commitHash.Length)] ?? "(empty)");
 
             return GitSyncResult.Succeeded(commitHash, isClone: false);
         }

@@ -58,6 +58,8 @@ public class KamailioClient : IKamailioClient
                 return Enumerable.Empty<ActiveDialog>();
             }
 
+            // Defensive null coalescing for external Kamailio API response fields
+            // External API may return null for any string field; empty string is safe default
             return response.Dialogs.Select(d => new ActiveDialog
             {
                 DialogId = d.HashEntry ?? string.Empty,

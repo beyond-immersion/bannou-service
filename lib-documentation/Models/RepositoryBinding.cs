@@ -130,7 +130,7 @@ internal sealed class SyncResult
     /// <summary>Creates a success result.</summary>
     public static SyncResult Success(
         Guid syncId,
-        string commitHash,
+        string? commitHash,
         int created,
         int updated,
         int deleted,

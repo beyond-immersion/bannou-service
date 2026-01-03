@@ -547,11 +547,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "assetId": {
                     "type": "string",
-                    "description": "Asset service ID where the compiled bytecode is stored"
+                    "nullable": true,
+                    "description": "Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled."
                 },
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle ID if the behavior was added to a bundle"
+                    "nullable": true,
+                    "description": "Bundle ID if the behavior was added to a bundle. Null if not bundled."
                 },
                 "isUpdate": {
                     "type": "boolean",
@@ -1004,11 +1006,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "assetId": {
                     "type": "string",
-                    "description": "Asset service ID where the compiled bytecode is stored"
+                    "nullable": true,
+                    "description": "Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled."
                 },
                 "bundleId": {
                     "type": "string",
-                    "description": "Bundle ID if the behavior was added to a bundle"
+                    "nullable": true,
+                    "description": "Bundle ID if the behavior was added to a bundle. Null if not bundled."
                 },
                 "isUpdate": {
                     "type": "boolean",
@@ -2381,7 +2385,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "message": {
                     "type": "string",
-                    "description": "Additional details about the validation result"
+                    "nullable": true,
+                    "description": "Additional details about the validation result. Null when no additional context is needed."
                 }
             }
         }

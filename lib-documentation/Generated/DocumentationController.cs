@@ -1144,14 +1144,17 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "summary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Brief text summary of the document"
                 },
                 "voiceSummary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Concise summary optimized for voice AI"
                 },
                 "content": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Full document content if requested"
                 },
                 "relevanceScore": {
@@ -1388,10 +1391,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "summary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Brief text summary of the document"
                 },
                 "voiceSummary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Concise summary optimized for voice AI"
                 },
                 "tags": {
@@ -1472,10 +1477,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "summary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Brief text summary of the document"
                 },
                 "voiceSummary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Concise summary optimized for voice AI"
                 },
                 "tags": {
@@ -1711,14 +1718,17 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "summary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Brief text summary of the document"
                 },
                 "voiceSummary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Concise summary optimized for voice AI"
                 },
                 "content": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Full document content if requested"
                 },
                 "relevanceScore": {
@@ -2007,10 +2017,12 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "summary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Brief text summary of the document"
                 },
                 "voiceSummary": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Concise summary optimized for voice AI"
                 },
                 "tags": {
@@ -4293,7 +4305,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "commitHash": {
                     "type": "string",
-                    "description": "Git commit hash that was synced"
+                    "nullable": true,
+                    "description": "Git commit hash that was synced (null if sync failed or repo is empty)"
                 },
                 "documentsCreated": {
                     "type": "integer",
@@ -4532,7 +4545,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "commitHash": {
                     "type": "string",
-                    "description": "Git commit hash that was synced"
+                    "nullable": true,
+                    "description": "Git commit hash that was synced (null if sync failed or repo is empty)"
                 },
                 "documentsProcessed": {
                     "type": "integer",
@@ -5280,6 +5294,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
                 },
                 "description": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Description of the archive"
                 },
                 "documentCount": {
