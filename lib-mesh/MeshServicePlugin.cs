@@ -95,10 +95,10 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         // Get app configuration for app-id
         var appConfig = serviceProvider.GetRequiredService<AppConfiguration>();
         var meshConfig = _cachedConfig ?? serviceProvider.GetRequiredService<MeshServiceConfiguration>();
-        var appId = appConfig.AppId ?? AppConstants.DEFAULT_APP_NAME;
+        var appId = appConfig.EffectiveAppId;
 
         // Endpoint host defaults to app-id for Docker Compose compatibility (hostname = service name)
-        var endpointHost = meshConfig.EndpointHost ?? appConfig.AppId ?? AppConstants.DEFAULT_APP_NAME;
+        var endpointHost = meshConfig.EndpointHost ?? appConfig.EffectiveAppId;
         var endpointPort = meshConfig.EndpointPort > 0 ? meshConfig.EndpointPort : 80;
 
         // Use the shared Program.ServiceGUID for consistent instance identification

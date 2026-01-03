@@ -76,7 +76,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         _mappingResolver.MappingChanged += OnMappingChanged;
 
         // Resolve app-id from configuration
-        AppId = configuration.AppId ?? AppConstants.DEFAULT_APP_NAME;
+        AppId = configuration.EffectiveAppId;
 
         // Get heartbeat settings from configuration (IMPLEMENTATION TENETS compliant)
         HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0
