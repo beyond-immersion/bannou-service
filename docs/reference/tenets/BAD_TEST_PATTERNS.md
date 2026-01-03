@@ -463,11 +463,27 @@ _mockStore.Setup(x => x.SaveAsync(
 
 ## Remediation Priority
 
-### Phase 1: Delete/Fix Broken Tests
-1. Remove `Assert.True(true)` in `WebSocketConnectionManagerTests.BroadcastMessageAsync_WithNoConnections`
-2. Fix or remove reflection-based tests in `ConnectServiceTests.cs` (lines 677-704)
-3. Fix or remove reflection-based tests in `VoiceServiceTests.cs` (lines 624-638)
-4. Fix Moq callback signatures in Pool/PoolNode tests
+### Phase 1: ✅ COMPLETE - Delete/Fix Broken Tests
+
+**Resolution Date**: 2026-01-03
+
+1. ✅ `Assert.True(true)` patterns replaced with `Record.ExceptionAsync` + `Assert.Null(exception)` in:
+   - `BannouSessionManagerTests.cs` (4 instances)
+   - `WebSocketConnectionManagerTests.cs` (1 instance)
+
+2. ✅ Reflection-based tests in `ConnectServiceTests.cs` fixed:
+   - Removed `CreateConnectServiceWithConnectionManager` helper (used reflection to inject mock)
+   - Removed `HasConnection_*` tests (tested mock behavior, not service)
+   - Removed `SendMessageAsync_WithValidConnection_ShouldReturnTrue` (tested mock behavior)
+   - Removed `StaticHeaders_ShouldBeProperlyInitialized` (tested implementation details)
+   - Updated event processing tests to use normal constructor
+
+3. ✅ `VoiceServiceTests.cs` - No reflection patterns found (already fixed or stale line references)
+
+4. ✅ Moq callback signatures in Pool/PoolNode tests - Reviewed and found valid:
+   - `.Callback(() =>` is valid when parameters aren't needed (e.g., just counting calls)
+   - `.Callback<T1,T2,T3>((a,b,c) =>` used when capturing event data
+   - All 10 HeartbeatEmitter tests pass
 
 ### Phase 2: Add Missing Coverage
 1. `RelationshipTypeService.MergeRelationshipTypeAsync` - HIGH risk

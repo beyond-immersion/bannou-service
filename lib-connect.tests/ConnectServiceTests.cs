@@ -443,7 +443,7 @@ public class ConnectServiceTests
     public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()
     {
         // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
+        var service = CreateConnectService();
         var eventData = new AuthEvent
         {
             SessionId = "test-session-456",
@@ -498,10 +498,10 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    public async Task ProcessClientMessageEventAsync_WithConnectedClient_ShouldDeliverMessage()
+    public async Task ProcessClientMessageEventAsync_ShouldProcessMessage()
     {
         // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
+        var service = CreateConnectService();
         var eventData = new ClientMessageEvent
         {
             ClientId = "client-789",
@@ -526,10 +526,10 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    public async Task ProcessClientRPCEventAsync_WithConnectedClient_ShouldSendRPCMessage()
+    public async Task ProcessClientRPCEventAsync_ShouldProcessRPCMessage()
     {
         // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
+        var service = CreateConnectService();
         var eventData = new ClientRPCEvent
         {
             ClientId = "client-rpc-999",
@@ -553,48 +553,9 @@ public class ConnectServiceTests
         Assert.Equal("client-rpc-999", resultDict["clientId"].ToString());
     }
 
-    [Fact]
-    public void HasConnection_WithExistingConnection_ShouldReturnTrue()
-    {
-        // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
-        var sessionId = "existing-session";
-
-        // Act
-        var result = service.HasConnection(sessionId);
-
-        // Assert
-        Assert.True(result);
-    }
-
-    [Fact]
-    public void HasConnection_WithNonExistentConnection_ShouldReturnFalse()
-    {
-        // Arrange
-        var service = CreateConnectServiceWithConnectionManager(false);
-        var sessionId = "non-existent-session";
-
-        // Act
-        var result = service.HasConnection(sessionId);
-
-        // Assert
-        Assert.False(result);
-    }
-
-    [Fact]
-    public async Task SendMessageAsync_WithValidConnection_ShouldReturnTrue()
-    {
-        // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
-        var sessionId = "test-session";
-        var message = BinaryMessage.FromJson(1, 0, Guid.NewGuid(), 123, "{\"test\": true}");
-
-        // Act
-        var result = await service.SendMessageAsync(sessionId, message, CancellationToken.None);
-
-        // Assert
-        Assert.True(result);
-    }
+    // NOTE: HasConnection and SendMessageAsync tests were removed because they used reflection
+    // to inject a mock connection manager, which tests mock behavior rather than service behavior.
+    // Connection behavior should be tested via WebSocket integration tests (edge-tester).
 
     #endregion
 
@@ -615,35 +576,6 @@ public class ConnectServiceTests
             _mockEventConsumer.Object,
             _mockSessionManager.Object
         );
-    }
-
-    private ConnectService CreateConnectServiceWithConnectionManager(bool hasConnection = true)
-    {
-        // Create a mock connection manager that simulates having connections
-        var mockConnectionManager = new Mock<WebSocketConnectionManager>();
-
-        WebSocketConnection? connection = null;
-        if (hasConnection)
-        {
-            // Create mock dependencies for WebSocketConnection
-            var mockWebSocket = new Mock<WebSocket>();
-            var connectionState = new ConnectionState("test-session");
-            connection = new WebSocketConnection("test-session", mockWebSocket.Object, connectionState);
-        }
-
-        mockConnectionManager.Setup(x => x.GetConnection(It.IsAny<string>()))
-            .Returns(connection);
-
-        mockConnectionManager.Setup(x => x.SendMessageAsync(It.IsAny<string>(), It.IsAny<BinaryMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(hasConnection);
-
-        // Use reflection to create service with mocked connection manager
-        var service = CreateConnectService();
-        var connectionManagerField = typeof(ConnectService).GetField("_connectionManager",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        connectionManagerField?.SetValue(service, mockConnectionManager.Object);
-
-        return service;
     }
 
 
@@ -941,34 +873,9 @@ public class ConnectServiceTests
 
     #region HTTP Routing Optimization Tests
 
-    /// <summary>
-    /// Tests that static header values are properly initialized for request optimization.
-    /// These static fields avoid per-request allocation of MediaType headers.
-    /// </summary>
-    [Fact]
-    public void StaticHeaders_ShouldBeProperlyInitialized()
-    {
-        // Arrange - access static fields via reflection
-        var acceptHeaderField = typeof(ConnectService).GetField("s_jsonAcceptHeader",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        var contentTypeField = typeof(ConnectService).GetField("s_jsonContentType",
-            BindingFlags.NonPublic | BindingFlags.Static);
-
-        // Assert - fields exist
-        Assert.NotNull(acceptHeaderField);
-        Assert.NotNull(contentTypeField);
-
-        // Act - get values
-        var acceptHeader = acceptHeaderField?.GetValue(null) as MediaTypeWithQualityHeaderValue;
-        var contentType = contentTypeField?.GetValue(null) as MediaTypeHeaderValue;
-
-        // Assert - values are correct
-        Assert.NotNull(acceptHeader);
-        Assert.NotNull(contentType);
-        Assert.Equal("application/json", acceptHeader?.MediaType);
-        Assert.Equal("application/json", contentType?.MediaType);
-        Assert.Equal("utf-8", contentType?.CharSet);
-    }
+    // NOTE: StaticHeaders_ShouldBeProperlyInitialized test was removed because it tested
+    // implementation details (private static fields) via reflection. Static header values
+    // are implementation optimization details that should not be tested directly.
 
     /// <summary>
     /// Tests that BinaryMessage.Payload provides direct access to raw bytes,

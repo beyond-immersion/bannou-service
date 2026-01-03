@@ -306,11 +306,9 @@ public class InMemoryMessageBusTests
         var topic = "test.topic";
         var handler = new Func<TestEvent, CancellationToken, Task>((evt, ct) => Task.CompletedTask);
 
-        // Act
-        await _messageBus.SubscribeAsync(topic, handler);
-
-        // Assert - No exception means success
-        Assert.True(true);
+        // Act & Assert - should complete without exception
+        var exception = await Record.ExceptionAsync(() => _messageBus.SubscribeAsync(topic, handler));
+        Assert.Null(exception);
     }
 
     [Fact]
@@ -343,11 +341,10 @@ public class InMemoryMessageBusTests
         var handler = new Func<TestEvent, CancellationToken, Task>((evt, ct) => Task.CompletedTask);
         var options = new SubscriptionOptions();
 
-        // Act
-        await _messageBus.SubscribeAsync(topic, handler, exchange: null, options: options);
-
-        // Assert - No exception means success
-        Assert.True(true);
+        // Act & Assert - should complete without exception
+        var exception = await Record.ExceptionAsync(() =>
+            _messageBus.SubscribeAsync(topic, handler, exchange: null, options: options));
+        Assert.Null(exception);
     }
 
     #endregion
@@ -458,11 +455,9 @@ public class InMemoryMessageBusTests
         var topic = "test.topic";
         await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) => Task.CompletedTask);
 
-        // Act
-        await _messageBus.UnsubscribeAsync(topic);
-
-        // Assert - No exception means success
-        Assert.True(true);
+        // Act & Assert - should complete without exception
+        var exception = await Record.ExceptionAsync(() => _messageBus.UnsubscribeAsync(topic));
+        Assert.Null(exception);
     }
 
     [Fact]
@@ -515,11 +510,9 @@ public class InMemoryMessageBusTests
         // Arrange
         var topic = "nonexistent.topic";
 
-        // Act - Should not throw
-        await _messageBus.UnsubscribeAsync(topic);
-
-        // Assert - No exception means success
-        Assert.True(true);
+        // Act & Assert - should complete without exception
+        var exception = await Record.ExceptionAsync(() => _messageBus.UnsubscribeAsync(topic));
+        Assert.Null(exception);
     }
 
     #endregion

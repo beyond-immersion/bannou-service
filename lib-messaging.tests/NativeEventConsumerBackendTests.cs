@@ -310,11 +310,9 @@ public class NativeEventConsumerBackendTests
         var backend = CreateBackend();
         await backend.StartAsync(CancellationToken.None);
 
-        // Act
-        await backend.StopAsync(CancellationToken.None);
-
-        // Assert - no exception means success
-        Assert.True(true);
+        // Act & Assert - should complete without exception
+        var exception = await Record.ExceptionAsync(() => backend.StopAsync(CancellationToken.None));
+        Assert.Null(exception);
     }
 
     [Fact]
