@@ -9,74 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-testing", "lib-testing\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "unit-tests", "unit-tests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-		Makefile = Makefile
-		ServiceLib.targets = ServiceLib.targets
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{6905E47E-6C04-4CF6-894F-2643528E490D}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
-		provisioning\docker-compose.ek.yml = provisioning\docker-compose.ek.yml
-		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
-		provisioning\docker-compose.ingress.yml = provisioning\docker-compose.ingress.yml
-		provisioning\docker-compose.local.ingress.yml = provisioning\docker-compose.local.ingress.yml
-		provisioning\docker-compose.local.yml = provisioning\docker-compose.local.yml
-		provisioning\docker-compose.yml = provisioning\docker-compose.yml
-		provisioning\Dockerfile = provisioning\Dockerfile
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
-	ProjectSection(SolutionItems) = preProject
-		.github\dependabot.yml = .github\dependabot.yml
-		.github\pull_request_template.md = .github\pull_request_template.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{1E4033CE-EDE2-4140-ABB1-0B55250255F9}"
-	ProjectSection(SolutionItems) = preProject
-		.github\CONTRIBUTING.md = .github\CONTRIBUTING.md
-		LICENSE = LICENSE
-		README.md = README.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4F07AA77-C49C-498D-BFA1-B47D0139E021}"
-	ProjectSection(SolutionItems) = preProject
-		build-service-libs.sh = build-service-libs.sh
-		infrastructure-tests.sh = infrastructure-tests.sh
-		wait-for-health.sh = wait-for-health.sh
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{9DF51A7F-2307-41EC-97DD-EBC30BF8B859}"
-	ProjectSection(SolutionItems) = preProject
-		.github\workflows\ci.integration.yml = .github\workflows\ci.integration.yml
-		.github\workflows\ci.lint.yml = .github\workflows\ci.lint.yml
-		.github\workflows\ci.unit.yml = .github\workflows\ci.unit.yml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mysql", "mysql", "{4D5FB375-61CA-4538-8393-1C74FA1F8E8F}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\mysql\my.cnf = provisioning\mysql\my.cnf
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logstash", "logstash", "{1BA3E060-714F-483C-9369-9339C75CF1AC}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\logstash\logstash.elk.conf = provisioning\logstash\logstash.elk.conf
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "filebeat", "filebeat", "{5D22D6B5-738C-41F6-9AE3-AFEF67B7C4A1}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\filebeat\filebeat.console.yml = provisioning\filebeat\filebeat.console.yml
-		provisioning\filebeat\filebeat.ek.yml = provisioning\filebeat\filebeat.ek.yml
-		provisioning\filebeat\filebeat.elk.yml = provisioning\filebeat\filebeat.elk.yml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "run-init", "run-init", "{FD9DCE8B-2D61-48A1-B215-EC10C5AFA54A}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\mysql\run-init\grant-permissions.sql = provisioning\mysql\run-init\grant-permissions.sql
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior", "lib-behavior\lib-behavior.csproj", "{BE805579-8F99-455F-BEFA-10D86C5398CD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website", "lib-website\lib-website.csproj", "{A93EB50A-5892-4C20-AAFB-B865313171F9}"
@@ -104,20 +36,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth", "lib-auth\lib-auth.csproj", "{27572A97-101F-0A9C-1C17-F1EA1541A562}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect", "lib-connect\lib-connect.csproj", "{12EF86E5-D398-AE42-DAF8-DA3F02333D25}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schemas", "Schemas", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
-	ProjectSection(SolutionItems) = preProject
-		schemas\accounts-api.yaml = schemas\accounts-api.yaml
-		schemas\accounts-events.yaml = schemas\accounts-events.yaml
-		schemas\auth-api.yaml = schemas\auth-api.yaml
-		schemas\behavior-api.yaml = schemas\behavior-api.yaml
-		schemas\common-events.yaml = schemas\common-events.yaml
-		schemas\connect-api.yaml = schemas\connect-api.yaml
-		schemas\game-session-api.yaml = schemas\game-session-api.yaml
-		schemas\permissions-api.yaml = schemas\permissions-api.yaml
-		schemas\permissions-events.yaml = schemas\permissions-events.yaml
-		schemas\website-api.yaml = schemas\website-api.yaml
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator", "lib-orchestrator\lib-orchestrator.csproj", "{A60FBB3F-4A2F-4BE7-A5A6-DDCB284E3136}"
 EndProject
@@ -1121,18 +1039,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{6905E47E-6C04-4CF6-894F-2643528E490D} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{8104DBD9-C9EB-460A-842B-9385C32836C6} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{1E4033CE-EDE2-4140-ABB1-0B55250255F9} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{4F07AA77-C49C-498D-BFA1-B47D0139E021} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{9DF51A7F-2307-41EC-97DD-EBC30BF8B859} = {8104DBD9-C9EB-460A-842B-9385C32836C6}
-		{4D5FB375-61CA-4538-8393-1C74FA1F8E8F} = {6905E47E-6C04-4CF6-894F-2643528E490D}
-		{1BA3E060-714F-483C-9369-9339C75CF1AC} = {6905E47E-6C04-4CF6-894F-2643528E490D}
-		{5D22D6B5-738C-41F6-9AE3-AFEF67B7C4A1} = {6905E47E-6C04-4CF6-894F-2643528E490D}
-		{FD9DCE8B-2D61-48A1-B215-EC10C5AFA54A} = {4D5FB375-61CA-4538-8393-1C74FA1F8E8F}
-		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}

@@ -766,7 +766,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     #region Hyphenated Service Name Prefix Tests
 
     [Fact]
-    public void ServiceConfigurationAttribute_RemovesHyphensFromPrefix()
+    public void ServiceConfigurationAttribute_ConvertsHyphensToUnderscoresInPrefix()
     {
         // Arrange & Act - get the attribute from our test configuration
         var configType = typeof(Configuration_HyphenatedService);
@@ -774,13 +774,13 @@ public class Configuration : IClassFixture<CollectionFixture>
             .Cast<ServiceConfigurationAttribute>()
             .FirstOrDefault();
 
-        // Assert - prefix should be "GAMESESSION_" not "GAME-SESSION_"
+        // Assert - prefix should be "GAME_SESSION_" (hyphens converted to underscores)
         Assert.NotNull(attr);
-        Assert.Equal("GAMESESSION_", attr.EnvPrefix);
+        Assert.Equal("GAME_SESSION_", attr.EnvPrefix);
     }
 
     [Fact]
-    public void ServiceConfigurationAttribute_RemovesMultipleHyphensFromPrefix()
+    public void ServiceConfigurationAttribute_ConvertsMultipleHyphensToUnderscoresInPrefix()
     {
         // Arrange & Act
         var configType = typeof(Configuration_MultiHyphenatedService);
@@ -788,17 +788,17 @@ public class Configuration : IClassFixture<CollectionFixture>
             .Cast<ServiceConfigurationAttribute>()
             .FirstOrDefault();
 
-        // Assert - prefix should be "RELATIONSHIPTYPE_" not "RELATIONSHIP-TYPE_"
+        // Assert - prefix should be "RELATIONSHIP_TYPE_" (hyphens converted to underscores)
         Assert.NotNull(attr);
-        Assert.Equal("RELATIONSHIPTYPE_", attr.EnvPrefix);
+        Assert.Equal("RELATIONSHIP_TYPE_", attr.EnvPrefix);
     }
 
     [Fact]
     public void Configuration_HyphenatedService_BindsWithNormalizedPrefix()
     {
-        // Arrange - use GAMESESSION_ prefix (hyphen removed)
-        Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", "test-salt-value");
-        Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", "32");
+        // Arrange - use GAME_SESSION_ prefix (hyphens converted to underscores)
+        Environment.SetEnvironmentVariable("GAME_SESSION_SERVER_SALT", "test-salt-value");
+        Environment.SetEnvironmentVariable("GAME_SESSION_MAX_PLAYERS_PER_SESSION", "32");
 
         try
         {
@@ -811,17 +811,17 @@ public class Configuration : IClassFixture<CollectionFixture>
         }
         finally
         {
-            Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", null);
-            Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", null);
+            Environment.SetEnvironmentVariable("GAME_SESSION_SERVER_SALT", null);
+            Environment.SetEnvironmentVariable("GAME_SESSION_MAX_PLAYERS_PER_SESSION", null);
         }
     }
 
     [Fact]
     public void Configuration_HyphenatedService_IgnoresHyphenatedPrefix()
     {
-        // Arrange - use incorrect GAME-SESSION_ prefix (with hyphen)
+        // Arrange - use incorrect GAME-SESSION_ prefix (with hyphen, not underscore)
         Environment.SetEnvironmentVariable("GAME-SESSION_SERVER_SALT", "wrong-prefix");
-        Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", null);
+        Environment.SetEnvironmentVariable("GAME_SESSION_SERVER_SALT", null);
 
         try
         {
@@ -840,9 +840,9 @@ public class Configuration : IClassFixture<CollectionFixture>
     [Fact]
     public void Configuration_MultiHyphenatedService_BindsCorrectly()
     {
-        // Arrange - use RELATIONSHIPTYPE_ prefix
-        Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_TYPE_NAME", "test-type");
-        Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_ENABLED", "true");
+        // Arrange - use RELATIONSHIP_TYPE_ prefix (hyphens converted to underscores)
+        Environment.SetEnvironmentVariable("RELATIONSHIP_TYPE_TYPE_NAME", "test-type");
+        Environment.SetEnvironmentVariable("RELATIONSHIP_TYPE_ENABLED", "true");
 
         try
         {
@@ -855,8 +855,8 @@ public class Configuration : IClassFixture<CollectionFixture>
         }
         finally
         {
-            Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_TYPE_NAME", null);
-            Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_ENABLED", null);
+            Environment.SetEnvironmentVariable("RELATIONSHIP_TYPE_TYPE_NAME", null);
+            Environment.SetEnvironmentVariable("RELATIONSHIP_TYPE_ENABLED", null);
         }
     }
 
@@ -868,8 +868,8 @@ public class Configuration : IClassFixture<CollectionFixture>
     public void Configuration_UpperSnakeCaseEnvVars_BindToPascalCaseProperties()
     {
         // Arrange - simulate real-world env var naming
-        Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", "production-salt");
-        Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", "64");
+        Environment.SetEnvironmentVariable("GAME_SESSION_SERVER_SALT", "production-salt");
+        Environment.SetEnvironmentVariable("GAME_SESSION_MAX_PLAYERS_PER_SESSION", "64");
 
         try
         {
@@ -882,16 +882,16 @@ public class Configuration : IClassFixture<CollectionFixture>
         }
         finally
         {
-            Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", null);
-            Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", null);
+            Environment.SetEnvironmentVariable("GAME_SESSION_SERVER_SALT", null);
+            Environment.SetEnvironmentVariable("GAME_SESSION_MAX_PLAYERS_PER_SESSION", null);
         }
     }
 
     [Fact]
     public void Configuration_PropertyNameAsEnvVar_AlsoBinds()
     {
-        // Arrange - use property name directly (no underscores)
-        Environment.SetEnvironmentVariable("GAMESESSION_SERVERSALT", "direct-property-name");
+        // Arrange - use property name directly (no underscores between words)
+        Environment.SetEnvironmentVariable("GAME_SESSION_SERVERSALT", "direct-property-name");
 
         try
         {
@@ -903,7 +903,7 @@ public class Configuration : IClassFixture<CollectionFixture>
         }
         finally
         {
-            Environment.SetEnvironmentVariable("GAMESESSION_SERVERSALT", null);
+            Environment.SetEnvironmentVariable("GAME_SESSION_SERVERSALT", null);
         }
     }
 

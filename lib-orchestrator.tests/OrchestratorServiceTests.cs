@@ -846,9 +846,12 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
+        // Use a non-control-plane app-id to test heartbeat routing initialization.
+        // Heartbeats from "bannou" (control plane) are intentionally filtered to prevent
+        // the orchestrator from claiming services before deployed nodes can.
         var heartbeat = new ServiceHeartbeatEvent
         {
-            AppId = "bannou",
+            AppId = "bannou-deployed-node",
             ServiceId = Guid.NewGuid(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
@@ -875,7 +878,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // Assert - routing should be initialized
         Assert.NotNull(capturedRouting);
-        Assert.Equal("bannou", capturedRouting.AppId);
+        Assert.Equal("bannou-deployed-node", capturedRouting.AppId);
     }
 
     [Fact]
@@ -977,10 +980,11 @@ public class ServiceHealthMonitorRoutingProtectionTests
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
-        // First, let heartbeat initialize routing
+        // First, let heartbeat initialize routing.
+        // Use a non-control-plane app-id since "bannou" heartbeats are filtered.
         var heartbeat = new ServiceHeartbeatEvent
         {
-            AppId = "bannou",
+            AppId = "bannou-deployed-node",
             ServiceId = Guid.NewGuid(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
@@ -992,7 +996,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _heartbeatHandler?.Invoke(heartbeat);
         await Task.Delay(50);
 
-        Assert.Equal("bannou", lastCapturedRouting?.AppId);
+        Assert.Equal("bannou-deployed-node", lastCapturedRouting?.AppId);
 
         // Now set an explicit mapping that routes to different app-id
         await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
@@ -1092,13 +1096,14 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // Now simulate a heartbeat - it should be able to initialize routing again
         // (because in-memory cache was cleared)
+        // Use a non-control-plane app-id since "bannou" heartbeats are filtered.
         _mockStateManager
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
         var heartbeat = new ServiceHeartbeatEvent
         {
-            AppId = "bannou",
+            AppId = "bannou-deployed-node",
             ServiceId = Guid.NewGuid(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
@@ -1118,7 +1123,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // Assert - heartbeat should initialize routing (cache was cleared)
         Assert.NotNull(capturedRouting);
-        Assert.Equal("bannou", capturedRouting.AppId);
+        Assert.Equal("bannou-deployed-node", capturedRouting.AppId);
     }
 }
 

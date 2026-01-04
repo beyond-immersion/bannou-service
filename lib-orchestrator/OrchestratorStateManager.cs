@@ -410,6 +410,28 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     }
 
     /// <summary>
+    /// Get a specific service routing mapping.
+    /// </summary>
+    public async Task<ServiceRouting?> GetServiceRoutingAsync(string serviceName)
+    {
+        if (_routingStore == null)
+        {
+            _logger.LogWarning("State stores not initialized. Cannot get routing.");
+            return null;
+        }
+
+        try
+        {
+            return await _routingStore.GetAsync(serviceName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get routing for {ServiceName}", serviceName);
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Update the routing index to include this service name.
     /// </summary>
     private async Task UpdateRoutingIndexAsync(string serviceName)

@@ -531,8 +531,63 @@ public partial class OrchestratorService : IOrchestratorService
             ICollection<TopologyNode> nodesToDeploy;
             IDictionary<string, string>? presetEnvironment = null;
 
-            // Check for "reset to default" request - "default", "bannou", or empty preset with no topology
+            // Check for "reset to default" request FIRST - "default", "bannou", or empty preset with no topology
+            // This must be checked before auto-cleanup since ResetToDefaultTopologyAsync handles its own cleanup.
             var isResetToDefault = IsResetToDefaultRequest(body.Preset, body.Topology);
+
+            // AUTO-CLEANUP: If there's an existing deployment, clean it up before deploying new containers.
+            // This prevents orphaned containers when DeployAsync is called multiple times without cleanup.
+            // Each deployment is treated as a replacement, not an accumulation.
+            // SKIP for reset-to-default requests since ResetToDefaultTopologyAsync handles cleanup.
+            if (!body.DryRun && !isResetToDefault)
+            {
+                var previousDeployment = await _stateManager.GetCurrentConfigurationAsync();
+                if (previousDeployment != null && previousDeployment.Services.Count > 0)
+                {
+                    var previousAppIds = previousDeployment.Services.Values
+                        .Where(s => s.Enabled && !string.IsNullOrEmpty(s.AppId))
+                        .Select(s => s.AppId!)
+                        .Where(appId => !appId.Equals("bannou", StringComparison.OrdinalIgnoreCase))
+                        .Distinct()
+                        .ToList();
+
+                    if (previousAppIds.Count > 0)
+                    {
+                        _logger.LogInformation(
+                            "Auto-cleanup: Found existing deployment with {Count} containers [{AppIds}], tearing down before new deployment",
+                            previousAppIds.Count, string.Join(", ", previousAppIds));
+
+                        foreach (var appId in previousAppIds)
+                        {
+                            try
+                            {
+                                var teardownResult = await orchestrator.TeardownServiceAsync(
+                                    appId,
+                                    removeVolumes: false,
+                                    cancellationToken);
+
+                                if (teardownResult.Success)
+                                {
+                                    _logger.LogInformation("Auto-cleanup: Torn down previous container {AppId}", appId);
+                                }
+                                else
+                                {
+                                    _logger.LogWarning(
+                                        "Auto-cleanup: Failed to tear down {AppId}: {Message}",
+                                        appId, teardownResult.Message);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Auto-cleanup: Error tearing down container {AppId}", appId);
+                            }
+                        }
+
+                        // Reset service mappings since we're tearing down the old deployment
+                        await _healthMonitor.ResetAllMappingsToDefaultAsync();
+                    }
+                }
+            }
 
             if (isResetToDefault)
             {

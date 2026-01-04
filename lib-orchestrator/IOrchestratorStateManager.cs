@@ -44,6 +44,13 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     Task WriteServiceRoutingAsync(string serviceName, ServiceRouting routing);
 
     /// <summary>
+    /// Get a specific service routing mapping.
+    /// </summary>
+    /// <param name="serviceName">Name of the service.</param>
+    /// <returns>The routing if found, null otherwise.</returns>
+    Task<ServiceRouting?> GetServiceRoutingAsync(string serviceName);
+
+    /// <summary>
     /// Get all service routing mappings.
     /// Uses index-based pattern to avoid KEYS/SCAN operations.
     /// </summary>

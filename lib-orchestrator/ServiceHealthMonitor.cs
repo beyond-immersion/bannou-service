@@ -66,9 +66,23 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// <summary>
     /// Handle real-time heartbeat events from RabbitMQ.
     /// Writes heartbeat to Redis and updates service routing for each service in the heartbeat.
+    /// CRITICAL: Filters heartbeats from the control plane (app-id "bannou") to prevent the
+    /// orchestrator's own heartbeat from claiming services before deployed nodes can.
     /// </summary>
     private void OnHeartbeatReceived(ServiceHeartbeatEvent heartbeat)
     {
+        // CRITICAL: Ignore heartbeats from the control plane itself.
+        // The orchestrator runs on "bannou" and publishes heartbeats, but we don't want
+        // those heartbeats to initialize service routing. Only explicitly deployed nodes
+        // (with different app-ids) should claim services via heartbeats.
+        if (string.Equals(heartbeat.AppId, AppConstants.DEFAULT_APP_NAME, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogDebug(
+                "Ignoring heartbeat from control plane (app-id: {AppId})",
+                heartbeat.AppId);
+            return;
+        }
+
         var serviceNames = heartbeat.Services?.Select(s => s.ServiceName) ?? Enumerable.Empty<string>();
         _logger.LogDebug(
             "Aggregated heartbeat from {AppId}: InstanceId={InstanceId}, Status={Status}, Services=[{Services}]",
@@ -140,23 +154,52 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 }
                 else
                 {
-                    // No existing routing - heartbeat can initialize it
-                    var newRouting = new ServiceRouting
+                    // No local cache entry - check Redis first to avoid overwriting orchestrator-managed routing
+                    var redisRouting = await _stateManager.GetServiceRoutingAsync(serviceName);
+                    if (redisRouting != null)
                     {
-                        AppId = heartbeat.AppId,
-                        Host = heartbeat.AppId, // In Docker, container name = app_id
-                        Port = 80,
-                        Status = serviceStatus.Status.ToString().ToLowerInvariant(),
-                        LoadPercent = loadPercent
-                    };
+                        // Routing exists in Redis (set by another node or orchestrator)
+                        // Cache it locally and only update if from same app-id
+                        _currentRoutings[serviceName] = redisRouting;
 
-                    await _stateManager.WriteServiceRoutingAsync(serviceName, newRouting);
-                    _currentRoutings[serviceName] = newRouting;
-                    routingChanged = true;
+                        if (!string.Equals(redisRouting.AppId, heartbeat.AppId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _logger.LogDebug(
+                                "Found existing Redis routing for {ServiceName} -> {RoutedAppId}, ignoring heartbeat from {HeartbeatAppId}",
+                                serviceName, redisRouting.AppId, heartbeat.AppId);
+                            continue;
+                        }
 
-                    _logger.LogInformation(
-                        "Initialized routing for {ServiceName} -> {AppId} (status: {Status})",
-                        serviceName, heartbeat.AppId, serviceStatus.Status);
+                        // Same app-id - update status
+                        redisRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                        redisRouting.LoadPercent = loadPercent;
+                        redisRouting.LastUpdated = DateTimeOffset.UtcNow;
+                        await _stateManager.WriteServiceRoutingAsync(serviceName, redisRouting);
+
+                        _logger.LogDebug(
+                            "Synced routing from Redis for {ServiceName} -> {AppId} (status: {Status})",
+                            serviceName, heartbeat.AppId, serviceStatus.Status);
+                    }
+                    else
+                    {
+                        // No routing anywhere - heartbeat can initialize it
+                        var newRouting = new ServiceRouting
+                        {
+                            AppId = heartbeat.AppId,
+                            Host = heartbeat.AppId, // In Docker, container name = app_id
+                            Port = 80,
+                            Status = serviceStatus.Status.ToString().ToLowerInvariant(),
+                            LoadPercent = loadPercent
+                        };
+
+                        await _stateManager.WriteServiceRoutingAsync(serviceName, newRouting);
+                        _currentRoutings[serviceName] = newRouting;
+                        routingChanged = true;
+
+                        _logger.LogInformation(
+                            "Initialized routing for {ServiceName} -> {AppId} (status: {Status})",
+                            serviceName, heartbeat.AppId, serviceStatus.Status);
+                    }
                 }
             }
 

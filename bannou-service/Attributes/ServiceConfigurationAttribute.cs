@@ -60,9 +60,9 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
         EnvPrefix = envPrefix;
         if (ServiceAttribute != null && envPrefix == null)
         {
-            // Convert service name to env prefix: "game-session" -> "GAMESESSION_"
-            // Hyphens are removed (not converted to underscores) to match property naming conventions
-            var normalizedName = ServiceAttribute.Name.Replace("-", "").ToUpper();
+            // Convert service name to env prefix: "game-session" -> "GAME_SESSION_"
+            // Hyphens are converted to underscores to match schema env: conventions
+            var normalizedName = ServiceAttribute.Name.Replace("-", "_").ToUpper();
             EnvPrefix = $"{normalizedName}_";
         }
     }
