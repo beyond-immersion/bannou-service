@@ -16,6 +16,7 @@ namespace BeyondImmersion.BannouService.Actor.Tests.PoolNode;
 public class ActorPoolNodeWorkerTests
 {
     private readonly Mock<IMessageBus> _messageBusMock;
+    private readonly Mock<IMessageSubscriber> _messageSubscriberMock;
     private readonly Mock<IActorRegistry> _actorRegistryMock;
     private readonly Mock<IActorRunnerFactory> _actorRunnerFactoryMock;
     private readonly Mock<ILogger<ActorPoolNodeWorker>> _loggerMock;
@@ -25,6 +26,7 @@ public class ActorPoolNodeWorkerTests
     public ActorPoolNodeWorkerTests()
     {
         _messageBusMock = new Mock<IMessageBus>();
+        _messageSubscriberMock = new Mock<IMessageSubscriber>();
         _actorRegistryMock = new Mock<IActorRegistry>();
         _actorRunnerFactoryMock = new Mock<IActorRunnerFactory>();
         _loggerMock = new Mock<ILogger<ActorPoolNodeWorker>>();
@@ -51,6 +53,7 @@ public class ActorPoolNodeWorkerTests
     {
         return new ActorPoolNodeWorker(
             _messageBusMock.Object,
+            _messageSubscriberMock.Object,
             _actorRegistryMock.Object,
             _actorRunnerFactoryMock.Object,
             _heartbeatEmitter,
@@ -257,6 +260,67 @@ public class ActorPoolNodeWorkerTests
 
         // Assert
         Assert.False(result);
+    }
+
+    #endregion
+
+    #region HandleMessageCommandAsync Tests
+
+    [Fact]
+    public async Task HandleMessageCommandAsync_ActorNotFound_ReturnsFalse()
+    {
+        // Arrange
+        var worker = CreateWorker();
+
+        _actorRegistryMock
+            .Setup(r => r.TryGet("actor-unknown", out It.Ref<IActorRunner?>.IsAny))
+            .Returns(false);
+
+        var command = new SendMessageCommand
+        {
+            ActorId = "actor-unknown",
+            MessageType = "test-message"
+        };
+
+        // Act
+        var result = await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HandleMessageCommandAsync_InjectsPerceptionToActor()
+    {
+        // Arrange
+        var worker = CreateWorker();
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
+        mockRunner.SetupGet(r => r.PerceptionQueueDepth).Returns(1);
+        mockRunner.Setup(r => r.InjectPerception(It.IsAny<PerceptionData>())).Returns(true);
+
+        var outRunner = mockRunner.Object;
+        _actorRegistryMock
+            .Setup(r => r.TryGet("actor-1", out outRunner))
+            .Returns(true);
+
+        var command = new SendMessageCommand
+        {
+            ActorId = "actor-1",
+            MessageType = "perception-update",
+            Payload = new { key = "value" }
+        };
+
+        // Act
+        var result = await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.True(result);
+        mockRunner.Verify(
+            r => r.InjectPerception(It.Is<PerceptionData>(p =>
+                p.PerceptionType == "perception-update" &&
+                p.SourceType == "message")),
+            Times.Once);
     }
 
     #endregion

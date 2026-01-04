@@ -124,6 +124,15 @@ public interface IActorPoolManager
     Task<IReadOnlyList<ActorAssignment>> ListActorsByNodeAsync(string nodeId, CancellationToken ct = default);
 
     /// <summary>
+    /// Lists all actor assignments for a specific template.
+    /// Used for auto-spawn max instance checking.
+    /// </summary>
+    /// <param name="templateId">Template ID to list assignments for.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of actor assignments from this template.</returns>
+    Task<IReadOnlyList<ActorAssignment>> GetAssignmentsByTemplateAsync(string templateId, CancellationToken ct = default);
+
+    /// <summary>
     /// Updates the status of an actor assignment.
     /// Called when ActorStatusChangedEvent is received.
     /// </summary>

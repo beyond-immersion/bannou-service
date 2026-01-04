@@ -33,6 +33,11 @@ public class ActorAssignment
     public required string TemplateId { get; set; }
 
     /// <summary>
+    /// Actor category (from template).
+    /// </summary>
+    public string? Category { get; set; }
+
+    /// <summary>
     /// Actor status (running, stopped, etc.).
     /// </summary>
     public string Status { get; set; } = "pending";
@@ -41,6 +46,11 @@ public class ActorAssignment
     /// When the actor was assigned to this node.
     /// </summary>
     public DateTimeOffset AssignedAt { get; set; }
+
+    /// <summary>
+    /// When the actor started running (set when status changes to running).
+    /// </summary>
+    public DateTimeOffset? StartedAt { get; set; }
 
     /// <summary>
     /// Associated character ID for NPC brain actors.

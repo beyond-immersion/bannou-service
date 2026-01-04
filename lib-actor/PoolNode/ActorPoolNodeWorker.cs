@@ -27,18 +27,26 @@ namespace BeyondImmersion.BannouService.Actor.PoolNode;
 /// </list>
 /// </para>
 /// <para>
-/// <b>Command Handling:</b> Spawn/stop commands are handled by ActorServiceEvents
-/// which calls into this worker's HandleSpawnCommand and HandleStopCommand methods.
+/// <b>Command Subscriptions:</b> Subscribes to node-specific command topics:
+/// <list type="bullet">
+/// <item>actor.node.{appId}.spawn - SpawnActorCommand</item>
+/// <item>actor.node.{appId}.stop - StopActorCommand</item>
+/// <item>actor.node.{appId}.message - SendMessageCommand (routed to actor perception queue)</item>
+/// </list>
 /// </para>
 /// </remarks>
 public sealed class ActorPoolNodeWorker : BackgroundService
 {
     private readonly IMessageBus _messageBus;
+    private readonly IMessageSubscriber _messageSubscriber;
     private readonly IActorRegistry _actorRegistry;
     private readonly IActorRunnerFactory _actorRunnerFactory;
     private readonly HeartbeatEmitter _heartbeatEmitter;
     private readonly ActorServiceConfiguration _configuration;
     private readonly ILogger<ActorPoolNodeWorker> _logger;
+
+    // Subscriptions to be disposed on shutdown
+    private readonly List<IAsyncDisposable> _subscriptions = new();
 
     /// <summary>
     /// Gets the validated PoolNodeId, throwing if not configured.
@@ -53,6 +61,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     /// </summary>
     public ActorPoolNodeWorker(
         IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
         IActorRegistry actorRegistry,
         IActorRunnerFactory actorRunnerFactory,
         HeartbeatEmitter heartbeatEmitter,
@@ -60,6 +69,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         ILogger<ActorPoolNodeWorker> logger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
         _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
         _actorRunnerFactory = actorRunnerFactory ?? throw new ArgumentNullException(nameof(actorRunnerFactory));
         _heartbeatEmitter = heartbeatEmitter ?? throw new ArgumentNullException(nameof(heartbeatEmitter));
@@ -84,13 +94,16 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             "Starting actor pool node worker: NodeId={NodeId}, AppId={AppId}, PoolType={PoolType}",
             nodeId, appId, poolType);
 
+        // Subscribe to command topics
+        await SubscribeToCommandsAsync(appId, stoppingToken);
+
         // Register with control plane
         await RegisterWithControlPlaneAsync(nodeId, appId, poolType, stoppingToken);
 
         // Start heartbeat emitter
         _heartbeatEmitter.Start();
 
-        _logger.LogInformation("Actor pool node worker started, waiting for commands via event handlers");
+        _logger.LogInformation("Actor pool node worker started, listening for commands on actor.node.{AppId}.*", appId);
 
         // Keep alive until shutdown
         try
@@ -130,8 +143,48 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     }
 
     /// <summary>
+    /// Sets up subscriptions to node-specific command topics.
+    /// </summary>
+    private async Task SubscribeToCommandsAsync(string appId, CancellationToken ct)
+    {
+        // Subscribe to spawn commands
+        var spawnSub = await _messageSubscriber.SubscribeDynamicAsync<SpawnActorCommand>(
+            $"actor.node.{appId}.spawn",
+            async (command, cancellationToken) =>
+            {
+                await HandleSpawnCommandAsync(command, cancellationToken);
+            },
+            cancellationToken: ct);
+        _subscriptions.Add(spawnSub);
+
+        // Subscribe to stop commands
+        var stopSub = await _messageSubscriber.SubscribeDynamicAsync<StopActorCommand>(
+            $"actor.node.{appId}.stop",
+            async (command, cancellationToken) =>
+            {
+                await HandleStopCommandAsync(command, cancellationToken);
+            },
+            cancellationToken: ct);
+        _subscriptions.Add(stopSub);
+
+        // Subscribe to message commands (for routing messages to actors)
+        var messageSub = await _messageSubscriber.SubscribeDynamicAsync<SendMessageCommand>(
+            $"actor.node.{appId}.message",
+            async (command, cancellationToken) =>
+            {
+                await HandleMessageCommandAsync(command, cancellationToken);
+            },
+            cancellationToken: ct);
+        _subscriptions.Add(messageSub);
+
+        _logger.LogDebug(
+            "Subscribed to command topics: actor.node.{AppId}.spawn, actor.node.{AppId}.stop, actor.node.{AppId}.message",
+            appId, appId, appId);
+    }
+
+    /// <summary>
     /// Handles a spawn command from the control plane.
-    /// Called by ActorServiceEvents when a spawn command is received.
+    /// Called via subscription to actor.node.{appId}.spawn topic.
     /// </summary>
     /// <param name="command">The spawn command.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -197,7 +250,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
 
     /// <summary>
     /// Handles a stop command from the control plane.
-    /// Called by ActorServiceEvents when a stop command is received.
+    /// Called via subscription to actor.node.{appId}.stop topic.
     /// </summary>
     /// <param name="command">The stop command.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -259,6 +312,70 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Handles a message command by routing it to the target actor's perception queue.
+    /// Messages are converted to perceptions and injected into the actor's queue.
+    /// </summary>
+    /// <param name="command">The message command containing actorId, messageType, and payload.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if message was delivered, false if actor not found.</returns>
+    public async Task<bool> HandleMessageCommandAsync(SendMessageCommand command, CancellationToken ct)
+    {
+        await Task.CompletedTask;
+        _logger.LogDebug(
+            "Received message command for actor {ActorId} (type: {MessageType})",
+            command.ActorId, command.MessageType);
+
+        try
+        {
+            if (!_actorRegistry.TryGet(command.ActorId, out var runner) || runner == null)
+            {
+                _logger.LogWarning("Actor {ActorId} not found for message command", command.ActorId);
+                return false;
+            }
+
+            // Convert the message to a perception and inject it
+            var perception = new PerceptionData
+            {
+                PerceptionType = command.MessageType,
+                SourceId = "message-bus",
+                SourceType = "message",
+                Data = command.Payload,
+                Urgency = 0.5f // Default urgency for messages; can be extended later
+            };
+
+            var queued = runner.InjectPerception(perception);
+
+            if (queued)
+            {
+                _logger.LogDebug(
+                    "Delivered message to actor {ActorId} (type: {MessageType}, queueDepth: {Depth})",
+                    command.ActorId, command.MessageType, runner.PerceptionQueueDepth);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Failed to queue message for actor {ActorId} (actor not running or disposed)",
+                    command.ActorId);
+            }
+
+            return queued;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling message command for actor {ActorId}", command.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandleMessageCommand",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { command.ActorId, command.MessageType },
+                stack: ex.StackTrace,
+                cancellationToken: ct);
+            return false;
+        }
+    }
+
     private async Task PublishStatusChangedAsync(string actorId, string previousStatus, string newStatus, CancellationToken ct)
     {
         var statusEvent = new ActorStatusChangedEvent
@@ -277,6 +394,22 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     private async Task ShutdownAsync(string nodeId)
     {
         _logger.LogInformation("Shutting down actor pool node worker");
+
+        // Dispose command subscriptions
+        var subscriptionCount = _subscriptions.Count;
+        foreach (var subscription in _subscriptions)
+        {
+            try
+            {
+                await subscription.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error disposing subscription during shutdown");
+            }
+        }
+        _subscriptions.Clear();
+        _logger.LogDebug("Disposed {Count} command subscriptions", subscriptionCount);
 
         // Stop heartbeat emitter
         await _heartbeatEmitter.StopAsync();

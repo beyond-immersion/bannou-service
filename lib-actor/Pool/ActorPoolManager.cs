@@ -380,8 +380,44 @@ public sealed class ActorPoolManager : IActorPoolManager
         if (assignment != null)
         {
             assignment.Status = newStatus;
+
+            // Set StartedAt when status transitions to running
+            if (newStatus == "running" && assignment.StartedAt == null)
+            {
+                assignment.StartedAt = DateTimeOffset.UtcNow;
+            }
+
             await store.SaveAsync(actorId, assignment, cancellationToken: ct);
         }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<ActorAssignment>> GetAssignmentsByTemplateAsync(string templateId, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
+
+        // Get all actor IDs from the index
+        var index = await GetActorIndexAsync(ct);
+        var allActorIds = index.ActorsByNode.Values.SelectMany(ids => ids).ToList();
+
+        if (allActorIds.Count == 0)
+        {
+            return Array.Empty<ActorAssignment>();
+        }
+
+        var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
+        var assignments = new List<ActorAssignment>();
+
+        foreach (var actorId in allActorIds)
+        {
+            var assignment = await store.GetAsync(actorId, ct);
+            if (assignment != null && assignment.TemplateId == templateId)
+            {
+                assignments.Add(assignment);
+            }
+        }
+
+        return assignments;
     }
 
     #endregion

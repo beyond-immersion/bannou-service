@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 [assembly: InternalsVisibleTo("lib-actor.tests")]
 
@@ -561,6 +562,7 @@ public partial class ActorService : IActorService
                     NodeId = poolNode.NodeId,
                     NodeAppId = poolNode.AppId,
                     TemplateId = body.TemplateId.ToString(),
+                    Category = template.Category,
                     Status = "pending",
                     CharacterId = body.CharacterId
                 };
@@ -632,8 +634,13 @@ public partial class ActorService : IActorService
     }
 
     /// <summary>
-    /// Gets an actor instance by ID.
+    /// Gets an actor instance by ID, optionally auto-spawning if a matching template allows it.
     /// </summary>
+    /// <remarks>
+    /// Auto-spawn behavior: If the actor doesn't exist but a template has AutoSpawn.Enabled=true
+    /// and the actorId matches the template's IdPattern regex, the actor will be automatically
+    /// spawned on first access. This enables "instantiate-on-access" patterns for NPC brains.
+    /// </remarks>
     public async Task<(StatusCodes, ActorInstanceResponse?)> GetActorAsync(
         GetActorRequest body,
         CancellationToken cancellationToken)
@@ -642,14 +649,69 @@ public partial class ActorService : IActorService
 
         try
         {
-            if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
+            // First check local registry (bannou mode) or pool assignments (pool mode)
+            if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
             {
+                return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
+                    nodeId: _configuration.DeploymentMode == "bannou" ? "bannou-local" : null,
+                    nodeAppId: _configuration.DeploymentMode == "bannou" ? "bannou" : null));
+            }
+
+            // In pool mode, check if actor is assigned to a pool node
+            if (_configuration.DeploymentMode != "bannou")
+            {
+                var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
+                if (assignment != null)
+                {
+                    // Actor exists on a pool node - return its status
+                    return (StatusCodes.OK, new ActorInstanceResponse
+                    {
+                        ActorId = assignment.ActorId,
+                        TemplateId = Guid.TryParse(assignment.TemplateId, out var tid) ? tid : Guid.Empty,
+                        Category = assignment.Category ?? "unknown",
+                        CharacterId = assignment.CharacterId,
+                        NodeId = assignment.NodeId,
+                        NodeAppId = assignment.NodeAppId,
+                        Status = assignment.Status == "running" ? ActorStatus.Running :
+                                 assignment.Status == "stopping" ? ActorStatus.Stopping :
+                                 ActorStatus.Pending,
+                        StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
+                        LoopIterations = 0
+                    });
+                }
+            }
+
+            // Actor not found - check for auto-spawn templates
+            var matchingTemplate = await FindAutoSpawnTemplateAsync(body.ActorId, cancellationToken);
+            if (matchingTemplate != null)
+            {
+                _logger.LogInformation(
+                    "Auto-spawning actor {ActorId} from template {TemplateId} (category: {Category})",
+                    body.ActorId, matchingTemplate.TemplateId, matchingTemplate.Category);
+
+                // Spawn the actor using the matched template
+                // Note: CharacterId can be inferred from actorId pattern (e.g., "npc-brain-{characterId}")
+                // but for now we leave it null - caller should use SpawnActor directly if they need characterId binding
+                var spawnRequest = new SpawnActorRequest
+                {
+                    TemplateId = matchingTemplate.TemplateId,
+                    ActorId = body.ActorId
+                };
+
+                var (spawnStatus, spawnResponse) = await SpawnActorAsync(spawnRequest, cancellationToken);
+                if (spawnStatus == StatusCodes.OK && spawnResponse != null)
+                {
+                    return (StatusCodes.OK, spawnResponse);
+                }
+
+                // If spawn failed (e.g., max instances exceeded, conflict), return not found
+                _logger.LogWarning(
+                    "Auto-spawn of actor {ActorId} failed with status {Status}",
+                    body.ActorId, spawnStatus);
                 return (StatusCodes.NotFound, null);
             }
 
-            return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
-                nodeId: _configuration.DeploymentMode == "bannou" ? "bannou-local" : null,
-                nodeAppId: _configuration.DeploymentMode == "bannou" ? "bannou" : null));
+            return (StatusCodes.NotFound, null);
         }
         catch (Exception ex)
         {
@@ -663,6 +725,89 @@ public partial class ActorService : IActorService
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Finds a template with auto-spawn enabled that matches the given actor ID.
+    /// </summary>
+    /// <param name="actorId">The actor ID to match against template patterns.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The matching template, or null if no auto-spawn template matches.</returns>
+    private async Task<ActorTemplateData?> FindAutoSpawnTemplateAsync(
+        string actorId,
+        CancellationToken cancellationToken)
+    {
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+
+        // Get all template IDs
+        var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken);
+        if (allIds == null || allIds.Count == 0)
+        {
+            return null;
+        }
+
+        // Load all templates
+        var templates = await templateStore.GetBulkAsync(allIds, cancellationToken);
+
+        foreach (var template in templates.Values)
+        {
+            // Skip templates without auto-spawn enabled
+            if (template.AutoSpawn?.Enabled != true)
+            {
+                continue;
+            }
+
+            // Skip templates without a pattern
+            if (string.IsNullOrEmpty(template.AutoSpawn.IdPattern))
+            {
+                continue;
+            }
+
+            // Check if actorId matches the pattern
+            try
+            {
+                if (!Regex.IsMatch(actorId, template.AutoSpawn.IdPattern))
+                {
+                    continue;
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Invalid regex pattern in template {TemplateId}: {Pattern}",
+                    template.TemplateId, template.AutoSpawn.IdPattern);
+                continue;
+            }
+
+            // Check max instances limit if configured
+            if (template.AutoSpawn.MaxInstances.HasValue && template.AutoSpawn.MaxInstances.Value > 0)
+            {
+                var currentCount = _actorRegistry.GetByTemplateId(template.TemplateId).Count();
+
+                // In pool mode, also count assigned actors
+                if (_configuration.DeploymentMode != "bannou")
+                {
+                    var assignments = await _poolManager.GetAssignmentsByTemplateAsync(
+                        template.TemplateId.ToString(), cancellationToken);
+                    currentCount += assignments.Count();
+                }
+
+                if (currentCount >= template.AutoSpawn.MaxInstances.Value)
+                {
+                    _logger.LogDebug(
+                        "Template {TemplateId} has reached max instances ({Current}/{Max})",
+                        template.TemplateId, currentCount, template.AutoSpawn.MaxInstances.Value);
+                    continue;
+                }
+            }
+
+            // Found a matching template
+            return template;
+        }
+
+        return null;
     }
 
     /// <summary>

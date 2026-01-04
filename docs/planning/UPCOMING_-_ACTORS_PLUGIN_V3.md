@@ -1,8 +1,8 @@
 # Actor Plugin V3 - Distributed Behavior Execution
 
-> **Status**: IN PROGRESS (Phase 1-4 mostly complete, Phase 5 next)
+> **Status**: IN PROGRESS (Phase 0-4 COMPLETE, Phase 5 NPC Brain Integration NEXT)
 > **Created**: 2026-01-01
-> **Updated**: 2026-01-03 (Phase 3-4 pool node deployment and orchestration complete)
+> **Updated**: 2026-01-04 (Phase 0 verified complete, Phase 5 detailed, stride-demo integration documented)
 > **Related Documents**:
 > - [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior compilation and GOAP planning
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Bytecode compilation and client execution
@@ -2439,13 +2439,20 @@ public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharact
 
 ## 10. Implementation Phases
 
-### Phase 0: Bytecode Runtime Migration (Pre-requisite)
-- [ ] Move `sdk-sources/Behavior/Runtime/*` to `lib-behavior/Runtime/`
-- [ ] Create `IBehaviorModelInterpreter` and `IBehaviorModelInterpreterFactory` interfaces
-- [ ] Add DI registration in lib-behavior
-- [ ] Update SDK build to copy from lib-behavior (like Connect protocol)
-- [ ] Remove `bannou-service/Abml/Bytecode/BehaviorOpcode.cs` (use lib-behavior)
-- [ ] Update any server-side bytecode references
+### Phase 0: Bytecode Runtime Migration (Pre-requisite) ✅ COMPLETE
+- [x] Move `sdk-sources/Behavior/Runtime/*` to `lib-behavior/Runtime/`
+- [x] Create `IBehaviorModelInterpreter` and `IBehaviorModelInterpreterFactory` interfaces
+- [x] Add DI registration in lib-behavior
+- [x] Update SDK build to copy from lib-behavior (like Connect protocol)
+- [x] Remove `bannou-service/Abml/Bytecode/BehaviorOpcode.cs` (use lib-behavior)
+- [x] Update any server-side bytecode references
+
+**Implementation Notes (Phase 0):**
+- `lib-behavior/Runtime/BehaviorModelInterpreter.cs` - Main bytecode interpreter
+- `lib-behavior/Runtime/BinaryModelInterpreter.cs` - Binary protocol interpreter
+- `lib-behavior/Runtime/IBehaviorModelInterpreterFactory.cs` - Factory interface
+- `sdk-sources/Behavior/Runtime/` - Copies behavior runtime for client SDK
+- `Bannou.SDK` includes full behavior runtime for game server integration
 
 ### Phase 1: Core Infrastructure ✅ COMPLETE
 - [x] Create `schemas/actor-api.yaml`
@@ -2519,11 +2526,142 @@ public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharact
 - Workers self-register via `actor.pool-node.registered` event after container starts
 - Environment variables properly set: APP_ID, ACTOR_POOL_NODE_ID, ACTOR_POOL_NODE_APP_ID
 
-### Phase 5: NPC Brain Integration
-- [ ] Perception event routing (character.*.perception → actor)
-- [ ] Behavior cache invalidation (behavior.updated subscription)
-- [ ] GOAP integration via IGoapPlanner
-- [ ] Cognition handler integration
+### Phase 5: NPC Brain Integration ⏳ NEXT SESSION
+
+**Status**: Cognition handlers implemented, perception/state routing needs wiring
+
+#### 5.1 What's Already Done
+- [x] All 6 cognition handlers implemented in lib-behavior/Handlers/ (53KB total):
+  - `FilterAttentionHandler.cs` - Stage 1: Attention budget filtering
+  - `AssessSignificanceHandler.cs` - Stage 2: Emotional impact evaluation
+  - `QueryMemoryHandler.cs` - Stage 3a: Memory retrieval
+  - `StoreMemoryHandler.cs` - Stage 3b: Memory persistence
+  - `EvaluateGoalImpactHandler.cs` - Stage 4: Goal impact assessment
+  - `TriggerGoapReplanHandler.cs` - Stage 5: GOAP planning with urgency
+- [x] Cognition handlers registered in `DocumentExecutorFactory`
+- [x] Behavior cache invalidation via `behavior.updated` event (ActorServiceEvents.cs)
+- [x] GOAP planner available via DI (`IGoapPlanner`)
+- [x] 124 unit tests passing for lib-actor
+
+#### 5.2 What's Needed (lib-messaging transport first)
+
+The architecture uses lib-messaging (RabbitMQ) as the primary transport, with Internal Connect as a future optimization for production scale. **lib-messaging must work first**.
+
+##### 5.2.1 Perception Flow (Game Server → Actor)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    STRIDE GAME SERVER                                        │
+│                                                                              │
+│  Character experiences something (sees enemy, takes damage, finds penny)    │
+│                            │                                                 │
+│                            │ BROADCAST to fanout exchange                    │
+│                            │ Topic: character.{characterId}.perceptions      │
+│                            ▼                                                 │
+│  "Oh I found a penny! Oh there's a doggie!"                                 │
+│  (broadcast with no required subscribers - fire and forget)                 │
+└────────────────────────────┼────────────────────────────────────────────────┘
+                             │
+                             │ lib-messaging (RabbitMQ fanout)
+                             │ Actors "tap into" this stream
+                             │
+┌────────────────────────────┼────────────────────────────────────────────────┐
+│                    NPC BRAIN ACTOR (optional subscriber)                     │
+│                                                                              │
+│  Subscribed to: character.{characterId}.perceptions                         │
+│  On receive: enqueue in ActorRunner perception queue                        │
+│  Each tick: drain queue → cognition pipeline → state updates                │
+│                                                                              │
+│  If NO actor subscribed: perceptions are broadcast but not consumed         │
+│  (game still works - character just doesn't "grow")                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+##### 5.2.2 State Update Flow (Actor → Game Server)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    NPC BRAIN ACTOR                                           │
+│                                                                              │
+│  Cognition pipeline produces state updates:                                 │
+│  - feelings: { angry: 0.8, fearful: 0.3 }                                   │
+│  - goals: { primary: "confront_betrayer", target: "entity_123" }            │
+│  - memories: [ { key: "betrayed_by", value: "entity_123" } ]                │
+│                            │                                                 │
+│                            │ PUBLISH to direct topic                         │
+│                            │ Topic: character.{characterId}.state-updates    │
+│                            ▼                                                 │
+└────────────────────────────┼────────────────────────────────────────────────┘
+                             │
+                             │ lib-messaging (RabbitMQ direct)
+                             │
+┌────────────────────────────┼────────────────────────────────────────────────┐
+│                    STRIDE GAME SERVER                                        │
+│                                                                              │
+│  Subscribed to: character.{characterId}.state-updates                       │
+│  On receive: apply to character's behavior stack input slots                │
+│                                                                              │
+│  BehaviorModelInterpreter reads actor_state inputs:                         │
+│  - if feelings.angry > 0.7 → choose aggressive behaviors                    │
+│  - if goals.target exists → prioritize that target                          │
+│  - if memories.betrayed_by[X] → react differently to X                      │
+│                                                                              │
+│  WITHOUT actor: Game server has "lizard brain" fallback                     │
+│  (basic behavior - character functions but doesn't evolve)                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+##### 5.2.3 Implementation Tasks
+
+**Bannou-side (lib-actor):**
+- [ ] Subscribe to `character.{characterId}.perceptions` when actor spawns with characterId
+- [ ] Unsubscribe when actor stops
+- [ ] Publish `CharacterStateUpdateEvent` to `character.{characterId}.state-updates`
+- [ ] Define `CharacterStateUpdateEvent` schema in actor-events.yaml
+- [ ] Add state update publishing to ActorRunner after cognition completes
+
+**Stride-side (game server):**
+- [ ] Publish `CharacterPerceptionEvent` to `character.{characterId}.perceptions` fanout
+- [ ] Subscribe to `character.{characterId}.state-updates` for managed characters
+- [ ] Apply state updates to character behavior input slots
+- [ ] Implement "lizard brain" fallback when no state updates received
+
+##### 5.2.4 Dual-Brain Architecture (Future Enhancement)
+
+For demos with few characters, both brains can run simultaneously:
+- **Lizard Brain** (game server): Basic reactive behavior, always runs
+- **Higher Brain** (NPC actor): Cognition, memory, personality - optional overlay
+
+```
+State Updates from Actor → Merge with Lizard Brain → Combined Behavior
+```
+
+This provides graceful degradation: if actor system unavailable, lizard brain keeps characters functional.
+
+#### 5.3 Quick Wins (Pre-Phase 5)
+
+These can be tackled immediately to improve the foundation:
+
+- [x] **Auto-spawn feature**: `GetActor` checks template's `autoSpawn` config and spawns if pattern matches (completed 2026-01-04)
+  - Added `FindAutoSpawnTemplateAsync` with regex pattern matching
+  - Added `GetAssignmentsByTemplateAsync` for max instance checking
+  - Extended `ActorAssignment` with `Category` and `StartedAt` fields
+- [x] **Message queue wiring**: `ActorPoolNodeWorker` now subscribes to command topics (completed 2026-01-04)
+  - Subscribes to `actor.node.{appId}.spawn`, `actor.node.{appId}.stop`, `actor.node.{appId}.message`
+  - `HandleMessageCommandAsync` converts `SendMessageCommand` to `PerceptionData` and injects into actor
+  - Proper subscription lifecycle (disposed on shutdown)
+- [ ] **HTTP test coverage**: Add actor template CRUD and spawn/stop to http-tester
+
+#### 5.4 Stride Demo Integration Reference
+
+The stride-demo (`~/repos/stride-demo/project/`) already has:
+- `BannouConnectionManager.cs` (15KB) - WebSocket lifecycle via Bannou.SDK
+- `CharacterAgentProxy.cs` (18KB) - Monster AI actor proxy
+- `FightCoordinatorClient.cs` (24KB) - Event Brain integration
+- `BehaviorInputMapper.cs` (8KB) - Game state → ABML input mapping
+- `IntentApplicator.cs` (10KB) - MergedIntent → game actions
+
+These files need the perception/state update flows wired in Phase 5.
 
 ### Phase 6: Advanced Features
 - [ ] Actor affinity (keep related actors on same node)
@@ -2533,4 +2671,4 @@ public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharact
 
 ---
 
-*Last Updated: 2026-01-03*
+*Last Updated: 2026-01-04*
