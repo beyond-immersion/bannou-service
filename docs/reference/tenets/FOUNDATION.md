@@ -138,7 +138,12 @@ Run `make generate` to execute the full pipeline in order:
 
 ### Configuration Environment Variable Naming (MANDATORY)
 
-**Rule**: ALL configuration environment variables MUST follow `{SERVICE}_{PROPERTY}` pattern.
+**Rule**: ALL configuration properties MUST have explicit `env:` keys following the `{SERVICE}_{PROPERTY}` pattern.
+
+**Three Inviolable Requirements**:
+1. **Explicit `env:` keys**: Every property MUST have an explicit `env:` field - never rely on auto-generation from property name
+2. **Service prefix**: All env vars MUST start with the service prefix (e.g., `CONNECT_`, `AUTH_`, `STATE_`)
+3. **Underscore separation**: Multi-word properties use underscores between words (e.g., `MAX_CONCURRENT_CONNECTIONS`)
 
 ```yaml
 # In {service}-configuration.yaml
@@ -146,22 +151,29 @@ x-service-configuration:
   properties:
     JwtSecret:
       type: string
-      env: AUTH_JWT_SECRET      # CORRECT: SERVICE_PROPERTY format
-    MaxConnections:
+      env: AUTH_JWT_SECRET           # CORRECT: Explicit env with SERVICE_PROPERTY format
+    MaxConcurrentConnections:
       type: integer
-      env: CONNECT_MAX_CONNECTIONS  # CORRECT: Underscores for multi-word
+      env: CONNECT_MAX_CONCURRENT_CONNECTIONS  # CORRECT: Underscores between words
+    Enabled:
+      type: boolean
+      env: BEHAVIOR_ENABLED          # CORRECT: Even simple properties need explicit env
 ```
 
 **Correct Examples**:
 - `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_MOCK_PROVIDERS`
-- `CONNECT_MAX_CONNECTIONS`, `CONNECT_WEBSOCKET_URL`
-- `BEHAVIOR_CACHE_TTL_SECONDS`
+- `CONNECT_MAX_CONCURRENT_CONNECTIONS`, `CONNECT_HEARTBEAT_INTERVAL_SECONDS`
+- `STATE_REDIS_CONNECTION_STRING`, `STATE_DEFAULT_CONSISTENCY`
+- `GAME_SESSION_MAX_PLAYERS_PER_SESSION` (hyphenated services use underscores)
 
-**Prohibited Patterns** (cause binding failures):
+**Prohibited Patterns** (cause binding failures or inconsistency):
+- Missing `env:` key - Generates `MAXCONCURRENTCONNECTIONS` instead of `MAX_CONCURRENT_CONNECTIONS`
 - `JWTSECRET` - No service prefix, no delimiter
 - `JwtSecret` - camelCase not allowed
 - `auth-jwt-secret` - kebab-case not allowed
 - `AUTH_JWTSECRET` - Missing underscore delimiter in property name
+- `REDIS_CONNECTION_STRING` - Missing service prefix (should be `STATE_REDIS_CONNECTION_STRING`)
+- `GAME-SESSION_ENABLED` - Hyphen in prefix (should be `GAME_SESSION_ENABLED`)
 
 ### Namespace for Generated Events
 
@@ -689,6 +701,9 @@ When a package changes license, pin to the last permissive version with XML comm
 |-----------|-------|-----|
 | Editing Generated/ files | T1, T2 | Edit schema, regenerate |
 | Wrong env var format (`JWTSECRET`) | T2 | Use `{SERVICE}_{PROPERTY}` pattern |
+| Missing `env:` key in config schema | T2 | Add explicit `env:` with proper naming |
+| Missing service prefix (`REDIS_CONNECTION_STRING`) | T2 | Add prefix (e.g., `STATE_REDIS_CONNECTION_STRING`) |
+| Hyphen in env var prefix (`GAME-SESSION_`) | T2 | Use underscore (`GAME_SESSION_`) |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use IMeshInvocationClient or generated clients via lib-mesh |

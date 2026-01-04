@@ -55,13 +55,13 @@ public class StateServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Redis connection string (host:port format) for Redis-backed state stores
-    /// Environment variable: REDIS_CONNECTION_STRING
+    /// Environment variable: STATE_REDIS_CONNECTION_STRING
     /// </summary>
     public string? RedisConnectionString { get; set; }
 
     /// <summary>
     /// MySQL connection string for MySQL-backed state stores
-    /// Environment variable: MYSQL_CONNECTION_STRING
+    /// Environment variable: STATE_MYSQL_CONNECTION_STRING
     /// </summary>
     public string? MySqlConnectionString { get; set; }
 
@@ -79,19 +79,19 @@ public class StateServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Default consistency level for state operations (strong or eventual)
-    /// Environment variable: DEFAULT_CONSISTENCY
+    /// Environment variable: STATE_DEFAULT_CONSISTENCY
     /// </summary>
     public string DefaultConsistency { get; set; } = "strong";
 
     /// <summary>
     /// Enable metrics collection for state operations
-    /// Environment variable: ENABLE_METRICS
+    /// Environment variable: STATE_ENABLE_METRICS
     /// </summary>
     public bool EnableMetrics { get; set; } = true;
 
     /// <summary>
     /// Enable distributed tracing for state operations
-    /// Environment variable: ENABLE_TRACING
+    /// Environment variable: STATE_ENABLE_TRACING
     /// </summary>
     public bool EnableTracing { get; set; } = true;
 

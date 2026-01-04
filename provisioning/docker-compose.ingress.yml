@@ -22,8 +22,8 @@ services:
       - ./openresty/lua:/usr/local/openresty/lua:ro
       - ./certificates:/certs:ro
     environment:
-      # Routing Redis on default (internal) network - service name resolution
-      - REDIS_HOST=routing-redis
+      # Use bannou-redis for service routing (orchestrator writes routing data there)
+      - REDIS_HOST=bannou-redis
       - REDIS_PORT=6379
       # Asset state Redis (same as bannou-redis) for token validation
       - ASSET_REDIS_HOST=bannou-redis

@@ -14,7 +14,7 @@ paths: {}
 
 # Flat configuration properties for environment variable binding (IMPLEMENTATION TENETS)
 # Note: env keys use underscores where property names have case changes
-# e.g., RedisConnectionString -> REDIS_CONNECTION_STRING (normalizes back correctly)
+# e.g., RedisConnectionString -> STATE_REDIS_CONNECTION_STRING
 x-service-configuration:
   properties:
     UseInMemory:
@@ -26,12 +26,12 @@ x-service-configuration:
       type: string
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
       description: Redis connection string (host:port format) for Redis-backed state stores
-      env: REDIS_CONNECTION_STRING
+      env: STATE_REDIS_CONNECTION_STRING
     MySqlConnectionString:
       type: string
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
       description: MySQL connection string for MySQL-backed state stores
-      env: MYSQL_CONNECTION_STRING
+      env: STATE_MYSQL_CONNECTION_STRING
     ConnectionTimeoutSeconds:
       type: integer
       description: Total timeout in seconds for establishing Redis/MySQL connections
@@ -45,15 +45,15 @@ x-service-configuration:
     DefaultConsistency:
       type: string
       description: Default consistency level for state operations (strong or eventual)
-      env: DEFAULT_CONSISTENCY
+      env: STATE_DEFAULT_CONSISTENCY
       default: "strong"
     EnableMetrics:
       type: boolean
       description: Enable metrics collection for state operations
-      env: ENABLE_METRICS
+      env: STATE_ENABLE_METRICS
       default: true
     EnableTracing:
       type: boolean
       description: Enable distributed tracing for state operations
-      env: ENABLE_TRACING
+      env: STATE_ENABLE_TRACING
       default: true

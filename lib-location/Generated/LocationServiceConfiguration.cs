@@ -49,7 +49,7 @@ public class LocationServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Location service
-    /// Environment variable: ENABLED
+    /// Environment variable: LOCATION_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

@@ -49,7 +49,7 @@ public class PermissionsServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Permissions service
-    /// Environment variable: ENABLED
+    /// Environment variable: PERMISSIONS_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

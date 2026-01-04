@@ -49,7 +49,7 @@ public class RelationshipServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Relationship service
-    /// Environment variable: ENABLED
+    /// Environment variable: RELATIONSHIP_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

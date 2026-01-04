@@ -49,7 +49,7 @@ public class RealmServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Realm service
-    /// Environment variable: ENABLED
+    /// Environment variable: REALM_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

@@ -2656,6 +2656,14 @@ These can be tackled immediately to improve the foundation:
   - Added `TestInjectPerceptionActorNotFound` - verifies 404 for non-existent actor
   - Total actor HTTP tests: 21 (template CRUD, lifecycle, validation, auto-spawn, perception)
 
+##### Quick Win Follow-ups (Minor Improvements for Later)
+
+Two minor items to revisit when extending the system:
+
+1. **Hardcoded urgency in HandleMessageCommandAsync**: `ActorPoolNodeWorker.HandleMessageCommandAsync` uses a fixed `Urgency = 0.5f` when converting `SendMessageCommand` to `PerceptionData`. Consider extending the `SendMessageCommand` schema to include an optional urgency field so callers can specify priority.
+
+2. **CharacterId not inferred in auto-spawn**: `ActorService.FindAutoSpawnTemplateAsync` doesn't extract CharacterId from the actorId pattern (e.g., `npc-brain-{characterId}`). For now, callers needing characterId binding should use `SpawnActor` directly. Future enhancement: add optional `characterIdPattern` capture group to `AutoSpawnConfig`.
+
 #### 5.4 Stride Demo Integration Reference
 
 The stride-demo (`~/repos/stride-demo/project/`) already has:

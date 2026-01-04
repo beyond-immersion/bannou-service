@@ -119,22 +119,22 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `CONNECT_AUTHENTICATEDSERVICES` | string[] | `['accounts', 'behavior', 'permissions', 'gamesession']` | Additional services available to authenticated connections |
-| `CONNECT_BINARYPROTOCOLVERSION` | string | `2.0` | Binary protocol version identifier |
-| `CONNECT_BUFFERSIZE` | int | `65536` | Size of message buffers in bytes |
-| `CONNECT_CONNECTIONMODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
-| `CONNECT_CONNECTIONTIMEOUTSECONDS` | int | `300` | WebSocket connection timeout in seconds |
-| `CONNECT_DEFAULTSERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
-| `CONNECT_ENABLECLIENTTOCLIENTROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
-| `CONNECT_HEARTBEATINTERVALSECONDS` | int | `30` | Interval between heartbeat messages |
-| `CONNECT_INTERNALAUTHMODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
+| `CONNECT_AUTHENTICATED_SERVICES` | string[] | `['accounts', 'behavior', 'permissions', 'gamesession']` | Additional services available to authenticated connections |
+| `CONNECT_BINARY_PROTOCOL_VERSION` | string | `2.0` | Binary protocol version identifier |
+| `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
+| `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
+| `CONNECT_CONNECTION_TIMEOUT_SECONDS` | int | `300` | WebSocket connection timeout in seconds |
+| `CONNECT_DEFAULT_SERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
+| `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
+| `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
+| `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
-| `CONNECT_JWTPUBLICKEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
-| `CONNECT_MAXCONCURRENTCONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
-| `CONNECT_MAXMESSAGESPERMINUTE` | int | `1000` | Rate limit for messages per minute per client |
-| `CONNECT_MESSAGEQUEUESIZE` | int | `1000` | Maximum number of queued messages per connection |
+| `CONNECT_JWT_PUBLIC_KEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
+| `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
+| `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
+| `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
 | `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (R... |
-| `CONNECT_RATELIMITWINDOWMINUTES` | int | `1` | Rate limit window in minutes |
+| `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL returned to clients for reconnection |
 
@@ -165,10 +165,10 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `GAME-SESSION_DEFAULTSESSIONTIMEOUTSECONDS` | int | `7200` | Default session timeout in seconds |
-| `GAME-SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
-| `GAME-SESSION_MAXPLAYERSPERSESSION` | int | `16` | Maximum players allowed per session |
-| `GAME-SESSION_SERVERSALT` | string | **REQUIRED** | Server salt for GUID generation. If not set, generates rando... |
+| `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
+| `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
+| `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
+| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. If not set, generates rando... |
 
 ### Location
 
@@ -279,7 +279,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `RELATIONSHIP-TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
+| `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
 
 ### Servicedata
 
@@ -297,13 +297,13 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations (strong or ev... |
-| `ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
-| `ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
-| `MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
-| `REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
 | `STATE_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of connection retry attempts |
+| `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations (strong or ev... |
+| `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
+| `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
+| `STATE_MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
+| `STATE_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
 ### Subscriptions

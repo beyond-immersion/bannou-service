@@ -15,3 +15,4 @@ x-service-configuration:
       type: boolean
       description: Enable/disable Realm service
       default: true
+      env: REALM_ENABLED

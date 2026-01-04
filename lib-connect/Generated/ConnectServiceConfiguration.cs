@@ -49,73 +49,73 @@ public class ConnectServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Maximum number of concurrent WebSocket connections
-    /// Environment variable: MAXCONCURRENTCONNECTIONS
+    /// Environment variable: CONNECT_MAX_CONCURRENT_CONNECTIONS
     /// </summary>
     public int MaxConcurrentConnections { get; set; } = 10000;
 
     /// <summary>
     /// WebSocket connection timeout in seconds
-    /// Environment variable: CONNECTIONTIMEOUTSECONDS
+    /// Environment variable: CONNECT_CONNECTION_TIMEOUT_SECONDS
     /// </summary>
     public int ConnectionTimeoutSeconds { get; set; } = 300;
 
     /// <summary>
     /// Interval between heartbeat messages
-    /// Environment variable: HEARTBEATINTERVALSECONDS
+    /// Environment variable: CONNECT_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
     public int HeartbeatIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Maximum number of queued messages per connection
-    /// Environment variable: MESSAGEQUEUESIZE
+    /// Environment variable: CONNECT_MESSAGE_QUEUE_SIZE
     /// </summary>
     public int MessageQueueSize { get; set; } = 1000;
 
     /// <summary>
     /// Binary protocol version identifier
-    /// Environment variable: BINARYPROTOCOLVERSION
+    /// Environment variable: CONNECT_BINARY_PROTOCOL_VERSION
     /// </summary>
     public string BinaryProtocolVersion { get; set; } = "2.0";
 
     /// <summary>
     /// Size of message buffers in bytes
-    /// Environment variable: BUFFERSIZE
+    /// Environment variable: CONNECT_BUFFER_SIZE
     /// </summary>
     public int BufferSize { get; set; } = 65536;
 
     /// <summary>
     /// Services available to unauthenticated connections
-    /// Environment variable: DEFAULTSERVICES
+    /// Environment variable: CONNECT_DEFAULT_SERVICES
     /// </summary>
     public string[] DefaultServices { get; set; } = ["auth", "website"];
 
     /// <summary>
     /// Additional services available to authenticated connections
-    /// Environment variable: AUTHENTICATEDSERVICES
+    /// Environment variable: CONNECT_AUTHENTICATED_SERVICES
     /// </summary>
     public string[] AuthenticatedServices { get; set; } = ["accounts", "behavior", "permissions", "gamesession"];
 
     /// <summary>
     /// Enable routing messages between WebSocket clients
-    /// Environment variable: ENABLECLIENTTOCLIENTROUTING
+    /// Environment variable: CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING
     /// </summary>
     public bool EnableClientToClientRouting { get; set; } = true;
 
     /// <summary>
     /// Rate limit for messages per minute per client
-    /// Environment variable: MAXMESSAGESPERMINUTE
+    /// Environment variable: CONNECT_MAX_MESSAGES_PER_MINUTE
     /// </summary>
     public int MaxMessagesPerMinute { get; set; } = 1000;
 
     /// <summary>
     /// Rate limit window in minutes
-    /// Environment variable: RATELIMITWINDOWMINUTES
+    /// Environment variable: CONNECT_RATE_LIMIT_WINDOW_MINUTES
     /// </summary>
     public int RateLimitWindowMinutes { get; set; } = 1;
 
     /// <summary>
     /// RSA public key for JWT validation (PEM format)
-    /// Environment variable: JWTPUBLICKEY
+    /// Environment variable: CONNECT_JWT_PUBLIC_KEY
     /// </summary>
     public string? JwtPublicKey { get; set; }
 
@@ -140,13 +140,13 @@ public class ConnectServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)
-    /// Environment variable: CONNECTIONMODE
+    /// Environment variable: CONNECT_CONNECTION_MODE
     /// </summary>
     public string ConnectionMode { get; set; } = "external";
 
     /// <summary>
     /// Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)
-    /// Environment variable: INTERNALAUTHMODE
+    /// Environment variable: CONNECT_INTERNAL_AUTH_MODE
     /// </summary>
     public string InternalAuthMode { get; set; } = "service-token";
 

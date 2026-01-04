@@ -49,7 +49,7 @@ public class SpeciesServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Species service
-    /// Environment variable: ENABLED
+    /// Environment variable: SPECIES_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

@@ -49,7 +49,7 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Behavior service
-    /// Environment variable: ENABLED
+    /// Environment variable: BEHAVIOR_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

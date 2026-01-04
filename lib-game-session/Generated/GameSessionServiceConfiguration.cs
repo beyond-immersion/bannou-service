@@ -49,25 +49,25 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Game Session service
-    /// Environment variable: ENABLED
+    /// Environment variable: GAME_SESSION_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 
     /// <summary>
     /// Server salt for GUID generation. If not set, generates random salt (OK for development, must be shared in production)
-    /// Environment variable: SERVERSALT
+    /// Environment variable: GAME_SESSION_SERVER_SALT
     /// </summary>
     public string? ServerSalt { get; set; }
 
     /// <summary>
     /// Maximum players allowed per session
-    /// Environment variable: MAXPLAYERSPERSESSION
+    /// Environment variable: GAME_SESSION_MAX_PLAYERS_PER_SESSION
     /// </summary>
     public int MaxPlayersPerSession { get; set; } = 16;
 
     /// <summary>
     /// Default session timeout in seconds
-    /// Environment variable: DEFAULTSESSIONTIMEOUTSECONDS
+    /// Environment variable: GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS
     /// </summary>
     public int DefaultSessionTimeoutSeconds { get; set; } = 7200;
 

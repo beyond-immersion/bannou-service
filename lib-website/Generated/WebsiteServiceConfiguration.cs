@@ -49,7 +49,7 @@ public class WebsiteServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Website service
-    /// Environment variable: ENABLED
+    /// Environment variable: WEBSITE_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

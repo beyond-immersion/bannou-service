@@ -104,6 +104,9 @@ Tenets are organized into three categories based on when they're needed:
 | Editing Generated/ files | T1, T2 | Edit schema, regenerate |
 | Missing `description` on schema property | T1 | Add description field (causes CS1591) |
 | Wrong env var format (`JWTSECRET`) | T2 | Use `{SERVICE}_{PROPERTY}` pattern |
+| Missing `env:` key in config schema | T2 | Add explicit `env:` with proper naming |
+| Missing service prefix (`REDIS_CONNECTION_STRING`) | T2 | Add prefix (e.g., `STATE_REDIS_CONNECTION_STRING`) |
+| Hyphen in env var prefix (`GAME-SESSION_`) | T2 | Use underscore (`GAME_SESSION_`) |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use generated clients via lib-mesh |

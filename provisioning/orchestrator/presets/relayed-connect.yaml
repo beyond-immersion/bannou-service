@@ -26,8 +26,8 @@ topology:
       replicas: 1
       environment:
         # Enable Relayed mode for peer-to-peer routing
+        # Env var matches schema: env: CONNECT_CONNECTION_MODE
         CONNECT_CONNECTION_MODE: "relayed"
-        BANNOU_CONNECT_CONNECTION_MODE: "relayed"
         # Node-specific marker
         BANNOU_IS_RELAYED_NODE: "true"
 
