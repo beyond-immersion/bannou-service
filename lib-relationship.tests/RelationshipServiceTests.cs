@@ -157,7 +157,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var (status, response) = await service.CreateRelationshipAsync(request);
 
         // Assert - Response
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(entity1Id, response.Entity1Id);
         Assert.Equal(entity2Id, response.Entity2Id);
@@ -238,7 +238,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var (status, response) = await service.CreateRelationshipAsync(request);
 
         // Assert - Response
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotNull(response.Metadata);
 
@@ -290,7 +290,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var (status, response) = await service.CreateRelationshipAsync(request);
 
         // Assert - Response
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
 
         // Assert - Event was published with correct content

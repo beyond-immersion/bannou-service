@@ -167,7 +167,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var (status, response) = await service.CreateGameSessionAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("Test Session", response.SessionName);
         Assert.Equal(4, response.MaxPlayers);
@@ -218,7 +218,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var (status, response) = await service.CreateGameSessionAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.True(response.IsPrivate);
     }

@@ -383,7 +383,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateSpeciesRequest'
       responses:
-        '201':
+        '200':
           description: Species created successfully
           content:
             application/json:
@@ -578,7 +578,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteSpeciesRequest'
       responses:
-        '204':
+        '200':
           description: Species deleted successfully
         '404':
           description: Species not found

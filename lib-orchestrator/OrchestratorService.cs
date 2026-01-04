@@ -2440,8 +2440,8 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 _logger.LogInformation("AcquireProcessor: No available processors in pool {PoolType}", body.PoolType);
 
-                // Return 429 Too Many Requests to indicate pool is busy
-                return (StatusCodes.TooManyRequests, null);
+                // Return 503 Service Unavailable to indicate pool is busy
+                return (StatusCodes.ServiceUnavailable, null);
             }
 
             // Pop the first available processor

@@ -205,7 +205,7 @@ public partial class ServicedataService : IServicedataService
             _logger.LogInformation("Created service {ServiceId} with stub name {StubName}",
                 serviceId, normalizedStubName);
 
-            return (StatusCodes.Created, MapToServiceInfo(serviceModel));
+            return (StatusCodes.OK, MapToServiceInfo(serviceModel));
         }
         catch (Exception ex)
         {
@@ -313,7 +313,7 @@ public partial class ServicedataService : IServicedataService
             await RemoveFromServiceListAsync(body.ServiceId.ToString(), cancellationToken);
 
             _logger.LogInformation("Deleted service {ServiceId}", body.ServiceId);
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {

@@ -314,7 +314,7 @@ public partial class RealmService : IRealmService
             await PublishRealmCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created realm: {RealmId} with code {Code}", realmId, code);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {
@@ -444,7 +444,7 @@ public partial class RealmService : IRealmService
             await PublishRealmDeletedEventAsync(model, null, cancellationToken);
 
             _logger.LogInformation("Deleted realm: {RealmId} ({Code})", body.RealmId, model.Code);
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -633,7 +633,7 @@ public partial class RealmService : IRealmService
 
                         var (status, _) = await CreateRealmAsync(createRequest, cancellationToken);
 
-                        if (status == StatusCodes.Created)
+                        if (status == StatusCodes.OK)
                         {
                             created++;
                             _logger.LogDebug("Created new realm: {Code}", code);

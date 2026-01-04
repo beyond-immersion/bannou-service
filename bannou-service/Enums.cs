@@ -69,6 +69,14 @@ public enum HttpMethodTypes
 /// All service methods return <c>(StatusCodes, TResponse?)</c> tuples.
 /// See TENETS.md T8: Return Pattern for usage requirements.
 /// </para>
+/// <para>
+/// <b>WARNING - DO NOT ADD NEW STATUS CODES WITHOUT EXPLICIT APPROVAL.</b>
+/// These codes are hand-chosen per TENET T8 to minimize client complexity.
+/// Adding new codes requires updating: Controller.liquid template, ErrorResponses.cs,
+/// client SDK ResponseCodes, and all consuming code. If you think you need a new
+/// status code, the answer is almost always "use an existing code with appropriate
+/// payload content to indicate the specific condition."
+/// </para>
 /// </remarks>
 public enum StatusCodes
 {
@@ -76,18 +84,6 @@ public enum StatusCodes
     /// Request succeeded (200).
     /// </summary>
     OK = 200,
-    /// <summary>
-    /// Resource created successfully (201).
-    /// </summary>
-    Created = 201,
-    /// <summary>
-    /// Request accepted for processing (202).
-    /// </summary>
-    Accepted = 202,
-    /// <summary>
-    /// No content to return (204).
-    /// </summary>
-    NoContent = 204,
     /// <summary>
     /// Bad request due to invalid input (400).
     /// </summary>
@@ -108,14 +104,6 @@ public enum StatusCodes
     /// Request conflicts with current resource state (409).
     /// </summary>
     Conflict = 409,
-    /// <summary>
-    /// Request payload too large (413).
-    /// </summary>
-    MessageTooLarge = 413,
-    /// <summary>
-    /// Too many requests - rate limited or pool exhausted (429).
-    /// </summary>
-    TooManyRequests = 429,
     /// <summary>
     /// Internal server error (500).
     /// </summary>

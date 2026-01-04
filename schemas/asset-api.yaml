@@ -150,7 +150,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CompleteUploadRequest'
       responses:
-        '201':
+        '200':
           description: Asset created, processing started
           content:
             application/json:

@@ -261,7 +261,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateRealmRequest'
       responses:
-        '201':
+        '200':
           description: Realm created successfully
           content:
             application/json:
@@ -418,7 +418,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteRealmRequest'
       responses:
-        '204':
+        '200':
           description: Realm deleted successfully
         '404':
           description: Realm not found

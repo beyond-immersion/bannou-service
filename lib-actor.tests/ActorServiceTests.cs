@@ -113,7 +113,7 @@ public class ActorServiceTests
         var (status, response) = await service.CreateActorTemplateAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("npc-brain", response.Category);
         Assert.Equal("behaviors/npc/standard.abml", response.BehaviorRef);
@@ -420,7 +420,7 @@ public class ActorServiceTests
         var (status, response) = await service.SpawnActorAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
     }
 

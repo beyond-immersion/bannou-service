@@ -198,7 +198,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(response.Roles);
         Assert.Contains("admin", response.Roles);
@@ -260,7 +260,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(response.Roles);
         Assert.Contains("admin", response.Roles);
@@ -417,7 +417,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
 
         // Should NOT have admin role
@@ -483,7 +483,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(response.Roles);
         Assert.Contains("admin", response.Roles);
@@ -542,7 +542,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(response.Roles);
 
@@ -609,7 +609,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(response.Roles);
 
@@ -811,7 +811,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal(request.Email, response.Email);
         Assert.Equal(request.DisplayName, response.DisplayName);
@@ -872,7 +872,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.EmailVerified);
     }
@@ -931,7 +931,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.False(response.EmailVerified);
     }
@@ -991,7 +991,7 @@ public class AccountsServiceTests
 
             var (statusCode, response) = await service.CreateAccountAsync(request);
 
-            Assert.Equal(StatusCodes.Created, statusCode);
+            Assert.Equal(StatusCodes.OK, statusCode);
             Assert.NotNull(response);
             accountIds.Add(response.AccountId);
         }
@@ -1059,7 +1059,7 @@ public class AccountsServiceTests
         var afterCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.CreatedAt >= beforeCreation, $"CreatedAt ({response.CreatedAt}) should be >= beforeCreation ({beforeCreation})");
         Assert.True(response.CreatedAt <= afterCreation, $"CreatedAt ({response.CreatedAt}) should be <= afterCreation ({afterCreation})");
@@ -1120,7 +1120,7 @@ public class AccountsServiceTests
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(response.AuthMethods);
         Assert.Empty(response.AuthMethods);

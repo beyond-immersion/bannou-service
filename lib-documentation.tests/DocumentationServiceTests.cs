@@ -457,7 +457,7 @@ public class DocumentationServiceTests
         var (status, response) = await _service.BindRepositoryAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotEqual(Guid.Empty, response.BindingId);
         Assert.Equal(TEST_NAMESPACE, response.Namespace);

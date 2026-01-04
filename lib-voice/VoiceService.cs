@@ -119,7 +119,7 @@ public partial class VoiceService : IVoiceService
 
             _logger.LogInformation("Created voice room {RoomId} for session {SessionId}", roomId, body.SessionId);
 
-            return (StatusCodes.Created, new VoiceRoomResponse
+            return (StatusCodes.OK, new VoiceRoomResponse
             {
                 RoomId = roomId,
                 SessionId = body.SessionId,

@@ -656,7 +656,7 @@ public partial class LocationService : ILocationService
             await PublishLocationCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {
@@ -930,7 +930,7 @@ public partial class LocationService : ILocationService
             await PublishLocationDeletedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Deleted location {LocationId}", body.LocationId);
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -1124,7 +1124,7 @@ public partial class LocationService : ILocationService
 
                     var (status, response) = await CreateLocationAsync(createRequest, cancellationToken);
 
-                    if (status == StatusCodes.Created && response != null)
+                    if (status == StatusCodes.OK && response != null)
                     {
                         codeToLocationId[compositeKey] = response.LocationId.ToString();
                         created++;

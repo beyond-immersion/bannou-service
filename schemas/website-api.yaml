@@ -502,7 +502,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PageContent'
       responses:
-        '201':
+        '200':
           description: Page created
           content:
             application/json:
@@ -716,7 +716,7 @@ paths:
         schema:
           type: string
       responses:
-        '204':
+        '200':
           description: Page deleted
 
       x-request-schema-json: '{}'

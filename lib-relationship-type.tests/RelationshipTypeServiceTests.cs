@@ -195,7 +195,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var (status, response) = await service.CreateRelationshipTypeAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("ENEMY", response.Code);
         Assert.Equal("Enemy", response.Name);
@@ -260,7 +260,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var (status, response) = await service.CreateRelationshipTypeAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(parentId, response.ParentTypeId);
     }
@@ -282,7 +282,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var (status, _) = await service.CreateRelationshipTypeAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "relationship-type.created",
             It.IsAny<RelationshipTypeCreatedEvent>(),
@@ -410,7 +410,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             new DeleteRelationshipTypeRequest { RelationshipTypeId = typeId });
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, status);
+        Assert.Equal(StatusCodes.OK, status);
     }
 
     [Fact]

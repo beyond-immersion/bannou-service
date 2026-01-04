@@ -206,7 +206,7 @@ public partial class MeshService : IMeshService
                 TtlSeconds = DEFAULT_TTL_SECONDS
             };
 
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -257,7 +257,7 @@ public partial class MeshService : IMeshService
                 MeshEndpointDeregisteredEventReason.Graceful,
                 cancellationToken);
 
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {

@@ -304,7 +304,7 @@ public partial class GameSessionService : IGameSessionService
             var response = MapModelToResponse(session);
 
             _logger.LogInformation("Game session {SessionId} created successfully", session.SessionId);
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {

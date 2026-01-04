@@ -168,7 +168,7 @@ public partial class ActorService : IActorService
             _logger.LogInformation("Created actor template {TemplateId} for category {Category}",
                 templateId, body.Category);
 
-            return (StatusCodes.Created, template.ToResponse());
+            return (StatusCodes.OK, template.ToResponse());
         }
         catch (Exception ex)
         {
@@ -551,7 +551,7 @@ public partial class ActorService : IActorService
                 if (poolNode == null)
                 {
                     _logger.LogWarning("No pool nodes with capacity available for category {Category}", template.Category);
-                    return (StatusCodes.TooManyRequests, null);
+                    return (StatusCodes.ServiceUnavailable, null);
                 }
 
                 // Record the assignment
@@ -604,7 +604,7 @@ public partial class ActorService : IActorService
             _logger.LogInformation("Spawned actor {ActorId} from template {TemplateId}",
                 actorId, body.TemplateId);
 
-            return (StatusCodes.Created, new ActorInstanceResponse
+            return (StatusCodes.OK, new ActorInstanceResponse
             {
                 ActorId = actorId,
                 TemplateId = body.TemplateId,

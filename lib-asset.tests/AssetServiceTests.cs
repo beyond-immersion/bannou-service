@@ -455,7 +455,7 @@ public class AssetServiceTests
         var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal("test.png", result.Filename);
         Assert.Equal("image/png", result.ContentType);
@@ -539,7 +539,7 @@ public class AssetServiceTests
         var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
 
         // Verify multipart completion was called

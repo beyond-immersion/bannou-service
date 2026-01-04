@@ -136,7 +136,7 @@ public partial class CharacterService : ICharacterService
             await PublishCharacterRealmJoinedEventAsync(characterId, body.RealmId, previousRealmId: null);
 
             var response = MapToCharacterResponse(character);
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -315,7 +315,7 @@ public partial class CharacterService : ICharacterService
             // Publish character deleted event
             await PublishCharacterDeletedEventAsync(character);
 
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {

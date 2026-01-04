@@ -246,7 +246,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var (status, response) = await service.CreateSpeciesAsync(request);
 
         // Assert - Response
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("ELF", response.Code);
         Assert.Equal("Elf", response.Name);
@@ -315,7 +315,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var (status, response) = await service.CreateSpeciesAsync(request);
 
         // Assert - Response
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
 
         // Assert - Event was published with correct content
@@ -509,7 +509,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             new DeleteSpeciesRequest { SpeciesId = speciesId });
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, status);
+        Assert.Equal(StatusCodes.OK, status);
     }
 
     [Fact]

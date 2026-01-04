@@ -691,7 +691,7 @@ public partial class AuthService : IAuthService
             await RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
 
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {

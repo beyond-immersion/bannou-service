@@ -50,7 +50,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateVoiceRoomRequest'
       responses:
-        '201':
+        '200':
           description: Voice room created successfully
           content:
             application/json:

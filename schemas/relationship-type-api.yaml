@@ -525,7 +525,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateRelationshipTypeRequest'
       responses:
-        '201':
+        '200':
           description: Relationship type created successfully
           content:
             application/json:
@@ -722,7 +722,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteRelationshipTypeRequest'
       responses:
-        '204':
+        '200':
           description: Relationship type deleted successfully
         '404':
           description: Relationship type not found

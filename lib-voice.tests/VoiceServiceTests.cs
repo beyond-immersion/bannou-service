@@ -116,7 +116,7 @@ public class VoiceServiceTests
         var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal(sessionId, result.SessionId);
         Assert.Equal(VoiceTier.P2p, result.Tier);
@@ -186,7 +186,7 @@ public class VoiceServiceTests
         var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal(8, result.MaxParticipants);
     }

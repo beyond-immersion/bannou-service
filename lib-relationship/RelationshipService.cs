@@ -447,7 +447,7 @@ public partial class RelationshipService : IRelationshipService
             await PublishRelationshipCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created relationship: {RelationshipId}", relationshipId);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {

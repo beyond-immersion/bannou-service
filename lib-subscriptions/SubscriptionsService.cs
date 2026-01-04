@@ -344,7 +344,7 @@ public partial class SubscriptionsService : ISubscriptionsService
             _logger.LogInformation("Created subscription {SubscriptionId} for account {AccountId} to service {StubName}",
                 subscriptionId, body.AccountId, serviceInfo.StubName);
 
-            return (StatusCodes.Created, MapToSubscriptionInfo(model));
+            return (StatusCodes.OK, MapToSubscriptionInfo(model));
         }
         catch (Exception ex)
         {

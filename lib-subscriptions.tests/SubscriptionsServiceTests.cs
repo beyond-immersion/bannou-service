@@ -526,7 +526,7 @@ public class SubscriptionsServiceTests
         var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal("arcadia", response.StubName);
         Assert.True(response.IsActive);
@@ -653,7 +653,7 @@ public class SubscriptionsServiceTests
         var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
 
         // Verify event published via IMessageBus
         _mockMessageBus.Verify(m => m.TryPublishAsync(

@@ -127,7 +127,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateGameSessionRequest'
       responses:
-        '201':
+        '200':
           description: Game session created successfully
           content:
             application/json:

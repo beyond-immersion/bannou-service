@@ -4983,26 +4983,19 @@
             All service methods return <c>(StatusCodes, TResponse?)</c> tuples.
             See TENETS.md T8: Return Pattern for usage requirements.
             </para>
+            <para>
+            <b>WARNING - DO NOT ADD NEW STATUS CODES WITHOUT EXPLICIT APPROVAL.</b>
+            These codes are hand-chosen per TENET T8 to minimize client complexity.
+            Adding new codes requires updating: Controller.liquid template, ErrorResponses.cs,
+            client SDK ResponseCodes, and all consuming code. If you think you need a new
+            status code, the answer is almost always "use an existing code with appropriate
+            payload content to indicate the specific condition."
+            </para>
             </remarks>
         </member>
         <member name="F:BeyondImmersion.BannouService.StatusCodes.OK">
             <summary>
             Request succeeded (200).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.StatusCodes.Created">
-            <summary>
-            Resource created successfully (201).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.StatusCodes.Accepted">
-            <summary>
-            Request accepted for processing (202).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.StatusCodes.NoContent">
-            <summary>
-            No content to return (204).
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.StatusCodes.BadRequest">
@@ -5028,16 +5021,6 @@
         <member name="F:BeyondImmersion.BannouService.StatusCodes.Conflict">
             <summary>
             Request conflicts with current resource state (409).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.StatusCodes.MessageTooLarge">
-            <summary>
-            Request payload too large (413).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.StatusCodes.TooManyRequests">
-            <summary>
-            Too many requests - rate limited or pool exhausted (429).
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.StatusCodes.InternalServerError">
@@ -34346,7 +34329,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertSuccess(BeyondImmersion.BannouService.StatusCodes)">
             <summary>
-            Asserts that the status code indicates success (OK, Created, NoContent).
+            Asserts that the status code indicates success (OK).
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertStatusCode(BeyondImmersion.BannouService.StatusCodes,BeyondImmersion.BannouService.StatusCodes)">
@@ -34357,11 +34340,6 @@
         <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertOkWithResult``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
             <summary>
             Asserts that the tuple result has the expected status code and non-null response.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertCreatedWithResult``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
-            <summary>
-            Asserts that the tuple result has Created status and non-null response.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertNotFound``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">

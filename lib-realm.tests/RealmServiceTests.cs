@@ -495,7 +495,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var status = await service.DeleteRealmAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, status);
+        Assert.Equal(StatusCodes.OK, status);
 
         // Verify delete operations
         _mockRealmStore.Verify(s => s.DeleteAsync(

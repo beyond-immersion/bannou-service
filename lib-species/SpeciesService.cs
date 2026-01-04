@@ -422,7 +422,7 @@ public partial class SpeciesService : ISpeciesService
             await PublishSpeciesCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created species: {SpeciesId} with code {Code}", speciesId, code);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {
@@ -581,7 +581,7 @@ public partial class SpeciesService : ISpeciesService
             await PublishSpeciesDeletedEventAsync(model, null, cancellationToken);
 
             _logger.LogInformation("Deleted species: {SpeciesId} ({Code})", body.SpeciesId, model.Code);
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -808,7 +808,7 @@ public partial class SpeciesService : ISpeciesService
 
                         var (status, _) = await CreateSpeciesAsync(createRequest, cancellationToken);
 
-                        if (status == StatusCodes.Created)
+                        if (status == StatusCodes.OK)
                         {
                             created++;
                             _logger.LogDebug("Created new species: {Code}", code);

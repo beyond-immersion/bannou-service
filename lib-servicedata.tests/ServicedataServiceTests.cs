@@ -102,7 +102,7 @@ public class ServicedataServiceTests
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal("testservice", response.StubName); // Normalized to lowercase
         Assert.Equal("Test Service", response.DisplayName);
@@ -136,7 +136,7 @@ public class ServicedataServiceTests
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
 
         // Verify service data saved with service: prefix
         _mockModelStore.Verify(s => s.SaveAsync(
@@ -191,7 +191,7 @@ public class ServicedataServiceTests
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(savedList);
         Assert.Equal(2, savedList.Count); // Should have existing + new
     }
@@ -283,7 +283,7 @@ public class ServicedataServiceTests
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal("mygameservice", response.StubName);
     }
@@ -738,7 +738,7 @@ public class ServicedataServiceTests
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
 
         // Verify delete was called
         _mockModelStore.Verify(s => s.DeleteAsync(
@@ -775,7 +775,7 @@ public class ServicedataServiceTests
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
 
         // Verify stub index delete was called
         _mockStringStore.Verify(s => s.DeleteAsync(
@@ -824,7 +824,7 @@ public class ServicedataServiceTests
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(savedList);
         Assert.Single(savedList);
         Assert.Equal(otherId.ToString(), savedList[0]);

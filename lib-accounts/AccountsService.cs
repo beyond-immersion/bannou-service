@@ -315,7 +315,7 @@ public partial class AccountsService : IAccountsService
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -713,7 +713,7 @@ public partial class AccountsService : IAccountsService
                 LinkedAt = DateTimeOffset.UtcNow
             };
 
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -948,7 +948,7 @@ public partial class AccountsService : IAccountsService
             // Publish account deleted event
             await PublishAccountDeletedEventAsync(account, "User requested deletion");
 
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -1010,7 +1010,7 @@ public partial class AccountsService : IAccountsService
 
             await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" });
 
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {

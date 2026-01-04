@@ -62,7 +62,6 @@ public static partial class ExtensionMethods
             return httpStatusCode switch
             {
                 StatusCodes.OK => new StatusCodeResult(200),
-                StatusCodes.Accepted => new StatusCodeResult(202),
                 StatusCodes.BadRequest => new StatusCodeResult(400),
                 StatusCodes.Forbidden => new StatusCodeResult(403),
                 StatusCodes.NotFound => new StatusCodeResult(404),
@@ -73,7 +72,6 @@ public static partial class ExtensionMethods
         return httpStatusCode switch
         {
             StatusCodes.OK => new ObjectResult(value) { StatusCode = 200 },
-            StatusCodes.Accepted => new ObjectResult(value) { StatusCode = 202 },
             StatusCodes.BadRequest => new ObjectResult(value) { StatusCode = 400 },
             StatusCodes.Forbidden => new ObjectResult(value) { StatusCode = 403 },
             StatusCodes.NotFound => new ObjectResult(value) { StatusCode = 404 },

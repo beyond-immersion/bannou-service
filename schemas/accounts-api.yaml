@@ -133,7 +133,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateAccountRequest'
       responses:
-        '201':
+        '200':
           description: Account created successfully
           content:
             application/json:
@@ -382,7 +382,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteAccountRequest'
       responses:
-        '204':
+        '200':
           description: Account deleted successfully
         '404':
           description: Account not found
@@ -546,7 +546,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AddAuthMethodRequest'
       responses:
-        '201':
+        '200':
           description: Authentication method added successfully
           content:
             application/json:
@@ -608,7 +608,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RemoveAuthMethodRequest'
       responses:
-        '204':
+        '200':
           description: Authentication method removed successfully
         '404':
           description: Account or method not found

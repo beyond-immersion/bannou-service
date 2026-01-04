@@ -260,7 +260,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateSubscriptionRequest'
       responses:
-        '201':
+        '200':
           description: Subscription created successfully
           content:
             application/json:

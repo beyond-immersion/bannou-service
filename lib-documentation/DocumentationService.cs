@@ -127,9 +127,22 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Content should never be null for a stored document - this is a data integrity issue
+            if (string.IsNullOrEmpty(storedDoc.Content))
+            {
+                _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - data integrity issue", documentId, namespaceId);
+                await _messageBus.TryPublishErrorAsync(
+                    serviceName: "documentation",
+                    operation: "BrowseDocument",
+                    errorType: "DataIntegrityError",
+                    message: "Stored document has null/empty Content",
+                    details: new { DocumentId = documentId, Namespace = namespaceId, Slug = slug },
+                    cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, null);
+            }
+
             // Render markdown to HTML for browser display
-            // Coalesce null to empty for display safety if markdown renderer fails
-            var htmlContent = RenderMarkdownToHtml(storedDoc.Content) ?? string.Empty;
+            var htmlContent = RenderMarkdownToHtml(storedDoc.Content);
 
             // Build simple HTML page (in production, use proper templating)
             var html = $@"<!DOCTYPE html>
@@ -320,11 +333,22 @@ public partial class DocumentationService : IDocumentationService
             };
 
             // Include content if requested
-            // TODO: Content should never be null - if it is, that's a data integrity issue
-            // Currently defensive to avoid breaking API response; consider throwing instead
             if (body.IncludeContent)
             {
-                doc.Content = (body.RenderHtml ? RenderMarkdownToHtml(storedDoc.Content) : storedDoc.Content) ?? string.Empty;
+                // Content should never be null for a stored document - this is a data integrity issue
+                if (string.IsNullOrEmpty(storedDoc.Content))
+                {
+                    _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - data integrity issue", documentId, namespaceId);
+                    await _messageBus.TryPublishErrorAsync(
+                        serviceName: "documentation",
+                        operation: "GetDocument",
+                        errorType: "DataIntegrityError",
+                        message: "Stored document has null/empty Content",
+                        details: new { DocumentId = documentId, Namespace = namespaceId },
+                        cancellationToken: cancellationToken);
+                    return (StatusCodes.InternalServerError, null);
+                }
+                doc.Content = body.RenderHtml ? RenderMarkdownToHtml(storedDoc.Content) : storedDoc.Content;
             }
 
             var response = new GetDocumentResponse
@@ -1966,7 +1990,7 @@ public partial class DocumentationService : IDocumentationService
 
             _logger.LogInformation("Created repository binding {BindingId} for namespace {Namespace}", binding.BindingId, body.Namespace);
 
-            return (StatusCodes.Created, new BindRepositoryResponse
+            return (StatusCodes.OK, new BindRepositoryResponse
             {
                 BindingId = binding.BindingId,
                 Namespace = binding.Namespace,
@@ -2321,7 +2345,7 @@ public partial class DocumentationService : IDocumentationService
             // Publish archive created event
             await TryPublishArchiveCreatedEventAsync(archive, cancellationToken);
 
-            return (StatusCodes.Created, new CreateArchiveResponse
+            return (StatusCodes.OK, new CreateArchiveResponse
             {
                 ArchiveId = archiveId,
                 Namespace = body.Namespace,
@@ -3152,20 +3176,37 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<byte[]> CreateArchiveBundleAsync(string namespaceId, List<StoredDocument> documents, CancellationToken cancellationToken)
     {
-        // Create a JSON bundle with all documents
+        // Filter out documents with null/empty Content - this is a data integrity issue
+        var validDocuments = new List<StoredDocument>();
+        foreach (var doc in documents)
+        {
+            if (string.IsNullOrEmpty(doc.Content))
+            {
+                _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - excluding from bundle", doc.DocumentId, namespaceId);
+                await _messageBus.TryPublishErrorAsync(
+                    serviceName: "documentation",
+                    operation: "CreateArchiveBundle",
+                    errorType: "DataIntegrityError",
+                    message: "Stored document has null/empty Content - excluded from bundle",
+                    details: new { DocumentId = doc.DocumentId, Namespace = namespaceId, Slug = doc.Slug },
+                    cancellationToken: cancellationToken);
+                continue;
+            }
+            validDocuments.Add(doc);
+        }
+
+        // Create a JSON bundle with valid documents
         var bundle = new DocumentationBundle
         {
             Version = "1.0",
             Namespace = namespaceId,
             CreatedAt = DateTimeOffset.UtcNow,
-            // TODO: Content should never be null - if it is, that's a data integrity issue
-            // Currently defensive to avoid breaking bundle creation; consider filtering/warning instead
-            Documents = documents.Select(d => new BundledDocument
+            Documents = validDocuments.Select(d => new BundledDocument
             {
                 DocumentId = d.DocumentId,
                 Slug = d.Slug,
                 Title = d.Title,
-                Content = d.Content ?? string.Empty,
+                Content = d.Content,
                 Category = d.Category,
                 Summary = d.Summary,
                 VoiceSummary = d.VoiceSummary,

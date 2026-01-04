@@ -2736,17 +2736,17 @@ public partial class ConnectService : IConnectService
 
             if (hasMetadata)
             {
-                // Parse name (optional metadata - coalesce null to empty for non-nullable property)
+                // Parse name (optional metadata)
                 if (metadataElement.TryGetProperty("name", out var nameElement) ||
                     metadataElement.TryGetProperty("Name", out nameElement))
                 {
-                    shortcutData.Name = nameElement.GetString() ?? string.Empty;
+                    shortcutData.Name = nameElement.GetString();
                 }
 
-                // Parse sourceService (optional metadata - coalesce null to empty for non-nullable property)
+                // Parse sourceService (optional metadata)
                 if (metadataElement.TryGetProperty("sourceService", out var sourceElement))
                 {
-                    shortcutData.SourceService = sourceElement.GetString() ?? string.Empty;
+                    shortcutData.SourceService = sourceElement.GetString();
                 }
 
                 // Parse targetService (required - validation at end catches null/empty)

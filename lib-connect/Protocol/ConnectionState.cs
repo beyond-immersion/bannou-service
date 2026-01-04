@@ -523,14 +523,14 @@ public class SessionShortcutData
 
     /// <summary>
     /// The service that created this shortcut.
-    /// Used for bulk revocation and audit logging.
+    /// Used for bulk revocation and audit logging. Null if not specified.
     /// </summary>
-    public string SourceService { get; set; } = string.Empty;
+    public string? SourceService { get; set; }
 
     /// <summary>
-    /// Machine-readable shortcut identifier.
+    /// Machine-readable shortcut identifier. Null if not specified.
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    public string? Name { get; set; }
 
     /// <summary>
     /// Human-readable description of what this shortcut does.

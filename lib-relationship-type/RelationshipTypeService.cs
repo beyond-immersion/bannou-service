@@ -457,7 +457,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             await PublishRelationshipTypeCreatedEventAsync(model, cancellationToken);
 
             var response = await MapToResponseAsync(model, cancellationToken);
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -628,7 +628,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             await PublishRelationshipTypeDeletedEventAsync(existing, cancellationToken);
 
-            return StatusCodes.NoContent;
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -756,7 +756,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                             }
 
                             var (status, response) = await CreateRelationshipTypeAsync(createRequest, cancellationToken);
-                            if (status == StatusCodes.Created && response != null)
+                            if (status == StatusCodes.OK && response != null)
                             {
                                 codeToId[code] = response.RelationshipTypeId.ToString();
                                 created++;

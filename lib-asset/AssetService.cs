@@ -395,7 +395,7 @@ public partial class AssetService : IAssetService
                 await DelegateToProcessingPoolAsync(assetId, assetMetadata, finalKey, cancellationToken).ConfigureAwait(false);
             }
 
-            return (StatusCodes.Created, assetMetadata);
+            return (StatusCodes.OK, assetMetadata);
         }
         catch (Exception ex)
         {
@@ -807,7 +807,8 @@ public partial class AssetService : IAssetService
                     jobId,
                     body.BundleId);
 
-                return (StatusCodes.Accepted, new CreateBundleResponse
+                // Return OK - the Status field in the response tells client it's queued
+                return (StatusCodes.OK, new CreateBundleResponse
                 {
                     BundleId = body.BundleId,
                     Status = CreateBundleResponseStatus.Queued,

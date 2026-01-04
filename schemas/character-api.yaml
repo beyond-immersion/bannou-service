@@ -43,7 +43,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateCharacterRequest'
       responses:
-        '201':
+        '200':
           description: Character created successfully
           content:
             application/json:
@@ -251,7 +251,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteCharacterRequest'
       responses:
-        '204':
+        '200':
           description: Character deleted successfully
         '404':
           description: Character not found
