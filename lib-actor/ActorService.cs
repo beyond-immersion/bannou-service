@@ -608,11 +608,13 @@ public partial class ActorService : IActorService
             {
                 ActorId = actorId,
                 TemplateId = body.TemplateId,
+                Category = template.Category,
                 CharacterId = body.CharacterId,
                 NodeId = nodeId,
                 NodeAppId = nodeAppId,
                 Status = _configuration.DeploymentMode == "bannou" ? ActorStatus.Running : ActorStatus.Pending,
-                StartedAt = startedAt
+                StartedAt = startedAt,
+                LoopIterations = 0
             });
         }
         catch (Exception ex)
