@@ -147,6 +147,9 @@ public class DeploymentConfiguration
     /// <summary>When this configuration was created.</summary>
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
 
+    /// <summary>Unique identifier for this deployment instance.</summary>
+    public string? DeploymentId { get; set; }
+
     /// <summary>Deployment preset name used (if applicable).</summary>
     public string? PresetName { get; set; }
 
@@ -158,6 +161,13 @@ public class DeploymentConfiguration
 
     /// <summary>Reason/description for this configuration.</summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Previous deployment state for rollback purposes.
+    /// Contains the state before this deployment was applied.
+    /// Only one level deep - PreviousDeploymentState.PreviousDeploymentState is always null.
+    /// </summary>
+    public DeploymentConfiguration? PreviousDeploymentState { get; set; }
 }
 
 /// <summary>

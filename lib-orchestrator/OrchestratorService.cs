@@ -41,6 +41,12 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private DateTimeOffset _orchestratorCachedAt;
 
+    /// <summary>
+    /// Last known deployment configuration. Loaded on startup for awareness mode.
+    /// Updated after each successful deployment.
+    /// </summary>
+    private DeploymentConfiguration? _lastKnownDeployment;
+
     private const string STATE_STORE = "orchestrator-statestore";
     private const string CONFIG_VERSION_KEY = "orchestrator:config:version";
 
@@ -115,6 +121,42 @@ public partial class OrchestratorService : IOrchestratorService
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
+    }
+
+    /// <summary>
+    /// Ensures the last known deployment state is loaded from persistent storage.
+    /// Called lazily on first access to provide startup awareness.
+    /// </summary>
+    private async Task EnsureLastDeploymentLoadedAsync()
+    {
+        // Skip if already loaded
+        if (_lastKnownDeployment != null)
+        {
+            return;
+        }
+
+        try
+        {
+            _lastKnownDeployment = await _stateManager.GetCurrentConfigurationAsync();
+
+            if (_lastKnownDeployment != null)
+            {
+                _logger.LogInformation(
+                    "Loaded previous deployment state: DeploymentId={DeploymentId}, Preset={Preset}, Version={Version}, DeployedAt={Timestamp}",
+                    _lastKnownDeployment.DeploymentId,
+                    _lastKnownDeployment.PresetName,
+                    _lastKnownDeployment.Version,
+                    _lastKnownDeployment.Timestamp);
+            }
+            else
+            {
+                _logger.LogInformation("No previous deployment state found - clean start");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load previous deployment state - continuing with clean start");
+        }
     }
 
     /// <summary>
@@ -864,10 +906,21 @@ public partial class OrchestratorService : IOrchestratorService
             // Save configuration version on successful deployment (skip in dryRun mode)
             if (success && !body.DryRun)
             {
+                // Get current configuration to store as previous state (for rollback)
+                var previousConfig = await _stateManager.GetCurrentConfigurationAsync();
+
+                // Strip nested PreviousDeploymentState to keep only one level deep
+                if (previousConfig?.PreviousDeploymentState != null)
+                {
+                    previousConfig.PreviousDeploymentState = null;
+                }
+
                 var deploymentConfig = new DeploymentConfiguration
                 {
+                    DeploymentId = deploymentId,
                     PresetName = body.Preset,
-                    Description = $"Deployment {deploymentId} via {orchestrator.BackendType}"
+                    Description = $"Deployment {deploymentId} via {orchestrator.BackendType}",
+                    PreviousDeploymentState = previousConfig
                 };
 
                 // Build service configuration from deployed nodes
@@ -900,6 +953,11 @@ public partial class OrchestratorService : IOrchestratorService
                 }
 
                 var configVersion = await _stateManager.SaveConfigurationVersionAsync(deploymentConfig);
+
+                // Update in-memory cache for awareness mode
+                deploymentConfig.Version = configVersion;
+                _lastKnownDeployment = deploymentConfig;
+
                 _logger.LogInformation(
                     "Saved deployment configuration version {Version} for deployment {DeploymentId}",
                     configVersion, deploymentId);
@@ -965,6 +1023,9 @@ public partial class OrchestratorService : IOrchestratorService
 
         try
         {
+            // Ensure we have the last deployment state loaded for DeploymentId
+            await EnsureLastDeploymentLoadedAsync();
+
             // Get service-to-app-id mappings from Redis
             // These are populated by DeployAsync when deploying presets with split topologies
             var serviceRoutings = await _stateManager.GetServiceRoutingsAsync();
@@ -1000,7 +1061,7 @@ public partial class OrchestratorService : IOrchestratorService
                 DefaultAppId = AppConstants.DEFAULT_APP_NAME,
                 GeneratedAt = DateTimeOffset.UtcNow,
                 TotalServices = mappings.Count,
-                DeploymentId = null // TODO: Track deployment ID if needed
+                DeploymentId = _lastKnownDeployment?.DeploymentId
             };
 
             _logger.LogInformation("Returning {Count} service routing mappings from Redis", response.TotalServices);

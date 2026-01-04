@@ -2069,8 +2069,8 @@ processingPools:
     scaleDownThreshold: 0.2
     idleTimeoutMinutes: 5
     environment:
-      ACTOR_DEPLOYMENT_MODE: pool-node
-      ACTOR_POOL_NODE_CAPACITY: '50'
+    ACTOR_DEPLOYMENT_MODE: pool-node
+    ACTOR_POOL_NODE_CAPACITY: '50'
 
   - poolType: actor-npc-brain
     plugin: actor
@@ -2080,8 +2080,8 @@ processingPools:
     scaleDownThreshold: 0.3
     idleTimeoutMinutes: 10
     environment:
-      ACTOR_DEPLOYMENT_MODE: pool-node
-      ACTOR_POOL_NODE_TYPE: npc-brain
+    ACTOR_DEPLOYMENT_MODE: pool-node
+    ACTOR_POOL_NODE_TYPE: npc-brain
 ";
 
         await CreatePresetFileAsync("actor-pools", presetContent);
@@ -2129,7 +2129,7 @@ description: Simple preset without pools
 topology:
   nodes:
     - name: test-node
-      services:
+    services:
         - auth
 ";
 
