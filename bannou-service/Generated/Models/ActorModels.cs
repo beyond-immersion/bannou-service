@@ -58,7 +58,7 @@ public partial class CreateActorTemplateRequest
     /// Auto-spawn configuration for instantiate-on-access
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSpawn")]
-    public AutoSpawnConfig AutoSpawn { get; set; } = default!;
+    public AutoSpawnConfig? AutoSpawn { get; set; } = default!;
 
     /// <summary>
     /// Milliseconds between behavior loop iterations
@@ -144,7 +144,7 @@ public partial class ActorTemplateResponse
     /// Auto-spawn configuration for instantiate-on-access
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSpawn")]
-    public AutoSpawnConfig AutoSpawn { get; set; } = default!;
+    public AutoSpawnConfig? AutoSpawn { get; set; } = default!;
 
     /// <summary>
     /// Milliseconds between behavior loop iterations
@@ -272,7 +272,7 @@ public partial class UpdateActorTemplateRequest
     /// Updated auto-spawn configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSpawn")]
-    public AutoSpawnConfig AutoSpawn { get; set; } = default!;
+    public AutoSpawnConfig? AutoSpawn { get; set; } = default!;
 
     /// <summary>
     /// Updated tick interval in milliseconds

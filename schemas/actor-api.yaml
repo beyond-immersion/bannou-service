@@ -25,7 +25,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateActorTemplateRequest'
       responses:
-        '200':
+        '201':
           description: Template created successfully
           content:
             application/json:
@@ -44,22 +44,23 @@ paths:
         \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Default configuration passed to behavior execution\"\n                },\n                \"autoSpawn\": {\n \
         \                   \"description\": \"Auto-spawn configuration for instantiate-on-access\",\n                   \
-        \ \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n             \
-        \       \"type\": \"integer\",\n                    \"default\": 1000,\n                    \"description\": \"Milliseconds
-        between behavior loop iterations\"\n                },\n                \"autoSaveIntervalSeconds\": {\n         \
-        \           \"type\": \"integer\",\n                    \"default\": 60,\n                    \"description\": \"\
-        Seconds between automatic state saves (0 to disable)\"\n                },\n                \"maxInstancesPerNode\"\
-        : {\n                    \"type\": \"integer\",\n                    \"default\": 100,\n                    \"description\"\
-        : \"Maximum actors of this category per pool node\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
-        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
-        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
-        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
+        \ \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n           \
+        \     \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                    \"default\": 1000,\n\
+        \                    \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n    \
+        \            \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"default\"\
+        : 60,\n                    \"description\": \"Seconds between automatic state saves (0 to disable)\"\n           \
+        \     },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n               \
+        \     \"default\": 100,\n                    \"description\": \"Maximum actors of this category per pool node\"\n\
+        \                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
+        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
+        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
+        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
+        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"properties\"\
@@ -71,26 +72,26 @@ paths:
         \  \"configuration\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
         true,\n                    \"nullable\": true,\n                    \"description\": \"Default configuration passed
         to behavior execution\"\n                },\n                \"autoSpawn\": {\n                    \"description\"\
-        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
-        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
-        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"nullable\": true,\n             \
+        \       \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
+        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
+        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"Maximum actors of this category per pool node\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        template was last updated\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n      \
+        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
+        If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
+        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
+        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
+        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an actor template (category definition)\",\n    \"description\"\
         : \"\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CreateActorTemplate\"\n}"
   /actor/template/get:
@@ -132,26 +133,26 @@ paths:
         \  \"configuration\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
         true,\n                    \"nullable\": true,\n                    \"description\": \"Default configuration passed
         to behavior execution\"\n                },\n                \"autoSpawn\": {\n                    \"description\"\
-        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
-        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
-        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"nullable\": true,\n             \
+        \       \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
+        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
+        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"Maximum actors of this category per pool node\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        template was last updated\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n      \
+        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
+        If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
+        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
+        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
+        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an actor template by ID or category\",\n    \"description\": \"\",\n\
         \    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetActorTemplate\"\n}"
   /actor/template/list:
@@ -199,25 +200,25 @@ paths:
         \         \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Default configuration passed to behavior execution\"\n                },\n                \"autoSpawn\": {\n \
         \                   \"description\": \"Auto-spawn configuration for instantiate-on-access\",\n                   \
-        \ \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n             \
-        \       \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
-        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
-        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"Maximum actors of this category per pool node\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
-        template was last updated\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n      \
-        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
-        for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
-        If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
-        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
-        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
-        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
+        \ \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n           \
+        \     \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Milliseconds
+        between behavior loop iterations\"\n                },\n                \"autoSaveIntervalSeconds\": {\n         \
+        \           \"type\": \"integer\",\n                    \"description\": \"Seconds between automatic state saves\"\
+        \n                },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"description\": \"Maximum actors of this category per pool node\"\n                },\n       \
+        \         \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When the template was created\"\n                },\n                \"\
+        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the template was last updated\"\n                }\n            }\n       \
+        \ },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n\
+        \                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"If true, accessing a non-existent actor creates it\"\n                },\n\
+        \                \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
+        \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all actor templates\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"ListActorTemplates\"\n}"
   /actor/template/update:
@@ -251,20 +252,21 @@ paths:
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
         \        \"nullable\": true,\n                    \"description\": \"Updated configuration settings\"\n          \
         \      },\n                \"autoSpawn\": {\n                    \"description\": \"Updated auto-spawn configuration\"\
-        ,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Updated tick interval in milliseconds\"\n                },\n                \"autoSaveIntervalSeconds\": {\n\
-        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Updated auto-save interval in seconds\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
-        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
-        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
-        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n          \
+        \      },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Updated tick interval in milliseconds\"\n          \
+        \      },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"Updated auto-save interval in seconds\"\n \
+        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
+        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
+        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
+        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
+        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"properties\"\
@@ -276,26 +278,26 @@ paths:
         \  \"configuration\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
         true,\n                    \"nullable\": true,\n                    \"description\": \"Default configuration passed
         to behavior execution\"\n                },\n                \"autoSpawn\": {\n                    \"description\"\
-        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
-        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
-        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"nullable\": true,\n             \
+        \       \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
+        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
+        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"Maximum actors of this category per pool node\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        template was last updated\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n      \
+        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
+        If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
+        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
+        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
+        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update an actor template\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateActorTemplate\"\n}"
   /actor/template/delete:
@@ -349,7 +351,7 @@ paths:
             schema:
               $ref: '#/components/schemas/SpawnActorRequest'
       responses:
-        '200':
+        '201':
           description: Actor spawned successfully
           content:
             application/json:
@@ -652,6 +654,7 @@ components:
           description: Default configuration passed to behavior execution
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
+          nullable: true
           $ref: '#/components/schemas/AutoSpawnConfig'
         tickIntervalMs:
           type: integer
@@ -708,6 +711,7 @@ components:
           description: Default configuration passed to behavior execution
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
+          nullable: true
           $ref: '#/components/schemas/AutoSpawnConfig'
         tickIntervalMs:
           type: integer
@@ -792,6 +796,7 @@ components:
           description: Updated configuration settings
         autoSpawn:
           description: Updated auto-spawn configuration
+          nullable: true
           $ref: '#/components/schemas/AutoSpawnConfig'
         tickIntervalMs:
           type: integer

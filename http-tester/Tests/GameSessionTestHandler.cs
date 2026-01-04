@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -146,14 +147,21 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             var sessionIdGuid = createResponse.SessionId;
 
+            // Set up lobby entry (JoinGameSession looks up by game type, not session ID)
+            await SetupLobbyAsync(sessionIdGuid, "arcadia");
+
             // Now test joining the session
             // Required fields: sessionId, accountId, gameType (normally provided by shortcut system)
+            var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
             {
                 SessionId = sessionIdGuid,
-                AccountId = Guid.NewGuid(), // Test player account
+                AccountId = testAccountId,
                 GameType = "arcadia"
             };
+
+            // Set up subscriber session (required for join validation)
+            await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
 
             var response = await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
@@ -180,6 +188,9 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
             var sessionIdGuid = createResponse.SessionId;
 
+            // Set up lobby entry (JoinGameSession looks up by game type)
+            await SetupLobbyAsync(sessionIdGuid, "arcadia");
+
             // Join the session first (required: sessionId, accountId, gameType)
             var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
@@ -188,6 +199,9 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 AccountId = testAccountId,
                 GameType = "arcadia"
             };
+
+            // Set up subscriber session (required for join validation)
+            await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
             await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
             // Now test leaving the session (required: sessionId, accountId, gameType)
@@ -219,6 +233,9 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
             var sessionIdGuid = createResponse.SessionId;
 
+            // Set up lobby entry (JoinGameSession looks up by game type)
+            await SetupLobbyAsync(sessionIdGuid, "arcadia");
+
             // Join the session first - this adds a player that we can kick
             var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
@@ -227,6 +244,9 @@ public class GameSessionTestHandler : BaseHttpTestHandler
                 AccountId = testAccountId,
                 GameType = "arcadia"
             };
+
+            // Set up subscriber session (required for join validation)
+            await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
             await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
             // Get the session to find the player's account ID
@@ -268,10 +288,25 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
             var sessionIdGuid = createResponse.SessionId;
 
+            // Set up lobby entry (JoinGameSession looks up by game type)
+            await SetupLobbyAsync(sessionIdGuid, "arcadia");
+
+            // To send chat, we need to be in the game first
+            var testAccountId = Guid.NewGuid();
+            await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
+            await gameSessionClient.JoinGameSessionAsync(new JoinGameSessionRequest
+            {
+                SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia"
+            });
+
             // Send a chat message (sender identity comes from JWT context)
             var chatRequest = new ChatMessageRequest
             {
                 SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia",
                 Message = "Hello, World!",
                 MessageType = ChatMessageRequestMessageType.Public
             };
@@ -298,19 +333,28 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
             var sessionIdGuid = createResponse.SessionId;
 
+            // Set up lobby entry (JoinGameSession looks up by game type)
+            await SetupLobbyAsync(sessionIdGuid, "arcadia");
+
             // Join as a player first (to get enhanced permissions)
+            var testAccountId = Guid.NewGuid();
             var joinRequest = new JoinGameSessionRequest
             {
                 SessionId = sessionIdGuid,
-                AccountId = Guid.NewGuid(),
+                AccountId = testAccountId,
                 GameType = "arcadia"
             };
+
+            // Set up subscriber session (required for join validation)
+            await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
             await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
             // Perform a game action (player identity comes from JWT context)
             var actionRequest = new GameActionRequest
             {
                 SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia",
                 ActionType = GameActionRequestActionType.Move,
                 ActionData = new { x = 10, y = 20 }
             };
@@ -355,8 +399,12 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var sessionIdGuid = createResponse.SessionId;
             Console.WriteLine($"  Step 1: Created session {createResponse.SessionId}");
 
+            // Set up lobby entry (JoinGameSession looks up by game type)
+            await SetupLobbyAsync(sessionIdGuid, "arcadia");
+
             // Step 2: Join as player
             var testAccountId = Guid.NewGuid();
+            await SetupSubscriberSessionAsync(testAccountId, sessionIdGuid);
             await gameSessionClient.JoinGameSessionAsync(new JoinGameSessionRequest
             {
                 SessionId = sessionIdGuid,
@@ -369,6 +417,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var actionResponse = await gameSessionClient.PerformGameActionAsync(new GameActionRequest
             {
                 SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia",
                 ActionType = GameActionRequestActionType.Move,
                 ActionData = new { testData = "lifecycle_test" }
             });
@@ -378,6 +428,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             await gameSessionClient.SendChatMessageAsync(new ChatMessageRequest
             {
                 SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia",
                 Message = "Lifecycle test message",
                 MessageType = ChatMessageRequestMessageType.Public
             });
@@ -398,4 +450,60 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"Complete session lifecycle test passed for session {createResponse.SessionId}");
         }, "Complete session lifecycle");
+
+    /// <summary>
+    /// Sets up a subscriber session entry in the game-session state store.
+    /// This is required for operations that validate WebSocket subscriber sessions.
+    /// </summary>
+    private static async Task SetupSubscriberSessionAsync(Guid accountId, Guid sessionId)
+    {
+        var stateClient = GetServiceClient<IStateClient>();
+
+        // Create the subscriber sessions model
+        var subscriberData = new
+        {
+            AccountId = accountId,
+            SessionIds = new[] { sessionId.ToString() },
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        var key = $"subscriber-sessions:{accountId}";
+        await stateClient.SaveStateAsync(new SaveStateRequest
+        {
+            StoreName = "game-session-statestore",
+            Key = key,
+            Value = subscriberData
+        });
+    }
+
+    /// <summary>
+    /// Sets up a lobby entry for a game type pointing to a session.
+    /// This is required because JoinGameSession looks up lobbies by game type.
+    /// </summary>
+    private static async Task SetupLobbyAsync(Guid sessionId, string gameType)
+    {
+        var stateClient = GetServiceClient<IStateClient>();
+
+        // Create the lobby model that points to this session
+        var lobbyData = new
+        {
+            SessionId = sessionId.ToString(),
+            GameType = gameType,
+            SessionName = $"Lobby_{gameType}",
+            MaxPlayers = 100,
+            IsPrivate = false,
+            Status = "Waiting",
+            CurrentPlayers = 0,
+            Players = Array.Empty<object>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var key = $"lobby:{gameType.ToLowerInvariant()}";
+        await stateClient.SaveStateAsync(new SaveStateRequest
+        {
+            StoreName = "game-session-statestore",
+            Key = key,
+            Value = lobbyData
+        });
+    }
 }

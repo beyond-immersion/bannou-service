@@ -112,7 +112,7 @@ public partial class SaveStateRequest
     /// Optional settings for the save operation including TTL and consistency
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("options")]
-    public StateOptions Options { get; set; } = default!;
+    public StateOptions? Options { get; set; } = default!;
 
 }
 

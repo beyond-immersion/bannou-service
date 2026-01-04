@@ -290,6 +290,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             // Create bundle from the assets
             var createRequest = new CreateBundleRequest
             {
+                Owner = "http-tester",
                 BundleId = $"test-bundle-{DateTime.Now.Ticks}",
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
@@ -324,6 +325,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleId = $"get-bundle-test-{DateTime.Now.Ticks}";
             var createRequest = new CreateBundleRequest
             {
+                Owner = "http-tester",
                 BundleId = bundleId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
@@ -362,6 +364,7 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             var request = new BundleUploadRequest
             {
+                Owner = "http-tester",
                 Filename = $"test-bundle-upload-{DateTime.Now.Ticks}.bannou",
                 Size = 10240,
                 ManifestPreview = new BundleManifestPreview
@@ -556,6 +559,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleId = $"lifecycle-bundle-{DateTime.Now.Ticks}";
             var bundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
+                Owner = "http-tester",
                 BundleId = bundleId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId, asset3.AssetId },

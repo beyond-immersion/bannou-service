@@ -110,7 +110,7 @@ public partial interface IAssetClient
     /// <br/>For large bundles, processing is delegated to the processing pool.
     /// <br/>Completion notification sent via WebSocket event.
     /// </remarks>
-    /// <returns>Bundle creation started</returns>
+    /// <returns>Bundle created immediately (small bundles)</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CreateBundleResponse> CreateBundleAsync(CreateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -752,7 +752,7 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     /// <br/>For large bundles, processing is delegated to the processing pool.
     /// <br/>Completion notification sent via WebSocket event.
     /// </remarks>
-    /// <returns>Bundle creation started</returns>
+    /// <returns>Bundle created immediately (small bundles)</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CreateBundleResponse> CreateBundleAsync(CreateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -799,6 +799,16 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<CreateBundleResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 202)
                     {
                         var objectResponse_ = await ReadObjectResponseAsync<CreateBundleResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)

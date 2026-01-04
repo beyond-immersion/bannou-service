@@ -96,17 +96,17 @@ paths:
         \           },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Key to save\"\n                },\n                \"value\": {\n                    \"type\": \"object\",\n \
         \                   \"additionalProperties\": false,\n                    \"description\": \"Value to store\"\n  \
-        \              },\n                \"options\": {\n                    \"$ref\": \"#/$defs/StateOptions\",\n     \
-        \               \"description\": \"Optional settings for the save operation including TTL and consistency\"\n    \
-        \            }\n            }\n        },\n        \"StateOptions\": {\n            \"description\": \"Configuration
-        options for state save operations including TTL, consistency level, and optimistic concurrency\",\n            \"\
-        type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n               \
-        \ \"ttl\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"TTL in seconds (Redis only)\"\n                },\n                \"consistency\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"strong\",\n\
-        \                        \"eventual\"\n                    ],\n                    \"default\": \"strong\",\n    \
-        \                \"description\": \"Consistency level\"\n                },\n                \"etag\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        \              },\n                \"options\": {\n                    \"nullable\": true,\n                    \"\
+        $ref\": \"#/$defs/StateOptions\",\n                    \"description\": \"Optional settings for the save operation
+        including TTL and consistency\"\n                }\n            }\n        },\n        \"StateOptions\": {\n     \
+        \       \"description\": \"Configuration options for state save operations including TTL, consistency level, and optimistic
+        concurrency\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"ttl\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"TTL in seconds (Redis only)\"\n                },\n                \"consistency\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"strong\"\
+        ,\n                        \"eventual\"\n                    ],\n                    \"default\": \"strong\",\n  \
+        \                  \"description\": \"Consistency level\"\n                },\n                \"etag\": {\n     \
+        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Optimistic concurrency check - save fails if ETag mismatch\"\n                }\n            }\n        }\n  \
         \  }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveStateResponse\"\
@@ -372,6 +372,7 @@ components:
           additionalProperties: false
           description: Value to store
         options:
+          nullable: true
           $ref: '#/components/schemas/StateOptions'
           description: Optional settings for the save operation including TTL and consistency
 

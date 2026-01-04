@@ -11275,7 +11275,7 @@
             <br/>For large bundles, processing is delegated to the processing pool.
             <br/>Completion notification sent via WebSocket event.
             </remarks>
-            <returns>Bundle creation started</returns>
+            <returns>Bundle created immediately (small bundles)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.GetBundleAsync(BeyondImmersion.BannouService.Asset.GetBundleRequest,System.Threading.CancellationToken)">
@@ -11454,7 +11454,7 @@
             <br/>For large bundles, processing is delegated to the processing pool.
             <br/>Completion notification sent via WebSocket event.
             </remarks>
-            <returns>Bundle creation started</returns>
+            <returns>Bundle created immediately (small bundles)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.GetBundleAsync(BeyondImmersion.BannouService.Asset.GetBundleRequest,System.Threading.CancellationToken)">

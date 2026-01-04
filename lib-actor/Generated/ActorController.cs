@@ -148,12 +148,14 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             BeyondImmersion.BannouService.StatusCodes.OK => Ok(result),
             BeyondImmersion.BannouService.StatusCodes.Created => Created("", result),
+            BeyondImmersion.BannouService.StatusCodes.Accepted => StatusCode(202, result),
             BeyondImmersion.BannouService.StatusCodes.NoContent => NoContent(),
             BeyondImmersion.BannouService.StatusCodes.BadRequest => BadRequest(result),
             BeyondImmersion.BannouService.StatusCodes.Unauthorized => Unauthorized(result),
             BeyondImmersion.BannouService.StatusCodes.Forbidden => Forbid(),
             BeyondImmersion.BannouService.StatusCodes.NotFound => NotFound(result),
             BeyondImmersion.BannouService.StatusCodes.Conflict => Conflict(result),
+            BeyondImmersion.BannouService.StatusCodes.TooManyRequests => StatusCode(429, result),
             BeyondImmersion.BannouService.StatusCodes.InternalServerError => StatusCode(500, result),
             _ => StatusCode(500, result)
         };
@@ -168,12 +170,14 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             BeyondImmersion.BannouService.StatusCodes.OK => result != null ? Ok(result) : Ok(),
             BeyondImmersion.BannouService.StatusCodes.Created => result != null ? Created("", result) : Created("", null),
+            BeyondImmersion.BannouService.StatusCodes.Accepted => StatusCode(202, result),
             BeyondImmersion.BannouService.StatusCodes.NoContent => NoContent(),
             BeyondImmersion.BannouService.StatusCodes.BadRequest => result != null ? BadRequest(result) : BadRequest(),
             BeyondImmersion.BannouService.StatusCodes.Unauthorized => result != null ? Unauthorized(result) : Unauthorized(),
             BeyondImmersion.BannouService.StatusCodes.Forbidden => Forbid(),
             BeyondImmersion.BannouService.StatusCodes.NotFound => result != null ? NotFound(result) : NotFound(),
             BeyondImmersion.BannouService.StatusCodes.Conflict => result != null ? Conflict(result) : Conflict(),
+            BeyondImmersion.BannouService.StatusCodes.TooManyRequests => StatusCode(429, result),
             BeyondImmersion.BannouService.StatusCodes.InternalServerError => StatusCode(500, result),
             _ => StatusCode(500, result)
         };
@@ -353,6 +357,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
+                    "nullable": true,
                     "$ref": "#/$defs/AutoSpawnConfig"
                 },
                 "tickIntervalMs": {
@@ -429,6 +434,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
+                    "nullable": true,
                     "$ref": "#/$defs/AutoSpawnConfig"
                 },
                 "tickIntervalMs": {
@@ -593,6 +599,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
+                    "nullable": true,
                     "$ref": "#/$defs/AutoSpawnConfig"
                 },
                 "tickIntervalMs": {
@@ -774,6 +781,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
+                    "nullable": true,
                     "$ref": "#/$defs/AutoSpawnConfig"
                 },
                 "tickIntervalMs": {
@@ -911,6 +919,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "autoSpawn": {
                     "description": "Updated auto-spawn configuration",
+                    "nullable": true,
                     "$ref": "#/$defs/AutoSpawnConfig"
                 },
                 "tickIntervalMs": {
@@ -982,6 +991,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
+                    "nullable": true,
                     "$ref": "#/$defs/AutoSpawnConfig"
                 },
                 "tickIntervalMs": {

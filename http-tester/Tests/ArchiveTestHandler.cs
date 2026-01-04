@@ -101,6 +101,7 @@ public class ArchiveTestHandler : BaseHttpTestHandler
 
             var response = await docClient.CreateDocumentationArchiveAsync(new CreateArchiveRequest
             {
+                Owner = "http-tester",
                 Namespace = TEST_NAMESPACE,
                 Description = "Test archive created by HTTP tester"
             });

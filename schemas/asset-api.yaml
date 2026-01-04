@@ -488,7 +488,13 @@ paths:
               $ref: '#/components/schemas/CreateBundleRequest'
       responses:
         '200':
-          description: Bundle creation started
+          description: Bundle created immediately (small bundles)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBundleResponse'
+        '202':
+          description: Bundle creation queued (large bundles)
           content:
             application/json:
               schema:
