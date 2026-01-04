@@ -25,6 +25,54 @@ EVENT_FILES=("${EVENT_FILES[@]}" "${LIB_CLIENT_EVENT_FILES[@]}")
 echo "Found ${#CLIENT_FILES[@]} client files, ${#MODEL_FILES[@]} model files, ${#EVENT_FILES[@]} event files"
 
 # =============================================================================
+# BEHAVIOR FILE COPYING WITH NAMESPACE TRANSFORMATION
+# =============================================================================
+# lib-behavior uses namespace BeyondImmersion.BannouService.Behavior
+# SDKs need their own namespaces:
+#   - Server SDK: BeyondImmersion.Bannou.SDK.Behavior
+#   - Client SDK: BeyondImmersion.Bannou.Client.SDK.Behavior
+# =============================================================================
+
+copy_behavior_files() {
+    local target_dir="$1"
+    local target_namespace="$2"
+
+    echo "  Copying behavior files to $target_dir with namespace $target_namespace..."
+
+    # Create directory structure
+    mkdir -p "$target_dir/Runtime"
+    mkdir -p "$target_dir/Intent"
+
+    # Source namespace pattern
+    local src_ns="BeyondImmersion.BannouService.Behavior"
+
+    # Copy and transform Runtime files
+    for file in ./lib-behavior/Runtime/*.cs; do
+        if [ -f "$file" ]; then
+            local basename=$(basename "$file")
+            sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Runtime/$basename"
+        fi
+    done
+
+    # Copy and transform Intent files
+    for file in ./lib-behavior/Intent/*.cs; do
+        if [ -f "$file" ]; then
+            local basename=$(basename "$file")
+            sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Intent/$basename"
+        fi
+    done
+
+    # Copy and transform root behavior files (IBehaviorEvaluator, BehaviorEvaluatorBase, BehaviorModelCache)
+    for file in IBehaviorEvaluator.cs BehaviorEvaluatorBase.cs BehaviorModelCache.cs; do
+        if [ -f "./lib-behavior/$file" ]; then
+            sed "s/$src_ns/$target_namespace/g" "./lib-behavior/$file" > "$target_dir/$file"
+        fi
+    done
+
+    echo "  Done copying behavior files."
+}
+
+# =============================================================================
 # SERVER SDK: Bannou.SDK (Full SDK with ServiceClients)
 # For game servers and internal services that need mesh service-to-service calls
 # =============================================================================
@@ -33,6 +81,9 @@ SERVER_SDK_DIR="Bannou.SDK"
 SERVER_SDK_PROJECT="$SERVER_SDK_DIR/Bannou.SDK.csproj"
 
 mkdir -p "$SERVER_SDK_DIR"
+
+# Copy behavior files with Server SDK namespace
+copy_behavior_files "$SERVER_SDK_DIR/Generated/Behavior" "BeyondImmersion.Bannou.SDK.Behavior"
 
 cat > "$SERVER_SDK_PROJECT" << 'EOF'
 <!--
@@ -157,13 +208,13 @@ cat >> "$SERVER_SDK_PROJECT" << 'EOF'
     <Compile Include="../sdk-sources/**/*.cs" Exclude="../sdk-sources/Behavior/**/*.cs" />
   </ItemGroup>
 
-  <!-- Behavior Runtime from lib-behavior (canonical source) -->
+  <!-- Behavior Runtime (copied from lib-behavior with SDK namespace) -->
+  <!-- Remove default includes first to avoid duplicates, then re-add explicitly -->
   <ItemGroup>
-    <Compile Include="../lib-behavior/Runtime/*.cs" />
-    <Compile Include="../lib-behavior/Intent/*.cs" />
-    <Compile Include="../lib-behavior/IBehaviorEvaluator.cs" />
-    <Compile Include="../lib-behavior/BehaviorEvaluatorBase.cs" />
-    <Compile Include="../lib-behavior/BehaviorModelCache.cs" />
+    <Compile Remove="Generated/Behavior/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Generated/Behavior/**/*.cs" />
   </ItemGroup>
 
 </Project>
@@ -246,6 +297,9 @@ CLIENT_SDK_DIR="Bannou.Client.SDK"
 CLIENT_SDK_PROJECT="$CLIENT_SDK_DIR/Bannou.Client.SDK.csproj"
 
 mkdir -p "$CLIENT_SDK_DIR"
+
+# Copy behavior files with Client SDK namespace
+copy_behavior_files "$CLIENT_SDK_DIR/Generated/Behavior" "BeyondImmersion.Bannou.Client.SDK.Behavior"
 
 cat > "$CLIENT_SDK_PROJECT" << 'EOF'
 <!--
@@ -361,13 +415,13 @@ cat >> "$CLIENT_SDK_PROJECT" << 'EOF'
     <Compile Include="../sdk-sources/**/*.cs" Exclude="../sdk-sources/Behavior/**/*.cs" />
   </ItemGroup>
 
-  <!-- Behavior Runtime from lib-behavior (canonical source) -->
+  <!-- Behavior Runtime (copied from lib-behavior with Client SDK namespace) -->
+  <!-- Remove default includes first to avoid duplicates, then re-add explicitly -->
   <ItemGroup>
-    <Compile Include="../lib-behavior/Runtime/*.cs" />
-    <Compile Include="../lib-behavior/Intent/*.cs" />
-    <Compile Include="../lib-behavior/IBehaviorEvaluator.cs" />
-    <Compile Include="../lib-behavior/BehaviorEvaluatorBase.cs" />
-    <Compile Include="../lib-behavior/BehaviorModelCache.cs" />
+    <Compile Remove="Generated/Behavior/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Generated/Behavior/**/*.cs" />
   </ItemGroup>
 
 </Project>

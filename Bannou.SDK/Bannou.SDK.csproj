@@ -162,13 +162,13 @@
     <Compile Include="../sdk-sources/**/*.cs" Exclude="../sdk-sources/Behavior/**/*.cs" />
   </ItemGroup>
 
-  <!-- Behavior Runtime from lib-behavior (canonical source) -->
+  <!-- Behavior Runtime (copied from lib-behavior with SDK namespace) -->
+  <!-- Remove default includes first to avoid duplicates, then re-add explicitly -->
   <ItemGroup>
-    <Compile Include="../lib-behavior/Runtime/*.cs" />
-    <Compile Include="../lib-behavior/Intent/*.cs" />
-    <Compile Include="../lib-behavior/IBehaviorEvaluator.cs" />
-    <Compile Include="../lib-behavior/BehaviorEvaluatorBase.cs" />
-    <Compile Include="../lib-behavior/BehaviorModelCache.cs" />
+    <Compile Remove="Generated/Behavior/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Generated/Behavior/**/*.cs" />
   </ItemGroup>
 
 </Project>
