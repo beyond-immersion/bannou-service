@@ -984,7 +984,7 @@ public class DocumentationConfigurationTests
         Assert.Equal(20, config.MaxSearchResults);
         Assert.Equal(0, config.MaxImportDocuments); // 0 = unlimited
         Assert.False(config.AiEnhancementsEnabled);
-        Assert.Equal("", config.AiEmbeddingsModel);
+        Assert.Null(config.AiEmbeddingsModel); // NRT: Optional config with no default is null
     }
 
     [Fact]

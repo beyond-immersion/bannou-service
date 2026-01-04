@@ -1804,6 +1804,17 @@ public partial class AuthService : IAuthService
     /// </summary>
     private async Task<OAuthUserInfo?> ExchangeDiscordCodeAsync(string code, CancellationToken cancellationToken)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var discordClientId = _configuration.DiscordClientId;
+        var discordClientSecret = _configuration.DiscordClientSecret;
+        var discordRedirectUri = _configuration.DiscordRedirectUri;
+
+        if (discordClientId == null || discordClientSecret == null || discordRedirectUri == null)
+        {
+            _logger.LogError("Discord OAuth not configured - set AUTH_DISCORD_CLIENT_ID, AUTH_DISCORD_CLIENT_SECRET, and AUTH_DISCORD_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
@@ -1811,11 +1822,11 @@ public partial class AuthService : IAuthService
             // Exchange code for access token
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.DiscordClientId },
-                { "client_secret", _configuration.DiscordClientSecret },
+                { "client_id", discordClientId },
+                { "client_secret", discordClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.DiscordRedirectUri }
+                { "redirect_uri", discordRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(DISCORD_TOKEN_URL, tokenRequest, cancellationToken);
@@ -1874,6 +1885,17 @@ public partial class AuthService : IAuthService
     /// </summary>
     private async Task<OAuthUserInfo?> ExchangeGoogleCodeAsync(string code, CancellationToken cancellationToken)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var googleClientId = _configuration.GoogleClientId;
+        var googleClientSecret = _configuration.GoogleClientSecret;
+        var googleRedirectUri = _configuration.GoogleRedirectUri;
+
+        if (googleClientId == null || googleClientSecret == null || googleRedirectUri == null)
+        {
+            _logger.LogError("Google OAuth not configured - set AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET, and AUTH_GOOGLE_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
@@ -1881,11 +1903,11 @@ public partial class AuthService : IAuthService
             // Exchange code for access token
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.GoogleClientId },
-                { "client_secret", _configuration.GoogleClientSecret },
+                { "client_id", googleClientId },
+                { "client_secret", googleClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.GoogleRedirectUri }
+                { "redirect_uri", googleRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(GOOGLE_TOKEN_URL, tokenRequest, cancellationToken);
@@ -1944,6 +1966,17 @@ public partial class AuthService : IAuthService
     /// </summary>
     private async Task<OAuthUserInfo?> ExchangeTwitchCodeAsync(string code, CancellationToken cancellationToken)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var twitchClientId = _configuration.TwitchClientId;
+        var twitchClientSecret = _configuration.TwitchClientSecret;
+        var twitchRedirectUri = _configuration.TwitchRedirectUri;
+
+        if (twitchClientId == null || twitchClientSecret == null || twitchRedirectUri == null)
+        {
+            _logger.LogError("Twitch OAuth not configured - set AUTH_TWITCH_CLIENT_ID, AUTH_TWITCH_CLIENT_SECRET, and AUTH_TWITCH_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
@@ -1951,11 +1984,11 @@ public partial class AuthService : IAuthService
             // Exchange code for access token
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.TwitchClientId },
-                { "client_secret", _configuration.TwitchClientSecret },
+                { "client_id", twitchClientId },
+                { "client_secret", twitchClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.TwitchRedirectUri }
+                { "redirect_uri", twitchRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(TWITCH_TOKEN_URL, tokenRequest, cancellationToken);
@@ -1977,7 +2010,7 @@ public partial class AuthService : IAuthService
             // Get user info
             using var userRequest = new HttpRequestMessage(HttpMethod.Get, TWITCH_USER_URL);
             userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.AccessToken);
-            userRequest.Headers.Add("Client-Id", _configuration.TwitchClientId);
+            userRequest.Headers.Add("Client-Id", twitchClientId);
 
             var userResponse = await httpClient.SendAsync(userRequest, cancellationToken);
             if (!userResponse.IsSuccessStatusCode)

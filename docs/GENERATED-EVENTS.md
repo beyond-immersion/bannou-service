@@ -95,6 +95,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `GameSessionActionPerformedEvent` | Custom | `game-session-action-performed` | Published when a game action is performed in a ses... |
 | `GameSessionPlayerJoinedEvent` | Custom | `game-session-player-joined` | Published when a player joins a game session |
 | `GameSessionPlayerLeftEvent` | Custom | `game-session-player-left` | Published when a player leaves a game session |
 

@@ -70,7 +70,7 @@ public class AccountsEventPublisherTests
                 e.AccountId == accountId &&
                 e.Email == email &&
                 e.DisplayName == displayName &&
-                e.Roles.SequenceEqual(roles)),
+                e.Roles != null && e.Roles.SequenceEqual(roles)),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -100,7 +100,7 @@ public class AccountsEventPublisherTests
             "account.created",
             It.Is<AccountCreatedEvent>(e =>
                 e.DisplayName == null &&
-                e.Roles.Count == 0),
+                e.Roles != null && e.Roles.Count == 0),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);

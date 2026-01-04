@@ -104,8 +104,6 @@ public sealed class AssetProcessingWorker : BackgroundService
             return;
         }
 
-        var nodeId = _configuration.ProcessorNodeId;
-
         if (!IsProcessorNodeMode)
         {
             // Not running as processor node - just keep alive for local processing
@@ -116,6 +114,12 @@ public sealed class AssetProcessingWorker : BackgroundService
             await KeepAliveAsync(stoppingToken);
             return;
         }
+
+        // IMPLEMENTATION TENETS: Fail fast if required config is missing
+        // IsProcessorNodeMode is true, so ProcessorNodeId must be set - validate explicitly
+        var nodeId = _configuration.ProcessorNodeId
+            ?? throw new InvalidOperationException(
+                "ASSET_PROCESSOR_NODE_ID is required when running in processor node mode");
 
         var appId = _appConfiguration.EffectiveAppId;
 

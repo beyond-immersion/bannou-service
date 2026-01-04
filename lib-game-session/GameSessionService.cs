@@ -1079,17 +1079,24 @@ public partial class GameSessionService : IGameSessionService
     /// Called internally by GameSessionEventsController.
     /// </summary>
     /// <param name="sessionId">WebSocket session ID that disconnected.</param>
-    /// <param name="accountId">Account ID from the disconnect event.</param>
-    internal async Task HandleSessionDisconnectedInternalAsync(string sessionId, Guid accountId)
+    /// <param name="accountId">Account ID from the disconnect event (null if session was unauthenticated).</param>
+    internal async Task HandleSessionDisconnectedInternalAsync(string sessionId, Guid? accountId)
     {
         if (string.IsNullOrEmpty(sessionId))
         {
             return;
         }
 
-        // Remove from distributed subscriber sessions tracking
-        await RemoveSubscriberSessionAsync(accountId, sessionId);
-        _logger.LogDebug("Removed session {SessionId} (account {AccountId}) from subscriber tracking", sessionId, accountId);
+        // Only remove from subscriber tracking if the session was authenticated
+        if (accountId.HasValue)
+        {
+            await RemoveSubscriberSessionAsync(accountId.Value, sessionId);
+            _logger.LogDebug("Removed session {SessionId} (account {AccountId}) from subscriber tracking", sessionId, accountId.Value);
+        }
+        else
+        {
+            _logger.LogDebug("Session {SessionId} disconnected (was not authenticated, no subscriber tracking to remove)", sessionId);
+        }
     }
 
     /// <summary>

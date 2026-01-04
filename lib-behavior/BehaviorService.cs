@@ -133,10 +133,8 @@ public partial class BehaviorService : IBehaviorService
                 ? body.BehaviorName
                 : behaviorId;
 
-            // Map category to string
-            var category = body.BehaviorCategory != default
-                ? body.BehaviorCategory.ToString().ToLowerInvariant()
-                : null;
+            // Map category to string (BehaviorCategory is nullable - use null-conditional)
+            var category = body.BehaviorCategory?.ToString().ToLowerInvariant();
 
             // Store the compiled model as an asset if caching is enabled
             string? assetId = null;

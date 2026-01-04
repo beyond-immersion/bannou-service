@@ -739,7 +739,7 @@ Voice communication coordination service for P2P and room-based audio.
 
 **Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml`
 
-Public-facing website service for registration, information, and account management
+Public-facing website service for registration, information, and account management.
 
 ### Account
 

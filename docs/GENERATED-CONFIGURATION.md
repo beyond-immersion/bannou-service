@@ -32,9 +32,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_MESSAGE_QUEUE_SIZE` | int | `50` | Max messages queued per actor before dropping oldest |
 | `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
-| `ACTOR_POOL_NODE_APP_ID` | string | `` | Mesh app-id for routing commands to this pool node. Required... |
+| `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
 | `ACTOR_POOL_NODE_CAPACITY` | int | `100` | Maximum actors this pool node can run. Overrides DefaultActo... |
-| `ACTOR_POOL_NODE_ID` | string | `` | If set, this instance runs as a pool node (not control plane... |
+| `ACTOR_POOL_NODE_ID` | string | **REQUIRED** | If set, this instance runs as a pool node (not control plane... |
 | `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
 | `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
 | `ACTOR_STATE_UPDATE_TRANSPORT` | string | `messaging` | State update transport: messaging (default, works in bannou ... |
@@ -88,7 +88,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_JWT_AUDIENCE` | string | `bannou-api` | JWT token audience |
 | `AUTH_JWT_EXPIRATION_MINUTES` | int | `60` | JWT token expiration time in minutes |
 | `AUTH_JWT_ISSUER` | string | `bannou-auth` | JWT token issuer |
-| `AUTH_JWT_SECRET` | string | **REQUIRED** | Secret key for JWT token signing |
+| `AUTH_JWT_SECRET` | string | **REQUIRED** | Secret key for JWT token signing (REQUIRED - service fails f... |
 | `AUTH_MOCK_DISCORD_ID` | string | `mock-discord-123456` | Mock Discord user ID for testing |
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
@@ -133,7 +133,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_MAXCONCURRENTCONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAXMESSAGESPERMINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGEQUEUESIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (I... |
+| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (R... |
 | `CONNECT_RATELIMITWINDOWMINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL returned to clients for reconnection |
@@ -142,7 +142,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | `` | Model for generating embeddings (when AI enabled) |
+| `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | **REQUIRED** | Model for generating embeddings (when AI enabled) |
 | `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | bool | `false` | Enable AI-powered semantic search (future feature) |
 | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
 | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
@@ -247,14 +247,15 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_DOCKER_HOST` | string | `unix:///var/run/docker.sock` | Docker host for direct Docker API access |
 | `ORCHESTRATOR_DOCKER_NETWORK` | string | `bannou_default` | Docker network name for deployed containers |
 | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Service heartbeat timeout in seconds |
+| `ORCHESTRATOR_KUBECONFIG_PATH` | string | **REQUIRED** | Path to kubeconfig file (null uses default ~/.kube/config) |
 | `ORCHESTRATOR_KUBERNETES_NAMESPACE` | string | `default` | Kubernetes namespace for deployments |
 | `ORCHESTRATOR_LOGS_VOLUME` | string | `logs-data` | Docker volume name for logs |
 | `ORCHESTRATOR_PORTAINER_API_KEY` | string | **REQUIRED** | Portainer API key |
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
-| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging (requi... |
-| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for orchestrator state (required, no... |
+| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging (REQUI... |
+| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for orchestrator state (REQUIRED - s... |
 
 ### Permissions
 
@@ -324,7 +325,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
 | `VOICE_SIP_DOMAIN` | string | `voice.bannou.local` | SIP domain for voice communication |
-| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation |
+| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation (REQUIRED when ScaledTierEn... |
 | `VOICE_STUN_SERVERS` | string | `stun:stun.l.google.com:19302` | Comma-separated list of STUN server URLs for WebRTC |
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
@@ -337,9 +338,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 213
-- **Required (no default)**: 37
-- **Optional (has default)**: 176
+- **Total properties**: 214
+- **Required (no default)**: 41
+- **Optional (has default)**: 173
 
 ## Environment Variable Naming Convention
 
