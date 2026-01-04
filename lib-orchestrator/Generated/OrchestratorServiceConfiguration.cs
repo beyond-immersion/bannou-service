@@ -120,6 +120,18 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public string LogsVolumeName { get; set; } = "logs-data";
 
     /// <summary>
+    /// OpenResty hostname for cache invalidation calls
+    /// Environment variable: ORCHESTRATOR_OPENRESTY_HOST
+    /// </summary>
+    public string OpenRestyHost { get; set; } = "openresty";
+
+    /// <summary>
+    /// OpenResty port for cache invalidation calls
+    /// Environment variable: ORCHESTRATOR_OPENRESTY_PORT
+    /// </summary>
+    public int OpenRestyPort { get; set; } = 80;
+
+    /// <summary>
     /// Kubernetes namespace for deployments
     /// Environment variable: ORCHESTRATOR_KUBERNETES_NAMESPACE
     /// </summary>

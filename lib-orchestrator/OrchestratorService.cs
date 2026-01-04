@@ -557,6 +557,16 @@ public partial class OrchestratorService : IOrchestratorService
                             "Auto-cleanup: Found existing deployment with {Count} containers [{AppIds}], tearing down before new deployment",
                             previousAppIds.Count, string.Join(", ", previousAppIds));
 
+                        // CRITICAL: Reset service mappings FIRST, before tearing down containers.
+                        // This ensures routing proxies (OpenResty, lib-mesh) get updated routes
+                        // before the old containers become unavailable. Prevents 404/502 errors
+                        // during the transition window.
+                        await _healthMonitor.ResetAllMappingsToDefaultAsync();
+
+                        // Invalidate OpenResty routing cache so it reads fresh routes from Redis
+                        await InvalidateOpenRestryRoutingCacheAsync();
+
+                        // Now tear down the old containers (routes already point elsewhere)
                         foreach (var appId in previousAppIds)
                         {
                             try
@@ -582,9 +592,6 @@ public partial class OrchestratorService : IOrchestratorService
                                 _logger.LogWarning(ex, "Auto-cleanup: Error tearing down container {AppId}", appId);
                             }
                         }
-
-                        // Reset service mappings since we're tearing down the old deployment
-                        await _healthMonitor.ResetAllMappingsToDefaultAsync();
                     }
                 }
             }
@@ -2410,12 +2417,19 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 // All services were deployed to "bannou" - nothing to tear down
                 await _healthMonitor.ResetAllMappingsToDefaultAsync();
+                await InvalidateOpenRestryRoutingCacheAsync();
                 await _stateManager.ClearCurrentConfigurationAsync();
 
                 return (true, "Already at default topology - all services on 'bannou', configuration cleared", tornDownServices);
             }
 
-            // Tear down each tracked deployment
+            // CRITICAL: Reset service mappings FIRST, before tearing down containers.
+            // This ensures routing proxies (OpenResty, lib-mesh) get updated routes
+            // before the old containers become unavailable.
+            await _healthMonitor.ResetAllMappingsToDefaultAsync();
+            await InvalidateOpenRestryRoutingCacheAsync();
+
+            // Now tear down each tracked deployment (routes already point to default)
             foreach (var appId in deployedAppIds)
             {
                 try
@@ -2441,9 +2455,6 @@ public partial class OrchestratorService : IOrchestratorService
                     _logger.LogWarning(ex, "Error tearing down tracked container {AppId}", appId);
                 }
             }
-
-            // Reset all service mappings to default ("bannou")
-            await _healthMonitor.ResetAllMappingsToDefaultAsync();
 
             // Clear the deployment configuration (saves empty config as new version for audit trail)
             await _stateManager.ClearCurrentConfigurationAsync();
@@ -3125,6 +3136,50 @@ public partial class OrchestratorService : IOrchestratorService
         }
 
         await _stateManager.SetValueAsync(metricsKey, metrics);
+    }
+
+    /// <summary>
+    /// Invalidates the OpenResty routing cache by calling an internal endpoint.
+    /// This forces OpenResty to re-read routing data from Redis on the next request.
+    /// Non-blocking: failures are logged but don't stop the deployment flow.
+    /// </summary>
+    private async Task InvalidateOpenRestryRoutingCacheAsync()
+    {
+        try
+        {
+            // OpenResty exposes an internal cache invalidation endpoint
+            // This is only accessible from within the Docker network
+            var openRestyHost = _configuration.OpenRestyHost;
+            var openRestyPort = _configuration.OpenRestyPort;
+            var invalidateUrl = $"http://{openRestyHost}:{openRestyPort}/internal/cache/invalidate";
+
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            var response = await httpClient.PostAsync(invalidateUrl, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("OpenResty routing cache invalidated successfully");
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "OpenResty cache invalidation returned {StatusCode}: {Reason}",
+                    (int)response.StatusCode, response.ReasonPhrase);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            // OpenResty might not be available (local dev without Docker) - this is fine
+            _logger.LogDebug(ex, "Could not invalidate OpenResty cache (endpoint may not be available)");
+        }
+        catch (TaskCanceledException)
+        {
+            _logger.LogDebug("OpenResty cache invalidation timed out");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unexpected error invalidating OpenResty cache");
+        }
     }
 
     #endregion

@@ -907,8 +907,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (success)
             {
-                Console.WriteLine("   Waiting for Relayed Connect to stabilize...");
-                await Task.Delay(5000); // Give time for the new Connect node to start
+                // Wait for:
+                // 1. New Connect node to start and become healthy
+                // 2. OpenResty routing cache to expire (10s TTL) as fallback
+                //    Note: Orchestrator calls /internal/cache/invalidate but we wait anyway
+                //    in case that fails or the cache was populated after invalidation
+                Console.WriteLine("   Waiting for Relayed Connect to stabilize (10s for cache expiry)...");
+                await Task.Delay(10000);
                 return true;
             }
 

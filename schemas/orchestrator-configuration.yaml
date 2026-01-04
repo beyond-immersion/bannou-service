@@ -81,6 +81,18 @@ x-service-configuration:
       env: ORCHESTRATOR_LOGS_VOLUME
       default: "logs-data"
 
+    # OpenResty Configuration (routing cache invalidation)
+    OpenRestyHost:
+      type: string
+      description: OpenResty hostname for cache invalidation calls
+      env: ORCHESTRATOR_OPENRESTY_HOST
+      default: "openresty"
+    OpenRestyPort:
+      type: integer
+      description: OpenResty port for cache invalidation calls
+      env: ORCHESTRATOR_OPENRESTY_PORT
+      default: 80
+
     # Kubernetes Configuration
     KubernetesNamespace:
       type: string
