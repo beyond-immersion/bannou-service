@@ -548,10 +548,13 @@ test-edge-logs: test-logs-dir ## Collect Edge test logs to ./test-logs/edge-test
 	@docker logs bannou-test-edge-bannou-edge-tester-1 2>&1 | tee $(TEST_LOG_DIR)/edge-tester.log
 	@echo "📋 Collecting bannou service logs..."
 	@docker logs bannou-test-edge-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/edge-bannou.log
+	@echo "📋 Collecting OpenResty logs..."
+	@docker logs bannou-test-edge-openresty-1 2>&1 | tee $(TEST_LOG_DIR)/edge-openresty.log || echo "⚠️  OpenResty container not found"
 	@echo ""
 	@echo "✅ Logs saved to:"
 	@echo "   $(TEST_LOG_DIR)/edge-tester.log"
 	@echo "   $(TEST_LOG_DIR)/edge-bannou.log"
+	@echo "   $(TEST_LOG_DIR)/edge-openresty.log"
 
 # Follow Edge tester logs live
 test-edge-follow: ## Follow Edge test logs in real-time

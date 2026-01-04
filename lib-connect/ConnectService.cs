@@ -2531,15 +2531,24 @@ public partial class ConnectService : IConnectService
                 });
             }
 
-            var capabilityManifest = new
+            // Build manifest as dictionary for conditional peerGuid inclusion
+            // External mode: No peerGuid (clients cannot route to each other)
+            // Relayed/Internal mode: Include peerGuid (enables peer-to-peer routing)
+            var capabilityManifest = new Dictionary<string, object>
             {
-                eventName = "connect.capability_manifest",
-                sessionId = sessionId,
-                availableAPIs = availableApis,
-                version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                reason = reason
+                ["eventName"] = "connect.capability_manifest",
+                ["sessionId"] = sessionId,
+                ["availableAPIs"] = availableApis,
+                ["version"] = 1,
+                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["reason"] = reason
             };
+
+            // Include peerGuid only in relayed/internal modes where peer routing is supported
+            if (_connectionMode != "external")
+            {
+                capabilityManifest["peerGuid"] = connectionState.PeerGuid.ToString();
+            }
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);
             var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
