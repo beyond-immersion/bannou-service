@@ -2650,7 +2650,11 @@ These can be tackled immediately to improve the foundation:
   - Subscribes to `actor.node.{appId}.spawn`, `actor.node.{appId}.stop`, `actor.node.{appId}.message`
   - `HandleMessageCommandAsync` converts `SendMessageCommand` to `PerceptionData` and injects into actor
   - Proper subscription lifecycle (disposed on shutdown)
-- [ ] **HTTP test coverage**: Add actor template CRUD and spawn/stop to http-tester
+- [x] **HTTP test coverage**: Extended `http-tester/Tests/ActorTestHandler.cs` (completed 2026-01-04)
+  - Added `TestAutoSpawnOnGetActor` - verifies auto-spawn via GetActor with matching template pattern
+  - Added `TestInjectPerception` - verifies perception injection into running actor
+  - Added `TestInjectPerceptionActorNotFound` - verifies 404 for non-existent actor
+  - Total actor HTTP tests: 21 (template CRUD, lifecycle, validation, auto-spawn, perception)
 
 #### 5.4 Stride Demo Integration Reference
 

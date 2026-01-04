@@ -1,15 +1,16 @@
 -- Service Routing with Dynamic Backend Selection
--- Reads service routing from Redis (written by orchestrator)
+-- Reads service routing from Redis (written by orchestrator via lib-state)
 -- Sets nginx variables for dynamic upstream selection
--- Redis key pattern: service:routing:{serviceName}
+-- Redis key pattern: orchestrator-routings:{serviceName}
 
 local redis = require "resty.redis"
 local cjson = require "cjson"
 
 local _M = {}
 
--- Redis key patterns - must match what orchestrator writes
-local ROUTING_KEY_PREFIX = "service:routing:"
+-- Redis key patterns - must match what orchestrator writes via lib-state
+-- The orchestrator uses store name "orchestrator-routings" which becomes the key prefix
+local ROUTING_KEY_PREFIX = "orchestrator-routings:"
 local DEFAULT_APP_ID = "bannou"
 local DEFAULT_HOST = "bannou"
 local DEFAULT_PORT = 80

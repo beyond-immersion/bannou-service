@@ -40,6 +40,13 @@ public class ActorTestHandler : BaseHttpTestHandler
 
         // Full lifecycle flow
         new ServiceTest(TestFullLifecycleFlow, "FullLifecycle", "Actor", "Complete create->spawn->stop->delete flow"),
+
+        // Auto-spawn tests
+        new ServiceTest(TestAutoSpawnOnGetActor, "AutoSpawn", "Actor", "GetActor auto-spawns actor when template matches"),
+
+        // Perception injection tests
+        new ServiceTest(TestInjectPerception, "InjectPerception", "Actor", "Inject perception into running actor"),
+        new ServiceTest(TestInjectPerceptionActorNotFound, "InjectPerceptionNotFound", "Actor", "Inject perception to non-existent actor returns 404"),
     ];
 
     #region Template CRUD Tests
@@ -555,6 +562,126 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful("Full lifecycle: create template -> spawn -> get -> list -> stop -> delete");
         }, "FullLifecycleFlow");
+
+    #endregion
+
+    #region Auto-Spawn Tests
+
+    private static async Task<TestResult> TestAutoSpawnOnGetActor(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var actorClient = GetServiceClient<IActorClient>();
+            var category = GenerateTestSlug("autospawn-test");
+            var actorIdPattern = $"autospawn-{category}-.*";
+            var actorId = $"autospawn-{category}-actor-1";
+
+            // Create template with auto-spawn enabled
+            var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
+            {
+                Category = category,
+                BehaviorRef = "asset://behaviors/test",
+                TickIntervalMs = 1000,
+                AutoSpawn = new AutoSpawnConfig
+                {
+                    Enabled = true,
+                    IdPattern = actorIdPattern,
+                    MaxInstances = 10
+                }
+            });
+
+            if (template.AutoSpawn == null || !template.AutoSpawn.Enabled)
+                return TestResult.Failed("AutoSpawn config not saved on template");
+
+            // Get actor that doesn't exist yet - should trigger auto-spawn
+            var response = await actorClient.GetActorAsync(new GetActorRequest
+            {
+                ActorId = actorId
+            });
+
+            if (response.ActorId != actorId)
+                return TestResult.Failed($"Actor ID mismatch: expected {actorId}, got {response.ActorId}");
+
+            if (response.Status != ActorStatus.Running && response.Status != ActorStatus.Starting && response.Status != ActorStatus.Pending)
+                return TestResult.Failed($"Auto-spawned actor not running: {response.Status}");
+
+            // Cleanup
+            await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
+            await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest { TemplateId = template.TemplateId });
+
+            return TestResult.Successful($"Auto-spawned actor {actorId} via GetActor");
+        }, "AutoSpawnOnGetActor");
+
+    #endregion
+
+    #region Perception Injection Tests
+
+    private static async Task<TestResult> TestInjectPerception(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var actorClient = GetServiceClient<IActorClient>();
+            var category = GenerateTestSlug("inject-test");
+            var actorId = GenerateTestSlug("inject-actor");
+
+            // Create template and spawn actor
+            var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
+            {
+                Category = category,
+                BehaviorRef = "asset://behaviors/test",
+                TickIntervalMs = 1000
+            });
+
+            await actorClient.SpawnActorAsync(new SpawnActorRequest
+            {
+                TemplateId = template.TemplateId,
+                ActorId = actorId
+            });
+
+            // Give the actor a moment to start
+            await Task.Delay(100);
+
+            // Inject a perception
+            var response = await actorClient.InjectPerceptionAsync(new InjectPerceptionRequest
+            {
+                ActorId = actorId,
+                Perception = new PerceptionData
+                {
+                    PerceptionType = "test-perception",
+                    SourceId = "http-tester",
+                    SourceType = "test",
+                    Urgency = 0.5f,
+                    Data = new { message = "Hello from HTTP tester" }
+                }
+            });
+
+            if (!response.Queued)
+                return TestResult.Failed("Perception not queued");
+
+            // Cleanup
+            await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
+            await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest { TemplateId = template.TemplateId });
+
+            return TestResult.Successful($"Injected perception into actor {actorId} (queue depth: {response.QueueDepth})");
+        }, "InjectPerception");
+
+    private static async Task<TestResult> TestInjectPerceptionActorNotFound(ITestClient client, string[] args) =>
+        await
+        ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var actorClient = GetServiceClient<IActorClient>();
+                await actorClient.InjectPerceptionAsync(new InjectPerceptionRequest
+                {
+                    ActorId = "nonexistent-actor-12345",
+                    Perception = new PerceptionData
+                    {
+                        PerceptionType = "test",
+                        SourceId = "test",
+                        SourceType = "test"
+                    }
+                });
+            },
+            404,
+            "InjectPerceptionActorNotFound");
 
     #endregion
 }

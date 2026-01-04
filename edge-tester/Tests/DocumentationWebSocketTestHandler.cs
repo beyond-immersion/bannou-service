@@ -1951,6 +1951,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                         new
                         {
                             @namespace = ARCHIVE_TEST_NAMESPACE,
+                            owner = "edge-tester",  // Service-initiated archive
                             description = "WebSocket test archive"
                         },
                         timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
