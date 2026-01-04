@@ -248,7 +248,7 @@ public class RtpEngineClient : IRtpEngineClient
                 var responseCookie = response[..spaceIndex];
                 if (responseCookie != cookie)
                 {
-                    _logger.LogWarning("RTPEngine response cookie mismatch: expected {Expected}, got {Actual}",
+                    _logger.LogError("RTPEngine response cookie mismatch: expected {Expected}, got {Actual}",
                         cookie, responseCookie);
                 }
                 response = response[(spaceIndex + 1)..];

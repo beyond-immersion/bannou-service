@@ -1020,7 +1020,8 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 },
                 "message": {
                     "type": "string",
-                    "description": "Additional status information"
+                    "nullable": true,
+                    "description": "Additional status information (null if no additional context needed)"
                 },
                 "metrics": {
                     "type": "object",
@@ -1474,7 +1475,8 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 },
                 "degradedDuration": {
                     "type": "string",
-                    "description": "How long service has been degraded"
+                    "nullable": true,
+                    "description": "How long service has been degraded (null if not degraded)"
                 },
                 "reason": {
                     "type": "string",
@@ -3252,7 +3254,8 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 },
                 "message": {
                     "type": "string",
-                    "description": "Additional status information"
+                    "nullable": true,
+                    "description": "Additional status information (null if no additional context needed)"
                 },
                 "metrics": {
                     "type": "object",

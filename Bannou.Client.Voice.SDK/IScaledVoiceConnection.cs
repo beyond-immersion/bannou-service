@@ -48,6 +48,7 @@ public interface IScaledVoiceConnection : IDisposable
 
     /// <summary>
     /// SIP registration username.
+    /// Returns empty string before credentials are set via <see cref="ConnectAsync"/>.
     /// </summary>
     string SipUsername { get; }
 

@@ -1171,8 +1171,9 @@ public partial class GameSessionService : IGameSessionService
 
             if (response?.Subscriptions != null && response.Subscriptions.Count > 0)
             {
+                // Filter first, then select - StubName is required (non-nullable) per schema
                 var stubs = new HashSet<string>(
-                    response.Subscriptions.Select(s => s.StubName ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)),
+                    response.Subscriptions.Where(s => !string.IsNullOrEmpty(s.StubName)).Select(s => s.StubName),
                     StringComparer.OrdinalIgnoreCase);
 
                 _accountSubscriptions[accountId] = stubs;

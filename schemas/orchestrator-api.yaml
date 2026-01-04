@@ -87,10 +87,11 @@ paths:
         \                 ],\n                    \"description\": \"Component health status\"\n                },\n     \
         \           \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"Last successful connection time\"\n                },\n                \"\
-        message\": {\n                    \"type\": \"string\",\n                    \"description\": \"Additional status
-        information\"\n                },\n                \"metrics\": {\n                    \"type\": \"object\",\n   \
-        \                 \"additionalProperties\": true,\n                    \"description\": \"Component-specific metrics
-        (e.g., ping time)\"\n                }\n            }\n        }\n    }\n}"
+        message\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Additional status information (null if no additional context needed)\"\n                },\n\
+        \                \"metrics\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Component-specific metrics (e.g., ping time)\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check infrastructure component health\",\n    \"description\": \"Validates
         connectivity and health of core infrastructure components:\\n- Redis (direct connection via StackExchange.Redis)\\
         n- RabbitMQ (direct connection via RabbitMQ.Client)\\n- \\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n  \
@@ -283,9 +284,10 @@ paths:
         : \"Current service health status\"\n                },\n                \"lastSeen\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Last heartbeat
         timestamp\"\n                },\n                \"degradedDuration\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"How long service has been degraded\"\n                },\n             \
-        \   \"reason\": {\n                    \"type\": \"string\",\n                    \"description\": \"Explanation for
-        recommendation\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"How long service has been degraded
+        (null if not degraded)\"\n                },\n                \"reason\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Explanation for recommendation\"\n                }\n            }\n   \
+        \     }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check if service needs restart\",\n    \"description\": \"Evaluates service
         health and determines if restart is necessary.\\n\\nRestart logic:\\n- Healthy: No restart needed\\n- Degraded < 5
         min: No restart needed\\n- Degraded > 5 min: Restart recommended\\n- Unavailable: Restart needed\\n\",\n    \"tags\"\
@@ -1026,23 +1028,23 @@ paths:
         \n                    ],\n                    \"description\": \"Component health status\"\n                },\n \
         \               \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"Last successful connection time\"\n                },\n                \"\
-        message\": {\n                    \"type\": \"string\",\n                    \"description\": \"Additional status
-        information\"\n                },\n                \"metrics\": {\n                    \"type\": \"object\",\n   \
-        \                 \"additionalProperties\": true,\n                    \"description\": \"Component-specific metrics
-        (e.g., ping time)\"\n                }\n            }\n        },\n        \"ResourceUsage\": {\n            \"description\"\
-        : \"System resource utilization metrics including CPU, memory, disk, and network\",\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"cpuPercent\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Total CPU usage percentage\"\n                },\n                \"memoryUsedMb\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"Total memory used (MB)\"\n                },\n      \
-        \          \"memoryTotalMb\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"Total memory available (MB)\"\n                },\n                \"diskUsedGb\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Disk space used
-        (GB)\"\n                },\n                \"networkInMb\": {\n                    \"type\": \"number\",\n      \
-        \              \"format\": \"float\",\n                    \"description\": \"Network input (MB)\"\n             \
-        \   },\n                \"networkOutMb\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"description\": \"Network output (MB)\"\n                }\n            }\n   \
-        \     }\n    }\n}"
+        message\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Additional status information (null if no additional context needed)\"\n                },\n\
+        \                \"metrics\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Component-specific metrics (e.g., ping time)\"\n                }\n\
+        \            }\n        },\n        \"ResourceUsage\": {\n            \"description\": \"System resource utilization
+        metrics including CPU, memory, disk, and network\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"cpuPercent\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"description\": \"Total CPU usage percentage\"\
+        \n                },\n                \"memoryUsedMb\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Total memory used (MB)\"\n                },\n                \"memoryTotalMb\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Total memory available (MB)\"\n\
+        \                },\n                \"diskUsedGb\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"float\",\n                    \"description\": \"Disk space used (GB)\"\n                },\n\
+        \                \"networkInMb\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"description\": \"Network input (MB)\"\n                },\n                \"networkOutMb\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        description\": \"Network output (MB)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current environment status\",\n    \"description\": \"Returns comprehensive
         status of the current deployment including:\\n- Active backend and deployment configuration\\n- Service topology (which
         services on which containers)\\n- Container health and resource usage\\n- Infrastructure component status\\n- Active
@@ -2264,7 +2266,8 @@ components:
           description: Last successful connection time
         message:
           type: string
-          description: Additional status information
+          nullable: true
+          description: Additional status information (null if no additional context needed)
         metrics:
           type: object
           additionalProperties: true
@@ -2536,7 +2539,8 @@ components:
           description: Last heartbeat timestamp
         degradedDuration:
           type: string
-          description: How long service has been degraded
+          nullable: true
+          description: How long service has been degraded (null if not degraded)
         reason:
           type: string
           description: Explanation for recommendation

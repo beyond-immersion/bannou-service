@@ -232,7 +232,7 @@ public partial class OrchestratorService : IOrchestratorService
                 Name = "statestore",
                 Status = stateHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
                 LastSeen = DateTimeOffset.UtcNow,
-                Message = stateMessage ?? string.Empty,
+                Message = stateMessage, // Nullable per schema
                 Metrics = stateOpTime.HasValue
                     ? (object)new Dictionary<string, object> { { "operationTimeMs", stateOpTime.Value.TotalMilliseconds } }
                     : new Dictionary<string, object>()
@@ -265,7 +265,7 @@ public partial class OrchestratorService : IOrchestratorService
                 Name = "pubsub",
                 Status = pubsubHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
                 LastSeen = DateTimeOffset.UtcNow,
-                Message = pubsubMessage ?? string.Empty
+                Message = pubsubMessage // Always set in try/catch above
             });
             overallHealthy = overallHealthy && pubsubHealthy;
 

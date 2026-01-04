@@ -314,11 +314,14 @@ public class ConnectionState
         // Add to main shortcuts dictionary
         SessionShortcuts[shortcut.RouteGuid] = shortcut;
 
-        // Add to service index for bulk revocation
-        var guids = ShortcutsByService.GetOrAdd(shortcut.SourceService, _ => new HashSet<Guid>());
-        lock (guids)
+        // Add to service index for bulk revocation (only if SourceService is specified)
+        if (!string.IsNullOrEmpty(shortcut.SourceService))
         {
-            guids.Add(shortcut.RouteGuid);
+            var guids = ShortcutsByService.GetOrAdd(shortcut.SourceService, _ => new HashSet<Guid>());
+            lock (guids)
+            {
+                guids.Add(shortcut.RouteGuid);
+            }
         }
     }
 
@@ -332,8 +335,9 @@ public class ConnectionState
         if (!SessionShortcuts.TryRemove(routeGuid, out var shortcut))
             return false;
 
-        // Remove from service index
-        if (ShortcutsByService.TryGetValue(shortcut.SourceService, out var guids))
+        // Remove from service index (only if SourceService was specified)
+        if (!string.IsNullOrEmpty(shortcut.SourceService) &&
+            ShortcutsByService.TryGetValue(shortcut.SourceService, out var guids))
         {
             lock (guids)
             {

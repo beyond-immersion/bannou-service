@@ -226,7 +226,7 @@ public class KamailioClient : IKamailioClient
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogWarning("Kamailio JSONRPC failed: {StatusCode}", response.StatusCode);
+            _logger.LogError("Kamailio JSONRPC failed: {StatusCode}", response.StatusCode);
             return null;
         }
 
@@ -234,7 +234,7 @@ public class KamailioClient : IKamailioClient
 
         if (jsonResponse?.Error != null)
         {
-            _logger.LogWarning("Kamailio JSONRPC error: {Code} - {Message}",
+            _logger.LogError("Kamailio JSONRPC error: {Code} - {Message}",
                 jsonResponse.Error.Code, jsonResponse.Error.Message);
             return null;
         }

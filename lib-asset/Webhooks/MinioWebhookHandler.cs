@@ -135,13 +135,27 @@ public class MinioWebhookHandler
         _logger.LogInformation("MinIO webhook: Upload completed for session {UploadId}, size={Size}, etag={ETag}",
             uploadId, size, etag);
 
+        // Defensive coding for external service: MinIO should always provide ETag for successful uploads,
+        // but we handle null gracefully since this is third-party webhook data
+        if (string.IsNullOrEmpty(etag))
+        {
+            _logger.LogError("MinIO webhook: Missing ETag for completed upload {UploadId} - MinIO may be misconfigured", uploadId);
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "asset",
+                operation: "MinioWebhook",
+                errorType: "MissingETag",
+                message: "MinIO webhook did not include ETag for completed upload",
+                details: new { UploadId = uploadId, Bucket = bucket, Key = key },
+                severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error).ConfigureAwait(false);
+        }
+
         // Publish upload notification event for processing pipeline
         var uploadNotification = new AssetUploadNotification
         {
             UploadId = uploadId,
             Bucket = bucket,
             Key = key,
-            ETag = etag?.Trim('"') ?? string.Empty,
+            ETag = etag?.Trim('"') ?? string.Empty, // Defensive: external service may omit ETag
             Size = size,
             ContentType = session.ContentType,
             Timestamp = DateTimeOffset.UtcNow

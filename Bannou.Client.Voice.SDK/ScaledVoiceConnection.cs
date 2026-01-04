@@ -56,6 +56,7 @@ public class ScaledVoiceConnection : IScaledVoiceConnection
     public bool IsAudioActive => _rtpHelper.IsActive && _sipHelper.IsRegistered;
 
     /// <inheritdoc/>
+    /// <remarks>Returns empty string when not yet connected (no credentials set).</remarks>
     public string SipUsername => _sipHelper.Username ?? string.Empty;
 
     /// <inheritdoc/>

@@ -450,7 +450,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             ServiceName = serviceName,
             CurrentStatus = worstStatus,
             LastSeen = latestHeartbeat.LastSeen,
-            DegradedDuration = degradedDuration ?? string.Empty,
+            DegradedDuration = degradedDuration, // Nullable per schema - null when not degraded
             Reason = reason
         };
     }

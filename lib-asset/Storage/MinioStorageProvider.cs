@@ -405,6 +405,14 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
 
         await foreach (var item in _minioClient.ListObjectsEnumAsync(args))
         {
+            // Defensive coding for external service: MinIO SDK may return null for optional fields.
+            // Log unexpected nulls but continue - listing should be resilient to individual item issues.
+            if (string.IsNullOrEmpty(item.ETag))
+            {
+                _logger.LogError("MinIO ListVersions: Object {Key} version {VersionId} has no ETag - possible corruption or delete marker",
+                    item.Key, item.VersionId);
+            }
+
             // MinIO SDK v7 Item: IsDeleteMarker and StorageClass may not be available
             // MinIO uses "STANDARD" for all objects by default; tier transitions require ILM rules
             versions.Add(new StorageModels.ObjectVersionInfo(
@@ -412,7 +420,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
                 item.IsLatest,
                 item.LastModifiedDateTime ?? DateTime.MinValue,
                 (long)item.Size,
-                item.ETag ?? string.Empty,
+                item.ETag ?? string.Empty, // Defensive: external service may omit ETag
                 IsDeleteMarker: false,
                 StorageClass: "STANDARD")); // MinIO defaults to STANDARD; real archival needs ILM rules
         }

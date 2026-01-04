@@ -343,10 +343,10 @@ public partial class ComponentHealth
     public System.DateTimeOffset LastSeen { get; set; } = default!;
 
     /// <summary>
-    /// Additional status information
+    /// Additional status information (null if no additional context needed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public string? Message { get; set; } = default!;
 
     /// <summary>
     /// Component-specific metrics (e.g., ping time)
@@ -779,10 +779,10 @@ public partial class RestartRecommendation
     public System.DateTimeOffset LastSeen { get; set; } = default!;
 
     /// <summary>
-    /// How long service has been degraded
+    /// How long service has been degraded (null if not degraded)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("degradedDuration")]
-    public string DegradedDuration { get; set; } = default!;
+    public string? DegradedDuration { get; set; } = default!;
 
     /// <summary>
     /// Explanation for recommendation

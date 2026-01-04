@@ -336,7 +336,8 @@ public partial class DocumentationService : IDocumentationService
             if (body.IncludeContent)
             {
                 // Content should never be null for a stored document - this is a data integrity issue
-                if (string.IsNullOrEmpty(storedDoc.Content))
+                var content = storedDoc.Content;
+                if (string.IsNullOrEmpty(content))
                 {
                     _logger.LogError("Document {DocumentId} in namespace {Namespace} has null/empty Content - data integrity issue", documentId, namespaceId);
                     await _messageBus.TryPublishErrorAsync(
@@ -348,7 +349,8 @@ public partial class DocumentationService : IDocumentationService
                         cancellationToken: cancellationToken);
                     return (StatusCodes.InternalServerError, null);
                 }
-                doc.Content = body.RenderHtml ? RenderMarkdownToHtml(storedDoc.Content) : storedDoc.Content;
+                // content is guaranteed non-null after the check above
+                doc.Content = body.RenderHtml ? RenderMarkdownToHtml(content) ?? content : content;
             }
 
             var response = new GetDocumentResponse
@@ -3201,12 +3203,14 @@ public partial class DocumentationService : IDocumentationService
             Version = "1.0",
             Namespace = namespaceId,
             CreatedAt = DateTimeOffset.UtcNow,
+            // validDocuments only contains docs with non-null Content (filtered above)
+            // The null-coalesce satisfies the compiler but will never execute
             Documents = validDocuments.Select(d => new BundledDocument
             {
                 DocumentId = d.DocumentId,
                 Slug = d.Slug,
                 Title = d.Title,
-                Content = d.Content,
+                Content = d.Content ?? string.Empty,
                 Category = d.Category,
                 Summary = d.Summary,
                 VoiceSummary = d.VoiceSummary,

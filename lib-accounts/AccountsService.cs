@@ -1388,6 +1388,8 @@ public partial class AccountsService : IAccountsService
     {
         return element.ValueKind switch
         {
+            // GetString() returns string? but cannot return null when ValueKind is String;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             System.Text.Json.JsonValueKind.String => element.GetString() ?? string.Empty,
             System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
             System.Text.Json.JsonValueKind.True => true,

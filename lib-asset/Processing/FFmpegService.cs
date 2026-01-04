@@ -35,9 +35,17 @@ public sealed class FFmpegService : IFFmpegService
         // Configure FFMpegCore if custom path is specified
         if (!string.IsNullOrEmpty(_configuration.FfmpegPath))
         {
+            var binaryFolder = Path.GetDirectoryName(_configuration.FfmpegPath);
+            if (string.IsNullOrEmpty(binaryFolder))
+            {
+                throw new InvalidOperationException(
+                    $"Invalid FfmpegPath configuration: '{_configuration.FfmpegPath}' - cannot extract directory. " +
+                    "FfmpegPath must be a full path to the ffmpeg binary, not a root path or bare filename.");
+            }
+
             GlobalFFOptions.Configure(options =>
             {
-                options.BinaryFolder = Path.GetDirectoryName(_configuration.FfmpegPath) ?? string.Empty;
+                options.BinaryFolder = binaryFolder;
             });
         }
     }

@@ -5732,12 +5732,12 @@
         <member name="P:BeyondImmersion.BannouService.Connect.Protocol.SessionShortcutData.SourceService">
             <summary>
             The service that created this shortcut.
-            Used for bulk revocation and audit logging.
+            Used for bulk revocation and audit logging. Null if not specified.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.Protocol.SessionShortcutData.Name">
             <summary>
-            Machine-readable shortcut identifier.
+            Machine-readable shortcut identifier. Null if not specified.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.Protocol.SessionShortcutData.Description">
@@ -21140,7 +21140,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ComponentHealth.Message">
             <summary>
-            Additional status information
+            Additional status information (null if no additional context needed)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ComponentHealth.Metrics">
@@ -21447,7 +21447,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.RestartRecommendation.DegradedDuration">
             <summary>
-            How long service has been degraded
+            How long service has been degraded (null if not degraded)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.RestartRecommendation.Reason">

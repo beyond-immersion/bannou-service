@@ -137,6 +137,21 @@ public class SubscriptionExpirationService : BackgroundService
                     continue;
                 }
 
+                // StubName is required - it's the service identifier. Skip corrupted subscriptions.
+                if (string.IsNullOrEmpty(subscription.StubName))
+                {
+                    _logger.LogError("Subscription {SubscriptionId} has null/empty StubName - data integrity issue",
+                        subscription.SubscriptionId);
+                    await messageBus.TryPublishErrorAsync(
+                        serviceName: "subscriptions",
+                        operation: "ExpirationCheck",
+                        errorType: "DataIntegrityError",
+                        message: "Subscription has null/empty StubName - cannot process expiration",
+                        details: new { SubscriptionId = subscription.SubscriptionId, AccountId = subscription.AccountId },
+                        severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
+                    continue;
+                }
+
                 // Check if subscription is active and has expired
                 if (subscription.IsActive &&
                     subscription.ExpirationDateUnix.HasValue &&
@@ -161,7 +176,7 @@ public class SubscriptionExpirationService : BackgroundService
                         SubscriptionId = subscription.SubscriptionId,
                         AccountId = subscription.AccountId,
                         ServiceId = subscription.ServiceId,
-                        StubName = subscription.StubName ?? string.Empty,
+                        StubName = subscription.StubName, // Validated non-null above
                         Action = SubscriptionUpdatedEventAction.Expired,
                         IsActive = false
                     };
