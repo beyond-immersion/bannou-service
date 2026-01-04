@@ -34,4 +34,10 @@
     <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="fixtures\**\*.yaml" LinkBase="fixtures">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

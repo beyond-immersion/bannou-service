@@ -1,0 +1,26 @@
+name: actor-pools
+description: Actor pool configuration
+category: processing
+
+processingPools:
+  - poolType: actor-shared
+    plugin: actor
+    minInstances: 1
+    maxInstances: 10
+    scaleUpThreshold: 0.8
+    scaleDownThreshold: 0.2
+    idleTimeoutMinutes: 5
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_CAPACITY: '50'
+
+  - poolType: actor-npc-brain
+    plugin: actor
+    minInstances: 2
+    maxInstances: 20
+    scaleUpThreshold: 0.7
+    scaleDownThreshold: 0.3
+    idleTimeoutMinutes: 10
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: npc-brain

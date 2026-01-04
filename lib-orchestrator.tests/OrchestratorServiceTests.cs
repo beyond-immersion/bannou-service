@@ -2031,6 +2031,7 @@ public class PresetLoaderTests
 {
     private readonly Mock<ILogger<PresetLoader>> _mockLogger;
     private readonly string _testPresetsDirectory;
+    private static readonly string FixturesDirectory = Path.Combine(AppContext.BaseDirectory, "fixtures");
 
     public PresetLoaderTests()
     {
@@ -2050,41 +2051,25 @@ public class PresetLoaderTests
         await File.WriteAllTextAsync(filePath, content);
     }
 
+    /// <summary>
+    /// Copies a fixture YAML file to the test presets directory.
+    /// Use this for YAML with complex indentation that gets mangled by formatters.
+    /// </summary>
+    private async Task CopyFixtureAsync(string fixtureName)
+    {
+        var sourcePath = Path.Combine(FixturesDirectory, $"{fixtureName}.yaml");
+        var destPath = Path.Combine(_testPresetsDirectory, $"{fixtureName}.yaml");
+        var content = await File.ReadAllTextAsync(sourcePath);
+        await File.WriteAllTextAsync(destPath, content);
+    }
+
     #region ProcessingPools YAML Parsing Tests
 
     [Fact]
     public async Task LoadPresetAsync_WithProcessingPools_ShouldParseCorrectly()
     {
-        // Arrange
-        const string presetContent = @"name: actor-pools
-description: Actor pool configuration
-category: processing
-
-processingPools:
-  - poolType: actor-shared
-    plugin: actor
-    minInstances: 1
-    maxInstances: 10
-    scaleUpThreshold: 0.8
-    scaleDownThreshold: 0.2
-    idleTimeoutMinutes: 5
-    environment:
-    ACTOR_DEPLOYMENT_MODE: pool-node
-    ACTOR_POOL_NODE_CAPACITY: '50'
-
-  - poolType: actor-npc-brain
-    plugin: actor
-    minInstances: 2
-    maxInstances: 20
-    scaleUpThreshold: 0.7
-    scaleDownThreshold: 0.3
-    idleTimeoutMinutes: 10
-    environment:
-    ACTOR_DEPLOYMENT_MODE: pool-node
-    ACTOR_POOL_NODE_TYPE: npc-brain
-";
-
-        await CreatePresetFileAsync("actor-pools", presetContent);
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("actor-pools");
         var loader = CreateLoader();
 
         // Act
@@ -2122,18 +2107,8 @@ processingPools:
     [Fact]
     public async Task LoadPresetAsync_WithNoProcessingPools_ShouldReturnNullProcessingPools()
     {
-        // Arrange
-        const string presetContent = @"name: simple-preset
-description: Simple preset without pools
-
-topology:
-  nodes:
-    - name: test-node
-    services:
-        - auth
-";
-
-        await CreatePresetFileAsync("simple-preset", presetContent);
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("simple-preset");
         var loader = CreateLoader();
 
         // Act
@@ -2149,14 +2124,8 @@ topology:
     [Fact]
     public async Task LoadPresetAsync_WithEmptyProcessingPools_ShouldReturnEmptyList()
     {
-        // Arrange
-        const string presetContent = @"name: empty-pools
-description: Preset with empty pools list
-
-processingPools: []
-";
-
-        await CreatePresetFileAsync("empty-pools", presetContent);
+        // Arrange - uses fixture file
+        await CopyFixtureAsync("empty-pools");
         var loader = CreateLoader();
 
         // Act
@@ -2171,19 +2140,8 @@ processingPools: []
     [Fact]
     public async Task LoadPresetAsync_WithPoolImage_ShouldParseImage()
     {
-        // Arrange
-        const string presetContent = @"name: custom-image-pool
-description: Pool with custom image
-
-processingPools:
-  - poolType: asset-processor
-    plugin: asset
-    image: myregistry/asset-processor:v2
-    minInstances: 1
-    maxInstances: 5
-";
-
-        await CreatePresetFileAsync("custom-image-pool", presetContent);
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("custom-image-pool");
         var loader = CreateLoader();
 
         // Act
@@ -2199,16 +2157,8 @@ processingPools:
     [Fact]
     public async Task LoadPresetAsync_WithDefaultValues_ShouldUseDefaults()
     {
-        // Arrange - pool with minimal configuration
-        const string presetContent = @"name: minimal-pool
-description: Minimal pool config
-
-processingPools:
-  - poolType: test-pool
-    plugin: test
-";
-
-        await CreatePresetFileAsync("minimal-pool", presetContent);
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("minimal-pool");
         var loader = CreateLoader();
 
         // Act
