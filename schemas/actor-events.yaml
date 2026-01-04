@@ -6,6 +6,9 @@ info:
     Events published and subscribed to by the Actor service.
     Includes lifecycle events for templates and instances, plus event subscriptions.
 
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+
   x-event-subscriptions:
     - topic: behavior.updated
       event: BehaviorUpdatedEvent
@@ -75,9 +78,11 @@ x-lifecycle:
       characterId:
         type: string
         format: uuid
+        nullable: true  # NRT: Optional property MUST be nullable
         description: Associated character ID for NPC brains
       nodeId:
         type: string
+        nullable: true  # NRT: Optional property MUST be nullable
         description: Pool node running this actor
       status:
         type: string
@@ -117,6 +122,7 @@ components:
           description: Unique identifier for this pool node
         appId:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Pool node's app-id for direct routing
         currentLoad:
           type: integer

@@ -4,6 +4,9 @@ info:
   description: |
     Shared event schemas used across all Bannou services.
     These events enable service-to-service communication via RabbitMQ pub/sub.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -112,9 +115,11 @@ components:
           description: Permission requirements for this endpoint
         description:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Human-readable endpoint description
         category:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: API category (auth, accounts, game, social, etc.)
 
     PermissionRequirement:
@@ -140,6 +145,7 @@ components:
             Example: {"game-session": "in_game", "character": "selected"}
         description:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Optional human-readable permission description
 
     ServiceHeartbeatEvent:
@@ -219,6 +225,7 @@ components:
           description: Individual service health status
         version:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Service API version
         metadata:
           type: object
@@ -233,17 +240,21 @@ components:
       properties:
         maxConnections:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Maximum connections this instance can handle
         currentConnections:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Current active connections
         cpuUsage:
           type: number
           format: float
+          nullable: true  # NRT: Optional property MUST be nullable
           description: CPU usage ratio (0.0 - 1.0)
         memoryUsage:
           type: number
           format: float
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Memory usage ratio (0.0 - 1.0)
 
     ServiceErrorEvent:
@@ -351,6 +362,7 @@ components:
           description: Complete dictionary of serviceName -> appId mappings
         defaultAppId:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Default app-id for unmapped services (usually "bannou")
         version:
           type: integer
@@ -359,9 +371,11 @@ components:
         sourceInstanceId:
           type: string
           format: uuid
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Orchestrator instance GUID that published this event
         totalServices:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Total number of services in the mappings dictionary
 
     SessionConnectedEvent:
@@ -452,6 +466,7 @@ components:
         accountId:
           type: string
           format: uuid
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Account ID that was disconnected
         reason:
           type: string

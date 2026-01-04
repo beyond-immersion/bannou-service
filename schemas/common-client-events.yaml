@@ -9,6 +9,9 @@ info:
     These events are different from service-to-service events:
     - Service events: RabbitMQ pub/sub between services via MassTransit
     - Client events: Services → RabbitMQ → Connect service → WebSocket → Client
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -407,13 +410,16 @@ components:
           description: The service that created this shortcut.
         targetService:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: The target service for routing.
         targetMethod:
           type: string
           default: "POST"
+          nullable: true  # NRT: Optional property MUST be nullable
           description: The target HTTP method for routing.
         targetEndpoint:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: The target endpoint for routing.
         createdAt:
           type: string

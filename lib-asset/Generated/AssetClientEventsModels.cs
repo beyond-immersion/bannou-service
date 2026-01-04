@@ -500,19 +500,23 @@ public partial class ProcessingOutput
     /// Type of output (e.g., "mipmap_level_1", "lod_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("outputType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string OutputType { get; set; } = default!;
 
     /// <summary>
     /// ID of the generated asset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Size of the generated asset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long Size { get; set; } = default!;
+    public long? Size { get; set; } = default!;
 
 }
 
@@ -527,12 +531,16 @@ public partial class ValidationWarning
     /// Warning code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Warning message
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Message { get; set; } = default!;
 
     /// <summary>

@@ -4,6 +4,9 @@ info:
   description: |
     Event models for subscriptions service RabbitMQ pub/sub via MassTransit.
     Publishes subscription state change events consumed by Auth and GameSession services.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Subscriptions service doesn't subscribe to external events
   x-event-publications:
@@ -65,6 +68,7 @@ components:
           description: Stub name of the service (e.g., "arcadia")
         displayName:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Display name of the service
         action:
           type: string
@@ -80,9 +84,11 @@ components:
           description: When the subscription expires (if applicable)
         previousValues:
           type: object
+          nullable: true  # NRT: Optional property MUST be nullable
           additionalProperties: false
           description: Previous values for updated fields (for update action)
         newValues:
           type: object
+          nullable: true  # NRT: Optional property MUST be nullable
           additionalProperties: false
           description: New values for updated fields (for update action)

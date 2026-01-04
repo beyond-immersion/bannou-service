@@ -472,7 +472,7 @@ public partial class CharacterRealmLeftEvent
     /// Reason for leaving (death, transfer, deletion)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    public string Reason { get; set; } = default!;
+    public string? Reason { get; set; } = default!;
 
 }
 

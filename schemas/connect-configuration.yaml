@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Connect Service Configuration
-  description: "Configuration schema for Connect service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  description: |
+    Configuration schema for Connect service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -56,17 +61,20 @@ x-service-configuration:
       default: 1
     JwtPublicKey:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (uses shared secret if not set)
       description: RSA public key for JWT validation (PEM format)
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for client event subscriptions (IMPLEMENTATION TENETS - no default, required)
+      description: RabbitMQ connection string for client event subscriptions (REQUIRED - service fails fast if missing)
       env: CONNECT_RABBITMQ_CONNECTION_STRING
     ServerSalt:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (generates random salt if not set)
       description: Server salt for client GUID generation. Must be shared across all Connect instances.
       env: CONNECT_SERVER_SALT
     ConnectUrl:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable
       description: WebSocket URL returned to clients for reconnection
       env: CONNECT_URL
 

@@ -8,6 +8,9 @@ info:
     StoreMigration, StoreHealth) were planned for debugging/auditing but never
     implemented. They would be expensive to publish for every operation.
     See docs/CLEANED_EVENTS.md for documentation of these planned events.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   # No subscriptions - State service doesn't subscribe to external events
   x-event-subscriptions: []

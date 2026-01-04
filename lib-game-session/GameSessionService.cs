@@ -598,7 +598,7 @@ public partial class GameSessionService : IGameSessionService
 
             // Publish game action event so other systems can react
             // TryPublishAsync handles buffering, retry, and error logging internally
-            await _messageBus.TryPublishAsync("game-session.action.performed", new
+            await _messageBus.TryPublishAsync("game-session.action.performed", new GameSessionActionPerformedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = actionTimestamp,

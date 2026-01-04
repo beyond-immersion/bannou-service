@@ -20,6 +20,8 @@ info:
     - Asset search by type, tags, realm
     - Processing pipeline for textures, models, audio, behaviors
 
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint
@@ -112,20 +114,20 @@ paths:
         \    },\n                \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\"\
         : \"integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n           \
-        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"description\": \"Pre-signed
-        URLs for each part of the multipart upload\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/PartUploadInfo\"\n                    }\n                }\n            }\n        },\n        \"PartUploadInfo\"\
-        : {\n            \"description\": \"Upload information for a single part in a multipart upload\",\n            \"\
-        type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
-        partNumber\",\n                \"uploadUrl\"\n            ],\n            \"properties\": {\n                \"partNumber\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Part number (1-based)\"\n\
-        \                },\n                \"uploadUrl\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uri\",\n                    \"description\": \"Pre-signed URL for uploading this part\"\n    \
-        \            },\n                \"minSize\": {\n                    \"type\": \"integer\",\n                    \"\
-        format\": \"int64\",\n                    \"description\": \"Minimum size for this part\"\n                },\n  \
-        \              \"maxSize\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"Maximum size for this part\"\n                }\n            }\n       \
-        \ }\n    }\n}"
+        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n\
+        \            }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a
+        single part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n   \
+        \         \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\"\
+        : \"Pre-signed URL for uploading this part\"\n                },\n                \"minSize\": {\n               \
+        \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        Minimum size for this part\"\n                },\n                \"maxSize\": {\n                    \"type\": \"\
+        integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Maximum size for this
+        part\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Request upload URL for a new asset\",\n    \"description\": \"Generate
         a pre-signed URL for uploading a new asset directly to storage.\\nFor large files (>50MB), returns multipart upload
         configuration.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -184,36 +186,40 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetMetadata\"\
         ,\n    \"$defs\": {\n        \"AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Complete asset metadata including system-generated fields\",\n          \
-        \  \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"Unique asset identifier\"\n                },\n                \"contentHash\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"SHA256 hash of file contents\"\n    \
-        \            },\n                \"filename\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Original filename\"\n                },\n                \"contentType\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n                },\n        \
-        \        \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
-        \                 \"description\": \"File size in bytes\"\n                },\n                \"assetType\": {\n\
-        \                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
-        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\"\
-        ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
-        tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
-        \n                },\n                \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\"\
-        ,\n                    \"description\": \"Current status of asset processing pipeline\"\n                },\n    \
-        \            \"isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the asset is in cold/archival storage\",\n                    \"default\": false\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the asset was created\"\n                },\n           \
-        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"Timestamp when the asset was last updated\"\n                }\n         \
-        \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
-        \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
-        \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
-        description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
-        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
-        \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
-        \n            ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
+        \  \"required\": [\n                \"assetId\",\n                \"contentHash\",\n                \"filename\",\n\
+        \                \"contentType\",\n                \"size\",\n                \"assetType\",\n                \"realm\"\
+        ,\n                \"tags\",\n                \"processingStatus\",\n                \"isArchived\",\n           \
+        \     \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n             \
+        \   \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique asset
+        identifier\"\n                },\n                \"contentHash\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"filename\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Original filename\"\n     \
+        \           },\n                \"contentType\": {\n                    \"type\": \"string\",\n                  \
+        \  \"description\": \"MIME content type\"\n                },\n                \"size\": {\n                    \"\
+        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"File size
+        in bytes\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type classification for the asset\"\n                },\n              \
+        \  \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm
+        the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
+        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
+        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
+        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
+        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
+        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
+        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
+        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
+        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
+        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
+        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
+        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark upload as complete, trigger processing\",\n    \"description\": \"\
         Called after the client has uploaded the file to the pre-signed URL.\\nTriggers the asset processing pipeline (texture
         conversion, model validation, etc.)\\nand emits completion events via WebSocket.\\n\",\n    \"tags\": [\n        \"\
@@ -257,51 +263,58 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetWithDownloadUrl\"\
         ,\n    \"$defs\": {\n        \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata combined with
         a pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
-        \          \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Unique asset identifier\"\n                },\n                \"versionId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Version identifier for this specific
-        asset version\"\n                },\n                \"downloadUrl\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uri\",\n                    \"description\": \"Pre-signed download URL\"\n  \
-        \              },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"date-time\",\n                    \"description\": \"When the download URL expires\"\n         \
-        \       },\n                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\"\
-        : \"int64\",\n                    \"description\": \"File size in bytes\"\n                },\n                \"\
-        contentHash\": {\n                    \"type\": \"string\",\n                    \"description\": \"SHA256 hash of
-        file contents\"\n                },\n                \"contentType\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"MIME content type\"\n                },\n                \"metadata\": {\n\
-        \                    \"$ref\": \"#/$defs/AssetMetadata\",\n                    \"description\": \"Complete asset metadata\"\
-        \n                }\n            }\n        },\n        \"AssetMetadata\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Complete asset metadata including system-generated
-        fields\",\n            \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique asset identifier\"\n                },\n                \"contentHash\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"SHA256 hash of file contents\"\
-        \n                },\n                \"filename\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Original filename\"\n                },\n                \"contentType\": {\n           \
-        \         \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n                },\n\
-        \                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
-        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\"\
-        ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
-        tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
-        \n                },\n                \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\"\
-        ,\n                    \"description\": \"Current status of asset processing pipeline\"\n                },\n    \
-        \            \"isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the asset is in cold/archival storage\",\n                    \"default\": false\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the asset was created\"\n                },\n           \
-        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"Timestamp when the asset was last updated\"\n                }\n         \
-        \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
-        \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
-        \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
-        description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
-        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
-        \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
-        \n            ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
+        \          \"required\": [\n                \"assetId\",\n                \"versionId\",\n                \"downloadUrl\"\
+        ,\n                \"expiresAt\",\n                \"size\",\n                \"contentHash\",\n                \"\
+        contentType\",\n                \"metadata\"\n            ],\n            \"properties\": {\n                \"assetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n\
+        \                },\n                \"versionId\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Version identifier for this specific asset version\"\n                },\n              \
+        \  \"downloadUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n     \
+        \               \"description\": \"Pre-signed download URL\"\n                },\n                \"expiresAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the download URL expires\"\n                },\n                \"size\": {\n              \
+        \      \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        File size in bytes\"\n                },\n                \"contentHash\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"contentType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n     \
+        \           },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/AssetMetadata\",\n      \
+        \              \"description\": \"Complete asset metadata\"\n                }\n            }\n        },\n      \
+        \  \"AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"description\": \"Complete asset metadata including system-generated fields\",\n            \"required\": [\n\
+        \                \"assetId\",\n                \"contentHash\",\n                \"filename\",\n                \"\
+        contentType\",\n                \"size\",\n                \"assetType\",\n                \"realm\",\n          \
+        \      \"tags\",\n                \"processingStatus\",\n                \"isArchived\",\n                \"createdAt\"\
+        ,\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n   \
+        \             },\n                \"contentHash\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"filename\": {\n    \
+        \                \"type\": \"string\",\n                    \"description\": \"Original filename\"\n             \
+        \   },\n                \"contentType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"MIME content type\"\n                },\n                \"size\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n     \
+        \           },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n         \
+        \           \"description\": \"Type classification for the asset\"\n                },\n                \"realm\"\
+        : {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm the asset
+        belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n        \
+        \            \"items\": {\n                        \"type\": \"string\"\n                    },\n                \
+        \    \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
+        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
+        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
+        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
+        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
+        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
+        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
+        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
+        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
+        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
+        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
+        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get asset metadata and download URL\",\n    \"description\": \"Retrieve
         asset metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for
         latest.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAsset\"\
@@ -346,25 +359,28 @@ paths:
         \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetVersionList\"\
         ,\n    \"$defs\": {\n        \"AssetVersionList\": {\n            \"description\": \"Paginated list of asset versions\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
-        \                \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Asset identifier\"\n                },\n                \"versions\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetVersion\"\n                  \
-        \  },\n                    \"description\": \"List of asset versions\"\n                },\n                \"total\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of versions available\"\
-        \n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"description\": \"Maximum number of versions returned per page\"\n                },\n                \"offset\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of versions skipped\"\
-        \n                }\n            }\n        },\n        \"AssetVersion\": {\n            \"description\": \"Metadata
-        for a specific version of an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"properties\": {\n                \"versionId\": {\n                    \"type\": \"string\",\n    \
-        \                \"description\": \"Unique version identifier\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Timestamp when this version was created\"\n                },\n                \"size\": {\n\
-        \                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
-        : \"File size in bytes for this version\"\n                },\n                \"isArchived\": {\n               \
-        \     \"type\": \"boolean\",\n                    \"description\": \"Whether this version is in cold storage\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"assetId\",\n                \"versions\",\n                \"total\",\n                \"limit\"\
+        ,\n                \"offset\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"description\": \"Asset identifier\"\n             \
+        \   },\n                \"versions\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/AssetVersion\"\n                    },\n                    \"description\"\
+        : \"List of asset versions\"\n                },\n                \"total\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Total number of versions available\"\n                },\n             \
+        \   \"limit\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum number
+        of versions returned per page\"\n                },\n                \"offset\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Number of versions skipped\"\n                }\n           \
+        \ }\n        },\n        \"AssetVersion\": {\n            \"description\": \"Metadata for a specific version of an
+        asset\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"versionId\",\n                \"createdAt\",\n                \"size\",\n                \"\
+        isArchived\"\n            ],\n            \"properties\": {\n                \"versionId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"description\": \"Unique version identifier\"\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when this version was created\"\n                },\n        \
+        \        \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"File size in bytes for this version\"\n                },\n                \"\
+        isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this version
+        is in cold storage\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all versions of an asset\",\n    \"description\": \"Retrieve version
         history for an asset with pagination.\\nIncludes version IDs, creation timestamps, and archive status.\\n\",\n   \
         \ \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAssetVersions\"\n\
@@ -424,25 +440,30 @@ paths:
         belongs to\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetSearchResult\"\
         ,\n    \"$defs\": {\n        \"AssetSearchResult\": {\n            \"description\": \"Paginated results from an asset
-        search query\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
-        : {\n                \"assets\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/AssetMetadata\"\n                    },\n                    \"description\"\
-        : \"List of matching assets\"\n                },\n                \"total\": {\n                    \"type\": \"\
-        integer\",\n                    \"description\": \"Total number of matching assets\"\n                },\n       \
-        \         \"limit\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum
-        number of results returned per page\"\n                },\n                \"offset\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of results skipped\"\n                }\n          \
-        \  }\n        },\n        \"AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Complete asset metadata including system-generated fields\",\n          \
-        \  \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"Unique asset identifier\"\n                },\n                \"contentHash\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"SHA256 hash of file contents\"\n    \
-        \            },\n                \"filename\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Original filename\"\n                },\n                \"contentType\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n                },\n        \
-        \        \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
-        \                 \"description\": \"File size in bytes\"\n                },\n                \"assetType\": {\n\
-        \                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
+        search query\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"assets\",\n                \"total\",\n                \"limit\",\n                \"offset\"\
+        \n            ],\n            \"properties\": {\n                \"assets\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetMetadata\"\n               \
+        \     },\n                    \"description\": \"List of matching assets\"\n                },\n                \"\
+        total\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of matching
+        assets\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Maximum number of results returned per page\"\n                },\n               \
+        \ \"offset\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of results
+        skipped\"\n                }\n            }\n        },\n        \"AssetMetadata\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Complete asset metadata including
+        system-generated fields\",\n            \"required\": [\n                \"assetId\",\n                \"contentHash\"\
+        ,\n                \"filename\",\n                \"contentType\",\n                \"size\",\n                \"\
+        assetType\",\n                \"realm\",\n                \"tags\",\n                \"processingStatus\",\n     \
+        \           \"isArchived\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Unique asset identifier\"\n                },\n                \"contentHash\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"SHA256 hash of file contents\"\n\
+        \                },\n                \"filename\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Original filename\"\n                },\n                \"contentType\": {\n            \
+        \        \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n                },\n \
+        \               \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
+        : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
         for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\"\
         ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
         tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
@@ -525,14 +546,15 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateBundleResponse\": {\n            \"description\": \"Response with bundle creation
         status and estimated size\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
-        \          \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n       \
-        \             \"description\": \"Unique bundle identifier\"\n                },\n                \"status\": {\n \
-        \                   \"type\": \"string\",\n                    \"enum\": [\n                        \"queued\",\n\
-        \                        \"processing\",\n                        \"ready\",\n                        \"failed\"\n\
-        \                    ],\n                    \"description\": \"Bundle creation status\"\n                },\n   \
-        \             \"estimatedSize\": {\n                    \"type\": \"integer\",\n                    \"format\": \"\
-        int64\",\n                    \"description\": \"Estimated bundle size in bytes\"\n                }\n           \
-        \ }\n        }\n    }\n}"
+        \          \"required\": [\n                \"bundleId\",\n                \"status\",\n                \"estimatedSize\"\
+        \n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Unique bundle identifier\"\n                },\n               \
+        \ \"status\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                    \
+        \    \"queued\",\n                        \"processing\",\n                        \"ready\",\n                  \
+        \      \"failed\"\n                    ],\n                    \"description\": \"Bundle creation status\"\n     \
+        \           },\n                \"estimatedSize\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Estimated bundle size in bytes\"\n          \
+        \      }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create asset bundle from multiple assets\",\n    \"description\": \"Create
         a .bannou bundle containing multiple assets.\\nFor large bundles, processing is delegated to the processing pool.\\
         nCompletion notification sent via WebSocket event.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\"\
@@ -578,22 +600,25 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BundleWithDownloadUrl\"\
         ,\n    \"$defs\": {\n        \"BundleWithDownloadUrl\": {\n            \"description\": \"Bundle metadata combined
         with a pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n     \
-        \               \"description\": \"Unique bundle identifier\"\n                },\n                \"version\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Bundle version string\"\n     \
-        \           },\n                \"downloadUrl\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"uri\",\n                    \"description\": \"Pre-signed URL for downloading the bundle\"\n    \
-        \            },\n                \"format\": {\n                    \"$ref\": \"#/$defs/BundleFormat\",\n        \
-        \            \"description\": \"Format of the downloadable bundle\"\n                },\n                \"expiresAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the download URL expires\"\n                },\n                \"size\": {\n        \
-        \            \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
-        : \"Bundle file size in bytes\"\n                },\n                \"assetCount\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of assets contained in the bundle\"\n              \
-        \  },\n                \"fromCache\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"True if ZIP format was served from conversion cache\"\n                }\n            }\n        },\n        \"\
-        BundleFormat\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"bannou\",\n     \
-        \           \"zip\"\n            ],\n            \"description\": \"Bundle file format\"\n        }\n    }\n}"
+        \            \"required\": [\n                \"bundleId\",\n                \"version\",\n                \"downloadUrl\"\
+        ,\n                \"format\",\n                \"expiresAt\",\n                \"size\",\n                \"assetCount\"\
+        ,\n                \"fromCache\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique bundle identifier\"\n  \
+        \              },\n                \"version\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Bundle version string\"\n                },\n                \"downloadUrl\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\": \"\
+        Pre-signed URL for downloading the bundle\"\n                },\n                \"format\": {\n                 \
+        \   \"$ref\": \"#/$defs/BundleFormat\",\n                    \"description\": \"Format of the downloadable bundle\"\
+        \n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the download URL expires\"\n      \
+        \          },\n                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"description\": \"Bundle file size in bytes\"\n                },\n           \
+        \     \"assetCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of assets contained in the bundle\"\n                },\n                \"fromCache\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"True if ZIP format was served from conversion cache\"\
+        \n                }\n            }\n        },\n        \"BundleFormat\": {\n            \"type\": \"string\",\n \
+        \           \"enum\": [\n                \"bannou\",\n                \"zip\"\n            ],\n            \"description\"\
+        : \"Bundle file format\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get bundle manifest and download URL\",\n    \"description\": \"Retrieve
         bundle metadata and generate a pre-signed download URL.\\nSupports both native .bannou format and ZIP conversion (cached).\\\
         n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getBundle\"\
@@ -641,12 +666,14 @@ paths:
         \                       }\n                    ],\n                    \"nullable\": true,\n                    \"\
         description\": \"Optional preview of bundle manifest for validation\"\n                }\n            }\n        },\n\
         \        \"BundleManifestPreview\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"description\": \"Preview of bundle manifest for validation\",\n            \"properties\": {\n    \
-        \            \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Bundle
-        identifier from the manifest\"\n                },\n                \"version\": {\n                    \"type\":
-        \"string\",\n                    \"description\": \"Bundle version from the manifest\"\n                },\n     \
-        \           \"assetCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Number of assets declared in the manifest\"\n                }\n            }\n        }\n    }\n}"
+        \            \"description\": \"Preview of bundle manifest for validation\",\n            \"required\": [\n      \
+        \          \"bundleId\",\n                \"version\",\n                \"assetCount\"\n            ],\n         \
+        \   \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"Bundle identifier from the manifest\"\n                },\n                \"version\":
+        {\n                    \"type\": \"string\",\n                    \"description\": \"Bundle version from the manifest\"\
+        \n                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Number of assets declared in the manifest\"\n                }\n            }\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UploadResponse\"\
         ,\n    \"$defs\": {\n        \"UploadResponse\": {\n            \"description\": \"Response containing pre-signed
         URL and configuration for uploading an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -669,20 +696,20 @@ paths:
         \    },\n                \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\"\
         : \"integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n           \
-        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"description\": \"Pre-signed
-        URLs for each part of the multipart upload\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/PartUploadInfo\"\n                    }\n                }\n            }\n        },\n        \"PartUploadInfo\"\
-        : {\n            \"description\": \"Upload information for a single part in a multipart upload\",\n            \"\
-        type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
-        partNumber\",\n                \"uploadUrl\"\n            ],\n            \"properties\": {\n                \"partNumber\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Part number (1-based)\"\n\
-        \                },\n                \"uploadUrl\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uri\",\n                    \"description\": \"Pre-signed URL for uploading this part\"\n    \
-        \            },\n                \"minSize\": {\n                    \"type\": \"integer\",\n                    \"\
-        format\": \"int64\",\n                    \"description\": \"Minimum size for this part\"\n                },\n  \
-        \              \"maxSize\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"Maximum size for this part\"\n                }\n            }\n       \
-        \ }\n    }\n}"
+        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n\
+        \            }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a
+        single part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n   \
+        \         \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\"\
+        : \"Pre-signed URL for uploading this part\"\n                },\n                \"minSize\": {\n               \
+        \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        Minimum size for this part\"\n                },\n                \"maxSize\": {\n                    \"type\": \"\
+        integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Maximum size for this
+        part\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Request upload URL for a pre-made bundle\",\n    \"description\": \"Upload
         a pre-built bundle (.bannou or .zip format).\\nAfter upload, the bundle undergoes validation before registration.\\\
         n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"requestBundleUpload\"\
@@ -851,6 +878,8 @@ components:
           description: Maximum number of parts
         uploadUrls:
           type: array
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
           description: Pre-signed URLs for each part of the multipart upload
           items:
             $ref: '#/components/schemas/PartUploadInfo'
@@ -904,6 +933,20 @@ components:
       type: object
       additionalProperties: false
       description: Complete asset metadata including system-generated fields
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assetId
+      - contentHash
+      - filename
+      - contentType
+      - size
+      - assetType
+      - realm
+      - tags
+      - processingStatus
+      - isArchived
+      - createdAt
+      - updatedAt
       properties:
         assetId:
           type: string
@@ -971,6 +1014,16 @@ components:
       description: Asset metadata combined with a pre-signed download URL
       type: object
       additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assetId
+      - versionId
+      - downloadUrl
+      - expiresAt
+      - size
+      - contentHash
+      - contentType
+      - metadata
       properties:
         assetId:
           type: string
@@ -1027,6 +1080,13 @@ components:
       description: Paginated list of asset versions
       type: object
       additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assetId
+      - versions
+      - total
+      - limit
+      - offset
       properties:
         assetId:
           type: string
@@ -1050,6 +1110,12 @@ components:
       description: Metadata for a specific version of an asset
       type: object
       additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - versionId
+      - createdAt
+      - size
+      - isArchived
       properties:
         versionId:
           type: string
@@ -1107,6 +1173,12 @@ components:
       description: Paginated results from an asset search query
       type: object
       additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assets
+      - total
+      - limit
+      - offset
       properties:
         assets:
           type: array
@@ -1167,6 +1239,11 @@ components:
       description: Response with bundle creation status and estimated size
       type: object
       additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - bundleId
+      - status
+      - estimatedSize
       properties:
         bundleId:
           type: string
@@ -1202,6 +1279,16 @@ components:
       description: Bundle metadata combined with a pre-signed download URL
       type: object
       additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - bundleId
+      - version
+      - downloadUrl
+      - format
+      - expiresAt
+      - size
+      - assetCount
+      - fromCache
       properties:
         bundleId:
           type: string
@@ -1263,6 +1350,11 @@ components:
       type: object
       additionalProperties: false
       description: Preview of bundle manifest for validation
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - bundleId
+      - version
+      - assetCount
       properties:
         bundleId:
           type: string

@@ -71,7 +71,7 @@ public partial class DocumentationQueriedEvent
     /// Number of documents returned in the query results
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resultCount")]
-    public int ResultCount { get; set; } = default!;
+    public int? ResultCount { get; set; } = default!;
 
     /// <summary>
     /// Document ID of the highest-ranked result, if any
@@ -136,7 +136,7 @@ public partial class DocumentationSearchedEvent
     /// Number of documents returned in the search results
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resultCount")]
-    public int ResultCount { get; set; } = default!;
+    public int? ResultCount { get; set; } = default!;
 
 }
 
@@ -191,7 +191,7 @@ public partial class DocumentationBindingCreatedEvent
     /// Git branch to sync documentation from
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("branch")]
-    public string Branch { get; set; } = default!;
+    public string? Branch { get; set; } = default!;
 
 }
 
@@ -238,7 +238,7 @@ public partial class DocumentationBindingRemovedEvent
     /// Number of documents deleted as a result of removing the binding
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsDeleted")]
-    public int DocumentsDeleted { get; set; } = default!;
+    public int? DocumentsDeleted { get; set; } = default!;
 
 }
 
@@ -366,25 +366,25 @@ public partial class DocumentationSyncCompletedEvent
     /// Number of new documents created during sync
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsCreated")]
-    public int DocumentsCreated { get; set; } = default!;
+    public int? DocumentsCreated { get; set; } = default!;
 
     /// <summary>
     /// Number of existing documents updated during sync
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsUpdated")]
-    public int DocumentsUpdated { get; set; } = default!;
+    public int? DocumentsUpdated { get; set; } = default!;
 
     /// <summary>
     /// Number of documents deleted during sync
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentsDeleted")]
-    public int DocumentsDeleted { get; set; } = default!;
+    public int? DocumentsDeleted { get; set; } = default!;
 
     /// <summary>
     /// Duration of the sync operation in milliseconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
-    public int DurationMs { get; set; } = default!;
+    public int? DurationMs { get; set; } = default!;
 
     /// <summary>
     /// Error message if the sync failed or partially failed
@@ -443,13 +443,13 @@ public partial class DocumentationArchiveCreatedEvent
     /// Number of documents included in the archive
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
-    public int DocumentCount { get; set; } = default!;
+    public int? DocumentCount { get; set; } = default!;
 
     /// <summary>
     /// Total size of the archive in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
-    public int SizeBytes { get; set; } = default!;
+    public int? SizeBytes { get; set; } = default!;
 
     /// <summary>
     /// Git commit hash the archive was created from, if applicable

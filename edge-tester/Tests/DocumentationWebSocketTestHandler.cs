@@ -1613,6 +1613,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                         {
                             @namespace = REPO_TEST_NAMESPACE,
                             repositoryUrl = FIXTURE_REPO_URL,
+                            owner = "edge-tester",  // Service-initiated binding
                             branch = "main",
                             filePatterns = new[] { "**/*.md" },
                             excludePatterns = new[] { "drafts/**" },

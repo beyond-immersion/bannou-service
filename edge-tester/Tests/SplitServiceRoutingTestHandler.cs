@@ -18,11 +18,38 @@ namespace BeyondImmersion.EdgeTester.Tests;
 ///
 /// IMPORTANT: These tests should run LAST as they modify the deployment topology.
 /// They require admin credentials and a working orchestrator service.
+///
+/// Test Dependencies:
+/// - All tests after "Deploy" depend on successful deployment
+/// - Cleanup always runs to reset state (even if tests fail)
 /// </summary>
 public class SplitServiceRoutingTestHandler : IServiceTestHandler
 {
     private const string SPLIT_PRESET = "split-auth-routing-test";
     private const int DEPLOYMENT_TIMEOUT_SECONDS = 180; // Increased from 120 - CI deployments can take 90+ seconds
+
+    // Test dependency tracking - tests check these before running
+    private static bool _deploymentSucceeded = false;
+    private static string? _deploymentError = null;
+
+    /// <summary>
+    /// Checks if deployment succeeded. If not, logs skip message and returns false.
+    /// </summary>
+    private static bool RequiresDeployment(string testName)
+    {
+        if (_deploymentSucceeded) return true;
+
+        Console.WriteLine($"   SKIPPED: {testName} requires successful deployment");
+        if (!string.IsNullOrEmpty(_deploymentError))
+        {
+            Console.WriteLine($"   Deployment failed with: {_deploymentError}");
+        }
+        else
+        {
+            Console.WriteLine("   Deployment has not been attempted or failed silently");
+        }
+        return false;
+    }
 
     public ServiceTest[] GetServiceTests()
     {
@@ -50,9 +77,14 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     /// <summary>
     /// Deploy the split-auth-routing-test topology via orchestrator.
     /// Uses the admin WebSocket connection to call /orchestrator/deploy.
+    /// Sets _deploymentSucceeded flag for dependent tests.
     /// </summary>
     private void TestDeploySplitTopology(string[] args)
     {
+        // Reset tracking state at start of test sequence
+        _deploymentSucceeded = false;
+        _deploymentError = null;
+
         Console.WriteLine("=== Deploy Split Topology Test ===");
         Console.WriteLine($"Deploying preset: {SPLIT_PRESET}");
         Console.WriteLine($"Timeout: {DEPLOYMENT_TIMEOUT_SECONDS} seconds");
@@ -60,6 +92,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var adminClient = Program.AdminClient;
         if (adminClient == null || !adminClient.IsConnected)
         {
+            _deploymentError = "Admin client not connected";
             Console.WriteLine("❌ Admin client not connected - cannot deploy split topology");
             Console.WriteLine("   Ensure admin credentials are configured and admin is authenticated.");
             return;
@@ -73,15 +106,18 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (result)
             {
+                _deploymentSucceeded = true;
                 Console.WriteLine("✅ Split topology deployment PASSED");
             }
             else
             {
+                _deploymentError = "Deployment returned failure";
                 Console.WriteLine("❌ Split topology deployment FAILED");
             }
         }
         catch (Exception ex)
         {
+            _deploymentError = ex.Message;
             Console.WriteLine($"❌ Split topology deployment FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
@@ -180,6 +216,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Connection Survived Deployment Test ===");
 
+        if (!RequiresDeployment("Connection survival test"))
+            return;
+
         var client = Program.Client;
         var adminClient = Program.AdminClient;
 
@@ -232,6 +271,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     private void TestServiceMappingsUpdated(string[] args)
     {
         Console.WriteLine("=== Service Mappings Updated Test ===");
+
+        if (!RequiresDeployment("Service mappings test"))
+            return;
 
         var adminClient = Program.AdminClient;
         if (adminClient == null || !adminClient.IsConnected)
@@ -371,6 +413,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Auth Routes to Split Node Test ===");
 
+        if (!RequiresDeployment("Auth routing test"))
+            return;
+
         try
         {
             var result = Task.Run(async () => await TestAuthRoutingAsync()).Result;
@@ -449,6 +494,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Accounts Routes to Split Node Test ===");
 
+        if (!RequiresDeployment("Accounts routing test"))
+            return;
+
         try
         {
             var result = Task.Run(async () => await TestAccountsRoutingAsync()).Result;
@@ -514,6 +562,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     private void TestConnectStillOnMainNode(string[] args)
     {
         Console.WriteLine("=== Connect Still on Main Node Test ===");
+
+        if (!RequiresDeployment("Connect routing test"))
+            return;
 
         var client = Program.Client;
         if (client == null || !client.IsConnected)

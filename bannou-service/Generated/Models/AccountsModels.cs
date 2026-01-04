@@ -431,7 +431,7 @@ public partial class AddAuthMethodRequest
     /// External user ID from the OAuth provider
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
-    public string ExternalId { get; set; } = default!;
+    public string? ExternalId { get; set; } = default!;
 
     /// <summary>
     /// Display name from the OAuth provider
@@ -529,7 +529,7 @@ public partial class AuthMethodInfo
     /// Unique identifier for the authentication method
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("methodId")]
-    public System.Guid MethodId { get; set; } = default!;
+    public System.Guid? MethodId { get; set; } = default!;
 
     /// <summary>
     /// Authentication provider type
@@ -590,7 +590,7 @@ public partial class AuthMethodResponse
     /// External user ID from the OAuth provider
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
-    public string ExternalId { get; set; } = default!;
+    public string? ExternalId { get; set; } = default!;
 
     /// <summary>
     /// Display name from the OAuth provider

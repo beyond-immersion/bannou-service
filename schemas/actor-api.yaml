@@ -7,6 +7,8 @@ info:
     and other long-running behavior loops. Actors output behavioral state (feelings,
     goals, memories) to characters - NOT physics data.
 
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+
 servers:
 - url: http://localhost:5012
 
@@ -63,35 +65,38 @@ paths:
         \           }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing actor template details\",\n            \"properties\"\
-        : {\n                \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique template identifier\"\n                },\n           \
-        \     \"category\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        identifier\"\n                },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Reference to behavior in lib-assets\"\n                },\n              \
-        \  \"configuration\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
-        true,\n                    \"nullable\": true,\n                    \"description\": \"Default configuration passed
-        to behavior execution\"\n                },\n                \"autoSpawn\": {\n                    \"description\"\
-        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"nullable\": true,\n             \
-        \       \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n       \
-        \             \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
-        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
-        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"Maximum actors of this category per pool node\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
-        template was last updated\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n      \
-        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
-        for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
-        If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
-        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
-        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
-        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
+        [\n                \"templateId\",\n                \"category\",\n                \"behaviorRef\",\n            \
+        \    \"tickIntervalMs\",\n                \"autoSaveIntervalSeconds\",\n                \"maxInstancesPerNode\",\n\
+        \                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n  \
+        \              \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique template identifier\"\n                },\n                \"category\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Category identifier\"\n   \
+        \             },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Reference to behavior in lib-assets\"\n                },\n                \"configuration\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Default configuration passed to behavior execution\"\
+        \n                },\n                \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration
+        for instantiate-on-access\",\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
+        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
+        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
+        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
+        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
+        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
+        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
+        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
+        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
+        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an actor template (category definition)\",\n    \"description\"\
         : \"\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CreateActorTemplate\"\n}"
   /actor/template/get:
@@ -124,35 +129,38 @@ paths:
         \ }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing actor template details\",\n            \"properties\"\
-        : {\n                \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique template identifier\"\n                },\n           \
-        \     \"category\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        identifier\"\n                },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Reference to behavior in lib-assets\"\n                },\n              \
-        \  \"configuration\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
-        true,\n                    \"nullable\": true,\n                    \"description\": \"Default configuration passed
-        to behavior execution\"\n                },\n                \"autoSpawn\": {\n                    \"description\"\
-        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"nullable\": true,\n             \
-        \       \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n       \
-        \             \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
-        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
-        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"Maximum actors of this category per pool node\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
-        template was last updated\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n      \
-        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
-        for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
-        If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
-        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
-        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
-        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
+        [\n                \"templateId\",\n                \"category\",\n                \"behaviorRef\",\n            \
+        \    \"tickIntervalMs\",\n                \"autoSaveIntervalSeconds\",\n                \"maxInstancesPerNode\",\n\
+        \                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n  \
+        \              \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique template identifier\"\n                },\n                \"category\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Category identifier\"\n   \
+        \             },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Reference to behavior in lib-assets\"\n                },\n                \"configuration\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Default configuration passed to behavior execution\"\
+        \n                },\n                \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration
+        for instantiate-on-access\",\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
+        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
+        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
+        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
+        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
+        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
+        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
+        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
+        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
+        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an actor template by ID or category\",\n    \"description\": \"\",\n\
         \    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetActorTemplate\"\n}"
   /actor/template/list:
@@ -185,19 +193,23 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListActorTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"ListActorTemplatesResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Response containing a list of actor templates\",\n\
-        \            \"properties\": {\n                \"templates\": {\n                    \"type\": \"array\",\n     \
-        \               \"description\": \"List of actor templates\",\n                    \"items\": {\n                \
-        \        \"$ref\": \"#/$defs/ActorTemplateResponse\"\n                    }\n                },\n                \"\
-        total\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of templates
-        available\"\n                }\n            }\n        },\n        \"ActorTemplateResponse\": {\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Response containing actor
-        template details\",\n            \"properties\": {\n                \"templateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique template identifier\"\
-        \n                },\n                \"category\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Category identifier\"\n                },\n                \"behaviorRef\": {\n         \
-        \           \"type\": \"string\",\n                    \"description\": \"Reference to behavior in lib-assets\"\n\
-        \                },\n                \"configuration\": {\n                    \"type\": \"object\",\n           \
-        \         \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        \            \"required\": [\n                \"templates\",\n                \"total\"\n            ],\n        \
+        \    \"properties\": {\n                \"templates\": {\n                    \"type\": \"array\",\n             \
+        \       \"description\": \"List of actor templates\",\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/ActorTemplateResponse\"\n                    }\n                },\n                \"total\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Total number of templates available\"\
+        \n                }\n            }\n        },\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Response containing actor template
+        details\",\n            \"required\": [\n                \"templateId\",\n                \"category\",\n        \
+        \        \"behaviorRef\",\n                \"tickIntervalMs\",\n                \"autoSaveIntervalSeconds\",\n   \
+        \             \"maxInstancesPerNode\",\n                \"createdAt\",\n                \"updatedAt\"\n          \
+        \  ],\n            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique template identifier\"\n\
+        \                },\n                \"category\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Category identifier\"\n                },\n                \"behaviorRef\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Reference to behavior in lib-assets\"\n \
+        \               },\n                \"configuration\": {\n                    \"type\": \"object\",\n            \
+        \        \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Default configuration passed to behavior execution\"\n                },\n                \"autoSpawn\": {\n \
         \                   \"description\": \"Auto-spawn configuration for instantiate-on-access\",\n                   \
         \ \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n           \
@@ -269,35 +281,38 @@ paths:
         \           }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing actor template details\",\n            \"properties\"\
-        : {\n                \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique template identifier\"\n                },\n           \
-        \     \"category\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        identifier\"\n                },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Reference to behavior in lib-assets\"\n                },\n              \
-        \  \"configuration\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
-        true,\n                    \"nullable\": true,\n                    \"description\": \"Default configuration passed
-        to behavior execution\"\n                },\n                \"autoSpawn\": {\n                    \"description\"\
-        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"nullable\": true,\n             \
-        \       \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n       \
-        \             \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
-        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
-        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"Maximum actors of this category per pool node\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
-        template was last updated\"\n                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n      \
-        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
-        for instantiate-on-access behavior\",\n            \"properties\": {\n                \"enabled\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"\
-        If true, accessing a non-existent actor creates it\"\n                },\n                \"idPattern\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"\
-        npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\": {\n                    \"type\":
-        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum auto-spawned
-        instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
+        [\n                \"templateId\",\n                \"category\",\n                \"behaviorRef\",\n            \
+        \    \"tickIntervalMs\",\n                \"autoSaveIntervalSeconds\",\n                \"maxInstancesPerNode\",\n\
+        \                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n  \
+        \              \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique template identifier\"\n                },\n                \"category\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Category identifier\"\n   \
+        \             },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Reference to behavior in lib-assets\"\n                },\n                \"configuration\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Default configuration passed to behavior execution\"\
+        \n                },\n                \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration
+        for instantiate-on-access\",\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
+        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
+        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
+        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
+        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
+        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
+        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
+        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
+        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
+        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update an actor template\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateActorTemplate\"\n}"
   /actor/template/delete:
@@ -332,9 +347,10 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Response confirming template deletion\",\n        \
-        \    \"properties\": {\n                \"deleted\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether the template was successfully deleted\"\n                },\n                \"\
-        stoppedActorCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        \    \"required\": [\n                \"deleted\",\n                \"stoppedActorCount\"\n            ],\n      \
+        \      \"properties\": {\n                \"deleted\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"description\": \"Whether the template was successfully deleted\"\n                },\n               \
+        \ \"stoppedActorCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
         of running actors that were stopped\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete an actor template\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"DeleteActorTemplate\"\n}"
@@ -375,7 +391,9 @@ paths:
         character ID for NPC brain actors\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ActorInstanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing actor instance details\",\n            \"properties\"\
+        : false,\n            \"description\": \"Response containing actor instance details\",\n            \"required\":
+        [\n                \"actorId\",\n                \"templateId\",\n                \"category\",\n                \"\
+        status\",\n                \"startedAt\",\n                \"loopIterations\"\n            ],\n            \"properties\"\
         : {\n                \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Unique actor identifier\"\n                },\n                \"templateId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template this actor
@@ -433,7 +451,9 @@ paths:
         \      }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ActorInstanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing actor instance details\",\n            \"properties\"\
+        : false,\n            \"description\": \"Response containing actor instance details\",\n            \"required\":
+        [\n                \"actorId\",\n                \"templateId\",\n                \"category\",\n                \"\
+        status\",\n                \"startedAt\",\n                \"loopIterations\"\n            ],\n            \"properties\"\
         : {\n                \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Unique actor identifier\"\n                },\n                \"templateId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template this actor
@@ -491,10 +511,11 @@ paths:
         \         }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StopActorResponse\"\
         ,\n    \"$defs\": {\n        \"StopActorResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response confirming actor stop operation\",\n            \"properties\":
-        {\n                \"stopped\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the actor was successfully stopped\"\n                },\n                \"finalStatus\": {\n       \
-        \             \"description\": \"Final status of the actor after stopping\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\
+        : false,\n            \"description\": \"Response confirming actor stop operation\",\n            \"required\": [\n\
+        \                \"stopped\",\n                \"finalStatus\"\n            ],\n            \"properties\": {\n  \
+        \              \"stopped\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
+        Whether the actor was successfully stopped\"\n                },\n                \"finalStatus\": {\n           \
+        \         \"description\": \"Final status of the actor after stopping\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\
         \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
         \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
         \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
@@ -541,13 +562,16 @@ paths:
         \      \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListActorsResponse\"\
         ,\n    \"$defs\": {\n        \"ListActorsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing a list of actor instances\",\n            \"properties\"\
-        : {\n                \"actors\": {\n                    \"type\": \"array\",\n                    \"description\"\
-        : \"List of actor instances\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActorInstanceResponse\"\
+        : false,\n            \"description\": \"Response containing a list of actor instances\",\n            \"required\"\
+        : [\n                \"actors\",\n                \"total\"\n            ],\n            \"properties\": {\n     \
+        \           \"actors\": {\n                    \"type\": \"array\",\n                    \"description\": \"List of
+        actor instances\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActorInstanceResponse\"\
         \n                    }\n                },\n                \"total\": {\n                    \"type\": \"integer\"\
         ,\n                    \"description\": \"Total number of actors matching the filter\"\n                }\n      \
         \      }\n        },\n        \"ActorInstanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing actor instance details\",\n            \"properties\"\
+        : false,\n            \"description\": \"Response containing actor instance details\",\n            \"required\":
+        [\n                \"actorId\",\n                \"templateId\",\n                \"category\",\n                \"\
+        status\",\n                \"startedAt\",\n                \"loopIterations\"\n            ],\n            \"properties\"\
         : {\n                \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Unique actor identifier\"\n                },\n                \"templateId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template this actor
@@ -621,11 +645,12 @@ paths:
         \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InjectPerceptionResponse\"\
         ,\n    \"$defs\": {\n        \"InjectPerceptionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response confirming perception injection\",\n            \"properties\":
-        {\n                \"queued\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the perception was successfully queued\"\n                },\n                \"queueDepth\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Current depth of the perception queue\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Response confirming perception injection\",\n            \"required\": [\n\
+        \                \"queued\",\n                \"queueDepth\"\n            ],\n            \"properties\": {\n    \
+        \            \"queued\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the perception was successfully queued\"\n                },\n                \"queueDepth\": {\n                \
+        \    \"type\": \"integer\",\n                    \"description\": \"Current depth of the perception queue\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Inject a perception event into an actor's queue (testing)\",\n    \"description\"\
         : \"Injects a perception event directly into the actor's perception queue\\nfor testing purposes. Useful for testing
         actor behavior without a\\nfull game server setup.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -693,6 +718,16 @@ components:
       type: object
       additionalProperties: false
       description: Response containing actor template details
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - templateId
+      - category
+      - behaviorRef
+      - tickIntervalMs
+      - autoSaveIntervalSeconds
+      - maxInstancesPerNode
+      - createdAt
+      - updatedAt
       properties:
         templateId:
           type: string
@@ -764,6 +799,10 @@ components:
       type: object
       additionalProperties: false
       description: Response containing a list of actor templates
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - templates
+      - total
       properties:
         templates:
           type: array
@@ -827,6 +866,10 @@ components:
       type: object
       additionalProperties: false
       description: Response confirming template deletion
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - deleted
+      - stoppedActorCount
       properties:
         deleted:
           type: boolean
@@ -882,6 +925,14 @@ components:
       type: object
       additionalProperties: false
       description: Response containing actor instance details
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actorId
+      - templateId
+      - category
+      - status
+      - startedAt
+      - loopIterations
       properties:
         actorId:
           type: string
@@ -954,6 +1005,10 @@ components:
       type: object
       additionalProperties: false
       description: Response confirming actor stop operation
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - stopped
+      - finalStatus
       properties:
         stopped:
           type: boolean
@@ -996,6 +1051,10 @@ components:
       type: object
       additionalProperties: false
       description: Response containing a list of actor instances
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actors
+      - total
       properties:
         actors:
           type: array
@@ -1057,6 +1116,10 @@ components:
       type: object
       additionalProperties: false
       description: Response confirming perception injection
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - queued
+      - queueDepth
       properties:
         queued:
           type: boolean

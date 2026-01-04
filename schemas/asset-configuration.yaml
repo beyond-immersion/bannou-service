@@ -4,6 +4,9 @@ info:
   description: |
     Configuration schema for Asset service.
     Properties are bound to environment variables with ASSET_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -29,11 +32,13 @@ x-service-configuration:
 
     StorageAccessKey:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage access key/username
       env: ASSET_STORAGE_ACCESS_KEY
 
     StorageSecretKey:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage secret key/password
       env: ASSET_STORAGE_SECRET_KEY
 
@@ -108,12 +113,14 @@ x-service-configuration:
 
     WorkerPool:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (only set in worker mode)
       description: Worker pool identifier when running in worker mode
       env: ASSET_WORKER_POOL
 
     # Processor Pool Configuration
     ProcessorNodeId:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (set by orchestrator when spawning worker)
       description: Unique processor node ID (set by orchestrator when spawning worker)
       env: ASSET_PROCESSOR_NODE_ID
 
@@ -144,6 +151,7 @@ x-service-configuration:
     # FFmpeg Configuration
     FfmpegPath:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (uses system PATH if not set)
       description: Path to FFmpeg binary (empty = use system PATH)
       env: ASSET_FFMPEG_PATH
 
@@ -188,5 +196,6 @@ x-service-configuration:
     # Webhook Configuration
     MinioWebhookSecret:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (webhooks disabled if not set)
       description: Secret for validating MinIO webhook requests
       env: ASSET_MINIO_WEBHOOK_SECRET

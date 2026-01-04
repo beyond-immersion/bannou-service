@@ -73,13 +73,13 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     /// In-game birth date of the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
-    public System.DateTimeOffset BirthDate { get; set; } = default!;
+    public System.DateTimeOffset? BirthDate { get; set; } = default!;
 
     /// <summary>
     /// Current status of the character (e.g., active, inactive, deceased)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string Status { get; set; } = default!;
+    public string? Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -93,7 +93,7 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     /// Timestamp when the character was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -148,13 +148,13 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     /// In-game birth date of the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
-    public System.DateTimeOffset BirthDate { get; set; } = default!;
+    public System.DateTimeOffset? BirthDate { get; set; } = default!;
 
     /// <summary>
     /// Current status of the character (e.g., active, inactive, deceased)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string Status { get; set; } = default!;
+    public string? Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -168,7 +168,7 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     /// Timestamp when the character was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -231,13 +231,13 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     /// In-game birth date of the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
-    public System.DateTimeOffset BirthDate { get; set; } = default!;
+    public System.DateTimeOffset? BirthDate { get; set; } = default!;
 
     /// <summary>
     /// Current status of the character (e.g., active, inactive, deceased)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string Status { get; set; } = default!;
+    public string? Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -251,7 +251,7 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     /// Timestamp when the character was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

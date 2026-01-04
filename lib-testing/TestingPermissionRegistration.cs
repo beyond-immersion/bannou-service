@@ -41,8 +41,7 @@ public static class TestingPermissionRegistration
             ServiceId = instanceId,
             ServiceName = ServiceId,
             Version = ServiceVersion,
-            // BANNOU_APP_ID is a legitimate IMPLEMENTATION TENETS exception - mesh bootstrap variable
-            AppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? AppConstants.DEFAULT_APP_NAME,
+            AppId = Program.Configuration.EffectiveAppId,
             Endpoints = GetEndpoints()
         };
     }

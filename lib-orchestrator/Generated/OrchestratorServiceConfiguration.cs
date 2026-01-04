@@ -75,15 +75,13 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Portainer API URL
     /// Environment variable: ORCHESTRATOR_PORTAINER_URL
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string PortainerUrl { get; set; } = string.Empty;
+    public string? PortainerUrl { get; set; }
 
     /// <summary>
     /// Portainer API key
     /// Environment variable: ORCHESTRATOR_PORTAINER_API_KEY
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string PortainerApiKey { get; set; } = string.Empty;
+    public string? PortainerApiKey { get; set; }
 
     /// <summary>
     /// Portainer endpoint ID
@@ -128,14 +126,20 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public string KubernetesNamespace { get; set; } = "default";
 
     /// <summary>
-    /// Redis connection string for orchestrator state (required, no default)
+    /// Path to kubeconfig file (null uses default ~/.kube/config)
+    /// Environment variable: ORCHESTRATOR_KUBECONFIG_PATH
+    /// </summary>
+    public string? KubeconfigPath { get; set; }
+
+    /// <summary>
+    /// Redis connection string for orchestrator state (REQUIRED - service fails fast if missing)
     /// Environment variable: ORCHESTRATOR_REDIS_CONNECTION_STRING
     /// </summary>
     [Required(AllowEmptyStrings = false)]
     public string RedisConnectionString { get; set; } = string.Empty;
 
     /// <summary>
-    /// RabbitMQ connection string for orchestrator messaging (required, no default)
+    /// RabbitMQ connection string for orchestrator messaging (REQUIRED - service fails fast if missing)
     /// Environment variable: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
     /// </summary>
     [Required(AllowEmptyStrings = false)]

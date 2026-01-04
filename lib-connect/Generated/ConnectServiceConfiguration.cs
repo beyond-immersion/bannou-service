@@ -117,11 +117,10 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// RSA public key for JWT validation (PEM format)
     /// Environment variable: JWTPUBLICKEY
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string JwtPublicKey { get; set; } = string.Empty;
+    public string? JwtPublicKey { get; set; }
 
     /// <summary>
-    /// RabbitMQ connection string for client event subscriptions (IMPLEMENTATION TENETS - no default, required)
+    /// RabbitMQ connection string for client event subscriptions (REQUIRED - service fails fast if missing)
     /// Environment variable: CONNECT_RABBITMQ_CONNECTION_STRING
     /// </summary>
     [Required(AllowEmptyStrings = false)]
@@ -131,15 +130,13 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Server salt for client GUID generation. Must be shared across all Connect instances.
     /// Environment variable: CONNECT_SERVER_SALT
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string ServerSalt { get; set; } = string.Empty;
+    public string? ServerSalt { get; set; }
 
     /// <summary>
     /// WebSocket URL returned to clients for reconnection
     /// Environment variable: CONNECT_URL
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string ConnectUrl { get; set; } = string.Empty;
+    public string? ConnectUrl { get; set; }
 
     /// <summary>
     /// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)

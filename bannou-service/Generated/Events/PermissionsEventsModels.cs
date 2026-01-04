@@ -61,7 +61,7 @@ public partial class PermissionCapabilityUpdate
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fullCapabilities")]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> FullCapabilities { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>>? FullCapabilities { get; set; } = default!;
 
     /// <summary>
     /// New capabilities added to the session (for delta updates).
@@ -69,7 +69,7 @@ public partial class PermissionCapabilityUpdate
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("addedCapabilities")]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> AddedCapabilities { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>>? AddedCapabilities { get; set; } = default!;
 
     /// <summary>
     /// Capabilities removed from the session (for delta updates).
@@ -77,26 +77,26 @@ public partial class PermissionCapabilityUpdate
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedCapabilities")]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> RemovedCapabilities { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>>? RemovedCapabilities { get; set; } = default!;
 
     /// <summary>
     /// When these capabilities were compiled
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
-    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+    public System.DateTimeOffset? GeneratedAt { get; set; } = default!;
 
     /// <summary>
     /// When these capabilities expire and need refresh
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
     /// <summary>
     /// Reason for the capability update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PermissionCapabilityUpdateReason Reason { get; set; } = default!;
+    public PermissionCapabilityUpdateReason? Reason { get; set; } = default!;
 
 }
 
@@ -143,7 +143,7 @@ public partial class SessionStateChangeEvent : BaseServiceEvent
     /// Additional context about the state change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
 }
 

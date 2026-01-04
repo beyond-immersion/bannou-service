@@ -5,6 +5,9 @@ info:
     Event models for Asset service RabbitMQ pub/sub via MassTransit.
     Contains asset-specific service-to-service events for upload tracking,
     processing coordination, and asset lifecycle management.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
     # MinIO webhook notifications (processed internally, not via pub/sub)
@@ -155,6 +158,7 @@ components:
           description: SHA256 hash of the file contents
         contentType:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
 
     # ==========================================================================
@@ -260,9 +264,11 @@ components:
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: File size in bytes
         contentType:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
         assetType:
           $ref: '#/components/schemas/AssetTypeEnum'
@@ -303,6 +309,7 @@ components:
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Bundle file size in bytes
         assetCount:
           type: integer
@@ -369,6 +376,9 @@ components:
       type: object
       additionalProperties: false
       description: Information about a generated derivative asset
+      required:  # NRT: Required event properties
+        - outputType
+        - key
       properties:
         outputType:
           type: string
@@ -379,4 +389,5 @@ components:
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Size of the output in bytes

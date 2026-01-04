@@ -71,25 +71,25 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
     /// Maximum number of players allowed in the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
-    public int MaxPlayers { get; set; } = default!;
+    public int? MaxPlayers { get; set; } = default!;
 
     /// <summary>
     /// Current number of players in the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
-    public int CurrentPlayers { get; set; } = default!;
+    public int? CurrentPlayers { get; set; } = default!;
 
     /// <summary>
     /// Whether the session is private (invite-only)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
-    public bool IsPrivate { get; set; } = default!;
+    public bool? IsPrivate { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the session owner
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public System.Guid Owner { get; set; } = default!;
+    public System.Guid? Owner { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the session was created
@@ -150,25 +150,25 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     /// Maximum number of players allowed in the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
-    public int MaxPlayers { get; set; } = default!;
+    public int? MaxPlayers { get; set; } = default!;
 
     /// <summary>
     /// Current number of players in the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
-    public int CurrentPlayers { get; set; } = default!;
+    public int? CurrentPlayers { get; set; } = default!;
 
     /// <summary>
     /// Whether the session is private (invite-only)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
-    public bool IsPrivate { get; set; } = default!;
+    public bool? IsPrivate { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the session owner
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public System.Guid Owner { get; set; } = default!;
+    public System.Guid? Owner { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the session was created
@@ -237,25 +237,25 @@ public partial class GameSessionDeletedEvent : BaseServiceEvent
     /// Maximum number of players allowed in the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
-    public int MaxPlayers { get; set; } = default!;
+    public int? MaxPlayers { get; set; } = default!;
 
     /// <summary>
     /// Current number of players in the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
-    public int CurrentPlayers { get; set; } = default!;
+    public int? CurrentPlayers { get; set; } = default!;
 
     /// <summary>
     /// Whether the session is private (invite-only)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
-    public bool IsPrivate { get; set; } = default!;
+    public bool? IsPrivate { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the session owner
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public System.Guid Owner { get; set; } = default!;
+    public System.Guid? Owner { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the session was created

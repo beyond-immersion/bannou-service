@@ -56,8 +56,8 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         }
         catch
         {
-            // Fall back to kubeconfig file
-            var kubeconfigPath = Environment.GetEnvironmentVariable("KUBECONFIG")
+            // Fall back to kubeconfig file - use configuration if set, otherwise default path
+            var kubeconfigPath = configuration.KubeconfigPath
                 ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".kube", "config");
 
             config = KubernetesClientConfiguration.BuildConfigFromConfigFile(kubeconfigPath);

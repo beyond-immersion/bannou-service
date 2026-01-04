@@ -125,13 +125,13 @@ public partial class ServiceEndpoint
     /// Human-readable endpoint description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// API category (auth, accounts, game, social, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
 }
 
@@ -167,7 +167,7 @@ public partial class PermissionRequirement
     /// Optional human-readable permission description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
 }
 
@@ -278,7 +278,7 @@ public partial class ServiceStatus
     /// Service API version
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public string Version { get; set; } = default!;
+    public string? Version { get; set; } = default!;
 
     /// <summary>
     /// Service-specific metadata from OnHeartbeat callback
@@ -299,25 +299,25 @@ public partial class InstanceCapacity
     /// Maximum connections this instance can handle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
-    public int MaxConnections { get; set; } = default!;
+    public int? MaxConnections { get; set; } = default!;
 
     /// <summary>
     /// Current active connections
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
-    public int CurrentConnections { get; set; } = default!;
+    public int? CurrentConnections { get; set; } = default!;
 
     /// <summary>
     /// CPU usage ratio (0.0 - 1.0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cpuUsage")]
-    public float CpuUsage { get; set; } = default!;
+    public float? CpuUsage { get; set; } = default!;
 
     /// <summary>
     /// Memory usage ratio (0.0 - 1.0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memoryUsage")]
-    public float MemoryUsage { get; set; } = default!;
+    public float? MemoryUsage { get; set; } = default!;
 
 }
 
@@ -468,7 +468,7 @@ public partial class FullServiceMappingsEvent : BaseServiceEvent
     /// Default app-id for unmapped services (usually "bannou")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
-    public string DefaultAppId { get; set; } = default!;
+    public string? DefaultAppId { get; set; } = default!;
 
     /// <summary>
     /// Monotonically increasing version for ordering. Consumers reject events with version &lt;= current.
@@ -480,13 +480,13 @@ public partial class FullServiceMappingsEvent : BaseServiceEvent
     /// Orchestrator instance GUID that published this event
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceInstanceId")]
-    public System.Guid SourceInstanceId { get; set; } = default!;
+    public System.Guid? SourceInstanceId { get; set; } = default!;
 
     /// <summary>
     /// Total number of services in the mappings dictionary
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
-    public int TotalServices { get; set; } = default!;
+    public int? TotalServices { get; set; } = default!;
 
 }
 
@@ -592,7 +592,7 @@ public partial class SessionDisconnectedEvent : BaseServiceEvent
     /// Account ID that was disconnected
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid? AccountId { get; set; } = default!;
 
     /// <summary>
     /// Disconnect reason (logout, timeout, error, server_shutdown)

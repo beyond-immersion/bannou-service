@@ -640,6 +640,11 @@ public partial class OrchestratorService : IOrchestratorService
                 // Layer 1: Forward orchestrator's own environment as foundation
                 // This ensures deployed containers inherit all service configuration
                 // (AUTH_*, STATE_*, CONNECT_*, etc.) without needing to duplicate in presets
+                //
+                // IMPLEMENTATION TENETS exception: Direct Environment.GetEnvironmentVariables() access
+                // is required here because we're forwarding UNKNOWN configuration to deployed containers.
+                // This is the orchestrator's core responsibility - not reading config for itself.
+                // Uses strict whitelist (IsAllowedEnvironmentVariable) and excludes per-container values.
                 foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
                 {
                     var key = entry.Key?.ToString();

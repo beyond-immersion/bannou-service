@@ -69,15 +69,13 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Storage access key/username
     /// Environment variable: ASSET_STORAGE_ACCESS_KEY
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string StorageAccessKey { get; set; } = string.Empty;
+    public string? StorageAccessKey { get; set; }
 
     /// <summary>
     /// Storage secret key/password
     /// Environment variable: ASSET_STORAGE_SECRET_KEY
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string StorageSecretKey { get; set; } = string.Empty;
+    public string? StorageSecretKey { get; set; }
 
     /// <summary>
     /// Storage region (for S3/R2)
@@ -149,15 +147,13 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Worker pool identifier when running in worker mode
     /// Environment variable: ASSET_WORKER_POOL
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string WorkerPool { get; set; } = string.Empty;
+    public string? WorkerPool { get; set; }
 
     /// <summary>
     /// Unique processor node ID (set by orchestrator when spawning worker)
     /// Environment variable: ASSET_PROCESSOR_NODE_ID
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string ProcessorNodeId { get; set; } = string.Empty;
+    public string? ProcessorNodeId { get; set; }
 
     /// <summary>
     /// Seconds of zero-load before auto-termination (0 to disable)
@@ -187,8 +183,7 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Path to FFmpeg binary (empty = use system PATH)
     /// Environment variable: ASSET_FFMPEG_PATH
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string FfmpegPath { get; set; } = string.Empty;
+    public string? FfmpegPath { get; set; }
 
     /// <summary>
     /// Working directory for FFmpeg temporary files
@@ -230,7 +225,6 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Secret for validating MinIO webhook requests
     /// Environment variable: ASSET_MINIO_WEBHOOK_SECRET
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string MinioWebhookSecret { get; set; } = string.Empty;
+    public string? MinioWebhookSecret { get; set; }
 
 }

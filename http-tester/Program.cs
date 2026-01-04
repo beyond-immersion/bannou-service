@@ -304,7 +304,7 @@ public class Program
         var timeout = TimeSpan.FromSeconds(60);
         var checkInterval = TimeSpan.FromSeconds(1);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var serviceUrl = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://bannou:80";
+        var serviceUrl = Program.Configuration.EffectiveHttpEndpoint;
         var healthUrl = $"{serviceUrl}/health";
 
         Console.WriteLine($"Waiting for bannou service to be healthy (timeout: {timeout.TotalSeconds}s)...");

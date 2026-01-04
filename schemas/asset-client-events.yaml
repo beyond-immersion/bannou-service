@@ -11,6 +11,9 @@ info:
 
     Event delivery: Published to RabbitMQ channel `CONNECT_{sessionId}`, forwarded
     to client's WebSocket connection with Event flag (0x10).
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -376,6 +379,9 @@ components:
       type: object
       additionalProperties: false
       description: Information about a generated derivative asset
+      required:  # NRT: Required event properties
+        - outputType
+        - assetId
       properties:
         outputType:
           type: string
@@ -386,12 +392,16 @@ components:
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Size of the generated asset
 
     ValidationWarning:
       type: object
       additionalProperties: false
       description: Non-fatal warning from bundle validation
+      required:  # NRT: Required event properties
+        - code
+        - message
       properties:
         code:
           type: string

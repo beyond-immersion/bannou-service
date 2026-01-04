@@ -46,9 +46,11 @@ components:
         bytecodeSize: &id006
           type: integer
           format: int32
+          nullable: true
           description: "Size of the compiled bytecode in bytes"
         schemaVersion: &id007
           type: string
+          nullable: true
           description: "Version of the schema used for this behavior"
         createdAt: &id008
           type: string
@@ -57,6 +59,7 @@ components:
         updatedAt: &id009
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the behavior was last updated"
     BehaviorUpdatedEvent:
       allOf:

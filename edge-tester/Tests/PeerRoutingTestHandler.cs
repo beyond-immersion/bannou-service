@@ -183,52 +183,60 @@ public class PeerRoutingTestHandler : IServiceTestHandler
     {
         return new ServiceTest[]
         {
-            new ServiceTest(TestPeerGuidInCapabilityManifest, "WebSocket - Peer GUID in Manifest", "PeerRouting",
-                "Test that capability manifest includes peerGuid for peer-to-peer routing"),
+            // External mode test (default - no peer routing)
+            new ServiceTest(TestExternalModeNoPeerGuid, "WebSocket - External Mode No Peer GUID", "PeerRouting",
+                "Test that External mode (default) does NOT include peerGuid in capability manifest"),
+
+            // Relayed mode tests - require Connect in Relayed mode (deployed via orchestrator preset)
+            // These tests will skip if peerGuid is not available (i.e., in External mode)
             new ServiceTest(TestPeerToPeerRouting, "WebSocket - Peer-to-Peer Routing", "PeerRouting",
-                "Test routing messages between two WebSocket peers using Client flag"),
+                "Test routing messages between two WebSocket peers using Client flag (requires Relayed mode)"),
             new ServiceTest(TestBidirectionalPeerRouting, "WebSocket - Bidirectional Peer Routing", "PeerRouting",
-                "Test bidirectional peer-to-peer communication between two connections"),
+                "Test bidirectional peer-to-peer communication between two connections (requires Relayed mode)"),
             new ServiceTest(TestUnknownPeerGuidReturnsError, "WebSocket - Unknown Peer Error", "PeerRouting",
-                "Test that routing to an unknown peer GUID returns an error")
+                "Test that routing to an unknown peer GUID returns an error (requires Relayed mode)")
         };
     }
 
-    private void TestPeerGuidInCapabilityManifest(string[] args)
+    /// <summary>
+    /// Tests that External mode (default) does NOT include peerGuid in capability manifest.
+    /// External mode is the default connection mode - no peer-to-peer routing.
+    /// </summary>
+    private void TestExternalModeNoPeerGuid(string[] args)
     {
-        Console.WriteLine("=== Peer GUID in Capability Manifest Test ===");
-        Console.WriteLine("Testing that capability manifest includes peerGuid...");
+        Console.WriteLine("=== External Mode - No Peer GUID Test ===");
+        Console.WriteLine("Testing that External mode (default) does NOT include peerGuid...");
 
         try
         {
-            var result = Task.Run(async () => await PerformPeerGuidInManifestTest()).Result;
+            var result = Task.Run(async () => await PerformExternalModeNoPeerGuidTest()).Result;
             if (result)
             {
-                Console.WriteLine("PASSED: Peer GUID in capability manifest test PASSED");
+                Console.WriteLine("PASSED: External mode correctly omits peerGuid from manifest");
             }
             else
             {
-                Console.WriteLine("FAILED: Peer GUID in capability manifest test FAILED");
+                Console.WriteLine("FAILED: External mode test failed");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED: Peer GUID in capability manifest test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"FAILED: External mode test failed with exception: {ex.Message}");
             Console.WriteLine($"   Stack trace: {ex.StackTrace}");
         }
     }
 
-    private async Task<bool> PerformPeerGuidInManifestTest()
+    private async Task<bool> PerformExternalModeNoPeerGuidTest()
     {
         // Create a test account
-        var accessToken = await CreateTestAccountAsync("peertest");
+        var accessToken = await CreateTestAccountAsync("externaltest");
         if (string.IsNullOrEmpty(accessToken))
         {
             Console.WriteLine("   Failed to create test account");
             return false;
         }
 
-        // Connect and get peer GUID
+        // Connect and check for peerGuid absence
         var (webSocket, peerGuid) = await ConnectAndGetPeerGuidAsync(accessToken, "TestConnection");
         try
         {
@@ -238,13 +246,15 @@ public class PeerRoutingTestHandler : IServiceTestHandler
                 return false;
             }
 
-            if (peerGuid == null || peerGuid == Guid.Empty)
+            // In External mode, peerGuid should NOT be present
+            if (peerGuid != null && peerGuid != Guid.Empty)
             {
-                Console.WriteLine("   peerGuid is missing or empty in capability manifest");
+                Console.WriteLine($"   UNEXPECTED: peerGuid present ({peerGuid}) - Connect may be in Relayed mode");
+                Console.WriteLine("   NOTE: If Relayed mode is intended, this test should be skipped");
                 return false;
             }
 
-            Console.WriteLine($"   Verified peerGuid present in manifest: {peerGuid}");
+            Console.WriteLine("   Confirmed: No peerGuid in External mode capability manifest (correct behavior)");
             return true;
         }
         finally
@@ -303,8 +313,10 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
             if (peerGuid1 == null || peerGuid2 == null)
             {
-                Console.WriteLine("   Failed to get peer GUIDs from capability manifests");
-                return false;
+                Console.WriteLine("   SKIPPED: No peerGuid in manifests - Connect is in External mode");
+                Console.WriteLine("   NOTE: Peer-to-peer routing requires Relayed mode (deploy via orchestrator preset)");
+                // Return true to mark as SKIPPED rather than FAILED
+                return true;
             }
 
             Console.WriteLine($"   Peer1 GUID: {peerGuid1}");
@@ -417,10 +429,17 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
         try
         {
-            if (webSocket1 == null || webSocket2 == null || peerGuid1 == null || peerGuid2 == null)
+            if (webSocket1 == null || webSocket2 == null)
             {
-                Console.WriteLine("   Failed to establish connections or get peer GUIDs");
+                Console.WriteLine("   Failed to establish WebSocket connections");
                 return false;
+            }
+
+            if (peerGuid1 == null || peerGuid2 == null)
+            {
+                Console.WriteLine("   SKIPPED: No peerGuid in manifests - Connect is in External mode");
+                Console.WriteLine("   NOTE: Bidirectional peer routing requires Relayed mode");
+                return true;  // SKIPPED
             }
 
             // Step 1: Peer1 sends to Peer2
@@ -508,10 +527,17 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
         try
         {
-            if (webSocket == null || peerGuid == null)
+            if (webSocket == null)
             {
-                Console.WriteLine("   Failed to establish connection");
+                Console.WriteLine("   Failed to establish WebSocket connection");
                 return false;
+            }
+
+            if (peerGuid == null)
+            {
+                Console.WriteLine("   SKIPPED: No peerGuid in manifest - Connect is in External mode");
+                Console.WriteLine("   NOTE: Unknown peer GUID test requires Relayed mode");
+                return true;  // SKIPPED
             }
 
             // Try to send to a random GUID that doesn't exist

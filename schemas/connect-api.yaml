@@ -30,6 +30,8 @@ info:
     - **Bi-directional RPC**: Services can make RPC calls back to connected clients
     - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
 
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -102,15 +104,16 @@ paths:
         \               \"description\": \"Whether the proxy request was successful\"\n                },\n              \
         \  \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"description\": \"HTTP status
         code from the target service\"\n                },\n                \"response\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"JSON response from the target service (as string)\"\n      \
-        \          },\n                \"headers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"array\",\n                        \"items\": {\n                        \
-        \    \"type\": \"string\"\n                        }\n                    },\n                    \"description\"\
-        : \"Response headers from the target service\"\n                },\n                \"error\": {\n               \
-        \     \"type\": \"string\",\n                    \"description\": \"Error message if the request failed\"\n      \
-        \          },\n                \"executionTime\": {\n                    \"type\": \"integer\",\n                \
-        \    \"description\": \"Request execution time in milliseconds\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"JSON response from
+        the target service (as string)\"\n                },\n                \"headers\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"array\",\n   \
+        \                     \"items\": {\n                            \"type\": \"string\"\n                        }\n\
+        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Response
+        headers from the target service\"\n                },\n                \"error\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error message if the
+        request failed\"\n                },\n                \"executionTime\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Request execution time in milliseconds\"\n                }\n          \
+        \  }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Internal API proxy for stateless requests\",\n    \"description\": \"Stateless
         HTTP proxy for internal requests that don't require persistent sessions.\\nApplies permission validation and rate
         limiting based on agent role and context.\\nPerfect for AI agents making one-off API calls or bulk operations.\\n\"\
@@ -753,6 +756,8 @@ components:
           description: HTTP status code from the target service
         response:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: JSON response from the target service (as string)
         headers:
           type: object
@@ -760,9 +765,13 @@ components:
             type: array
             items:
               type: string
+          # NRT: Optional object MUST be nullable (Rule 2)
+          nullable: true
           description: Response headers from the target service
         error:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Error message if the request failed
         executionTime:
           type: integer
@@ -1005,6 +1014,8 @@ components:
           default: 30
         tokenPublicKey:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Base64-encoded RSA public key for JWT validation
 
     # RabbitMQ Event Models for Real-time Communication
@@ -1025,16 +1036,22 @@ components:
           type: array
           items:
             type: string
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
           description: New capabilities added to the session
         removedCapabilities:
           type: array
           items:
             type: string
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
           description: Capabilities removed from the session
         updatedServices:
           type: array
           items:
             type: string
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
           description: Services that had permission changes
         version:
           type: integer
@@ -1042,6 +1059,8 @@ components:
         expiresAt:
           type: string
           format: date-time
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: When these capabilities expire and need refresh
 
     AuthEvent:
@@ -1067,10 +1086,14 @@ components:
           description: When the auth event occurred
         userId:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: User ID associated with the session (optional for some events)
         metadata:
           type: object
           additionalProperties: true
+          # NRT: Optional object MUST be nullable (Rule 2)
+          nullable: true
           description: Additional event metadata (device info, location, etc.)
 
     AuthEventType:
@@ -1102,6 +1125,8 @@ components:
           description: Target client session ID
         serviceName:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Name of the service sending the message
         serviceGuid:
           type: string
@@ -1126,6 +1151,8 @@ components:
         timestamp:
           type: string
           format: date-time
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: When the message was sent
 
     ClientRPCEvent:
@@ -1146,6 +1173,8 @@ components:
           description: Target client session ID
         serviceName:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Name of the service making the RPC call
         serviceGuid:
           type: string
@@ -1177,6 +1206,8 @@ components:
         timestamp:
           type: string
           format: date-time
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: When the RPC was initiated
 
     ClientRPCResponseEvent:
@@ -1196,10 +1227,14 @@ components:
           description: Client session ID that sent the response
         serviceName:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Name of the service that initiated the RPC
         serviceGuid:
           type: string
           format: uuid
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Service GUID from the original RPC
         messageId:
           type: integer
@@ -1216,6 +1251,8 @@ components:
         timestamp:
           type: string
           format: date-time
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: When the response was received
 
     # NOTE: MessageFlags already defined above in Binary Protocol Schemas section
@@ -1248,10 +1285,14 @@ components:
           description: Reason for triggering permission recompilation
         serviceId:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Service ID that triggered the recompilation (if applicable)
         metadata:
           type: object
           additionalProperties: true
+          # NRT: Optional object MUST be nullable (Rule 2)
+          nullable: true
           description: Additional context for the recompilation
 
   securitySchemes:

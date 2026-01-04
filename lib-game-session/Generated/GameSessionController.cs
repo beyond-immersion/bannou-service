@@ -419,6 +419,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "gameSettings": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Game-specific configuration settings"
                 }
             }
@@ -445,6 +446,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 },
                 "displayName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Display name shown to other players"
                 },
                 "role": {
@@ -666,6 +668,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "gameSettings": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Game-specific configuration settings"
                 }
             }
@@ -692,6 +695,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 },
                 "displayName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Display name shown to other players"
                 },
                 "role": {
@@ -881,6 +885,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "gameSettings": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Game-specific configuration settings"
                 }
             }
@@ -907,6 +912,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 },
                 "displayName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Display name shown to other players"
                 },
                 "role": {
@@ -1060,6 +1066,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "ICE candidates for NAT traversal"
                 }
             }
@@ -1153,6 +1160,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                         "g711",
                         "g722"
                     ],
+                    "nullable": true,
                     "description": "Audio codec to use"
                 },
                 "stunServers": {
@@ -1160,6 +1168,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "STUN server URIs for NAT traversal (clients should configure these early)"
                 }
             }
@@ -1346,6 +1355,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "reason": {
                     "type": "string",
                     "maxLength": 200,
+                    "nullable": true,
                     "description": "Reason for kicking the player"
                 }
             }
@@ -1462,6 +1472,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "targetPlayerId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "For whisper messages"
                 }
             }
@@ -1574,11 +1585,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "actionData": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Action-specific data"
                 },
                 "targetId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Target of the action (if applicable)"
                 }
             }
@@ -1613,11 +1626,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "result": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Action result data"
                 },
                 "newGameState": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Updated game state (if applicable)"
                 }
             }

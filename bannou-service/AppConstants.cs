@@ -45,18 +45,16 @@ public static class AppConstants
     public const int DEFAULT_BANNOU_HTTP_PORT = 3500;
 
     // ==========================================================================
-    // Environment Variable Names (for documented IMPLEMENTATION TENETS exceptions)
+    // Environment Variable Names
     // ==========================================================================
 
     /// <summary>
-    /// Environment variable for app ID (legacy env var name). Used by PermissionRegistration and
-    /// ServiceHeartbeatManager. This is an IMPLEMENTATION TENETS exception - needed before DI is available.
+    /// Environment variable name for app ID.
     /// </summary>
     public const string ENV_BANNOU_APP_ID = "BANNOU_APP_ID";
 
     /// <summary>
-    /// Environment variable for mesh HTTP endpoint. This is an IMPLEMENTATION TENETS exception -
-    /// needed to bootstrap mesh client before configuration system initializes.
+    /// Environment variable name for HTTP endpoint.
     /// </summary>
     public const string ENV_BANNOU_HTTP_ENDPOINT = "BANNOU_HTTP_ENDPOINT";
 

@@ -494,19 +494,19 @@ public partial class SessionShortcutMetadata
     /// The target service for routing.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetService")]
-    public string TargetService { get; set; } = default!;
+    public string? TargetService { get; set; } = default!;
 
     /// <summary>
     /// The target HTTP method for routing.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetMethod")]
-    public string TargetMethod { get; set; } = "POST";
+    public string? TargetMethod { get; set; } = "POST";
 
     /// <summary>
     /// The target endpoint for routing.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetEndpoint")]
-    public string TargetEndpoint { get; set; } = default!;
+    public string? TargetEndpoint { get; set; } = default!;
 
     /// <summary>
     /// When this shortcut was created.

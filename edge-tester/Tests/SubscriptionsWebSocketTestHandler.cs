@@ -25,8 +25,8 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                 "Test subscription creation and retrieval via WebSocket binary protocol"),
             new ServiceTest(TestSubscriptionLifecycleViaWebSocket, "Subscriptions - Full Lifecycle (WebSocket)", "WebSocket",
                 "Test complete subscription lifecycle: create -> update -> cancel -> renew"),
-            new ServiceTest(TestGetCurrentSubscriptionsViaWebSocket, "Subscriptions - Get Current (WebSocket)", "WebSocket",
-                "Test getting current active subscriptions with authorization strings"),
+            new ServiceTest(TestGetCurrentSubscriptionsViaWebSocket, "Subscriptions - Account List (WebSocket)", "WebSocket",
+                "Test getting account subscriptions returns expected stub names"),
 
             // Error handling tests
             new ServiceTest(TestGetNonExistentSubscriptionViaWebSocket, "Subscriptions - 404 Not Found (WebSocket)", "WebSocket",
@@ -421,8 +421,8 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
 
     private void TestGetCurrentSubscriptionsViaWebSocket(string[] args)
     {
-        Console.WriteLine("=== Subscriptions Get Current Test (WebSocket) ===");
-        Console.WriteLine("Testing /subscriptions/account/current returns authorization strings...");
+        Console.WriteLine("=== Subscriptions Account List Test (WebSocket) ===");
+        Console.WriteLine("Testing /subscriptions/account/list returns subscriptions for account...");
 
         try
         {
@@ -469,37 +469,38 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                         return false;
                     }
 
-                    // Get current subscriptions with authorization strings
-                    Console.WriteLine("   Invoking /subscriptions/account/current...");
-                    var currentResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                    // Get subscriptions for the account
+                    Console.WriteLine("   Invoking /subscriptions/account/list...");
+                    var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/account/current",
+                        "/subscriptions/account/list",
                         new { accountId = accountId },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
-                    var currentJson = JsonNode.Parse(currentResponse.GetRawText())?.AsObject();
-                    var authorizations = currentJson?["authorizations"]?.AsArray();
+                    var listJson = JsonNode.Parse(listResponse.GetRawText())?.AsObject();
+                    var subscriptions = listJson?["subscriptions"]?.AsArray();
 
-                    if (authorizations == null)
+                    if (subscriptions == null)
                     {
-                        Console.WriteLine("   authorizations array is null");
+                        Console.WriteLine("   subscriptions array is null");
                         return false;
                     }
 
-                    Console.WriteLine($"   Received {authorizations.Count} authorization(s)");
+                    Console.WriteLine($"   Received {subscriptions.Count} subscription(s)");
 
-                    // Should have at least one authorization matching our service
-                    var hasExpectedAuth = authorizations.Any(a =>
-                        a?.GetValue<string>()?.Contains(stubName) ?? false);
+                    // Should have at least one subscription matching our service stub name
+                    var hasExpectedSub = subscriptions.Any(s =>
+                        s?["stubName"]?.GetValue<string>() == stubName);
 
-                    if (!hasExpectedAuth)
+                    if (!hasExpectedSub)
                     {
-                        Console.WriteLine($"   Expected authorization for service '{stubName}' not found");
-                        Console.WriteLine($"   Authorizations: {string.Join(", ", authorizations.Select(a => a?.GetValue<string>() ?? "null"))}");
+                        var stubNames = subscriptions.Select(s => s?["stubName"]?.GetValue<string>() ?? "null");
+                        Console.WriteLine($"   Expected subscription for service '{stubName}' not found");
+                        Console.WriteLine($"   Subscriptions: {string.Join(", ", stubNames)}");
                         return false;
                     }
 
-                    Console.WriteLine($"   Found expected authorization for service: {stubName}");
+                    Console.WriteLine($"   Found expected subscription for service: {stubName}");
                     return true;
                 }
                 catch (Exception ex)
@@ -510,13 +511,13 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
             }).Result;
 
             if (result)
-                Console.WriteLine("   Subscriptions get current test PASSED");
+                Console.WriteLine("   Subscriptions account list test PASSED");
             else
-                Console.WriteLine("   Subscriptions get current test FAILED");
+                Console.WriteLine("   Subscriptions account list test FAILED");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Subscriptions get current test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Subscriptions account list test FAILED with exception: {ex.Message}");
         }
     }
 

@@ -4,6 +4,9 @@ info:
   description: |
     Event models for permissions service RabbitMQ pub/sub via MassTransit.
     Handles session state management and capability compilation.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
     # Service registration - services publish their API permissions on startup
@@ -79,6 +82,7 @@ components:
           description: Type of update - full capabilities or delta changes
         fullCapabilities:
           type: object
+          nullable: true  # NRT: Optional property MUST be nullable
           additionalProperties:
             type: array
             items:
@@ -89,6 +93,7 @@ components:
             Example: {"accounts": ["GET:/accounts", "PUT:/accounts/{id}"]}
         addedCapabilities:
           type: object
+          nullable: true  # NRT: Optional property MUST be nullable
           additionalProperties:
             type: array
             items:
@@ -98,6 +103,7 @@ components:
             Same format as fullCapabilities.
         removedCapabilities:
           type: object
+          nullable: true  # NRT: Optional property MUST be nullable
           additionalProperties:
             type: array
             items:
@@ -108,13 +114,16 @@ components:
         generatedAt:
           type: string
           format: date-time
+          nullable: true  # NRT: Optional property MUST be nullable
           description: When these capabilities were compiled
         expiresAt:
           type: string
           format: date-time
+          nullable: true  # NRT: Optional property MUST be nullable
           description: When these capabilities expire and need refresh
         reason:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           enum:
             - session_created
             - session_state_changed
@@ -152,5 +161,6 @@ components:
           description: New state (e.g., "authenticated", "in_game", "character_selected")
         metadata:
           type: object
+          nullable: true  # NRT: Optional property MUST be nullable
           additionalProperties: true
           description: Additional context about the state change

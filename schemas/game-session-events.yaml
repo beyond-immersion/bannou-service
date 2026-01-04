@@ -5,6 +5,9 @@ info:
     Event subscription and publication declarations for Game Session service.
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
     Custom events (PlayerJoined, PlayerLeft) are manually defined.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
     # Session lifecycle events from Connect service
@@ -43,6 +46,9 @@ info:
     - topic: game-session.player-left
       event: GameSessionPlayerLeftEvent
       description: Published when a player leaves a game session
+    - topic: game-session.action.performed
+      event: GameSessionActionPerformedEvent
+      description: Published when a game action is performed in a session
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/game-session-lifecycle-events.yaml
 x-lifecycle:
@@ -52,10 +58,10 @@ x-lifecycle:
       gameType: { type: string, required: true, description: "Type of game being played in this session" }
       sessionName: { type: string, nullable: true, description: "Human-readable name for the session" }
       status: { type: string, required: true, description: "Current status of the game session (e.g., waiting, active, completed)" }
-      maxPlayers: { type: integer, description: "Maximum number of players allowed in the session" }
-      currentPlayers: { type: integer, description: "Current number of players in the session" }
-      isPrivate: { type: boolean, description: "Whether the session is private (invite-only)" }
-      owner: { type: string, format: uuid, description: "Account ID of the session owner" }
+      maxPlayers: { type: integer, nullable: true, description: "Maximum number of players allowed in the session" }  # NRT: Optional property MUST be nullable
+      currentPlayers: { type: integer, nullable: true, description: "Current number of players in the session" }  # NRT: Optional property MUST be nullable
+      isPrivate: { type: boolean, nullable: true, description: "Whether the session is private (invite-only)" }  # NRT: Optional property MUST be nullable
+      owner: { type: string, format: uuid, nullable: true, description: "Account ID of the session owner" }  # NRT: Optional property MUST be nullable
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the session was created" }
 
 paths: {}  # Events don't have HTTP paths
@@ -127,4 +133,41 @@ components:
           default: false
         reason:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Reason for leaving/being kicked (if applicable)
+
+    GameSessionActionPerformedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a game action is performed in a session
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - actionId
+        - actionType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the action was performed
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session
+        actionId:
+          type: string
+          format: uuid
+          description: Unique identifier for the action
+        actionType:
+          type: string
+          description: Type of action performed
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional target entity ID for the action

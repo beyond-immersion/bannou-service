@@ -49,7 +49,7 @@ public partial class PoolNodeHeartbeatEvent : BaseServiceEvent
     /// Pool node's app-id for direct routing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    public string AppId { get; set; } = default!;
+    public string? AppId { get; set; } = default!;
 
     /// <summary>
     /// Number of actors currently running

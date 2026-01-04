@@ -392,6 +392,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
                 },
                 "response": {
                     "type": "string",
+                    "nullable": true,
                     "description": "JSON response from the target service (as string)"
                 },
                 "headers": {
@@ -402,10 +403,12 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
                             "type": "string"
                         }
                     },
+                    "nullable": true,
                     "description": "Response headers from the target service"
                 },
                 "error": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Error message if the request failed"
                 },
                 "executionTime": {

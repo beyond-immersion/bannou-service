@@ -12,6 +12,8 @@ info:
 
     **Browser Endpoint**: The GET /documentation/view/{slug} endpoint is browser-facing
     (NGINX-routed) per FOUNDATION TENETS and has NO x-permissions.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
 - url: http://localhost:5012

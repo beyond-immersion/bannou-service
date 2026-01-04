@@ -218,13 +218,13 @@ public partial class ActorInstanceCreatedEvent : BaseServiceEvent
     /// Associated character ID for NPC brains
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid? CharacterId { get; set; } = default!;
 
     /// <summary>
     /// Pool node running this actor
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
-    public string NodeId { get; set; } = default!;
+    public string? NodeId { get; set; } = default!;
 
     /// <summary>
     /// Current actor lifecycle state
@@ -279,13 +279,13 @@ public partial class ActorInstanceUpdatedEvent : BaseServiceEvent
     /// Associated character ID for NPC brains
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid? CharacterId { get; set; } = default!;
 
     /// <summary>
     /// Pool node running this actor
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
-    public string NodeId { get; set; } = default!;
+    public string? NodeId { get; set; } = default!;
 
     /// <summary>
     /// Current actor lifecycle state
@@ -348,13 +348,13 @@ public partial class ActorInstanceDeletedEvent : BaseServiceEvent
     /// Associated character ID for NPC brains
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid? CharacterId { get; set; } = default!;
 
     /// <summary>
     /// Pool node running this actor
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
-    public string NodeId { get; set; } = default!;
+    public string? NodeId { get; set; } = default!;
 
     /// <summary>
     /// Current actor lifecycle state

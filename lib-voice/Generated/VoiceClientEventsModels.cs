@@ -53,7 +53,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// Associated game session ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    public System.Guid SessionId { get; set; } = default!;
+    public System.Guid? SessionId { get; set; } = default!;
 
     /// <summary>
     /// Current voice tier
@@ -69,7 +69,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceRoomStateEventCodec Codec { get; set; } = default!;
+    public VoiceRoomStateEventCodec? Codec { get; set; } = default!;
 
     /// <summary>
     /// List of peers to connect to (P2P mode)
@@ -89,7 +89,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// STUN server URIs for NAT traversal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stunServers")]
-    public System.Collections.Generic.ICollection<string> StunServers { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? StunServers { get; set; } = default!;
 
 }
 
@@ -245,7 +245,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// Previous tier (always p2p for upgrade events)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousTier")]
-    public string PreviousTier { get; set; } = "p2p";
+    public string? PreviousTier { get; set; } = "p2p";
 
     /// <summary>
     /// New tier after upgrade (always scaled for upgrade events)

@@ -132,6 +132,8 @@ public partial class PublishEventResponse
     /// Unique identifier assigned to the published message
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid MessageId { get; set; } = default!;
 
 }
@@ -223,12 +225,16 @@ public partial class CreateSubscriptionResponse
     /// Unique identifier for the created subscription
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
     /// <summary>
     /// Name of the RabbitMQ queue created for this subscription
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queueName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string QueueName { get; set; } = default!;
 
 }
@@ -276,7 +282,7 @@ public partial class ListTopicsRequest
     /// Filter topics by exchange name prefix
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchangeFilter")]
-    public string ExchangeFilter { get; set; } = default!;
+    public string? ExchangeFilter { get; set; } = default!;
 
     /// <summary>
     /// Include topics with no messages
@@ -297,7 +303,9 @@ public partial class ListTopicsResponse
     /// List of topics matching the filter criteria
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topics")]
-    public System.Collections.Generic.ICollection<TopicInfo> Topics { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<TopicInfo> Topics { get; set; } = new System.Collections.ObjectModel.Collection<TopicInfo>();
 
 }
 
@@ -312,6 +320,8 @@ public partial class TopicInfo
     /// Name of the topic/exchange
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Name { get; set; } = default!;
 
     /// <summary>

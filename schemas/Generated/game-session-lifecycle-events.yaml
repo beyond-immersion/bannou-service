@@ -42,16 +42,20 @@ components:
           description: "Current status of the game session (e.g., waiting, active, completed)"
         maxPlayers: &id005
           type: integer
+          nullable: true
           description: "Maximum number of players allowed in the session"
         currentPlayers: &id006
           type: integer
+          nullable: true
           description: "Current number of players in the session"
         isPrivate: &id007
           type: boolean
+          nullable: true
           description: "Whether the session is private (invite-only)"
         owner: &id008
           type: string
           format: uuid
+          nullable: true
           description: "Account ID of the session owner"
         createdAt: &id009
           type: string

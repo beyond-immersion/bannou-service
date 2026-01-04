@@ -556,6 +556,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
@@ -790,6 +791,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
@@ -994,6 +996,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
@@ -1218,6 +1221,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
@@ -1506,6 +1510,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
@@ -1658,6 +1663,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
@@ -1777,6 +1783,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "externalId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "External user ID from the OAuth provider"
                 },
                 "displayName": {
@@ -1826,6 +1833,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "externalId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "External user ID from the OAuth provider"
                 },
                 "displayName": {
@@ -2124,6 +2132,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
@@ -2340,6 +2349,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "methodId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {

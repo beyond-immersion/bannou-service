@@ -12,6 +12,8 @@ info:
     these URLs directly for OAuth provider authentication.
 
     See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 4.0.0
   # NOTE: Event subscriptions and publications are in auth-events.yaml
 servers:
@@ -63,13 +65,14 @@ paths:
         \      \"additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n      \
         \              \"type\": \"string\",\n                    \"enum\": [\n                        \"desktop\",\n    \
         \                    \"mobile\",\n                        \"tablet\",\n                        \"console\"\n     \
-        \               ],\n                    \"description\": \"Category of the device\"\n                },\n        \
-        \        \"platform\": {\n                    \"type\": \"string\",\n                    \"description\": \"Operating
-        system or platform name\"\n                },\n                \"browser\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\
-        \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
-        \        }\n            }\n        }\n    }\n}"
+        \               ],\n                    \"nullable\": true,\n                    \"description\": \"Category of the
+        device\"\n                },\n                \"platform\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n  \
+        \              },\n                \"browser\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\n         \
+        \       },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Version of the client application\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -85,11 +88,11 @@ paths:
         \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
         \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"List of roles assigned to the authenticated user\"\n             \
+        \   },\n                \"requiresTwoFactor\": {\n                    \"type\": \"boolean\",\n                   \
+        \ \"default\": false,\n                    \"description\": \"Whether the user needs to complete two-factor authentication\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Login with email/password\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Authentication\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"login\"\n}"
   /auth/register:
@@ -240,13 +243,13 @@ paths:
         \            \"properties\": {\n                \"deviceType\": {\n                    \"type\": \"string\",\n   \
         \                 \"enum\": [\n                        \"desktop\",\n                        \"mobile\",\n       \
         \                 \"tablet\",\n                        \"console\"\n                    ],\n                    \"\
-        description\": \"Category of the device\"\n                },\n                \"platform\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Operating system or platform name\"\n          \
-        \      },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Browser name and version if applicable\"\n                },\n   \
-        \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
-        \      }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"Category of the device\"\n                },\n         \
+        \       \"platform\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Operating system or platform name\"\n                },\n                \"browser\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Browser name and version if applicable\"\n                },\n                \"appVersion\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Version
+        of the client application\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -262,11 +265,11 @@ paths:
         \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
         \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"List of roles assigned to the authenticated user\"\n             \
+        \   },\n                \"requiresTwoFactor\": {\n                    \"type\": \"boolean\",\n                   \
+        \ \"default\": false,\n                    \"description\": \"Whether the user needs to complete two-factor authentication\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Complete OAuth2 flow (browser redirect callback)\",\n    \"description\"\
         : \"Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects\\nthe user's browser back to
         this URL after authentication.\\n\\n**Note**: This endpoint uses path parameters because the callback URL is registered\\
@@ -318,14 +321,14 @@ paths:
         or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"properties\": {\n                \"deviceType\": {\n                    \"type\": \"string\",\n           \
         \         \"enum\": [\n                        \"desktop\",\n                        \"mobile\",\n               \
-        \         \"tablet\",\n                        \"console\"\n                    ],\n                    \"description\"\
-        : \"Category of the device\"\n                },\n                \"platform\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Operating system or platform name\"\n                },\n      \
-        \          \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Browser name and version if applicable\"\n                },\n             \
-        \   \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Version of the client application\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        \         \"tablet\",\n                        \"console\"\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Category of the device\"\n                },\n                \"platform\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Operating system or platform name\"\n                },\n                \"browser\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Browser name
+        and version if applicable\"\n                },\n                \"appVersion\": {\n                    \"type\":
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Version of the client
+        application\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -341,11 +344,11 @@ paths:
         \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
         \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"List of roles assigned to the authenticated user\"\n             \
+        \   },\n                \"requiresTwoFactor\": {\n                    \"type\": \"boolean\",\n                   \
+        \ \"default\": false,\n                    \"description\": \"Whether the user needs to complete two-factor authentication\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Verify Steam Session Ticket\",\n    \"description\": \"Validates a Steam
         Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().\\nThe server validates the
         ticket with Steam's Web API and retrieves the SteamID from Steam's response.\\nNEVER trust client-provided SteamID
@@ -404,11 +407,11 @@ paths:
         \n                },\n                \"connectUrl\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uri\",\n                    \"description\": \"WebSocket endpoint for Connect service\"\n  \
         \              },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"List of roles assigned to the authenticated user\"\n                },\n                \"requiresTwoFactor\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether the user needs to complete two-factor authentication\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"List of roles assigned to the authenticated user\"\n             \
+        \   },\n                \"requiresTwoFactor\": {\n                    \"type\": \"boolean\",\n                   \
+        \ \"default\": false,\n                    \"description\": \"Whether the user needs to complete two-factor authentication\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Refresh access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Tokens\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"refreshToken\"\n}"
   /auth/validate:
@@ -453,12 +456,13 @@ paths:
         \                 \"format\": \"uuid\",\n                    \"description\": \"Session identifier for WebSocket connections
         and service routing\"\n                },\n                \"roles\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"List of roles assigned to the authenticated user\"\n                },\n         \
-        \       \"authorizations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
-        \                  \"type\": \"string\"\n                    },\n                    \"description\": \"Authorization
-        strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"arcadia:authorized\\\")\\n\"\n\
-        \                },\n                \"remainingTime\": {\n                    \"type\": \"integer\",\n          \
-        \          \"description\": \"Seconds until expiration\"\n                }\n            }\n        }\n    }\n}"
+        \            \"nullable\": true,\n                    \"description\": \"List of roles assigned to the authenticated
+        user\"\n                },\n                \"authorizations\": {\n                    \"type\": \"array\",\n    \
+        \                \"items\": {\n                        \"type\": \"string\"\n                    },\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Authorization strings from active subscriptions.\\
+        nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"arcadia:authorized\\\")\\n\"\n                },\n                \"\
+        remainingTime\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Seconds until
+        expiration\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Tokens\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"validateToken\"\n}"
   /auth/logout:
@@ -541,21 +545,22 @@ paths:
         was created\"\n                },\n                \"lastActive\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp of the last activity
         in this session\"\n                },\n                \"ipAddress\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"IP address from which the session was initiated\"\n                },\n\
-        \                \"location\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Geographic location derived from the IP address\"\n                }\n   \
-        \         }\n        },\n        \"DeviceInfo\": {\n            \"description\": \"Information about the client device
-        used for authentication or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"deviceType\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"desktop\",\n                        \"mobile\",\n  \
-        \                      \"tablet\",\n                        \"console\"\n                    ],\n                \
-        \    \"description\": \"Category of the device\"\n                },\n                \"platform\": {\n          \
-        \          \"type\": \"string\",\n                    \"description\": \"Operating system or platform name\"\n   \
-        \             },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\n             \
-        \   },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Version of the client application\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"IP address from which the session
+        was initiated\"\n                },\n                \"location\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Geographic location derived from
+        the IP address\"\n                }\n            }\n        },\n        \"DeviceInfo\": {\n            \"description\"\
+        : \"Information about the client device used for authentication or session tracking\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"desktop\",\n\
+        \                        \"mobile\",\n                        \"tablet\",\n                        \"console\"\n \
+        \                   ],\n                    \"nullable\": true,\n                    \"description\": \"Category of
+        the device\"\n                },\n                \"platform\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n\
+        \                },\n                \"browser\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\n       \
+        \         },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Version of the client application\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get active sessions for account\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSessions\"\n}"
   /auth/sessions/terminate:
@@ -819,6 +824,8 @@ components:
           type: array
           items:
             type: string
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
           description: List of roles assigned to the authenticated user
         requiresTwoFactor:
           type: boolean
@@ -900,11 +907,15 @@ components:
           type: array
           items:
             type: string
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
           description: List of roles assigned to the authenticated user
         authorizations:
           type: array
           items:
             type: string
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
           description: |
             Authorization strings from active subscriptions.
             Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
@@ -962,6 +973,8 @@ components:
           description: Timestamp of the last activity in this session
         ipAddress:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: IP address from which the session was initiated
         location:
           type: string
@@ -976,9 +989,13 @@ components:
         deviceType:
           type: string
           enum: [desktop, mobile, tablet, console]
+          # NRT: Optional string/enum MUST be nullable (Rule 2)
+          nullable: true
           description: Category of the device
         platform:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Operating system or platform name
         browser:
           type: string
@@ -1059,6 +1076,8 @@ components:
           example: true
         preferredInstance:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: The preferred Connect service instance ID
           example: "connect-omega-01"
 

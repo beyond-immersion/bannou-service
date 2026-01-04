@@ -4,6 +4,9 @@ info:
   description: |
     Event models for Auth service RabbitMQ pub/sub via MassTransit.
     Contains auth-specific events and subscription/publication declarations.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
     # Account lifecycle events from Accounts service

@@ -23,12 +23,8 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
     /// </summary>
     protected override bool OnValidatePlugin()
     {
-        // Get current app-id, defaulting to the constant if not set
-        var currentAppId = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_APP_ID);
-        if (string.IsNullOrEmpty(currentAppId))
-        {
-            currentAppId = AppConstants.DEFAULT_APP_NAME;
-        }
+        // Get current app-id from configuration
+        var currentAppId = Program.Configuration.EffectiveAppId;
 
         // CRITICAL: Orchestrator can ONLY run on the default "bannou" app-id
         // It's the control plane that manages all other services

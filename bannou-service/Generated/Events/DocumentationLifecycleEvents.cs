@@ -81,7 +81,7 @@ public partial class DocumentCreatedEvent : BaseServiceEvent
     /// List of tags for categorization and search
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the document was created
@@ -160,7 +160,7 @@ public partial class DocumentUpdatedEvent : BaseServiceEvent
     /// List of tags for categorization and search
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the document was created
@@ -247,7 +247,7 @@ public partial class DocumentDeletedEvent : BaseServiceEvent
     /// List of tags for categorization and search
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the document was created

@@ -117,13 +117,13 @@ public partial class PlayerJoinedEvent : BaseClientEvent
     /// Total players in session after join
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayerCount")]
-    public int CurrentPlayerCount { get; set; } = default!;
+    public int? CurrentPlayerCount { get; set; } = default!;
 
     /// <summary>
     /// Maximum allowed players
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
-    public int MaxPlayers { get; set; } = default!;
+    public int? MaxPlayers { get; set; } = default!;
 
 }
 
@@ -169,7 +169,7 @@ public partial class PlayerLeftEvent : BaseClientEvent
     /// Total players remaining after departure
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPlayerCount")]
-    public int CurrentPlayerCount { get; set; } = default!;
+    public int? CurrentPlayerCount { get; set; } = default!;
 
     /// <summary>
     /// New session owner if ownership transferred
@@ -355,7 +355,7 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
     /// Monotonically increasing sequence for ordering state updates
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sequenceNumber")]
-    public int SequenceNumber { get; set; } = default!;
+    public int? SequenceNumber { get; set; } = default!;
 
 }
 
@@ -405,7 +405,7 @@ public partial class GameActionResultEvent : BaseClientEvent
     /// Account ID of player who performed the action
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public System.Guid ActorId { get; set; } = default!;
+    public System.Guid? ActorId { get; set; } = default!;
 
     /// <summary>
     /// Whether the action succeeded

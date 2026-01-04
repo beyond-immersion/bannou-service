@@ -4,6 +4,9 @@ info:
   description: |
     Event models for Mesh service RabbitMQ pub/sub.
     Mesh publishes endpoint lifecycle events and subscribes to heartbeats.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
     - topic: bannou-service-heartbeats
@@ -72,6 +75,7 @@ components:
           description: Port of the endpoint
         services:
           type: array
+          nullable: true  # NRT: Optional property MUST be nullable
           items:
             type: string
           description: Services available on this endpoint

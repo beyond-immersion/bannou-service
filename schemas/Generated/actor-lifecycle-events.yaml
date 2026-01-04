@@ -125,9 +125,11 @@ components:
         characterId: &id007
           type: string
           format: uuid
+          nullable: true
           description: Associated character ID for NPC brains
         nodeId: &id008
           type: string
+          nullable: true
           description: Pool node running this actor
         status: &id009
           type: string

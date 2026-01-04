@@ -69,7 +69,7 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     /// List of roles assigned to the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the account was created
@@ -83,13 +83,13 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     /// Timestamp when the account was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Additional metadata associated with the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
 }
 
@@ -140,7 +140,7 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     /// List of roles assigned to the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the account was created
@@ -154,13 +154,13 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     /// Timestamp when the account was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Additional metadata associated with the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -219,7 +219,7 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     /// List of roles assigned to the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the account was created
@@ -233,13 +233,13 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     /// Timestamp when the account was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Additional metadata associated with the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

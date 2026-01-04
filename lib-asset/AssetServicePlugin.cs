@@ -92,17 +92,9 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Register processor pool manager for tracking processor node state
         services.AddSingleton<IAssetProcessorPoolManager, AssetProcessorPoolManager>();
 
-        // T21 Exception: ConfigureServices bootstrap - reading config before service provider exists
-        // Determines whether to register AssetProcessingWorker as a hosted service.
-        // Values: "api" (HTTP only), "worker" (processing only), "both" (default)
-        var processingMode = Environment.GetEnvironmentVariable("ASSET_PROCESSING_MODE") ?? "both";
-
-        if (processingMode.Equals("worker", StringComparison.OrdinalIgnoreCase) ||
-            processingMode.Equals("both", StringComparison.OrdinalIgnoreCase))
-        {
-            Logger?.LogInformation("Registering AssetProcessingWorker (mode: {Mode})", processingMode);
-            services.AddHostedService<AssetProcessingWorker>();
-        }
+        // Register background worker for asset processing
+        // Worker checks ProcessingMode from configuration at startup and exits early if mode is "api"
+        services.AddHostedService<AssetProcessingWorker>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

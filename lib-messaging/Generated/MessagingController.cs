@@ -267,6 +267,10 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "description": "Response confirming event publication with message identifier",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "success",
+                "messageId"
+            ],
             "properties": {
                 "success": {
                     "type": "boolean",
@@ -419,6 +423,10 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "description": "Response containing the created subscription details",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "subscriptionId",
+                "queueName"
+            ],
             "properties": {
                 "subscriptionId": {
                     "type": "string",
@@ -524,6 +532,9 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "description": "Response confirming subscription removal status",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "success"
+            ],
             "properties": {
                 "success": {
                     "type": "boolean",
@@ -603,6 +614,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "properties": {
                 "exchangeFilter": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Filter topics by exchange name prefix"
                 },
                 "includeEmpty": {
@@ -625,6 +637,9 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "description": "Response containing a list of available messaging topics",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "topics"
+            ],
             "properties": {
                 "topics": {
                     "type": "array",
@@ -639,6 +654,11 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "description": "Information about a messaging topic including its name and statistics",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "name",
+                "messageCount",
+                "consumerCount"
+            ],
             "properties": {
                 "name": {
                     "type": "string",

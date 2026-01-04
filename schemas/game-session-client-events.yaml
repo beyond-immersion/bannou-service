@@ -8,6 +8,9 @@ info:
 
     All events inherit from BaseClientEvent (common-client-events.yaml) and use
     the "game_session.{event_type}" naming convention.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -97,9 +100,11 @@ components:
           description: Information about the player who joined the session
         currentPlayerCount:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Total players in session after join
         maxPlayers:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Maximum allowed players
 
     PlayerLeftEvent:
@@ -135,6 +140,7 @@ components:
           description: Display name for UI notification
         currentPlayerCount:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Total players remaining after departure
         newOwnerId:
           type: string
@@ -282,6 +288,7 @@ components:
           description: Account ID that triggered the state change
         sequenceNumber:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Monotonically increasing sequence for ordering state updates
 
     GameActionResultEvent:
@@ -321,6 +328,7 @@ components:
         actorId:
           type: string
           format: uuid
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Account ID of player who performed the action
         success:
           type: boolean
@@ -383,9 +391,10 @@ components:
           nullable: true
           description: Entity the effect targets
         position:
-          $ref: '#/components/schemas/Position'
+          nullable: true  # NRT: Optional property MUST be nullable
           description: World position for the effect in 3D space coordinates
-          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Position'
         effectData:
           type: object
           additionalProperties: true
@@ -396,6 +405,10 @@ components:
       type: object
       additionalProperties: false
       description: 3D world coordinates representing a position in game space
+      required:  # NRT: Required event properties
+        - x
+        - y
+        - z
       properties:
         x:
           type: number

@@ -67,7 +67,7 @@ public partial class SubscriptionUpdatedEvent : BaseServiceEvent
     /// Display name of the service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// What action triggered this event
@@ -94,13 +94,13 @@ public partial class SubscriptionUpdatedEvent : BaseServiceEvent
     /// Previous values for updated fields (for update action)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousValues")]
-    public object PreviousValues { get; set; } = default!;
+    public object? PreviousValues { get; set; } = default!;
 
     /// <summary>
     /// New values for updated fields (for update action)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newValues")]
-    public object NewValues { get; set; } = default!;
+    public object? NewValues { get; set; } = default!;
 
 }
 

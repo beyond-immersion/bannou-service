@@ -142,8 +142,8 @@ public class BackendDetector : IBackendDetector
                 return info;
             }
 
-            // Check for kubeconfig file
-            var kubeconfigPath = Environment.GetEnvironmentVariable("KUBECONFIG")
+            // Check for kubeconfig file - use configuration if set, otherwise default path
+            var kubeconfigPath = _configuration.KubeconfigPath
                 ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".kube", "config");
 
             if (File.Exists(kubeconfigPath))

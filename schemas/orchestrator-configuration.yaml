@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Orchestrator Service Configuration
-  description: "Configuration schema for Orchestrator service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  description: |
+    Configuration schema for Orchestrator service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -35,10 +40,12 @@ x-service-configuration:
     # Portainer Configuration (Docker Swarm/Compose backend)
     PortainerUrl:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (only needed for Portainer backend)
       description: Portainer API URL
       env: ORCHESTRATOR_PORTAINER_URL
     PortainerApiKey:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (only needed for Portainer backend)
       description: Portainer API key
       env: ORCHESTRATOR_PORTAINER_API_KEY
     PortainerEndpointId:
@@ -80,13 +87,18 @@ x-service-configuration:
       description: Kubernetes namespace for deployments
       env: ORCHESTRATOR_KUBERNETES_NAMESPACE
       default: "default"
+    KubeconfigPath:
+      type: string
+      nullable: true
+      description: Path to kubeconfig file (null uses default ~/.kube/config)
+      env: ORCHESTRATOR_KUBECONFIG_PATH
 
     # Infrastructure Connection Strings (IMPLEMENTATION TENETS - no insecure defaults)
     RedisConnectionString:
       type: string
-      description: Redis connection string for orchestrator state (required, no default)
+      description: Redis connection string for orchestrator state (REQUIRED - service fails fast if missing)
       env: ORCHESTRATOR_REDIS_CONNECTION_STRING
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for orchestrator messaging (required, no default)
+      description: RabbitMQ connection string for orchestrator messaging (REQUIRED - service fails fast if missing)
       env: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING

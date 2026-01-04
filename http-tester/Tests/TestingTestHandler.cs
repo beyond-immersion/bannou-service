@@ -18,9 +18,8 @@ public class TestingTestHandler : BaseHttpTestHandler
 
     static TestingTestHandler()
     {
-        // Get base URL from environment or default to localhost
-        var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://bannou:80";
-        _baseUrl = bannouHttpEndpoint;
+        // Get base URL from configuration
+        _baseUrl = Program.Configuration.EffectiveHttpEndpoint;
     }
 
     public override ServiceTest[] GetServiceTests() =>

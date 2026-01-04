@@ -120,18 +120,24 @@ public partial class ActorTemplateResponse
     /// Unique template identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
     /// Category identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
     /// <summary>
     /// Reference to behavior in lib-assets
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
@@ -168,12 +174,16 @@ public partial class ActorTemplateResponse
     /// When the template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
     /// When the template was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
 }
@@ -231,7 +241,9 @@ public partial class ListActorTemplatesResponse
     /// List of actor templates
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templates")]
-    public System.Collections.Generic.ICollection<ActorTemplateResponse> Templates { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ActorTemplateResponse> Templates { get; set; } = new System.Collections.ObjectModel.Collection<ActorTemplateResponse>();
 
     /// <summary>
     /// Total number of templates available
@@ -401,18 +413,24 @@ public partial class ActorInstanceResponse
     /// Unique actor identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
     /// <summary>
     /// Template this actor was instantiated from
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
     /// Actor category from template
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
     /// <summary>
@@ -431,6 +449,8 @@ public partial class ActorInstanceResponse
     /// Current actor lifecycle state
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ActorStatus Status { get; set; } = default!;
 
@@ -444,6 +464,8 @@ public partial class ActorInstanceResponse
     /// When the actor started running
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
     /// <summary>
@@ -532,6 +554,8 @@ public partial class StopActorResponse
     /// Final status of the actor after stopping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("finalStatus")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ActorStatus FinalStatus { get; set; } = default!;
 
@@ -594,7 +618,9 @@ public partial class ListActorsResponse
     /// List of actor instances
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actors")]
-    public System.Collections.Generic.ICollection<ActorInstanceResponse> Actors { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ActorInstanceResponse> Actors { get; set; } = new System.Collections.ObjectModel.Collection<ActorInstanceResponse>();
 
     /// <summary>
     /// Total number of actors matching the filter

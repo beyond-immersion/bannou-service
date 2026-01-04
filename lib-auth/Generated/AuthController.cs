@@ -448,10 +448,12 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                         "tablet",
                         "console"
                     ],
+                    "nullable": true,
                     "description": "Category of the device"
                 },
                 "platform": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Operating system or platform name"
                 },
                 "browser": {
@@ -514,6 +516,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
                 },
                 "requiresTwoFactor": {
@@ -823,10 +826,12 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                         "tablet",
                         "console"
                     ],
+                    "nullable": true,
                     "description": "Category of the device"
                 },
                 "platform": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Operating system or platform name"
                 },
                 "browser": {
@@ -889,6 +894,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
                 },
                 "requiresTwoFactor": {
@@ -996,10 +1002,12 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                         "tablet",
                         "console"
                     ],
+                    "nullable": true,
                     "description": "Category of the device"
                 },
                 "platform": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Operating system or platform name"
                 },
                 "browser": {
@@ -1062,6 +1070,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
                 },
                 "requiresTwoFactor": {
@@ -1198,6 +1207,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
                 },
                 "requiresTwoFactor": {
@@ -1305,6 +1315,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
                 },
                 "authorizations": {
@@ -1312,7 +1323,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "items": {
                         "type": "string"
                     },
-                    "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
+                    "nullable": true,
+                    "description": "Authorization strings from active subscriptions.\ nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
                 },
                 "remainingTime": {
                     "type": "integer",
@@ -1519,6 +1531,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "ipAddress": {
                     "type": "string",
+                    "nullable": true,
                     "description": "IP address from which the session was initiated"
                 },
                 "location": {
@@ -1541,10 +1554,12 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                         "tablet",
                         "console"
                     ],
+                    "nullable": true,
                     "description": "Category of the device"
                 },
                 "platform": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Operating system or platform name"
                 },
                 "browser": {

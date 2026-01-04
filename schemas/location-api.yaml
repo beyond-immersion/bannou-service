@@ -30,6 +30,8 @@ info:
     **Two-Step Deletion**:
     1. Deprecate the location (soft delete, prevents new usage)
     2. Optionally hard-delete the deprecated location after all references are removed
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
 - url: http://localhost:5012

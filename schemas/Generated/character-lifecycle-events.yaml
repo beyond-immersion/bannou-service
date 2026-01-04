@@ -45,9 +45,11 @@ components:
         birthDate: &id005
           type: string
           format: date-time
+          nullable: true
           description: In-game birth date of the character
         status: &id006
           type: string
+          nullable: true
           description: Current status of the character (e.g., active, inactive, deceased)
         createdAt: &id007
           type: string
@@ -56,6 +58,7 @@ components:
         updatedAt: &id008
           type: string
           format: date-time
+          nullable: true
           description: Timestamp when the character was last updated
     CharacterUpdatedEvent:
       allOf:

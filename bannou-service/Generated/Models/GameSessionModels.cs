@@ -229,7 +229,7 @@ public partial class GameSessionResponse
     /// Game-specific configuration settings
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
-    public object GameSettings { get; set; } = default!;
+    public object? GameSettings { get; set; } = default!;
 
 }
 
@@ -384,7 +384,7 @@ public partial class GamePlayer
     /// Display name shown to other players
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Role of the player in the game session
@@ -445,7 +445,7 @@ public partial class KickPlayerRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string Reason { get; set; } = default!;
+    public string? Reason { get; set; } = default!;
 
 }
 
@@ -500,7 +500,7 @@ public partial class ChatMessageRequest
     /// For whisper messages
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetPlayerId")]
-    public System.Guid TargetPlayerId { get; set; } = default!;
+    public System.Guid? TargetPlayerId { get; set; } = default!;
 
 }
 
@@ -548,13 +548,13 @@ public partial class GameActionRequest
     /// Action-specific data
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionData")]
-    public object ActionData { get; set; } = default!;
+    public object? ActionData { get; set; } = default!;
 
     /// <summary>
     /// Target of the action (if applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetId")]
-    public System.Guid TargetId { get; set; } = default!;
+    public System.Guid? TargetId { get; set; } = default!;
 
 }
 
@@ -583,13 +583,13 @@ public partial class GameActionResponse
     /// Action result data
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("result")]
-    public object Result { get; set; } = default!;
+    public object? Result { get; set; } = default!;
 
     /// <summary>
     /// Updated game state (if applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newGameState")]
-    public object NewGameState { get; set; } = default!;
+    public object? NewGameState { get; set; } = default!;
 
 }
 
@@ -612,7 +612,7 @@ public partial class VoiceSipEndpoint
     /// ICE candidates for NAT traversal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
-    public System.Collections.Generic.ICollection<string> IceCandidates { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
 
 }
 
@@ -652,13 +652,13 @@ public partial class VoiceConnectionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceConnectionInfoCodec Codec { get; set; } = default!;
+    public VoiceConnectionInfoCodec? Codec { get; set; } = default!;
 
     /// <summary>
     /// STUN server URIs for NAT traversal (clients should configure these early)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stunServers")]
-    public System.Collections.Generic.ICollection<string> StunServers { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? StunServers { get; set; } = default!;
 
 }
 

@@ -3474,14 +3474,12 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_BANNOU_APP_ID">
             <summary>
-            Environment variable for app ID (legacy env var name). Used by PermissionRegistration and
-            ServiceHeartbeatManager. This is an IMPLEMENTATION TENETS exception - needed before DI is available.
+            Environment variable name for app ID.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_BANNOU_HTTP_ENDPOINT">
             <summary>
-            Environment variable for mesh HTTP endpoint. This is an IMPLEMENTATION TENETS exception -
-            needed to bootstrap mesh client before configuration system initializes.
+            Environment variable name for HTTP endpoint.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.BROADCAST_GUID">
@@ -7869,6 +7867,41 @@
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.Reason">
             <summary>
             Reason for leaving/being kicked (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionActionPerformedEvent">
+            <summary>
+            Published when a game action is performed in a session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionActionPerformedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionActionPerformedEvent.Timestamp">
+            <summary>
+            When the action was performed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionActionPerformedEvent.SessionId">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionActionPerformedEvent.ActionId">
+            <summary>
+            Unique identifier for the action
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionActionPerformedEvent.ActionType">
+            <summary>
+            Type of action performed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionActionPerformedEvent.TargetId">
+            <summary>
+            Optional target entity ID for the action
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent">

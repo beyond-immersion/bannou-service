@@ -28,6 +28,8 @@ info:
     1. Deprecate the species (soft delete, prevents new usage)
     2. Merge deprecated species into another species (or VOID to effectively delete)
     3. Optionally hard-delete the deprecated species after merge
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 2.0.0
 servers:
 - url: http://localhost:5012

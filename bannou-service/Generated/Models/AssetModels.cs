@@ -308,7 +308,7 @@ public partial class MultipartConfig
     /// Pre-signed URLs for each part of the multipart upload
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadUrls")]
-    public System.Collections.Generic.ICollection<PartUploadInfo> UploadUrls { get; set; } = default!;
+    public System.Collections.Generic.ICollection<PartUploadInfo>? UploadUrls { get; set; } = default!;
 
 }
 
@@ -387,24 +387,32 @@ public partial class AssetMetadata
     /// Unique asset identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// SHA256 hash of file contents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentHash { get; set; } = default!;
 
     /// <summary>
     /// Original filename
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filename")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Filename { get; set; } = default!;
 
     /// <summary>
     /// MIME content type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentType { get; set; } = default!;
 
     /// <summary>
@@ -417,6 +425,8 @@ public partial class AssetMetadata
     /// Type classification for the asset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AssetType AssetType { get; set; } = default!;
 
@@ -424,6 +434,8 @@ public partial class AssetMetadata
     /// Game realm the asset belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public Realm Realm { get; set; } = default!;
 
@@ -431,12 +443,16 @@ public partial class AssetMetadata
     /// Searchable tags for the asset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Tags { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
     /// Current status of asset processing pipeline
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("processingStatus")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ProcessingStatus ProcessingStatus { get; set; } = default!;
 
@@ -450,12 +466,16 @@ public partial class AssetMetadata
     /// Timestamp when the asset was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the asset was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
 }
@@ -494,24 +514,32 @@ public partial class AssetWithDownloadUrl
     /// Unique asset identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Version identifier for this specific asset version
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string VersionId { get; set; } = default!;
 
     /// <summary>
     /// Pre-signed download URL
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri DownloadUrl { get; set; } = default!;
 
     /// <summary>
     /// When the download URL expires
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     /// <summary>
@@ -524,19 +552,25 @@ public partial class AssetWithDownloadUrl
     /// SHA256 hash of file contents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentHash { get; set; } = default!;
 
     /// <summary>
     /// MIME content type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ContentType { get; set; } = default!;
 
     /// <summary>
     /// Complete asset metadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public AssetMetadata Metadata { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public AssetMetadata Metadata { get; set; } = new AssetMetadata();
 
 }
 
@@ -580,13 +614,17 @@ public partial class AssetVersionList
     /// Asset identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// List of asset versions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versions")]
-    public System.Collections.Generic.ICollection<AssetVersion> Versions { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<AssetVersion> Versions { get; set; } = new System.Collections.ObjectModel.Collection<AssetVersion>();
 
     /// <summary>
     /// Total number of versions available
@@ -619,12 +657,16 @@ public partial class AssetVersion
     /// Unique version identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string VersionId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when this version was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
@@ -703,7 +745,9 @@ public partial class AssetSearchResult
     /// List of matching assets
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assets")]
-    public System.Collections.Generic.ICollection<AssetMetadata> Assets { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<AssetMetadata> Assets { get; set; } = new System.Collections.ObjectModel.Collection<AssetMetadata>();
 
     /// <summary>
     /// Total number of matching assets
@@ -791,12 +835,16 @@ public partial class CreateBundleResponse
     /// Unique bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle creation status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CreateBundleResponseStatus Status { get; set; } = default!;
 
@@ -843,24 +891,32 @@ public partial class BundleWithDownloadUrl
     /// Unique bundle identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version string
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Version { get; set; } = default!;
 
     /// <summary>
     /// Pre-signed URL for downloading the bundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Uri DownloadUrl { get; set; } = default!;
 
     /// <summary>
     /// Format of the downloadable bundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("format")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BundleFormat Format { get; set; } = default!;
 
@@ -868,6 +924,8 @@ public partial class BundleWithDownloadUrl
     /// When the download URL expires
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     /// <summary>
@@ -941,12 +999,16 @@ public partial class BundleManifestPreview
     /// Bundle identifier from the manifest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version from the manifest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Version { get; set; } = default!;
 
     /// <summary>

@@ -4,6 +4,9 @@ info:
   description: |
     Event models for Orchestrator service RabbitMQ pub/sub.
     Used for service discovery, health checks, and orchestration events.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
     # Service heartbeats from all bannou instances - used for deployment validation

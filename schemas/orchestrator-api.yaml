@@ -28,6 +28,8 @@ info:
     bannou so other services can call its APIs via mesh
     service invocation through lib-mesh.
 
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+
 servers:
 - url: http://localhost:5012
   description: Service endpoint for service-to-service invocation (orchestrator runs as plugin within bannou)

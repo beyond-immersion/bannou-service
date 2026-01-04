@@ -4,6 +4,9 @@ info:
   description: |
     Event models for Accounts service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions: []  # Accounts service doesn't subscribe to external events
   x-event-publications:
@@ -27,10 +30,10 @@ x-lifecycle:
       email: { type: string, format: email, required: true, description: "Email address associated with the account" }
       displayName: { type: string, nullable: true, description: "User-chosen display name for the account" }
       emailVerified: { type: boolean, required: true, description: "Whether the email address has been verified" }
-      roles: { type: array, items: { type: string }, description: "List of roles assigned to the account" }
+      roles: { type: array, items: { type: string }, nullable: true, description: "List of roles assigned to the account" }  # NRT: Optional array MUST be nullable
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the account was created" }
-      updatedAt: { type: string, format: date-time, description: "Timestamp when the account was last updated" }
-      metadata: { type: object, additionalProperties: true, description: "Additional metadata associated with the account" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the account was last updated" }  # NRT: Optional property MUST be nullable
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional metadata associated with the account" }  # NRT: Optional object MUST be nullable
     sensitive: [passwordHash]
 
 paths: {}  # Events don't have HTTP paths

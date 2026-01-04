@@ -11,6 +11,9 @@ info:
 
     **Event Delivery**: Events are published to the session-specific RabbitMQ
     channel (CONNECT_SESSION_{sessionId}) and delivered to the client via WebSocket.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -53,6 +56,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Associated game session ID
         tier:
           type: string
@@ -61,6 +65,7 @@ components:
         codec:
           type: string
           enum: [opus, g711, g722]
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Audio codec to use
         peers:
           type: array
@@ -75,6 +80,7 @@ components:
           type: array
           items:
             type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: STUN server URIs for NAT traversal
 
     # ============================================
@@ -208,6 +214,7 @@ components:
         previousTier:
           type: string
           default: p2p
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Previous tier (always p2p for upgrade events)
         newTier:
           type: string

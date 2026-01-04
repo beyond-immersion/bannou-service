@@ -4,6 +4,9 @@ info:
   description: |
     Event models for Documentation service RabbitMQ pub/sub via MassTransit.
     Contains documentation-specific events and subscription/publication declarations.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   # Minimal event subscriptions - sessions use TTL cleanup, no external events needed
   x-event-subscriptions: []
@@ -76,6 +79,7 @@ x-lifecycle:
         type: array
         items:
           type: string
+        nullable: true  # NRT: Optional array MUST be nullable
         description: List of tags for categorization and search
       createdAt:
         type: string
@@ -130,6 +134,7 @@ components:
           description: Optional session identifier for tracking query context
         resultCount:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Number of documents returned in the query results
         topResultId:
           type: string
@@ -171,6 +176,7 @@ components:
           description: Optional session identifier for tracking search context
         resultCount:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Number of documents returned in the search results
 
     # Repository binding events
@@ -204,6 +210,7 @@ components:
           description: URL of the Git repository being bound
         branch:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Git branch to sync documentation from
 
     DocumentationBindingRemovedEvent:
@@ -232,6 +239,7 @@ components:
           description: Unique identifier of the removed binding
         documentsDeleted:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Number of documents deleted as a result of removing the binding
 
     # Sync events
@@ -315,15 +323,19 @@ components:
           description: Git commit hash that was synced (null if sync failed or repo is empty)
         documentsCreated:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Number of new documents created during sync
         documentsUpdated:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Number of existing documents updated during sync
         documentsDeleted:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Number of documents deleted during sync
         durationMs:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Duration of the sync operation in milliseconds
         errorMessage:
           type: string
@@ -361,9 +373,11 @@ components:
           description: Asset ID of the archive bundle in the asset storage system
         documentCount:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Number of documents included in the archive
         sizeBytes:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Total size of the archive in bytes
         commitHash:
           type: string

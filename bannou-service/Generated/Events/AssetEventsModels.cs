@@ -172,7 +172,7 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
     /// MIME content type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
-    public string ContentType { get; set; } = default!;
+    public string? ContentType { get; set; } = default!;
 
 }
 
@@ -319,13 +319,13 @@ public partial class AssetReadyEvent : BaseServiceEvent
     /// File size in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long Size { get; set; } = default!;
+    public long? Size { get; set; } = default!;
 
     /// <summary>
     /// MIME content type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
-    public string ContentType { get; set; } = default!;
+    public string? ContentType { get; set; } = default!;
 
     /// <summary>
     /// Category of the asset
@@ -386,7 +386,7 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     /// Bundle file size in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long Size { get; set; } = default!;
+    public long? Size { get; set; } = default!;
 
     /// <summary>
     /// Number of assets in the bundle
@@ -527,19 +527,23 @@ public partial class ProcessingOutput
     /// Type of output (e.g., "mipmap_level_1", "lod_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("outputType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string OutputType { get; set; } = default!;
 
     /// <summary>
     /// Storage key for the output
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Key { get; set; } = default!;
 
     /// <summary>
     /// Size of the output in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long Size { get; set; } = default!;
+    public long? Size { get; set; } = default!;
 
 }
 

@@ -79,13 +79,13 @@ public partial class BehaviorCreatedEvent : BaseServiceEvent
     /// Size of the compiled bytecode in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
-    public int BytecodeSize { get; set; } = default!;
+    public int? BytecodeSize { get; set; } = default!;
 
     /// <summary>
     /// Version of the schema used for this behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    public string SchemaVersion { get; set; } = default!;
+    public string? SchemaVersion { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the behavior was created
@@ -99,7 +99,7 @@ public partial class BehaviorCreatedEvent : BaseServiceEvent
     /// Timestamp when the behavior was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 
@@ -160,13 +160,13 @@ public partial class BehaviorUpdatedEvent : BaseServiceEvent
     /// Size of the compiled bytecode in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
-    public int BytecodeSize { get; set; } = default!;
+    public int? BytecodeSize { get; set; } = default!;
 
     /// <summary>
     /// Version of the schema used for this behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    public string SchemaVersion { get; set; } = default!;
+    public string? SchemaVersion { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the behavior was created
@@ -180,7 +180,7 @@ public partial class BehaviorUpdatedEvent : BaseServiceEvent
     /// Timestamp when the behavior was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -249,13 +249,13 @@ public partial class BehaviorDeletedEvent : BaseServiceEvent
     /// Size of the compiled bytecode in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
-    public int BytecodeSize { get; set; } = default!;
+    public int? BytecodeSize { get; set; } = default!;
 
     /// <summary>
     /// Version of the schema used for this behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    public string SchemaVersion { get; set; } = default!;
+    public string? SchemaVersion { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the behavior was created
@@ -269,7 +269,7 @@ public partial class BehaviorDeletedEvent : BaseServiceEvent
     /// Timestamp when the behavior was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

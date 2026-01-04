@@ -111,7 +111,7 @@ public class DocumentationServiceConfiguration : IServiceConfiguration
     /// Model for generating embeddings (when AI enabled)
     /// Environment variable: DOCUMENTATION_AI_EMBEDDINGS_MODEL
     /// </summary>
-    public string AiEmbeddingsModel { get; set; } = "";
+    public string? AiEmbeddingsModel { get; set; }
 
     /// <summary>
     /// Local path for cloned git repositories

@@ -339,6 +339,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "behaviorName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Optional human-readable name for the behavior.\nIf not provided, extracted from ABML metadata.id or generated from content hash.\n",
                     "example": "blacksmith_daily_routine"
                 },
@@ -353,19 +354,23 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                         "situational",
                         "ambient"
                     ],
+                    "nullable": true,
                     "example": "professional"
                 },
                 "bundleId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\nIf the bundle doesn't exist, it will be created.\n",
                     "example": "blacksmith-behaviors-v1"
                 },
                 "characterContext": {
                     "$ref": "#/$defs/CharacterContext",
+                    "nullable": true,
                     "description": "Character context for context variable resolution during compilation"
                 },
                 "compilationOptions": {
                     "$ref": "#/$defs/CompilationOptions",
+                    "nullable": true,
                     "description": "Options controlling the compilation process"
                 }
             }
@@ -377,16 +382,19 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "npcId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Unique identifier for the NPC",
                     "example": "npc_12345"
                 },
                 "culture": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Cultural background identifier",
                     "example": "european_medieval"
                 },
                 "profession": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Character profession identifier",
                     "example": "blacksmith"
                 },
@@ -395,6 +403,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Character statistics and attributes",
                     "example": {
                         "energy": 0.8,
@@ -407,6 +416,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Character skill levels",
                     "example": {
                         "blacksmithing": 85,
@@ -415,6 +425,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "location": {
                     "$ref": "#/$defs/Location",
+                    "nullable": true,
                     "description": "Current location information for the character"
                 },
                 "relationships": {
@@ -422,11 +433,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Relationship values with other characters"
                 },
                 "worldState": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Relevant world state information"
                 }
             }
@@ -438,14 +451,17 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "current": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Current location name or identifier"
                 },
                 "region": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Region or zone the character is in"
                 },
                 "coordinates": {
                     "$ref": "#/$defs/Coordinates",
+                    "nullable": true,
                     "description": "3D spatial coordinates of the character's position in the game world"
                 }
             }
@@ -530,11 +546,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "behaviorName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Human-readable name of the behavior",
                     "example": "blacksmith_daily_routine"
                 },
                 "compiledBehavior": {
                     "$ref": "#/$defs/CompiledBehavior",
+                    "nullable": true,
                     "description": "The compiled behavior data including behavior tree and metadata"
                 },
                 "compilationTimeMs": {
@@ -560,6 +578,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Non-fatal warnings during compilation"
                 }
             }
@@ -586,6 +605,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of required services for this behavior"
                 },
                 "goapGoals": {
@@ -593,10 +613,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "$ref": "#/$defs/GoapGoal"
                     },
+                    "nullable": true,
                     "description": "GOAP goals extracted from the behavior"
                 },
                 "executionMetadata": {
                     "$ref": "#/$defs/ExecutionMetadata",
+                    "nullable": true,
                     "description": "Metadata for behavior execution including performance hints and resource requirements"
                 }
             }
@@ -608,6 +630,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "bytecode": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Base64-encoded compiled bytecode for the behavior tree"
                 },
                 "bytecodeSize": {
@@ -616,6 +639,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "downloadUrl": {
                     "type": "string",
+                    "nullable": true,
                     "description": "URL to download the compiled behavior asset"
                 }
             }
@@ -642,6 +666,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "description": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Human-readable description of the goal"
                 },
                 "conditions": {
@@ -666,6 +691,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "World state conditions required to pursue this goal"
                 }
             }
@@ -684,6 +710,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Resource requirements for behavior execution"
                 },
                 "interruptConditions": {
@@ -691,6 +718,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Conditions that can interrupt behavior execution"
                 }
             }
@@ -777,10 +805,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "characterContext": {
                     "$ref": "#/$defs/CharacterContext",
+                    "nullable": true,
                     "description": "Character context for context variable resolution during compilation"
                 },
                 "compilationOptions": {
                     "$ref": "#/$defs/CompilationOptions",
+                    "nullable": true,
                     "description": "Options controlling the compilation process"
                 }
             }
@@ -816,7 +846,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                         "professional",
                         "personal",
                         "situational"
-                    ]
+                    ],
+                    "nullable": true
                 },
                 "abmlContent": {
                     "type": "string",
@@ -825,6 +856,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Additional metadata for the behavior set"
                 }
             }
@@ -836,16 +868,19 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "npcId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Unique identifier for the NPC",
                     "example": "npc_12345"
                 },
                 "culture": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Cultural background identifier",
                     "example": "european_medieval"
                 },
                 "profession": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Character profession identifier",
                     "example": "blacksmith"
                 },
@@ -854,6 +889,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Character statistics and attributes",
                     "example": {
                         "energy": 0.8,
@@ -866,6 +902,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Character skill levels",
                     "example": {
                         "blacksmithing": 85,
@@ -874,6 +911,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "location": {
                     "$ref": "#/$defs/Location",
+                    "nullable": true,
                     "description": "Current location information for the character"
                 },
                 "relationships": {
@@ -881,11 +919,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Relationship values with other characters"
                 },
                 "worldState": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Relevant world state information"
                 }
             }
@@ -897,14 +937,17 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "current": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Current location name or identifier"
                 },
                 "region": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Region or zone the character is in"
                 },
                 "coordinates": {
                     "$ref": "#/$defs/Coordinates",
+                    "nullable": true,
                     "description": "3D spatial coordinates of the character's position in the game world"
                 }
             }
@@ -989,11 +1032,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "behaviorName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Human-readable name of the behavior",
                     "example": "blacksmith_daily_routine"
                 },
                 "compiledBehavior": {
                     "$ref": "#/$defs/CompiledBehavior",
+                    "nullable": true,
                     "description": "The compiled behavior data including behavior tree and metadata"
                 },
                 "compilationTimeMs": {
@@ -1019,6 +1064,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Non-fatal warnings during compilation"
                 }
             }
@@ -1045,6 +1091,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of required services for this behavior"
                 },
                 "goapGoals": {
@@ -1052,10 +1099,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "$ref": "#/$defs/GoapGoal"
                     },
+                    "nullable": true,
                     "description": "GOAP goals extracted from the behavior"
                 },
                 "executionMetadata": {
                     "$ref": "#/$defs/ExecutionMetadata",
+                    "nullable": true,
                     "description": "Metadata for behavior execution including performance hints and resource requirements"
                 }
             }
@@ -1067,6 +1116,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "bytecode": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Base64-encoded compiled bytecode for the behavior tree"
                 },
                 "bytecodeSize": {
@@ -1075,6 +1125,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "downloadUrl": {
                     "type": "string",
+                    "nullable": true,
                     "description": "URL to download the compiled behavior asset"
                 }
             }
@@ -1101,6 +1152,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "description": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Human-readable description of the goal"
                 },
                 "conditions": {
@@ -1125,6 +1177,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "World state conditions required to pursue this goal"
                 }
             }
@@ -1143,6 +1196,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Resource requirements for behavior execution"
                 },
                 "interruptConditions": {
@@ -1150,6 +1204,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Conditions that can interrupt behavior execution"
                 }
             }
@@ -1264,6 +1319,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "$ref": "#/$defs/ValidationError"
                     },
+                    "nullable": true,
                     "description": "List of validation errors if invalid"
                 },
                 "semanticWarnings": {
@@ -1271,10 +1327,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Semantic warnings that don't prevent compilation"
                 },
                 "schemaVersion": {
                     "type": "string",
+                    "nullable": true,
                     "description": "ABML schema version used for validation"
                 }
             }
@@ -1313,6 +1371,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "yamlPath": {
                     "type": "string",
+                    "nullable": true,
                     "description": "YAML path to the problematic element",
                     "example": "behaviors.morning_startup.actions[0]"
                 }
@@ -1426,6 +1485,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "cacheTimestamp": {
                     "type": "string",
                     "format": "date-time",
+                    "nullable": true,
                     "description": "When the behavior was cached"
                 },
                 "cacheHit": {
@@ -1456,6 +1516,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of required services for this behavior"
                 },
                 "goapGoals": {
@@ -1463,10 +1524,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "$ref": "#/$defs/GoapGoal"
                     },
+                    "nullable": true,
                     "description": "GOAP goals extracted from the behavior"
                 },
                 "executionMetadata": {
                     "$ref": "#/$defs/ExecutionMetadata",
+                    "nullable": true,
                     "description": "Metadata for behavior execution including performance hints and resource requirements"
                 }
             }
@@ -1478,6 +1541,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "bytecode": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Base64-encoded compiled bytecode for the behavior tree"
                 },
                 "bytecodeSize": {
@@ -1486,6 +1550,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "downloadUrl": {
                     "type": "string",
+                    "nullable": true,
                     "description": "URL to download the compiled behavior asset"
                 }
             }
@@ -1512,6 +1577,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "description": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Human-readable description of the goal"
                 },
                 "conditions": {
@@ -1536,6 +1602,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "World state conditions required to pursue this goal"
                 }
             }
@@ -1554,6 +1621,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Resource requirements for behavior execution"
                 },
                 "interruptConditions": {
@@ -1561,6 +1629,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Conditions that can interrupt behavior execution"
                 }
             }
@@ -1740,16 +1809,19 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "npcId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Unique identifier for the NPC",
                     "example": "npc_12345"
                 },
                 "culture": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Cultural background identifier",
                     "example": "european_medieval"
                 },
                 "profession": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Character profession identifier",
                     "example": "blacksmith"
                 },
@@ -1758,6 +1830,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Character statistics and attributes",
                     "example": {
                         "energy": 0.8,
@@ -1770,6 +1843,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Character skill levels",
                     "example": {
                         "blacksmithing": 85,
@@ -1778,6 +1852,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "location": {
                     "$ref": "#/$defs/Location",
+                    "nullable": true,
                     "description": "Current location information for the character"
                 },
                 "relationships": {
@@ -1785,11 +1860,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "number"
                     },
+                    "nullable": true,
                     "description": "Relationship values with other characters"
                 },
                 "worldState": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Relevant world state information"
                 }
             }
@@ -1801,14 +1878,17 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "current": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Current location name or identifier"
                 },
                 "region": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Region or zone the character is in"
                 },
                 "coordinates": {
                     "$ref": "#/$defs/Coordinates",
+                    "nullable": true,
                     "description": "3D spatial coordinates of the character's position in the game world"
                 }
             }
@@ -1861,6 +1941,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                         "object",
                         "array"
                     ],
+                    "nullable": true,
                     "description": "Type of the resolved value"
                 },
                 "contextVariablesUsed": {
@@ -1868,6 +1949,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "List of context variables referenced in the expression"
                 }
             }
@@ -1949,6 +2031,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "agentId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Unique identifier for the agent requesting the plan"
                 },
                 "goal": {
@@ -1971,6 +2054,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "options": {
                     "$ref": "#/$defs/GoapPlanningOptions",
+                    "nullable": true,
                     "description": "Options controlling the planning process"
                 }
             }
@@ -1992,6 +2076,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "description": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Human-readable description of the goal"
                 },
                 "conditions": {
@@ -2016,6 +2101,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "World state conditions required to pursue this goal"
                 }
             }
@@ -2065,6 +2151,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "plan": {
                     "$ref": "#/$defs/GoapPlanResult",
+                    "nullable": true,
                     "description": "The generated plan if successful"
                 },
                 "planningTimeMs": {
@@ -2077,6 +2164,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "failureReason": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Reason for planning failure if unsuccessful",
                     "example": "No plan found - goal unreachable"
                 }
@@ -2228,6 +2316,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "$ref": "#/$defs/GoapGoal"
                     },
+                    "nullable": true,
                     "description": "All active goals for priority checking"
                 }
             }
@@ -2302,6 +2391,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "description": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Human-readable description of the goal"
                 },
                 "conditions": {
@@ -2326,6 +2416,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "additionalProperties": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "World state conditions required to pursue this goal"
                 }
             }

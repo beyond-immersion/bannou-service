@@ -44,6 +44,7 @@ components:
         roles: &id005
           type: array
           items: {type: string}
+          nullable: true
           description: "List of roles assigned to the account"
         createdAt: &id006
           type: string
@@ -52,10 +53,12 @@ components:
         updatedAt: &id007
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the account was last updated"
         metadata: &id008
           type: object
           additionalProperties: true
+          nullable: true
           description: "Additional metadata associated with the account"
     AccountUpdatedEvent:
       allOf:

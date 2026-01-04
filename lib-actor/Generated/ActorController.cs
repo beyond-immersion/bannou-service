@@ -404,6 +404,16 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing actor template details",
+            "required": [
+                "templateId",
+                "category",
+                "behaviorRef",
+                "tickIntervalMs",
+                "autoSaveIntervalSeconds",
+                "maxInstancesPerNode",
+                "createdAt",
+                "updatedAt"
+            ],
             "properties": {
                 "templateId": {
                     "type": "string",
@@ -569,6 +579,16 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing actor template details",
+            "required": [
+                "templateId",
+                "category",
+                "behaviorRef",
+                "tickIntervalMs",
+                "autoSaveIntervalSeconds",
+                "maxInstancesPerNode",
+                "createdAt",
+                "updatedAt"
+            ],
             "properties": {
                 "templateId": {
                     "type": "string",
@@ -733,6 +753,10 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing a list of actor templates",
+            "required": [
+                "templates",
+                "total"
+            ],
             "properties": {
                 "templates": {
                     "type": "array",
@@ -751,6 +775,16 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing actor template details",
+            "required": [
+                "templateId",
+                "category",
+                "behaviorRef",
+                "tickIntervalMs",
+                "autoSaveIntervalSeconds",
+                "maxInstancesPerNode",
+                "createdAt",
+                "updatedAt"
+            ],
             "properties": {
                 "templateId": {
                     "type": "string",
@@ -961,6 +995,16 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing actor template details",
+            "required": [
+                "templateId",
+                "category",
+                "behaviorRef",
+                "tickIntervalMs",
+                "autoSaveIntervalSeconds",
+                "maxInstancesPerNode",
+                "createdAt",
+                "updatedAt"
+            ],
             "properties": {
                 "templateId": {
                     "type": "string",
@@ -1128,6 +1172,10 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response confirming template deletion",
+            "required": [
+                "deleted",
+                "stoppedActorCount"
+            ],
             "properties": {
                 "deleted": {
                     "type": "boolean",
@@ -1253,6 +1301,14 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing actor instance details",
+            "required": [
+                "actorId",
+                "templateId",
+                "category",
+                "status",
+                "startedAt",
+                "loopIterations"
+            ],
             "properties": {
                 "actorId": {
                     "type": "string",
@@ -1408,6 +1464,14 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing actor instance details",
+            "required": [
+                "actorId",
+                "templateId",
+                "category",
+                "status",
+                "startedAt",
+                "loopIterations"
+            ],
             "properties": {
                 "actorId": {
                     "type": "string",
@@ -1568,6 +1632,10 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response confirming actor stop operation",
+            "required": [
+                "stopped",
+                "finalStatus"
+            ],
             "properties": {
                 "stopped": {
                     "type": "boolean",
@@ -1718,6 +1786,10 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing a list of actor instances",
+            "required": [
+                "actors",
+                "total"
+            ],
             "properties": {
                 "actors": {
                     "type": "array",
@@ -1736,6 +1808,14 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response containing actor instance details",
+            "required": [
+                "actorId",
+                "templateId",
+                "category",
+                "status",
+                "startedAt",
+                "loopIterations"
+            ],
             "properties": {
                 "actorId": {
                     "type": "string",
@@ -1934,6 +2014,10 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "description": "Response confirming perception injection",
+            "required": [
+                "queued",
+                "queueDepth"
+            ],
             "properties": {
                 "queued": {
                     "type": "boolean",

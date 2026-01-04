@@ -80,7 +80,7 @@ public partial class CompileBehaviorRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorName")]
-    public string BehaviorName { get; set; } = default!;
+    public string? BehaviorName { get; set; } = default!;
 
     /// <summary>
     /// Category for organizing behaviors (e.g., profession, cultural, situational).
@@ -89,7 +89,7 @@ public partial class CompileBehaviorRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorCategory")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CompileBehaviorRequestBehaviorCategory BehaviorCategory { get; set; } = default!;
+    public CompileBehaviorRequestBehaviorCategory? BehaviorCategory { get; set; } = default!;
 
     /// <summary>
     /// Optional bundle identifier for grouping related behaviors.
@@ -99,19 +99,19 @@ public partial class CompileBehaviorRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string BundleId { get; set; } = default!;
+    public string? BundleId { get; set; } = default!;
 
     /// <summary>
     /// Character context for context variable resolution during compilation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
-    public CharacterContext CharacterContext { get; set; } = default!;
+    public CharacterContext? CharacterContext { get; set; } = default!;
 
     /// <summary>
     /// Options controlling the compilation process
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compilationOptions")]
-    public CompilationOptions CompilationOptions { get; set; } = default!;
+    public CompilationOptions? CompilationOptions { get; set; } = default!;
 
 }
 
@@ -134,13 +134,13 @@ public partial class BehaviorStackRequest
     /// Character context for context variable resolution during compilation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
-    public CharacterContext CharacterContext { get; set; } = default!;
+    public CharacterContext? CharacterContext { get; set; } = default!;
 
     /// <summary>
     /// Options controlling the compilation process
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compilationOptions")]
-    public CompilationOptions CompilationOptions { get; set; } = default!;
+    public CompilationOptions? CompilationOptions { get; set; } = default!;
 
 }
 
@@ -217,13 +217,13 @@ public partial class CompileBehaviorResponse
     /// Human-readable name of the behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorName")]
-    public string BehaviorName { get; set; } = default!;
+    public string? BehaviorName { get; set; } = default!;
 
     /// <summary>
     /// The compiled behavior data including behavior tree and metadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compiledBehavior")]
-    public CompiledBehavior CompiledBehavior { get; set; } = default!;
+    public CompiledBehavior? CompiledBehavior { get; set; } = default!;
 
     /// <summary>
     /// Time taken to compile the behavior in milliseconds
@@ -253,7 +253,7 @@ public partial class CompileBehaviorResponse
     /// Non-fatal warnings during compilation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("warnings")]
-    public System.Collections.Generic.ICollection<string> Warnings { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Warnings { get; set; } = default!;
 
 }
 
@@ -274,19 +274,19 @@ public partial class ValidateAbmlResponse
     /// List of validation errors if invalid
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("validationErrors")]
-    public System.Collections.Generic.ICollection<ValidationError> ValidationErrors { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ValidationError>? ValidationErrors { get; set; } = default!;
 
     /// <summary>
     /// Semantic warnings that don't prevent compilation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("semanticWarnings")]
-    public System.Collections.Generic.ICollection<string> SemanticWarnings { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? SemanticWarnings { get; set; } = default!;
 
     /// <summary>
     /// ABML schema version used for validation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    public string SchemaVersion { get; set; } = default!;
+    public string? SchemaVersion { get; set; } = default!;
 
 }
 
@@ -317,7 +317,7 @@ public partial class CachedBehaviorResponse
     /// When the behavior was cached
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cacheTimestamp")]
-    public System.DateTimeOffset CacheTimestamp { get; set; } = default!;
+    public System.DateTimeOffset? CacheTimestamp { get; set; } = default!;
 
     /// <summary>
     /// Whether this was a cache hit or miss
@@ -347,13 +347,13 @@ public partial class ResolveContextResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resolvedType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ResolveContextResponseResolvedType ResolvedType { get; set; } = default!;
+    public ResolveContextResponseResolvedType? ResolvedType { get; set; } = default!;
 
     /// <summary>
     /// List of context variables referenced in the expression
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contextVariablesUsed")]
-    public System.Collections.Generic.ICollection<string> ContextVariablesUsed { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ContextVariablesUsed { get; set; } = default!;
 
 }
 
@@ -384,7 +384,7 @@ public partial class BehaviorSetDefinition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BehaviorSetDefinitionCategory Category { get; set; } = default!;
+    public BehaviorSetDefinitionCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Raw ABML YAML content for this behavior set
@@ -398,7 +398,7 @@ public partial class BehaviorSetDefinition
     /// Additional metadata for the behavior set
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
 }
 
@@ -413,49 +413,49 @@ public partial class CharacterContext
     /// Unique identifier for the NPC
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("npcId")]
-    public string NpcId { get; set; } = default!;
+    public string? NpcId { get; set; } = default!;
 
     /// <summary>
     /// Cultural background identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("culture")]
-    public string Culture { get; set; } = default!;
+    public string? Culture { get; set; } = default!;
 
     /// <summary>
     /// Character profession identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("profession")]
-    public string Profession { get; set; } = default!;
+    public string? Profession { get; set; } = default!;
 
     /// <summary>
     /// Character statistics and attributes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stats")]
-    public System.Collections.Generic.IDictionary<string, double> Stats { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, double>? Stats { get; set; } = default!;
 
     /// <summary>
     /// Character skill levels
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("skills")]
-    public System.Collections.Generic.IDictionary<string, double> Skills { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, double>? Skills { get; set; } = default!;
 
     /// <summary>
     /// Current location information for the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("location")]
-    public Location Location { get; set; } = default!;
+    public Location? Location { get; set; } = default!;
 
     /// <summary>
     /// Relationship values with other characters
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationships")]
-    public System.Collections.Generic.IDictionary<string, double> Relationships { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, double>? Relationships { get; set; } = default!;
 
     /// <summary>
     /// Relevant world state information
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("worldState")]
-    public object WorldState { get; set; } = default!;
+    public object? WorldState { get; set; } = default!;
 
 }
 
@@ -470,7 +470,7 @@ public partial class BehaviorTreeData
     /// Base64-encoded compiled bytecode for the behavior tree
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bytecode")]
-    public string Bytecode { get; set; } = default!;
+    public string? Bytecode { get; set; } = default!;
 
     /// <summary>
     /// Size of the bytecode in bytes
@@ -482,7 +482,7 @@ public partial class BehaviorTreeData
     /// URL to download the compiled behavior asset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
-    public string DownloadUrl { get; set; } = default!;
+    public string? DownloadUrl { get; set; } = default!;
 
 }
 
@@ -534,19 +534,19 @@ public partial class CompiledBehavior
     /// List of required services for this behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceDependencies")]
-    public System.Collections.Generic.ICollection<string> ServiceDependencies { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ServiceDependencies { get; set; } = default!;
 
     /// <summary>
     /// GOAP goals extracted from the behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("goapGoals")]
-    public System.Collections.Generic.ICollection<GoapGoal> GoapGoals { get; set; } = default!;
+    public System.Collections.Generic.ICollection<GoapGoal>? GoapGoals { get; set; } = default!;
 
     /// <summary>
     /// Metadata for behavior execution including performance hints and resource requirements
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("executionMetadata")]
-    public ExecutionMetadata ExecutionMetadata { get; set; } = default!;
+    public ExecutionMetadata? ExecutionMetadata { get; set; } = default!;
 
 }
 
@@ -561,19 +561,19 @@ public partial class Location
     /// Current location name or identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("current")]
-    public string Current { get; set; } = default!;
+    public string? Current { get; set; } = default!;
 
     /// <summary>
     /// Region or zone the character is in
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("region")]
-    public string Region { get; set; } = default!;
+    public string? Region { get; set; } = default!;
 
     /// <summary>
     /// 3D spatial coordinates of the character's position in the game world
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("coordinates")]
-    public Coordinates Coordinates { get; set; } = default!;
+    public Coordinates? Coordinates { get; set; } = default!;
 
 }
 
@@ -621,13 +621,13 @@ public partial class ExecutionMetadata
     /// Resource requirements for behavior execution
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resourceRequirements")]
-    public System.Collections.Generic.IDictionary<string, double> ResourceRequirements { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, double>? ResourceRequirements { get; set; } = default!;
 
     /// <summary>
     /// Conditions that can interrupt behavior execution
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("interruptConditions")]
-    public System.Collections.Generic.ICollection<string> InterruptConditions { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? InterruptConditions { get; set; } = default!;
 
 }
 
@@ -650,7 +650,7 @@ public partial class GoapGoal
     /// Human-readable description of the goal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
     /// World state conditions that satisfy this goal (literal conditions)
@@ -671,7 +671,7 @@ public partial class GoapGoal
     /// World state conditions required to pursue this goal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preconditions")]
-    public System.Collections.Generic.IDictionary<string, string> Preconditions { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Preconditions { get; set; } = default!;
 
 }
 
@@ -686,7 +686,7 @@ public partial class GoapPlanRequest
     /// Unique identifier for the agent requesting the plan
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("agentId")]
-    public string AgentId { get; set; } = default!;
+    public string? AgentId { get; set; } = default!;
 
     /// <summary>
     /// The goal to achieve through planning
@@ -716,7 +716,7 @@ public partial class GoapPlanRequest
     /// Options controlling the planning process
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("options")]
-    public GoapPlanningOptions Options { get; set; } = default!;
+    public GoapPlanningOptions? Options { get; set; } = default!;
 
 }
 
@@ -737,7 +737,7 @@ public partial class GoapPlanResponse
     /// The generated plan if successful
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("plan")]
-    public GoapPlanResult Plan { get; set; } = default!;
+    public GoapPlanResult? Plan { get; set; } = default!;
 
     /// <summary>
     /// Time spent planning in milliseconds
@@ -755,7 +755,7 @@ public partial class GoapPlanResponse
     /// Reason for planning failure if unsuccessful
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failureReason")]
-    public string FailureReason { get; set; } = default!;
+    public string? FailureReason { get; set; } = default!;
 
 }
 
@@ -852,7 +852,7 @@ public partial class ValidateGoapPlanRequest
     /// All active goals for priority checking
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("activeGoals")]
-    public System.Collections.Generic.ICollection<GoapGoal> ActiveGoals { get; set; } = default!;
+    public System.Collections.Generic.ICollection<GoapGoal>? ActiveGoals { get; set; } = default!;
 
 }
 
@@ -1007,7 +1007,7 @@ public partial class ValidationError
     /// YAML path to the problematic element
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("yamlPath")]
-    public string YamlPath { get; set; } = default!;
+    public string? YamlPath { get; set; } = default!;
 
 }
 
@@ -1030,19 +1030,19 @@ public partial class AbmlErrorResponse
     /// Specific error code for programmatic handling
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
-    public string ErrorCode { get; set; } = default!;
+    public string? ErrorCode { get; set; } = default!;
 
     /// <summary>
     /// Detailed error information
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("details")]
-    public System.Collections.Generic.ICollection<string> Details { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Details { get; set; } = default!;
 
     /// <summary>
     /// Validation errors encountered
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("validationErrors")]
-    public System.Collections.Generic.ICollection<ValidationError> ValidationErrors { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ValidationError>? ValidationErrors { get; set; } = default!;
 
     /// <summary>
     /// Line number in YAML where error occurred
@@ -1054,19 +1054,19 @@ public partial class AbmlErrorResponse
     /// Additional context about the error
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("context")]
-    public object Context { get; set; } = default!;
+    public object? Context { get; set; } = default!;
 
     /// <summary>
     /// When the error occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public System.DateTimeOffset? Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for the failed request
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requestId")]
-    public string RequestId { get; set; } = default!;
+    public string? RequestId { get; set; } = default!;
 
 }
 

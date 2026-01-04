@@ -3,7 +3,12 @@
 openapi: 3.0.3
 info:
   title: State Service Configuration
-  description: "Configuration schema for State service.\nProperties are bound to environment variables with STATE_ prefix."
+  description: |
+    Configuration schema for State service.
+    Properties are bound to environment variables with STATE_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 
@@ -19,10 +24,12 @@ x-service-configuration:
       default: false
     RedisConnectionString:
       type: string
+      nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
       description: Redis connection string (host:port format) for Redis-backed state stores
       env: REDIS_CONNECTION_STRING
     MySqlConnectionString:
       type: string
+      nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
       description: MySQL connection string for MySQL-backed state stores
       env: MYSQL_CONNECTION_STRING
     ConnectionTimeoutSeconds:

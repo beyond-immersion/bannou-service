@@ -442,14 +442,15 @@ Document with code comments explaining the exception:
 1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IBannouService.cs`
    - Required before DI container is available to determine which plugins to load
 
-2. **ConfigureServices Bootstrap**: Reading config before service provider is built
-   - Example: `ASSET_PROCESSING_MODE` in `AssetServicePlugin.cs` to conditionally register hosted services
-   - Cannot use injected configuration because the service provider doesn't exist yet
-   - Must use canonical env var names defined in the service's configuration schema
-
-3. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
+2. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
    - Test infrastructure, not production code
    - Tests specifically testing configuration-binding may use `SetEnvironmentVariable`
+
+3. **Orchestrator Environment Forwarding**: `Environment.GetEnvironmentVariables()` in `OrchestratorService.cs`
+   - Forwards UNKNOWN configuration to deployed containers (orchestrator's core responsibility)
+   - Not reading config for orchestrator itself - forwarding to child containers
+   - Uses strict whitelist (`IsAllowedEnvironmentVariable`) and excludes per-container values
+   - Required because container deployments need inherited infrastructure config
 
 ### Pattern
 

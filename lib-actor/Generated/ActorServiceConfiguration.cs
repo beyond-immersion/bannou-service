@@ -57,13 +57,13 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
     /// Environment variable: ACTOR_POOL_NODE_ID
     /// </summary>
-    public string PoolNodeId { get; set; } = "";
+    public string? PoolNodeId { get; set; }
 
     /// <summary>
     /// Mesh app-id for routing commands to this pool node. Required when PoolNodeId is set.
     /// Environment variable: ACTOR_POOL_NODE_APP_ID
     /// </summary>
-    public string PoolNodeAppId { get; set; } = "";
+    public string? PoolNodeAppId { get; set; }
 
     /// <summary>
     /// Pool type this node belongs to: shared, npc-brain, event-coordinator, or custom category

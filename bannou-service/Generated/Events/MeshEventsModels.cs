@@ -65,7 +65,7 @@ public partial class MeshEndpointRegisteredEvent : BaseServiceEvent
     /// Services available on this endpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Services { get; set; } = default!;
 
 }
 

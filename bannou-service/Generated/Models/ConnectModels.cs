@@ -383,19 +383,19 @@ public partial class InternalProxyResponse
     /// JSON response from the target service (as string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("response")]
-    public string Response { get; set; } = default!;
+    public string? Response { get; set; } = default!;
 
     /// <summary>
     /// Response headers from the target service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("headers")]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Headers { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>>? Headers { get; set; } = default!;
 
     /// <summary>
     /// Error message if the request failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
-    public string Error { get; set; } = default!;
+    public string? Error { get; set; } = default!;
 
     /// <summary>
     /// Request execution time in milliseconds
@@ -672,7 +672,7 @@ public partial class ConnectionConfiguration
     /// Base64-encoded RSA public key for JWT validation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tokenPublicKey")]
-    public string TokenPublicKey { get; set; } = default!;
+    public string? TokenPublicKey { get; set; } = default!;
 
 }
 
@@ -697,19 +697,19 @@ public partial class SessionCapabilityUpdateEvent
     /// New capabilities added to the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("addedCapabilities")]
-    public System.Collections.Generic.ICollection<string> AddedCapabilities { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? AddedCapabilities { get; set; } = default!;
 
     /// <summary>
     /// Capabilities removed from the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedCapabilities")]
-    public System.Collections.Generic.ICollection<string> RemovedCapabilities { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RemovedCapabilities { get; set; } = default!;
 
     /// <summary>
     /// Services that had permission changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedServices")]
-    public System.Collections.Generic.ICollection<string> UpdatedServices { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? UpdatedServices { get; set; } = default!;
 
     /// <summary>
     /// New capability version number
@@ -721,7 +721,7 @@ public partial class SessionCapabilityUpdateEvent
     /// When these capabilities expire and need refresh
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
 
@@ -763,13 +763,13 @@ public partial class AuthEvent
     /// User ID associated with the session (optional for some events)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("userId")]
-    public string UserId { get; set; } = default!;
+    public string? UserId { get; set; } = default!;
 
     /// <summary>
     /// Additional event metadata (device info, location, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
 }
 
@@ -817,7 +817,7 @@ public partial class ClientMessageEvent
     /// Name of the service sending the message
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = default!;
+    public string? ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service GUID for routing
@@ -858,7 +858,7 @@ public partial class ClientMessageEvent
     /// When the message was sent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public System.DateTimeOffset? Timestamp { get; set; } = default!;
 
 }
 
@@ -883,7 +883,7 @@ public partial class ClientRPCEvent
     /// Name of the service making the RPC call
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = default!;
+    public string? ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service GUID for routing
@@ -938,7 +938,7 @@ public partial class ClientRPCEvent
     /// When the RPC was initiated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public System.DateTimeOffset? Timestamp { get; set; } = default!;
 
 }
 
@@ -963,13 +963,13 @@ public partial class ClientRPCResponseEvent
     /// Name of the service that initiated the RPC
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = default!;
+    public string? ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service GUID from the original RPC
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
-    public System.Guid ServiceGuid { get; set; } = default!;
+    public System.Guid? ServiceGuid { get; set; } = default!;
 
     /// <summary>
     /// Message ID for correlation with original request
@@ -995,7 +995,7 @@ public partial class ClientRPCResponseEvent
     /// When the response was received
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public System.DateTimeOffset? Timestamp { get; set; } = default!;
 
 }
 
@@ -1037,13 +1037,13 @@ public partial class PermissionRecompileEvent
     /// Service ID that triggered the recompilation (if applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    public string ServiceId { get; set; } = default!;
+    public string? ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Additional context for the recompilation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
 }
 

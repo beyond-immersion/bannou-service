@@ -6,6 +6,9 @@ info:
     Connect receives session invalidation events to disconnect WebSocket clients.
     Connect also receives service error events to forward to admin WebSocket clients.
     Connect publishes session lifecycle events when clients connect/disconnect/reconnect.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.1.0
   x-event-subscriptions:
     # Session lifecycle events from Auth service

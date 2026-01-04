@@ -112,7 +112,62 @@ public partial class GameSessionPlayerLeftEvent
     /// Reason for leaving/being kicked (if applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    public string Reason { get; set; } = default!;
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a game action is performed in a session
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GameSessionActionPerformedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the action was performed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the action
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ActionId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of action performed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActionType { get; set; } = default!;
+
+    /// <summary>
+    /// Optional target entity ID for the action
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetId")]
+    public System.Guid? TargetId { get; set; } = default!;
 
 }
 

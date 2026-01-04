@@ -255,7 +255,7 @@ public partial class AuthResponse
     /// List of roles assigned to the authenticated user
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
     /// Whether the user needs to complete two-factor authentication
@@ -372,7 +372,7 @@ public partial class ValidateTokenResponse
     /// List of roles assigned to the authenticated user
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
     /// Authorization strings from active subscriptions.
@@ -380,7 +380,7 @@ public partial class ValidateTokenResponse
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
-    public System.Collections.Generic.ICollection<string> Authorizations { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Authorizations { get; set; } = default!;
 
     /// <summary>
     /// Seconds until expiration
@@ -463,7 +463,7 @@ public partial class SessionInfo
     /// IP address from which the session was initiated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
-    public string IpAddress { get; set; } = default!;
+    public string? IpAddress { get; set; } = default!;
 
     /// <summary>
     /// Geographic location derived from the IP address
@@ -485,13 +485,13 @@ public partial class DeviceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeviceInfoDeviceType DeviceType { get; set; } = default!;
+    public DeviceInfoDeviceType? DeviceType { get; set; } = default!;
 
     /// <summary>
     /// Operating system or platform name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platform")]
-    public string Platform { get; set; } = default!;
+    public string? Platform { get; set; } = default!;
 
     /// <summary>
     /// Browser name and version if applicable
@@ -584,7 +584,7 @@ public partial class RoutingPreferenceResponse
     /// The preferred Connect service instance ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preferredInstance")]
-    public string PreferredInstance { get; set; } = default!;
+    public string? PreferredInstance { get; set; } = default!;
 
 }
 
