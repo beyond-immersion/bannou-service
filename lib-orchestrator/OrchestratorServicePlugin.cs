@@ -87,8 +87,66 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
             return false;
         }
 
+        // Initialize default routes for all loaded services
+        // This ensures routing proxies (like OpenResty) have explicit routes from startup
+        // rather than falling back to hardcoded defaults.
+        await InitializeDefaultServiceRoutesAsync(stateManager);
+
         // Call base to resolve service and call IBannouService.OnStartAsync
         return await base.OnStartAsync();
+    }
+
+    /// <summary>
+    /// Known routable services. Infrastructure services (state, messaging, mesh) are excluded
+    /// as they must always be handled locally, never routed to external nodes.
+    /// </summary>
+    private static readonly string[] KnownRoutableServices =
+    {
+        "auth", "accounts", "connect", "website", "permissions",
+        "behavior", "character", "species", "realm", "location",
+        "relationship", "relationship-type", "subscriptions",
+        "game-session", "orchestrator", "documentation",
+        "servicedata", "voice", "asset", "actor"
+    };
+
+    /// <summary>
+    /// Initialize default routes for all known routable services.
+    /// Sets each service to route to the orchestrator's EffectiveAppId.
+    /// This ensures routing proxies like OpenResty have explicit routes from startup.
+    /// </summary>
+    private async Task InitializeDefaultServiceRoutesAsync(IOrchestratorStateManager stateManager)
+    {
+        try
+        {
+            var defaultAppId = Program.Configuration.EffectiveAppId;
+            var routesInitialized = 0;
+
+            foreach (var serviceName in KnownRoutableServices)
+            {
+                // Write default routing for this service
+                var defaultRouting = new ServiceRouting
+                {
+                    AppId = defaultAppId,
+                    Host = defaultAppId,
+                    Port = 80,
+                    Status = "healthy",
+                    LastUpdated = DateTimeOffset.UtcNow
+                };
+
+                await stateManager.WriteServiceRoutingAsync(serviceName, defaultRouting);
+                routesInitialized++;
+
+                Logger?.LogDebug("Initialized default route: {ServiceName} -> {AppId}", serviceName, defaultAppId);
+            }
+
+            Logger?.LogInformation(
+                "Initialized {Count} default service routes to '{AppId}' on orchestrator startup",
+                routesInitialized, defaultAppId);
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to initialize default service routes - routing may fall back to proxy defaults");
+        }
     }
 
     protected override async Task OnRunningAsync()

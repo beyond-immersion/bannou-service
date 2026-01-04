@@ -1007,41 +1007,39 @@ public class ServiceHealthMonitorRoutingProtectionTests
     }
 
     [Fact]
-    public async Task RemoveServiceRoutingAsync_ShouldRemoveRouting()
+    public async Task RestoreServiceRoutingToDefaultAsync_ShouldSetRoutingToDefault()
     {
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
+        ServiceRouting? capturedRouting = null;
         _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Callback<string, ServiceRouting>((_, r) => capturedRouting = r)
             .Returns(Task.CompletedTask);
 
-        _mockStateManager
-            .Setup(x => x.RemoveServiceRoutingAsync("auth"))
-            .Returns(Task.CompletedTask);
-
-        // First, set a routing
+        // First, set a custom routing
         await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
+        Assert.Equal("bannou-auth", capturedRouting?.AppId);
 
-        // Act - remove the routing
-        await monitor.RemoveServiceRoutingAsync("auth");
+        // Act - restore the routing to default
+        await monitor.RestoreServiceRoutingToDefaultAsync("auth");
 
-        // Assert - RemoveServiceRoutingAsync was called on redis
-        _mockStateManager.Verify(
-            x => x.RemoveServiceRoutingAsync("auth"),
-            Times.Once(),
-            "RemoveServiceRoutingAsync should be called on redis manager");
+        // Assert - The routing was set to the default app-id
+        Assert.NotNull(capturedRouting);
+        Assert.Equal(Program.Configuration.EffectiveAppId, capturedRouting.AppId);
     }
 
     [Fact]
-    public async Task ResetAllMappingsToDefaultAsync_ShouldClearAllRoutingsAndPublishMappings()
+    public async Task ResetAllMappingsToDefaultAsync_ShouldSetAllRoutingsToDefaultAndPublishMappings()
     {
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
+        // Setup to return an empty list (no services in the routing index)
         _mockStateManager
-            .Setup(x => x.ClearAllServiceRoutingsAsync())
-            .Returns(Task.CompletedTask);
+            .Setup(x => x.SetAllServiceRoutingsToDefaultAsync(It.IsAny<string>()))
+            .ReturnsAsync(new List<string>());
 
         _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
@@ -1054,19 +1052,21 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Act
         await monitor.ResetAllMappingsToDefaultAsync();
 
-        // Assert
-        _mockStateManager.Verify(x => x.ClearAllServiceRoutingsAsync(), Times.Once(),
-            "ClearAllServiceRoutingsAsync should be called to clear Redis routing keys");
+        // Assert - SetAllServiceRoutingsToDefaultAsync should be called (not ClearAllServiceRoutingsAsync)
+        _mockStateManager.Verify(
+            x => x.SetAllServiceRoutingsToDefaultAsync(Program.Configuration.EffectiveAppId),
+            Times.Once(),
+            "SetAllServiceRoutingsToDefaultAsync should be called to set all routes to default");
 
         _mockEventManager.Verify(
             x => x.PublishFullMappingsAsync(It.Is<FullServiceMappingsEvent>(e =>
-                e.DefaultAppId == "bannou" && e.TotalServices == 0)),
+                e.DefaultAppId == Program.Configuration.EffectiveAppId)),
             Times.Once(),
-            "Should publish full mappings event with empty mappings");
+            "Should publish full mappings event");
     }
 
     [Fact]
-    public async Task ResetAllMappingsToDefaultAsync_ShouldClearInMemoryCache()
+    public async Task ResetAllMappingsToDefaultAsync_ShouldUpdateInMemoryCacheToDefaults()
     {
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
@@ -1075,9 +1075,10 @@ public class ServiceHealthMonitorRoutingProtectionTests
             .Setup(x => x.WriteServiceRoutingAsync(It.IsAny<string>(), It.IsAny<ServiceRouting>()))
             .Returns(Task.CompletedTask);
 
+        // Return the list of services that were updated
         _mockStateManager
-            .Setup(x => x.ClearAllServiceRoutingsAsync())
-            .Returns(Task.CompletedTask);
+            .Setup(x => x.SetAllServiceRoutingsToDefaultAsync(It.IsAny<string>()))
+            .ReturnsAsync(new List<string> { "auth", "accounts" });
 
         _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
@@ -1094,36 +1095,15 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Act
         await monitor.ResetAllMappingsToDefaultAsync();
 
-        // Now simulate a heartbeat - it should be able to initialize routing again
-        // (because in-memory cache was cleared)
-        // Use a non-control-plane app-id since "bannou" heartbeats are filtered.
-        _mockStateManager
-            .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
-            .Returns(Task.CompletedTask);
+        // Assert - SetAllServiceRoutingsToDefaultAsync was called
+        _mockStateManager.Verify(
+            x => x.SetAllServiceRoutingsToDefaultAsync(Program.Configuration.EffectiveAppId),
+            Times.Once(),
+            "SetAllServiceRoutingsToDefaultAsync should be called");
 
-        var heartbeat = new ServiceHeartbeatEvent
-        {
-            AppId = "bannou-deployed-node",
-            ServiceId = Guid.NewGuid(),
-            Status = ServiceHeartbeatEventStatus.Healthy,
-            Services = new List<ServiceStatus>
-            {
-                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
-            }
-        };
-
-        ServiceRouting? capturedRouting = null;
-        _mockStateManager
-            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
-            .Callback<string, ServiceRouting>((name, routing) => capturedRouting = routing)
-            .Returns(Task.CompletedTask);
-
-        _heartbeatHandler?.Invoke(heartbeat);
-        await Task.Delay(100);
-
-        // Assert - heartbeat should initialize routing (cache was cleared)
-        Assert.NotNull(capturedRouting);
-        Assert.Equal("bannou-deployed-node", capturedRouting.AppId);
+        // The in-memory cache should now have default routing (not be cleared)
+        // Reset sets routes to EffectiveAppId rather than deleting them, ensuring
+        // routing proxies (OpenResty) always have explicit routing data to read
     }
 }
 

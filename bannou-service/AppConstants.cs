@@ -9,6 +9,11 @@ public static class AppConstants
     /// Default application name for service routing ("bannou" - omnipotent routing).
     /// Used when no specific app-id is configured for distributed deployment.
     /// </summary>
+    /// <remarks>
+    /// WARNING: For routing decisions, use <c>Program.Configuration.EffectiveAppId</c> instead!
+    /// This constant is only for internal fallback logic in <c>AppConfiguration.EffectiveAppId</c>.
+    /// Direct use of this constant bypasses configuration and can cause routing issues.
+    /// </remarks>
     public const string DEFAULT_APP_NAME = "bannou";
 
     /// <summary>

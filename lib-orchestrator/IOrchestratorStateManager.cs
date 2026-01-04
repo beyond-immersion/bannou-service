@@ -69,6 +69,16 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     Task ClearAllServiceRoutingsAsync();
 
     /// <summary>
+    /// Set all known service routings to the default app-id.
+    /// Unlike ClearAllServiceRoutingsAsync which deletes routes (causing fallback to hardcoded defaults),
+    /// this method explicitly sets each service to route to the specified default app-id.
+    /// This ensures routing proxies (like OpenResty) have explicit routes rather than relying on fallbacks.
+    /// </summary>
+    /// <param name="defaultAppId">The default app-id to route all services to (typically "bannou").</param>
+    /// <returns>List of service names that were set to default.</returns>
+    Task<List<string>> SetAllServiceRoutingsToDefaultAsync(string defaultAppId);
+
+    /// <summary>
     /// Get the current configuration version number.
     /// </summary>
     Task<int> GetConfigVersionAsync();

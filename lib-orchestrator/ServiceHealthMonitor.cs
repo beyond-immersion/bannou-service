@@ -239,36 +239,73 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     }
 
     /// <summary>
-    /// Remove service routing. Called by OrchestratorService during teardown.
+    /// Restore service routing to default. Called by OrchestratorService during teardown.
+    /// Instead of deleting the routing entry (which causes proxies to fall back to hardcoded defaults),
+    /// this sets the routing to the orchestrator's EffectiveAppId.
     /// </summary>
-    public async Task RemoveServiceRoutingAsync(string serviceName)
+    public async Task RestoreServiceRoutingToDefaultAsync(string serviceName)
     {
-        await _stateManager.RemoveServiceRoutingAsync(serviceName);
-        _currentRoutings.TryRemove(serviceName, out _);
+        var defaultAppId = Program.Configuration.EffectiveAppId;
+
+        // Set the routing to the default app-id instead of removing it
+        // This ensures routing proxies (like OpenResty) have an explicit route
+        // rather than falling back to hardcoded defaults.
+        var defaultRouting = new ServiceRouting
+        {
+            AppId = defaultAppId,
+            Host = defaultAppId,
+            Port = 80,
+            Status = "healthy",
+            LastUpdated = DateTimeOffset.UtcNow
+        };
+
+        await _stateManager.WriteServiceRoutingAsync(serviceName, defaultRouting);
+        _currentRoutings[serviceName] = defaultRouting;
         MarkRoutingChanged();
 
-        _logger.LogInformation("Removed routing for {ServiceName}", serviceName);
+        _logger.LogInformation(
+            "Restored routing for {ServiceName} to default app-id '{DefaultAppId}'",
+            serviceName, defaultAppId);
     }
 
     /// <summary>
-    /// Reset all service mappings to default ("bannou").
-    /// Clears all custom routing from Redis and in-memory cache, then publishes updated mappings.
+    /// Reset all service mappings to the orchestrator's effective app-id.
+    /// Sets all known service routings to the default app-id (does NOT delete them).
+    /// This ensures routing proxies like OpenResty have explicit routes rather than
+    /// falling back to hardcoded defaults.
     /// </summary>
     public async Task ResetAllMappingsToDefaultAsync()
     {
         try
         {
-            // Clear all service-specific routings from Redis
-            await _stateManager.ClearAllServiceRoutingsAsync();
+            // Use the orchestrator's effective app-id (from configuration, not hardcoded constant)
+            var defaultAppId = Program.Configuration.EffectiveAppId;
 
-            // Clear in-memory cache
-            _currentRoutings.Clear();
+            // Set all service routings to the default app-id (NOT delete them)
+            // This ensures OpenResty has explicit routes rather than
+            // falling back to hardcoded defaults when routes are missing.
+            var updatedServices = await _stateManager.SetAllServiceRoutingsToDefaultAsync(defaultAppId);
+
+            // Update in-memory cache to match - set each service to default routing
+            foreach (var serviceName in updatedServices)
+            {
+                _currentRoutings[serviceName] = new ServiceRouting
+                {
+                    AppId = defaultAppId,
+                    Host = defaultAppId,
+                    Port = 80,
+                    Status = "healthy",
+                    LastUpdated = DateTimeOffset.UtcNow
+                };
+            }
 
             // Mark routing changed and publish immediately
             MarkRoutingChanged();
             await PublishFullMappingsAsync("reset to default topology");
 
-            _logger.LogInformation("Reset all service mappings to default - all services now route to 'bannou'");
+            _logger.LogInformation(
+                "Reset {Count} service mappings to default app-id '{DefaultAppId}'",
+                updatedServices.Count, defaultAppId);
         }
         catch (Exception ex)
         {
@@ -345,7 +382,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Mappings = mappings,
-                DefaultAppId = AppConstants.DEFAULT_APP_NAME,
+                DefaultAppId = Program.Configuration.EffectiveAppId,
                 Version = version,
                 SourceInstanceId = _instanceId,
                 TotalServices = mappings.Count

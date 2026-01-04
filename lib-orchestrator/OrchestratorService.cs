@@ -848,7 +848,7 @@ public partial class OrchestratorService : IOrchestratorService
                             // Remove service routings that were set
                             foreach (var serviceName in rolledBackServices)
                             {
-                                await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
+                                await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
                             }
                         }
 
@@ -949,7 +949,7 @@ public partial class OrchestratorService : IOrchestratorService
 
                             foreach (var serviceName in rolledBackServices)
                             {
-                                await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
+                                await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
                             }
                         }
 
@@ -1375,7 +1375,7 @@ public partial class OrchestratorService : IOrchestratorService
                         : appName;
 
                     // Remove service routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
-                    await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
+                    await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
 
                     _logger.LogInformation(
                         "Service {AppName} torn down, routing removed",
@@ -1855,7 +1855,7 @@ public partial class OrchestratorService : IOrchestratorService
                                     if (teardownResult.Success)
                                     {
                                         // Remove routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
-                                        await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
+                                        await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
                                         removeNodeSucceeded++;
                                     }
                                     else

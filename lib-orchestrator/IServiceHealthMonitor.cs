@@ -34,9 +34,11 @@ public interface IServiceHealthMonitor
     Task SetServiceRoutingAsync(string serviceName, string appId);
 
     /// <summary>
-    /// Remove service routing. Called by OrchestratorService during teardown.
+    /// Restore service routing to default. Called by OrchestratorService during teardown.
+    /// Instead of deleting the routing entry (which causes proxies to fall back to hardcoded defaults),
+    /// this sets the routing to the orchestrator's EffectiveAppId.
     /// </summary>
-    Task RemoveServiceRoutingAsync(string serviceName);
+    Task RestoreServiceRoutingToDefaultAsync(string serviceName);
 
     /// <summary>
     /// Publish the complete service mappings to all bannou instances.
