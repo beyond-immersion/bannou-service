@@ -304,7 +304,9 @@ public class Program
         var timeout = TimeSpan.FromSeconds(60);
         var checkInterval = TimeSpan.FromSeconds(1);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var serviceUrl = Program.Configuration.EffectiveHttpEndpoint;
+        // IMPLEMENTATION TENETS exception: http-tester doesn't have access to service configuration
+        var serviceUrl = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_HTTP_ENDPOINT)
+            ?? "http://localhost:5012";
         var healthUrl = $"{serviceUrl}/health";
 
         Console.WriteLine($"Waiting for bannou service to be healthy (timeout: {timeout.TotalSeconds}s)...");

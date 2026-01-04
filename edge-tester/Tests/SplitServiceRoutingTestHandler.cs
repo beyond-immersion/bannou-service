@@ -26,23 +26,26 @@ namespace BeyondImmersion.EdgeTester.Tests;
 public class SplitServiceRoutingTestHandler : IServiceTestHandler
 {
     private const string SPLIT_PRESET = "split-auth-routing-test";
+    private const string RELAYED_CONNECT_PRESET = "relayed-connect";
     private const int DEPLOYMENT_TIMEOUT_SECONDS = 180; // Increased from 120 - CI deployments can take 90+ seconds
 
     // Test dependency tracking - tests check these before running
-    private static bool _deploymentSucceeded = false;
-    private static string? _deploymentError = null;
+    private static bool _splitDeploymentSucceeded = false;
+    private static string? _splitDeploymentError = null;
+    private static bool _relayedDeploymentSucceeded = false;
+    private static string? _relayedDeploymentError = null;
 
     /// <summary>
-    /// Checks if deployment succeeded. If not, logs skip message and returns false.
+    /// Checks if split deployment (auth/accounts) succeeded.
     /// </summary>
-    private static bool RequiresDeployment(string testName)
+    private static bool RequiresSplitDeployment(string testName)
     {
-        if (_deploymentSucceeded) return true;
+        if (_splitDeploymentSucceeded) return true;
 
-        Console.WriteLine($"   SKIPPED: {testName} requires successful deployment");
-        if (!string.IsNullOrEmpty(_deploymentError))
+        Console.WriteLine($"   SKIPPED: {testName} requires successful auth/accounts deployment");
+        if (!string.IsNullOrEmpty(_splitDeploymentError))
         {
-            Console.WriteLine($"   Deployment failed with: {_deploymentError}");
+            Console.WriteLine($"   Deployment failed with: {_splitDeploymentError}");
         }
         else
         {
@@ -51,11 +54,30 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         return false;
     }
 
+    /// <summary>
+    /// Checks if relayed-connect deployment succeeded.
+    /// </summary>
+    private static bool RequiresRelayedDeployment(string testName)
+    {
+        if (_relayedDeploymentSucceeded) return true;
+
+        Console.WriteLine($"   SKIPPED: {testName} requires successful relayed-connect deployment");
+        if (!string.IsNullOrEmpty(_relayedDeploymentError))
+        {
+            Console.WriteLine($"   Relayed deployment failed with: {_relayedDeploymentError}");
+        }
+        else
+        {
+            Console.WriteLine("   Relayed deployment has not been attempted or failed silently");
+        }
+        return false;
+    }
+
     public ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]
         {
-            // These tests run in sequence - deployment first, then validation, then cleanup
+            // Phase 1: Deploy auth/accounts split topology
             new ServiceTest(TestDeploySplitTopology, "SplitRouting - Deploy Split Topology", "Orchestrator",
                 "Deploy split-auth-routing-test preset via orchestrator (requires admin)"),
             new ServiceTest(TestConnectionSurvivedDeployment, "SplitRouting - Connection Survived", "WebSocket",
@@ -68,22 +90,33 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "Verify accounts API calls route to bannou-auth node"),
             new ServiceTest(TestConnectStillOnMainNode, "SplitRouting - Connect on Main", "Routing",
                 "Verify connect service still on bannou-main node"),
-            // CRITICAL: Cleanup MUST run last to reset service mappings for subsequent test runs
+
+            // Phase 2: Deploy relayed-connect and test peer-to-peer routing
+            new ServiceTest(TestDeployRelayedConnect, "RelayedConnect - Deploy", "Orchestrator",
+                "Deploy relayed-connect preset for peer-to-peer routing tests"),
+            new ServiceTest(TestPeerToPeerRouting, "RelayedConnect - Peer Routing", "PeerRouting",
+                "Test peer-to-peer routing between two WebSocket connections (requires Relayed mode)"),
+
+            // Phase 3: Cleanup and verify
             new ServiceTest(TestCleanupServiceMappings, "SplitRouting - Cleanup", "Orchestrator",
                 "Reset service mappings to default state via Clean API"),
+            new ServiceTest(TestVerifyNoPeerGuidAfterCleanup, "PostCleanup - No Peer GUID", "PeerRouting",
+                "Verify new connections have no peerGuid after cleanup (back to External mode)"),
         };
     }
 
     /// <summary>
     /// Deploy the split-auth-routing-test topology via orchestrator.
     /// Uses the admin WebSocket connection to call /orchestrator/deploy.
-    /// Sets _deploymentSucceeded flag for dependent tests.
+    /// Sets _splitDeploymentSucceeded flag for dependent tests.
     /// </summary>
     private void TestDeploySplitTopology(string[] args)
     {
         // Reset tracking state at start of test sequence
-        _deploymentSucceeded = false;
-        _deploymentError = null;
+        _splitDeploymentSucceeded = false;
+        _splitDeploymentError = null;
+        _relayedDeploymentSucceeded = false;
+        _relayedDeploymentError = null;
 
         Console.WriteLine("=== Deploy Split Topology Test ===");
         Console.WriteLine($"Deploying preset: {SPLIT_PRESET}");
@@ -92,13 +125,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var adminClient = Program.AdminClient;
         if (adminClient == null || !adminClient.IsConnected)
         {
-            _deploymentError = "Admin client not connected";
-            Console.WriteLine("❌ Admin client not connected - cannot deploy split topology");
+            _splitDeploymentError = "Admin client not connected";
+            Console.WriteLine("   Admin client not connected - cannot deploy split topology");
             Console.WriteLine("   Ensure admin credentials are configured and admin is authenticated.");
             return;
         }
 
-        Console.WriteLine($"✅ Admin client connected, session: {adminClient.SessionId}");
+        Console.WriteLine($"   Admin client connected, session: {adminClient.SessionId}");
 
         try
         {
@@ -106,19 +139,19 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (result)
             {
-                _deploymentSucceeded = true;
-                Console.WriteLine("✅ Split topology deployment PASSED");
+                _splitDeploymentSucceeded = true;
+                Console.WriteLine("PASSED: Split topology deployment succeeded");
             }
             else
             {
-                _deploymentError = "Deployment returned failure";
-                Console.WriteLine("❌ Split topology deployment FAILED");
+                _splitDeploymentError = "Deployment returned failure";
+                Console.WriteLine("FAILED: Split topology deployment failed");
             }
         }
         catch (Exception ex)
         {
-            _deploymentError = ex.Message;
-            Console.WriteLine($"❌ Split topology deployment FAILED with exception: {ex.Message}");
+            _splitDeploymentError = ex.Message;
+            Console.WriteLine($"FAILED: Split topology deployment failed with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -216,7 +249,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Connection Survived Deployment Test ===");
 
-        if (!RequiresDeployment("Connection survival test"))
+        if (!RequiresSplitDeployment("Connection survival test"))
             return;
 
         var client = Program.Client;
@@ -272,7 +305,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Service Mappings Updated Test ===");
 
-        if (!RequiresDeployment("Service mappings test"))
+        if (!RequiresSplitDeployment("Service mappings test"))
             return;
 
         var adminClient = Program.AdminClient;
@@ -413,7 +446,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Auth Routes to Split Node Test ===");
 
-        if (!RequiresDeployment("Auth routing test"))
+        if (!RequiresSplitDeployment("Auth routing test"))
             return;
 
         try
@@ -494,7 +527,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Accounts Routes to Split Node Test ===");
 
-        if (!RequiresDeployment("Accounts routing test"))
+        if (!RequiresSplitDeployment("Accounts routing test"))
             return;
 
         try
@@ -563,7 +596,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         Console.WriteLine("=== Connect Still on Main Node Test ===");
 
-        if (!RequiresDeployment("Connect routing test"))
+        if (!RequiresSplitDeployment("Connect routing test"))
             return;
 
         var client = Program.Client;
@@ -797,4 +830,436 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             return false;
         }
     }
+
+    #region Relayed Connect Tests
+
+    /// <summary>
+    /// Deploy the relayed-connect preset to enable peer-to-peer routing.
+    /// This adds a Connect service in Relayed mode to the topology.
+    /// </summary>
+    private void TestDeployRelayedConnect(string[] args)
+    {
+        Console.WriteLine("=== Deploy Relayed Connect Test ===");
+        Console.WriteLine($"Deploying preset: {RELAYED_CONNECT_PRESET}");
+
+        // Relayed deployment depends on split deployment succeeding
+        if (!RequiresSplitDeployment("Relayed Connect deployment"))
+            return;
+
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            _relayedDeploymentError = "Admin client not connected";
+            Console.WriteLine("FAILED: Admin client not connected");
+            return;
+        }
+
+        try
+        {
+            var result = Task.Run(async () => await DeployRelayedConnectAsync(adminClient)).Result;
+
+            if (result)
+            {
+                _relayedDeploymentSucceeded = true;
+                Console.WriteLine("PASSED: Relayed Connect deployment succeeded");
+            }
+            else
+            {
+                _relayedDeploymentError = "Deployment returned failure";
+                Console.WriteLine("FAILED: Relayed Connect deployment failed");
+            }
+        }
+        catch (Exception ex)
+        {
+            _relayedDeploymentError = ex.Message;
+            Console.WriteLine($"FAILED: Relayed Connect deployment failed with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> DeployRelayedConnectAsync(BannouClient adminClient)
+    {
+        var deployRequest = new
+        {
+            preset = RELAYED_CONNECT_PRESET,
+            backend = "compose",
+            dryRun = false
+        };
+
+        Console.WriteLine($"   Request: {BannouJson.Serialize(deployRequest)}");
+
+        try
+        {
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/orchestrator/deploy",
+                deployRequest,
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
+
+            var content = response.GetRawText();
+            Console.WriteLine($"   Response: {content}");
+
+            var responseObj = JsonNode.Parse(content);
+            var success = responseObj?["success"]?.GetValue<bool>() ?? false;
+            var message = responseObj?["message"]?.GetValue<string>();
+
+            Console.WriteLine($"   Success: {success}");
+            Console.WriteLine($"   Message: {message}");
+
+            if (success)
+            {
+                Console.WriteLine("   Waiting for Relayed Connect to stabilize...");
+                await Task.Delay(5000); // Give time for the new Connect node to start
+                return true;
+            }
+
+            return false;
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine("   Deploy endpoint not available in capability manifest");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Deploy request failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Test peer-to-peer routing after relayed-connect deployment.
+    /// Creates two new WebSocket connections, verifies both get peerGuid,
+    /// and tests bidirectional message routing between them.
+    /// </summary>
+    private void TestPeerToPeerRouting(string[] args)
+    {
+        Console.WriteLine("=== Peer-to-Peer Routing Test (Relayed Mode) ===");
+
+        if (!RequiresRelayedDeployment("Peer-to-peer routing test"))
+            return;
+
+        try
+        {
+            var result = Task.Run(async () => await PerformPeerToPeerRoutingTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("PASSED: Peer-to-peer routing test succeeded");
+            }
+            else
+            {
+                Console.WriteLine("FAILED: Peer-to-peer routing test failed");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED: Peer-to-peer routing test failed with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformPeerToPeerRoutingTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return false;
+        }
+
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
+
+        // Create two test accounts for peer routing
+        var peer1Token = await CreateTestAccountForPeerTest("peer1");
+        var peer2Token = await CreateTestAccountForPeerTest("peer2");
+
+        if (peer1Token == null || peer2Token == null)
+        {
+            Console.WriteLine("   Failed to create test accounts");
+            return false;
+        }
+
+        // Connect both peers and get their peerGuids
+        var (ws1, peerGuid1) = await ConnectAndGetPeerGuidForTest(peer1Token, "Peer1");
+        var (ws2, peerGuid2) = await ConnectAndGetPeerGuidForTest(peer2Token, "Peer2");
+
+        try
+        {
+            if (ws1 == null || ws2 == null)
+            {
+                Console.WriteLine("   Failed to establish WebSocket connections");
+                return false;
+            }
+
+            // In Relayed mode, both should have peerGuids
+            if (peerGuid1 == null || peerGuid2 == null)
+            {
+                Console.WriteLine("   FAILED: No peerGuid received - Connect may not be in Relayed mode");
+                Console.WriteLine($"   Peer1 peerGuid: {peerGuid1?.ToString() ?? "null"}");
+                Console.WriteLine($"   Peer2 peerGuid: {peerGuid2?.ToString() ?? "null"}");
+                return false;
+            }
+
+            Console.WriteLine($"   Peer1 peerGuid: {peerGuid1}");
+            Console.WriteLine($"   Peer2 peerGuid: {peerGuid2}");
+
+            // Test A -> B routing
+            Console.WriteLine("   Step 1: Peer1 -> Peer2");
+            var message1To2 = PeerRoutingTestHandler.CreatePeerMessage(peerGuid2.Value, "Hello from Peer1!", 1);
+            await ws1.SendAsync(new ArraySegment<byte>(message1To2), WebSocketMessageType.Binary, true, CancellationToken.None);
+
+            var (received1, code1) = await PeerRoutingTestHandler.ReceivePeerMessageAsync(ws2, "Peer2");
+            if (received1 == null || !received1.Contains("Hello from Peer1!"))
+            {
+                Console.WriteLine($"   FAILED: Peer2 didn't receive message from Peer1 (code: {code1})");
+                return false;
+            }
+            Console.WriteLine($"   Peer2 received: {received1}");
+
+            // Test B -> A routing
+            Console.WriteLine("   Step 2: Peer2 -> Peer1");
+            var message2To1 = PeerRoutingTestHandler.CreatePeerMessage(peerGuid1.Value, "Hello from Peer2!", 2);
+            await ws2.SendAsync(new ArraySegment<byte>(message2To1), WebSocketMessageType.Binary, true, CancellationToken.None);
+
+            var (received2, code2) = await PeerRoutingTestHandler.ReceivePeerMessageAsync(ws1, "Peer1");
+            if (received2 == null || !received2.Contains("Hello from Peer2!"))
+            {
+                Console.WriteLine($"   FAILED: Peer1 didn't receive message from Peer2 (code: {code2})");
+                return false;
+            }
+            Console.WriteLine($"   Peer1 received: {received2}");
+
+            Console.WriteLine("   Bidirectional peer routing successful!");
+            return true;
+        }
+        finally
+        {
+            await CloseWebSocketSafely(ws1);
+            await CloseWebSocketSafely(ws2);
+        }
+    }
+
+    /// <summary>
+    /// Verify that after cleanup, new connections no longer receive peerGuid.
+    /// This confirms the system is back to External mode.
+    /// </summary>
+    private void TestVerifyNoPeerGuidAfterCleanup(string[] args)
+    {
+        Console.WriteLine("=== Verify No Peer GUID After Cleanup ===");
+        Console.WriteLine("Verifying new connections are back to External mode (no peerGuid)...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformNoPeerGuidVerification()).Result;
+            if (result)
+            {
+                Console.WriteLine("PASSED: No peerGuid in manifest - back to External mode");
+            }
+            else
+            {
+                Console.WriteLine("FAILED: Unexpected peerGuid present after cleanup");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED: Post-cleanup verification failed with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformNoPeerGuidVerification()
+    {
+        var token = await CreateTestAccountForPeerTest("postcleanup");
+        if (token == null)
+        {
+            Console.WriteLine("   Failed to create test account");
+            return false;
+        }
+
+        var (ws, peerGuid) = await ConnectAndGetPeerGuidForTest(token, "PostCleanup");
+
+        try
+        {
+            if (ws == null)
+            {
+                Console.WriteLine("   Failed to establish WebSocket connection");
+                return false;
+            }
+
+            // After cleanup, should be back to External mode - no peerGuid
+            if (peerGuid != null && peerGuid != Guid.Empty)
+            {
+                Console.WriteLine($"   UNEXPECTED: peerGuid present ({peerGuid}) after cleanup");
+                Console.WriteLine("   System may still be in Relayed mode");
+                return false;
+            }
+
+            Console.WriteLine("   Confirmed: No peerGuid in manifest (External mode restored)");
+            return true;
+        }
+        finally
+        {
+            await CloseWebSocketSafely(ws);
+        }
+    }
+
+    #endregion
+
+    #region Peer Test Helpers
+
+    /// <summary>
+    /// Creates a test account and returns the access token.
+    /// </summary>
+    private async Task<string?> CreateTestAccountForPeerTest(string testPrefix)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return null;
+        }
+
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
+        var testPassword = $"{testPrefix}Test123!";
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                BannouJson.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return null;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("   No accessToken in registration response");
+                return null;
+            }
+
+            Console.WriteLine($"   Created test account: {testEmail}");
+            return accessToken;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Connects to WebSocket and extracts peerGuid from capability manifest.
+    /// </summary>
+    private async Task<(ClientWebSocket? webSocket, Guid? peerGuid)> ConnectAndGetPeerGuidForTest(string accessToken, string connectionName)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine($"   [{connectionName}] Configuration not available");
+            return (null, null);
+        }
+
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
+        var webSocket = new ClientWebSocket();
+        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+        try
+        {
+            Console.WriteLine($"   [{connectionName}] Connecting to {serverUri}...");
+            await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+
+            if (webSocket.State != WebSocketState.Open)
+            {
+                Console.WriteLine($"   [{connectionName}] WebSocket in unexpected state: {webSocket.State}");
+                return (null, null);
+            }
+
+            // Wait for capability manifest
+            var buffer = new ArraySegment<byte>(new byte[65536]);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            var result = await webSocket.ReceiveAsync(buffer, cts.Token);
+            if (result.Count == 0)
+            {
+                Console.WriteLine($"   [{connectionName}] Empty response received");
+                return (webSocket, null);
+            }
+
+            if (result.Count < BinaryMessage.HeaderSize)
+            {
+                Console.WriteLine($"   [{connectionName}] Message too short for header");
+                return (webSocket, null);
+            }
+
+            var payloadBytes = buffer.Array![(BinaryMessage.HeaderSize)..result.Count];
+            var payloadJson = Encoding.UTF8.GetString(payloadBytes);
+            var manifestObj = JsonNode.Parse(payloadJson)?.AsObject();
+
+            if (manifestObj == null)
+            {
+                Console.WriteLine($"   [{connectionName}] Failed to parse manifest JSON");
+                return (webSocket, null);
+            }
+
+            var eventName = manifestObj["eventName"]?.GetValue<string>();
+            if (eventName != "connect.capability_manifest")
+            {
+                Console.WriteLine($"   [{connectionName}] Unexpected event type: {eventName}");
+                return (webSocket, null);
+            }
+
+            var peerGuidStr = manifestObj["peerGuid"]?.GetValue<string>();
+            if (string.IsNullOrEmpty(peerGuidStr) || !Guid.TryParse(peerGuidStr, out var peerGuid))
+            {
+                Console.WriteLine($"   [{connectionName}] No peerGuid in capability manifest (External mode)");
+                return (webSocket, null);
+            }
+
+            Console.WriteLine($"   [{connectionName}] Received peerGuid: {peerGuid}");
+            return (webSocket, peerGuid);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   [{connectionName}] Connection failed: {ex.Message}");
+            webSocket.Dispose();
+            return (null, null);
+        }
+    }
+
+    /// <summary>
+    /// Safely closes a WebSocket connection.
+    /// </summary>
+    private static async Task CloseWebSocketSafely(ClientWebSocket? webSocket)
+    {
+        if (webSocket == null) return;
+        try
+        {
+            if (webSocket.State == WebSocketState.Open)
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
+            }
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+        finally
+        {
+            webSocket.Dispose();
+        }
+    }
+
+    #endregion
 }

@@ -435,7 +435,7 @@ All serialization via `BannouJson` uses these settings:
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
 5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
 
-### Allowed Exceptions (3 Categories)
+### Allowed Exceptions (4 Categories)
 
 Document with code comments explaining the exception:
 
@@ -451,6 +451,11 @@ Document with code comments explaining the exception:
    - Not reading config for orchestrator itself - forwarding to child containers
    - Uses strict whitelist (`IsAllowedEnvironmentVariable`) and excludes per-container values
    - Required because container deployments need inherited infrastructure config
+
+4. **Integration Test Runners**: `BANNOU_HTTP_ENDPOINT`, `BANNOU_APP_ID` in `http-tester/` and `edge-tester/`
+   - Standalone test harnesses without access to bannou-service's DI or configuration system
+   - Use `AppConstants.ENV_*` for env var names, not hardcoded strings
+   - Must provide sensible defaults (e.g., `?? "http://localhost:5012"`)
 
 ### Pattern
 

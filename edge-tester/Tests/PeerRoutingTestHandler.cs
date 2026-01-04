@@ -8,9 +8,13 @@ using System.Text.Json.Nodes;
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
-/// Tests for peer-to-peer routing via WebSocket.
-/// Two WebSocket connections on the same Connect node can route messages
-/// directly to each other using peer GUIDs with the Client flag (0x20).
+/// Tests for External mode WebSocket behavior - no peer-to-peer routing.
+/// These tests run BEFORE any orchestrator deployment and verify:
+/// 1. External mode (default) does NOT include peerGuid in capability manifest
+/// 2. Using a fake peerGuid with Client flag is rejected
+///
+/// Relayed mode tests (actual peer-to-peer routing) are in SplitServiceRoutingTestHandler,
+/// which deploys the relayed-connect preset before testing peer routing.
 /// </summary>
 public class PeerRoutingTestHandler : IServiceTestHandler
 {
@@ -74,7 +78,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Establishes a WebSocket connection and receives the capability manifest.
-    /// Returns the WebSocket and parsed peerGuid from the manifest.
+    /// Returns the WebSocket and parsed peerGuid from the manifest (null if not present).
     /// </summary>
     private async Task<(ClientWebSocket? webSocket, Guid? peerGuid)> ConnectAndGetPeerGuidAsync(string accessToken, string connectionName)
     {
@@ -139,7 +143,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
             var peerGuidStr = manifestObj["peerGuid"]?.GetValue<string>();
             if (string.IsNullOrEmpty(peerGuidStr) || !Guid.TryParse(peerGuidStr, out var peerGuid))
             {
-                Console.WriteLine($"   [{connectionName}] No peerGuid in capability manifest");
+                Console.WriteLine($"   [{connectionName}] No peerGuid in capability manifest (External mode)");
                 return (webSocket, null);
             }
 
@@ -179,22 +183,19 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
     #endregion
 
+    /// <summary>
+    /// Returns External mode tests only.
+    /// Relayed mode tests are in SplitServiceRoutingTestHandler (after relayed-connect deployment).
+    /// </summary>
     public ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]
         {
-            // External mode test (default - no peer routing)
             new ServiceTest(TestExternalModeNoPeerGuid, "WebSocket - External Mode No Peer GUID", "PeerRouting",
                 "Test that External mode (default) does NOT include peerGuid in capability manifest"),
 
-            // Relayed mode tests - require Connect in Relayed mode (deployed via orchestrator preset)
-            // These tests will skip if peerGuid is not available (i.e., in External mode)
-            new ServiceTest(TestPeerToPeerRouting, "WebSocket - Peer-to-Peer Routing", "PeerRouting",
-                "Test routing messages between two WebSocket peers using Client flag (requires Relayed mode)"),
-            new ServiceTest(TestBidirectionalPeerRouting, "WebSocket - Bidirectional Peer Routing", "PeerRouting",
-                "Test bidirectional peer-to-peer communication between two connections (requires Relayed mode)"),
-            new ServiceTest(TestUnknownPeerGuidReturnsError, "WebSocket - Unknown Peer Error", "PeerRouting",
-                "Test that routing to an unknown peer GUID returns an error (requires Relayed mode)")
+            new ServiceTest(TestFakePeerGuidRejected, "WebSocket - Fake Peer GUID Rejected", "PeerRouting",
+                "Test that using a fake peerGuid with Client flag is rejected in External mode"),
         };
     }
 
@@ -250,7 +251,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
             if (peerGuid != null && peerGuid != Guid.Empty)
             {
                 Console.WriteLine($"   UNEXPECTED: peerGuid present ({peerGuid}) - Connect may be in Relayed mode");
-                Console.WriteLine("   NOTE: If Relayed mode is intended, this test should be skipped");
+                Console.WriteLine("   This test expects External mode (default)");
                 return false;
             }
 
@@ -263,259 +264,38 @@ public class PeerRoutingTestHandler : IServiceTestHandler
         }
     }
 
-    private void TestPeerToPeerRouting(string[] args)
+    /// <summary>
+    /// Tests that using a fake peerGuid with Client flag is rejected in External mode.
+    /// Even though peer routing isn't enabled, we should get a proper rejection.
+    /// </summary>
+    private void TestFakePeerGuidRejected(string[] args)
     {
-        Console.WriteLine("=== Peer-to-Peer Routing Test ===");
-        Console.WriteLine("Testing routing messages between two WebSocket peers...");
+        Console.WriteLine("=== Fake Peer GUID Rejected Test ===");
+        Console.WriteLine("Testing that fake peerGuid with Client flag is rejected in External mode...");
 
         try
         {
-            var result = Task.Run(async () => await PerformPeerToPeerRoutingTest()).Result;
+            var result = Task.Run(async () => await PerformFakePeerGuidRejectedTest()).Result;
             if (result)
             {
-                Console.WriteLine("PASSED: Peer-to-peer routing test PASSED");
+                Console.WriteLine("PASSED: Fake peerGuid correctly rejected");
             }
             else
             {
-                Console.WriteLine("FAILED: Peer-to-peer routing test FAILED");
+                Console.WriteLine("FAILED: Fake peerGuid rejection test failed");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED: Peer-to-peer routing test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"FAILED: Fake peerGuid rejection test failed with exception: {ex.Message}");
             Console.WriteLine($"   Stack trace: {ex.StackTrace}");
         }
     }
 
-    private async Task<bool> PerformPeerToPeerRoutingTest()
-    {
-        // Create two test accounts
-        var accessToken1 = await CreateTestAccountAsync("peer1");
-        var accessToken2 = await CreateTestAccountAsync("peer2");
-
-        if (string.IsNullOrEmpty(accessToken1) || string.IsNullOrEmpty(accessToken2))
-        {
-            Console.WriteLine("   Failed to create test accounts");
-            return false;
-        }
-
-        // Connect both accounts
-        var (webSocket1, peerGuid1) = await ConnectAndGetPeerGuidAsync(accessToken1, "Peer1");
-        var (webSocket2, peerGuid2) = await ConnectAndGetPeerGuidAsync(accessToken2, "Peer2");
-
-        try
-        {
-            if (webSocket1 == null || webSocket2 == null)
-            {
-                Console.WriteLine("   Failed to establish WebSocket connections");
-                return false;
-            }
-
-            if (peerGuid1 == null || peerGuid2 == null)
-            {
-                Console.WriteLine("   SKIPPED: No peerGuid in manifests - Connect is in External mode");
-                Console.WriteLine("   NOTE: Peer-to-peer routing requires Relayed mode (deploy via orchestrator preset)");
-                // Return true to mark as SKIPPED rather than FAILED
-                return true;
-            }
-
-            Console.WriteLine($"   Peer1 GUID: {peerGuid1}");
-            Console.WriteLine($"   Peer2 GUID: {peerGuid2}");
-
-            // Send a message from Peer1 to Peer2 using Client flag
-            var testPayload = BannouJson.Serialize(new { message = "Hello from Peer1!", testId = Guid.NewGuid().ToString() });
-            var payloadBytes = Encoding.UTF8.GetBytes(testPayload);
-            var messageId = (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-            var peerMessage = new BinaryMessage(
-                flags: MessageFlags.Client,  // Client flag for peer-to-peer routing
-                channel: 0,
-                sequenceNumber: 1,
-                serviceGuid: peerGuid2.Value,  // Target peer's GUID
-                messageId: messageId,
-                payload: payloadBytes
-            );
-
-            var messageBytes = peerMessage.ToByteArray();
-            Console.WriteLine($"   Sending message from Peer1 to Peer2 (GUID: {peerGuid2})...");
-
-            await webSocket1.SendAsync(
-                new ArraySegment<byte>(messageBytes),
-                WebSocketMessageType.Binary,
-                endOfMessage: true,
-                CancellationToken.None);
-
-            // Peer2 should receive the message
-            Console.WriteLine("   Waiting for Peer2 to receive message...");
-            var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
-            using var receiveCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-
-            var receiveResult = await webSocket2.ReceiveAsync(receiveBuffer, receiveCts.Token);
-
-            if (receiveResult.Count == 0)
-            {
-                Console.WriteLine("   Peer2 received empty response");
-                return false;
-            }
-
-            // Parse the received message
-            if (receiveResult.Count < BinaryMessage.HeaderSize)
-            {
-                Console.WriteLine($"   Received message too short: {receiveResult.Count} bytes");
-                return false;
-            }
-
-            var receivedPayloadBytes = receiveBuffer.Array![(BinaryMessage.HeaderSize)..receiveResult.Count];
-            var receivedPayloadJson = Encoding.UTF8.GetString(receivedPayloadBytes);
-
-            Console.WriteLine($"   Peer2 received: {receivedPayloadJson}");
-
-            // Verify the payload matches
-            if (!receivedPayloadJson.Contains("Hello from Peer1!"))
-            {
-                Console.WriteLine("   Received payload doesn't match sent message");
-                return false;
-            }
-
-            Console.WriteLine("   Peer-to-peer message routing successful!");
-            return true;
-        }
-        finally
-        {
-            await CloseWebSocketSafely(webSocket1);
-            await CloseWebSocketSafely(webSocket2);
-        }
-    }
-
-    private void TestBidirectionalPeerRouting(string[] args)
-    {
-        Console.WriteLine("=== Bidirectional Peer Routing Test ===");
-        Console.WriteLine("Testing bidirectional peer-to-peer communication...");
-
-        try
-        {
-            var result = Task.Run(async () => await PerformBidirectionalRoutingTest()).Result;
-            if (result)
-            {
-                Console.WriteLine("PASSED: Bidirectional peer routing test PASSED");
-            }
-            else
-            {
-                Console.WriteLine("FAILED: Bidirectional peer routing test FAILED");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED: Bidirectional peer routing test FAILED with exception: {ex.Message}");
-            Console.WriteLine($"   Stack trace: {ex.StackTrace}");
-        }
-    }
-
-    private async Task<bool> PerformBidirectionalRoutingTest()
-    {
-        // Create two test accounts
-        var accessToken1 = await CreateTestAccountAsync("bidir1");
-        var accessToken2 = await CreateTestAccountAsync("bidir2");
-
-        if (string.IsNullOrEmpty(accessToken1) || string.IsNullOrEmpty(accessToken2))
-        {
-            Console.WriteLine("   Failed to create test accounts");
-            return false;
-        }
-
-        // Connect both accounts
-        var (webSocket1, peerGuid1) = await ConnectAndGetPeerGuidAsync(accessToken1, "BiPeer1");
-        var (webSocket2, peerGuid2) = await ConnectAndGetPeerGuidAsync(accessToken2, "BiPeer2");
-
-        try
-        {
-            if (webSocket1 == null || webSocket2 == null)
-            {
-                Console.WriteLine("   Failed to establish WebSocket connections");
-                return false;
-            }
-
-            if (peerGuid1 == null || peerGuid2 == null)
-            {
-                Console.WriteLine("   SKIPPED: No peerGuid in manifests - Connect is in External mode");
-                Console.WriteLine("   NOTE: Bidirectional peer routing requires Relayed mode");
-                return true;  // SKIPPED
-            }
-
-            // Step 1: Peer1 sends to Peer2
-            Console.WriteLine("   Step 1: Peer1 -> Peer2");
-            var message1To2 = CreatePeerMessage(peerGuid2.Value, "Hello from Peer1!", 1);
-            await webSocket1.SendAsync(
-                new ArraySegment<byte>(message1To2),
-                WebSocketMessageType.Binary,
-                true,
-                CancellationToken.None);
-
-            // Peer2 receives
-            var (received1, _) = await ReceivePeerMessageAsync(webSocket2, "BiPeer2");
-            if (received1 == null || !received1.Contains("Hello from Peer1!"))
-            {
-                Console.WriteLine("   Failed: Peer2 didn't receive message from Peer1");
-                return false;
-            }
-            Console.WriteLine($"   Peer2 received: {received1}");
-
-            // Step 2: Peer2 sends to Peer1
-            Console.WriteLine("   Step 2: Peer2 -> Peer1");
-            var message2To1 = CreatePeerMessage(peerGuid1.Value, "Hello from Peer2!", 2);
-            await webSocket2.SendAsync(
-                new ArraySegment<byte>(message2To1),
-                WebSocketMessageType.Binary,
-                true,
-                CancellationToken.None);
-
-            // Peer1 receives
-            var (received2, _) = await ReceivePeerMessageAsync(webSocket1, "BiPeer1");
-            if (received2 == null || !received2.Contains("Hello from Peer2!"))
-            {
-                Console.WriteLine("   Failed: Peer1 didn't receive message from Peer2");
-                return false;
-            }
-            Console.WriteLine($"   Peer1 received: {received2}");
-
-            Console.WriteLine("   Bidirectional routing successful!");
-            return true;
-        }
-        finally
-        {
-            await CloseWebSocketSafely(webSocket1);
-            await CloseWebSocketSafely(webSocket2);
-        }
-    }
-
-    private void TestUnknownPeerGuidReturnsError(string[] args)
-    {
-        Console.WriteLine("=== Unknown Peer GUID Error Test ===");
-        Console.WriteLine("Testing that routing to unknown peer GUID returns error...");
-
-        try
-        {
-            var result = Task.Run(async () => await PerformUnknownPeerGuidTest()).Result;
-            if (result)
-            {
-                Console.WriteLine("PASSED: Unknown peer GUID error test PASSED");
-            }
-            else
-            {
-                Console.WriteLine("FAILED: Unknown peer GUID error test FAILED");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED: Unknown peer GUID error test FAILED with exception: {ex.Message}");
-            Console.WriteLine($"   Stack trace: {ex.StackTrace}");
-        }
-    }
-
-    private async Task<bool> PerformUnknownPeerGuidTest()
+    private async Task<bool> PerformFakePeerGuidRejectedTest()
     {
         // Create a test account
-        var accessToken = await CreateTestAccountAsync("unknownpeer");
+        var accessToken = await CreateTestAccountAsync("fakepeertest");
         if (string.IsNullOrEmpty(accessToken))
         {
             Console.WriteLine("   Failed to create test account");
@@ -523,7 +303,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
         }
 
         // Connect
-        var (webSocket, peerGuid) = await ConnectAndGetPeerGuidAsync(accessToken, "Sender");
+        var (webSocket, peerGuid) = await ConnectAndGetPeerGuidAsync(accessToken, "FakePeerSender");
 
         try
         {
@@ -533,18 +313,22 @@ public class PeerRoutingTestHandler : IServiceTestHandler
                 return false;
             }
 
-            if (peerGuid == null)
+            // Confirm we're in External mode (no peerGuid)
+            if (peerGuid != null && peerGuid != Guid.Empty)
             {
-                Console.WriteLine("   SKIPPED: No peerGuid in manifest - Connect is in External mode");
-                Console.WriteLine("   NOTE: Unknown peer GUID test requires Relayed mode");
-                return true;  // SKIPPED
+                Console.WriteLine($"   WARNING: peerGuid present ({peerGuid}) - this test assumes External mode");
+                Console.WriteLine("   Test will still run to verify behavior");
+            }
+            else
+            {
+                Console.WriteLine("   Confirmed: No peerGuid (External mode)");
             }
 
-            // Try to send to a random GUID that doesn't exist
-            var unknownGuid = Guid.NewGuid();
-            Console.WriteLine($"   Sending message to unknown peer GUID: {unknownGuid}");
+            // Try to send a message with Client flag to a fake peerGuid
+            var fakePeerGuid = Guid.NewGuid();
+            Console.WriteLine($"   Attempting to route to fake peerGuid: {fakePeerGuid}");
 
-            var message = CreatePeerMessage(unknownGuid, "This should fail", 1);
+            var message = CreatePeerMessage(fakePeerGuid, "This should be rejected", 1);
             await webSocket.SendAsync(
                 new ArraySegment<byte>(message),
                 WebSocketMessageType.Binary,
@@ -553,18 +337,24 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
             // Should receive an error response
             Console.WriteLine("   Waiting for error response...");
-            var (responsePayload, responseCode) = await ReceivePeerMessageAsync(webSocket, "Sender");
+            var (responsePayload, responseCode) = await ReceivePeerMessageAsync(webSocket, "FakePeerSender");
 
             Console.WriteLine($"   Response code: {responseCode}");
+            if (responsePayload != null)
+            {
+                Console.WriteLine($"   Response payload: {responsePayload}");
+            }
 
-            // ResponseCode should be non-zero (ClientNotFound = 4)
+            // Response code should be non-zero (error)
+            // ClientNotFound = 4, or similar error code
             if (responseCode == 0)
             {
-                Console.WriteLine("   Expected error response code, got 0 (success)");
+                Console.WriteLine("   FAILED: Expected error response code, got 0 (success)");
+                Console.WriteLine("   Fake peerGuid should have been rejected");
                 return false;
             }
 
-            Console.WriteLine($"   Received expected error response (code: {responseCode})");
+            Console.WriteLine($"   Fake peerGuid correctly rejected with error code {responseCode}");
             return true;
         }
         finally
@@ -578,7 +368,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
     /// <summary>
     /// Creates a binary message for peer-to-peer routing.
     /// </summary>
-    private static byte[] CreatePeerMessage(Guid targetPeerGuid, string message, uint sequence)
+    internal static byte[] CreatePeerMessage(Guid targetPeerGuid, string message, uint sequence)
     {
         var payload = BannouJson.Serialize(new { message, timestamp = DateTimeOffset.UtcNow.ToString("o") });
         var payloadBytes = Encoding.UTF8.GetBytes(payload);
@@ -600,7 +390,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
     /// Receives a message from WebSocket and parses the payload.
     /// Returns the JSON payload string and response code.
     /// </summary>
-    private static async Task<(string? payload, byte responseCode)> ReceivePeerMessageAsync(ClientWebSocket webSocket, string connectionName)
+    internal static async Task<(string? payload, byte responseCode)> ReceivePeerMessageAsync(ClientWebSocket webSocket, string connectionName)
     {
         var buffer = new ArraySegment<byte>(new byte[65536]);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));

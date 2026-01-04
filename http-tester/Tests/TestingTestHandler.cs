@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Testing;
 
@@ -18,8 +19,9 @@ public class TestingTestHandler : BaseHttpTestHandler
 
     static TestingTestHandler()
     {
-        // Get base URL from configuration
-        _baseUrl = Program.Configuration.EffectiveHttpEndpoint;
+        // IMPLEMENTATION TENETS exception: http-tester doesn't have access to service configuration
+        _baseUrl = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_HTTP_ENDPOINT)
+            ?? "http://localhost:5012";
     }
 
     public override ServiceTest[] GetServiceTests() =>

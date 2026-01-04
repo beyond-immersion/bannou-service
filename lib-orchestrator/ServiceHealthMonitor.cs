@@ -330,8 +330,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             return 0;
         }
 
-        return (int)((double)heartbeat.Capacity.CurrentConnections /
-                    heartbeat.Capacity.MaxConnections * 100);
+        // Capacity values are nullable in event schema; use GetValueOrDefault for calculation
+        return (int)((double)heartbeat.Capacity.CurrentConnections.GetValueOrDefault() /
+                    heartbeat.Capacity.MaxConnections.GetValueOrDefault(1) * 100);
     }
 
     /// <summary>

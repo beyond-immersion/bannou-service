@@ -1912,7 +1912,7 @@ public partial class ConnectService : IConnectService
                     var pendingRPC = new PendingRPCInfo
                     {
                         ClientSessionId = eventData.ClientId,
-                        ServiceName = eventData.ServiceName,
+                        ServiceName = eventData.ServiceName ?? "unknown",
                         ResponseChannel = eventData.ResponseChannel,
                         ServiceGuid = eventData.ServiceGuid,
                         SentAt = now,
