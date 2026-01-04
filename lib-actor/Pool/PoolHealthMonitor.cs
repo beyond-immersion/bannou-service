@@ -55,6 +55,21 @@ public sealed class PoolHealthMonitor : BackgroundService
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Only run in control plane mode (non-bannou deployment)
+        // Pool nodes don't need to monitor other nodes - the control plane does
+        if (_configuration.DeploymentMode == "bannou")
+        {
+            _logger.LogDebug("Pool health monitor disabled in bannou mode (local actors only)");
+            return;
+        }
+
+        // Also don't run on pool nodes themselves
+        if (!string.IsNullOrEmpty(_configuration.PoolNodeId))
+        {
+            _logger.LogDebug("Pool health monitor disabled on pool node (control plane responsibility)");
+            return;
+        }
+
         _logger.LogInformation(
             "Pool health monitor started (check interval: {Interval}s, timeout: {Timeout}s)",
             CheckInterval.TotalSeconds, HeartbeatTimeout.TotalSeconds);

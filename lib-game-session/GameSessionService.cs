@@ -143,7 +143,7 @@ public partial class GameSessionService : IGameSessionService
         if (string.IsNullOrEmpty(configuration.ServerSalt))
         {
             throw new InvalidOperationException(
-                "GAMESESSION_SERVERSALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
+                "GAME_SESSION_SERVER_SALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
         }
         _serverSalt = configuration.ServerSalt;
 

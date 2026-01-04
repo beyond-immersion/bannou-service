@@ -29,13 +29,13 @@ services:
       - AUTH_SERVICE_ENABLED=false
       - BEHAVIOR_SERVICE_ENABLED=false
       - CONNECT_SERVICE_ENABLED=false
-      - GAMESESSION_SERVICE_ENABLED=false
+      - GAME_SESSION_SERVICE_ENABLED=false
       - PERMISSIONS_SERVICE_ENABLED=false
       - WEBSITE_SERVICE_ENABLED=false
       # Direct infrastructure connections for orchestrator's own monitoring
-      - BANNOU_RedisConnectionString=bannou-redis:6379
-      - BANNOU_RabbitMqConnectionString=amqp://guest:guest@rabbitmq:5672
-      - BANNOU_DockerHost=unix:///var/run/docker.sock
+      - ORCHESTRATOR_REDIS_CONNECTION_STRING=bannou-redis:6379
+      - ORCHESTRATOR_RABBITMQ_CONNECTION_STRING=amqp://guest:guest@rabbitmq:5672
+      - ORCHESTRATOR_DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket access
       - "./certificates:/certificates"

@@ -28,8 +28,9 @@ processing_pools:
     environment:
       ASSET_PROCESSING_MODE: worker
       ASSET_WORKER_POOL: texture-processor
-      TEXTURE_COMPRESSION_ENABLED: "true"
-      TEXTURE_MAX_DIMENSION: "4096"
+      # TODO: Add to asset-configuration.yaml schema if needed:
+      # ASSET_TEXTURE_COMPRESSION_ENABLED: "true"
+      # ASSET_TEXTURE_MAX_DIMENSION: "4096"
 
   - pool_type: model-processor
     plugin: asset
@@ -41,8 +42,9 @@ processing_pools:
     environment:
       ASSET_PROCESSING_MODE: worker
       ASSET_WORKER_POOL: model-processor
-      MODEL_OPTIMIZE_MESHES: "true"
-      MODEL_GENERATE_LODS: "true"
+      # TODO: Add to asset-configuration.yaml schema if needed:
+      # ASSET_MODEL_OPTIMIZE_MESHES: "true"
+      # ASSET_MODEL_GENERATE_LODS: "true"
 
   - pool_type: audio-processor
     plugin: asset
@@ -54,8 +56,9 @@ processing_pools:
     environment:
       ASSET_PROCESSING_MODE: worker
       ASSET_WORKER_POOL: audio-processor
-      AUDIO_NORMALIZE: "true"
-      AUDIO_TARGET_FORMAT: opus
+      ASSET_AUDIO_OUTPUT_FORMAT: opus
+      # TODO: Add to asset-configuration.yaml schema if needed:
+      # ASSET_AUDIO_NORMALIZE: "true"
 
 topology:
   nodes:
@@ -66,7 +69,7 @@ topology:
       environment:
         ASPNETCORE_ENVIRONMENT: Production
         ASSET_PROCESSING_MODE: coordinator
-        LARGE_FILE_THRESHOLD_MB: "50"
+        ASSET_LARGE_FILE_THRESHOLD_MB: "50"
 
   infrastructure:
     minio:
@@ -80,7 +83,7 @@ topology:
       version: "4"
 
 environment:
-  APP_LOGGING_LEVEL: Information
+  BANNOU_APP_LOGGING_LEVEL: Information
   ASSET_STORAGE_PROVIDER: minio
   ASSET_TOKEN_TTL_SECONDS: "3600"
   ASSET_MAX_UPLOAD_SIZE_MB: "500"

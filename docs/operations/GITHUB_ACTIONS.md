@@ -104,15 +104,15 @@ CI uses specific environment configurations:
 Key variables:
 ```bash
 # CI-specific JWT settings
-BANNOU_JWTSECRET=ci-test-secret
-BANNOU_JWTISSUER=bannou-ci
-BANNOU_JWTAUDIENCE=bannou-ci-tests
+BANNOU_JWT_SECRET=ci-test-secret
+BANNOU_JWT_ISSUER=bannou-ci
+BANNOU_JWT_AUDIENCE=bannou-ci-tests
 
 # Mock OAuth for testing
-BANNOU_MOCKPROVIDERS=true
+AUTH_MOCK_PROVIDERS=true
 
 # Admin role for test accounts
-BANNOU_ADMINEMAILDOMAIN=@admin.test.local
+ACCOUNTS_ADMIN_EMAIL_DOMAIN=@admin.test.local
 ```
 
 ## SDK Release Process

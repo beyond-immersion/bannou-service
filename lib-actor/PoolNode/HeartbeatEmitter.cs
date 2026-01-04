@@ -52,8 +52,20 @@ public sealed class HeartbeatEmitter : IDisposable
     /// <summary>
     /// Starts emitting heartbeats.
     /// </summary>
+    /// <remarks>
+    /// Only emits heartbeats if running in pool node mode (PoolNodeId configured).
+    /// Returns immediately as no-op if not in pool node mode.
+    /// </remarks>
     public void Start()
     {
+        // Only run if configured as a pool node
+        if (string.IsNullOrEmpty(_configuration.PoolNodeId) ||
+            string.IsNullOrEmpty(_configuration.PoolNodeAppId))
+        {
+            _logger.LogDebug("Heartbeat emitter disabled (not running as pool node)");
+            return;
+        }
+
         if (_heartbeatTask != null)
         {
             _logger.LogWarning("Heartbeat emitter already started");
@@ -123,14 +135,9 @@ public sealed class HeartbeatEmitter : IDisposable
 
     private async Task EmitHeartbeatAsync(CancellationToken ct)
     {
-        var nodeId = _configuration.PoolNodeId;
-        var appId = _configuration.PoolNodeAppId;
-
-        if (string.IsNullOrEmpty(nodeId) || string.IsNullOrEmpty(appId))
-        {
-            _logger.LogWarning("Cannot emit heartbeat: PoolNodeId or PoolNodeAppId not configured");
-            return;
-        }
+        // Start() validates PoolNodeId/PoolNodeAppId, so these are guaranteed non-null here
+        var nodeId = _configuration.PoolNodeId ?? throw new InvalidOperationException("PoolNodeId not configured");
+        var appId = _configuration.PoolNodeAppId ?? throw new InvalidOperationException("PoolNodeAppId not configured");
 
         // Collect actor statistics
         var runningActors = _actorRegistry.GetAllRunners().ToList();

@@ -138,7 +138,7 @@ public static class Program
                     if (string.IsNullOrEmpty(Configuration.JwtSecret))
                     {
                         throw new InvalidOperationException(
-                            "JWT secret not configured. Set BANNOU_JWTSECRET environment variable.");
+                            "JWT secret not configured. Set BANNOU_JWT_SECRET environment variable.");
                     }
 
                     var key = System.Text.Encoding.ASCII.GetBytes(Configuration.JwtSecret);

@@ -29,8 +29,8 @@ topology:
       enabled: false
 
 environment:
-  APP_LOGGING_LEVEL: Debug
-  WEB_HOST_LOGGING_LEVEL: Warning
+  BANNOU_APP_LOGGING_LEVEL: Debug
+  BANNOU_WEB_HOST_LOGGING_LEVEL: Warning
 
 requiredBackends:
   - docker-compose

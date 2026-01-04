@@ -26,7 +26,6 @@ topology:
       replicas: 1
       environment:
         # Enable Relayed mode for peer-to-peer routing
-        # Env var matches schema: env: CONNECT_CONNECTION_MODE
         CONNECT_CONNECTION_MODE: "relayed"
         # Node-specific marker
         BANNOU_IS_RELAYED_NODE: "true"
@@ -44,7 +43,6 @@ topology:
 
 environment:
   # Debug logging for test visibility
-  APP_LOGGING_LEVEL: Debug
   BANNOU_APP_LOGGING_LEVEL: Debug
 
 requiredBackends:

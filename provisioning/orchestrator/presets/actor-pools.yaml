@@ -55,7 +55,7 @@ processingPools:
 # The control plane runs on the main bannou deployment topology.
 
 environment:
-  APP_LOGGING_LEVEL: Information
+  BANNOU_APP_LOGGING_LEVEL: Information
   ACTOR_CONTROL_PLANE_APP_ID: bannou
 
 requiredBackends:

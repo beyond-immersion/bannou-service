@@ -217,7 +217,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
         // Infrastructure service names that dynamically created containers need to resolve
         // IMPORTANT: DEFAULT_APP_NAME must be included so deployed containers can reach the orchestrator
-        // for fetching initial service mappings via BANNOU_MappingSourceAppId
+        // for fetching initial service mappings via BANNOU_MAPPING_SOURCE_APP_ID
         var serviceNames = new[] { AppConstants.DEFAULT_APP_NAME, "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
 
         try
@@ -708,10 +708,10 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 $"BANNOU_APP_ID={appId}",
                 // Tell deployed container to query this orchestrator for initial service mappings
                 // This ensures new containers have correct routing info before participating in network
-                $"BANNOU_MappingSourceAppId={orchestratorAppId}",
+                $"BANNOU_MAPPING_SOURCE_APP_ID={orchestratorAppId}",
                 // Set the HTTP endpoint to the orchestrator so the new container can reach it
                 // via ExtraHosts DNS resolution (not localhost which would hit itself)
-                $"BANNOU_HttpEndpoint=http://{orchestratorAppId}",
+                $"BANNOU_HTTP_ENDPOINT=http://{orchestratorAppId}",
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 "DAEMON_MODE=true",
                 "BANNOU_HEARTBEAT_ENABLED=true"

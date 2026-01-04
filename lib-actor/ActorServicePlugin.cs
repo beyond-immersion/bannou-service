@@ -72,34 +72,16 @@ public class ActorServicePlugin : BaseBannouPlugin
         // In bannou mode it's available but pool operations will be local-only
         services.AddSingleton<IActorPoolManager, ActorPoolManager>();
 
-        // Determine deployment mode from environment for additional components
-        var poolNodeId = Environment.GetEnvironmentVariable("ACTOR_POOL_NODE_ID");
-        var deploymentMode = Environment.GetEnvironmentVariable("ACTOR_DEPLOYMENT_MODE") ?? "bannou";
+        // Register all pool-related services unconditionally
+        // Each service checks its own configuration in ExecuteAsync/Start and becomes a no-op
+        // if running in the wrong mode. This follows FOUNDATION TENETS - configuration access
+        // via DI, not Environment.GetEnvironmentVariable during registration.
+        services.AddSingleton<HeartbeatEmitter>();
+        services.AddSingleton<ActorPoolNodeWorker>();
+        services.AddHostedService(sp => sp.GetRequiredService<ActorPoolNodeWorker>());
+        services.AddHostedService<PoolHealthMonitor>();
 
-        if (!string.IsNullOrEmpty(poolNodeId))
-        {
-            // Running as pool node - register pool node worker components
-            Logger?.LogInformation(
-                "Configuring actor service as pool node (NodeId: {NodeId})",
-                poolNodeId);
-
-            services.AddSingleton<HeartbeatEmitter>();
-            services.AddSingleton<ActorPoolNodeWorker>();
-            services.AddHostedService(sp => sp.GetRequiredService<ActorPoolNodeWorker>());
-        }
-        else if (deploymentMode != "bannou")
-        {
-            // Running as control plane with pool support - add health monitor
-            Logger?.LogInformation(
-                "Configuring actor service as control plane with pool support (mode: {Mode})",
-                deploymentMode);
-
-            services.AddHostedService<PoolHealthMonitor>();
-        }
-        else
-        {
-            Logger?.LogInformation("Configuring actor service in bannou mode (local actors)");
-        }
+        Logger?.LogDebug("Registered all actor pool components (mode determined at runtime via configuration)");
 
         Logger?.LogDebug("Service dependencies configured");
     }

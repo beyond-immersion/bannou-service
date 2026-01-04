@@ -49,6 +49,7 @@
         <member name="P:BeyondImmersion.Bannou.Client.Voice.IScaledVoiceConnection.SipUsername">
             <summary>
             SIP registration username.
+            Returns empty string before credentials are set via <see cref="M:BeyondImmersion.Bannou.Client.Voice.IScaledVoiceConnection.ConnectAsync(BeyondImmersion.Bannou.Client.Voice.SipConnectionCredentials,System.String,System.Threading.CancellationToken)"/>.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.Voice.IScaledVoiceConnection.ConnectAsync(BeyondImmersion.Bannou.Client.Voice.SipConnectionCredentials,System.String,System.Threading.CancellationToken)">
@@ -553,6 +554,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.Voice.ScaledVoiceConnection.SipUsername">
             <inheritdoc/>
+            <remarks>Returns empty string when not yet connected (no credentials set).</remarks>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.Voice.ScaledVoiceConnection.IsMuted">
             <inheritdoc/>

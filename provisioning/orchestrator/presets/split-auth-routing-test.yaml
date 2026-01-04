@@ -52,7 +52,6 @@ environment:
   # Only override logging if different from main node
   # All other configuration (AUTH_*, STATE_*, ACCOUNT_*, etc.) is
   # inherited from orchestrator's environment automatically
-  APP_LOGGING_LEVEL: Debug
   BANNOU_APP_LOGGING_LEVEL: Debug
 
 requiredBackends:
