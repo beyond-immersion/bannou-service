@@ -673,8 +673,8 @@ public partial class ActorService : IActorService
                         NodeId = assignment.NodeId,
                         NodeAppId = assignment.NodeAppId,
                         Status = assignment.Status == "running" ? ActorStatus.Running :
-                                 assignment.Status == "stopping" ? ActorStatus.Stopping :
-                                 ActorStatus.Pending,
+                                assignment.Status == "stopping" ? ActorStatus.Stopping :
+                                ActorStatus.Pending,
                         StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
                         LoopIterations = 0
                     });
