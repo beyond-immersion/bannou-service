@@ -68,6 +68,7 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
 
             var response = await docClient.BindRepositoryAsync(new BindRepositoryRequest
             {
+                Owner = "http-tester",
                 Namespace = TEST_NAMESPACE,
                 RepositoryUrl = FIXTURE_REPO_URL,
                 Branch = "main",
@@ -246,6 +247,7 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
 
             var response = await docClient.BindRepositoryAsync(new BindRepositoryRequest
             {
+                Owner = "http-tester",
                 Namespace = LIVE_TEST_NAMESPACE,
                 RepositoryUrl = gitUrl,
                 Branch = branch,

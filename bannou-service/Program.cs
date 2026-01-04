@@ -233,6 +233,15 @@ public static class Program
                         .AddSerilog()
                         .SetMinimumLevel(Configuration.WebHostLoggingLevel);
                 });
+
+            // Enable DI validation to catch missing service registrations at startup
+            // ValidateScopes: Ensures scoped services aren't resolved from root provider
+            // ValidateOnBuild: Validates all service registrations when Build() is called
+            webAppBuilder.Host.UseDefaultServiceProvider(options =>
+            {
+                options.ValidateScopes = true;
+                options.ValidateOnBuild = true;
+            });
         }
         catch (Exception exc)
         {

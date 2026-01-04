@@ -96,6 +96,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             Filename = $"test-{testName}-{DateTime.Now.Ticks}.json",
             Size = testBytes.Length,
             ContentType = "application/json",
+            Owner = "http-tester",
             Metadata = new AssetMetadataInput
             {
                 AssetType = assetType,
@@ -135,6 +136,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Filename = $"test-request-{DateTime.Now.Ticks}.json",
                 Size = 1024,
                 ContentType = "application/json",
+                Owner = "http-tester",
                 Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Behavior,
@@ -403,6 +405,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Filename = $"test-audio-{DateTime.Now.Ticks}.wav",
                 Size = wavBytes.Length,
                 ContentType = "audio/wav",
+                Owner = "http-tester",
                 Metadata = new AssetMetadataInput
                 {
                     AssetType = AssetType.Audio,

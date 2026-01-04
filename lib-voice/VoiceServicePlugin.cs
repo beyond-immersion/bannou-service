@@ -19,6 +19,9 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
     {
         Logger?.LogInformation("Configuring Voice service dependencies");
 
+        // Ensure HttpClient factory is available for Kamailio/RTPEngine clients
+        services.AddHttpClient();
+
         // Register helper services for P2P voice coordination
         // These are Singleton because they maintain local caches for multi-instance safety (FOUNDATION TENETS)
         services.AddSingleton<ISipEndpointRegistry, SipEndpointRegistry>();

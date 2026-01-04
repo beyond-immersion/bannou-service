@@ -146,10 +146,13 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             var sessionIdGuid = createResponse.SessionId;
 
-            // Now test joining the session (player identity comes from JWT context)
+            // Now test joining the session
+            // Required fields: sessionId, accountId, gameType (normally provided by shortcut system)
             var joinRequest = new JoinGameSessionRequest
             {
-                SessionId = sessionIdGuid
+                SessionId = sessionIdGuid,
+                AccountId = Guid.NewGuid(), // Test player account
+                GameType = "arcadia"
             };
 
             var response = await gameSessionClient.JoinGameSessionAsync(joinRequest);
@@ -177,12 +180,23 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
             var sessionIdGuid = createResponse.SessionId;
 
-            // Join the session first
-            var joinRequest = new JoinGameSessionRequest { SessionId = sessionIdGuid };
+            // Join the session first (required: sessionId, accountId, gameType)
+            var testAccountId = Guid.NewGuid();
+            var joinRequest = new JoinGameSessionRequest
+            {
+                SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia"
+            };
             await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
-            // Now test leaving the session (player identity comes from JWT context)
-            var leaveRequest = new LeaveGameSessionRequest { SessionId = sessionIdGuid };
+            // Now test leaving the session (required: sessionId, accountId, gameType)
+            var leaveRequest = new LeaveGameSessionRequest
+            {
+                SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia"
+            };
             await gameSessionClient.LeaveGameSessionAsync(leaveRequest);
 
             return TestResult.Successful($"Successfully left game session: SessionID={createResponse.SessionId}");
@@ -206,7 +220,13 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var sessionIdGuid = createResponse.SessionId;
 
             // Join the session first - this adds a player that we can kick
-            var joinRequest = new JoinGameSessionRequest { SessionId = sessionIdGuid };
+            var testAccountId = Guid.NewGuid();
+            var joinRequest = new JoinGameSessionRequest
+            {
+                SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia"
+            };
             await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
             // Get the session to find the player's account ID
@@ -279,7 +299,12 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             var sessionIdGuid = createResponse.SessionId;
 
             // Join as a player first (to get enhanced permissions)
-            var joinRequest = new JoinGameSessionRequest { SessionId = sessionIdGuid };
+            var joinRequest = new JoinGameSessionRequest
+            {
+                SessionId = sessionIdGuid,
+                AccountId = Guid.NewGuid(),
+                GameType = "arcadia"
+            };
             await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
             // Perform a game action (player identity comes from JWT context)
@@ -331,7 +356,13 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             Console.WriteLine($"  Step 1: Created session {createResponse.SessionId}");
 
             // Step 2: Join as player
-            await gameSessionClient.JoinGameSessionAsync(new JoinGameSessionRequest { SessionId = sessionIdGuid });
+            var testAccountId = Guid.NewGuid();
+            await gameSessionClient.JoinGameSessionAsync(new JoinGameSessionRequest
+            {
+                SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia"
+            });
             Console.WriteLine($"  Step 2: Player joined");
 
             // Step 3: Perform game action
@@ -353,7 +384,12 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             Console.WriteLine($"  Step 4: Sent chat message");
 
             // Step 5: Leave session
-            await gameSessionClient.LeaveGameSessionAsync(new LeaveGameSessionRequest { SessionId = sessionIdGuid });
+            await gameSessionClient.LeaveGameSessionAsync(new LeaveGameSessionRequest
+            {
+                SessionId = sessionIdGuid,
+                AccountId = testAccountId,
+                GameType = "arcadia"
+            });
             Console.WriteLine($"  Step 5: Player left session");
 
             // Step 6: Verify session still exists

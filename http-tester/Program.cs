@@ -201,7 +201,6 @@ public class Program
             var meshConfig = new MeshServiceConfiguration
             {
                 RedisConnectionString = meshRedisConnectionString,
-                DefaultAppId = AppConstants.DEFAULT_APP_NAME,
                 UseLocalRouting = false,  // MUST use real Redis
                 RedisConnectionTimeoutSeconds = 60,
                 RedisConnectRetryCount = 10,
@@ -245,6 +244,7 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.State.IStateClient, BeyondImmersion.BannouService.State.StateClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Mesh.IMeshClient, BeyondImmersion.BannouService.Mesh.MeshClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Asset.IAssetClient, BeyondImmersion.BannouService.Asset.AssetClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Actor.IActorClient, BeyondImmersion.BannouService.Actor.ActorClient>();
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
 
             // Build the service provider

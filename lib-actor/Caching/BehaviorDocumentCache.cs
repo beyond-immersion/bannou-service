@@ -6,6 +6,7 @@
 using BeyondImmersion.BannouService.Abml.Documents;
 using BeyondImmersion.BannouService.Abml.Parser;
 using BeyondImmersion.BannouService.Asset;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -14,10 +15,11 @@ namespace BeyondImmersion.BannouService.Actor.Caching;
 /// <summary>
 /// Caches parsed ABML documents loaded from lib-asset.
 /// Thread-safe via ConcurrentDictionary (T9 compliant).
+/// Uses IServiceScopeFactory to resolve scoped IAssetClient on demand.
 /// </summary>
 public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
 {
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<BehaviorDocumentCache> _logger;
     private readonly ConcurrentDictionary<string, AbmlDocument> _cache = new();
     private readonly HttpClient _httpClient;
@@ -25,13 +27,13 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
     /// <summary>
     /// Creates a new behavior document cache.
     /// </summary>
-    /// <param name="assetClient">Asset client for fetching behavior YAML.</param>
+    /// <param name="scopeFactory">Service scope factory for resolving scoped dependencies.</param>
     /// <param name="logger">Logger instance.</param>
     public BehaviorDocumentCache(
-        IAssetClient assetClient,
+        IServiceScopeFactory scopeFactory,
         ILogger<BehaviorDocumentCache> logger)
     {
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
+        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClient = new HttpClient();
     }
@@ -105,10 +107,13 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
         var assetId = ExtractAssetId(behaviorRef);
 
         // Fetch asset metadata with download URL from lib-asset
+        // Use scope factory to resolve scoped IAssetClient (singleton cannot hold scoped dependency)
         AssetWithDownloadUrl assetInfo;
         try
         {
-            assetInfo = await _assetClient.GetAssetAsync(
+            using var scope = _scopeFactory.CreateScope();
+            var assetClient = scope.ServiceProvider.GetRequiredService<IAssetClient>();
+            assetInfo = await assetClient.GetAssetAsync(
                 new GetAssetRequest { AssetId = assetId },
                 ct);
         }

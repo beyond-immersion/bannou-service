@@ -73,6 +73,13 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         services.AddHostedService<NativeEventConsumerBackend>();
         Logger?.LogInformation("Registered NativeEventConsumerBackend - messaging is required infrastructure");
 
+        // Register MessagingService concrete type in addition to interface
+        // This allows MessagingSubscriptionRecoveryService to access internal methods
+        // while still using the interface for standard DI patterns
+        services.AddSingleton<MessagingService>(sp =>
+            (MessagingService)sp.GetRequiredService<IMessagingService>());
+        Logger?.LogDebug("Registered MessagingService concrete type for recovery service access");
+
         // Register subscription recovery service
         // Recovers external HTTP callback subscriptions from lib-state on startup
         services.AddHostedService<MessagingSubscriptionRecoveryService>();

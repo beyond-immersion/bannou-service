@@ -9,6 +9,7 @@ using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -38,14 +39,23 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Handlers;
 public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
 {
     private readonly Mock<IGoapPlanner> _mockPlanner;
+    private readonly Mock<IServiceScopeFactory> _mockScopeFactory;
     private readonly Mock<ILogger<TriggerGoapReplanHandler>> _mockLogger;
     private readonly TriggerGoapReplanHandler _handler;
 
     public TriggerGoapReplanHandlerTests()
     {
         _mockPlanner = new Mock<IGoapPlanner>();
+        _mockScopeFactory = new Mock<IServiceScopeFactory>();
         _mockLogger = new Mock<ILogger<TriggerGoapReplanHandler>>();
-        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, null, _mockLogger.Object);
+
+        // Setup empty scope that returns null for bundle manager (tests don't use it)
+        var mockScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        _mockScopeFactory.Setup(f => f.CreateScope()).Returns(mockScope.Object);
+
+        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, _mockScopeFactory.Object, _mockLogger.Object);
     }
 
     #region Constructor Tests

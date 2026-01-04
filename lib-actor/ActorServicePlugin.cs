@@ -33,11 +33,12 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Conditional Registration:</b>
+    /// <b>Registration:</b> ActorPoolManager is always registered (required by ActorService).
+    /// Additional components are registered based on deployment mode:
     /// <list type="bullet">
-    /// <item>Pool node mode (ACTOR_POOL_NODE_ID set): Registers ActorPoolNodeWorker, HeartbeatEmitter</item>
-    /// <item>Control plane mode (non-bannou without pool node): Registers ActorPoolManager, PoolHealthMonitor</item>
-    /// <item>Bannou mode: No pool infrastructure, actors run locally</item>
+    /// <item>Pool node mode (ACTOR_POOL_NODE_ID set): Adds ActorPoolNodeWorker, HeartbeatEmitter</item>
+    /// <item>Control plane mode (non-bannou): Adds PoolHealthMonitor</item>
+    /// <item>Bannou mode: No additional components, actors run locally</item>
     /// </list>
     /// </para>
     /// </remarks>
@@ -67,7 +68,11 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<IActorRegistry, ActorRegistry>();
         services.AddSingleton<IActorRunnerFactory, ActorRunnerFactory>();
 
-        // Determine deployment mode from environment
+        // Always register pool manager - required by ActorService constructor
+        // In bannou mode it's available but pool operations will be local-only
+        services.AddSingleton<IActorPoolManager, ActorPoolManager>();
+
+        // Determine deployment mode from environment for additional components
         var poolNodeId = Environment.GetEnvironmentVariable("ACTOR_POOL_NODE_ID");
         var deploymentMode = Environment.GetEnvironmentVariable("ACTOR_DEPLOYMENT_MODE") ?? "bannou";
 
@@ -84,12 +89,11 @@ public class ActorServicePlugin : BaseBannouPlugin
         }
         else if (deploymentMode != "bannou")
         {
-            // Running as control plane with pool support - register pool manager
+            // Running as control plane with pool support - add health monitor
             Logger?.LogInformation(
                 "Configuring actor service as control plane with pool support (mode: {Mode})",
                 deploymentMode);
 
-            services.AddSingleton<IActorPoolManager, ActorPoolManager>();
             services.AddHostedService<PoolHealthMonitor>();
         }
         else

@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Behavior;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 using GoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
@@ -18,6 +19,7 @@ namespace BeyondImmersion.Bannou.Behavior.Handlers;
 /// <summary>
 /// ABML action handler for triggering GOAP replanning (Cognition Stage 5).
 /// Invokes the GOAP planner with urgency-based constraints.
+/// Uses IServiceScopeFactory to resolve scoped dependencies on-demand.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -44,22 +46,22 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
 {
     private const string ACTION_NAME = "trigger_goap_replan";
     private readonly IGoapPlanner _planner;
-    private readonly IBehaviorBundleManager? _bundleManager;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<TriggerGoapReplanHandler> _logger;
 
     /// <summary>
     /// Creates a new trigger GOAP replan handler.
     /// </summary>
     /// <param name="planner">GOAP planner for creating plans.</param>
-    /// <param name="bundleManager">Bundle manager for loading GOAP metadata (optional).</param>
+    /// <param name="scopeFactory">Service scope factory for resolving scoped dependencies.</param>
     /// <param name="logger">Logger instance.</param>
     public TriggerGoapReplanHandler(
         IGoapPlanner planner,
-        IBehaviorBundleManager? bundleManager,
+        IServiceScopeFactory scopeFactory,
         ILogger<TriggerGoapReplanHandler> logger)
     {
         _planner = planner ?? throw new ArgumentNullException(nameof(planner));
-        _bundleManager = bundleManager;
+        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -203,13 +205,18 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
             return scopeActions;
         }
 
-        // Try to load from behavior metadata via bundle manager
-        if (_bundleManager != null && !string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
+        // Try to load from behavior metadata via bundle manager (use scope for scoped dependency)
+        if (!string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
         {
-            var metadata = await _bundleManager.GetGoapMetadataAsync(behaviorId, ct);
-            if (metadata != null)
+            using var serviceScope = _scopeFactory.CreateScope();
+            var bundleManager = serviceScope.ServiceProvider.GetService<IBehaviorBundleManager>();
+            if (bundleManager != null)
             {
-                return ConvertCachedActions(metadata.Actions);
+                var metadata = await bundleManager.GetGoapMetadataAsync(behaviorId, ct);
+                if (metadata != null)
+                {
+                    return ConvertCachedActions(metadata.Actions);
+                }
             }
         }
 
@@ -234,20 +241,25 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
             return null;
         }
 
-        // Try to load goal definition from behavior metadata
-        if (_bundleManager != null && !string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
+        // Try to load goal definition from behavior metadata (use scope for scoped dependency)
+        if (!string.IsNullOrEmpty(behaviorId) && behaviorId != "unknown")
         {
-            var metadata = await _bundleManager.GetGoapMetadataAsync(behaviorId, ct);
-            if (metadata != null)
+            using var serviceScope = _scopeFactory.CreateScope();
+            var bundleManager = serviceScope.ServiceProvider.GetService<IBehaviorBundleManager>();
+            if (bundleManager != null)
             {
-                // Find the first matching affected goal
-                var goalName = affectedGoals[0];
-                var cachedGoal = metadata.Goals.FirstOrDefault(g =>
-                    g.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
-
-                if (cachedGoal != null)
+                var metadata = await bundleManager.GetGoapMetadataAsync(behaviorId, ct);
+                if (metadata != null)
                 {
-                    return ConvertCachedGoal(cachedGoal);
+                    // Find the first matching affected goal
+                    var goalName = affectedGoals[0];
+                    var cachedGoal = metadata.Goals.FirstOrDefault(g =>
+                        g.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+
+                    if (cachedGoal != null)
+                    {
+                        return ConvertCachedGoal(cachedGoal);
+                    }
                 }
             }
         }
