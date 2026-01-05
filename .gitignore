@@ -8,8 +8,10 @@ nupkg/
 # Allow CI-specific environment files (non-sensitive)
 !.env.ci.*
 
-# Generated Client SDK (regenerated on build)
-Bannou.Client.SDK/
+# SDK behavior files (regenerated via namespace transformation)
+Bannou.Client.SDK/Generated/
+Bannou.SDK/Generated/
+
 test-nuget/
 nuget-packages/
 

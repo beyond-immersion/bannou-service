@@ -189,6 +189,24 @@ jobs:
           echo "${{ steps.new_version.outputs.new_version }}" > SDK_VERSION
           echo "✅ Updated SDK_VERSION to ${{ steps.new_version.outputs.new_version }}"
 
+      - name: Install Python Dependencies
+        if: steps.new_version.outputs.new_version != ''
+        run: |
+          echo "🐍 Installing Python dependencies for code generation..."
+          pip install ruamel.yaml
+
+      - name: Generate Services
+        if: steps.new_version.outputs.new_version != ''
+        run: |
+          echo "🔧 Generating all service controllers, models, and clients..."
+          scripts/generate-all-services.sh
+
+      - name: Generate SDK Behavior Files
+        if: steps.new_version.outputs.new_version != ''
+        run: |
+          echo "📦 Generating SDK behavior files..."
+          scripts/generate-client-sdk.sh
+
       - name: Build and Pack Stable SDKs
         if: steps.new_version.outputs.new_version != ''
         run: |

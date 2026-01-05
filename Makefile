@@ -185,7 +185,6 @@ clean: ## Clean generated files, build artifacts, and caches (add PLUGIN=name fo
 		echo "🧹 Cleaning all generated files..."; \
 		find . -path "./lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
 		rm -rf bannou-service/Generated 2>/dev/null || true; \
-		rm -rf Bannou.Client.SDK 2>/dev/null || true; \
 		echo "🧹 Cleaning caches and resources..."; \
 		git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean; \
 		echo "✅ Clean completed"; \
