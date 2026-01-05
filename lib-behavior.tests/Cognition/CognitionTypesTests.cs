@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Cognition;
+using BeyondImmersion.BannouService.Behavior;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Cognition;
@@ -438,6 +439,232 @@ public class CognitionTypesTests
         Assert.Equal(0.9f, memory.Significance);
         Assert.Single(memory.Metadata);
         Assert.Equal(2, memory.RelatedMemoryIds.Count);
+    }
+
+    #endregion
+
+    #region CognitionConstants Initialization Tests
+
+    /// <summary>
+    /// Verifies that CognitionConstants.Initialize() applies configuration values.
+    /// </summary>
+    [Fact]
+    public void CognitionConstants_Initialize_AppliesConfigurationValues()
+    {
+        // Arrange
+        CognitionConstants.Reset(); // Ensure clean state
+
+        var config = new BehaviorServiceConfiguration
+        {
+            LowUrgencyThreshold = 0.25,
+            HighUrgencyThreshold = 0.75,
+            LowUrgencyMaxPlanDepth = 12,
+            LowUrgencyPlanTimeoutMs = 150,
+            LowUrgencyMaxPlanNodes = 1200,
+            MediumUrgencyMaxPlanDepth = 8,
+            MediumUrgencyPlanTimeoutMs = 75,
+            MediumUrgencyMaxPlanNodes = 600,
+            HighUrgencyMaxPlanDepth = 4,
+            HighUrgencyPlanTimeoutMs = 30,
+            HighUrgencyMaxPlanNodes = 250,
+            DefaultThreatWeight = 12.0,
+            DefaultNoveltyWeight = 6.0,
+            DefaultSocialWeight = 4.0,
+            DefaultRoutineWeight = 1.5,
+            DefaultThreatFastTrackThreshold = 0.85,
+            DefaultEmotionalWeight = 0.5,
+            DefaultGoalRelevanceWeight = 0.35,
+            DefaultRelationshipWeight = 0.15,
+            MemoryMinimumRelevanceThreshold = 0.15,
+            DefaultStorageThreshold = 0.65,
+            MemoryCategoryMatchWeight = 0.35,
+            MemoryContentOverlapWeight = 0.45,
+            MemoryMetadataOverlapWeight = 0.25,
+            MemoryRecencyBonusWeight = 0.15,
+            MemorySignificanceBonusWeight = 0.12
+        };
+
+        // Act
+        CognitionConstants.Initialize(config);
+
+        // Assert - Urgency thresholds
+        Assert.Equal(0.25f, CognitionConstants.LowUrgencyThreshold);
+        Assert.Equal(0.75f, CognitionConstants.HighUrgencyThreshold);
+
+        // Assert - Low urgency planning
+        Assert.Equal(12, CognitionConstants.LowUrgencyMaxDepth);
+        Assert.Equal(150, CognitionConstants.LowUrgencyTimeoutMs);
+        Assert.Equal(1200, CognitionConstants.LowUrgencyMaxNodes);
+
+        // Assert - Medium urgency planning
+        Assert.Equal(8, CognitionConstants.MediumUrgencyMaxDepth);
+        Assert.Equal(75, CognitionConstants.MediumUrgencyTimeoutMs);
+        Assert.Equal(600, CognitionConstants.MediumUrgencyMaxNodes);
+
+        // Assert - High urgency planning
+        Assert.Equal(4, CognitionConstants.HighUrgencyMaxDepth);
+        Assert.Equal(30, CognitionConstants.HighUrgencyTimeoutMs);
+        Assert.Equal(250, CognitionConstants.HighUrgencyMaxNodes);
+
+        // Assert - Attention weights
+        Assert.Equal(12.0f, CognitionConstants.DefaultThreatWeight);
+        Assert.Equal(6.0f, CognitionConstants.DefaultNoveltyWeight);
+        Assert.Equal(4.0f, CognitionConstants.DefaultSocialWeight);
+        Assert.Equal(1.5f, CognitionConstants.DefaultRoutineWeight);
+        Assert.Equal(0.85f, CognitionConstants.DefaultThreatFastTrackThreshold);
+
+        // Assert - Significance weights
+        Assert.Equal(0.5f, CognitionConstants.DefaultEmotionalWeight);
+        Assert.Equal(0.35f, CognitionConstants.DefaultGoalRelevanceWeight);
+        Assert.Equal(0.15f, CognitionConstants.DefaultRelationshipWeight);
+
+        // Assert - Memory relevance weights
+        Assert.Equal(0.15f, CognitionConstants.MemoryMinimumRelevanceThreshold);
+        Assert.Equal(0.65f, CognitionConstants.DefaultStorageThreshold);
+        Assert.Equal(0.35f, CognitionConstants.MemoryCategoryMatchWeight);
+        Assert.Equal(0.45f, CognitionConstants.MemoryContentOverlapWeight);
+        Assert.Equal(0.25f, CognitionConstants.MemoryMetadataOverlapWeight);
+        Assert.Equal(0.15f, CognitionConstants.MemoryRecencyBonusWeight);
+        Assert.Equal(0.12f, CognitionConstants.MemorySignificanceBonusWeight);
+
+        Assert.True(CognitionConstants.IsInitialized);
+
+        // Cleanup
+        CognitionConstants.Reset();
+    }
+
+    /// <summary>
+    /// Verifies that CognitionConstants.Reset() restores default values.
+    /// </summary>
+    [Fact]
+    public void CognitionConstants_Reset_RestoresDefaultValues()
+    {
+        // Arrange - Initialize with non-default values
+        CognitionConstants.Reset();
+        var config = new BehaviorServiceConfiguration
+        {
+            LowUrgencyThreshold = 0.5,
+            HighUrgencyThreshold = 0.9,
+            DefaultThreatWeight = 99.0,
+            DefaultStorageThreshold = 0.99,
+            MemoryCategoryMatchWeight = 0.99
+        };
+        CognitionConstants.Initialize(config);
+
+        // Act
+        CognitionConstants.Reset();
+
+        // Assert - values should be back to defaults
+        Assert.Equal(0.3f, CognitionConstants.LowUrgencyThreshold);
+        Assert.Equal(0.7f, CognitionConstants.HighUrgencyThreshold);
+        Assert.Equal(10.0f, CognitionConstants.DefaultThreatWeight);
+        Assert.Equal(0.7f, CognitionConstants.DefaultStorageThreshold);
+        Assert.Equal(0.3f, CognitionConstants.MemoryCategoryMatchWeight);
+        Assert.False(CognitionConstants.IsInitialized);
+    }
+
+    /// <summary>
+    /// Verifies that CognitionConstants.Initialize() is idempotent - subsequent calls are ignored.
+    /// </summary>
+    [Fact]
+    public void CognitionConstants_Initialize_IsIdempotent()
+    {
+        // Arrange
+        CognitionConstants.Reset();
+        var config1 = new BehaviorServiceConfiguration
+        {
+            DefaultThreatWeight = 15.0,
+            DefaultStorageThreshold = 0.8
+        };
+        var config2 = new BehaviorServiceConfiguration
+        {
+            DefaultThreatWeight = 25.0,
+            DefaultStorageThreshold = 0.5
+        };
+
+        // Act - First initialization
+        CognitionConstants.Initialize(config1);
+        var threatWeightAfterFirst = CognitionConstants.DefaultThreatWeight;
+        var storageThresholdAfterFirst = CognitionConstants.DefaultStorageThreshold;
+
+        // Second initialization should be ignored
+        CognitionConstants.Initialize(config2);
+
+        // Assert - values should match first config, not second
+        Assert.Equal(threatWeightAfterFirst, CognitionConstants.DefaultThreatWeight);
+        Assert.Equal(storageThresholdAfterFirst, CognitionConstants.DefaultStorageThreshold);
+        Assert.Equal(15.0f, CognitionConstants.DefaultThreatWeight);
+        Assert.Equal(0.8f, CognitionConstants.DefaultStorageThreshold);
+
+        // Cleanup
+        CognitionConstants.Reset();
+    }
+
+    /// <summary>
+    /// Verifies that CognitionConstants works with default config values (no explicit settings).
+    /// </summary>
+    [Fact]
+    public void CognitionConstants_Initialize_WithDefaultConfig_UsesSchemaDefaults()
+    {
+        // Arrange
+        CognitionConstants.Reset();
+        var config = new BehaviorServiceConfiguration(); // All defaults
+
+        // Act
+        CognitionConstants.Initialize(config);
+
+        // Assert - values should match schema defaults
+        Assert.Equal(0.3f, CognitionConstants.LowUrgencyThreshold);
+        Assert.Equal(0.7f, CognitionConstants.HighUrgencyThreshold);
+        Assert.Equal(10, CognitionConstants.LowUrgencyMaxDepth);
+        Assert.Equal(100, CognitionConstants.LowUrgencyTimeoutMs);
+        Assert.Equal(1000, CognitionConstants.LowUrgencyMaxNodes);
+        Assert.Equal(10.0f, CognitionConstants.DefaultThreatWeight);
+        Assert.Equal(0.4f, CognitionConstants.DefaultEmotionalWeight);
+        Assert.Equal(0.7f, CognitionConstants.DefaultStorageThreshold);
+        Assert.Equal(0.3f, CognitionConstants.MemoryCategoryMatchWeight);
+        Assert.True(CognitionConstants.IsInitialized);
+
+        // Cleanup
+        CognitionConstants.Reset();
+    }
+
+    /// <summary>
+    /// Verifies that CognitionConstants.Initialize() throws on null config.
+    /// </summary>
+    [Fact]
+    public void CognitionConstants_Initialize_NullConfig_Throws()
+    {
+        // Arrange
+        CognitionConstants.Reset();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => CognitionConstants.Initialize(null!));
+    }
+
+    /// <summary>
+    /// Verifies that default values are usable without calling Initialize().
+    /// </summary>
+    [Fact]
+    public void CognitionConstants_WithoutInitialize_HasValidDefaults()
+    {
+        // Arrange
+        CognitionConstants.Reset();
+
+        // Act & Assert - should have valid defaults even without Initialize()
+        Assert.Equal(0.3f, CognitionConstants.LowUrgencyThreshold);
+        Assert.Equal(0.7f, CognitionConstants.HighUrgencyThreshold);
+        Assert.Equal(10.0f, CognitionConstants.DefaultThreatWeight);
+        Assert.Equal(5.0f, CognitionConstants.DefaultNoveltyWeight);
+        Assert.Equal(3.0f, CognitionConstants.DefaultSocialWeight);
+        Assert.Equal(1.0f, CognitionConstants.DefaultRoutineWeight);
+        Assert.Equal(0.7f, CognitionConstants.DefaultStorageThreshold);
+        Assert.Equal(0.3f, CognitionConstants.MemoryCategoryMatchWeight);
+        Assert.Equal(0.4f, CognitionConstants.MemoryContentOverlapWeight);
+        Assert.Equal(0.2f, CognitionConstants.MemoryMetadataOverlapWeight);
+        Assert.Equal(0.1f, CognitionConstants.MemoryRecencyBonusWeight);
+        Assert.Equal(0.1f, CognitionConstants.MemorySignificanceBonusWeight);
+        Assert.False(CognitionConstants.IsInitialized);
     }
 
     #endregion

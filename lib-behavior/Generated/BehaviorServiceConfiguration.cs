@@ -186,6 +186,42 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
     public double MemoryMinimumRelevanceThreshold { get; set; } = 0.1;
 
     /// <summary>
+    /// Significance score threshold for storing memories (0.0-1.0)
+    /// Environment variable: BEHAVIOR_DEFAULT_STORAGE_THRESHOLD
+    /// </summary>
+    public double DefaultStorageThreshold { get; set; } = 0.7;
+
+    /// <summary>
+    /// Weight for category match in memory relevance scoring
+    /// Environment variable: BEHAVIOR_MEMORY_CATEGORY_MATCH_WEIGHT
+    /// </summary>
+    public double MemoryCategoryMatchWeight { get; set; } = 0.3;
+
+    /// <summary>
+    /// Weight for content keyword overlap in memory relevance scoring
+    /// Environment variable: BEHAVIOR_MEMORY_CONTENT_OVERLAP_WEIGHT
+    /// </summary>
+    public double MemoryContentOverlapWeight { get; set; } = 0.4;
+
+    /// <summary>
+    /// Weight for metadata key overlap in memory relevance scoring
+    /// Environment variable: BEHAVIOR_MEMORY_METADATA_OVERLAP_WEIGHT
+    /// </summary>
+    public double MemoryMetadataOverlapWeight { get; set; } = 0.2;
+
+    /// <summary>
+    /// Maximum recency bonus for memories less than 1 hour old
+    /// Environment variable: BEHAVIOR_MEMORY_RECENCY_BONUS_WEIGHT
+    /// </summary>
+    public double MemoryRecencyBonusWeight { get; set; } = 0.1;
+
+    /// <summary>
+    /// Weight for memory significance in relevance scoring
+    /// Environment variable: BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT
+    /// </summary>
+    public double MemorySignificanceBonusWeight { get; set; } = 0.1;
+
+    /// <summary>
     /// Maximum constants in behavior constant pool
     /// Environment variable: BEHAVIOR_COMPILER_MAX_CONSTANTS
     /// </summary>

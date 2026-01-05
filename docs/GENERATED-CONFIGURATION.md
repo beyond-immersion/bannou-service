@@ -146,6 +146,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_DEFAULT_RELATIONSHIP_WEIGHT` | double | `0.2` | Weight for relationship significance in perception scoring |
 | `BEHAVIOR_DEFAULT_ROUTINE_WEIGHT` | double | `1.0` | Attention priority weight for routine perceptions |
 | `BEHAVIOR_DEFAULT_SOCIAL_WEIGHT` | double | `3.0` | Attention priority weight for social perceptions |
+| `BEHAVIOR_DEFAULT_STORAGE_THRESHOLD` | double | `0.7` | Significance score threshold for storing memories (0.0-1.0) |
 | `BEHAVIOR_DEFAULT_THREAT_FAST_TRACK_THRESHOLD` | double | `0.8` | Urgency threshold for fast-tracking threat perceptions (0.0-... |
 | `BEHAVIOR_DEFAULT_THREAT_WEIGHT` | double | `10.0` | Attention priority weight for threat perceptions |
 | `BEHAVIOR_ENABLED` | bool | `true` | Enable/disable Behavior service |
@@ -161,9 +162,14 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_DEPTH` | int | `6` | Maximum depth for GOAP planning search at medium urgency |
 | `BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_NODES` | int | `500` | Maximum nodes to explore during GOAP planning at medium urge... |
 | `BEHAVIOR_MEDIUM_URGENCY_PLAN_TIMEOUT_MS` | int | `50` | Maximum time in ms for GOAP planning at medium urgency |
+| `BEHAVIOR_MEMORY_CATEGORY_MATCH_WEIGHT` | double | `0.3` | Weight for category match in memory relevance scoring |
+| `BEHAVIOR_MEMORY_CONTENT_OVERLAP_WEIGHT` | double | `0.4` | Weight for content keyword overlap in memory relevance scori... |
 | `BEHAVIOR_MEMORY_INDEX_KEY_PREFIX` | string | `memory-index:` | Key prefix for memory index entries |
 | `BEHAVIOR_MEMORY_KEY_PREFIX` | string | `memory:` | Key prefix for memory entries |
+| `BEHAVIOR_MEMORY_METADATA_OVERLAP_WEIGHT` | double | `0.2` | Weight for metadata key overlap in memory relevance scoring |
 | `BEHAVIOR_MEMORY_MINIMUM_RELEVANCE_THRESHOLD` | double | `0.1` | Minimum relevance score for memory retrieval (0.0-1.0) |
+| `BEHAVIOR_MEMORY_RECENCY_BONUS_WEIGHT` | double | `0.1` | Maximum recency bonus for memories less than 1 hour old |
+| `BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT` | double | `0.1` | Weight for memory significance in relevance scoring |
 | `BEHAVIOR_MEMORY_STATESTORE_NAME` | string | `agent-memories` | Name of the state store for actor memories |
 | `BEHAVIOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Max retries for memory store operations |
 | `BEHAVIOR_METADATA_KEY_PREFIX` | string | `behavior-metadata:` | Key prefix for behavior metadata entries |
@@ -408,9 +414,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 284
+- **Total properties**: 290
 - **Required (no default)**: 44
-- **Optional (has default)**: 240
+- **Optional (has default)**: 246
 
 ## Environment Variable Naming Convention
 

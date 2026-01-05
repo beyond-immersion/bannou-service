@@ -156,6 +156,43 @@ x-service-configuration:
       default: 0.1
       description: Minimum relevance score for memory retrieval (0.0-1.0)
 
+    # === Memory Relevance Scoring Weights (Tier 2) ===
+    DefaultStorageThreshold:
+      type: number
+      env: BEHAVIOR_DEFAULT_STORAGE_THRESHOLD
+      default: 0.7
+      description: Significance score threshold for storing memories (0.0-1.0)
+
+    MemoryCategoryMatchWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_CATEGORY_MATCH_WEIGHT
+      default: 0.3
+      description: Weight for category match in memory relevance scoring
+
+    MemoryContentOverlapWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_CONTENT_OVERLAP_WEIGHT
+      default: 0.4
+      description: Weight for content keyword overlap in memory relevance scoring
+
+    MemoryMetadataOverlapWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_METADATA_OVERLAP_WEIGHT
+      default: 0.2
+      description: Weight for metadata key overlap in memory relevance scoring
+
+    MemoryRecencyBonusWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_RECENCY_BONUS_WEIGHT
+      default: 0.1
+      description: Maximum recency bonus for memories less than 1 hour old
+
+    MemorySignificanceBonusWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT
+      default: 0.1
+      description: Weight for memory significance in relevance scoring
+
     # === Compiler Limits (Tier 2) ===
     CompilerMaxConstants:
       type: integer

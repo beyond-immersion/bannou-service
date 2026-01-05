@@ -758,4 +758,133 @@ public class BannouSessionManagerTests
     }
 
     #endregion
+
+    #region Configuration Tests
+
+    /// <summary>
+    /// Verifies that custom TTL configuration values are applied when setting connection state.
+    /// </summary>
+    [Fact]
+    public async Task SetConnectionStateAsync_WithCustomTtlConfig_ShouldApplyConfiguredTtl()
+    {
+        // Arrange
+        var customConfig = new ConnectServiceConfiguration
+        {
+            SessionTtlSeconds = 3600 // 1 hour instead of default 24 hours
+        };
+
+        var mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        var mockConnectionStore = new Mock<IStateStore<ConnectionStateData>>();
+        var mockMappingsStore = new Mock<IStateStore<Dictionary<string, Guid>>>();
+        var mockHeartbeatStore = new Mock<IStateStore<SessionHeartbeat>>();
+        var mockStringStore = new Mock<IStateStore<string>>();
+
+        StateOptions? capturedOptions = null;
+        mockConnectionStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ConnectionStateData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ConnectionStateData, StateOptions?, CancellationToken>((k, v, opts, ct) => capturedOptions = opts)
+            .ReturnsAsync("etag-1");
+        mockMappingsStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        mockHeartbeatStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        mockStringStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        mockStateStoreFactory.Setup(f => f.GetStore<ConnectionStateData>(It.IsAny<string>())).Returns(mockConnectionStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, Guid>>(It.IsAny<string>())).Returns(mockMappingsStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<SessionHeartbeat>(It.IsAny<string>())).Returns(mockHeartbeatStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<string>(It.IsAny<string>())).Returns(mockStringStore.Object);
+
+        var sessionManager = new BannouSessionManager(
+            mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            customConfig,
+            _mockLogger.Object);
+
+        var sessionId = "test-session";
+        var stateData = new ConnectionStateData { SessionId = sessionId };
+
+        // Act - Use default TTL (not explicit) so it uses config value
+        await sessionManager.SetConnectionStateAsync(sessionId, stateData);
+
+        // Assert - TTL should be the custom configured value
+        Assert.NotNull(capturedOptions);
+        Assert.Equal(3600, capturedOptions.Ttl);
+    }
+
+    /// <summary>
+    /// Verifies that custom heartbeat TTL configuration is applied when recording heartbeats.
+    /// </summary>
+    [Fact]
+    public async Task UpdateSessionHeartbeatAsync_WithCustomConfig_ShouldApplyConfiguredTtl()
+    {
+        // Arrange
+        var customConfig = new ConnectServiceConfiguration
+        {
+            HeartbeatTtlSeconds = 600 // 10 minutes instead of default 5 minutes
+        };
+
+        var mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        var mockConnectionStore = new Mock<IStateStore<ConnectionStateData>>();
+        var mockMappingsStore = new Mock<IStateStore<Dictionary<string, Guid>>>();
+        var mockHeartbeatStore = new Mock<IStateStore<SessionHeartbeat>>();
+        var mockStringStore = new Mock<IStateStore<string>>();
+
+        StateOptions? capturedOptions = null;
+        mockConnectionStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ConnectionStateData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        mockMappingsStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+        mockHeartbeatStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SessionHeartbeat, StateOptions?, CancellationToken>((k, v, opts, ct) => capturedOptions = opts)
+            .ReturnsAsync("etag-1");
+        mockStringStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        mockStateStoreFactory.Setup(f => f.GetStore<ConnectionStateData>(It.IsAny<string>())).Returns(mockConnectionStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, Guid>>(It.IsAny<string>())).Returns(mockMappingsStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<SessionHeartbeat>(It.IsAny<string>())).Returns(mockHeartbeatStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<string>(It.IsAny<string>())).Returns(mockStringStore.Object);
+
+        var sessionManager = new BannouSessionManager(
+            mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            customConfig,
+            _mockLogger.Object);
+
+        var sessionId = "test-session";
+        var instanceId = "instance-1";
+
+        // Act
+        await sessionManager.UpdateSessionHeartbeatAsync(sessionId, instanceId);
+
+        // Assert - TTL should be the custom configured value
+        Assert.NotNull(capturedOptions);
+        Assert.Equal(600, capturedOptions.Ttl);
+    }
+
+    /// <summary>
+    /// Verifies that configuration defaults match the original hardcoded values.
+    /// </summary>
+    [Fact]
+    public void Configuration_DefaultValues_MatchOriginalHardcodedValues()
+    {
+        // Arrange & Act
+        var config = new ConnectServiceConfiguration();
+
+        // Assert - verify defaults match the original constants
+        Assert.Equal(86400, config.SessionTtlSeconds); // 24 hours
+        Assert.Equal(300, config.HeartbeatTtlSeconds); // 5 minutes
+        Assert.Equal(300, config.ReconnectionWindowSeconds); // 5 minutes
+    }
+
+    #endregion
 }

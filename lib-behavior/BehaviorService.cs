@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.BannouService;
@@ -76,6 +77,10 @@ public partial class BehaviorService : IBehaviorService
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
         _bundleManager = bundleManager;
+
+        // Initialize cognition constants from configuration (idempotent - first call wins)
+        // IMPLEMENTATION TENETS - Configuration-First
+        CognitionConstants.Initialize(configuration);
 
         // Register event handlers via partial class (BehaviorServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
