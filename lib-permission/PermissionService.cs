@@ -375,8 +375,8 @@ public partial class PermissionService : IPermissionService
 
             // Acquire distributed lock with retry to handle concurrent registration contention
             // Lock contention is expected when multiple services register simultaneously (e.g., during tests or startup)
-            const int maxRetries = 10;
-            const int baseDelayMs = 100;
+            var maxRetries = _configuration.LockMaxRetries;
+            var baseDelayMs = _configuration.LockBaseDelayMs;
             ILockResponse? serviceLock = null;
 
             for (int attempt = 0; attempt < maxRetries; attempt++)
@@ -387,7 +387,7 @@ public partial class PermissionService : IPermissionService
                         LOCK_STORE,
                         LOCK_RESOURCE,
                         lockOwnerId,
-                        expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
+                        expiryInSeconds: _configuration.LockExpirySeconds,  // Lock expires after configured seconds if not released
                         cancellationToken: cancellationToken);
 
                     if (serviceLock.Success)

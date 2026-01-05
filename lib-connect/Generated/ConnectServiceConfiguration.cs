@@ -156,4 +156,22 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string? InternalServiceToken { get; set; }
 
+    /// <summary>
+    /// Session time-to-live in seconds (default 24 hours)
+    /// Environment variable: CONNECT_SESSION_TTL_SECONDS
+    /// </summary>
+    public int SessionTtlSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Heartbeat data TTL in Redis in seconds (default 5 minutes)
+    /// Environment variable: CONNECT_HEARTBEAT_TTL_SECONDS
+    /// </summary>
+    public int HeartbeatTtlSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Window for client reconnection after disconnect in seconds (default 5 minutes)
+    /// Environment variable: CONNECT_RECONNECTION_WINDOW_SECONDS
+    /// </summary>
+    public int ReconnectionWindowSeconds { get; set; } = 300;
+
 }

@@ -72,7 +72,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         var logger = _loggerFactory.CreateLogger<ActorRunner>();
 
         // Get the actor-state store for this actor
-        var stateStore = _stateStoreFactory.GetStore<ActorStateSnapshot>("actor-state");
+        var stateStore = _stateStoreFactory.GetStore<ActorStateSnapshot>(_config.ActorStateStoreName);
 
         // Create a document executor for this actor
         var executor = _executorFactory.Create();

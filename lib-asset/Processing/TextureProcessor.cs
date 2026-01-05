@@ -26,7 +26,7 @@ public sealed class TextureProcessor : IAssetProcessor
     };
 
     /// <inheritdoc />
-    public string PoolType => "texture-processor";
+    public string PoolType => _configuration.TextureProcessorPoolType;
 
     /// <inheritdoc />
     public IReadOnlyList<string> SupportedContentTypes => TextureContentTypes;

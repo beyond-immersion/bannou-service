@@ -3,6 +3,8 @@
 // Manages string table with interning during compilation.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Abml.Compiler;
+
 namespace BeyondImmersion.Bannou.Behavior.Compiler.Codegen;
 
 /// <summary>
@@ -22,7 +24,10 @@ public sealed class StringTableBuilder
     /// <summary>
     /// Maximum number of strings (16-bit index limit).
     /// </summary>
-    public const int MaxStrings = 65536;
+    /// <remarks>
+    /// References <see cref="VmConfig.MaxStrings"/> as the authoritative value.
+    /// </remarks>
+    public static int MaxStrings => VmConfig.MaxStrings;
 
     /// <summary>
     /// Adds or retrieves an existing string from the table.

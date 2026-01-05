@@ -167,4 +167,58 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int GoapPlanTimeoutMs { get; set; } = 50;
 
+    /// <summary>
+    /// Node ID used when running in local/bannou deployment mode
+    /// Environment variable: ACTOR_LOCAL_MODE_NODE_ID
+    /// </summary>
+    public string LocalModeNodeId { get; set; } = "bannou-local";
+
+    /// <summary>
+    /// App ID used when running in local/bannou deployment mode
+    /// Environment variable: ACTOR_LOCAL_MODE_APP_ID
+    /// </summary>
+    public string LocalModeAppId { get; set; } = "bannou";
+
+    /// <summary>
+    /// Minimum urgency for perception to be processed (0.0-1.0)
+    /// Environment variable: ACTOR_PERCEPTION_FILTER_THRESHOLD
+    /// </summary>
+    public double PerceptionFilterThreshold { get; set; } = 0.1;
+
+    /// <summary>
+    /// Minimum urgency for perception to become a memory (0.0-1.0)
+    /// Environment variable: ACTOR_PERCEPTION_MEMORY_THRESHOLD
+    /// </summary>
+    public double PerceptionMemoryThreshold { get; set; } = 0.7;
+
+    /// <summary>
+    /// Expiration time in minutes for short-term memories from high-urgency perceptions
+    /// Environment variable: ACTOR_SHORT_TERM_MEMORY_MINUTES
+    /// </summary>
+    public int ShortTermMemoryMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Default expiration time in minutes for actor memories
+    /// Environment variable: ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES
+    /// </summary>
+    public int DefaultMemoryExpirationMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Name of the state store for actor templates
+    /// Environment variable: ACTOR_TEMPLATE_STATESTORE_NAME
+    /// </summary>
+    public string TemplateStatestoreName { get; set; } = "actor-templates";
+
+    /// <summary>
+    /// Name of the state store for actor instance tracking
+    /// Environment variable: ACTOR_INSTANCE_STATESTORE_NAME
+    /// </summary>
+    public string InstanceStatestoreName { get; set; } = "actor-instances";
+
+    /// <summary>
+    /// Name of the state store for actor state persistence
+    /// Environment variable: ACTOR_STATE_STORE_NAME
+    /// </summary>
+    public string ActorStateStoreName { get; set; } = "actor-state";
+
 }

@@ -72,8 +72,8 @@ public partial class ActorService
             }
 
             // Find actors using this behavior
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
 
             // Get all template IDs from index
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, CancellationToken.None) ?? new List<string>();

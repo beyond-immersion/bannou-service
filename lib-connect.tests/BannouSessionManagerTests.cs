@@ -17,6 +17,7 @@ public class BannouSessionManagerTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<BannouSessionManager>> _mockLogger;
+    private readonly ConnectServiceConfiguration _configuration;
     private readonly BannouSessionManager _sessionManager;
 
     // Mock stores for different data types
@@ -30,6 +31,7 @@ public class BannouSessionManagerTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<BannouSessionManager>>();
+        _configuration = new ConnectServiceConfiguration();
 
         // Set up type-specific stores
         _mockMappingsStore = new Mock<IStateStore<Dictionary<string, Guid>>>();
@@ -81,6 +83,7 @@ public class BannouSessionManagerTests
         _sessionManager = new BannouSessionManager(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _configuration,
             _mockLogger.Object);
     }
 

@@ -53,4 +53,190 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
     /// </summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// Threshold below which urgency is considered low (0.0-1.0)
+    /// Environment variable: BEHAVIOR_LOW_URGENCY_THRESHOLD
+    /// </summary>
+    public double LowUrgencyThreshold { get; set; } = 0.3;
+
+    /// <summary>
+    /// Threshold above which urgency is considered high (0.0-1.0)
+    /// Environment variable: BEHAVIOR_HIGH_URGENCY_THRESHOLD
+    /// </summary>
+    public double HighUrgencyThreshold { get; set; } = 0.7;
+
+    /// <summary>
+    /// Maximum depth for GOAP planning search at low urgency
+    /// Environment variable: BEHAVIOR_LOW_URGENCY_MAX_PLAN_DEPTH
+    /// </summary>
+    public int LowUrgencyMaxPlanDepth { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum time in ms for GOAP planning at low urgency
+    /// Environment variable: BEHAVIOR_LOW_URGENCY_PLAN_TIMEOUT_MS
+    /// </summary>
+    public int LowUrgencyPlanTimeoutMs { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum nodes to explore during GOAP planning at low urgency
+    /// Environment variable: BEHAVIOR_LOW_URGENCY_MAX_PLAN_NODES
+    /// </summary>
+    public int LowUrgencyMaxPlanNodes { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum depth for GOAP planning search at medium urgency
+    /// Environment variable: BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_DEPTH
+    /// </summary>
+    public int MediumUrgencyMaxPlanDepth { get; set; } = 6;
+
+    /// <summary>
+    /// Maximum time in ms for GOAP planning at medium urgency
+    /// Environment variable: BEHAVIOR_MEDIUM_URGENCY_PLAN_TIMEOUT_MS
+    /// </summary>
+    public int MediumUrgencyPlanTimeoutMs { get; set; } = 50;
+
+    /// <summary>
+    /// Maximum nodes to explore during GOAP planning at medium urgency
+    /// Environment variable: BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_NODES
+    /// </summary>
+    public int MediumUrgencyMaxPlanNodes { get; set; } = 500;
+
+    /// <summary>
+    /// Maximum depth for GOAP planning search at high urgency
+    /// Environment variable: BEHAVIOR_HIGH_URGENCY_MAX_PLAN_DEPTH
+    /// </summary>
+    public int HighUrgencyMaxPlanDepth { get; set; } = 3;
+
+    /// <summary>
+    /// Maximum time in ms for GOAP planning at high urgency
+    /// Environment variable: BEHAVIOR_HIGH_URGENCY_PLAN_TIMEOUT_MS
+    /// </summary>
+    public int HighUrgencyPlanTimeoutMs { get; set; } = 20;
+
+    /// <summary>
+    /// Maximum nodes to explore during GOAP planning at high urgency
+    /// Environment variable: BEHAVIOR_HIGH_URGENCY_MAX_PLAN_NODES
+    /// </summary>
+    public int HighUrgencyMaxPlanNodes { get; set; } = 200;
+
+    /// <summary>
+    /// Attention priority weight for threat perceptions
+    /// Environment variable: BEHAVIOR_DEFAULT_THREAT_WEIGHT
+    /// </summary>
+    public double DefaultThreatWeight { get; set; } = 10.0;
+
+    /// <summary>
+    /// Attention priority weight for novel perceptions
+    /// Environment variable: BEHAVIOR_DEFAULT_NOVELTY_WEIGHT
+    /// </summary>
+    public double DefaultNoveltyWeight { get; set; } = 5.0;
+
+    /// <summary>
+    /// Attention priority weight for social perceptions
+    /// Environment variable: BEHAVIOR_DEFAULT_SOCIAL_WEIGHT
+    /// </summary>
+    public double DefaultSocialWeight { get; set; } = 3.0;
+
+    /// <summary>
+    /// Attention priority weight for routine perceptions
+    /// Environment variable: BEHAVIOR_DEFAULT_ROUTINE_WEIGHT
+    /// </summary>
+    public double DefaultRoutineWeight { get; set; } = 1.0;
+
+    /// <summary>
+    /// Urgency threshold for fast-tracking threat perceptions (0.0-1.0)
+    /// Environment variable: BEHAVIOR_DEFAULT_THREAT_FAST_TRACK_THRESHOLD
+    /// </summary>
+    public double DefaultThreatFastTrackThreshold { get; set; } = 0.8;
+
+    /// <summary>
+    /// Weight for emotional significance in perception scoring
+    /// Environment variable: BEHAVIOR_DEFAULT_EMOTIONAL_WEIGHT
+    /// </summary>
+    public double DefaultEmotionalWeight { get; set; } = 0.4;
+
+    /// <summary>
+    /// Weight for goal relevance in perception scoring
+    /// Environment variable: BEHAVIOR_DEFAULT_GOAL_RELEVANCE_WEIGHT
+    /// </summary>
+    public double DefaultGoalRelevanceWeight { get; set; } = 0.4;
+
+    /// <summary>
+    /// Weight for relationship significance in perception scoring
+    /// Environment variable: BEHAVIOR_DEFAULT_RELATIONSHIP_WEIGHT
+    /// </summary>
+    public double DefaultRelationshipWeight { get; set; } = 0.2;
+
+    /// <summary>
+    /// Maximum memory entries per actor
+    /// Environment variable: BEHAVIOR_DEFAULT_MEMORY_LIMIT
+    /// </summary>
+    public int DefaultMemoryLimit { get; set; } = 100;
+
+    /// <summary>
+    /// Max retries for memory store operations
+    /// Environment variable: BEHAVIOR_MEMORY_STORE_MAX_RETRIES
+    /// </summary>
+    public int MemoryStoreMaxRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Minimum relevance score for memory retrieval (0.0-1.0)
+    /// Environment variable: BEHAVIOR_MEMORY_MINIMUM_RELEVANCE_THRESHOLD
+    /// </summary>
+    public double MemoryMinimumRelevanceThreshold { get; set; } = 0.1;
+
+    /// <summary>
+    /// Maximum constants in behavior constant pool
+    /// Environment variable: BEHAVIOR_COMPILER_MAX_CONSTANTS
+    /// </summary>
+    public int CompilerMaxConstants { get; set; } = 256;
+
+    /// <summary>
+    /// Maximum strings in behavior string table
+    /// Environment variable: BEHAVIOR_COMPILER_MAX_STRINGS
+    /// </summary>
+    public int CompilerMaxStrings { get; set; } = 65536;
+
+    /// <summary>
+    /// Name of the state store for behavior metadata
+    /// Environment variable: BEHAVIOR_STATESTORE_NAME
+    /// </summary>
+    public string StatestoreName { get; set; } = "behavior-statestore";
+
+    /// <summary>
+    /// Name of the state store for actor memories
+    /// Environment variable: BEHAVIOR_MEMORY_STATESTORE_NAME
+    /// </summary>
+    public string MemoryStatestoreName { get; set; } = "agent-memories";
+
+    /// <summary>
+    /// Key prefix for bundle membership entries
+    /// Environment variable: BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX
+    /// </summary>
+    public string BundleMembershipKeyPrefix { get; set; } = "bundle-membership:";
+
+    /// <summary>
+    /// Key prefix for behavior metadata entries
+    /// Environment variable: BEHAVIOR_METADATA_KEY_PREFIX
+    /// </summary>
+    public string BehaviorMetadataKeyPrefix { get; set; } = "behavior-metadata:";
+
+    /// <summary>
+    /// Key prefix for GOAP metadata entries
+    /// Environment variable: BEHAVIOR_GOAP_METADATA_KEY_PREFIX
+    /// </summary>
+    public string GoapMetadataKeyPrefix { get; set; } = "goap-metadata:";
+
+    /// <summary>
+    /// Key prefix for memory entries
+    /// Environment variable: BEHAVIOR_MEMORY_KEY_PREFIX
+    /// </summary>
+    public string MemoryKeyPrefix { get; set; } = "memory:";
+
+    /// <summary>
+    /// Key prefix for memory index entries
+    /// Environment variable: BEHAVIOR_MEMORY_INDEX_KEY_PREFIX
+    /// </summary>
+    public string MemoryIndexKeyPrefix { get; set; } = "memory-index:";
+
 }

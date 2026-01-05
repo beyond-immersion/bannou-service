@@ -199,3 +199,141 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (webhooks disabled if not set)
       description: Secret for validating MinIO webhook requests
       env: ASSET_MINIO_WEBHOOK_SECRET
+
+    # === Storage Path Prefixes (Tier 1) ===
+    TempUploadPathPrefix:
+      type: string
+      description: Path prefix for temporary upload staging in storage bucket
+      env: ASSET_TEMP_UPLOAD_PATH_PREFIX
+      default: temp
+
+    FinalAssetPathPrefix:
+      type: string
+      description: Path prefix for final asset storage in bucket
+      env: ASSET_FINAL_ASSET_PATH_PREFIX
+      default: assets
+
+    BundleCurrentPathPrefix:
+      type: string
+      description: Path prefix for finalized bundles in storage bucket
+      env: ASSET_BUNDLE_CURRENT_PATH_PREFIX
+      default: bundles/current
+
+    BundleZipCachePathPrefix:
+      type: string
+      description: Path prefix for ZIP conversion cache in storage bucket
+      env: ASSET_BUNDLE_ZIP_CACHE_PATH_PREFIX
+      default: bundles/zip-cache
+
+    BundleUploadPathPrefix:
+      type: string
+      description: Path prefix for bundle upload staging in storage bucket
+      env: ASSET_BUNDLE_UPLOAD_PATH_PREFIX
+      default: bundles/uploads
+
+    # === Processor Availability Parameters (Tier 1) ===
+    ProcessorAvailabilityMaxWaitSeconds:
+      type: integer
+      description: Maximum seconds to wait for processor availability
+      env: ASSET_PROCESSOR_AVAILABILITY_MAX_WAIT_SECONDS
+      default: 60
+
+    ProcessorAvailabilityPollIntervalSeconds:
+      type: integer
+      description: Polling interval in seconds when waiting for processor
+      env: ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS
+      default: 2
+
+    ProcessingMaxRetries:
+      type: integer
+      description: Maximum retry attempts for asset processing
+      env: ASSET_PROCESSING_MAX_RETRIES
+      default: 5
+
+    ProcessingRetryDelaySeconds:
+      type: integer
+      description: Delay in seconds between processing retries
+      env: ASSET_PROCESSING_RETRY_DELAY_SECONDS
+      default: 30
+
+    # === State Store Configuration (Tier 3) ===
+    StatestoreName:
+      type: string
+      description: Name of the state store for asset metadata
+      env: ASSET_STATESTORE_NAME
+      default: asset-statestore
+
+    ProcessorPoolStoreName:
+      type: string
+      description: Name of the state store for processor pool management
+      env: ASSET_PROCESSOR_POOL_STORE_NAME
+      default: asset-processor-pool
+
+    # === Key Prefix Configuration (Tier 3) ===
+    UploadSessionKeyPrefix:
+      type: string
+      description: Key prefix for upload session entries in state store
+      env: ASSET_UPLOAD_SESSION_KEY_PREFIX
+      default: "upload:"
+
+    AssetKeyPrefix:
+      type: string
+      description: Key prefix for asset entries in state store
+      env: ASSET_KEY_PREFIX
+      default: "asset:"
+
+    AssetIndexKeyPrefix:
+      type: string
+      description: Key prefix for asset index entries in state store
+      env: ASSET_INDEX_KEY_PREFIX
+      default: "asset-index:"
+
+    BundleKeyPrefix:
+      type: string
+      description: Key prefix for bundle entries in state store
+      env: ASSET_BUNDLE_KEY_PREFIX
+      default: "bundle:"
+
+    # === Processor Pool Type Names (Tier 3) ===
+    TextureProcessorPoolType:
+      type: string
+      description: Pool type name for texture processing
+      env: ASSET_TEXTURE_PROCESSOR_POOL_TYPE
+      default: texture-processor
+
+    ModelProcessorPoolType:
+      type: string
+      description: Pool type name for 3D model processing
+      env: ASSET_MODEL_PROCESSOR_POOL_TYPE
+      default: model-processor
+
+    AudioProcessorPoolType:
+      type: string
+      description: Pool type name for audio processing
+      env: ASSET_AUDIO_PROCESSOR_POOL_TYPE
+      default: audio-processor
+
+    DefaultProcessorPoolType:
+      type: string
+      description: Default pool type name for general asset processing
+      env: ASSET_DEFAULT_PROCESSOR_POOL_TYPE
+      default: asset-processor
+
+    # === Content Type Extensions (Tier 3) ===
+    AdditionalProcessableContentTypes:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (extends defaults)
+      description: Comma-separated list of additional processable content types beyond defaults
+      env: ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES
+
+    AdditionalExtensionMappings:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (extends defaults)
+      description: Comma-separated ext=type pairs for additional extension mappings (e.g., ".ktx=image/ktx")
+      env: ASSET_ADDITIONAL_EXTENSION_MAPPINGS
+
+    AdditionalForbiddenContentTypes:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (extends defaults)
+      description: Comma-separated list of additional forbidden content types
+      env: ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES

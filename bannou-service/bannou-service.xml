@@ -750,6 +750,9 @@
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.VmConfig.MaxConstants">
             <summary>Maximum number of constants (256).</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Compiler.VmConfig.MaxStrings">
+            <summary>Maximum number of strings in the string table (65536).</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.VmConfig.MaxInstructions">
             <summary>Maximum bytecode length.</summary>
         </member>

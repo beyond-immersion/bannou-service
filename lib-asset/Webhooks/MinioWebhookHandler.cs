@@ -19,7 +19,7 @@ public class MinioWebhookHandler
     private readonly ILogger<MinioWebhookHandler> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
-    private const string UPLOAD_SESSION_PREFIX = "upload:";
+    // Key prefix now comes from configuration (UploadSessionKeyPrefix)
 
     public MinioWebhookHandler(
         IStateStoreFactory stateStoreFactory,
@@ -28,10 +28,11 @@ public class MinioWebhookHandler
         AssetServiceConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
-        _stateStore = stateStoreFactory.GetStore<UploadSession>("asset-statestore");
+        ArgumentNullException.ThrowIfNull(configuration);
+        _configuration = configuration;
+        _stateStore = stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     /// <summary>
@@ -93,8 +94,9 @@ public class MinioWebhookHandler
             return;
         }
 
-        // Check if this is a temp upload (format: temp/{uploadId}/{filename})
-        if (!key.StartsWith("temp/", StringComparison.OrdinalIgnoreCase))
+        // Check if this is a temp upload (format: {TempUploadPathPrefix}/{uploadId}/{filename})
+        var tempPrefix = _configuration.TempUploadPathPrefix.TrimEnd('/') + "/";
+        if (!key.StartsWith(tempPrefix, StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogDebug("MinIO webhook: Ignoring non-temp upload {Key}", key);
             return;
@@ -116,7 +118,7 @@ public class MinioWebhookHandler
         }
 
         // Look up the upload session
-        var stateKey = $"{UPLOAD_SESSION_PREFIX}{uploadId:N}";
+        var stateKey = $"{_configuration.UploadSessionKeyPrefix}{uploadId:N}";
         var session = await _stateStore.GetAsync(stateKey).ConfigureAwait(false);
 
         if (session == null)

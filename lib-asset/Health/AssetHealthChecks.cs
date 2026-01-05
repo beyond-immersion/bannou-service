@@ -109,18 +109,22 @@ public class RedisHealthCheck : IHealthCheck
 public class ProcessingPoolHealthCheck : IHealthCheck
 {
     private readonly BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient _orchestratorClient;
+    private readonly AssetServiceConfiguration _configuration;
     private readonly ILogger<ProcessingPoolHealthCheck> _logger;
 
     /// <summary>
     /// Initializes a new instance of the ProcessingPoolHealthCheck class.
     /// </summary>
     /// <param name="orchestratorClient">The orchestrator client.</param>
+    /// <param name="configuration">The asset service configuration.</param>
     /// <param name="logger">The logger.</param>
     public ProcessingPoolHealthCheck(
         BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient orchestratorClient,
+        AssetServiceConfiguration configuration,
         ILogger<ProcessingPoolHealthCheck> logger)
     {
         _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -137,7 +141,7 @@ public class ProcessingPoolHealthCheck : IHealthCheck
             var status = await _orchestratorClient.GetPoolStatusAsync(
                 new BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest
                 {
-                    PoolType = "asset-processor"
+                    PoolType = _configuration.DefaultProcessorPoolType
                 },
                 cancellationToken);
 

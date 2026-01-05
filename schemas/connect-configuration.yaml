@@ -108,5 +108,24 @@ x-service-configuration:
       description: "Secret for X-Service-Token validation when InternalAuthMode is service-token"
       env: CONNECT_INTERNAL_SERVICE_TOKEN
 
+    # === Session/Connection TTLs (Tier 1) ===
+    SessionTtlSeconds:
+      type: integer
+      env: CONNECT_SESSION_TTL_SECONDS
+      default: 86400
+      description: Session time-to-live in seconds (default 24 hours)
+
+    HeartbeatTtlSeconds:
+      type: integer
+      env: CONNECT_HEARTBEAT_TTL_SECONDS
+      default: 300
+      description: Heartbeat data TTL in Redis in seconds (default 5 minutes)
+
+    ReconnectionWindowSeconds:
+      type: integer
+      env: CONNECT_RECONNECTION_WINDOW_SECONDS
+      default: 300
+      description: Window for client reconnection after disconnect in seconds (default 5 minutes)
+
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permission.capabilities-updated

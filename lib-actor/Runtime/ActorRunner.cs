@@ -407,7 +407,7 @@ public class ActorRunner : IActorRunner
         while (_perceptionQueue.Reader.TryRead(out var perception))
         {
             // Apply attention filter (based on urgency)
-            if (perception.Urgency < 0.1f)
+            if (perception.Urgency < (float)_config.PerceptionFilterThreshold)
             {
                 // Skip very low urgency perceptions
                 continue;
@@ -418,13 +418,13 @@ public class ActorRunner : IActorRunner
             _state.SetWorkingMemory(key, perception);
 
             // Assess significance and potentially store as memory
-            if (perception.Urgency >= 0.7f)
+            if (perception.Urgency >= (float)_config.PerceptionMemoryThreshold)
             {
                 // High urgency perceptions become memories
                 _state.AddMemory(
                     $"recent:{perception.PerceptionType}",
                     new { perception.SourceId, perception.SourceType, perception.Data, perception.Urgency },
-                    DateTimeOffset.UtcNow.AddMinutes(5)); // Short-term memory
+                    DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes)); // Short-term memory
             }
 
             processedCount++;

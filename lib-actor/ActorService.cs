@@ -46,8 +46,7 @@ public partial class ActorService : IActorService
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IActorPoolManager _poolManager;
 
-    private const string TEMPLATE_STORE = "actor-templates";
-    private const string INSTANCE_STORE = "actor-instances";
+    // State store names now come from configuration (TemplateStatestoreName, InstanceStatestoreName)
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
 
     /// <summary>
@@ -111,7 +110,7 @@ public partial class ActorService : IActorService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var templateId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
@@ -146,7 +145,7 @@ public partial class ActorService : IActorService
             await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
 
             // Add to template index
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
             if (!allIds.Contains(templateId.ToString()))
             {
@@ -197,7 +196,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             ActorTemplateData? template = null;
 
             if (body.TemplateId.HasValue)
@@ -245,8 +244,8 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
 
             // Get all template IDs from index
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
@@ -300,7 +299,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
@@ -392,7 +391,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
@@ -427,7 +426,7 @@ public partial class ActorService : IActorService
             await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
 
             // Remove from template index
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
             if (allIds.Remove(body.TemplateId.ToString()))
             {
@@ -486,7 +485,7 @@ public partial class ActorService : IActorService
         try
         {
             // Get template
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (template == null)
@@ -540,8 +539,8 @@ public partial class ActorService : IActorService
                 }
 
                 await runner.StartAsync(cancellationToken);
-                nodeId = "bannou-local";
-                nodeAppId = "bannou";
+                nodeId = _configuration.LocalModeNodeId;
+                nodeAppId = _configuration.LocalModeAppId;
                 startedAt = runner.StartedAt;
             }
             else
@@ -653,8 +652,8 @@ public partial class ActorService : IActorService
             if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
             {
                 return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? "bannou-local" : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? "bannou" : null));
+                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null));
             }
 
             // In pool mode, check if actor is assigned to a pool node
@@ -737,8 +736,8 @@ public partial class ActorService : IActorService
         string actorId,
         CancellationToken cancellationToken)
     {
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
 
         // Get all template IDs
         var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken);
@@ -865,7 +864,7 @@ public partial class ActorService : IActorService
                     ActorId = body.ActorId,
                     TemplateId = runner.TemplateId,
                     CharacterId = runner.CharacterId ?? Guid.Empty,
-                    NodeId = "bannou-local",
+                    NodeId = _configuration.LocalModeNodeId,
                     Status = runner.Status.ToString().ToLowerInvariant(),
                     StartedAt = runner.StartedAt,
                     DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
@@ -965,8 +964,8 @@ public partial class ActorService : IActorService
                 .Skip(body.Offset)
                 .Take(body.Limit)
                 .Select(r => r.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? "bannou-local" : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? "bannou" : null))
+                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null))
                 .ToList();
 
             return (StatusCodes.OK, new ListActorsResponse
