@@ -104,7 +104,7 @@ public class BannouSessionManagerTests
         var sessionId = "test-session-123";
         var mappings = new Dictionary<string, Guid>
         {
-            { "accounts", Guid.NewGuid() },
+            { "account", Guid.NewGuid() },
             { "auth", Guid.NewGuid() }
         };
 
@@ -168,7 +168,7 @@ public class BannouSessionManagerTests
         var sessionId = "test-session-123";
         var expectedMappings = new Dictionary<string, Guid>
         {
-            { "accounts", Guid.NewGuid() }
+            { "account", Guid.NewGuid() }
         };
 
         _mockMappingsStore

@@ -136,7 +136,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
 
                     var response = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/account/list",
+                        "/subscription/account/list",
                         new { accountId = nonExistentAccountId },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
@@ -217,7 +217,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Invoking /subscriptions/create...");
                     var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/create",
+                        "/subscription/create",
                         new
                         {
                             accountId = accountId,
@@ -242,7 +242,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Invoking /subscriptions/get...");
                     var getResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/get",
+                        "/subscription/get",
                         new { subscriptionId = subscriptionIdStr },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
@@ -305,7 +305,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 1: Creating subscription...");
                     var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/create",
+                        "/subscription/create",
                         new
                         {
                             accountId = accountId,
@@ -327,7 +327,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 2: Verifying subscription appears in account list...");
                     var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/account/list",
+                        "/subscription/account/list",
                         new { accountId = accountId },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
@@ -345,7 +345,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     var newExpiration = DateTimeOffset.UtcNow.AddDays(60);
                     var updateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/update",
+                        "/subscription/update",
                         new
                         {
                             subscriptionId = subscriptionId,
@@ -361,7 +361,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 4: Cancelling subscription...");
                     var cancelResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/cancel",
+                        "/subscription/cancel",
                         new
                         {
                             subscriptionId = subscriptionId,
@@ -382,7 +382,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 5: Renewing subscription...");
                     var renewResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/renew",
+                        "/subscription/renew",
                         new
                         {
                             subscriptionId = subscriptionId,
@@ -452,7 +452,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Creating subscription...");
                     var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/create",
+                        "/subscription/create",
                         new
                         {
                             accountId = accountId,
@@ -473,7 +473,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Invoking /subscriptions/account/list...");
                     var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/account/list",
+                        "/subscription/account/list",
                         new { accountId = accountId },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
@@ -546,7 +546,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     {
                         var response = (await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
-                            "/subscriptions/get",
+                            "/subscription/get",
                             new { subscriptionId = nonExistentId },
                             timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
@@ -630,7 +630,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Creating first subscription...");
                     var firstResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/create",
+                        "/subscription/create",
                         new
                         {
                             accountId = accountId,
@@ -652,7 +652,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Attempting to create duplicate subscription...");
                     var duplicateApiResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/create",
+                        "/subscription/create",
                         new
                         {
                             accountId = accountId,

@@ -2113,7 +2113,7 @@ public partial class ConnectService : IConnectService
 
             // Handle SessionCapabilitiesEvent - extract permissions and send to client
             // Check both the EnumMember value and the C# enum name (JsonStringEnumConverter uses C# name)
-            if (eventName == "permissions.session_capabilities" ||
+            if (eventName == "permission.session_capabilities" ||
                 eventName == "Permissions_session_capabilities")
             {
                 _logger.LogDebug("Handling SessionCapabilitiesEvent for session {SessionId}", sessionId);

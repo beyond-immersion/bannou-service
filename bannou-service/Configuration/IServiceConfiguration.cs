@@ -14,7 +14,7 @@ public interface IServiceConfiguration
     /// Shared serializer options, between all Bannou services/consumers.
     /// References BannouJson.Options as the single source of truth for JSON serialization.
     /// IMPORTANT: Must include JsonStringEnumConverter to ensure enum values serialize
-    /// as strings (e.g., "permissions.capabilities_refresh") instead of numbers (e.g., 0).
+    /// as strings (e.g., "permission.capabilities_refresh") instead of numbers (e.g., 0).
     /// This is critical for client event handling where event_name is matched by string value.
     /// </summary>
     public static readonly JsonSerializerOptions BannouSerializerConfig = BannouJson.Options;

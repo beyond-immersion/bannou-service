@@ -204,7 +204,7 @@ public static class TestingPermissionRegistration
             var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
 
             await messageBus.TryPublishAsync(
-                "permissions.service-registered",
+                "permission.service-registered",
                 registrationEvent);
 
             logger?.LogInformation(

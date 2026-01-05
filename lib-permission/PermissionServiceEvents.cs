@@ -21,12 +21,12 @@ public partial class PermissionService
     {
         // Service registration - services publish their API permissions on startup
         eventConsumer.RegisterHandler<IPermissionService, ServiceRegistrationEvent>(
-            "permissions.service-registered",
+            "permission.service-registered",
             async (svc, evt) => await ((PermissionService)svc).HandleServiceRegistrationAsync(evt));
 
         // Session state changes from services (e.g., game-session state transitions)
         eventConsumer.RegisterHandler<IPermissionService, SessionStateChangeEvent>(
-            "permissions.session-state-changed",
+            "permission.session-state-changed",
             async (svc, evt) => await ((PermissionService)svc).HandleSessionStateChangeAsync(evt));
 
         // Session updates from Auth service (role/authorization changes)

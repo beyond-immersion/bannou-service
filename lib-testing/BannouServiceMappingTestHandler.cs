@@ -50,23 +50,23 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
             var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>(), CreateTestConfiguration());
 
             // Should default to "bannou"
-            var appId = resolver.GetAppIdForService("accounts");
+            var appId = resolver.GetAppIdForService("account");
             if (appId != "bannou")
                 return new TestResult(false, $"Expected default app-id 'bannou', got '{appId}'");
 
             Console.WriteLine($"✓ Default service mapping: accounts -> {appId}");
 
             // Test dynamic mapping update
-            resolver.UpdateServiceMapping("accounts", "accounts-service-east");
-            appId = resolver.GetAppIdForService("accounts");
+            resolver.UpdateServiceMapping("account", "accounts-service-east");
+            appId = resolver.GetAppIdForService("account");
             if (appId != "accounts-service-east")
                 return new TestResult(false, $"Expected updated app-id 'accounts-service-east', got '{appId}'");
 
             Console.WriteLine($"✓ Dynamic service mapping: accounts -> {appId}");
 
             // Test service removal (should revert to default)
-            resolver.RemoveServiceMapping("accounts");
-            appId = resolver.GetAppIdForService("accounts");
+            resolver.RemoveServiceMapping("account");
+            appId = resolver.GetAppIdForService("account");
             if (appId != "bannou")
                 return new TestResult(false, $"Expected reverted app-id 'bannou', got '{appId}'");
 
@@ -121,7 +121,7 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
             Console.WriteLine($"✓ Mapping removal: test-service -> {revertedAppId}");
 
             // Test 4: Test GetAllMappings for monitoring
-            resolver.UpdateServiceMapping("accounts", "accounts-cluster-west");
+            resolver.UpdateServiceMapping("account", "accounts-cluster-west");
             resolver.UpdateServiceMapping("behavior", "npc-processing-01");
 
             var allMappings = resolver.GetAllMappings();
@@ -180,14 +180,14 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
                 return new TestResult(false, $"Initial mappings should be empty, got {initialMappings.Count}");
 
             // Add some mappings and verify monitoring
-            resolver.UpdateServiceMapping("accounts", "accounts-cluster");
+            resolver.UpdateServiceMapping("account", "accounts-cluster");
             resolver.UpdateServiceMapping("auth", "auth-cluster");
 
             var updatedMappings = resolver.GetAllMappings();
             if (updatedMappings.Count != 2)
                 return new TestResult(false, $"Expected 2 mappings after updates, got {updatedMappings.Count}");
 
-            if (!updatedMappings.ContainsKey("accounts") || updatedMappings["accounts"] != "accounts-cluster")
+            if (!updatedMappings.ContainsKey("account") || updatedMappings["account"] != "accounts-cluster")
                 return new TestResult(false, "Accounts mapping not found or incorrect");
 
             if (!updatedMappings.ContainsKey("auth") || updatedMappings["auth"] != "auth-cluster")

@@ -1633,7 +1633,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             Console.WriteLine($"  Publishing service registration event for {testServiceId} via IMessageBus...");
 
             // Publish the event via IMessageBus
-            await messageBus.TryPublishAsync("permissions.service-registered", serviceRegistrationEvent);
+            await messageBus.TryPublishAsync("permission.service-registered", serviceRegistrationEvent);
 
             Console.WriteLine("  Event published via IMessageBus, waiting for processing...");
 
@@ -1788,7 +1788,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             };
 
             Console.WriteLine($"  Publishing session state change event via IMessageBus...");
-            await messageBus.TryPublishAsync("permissions.session-state-changed", stateChangeEvent);
+            await messageBus.TryPublishAsync("permission.session-state-changed", stateChangeEvent);
 
             // Step 5: Wait for event processing
             await Task.Delay(500);

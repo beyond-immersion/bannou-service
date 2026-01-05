@@ -767,7 +767,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
 
         // Check if the delete endpoint is available
-        var deleteGuid = adminClient.GetServiceGuid("POST", "/accounts/delete");
+        var deleteGuid = adminClient.GetServiceGuid("POST", "/account/delete");
         if (deleteGuid == null)
         {
             Console.WriteLine("❌ Admin client does not have /accounts/delete in available APIs");
@@ -787,7 +787,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             var deleteRequest = new { accountId = accountId.ToString() };
             var response = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/accounts/delete",
+                "/account/delete",
                 deleteRequest,
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -1460,7 +1460,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                                 var serviceGuidStr = api?["serviceGuid"]?.GetValue<string>();
 
                                 // Match POST /accounts/delete
-                                if (method == "POST" && path == "/accounts/delete")
+                                if (method == "POST" && path == "/account/delete")
                                 {
                                     if (Guid.TryParse(serviceGuidStr, out var guid))
                                     {

@@ -30,7 +30,7 @@ public class MetaResponse
     public string Method { get; set; } = "";
 
     /// <summary>
-    /// Endpoint path (e.g., "/accounts/get")
+    /// Endpoint path (e.g., "/account/get")
     /// </summary>
     public string Path { get; set; } = "";
 

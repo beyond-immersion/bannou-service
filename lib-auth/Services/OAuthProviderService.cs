@@ -453,7 +453,7 @@ public class OAuthProviderService : IOAuthProviderService
                             "FindOrCreateOAuthAccount",
                             innerEx.GetType().Name,
                             innerEx.Message,
-                            dependency: "accounts",
+                            dependency: "account",
                             stack: innerEx.StackTrace,
                             cancellationToken: cancellationToken);
                         return null;
@@ -492,7 +492,7 @@ public class OAuthProviderService : IOAuthProviderService
                 "FindOrCreateOAuthAccount",
                 ex.GetType().Name,
                 ex.Message,
-                dependency: "accounts",
+                dependency: "account",
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return null;

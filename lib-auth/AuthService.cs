@@ -128,7 +128,7 @@ public partial class AuthService : IAuthService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to lookup account by email via AccountClient");
-                await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message, dependency: "accounts");
+                await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message, dependency: "account");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -231,7 +231,7 @@ public partial class AuthService : IAuthService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to create account via AccountClient");
-                await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message, dependency: "accounts");
+                await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message, dependency: "account");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -305,7 +305,7 @@ public partial class AuthService : IAuthService
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for OAuth user: {ProviderId}", userInfo.ProviderId);
-                await PublishErrorEventAsync("CompleteOAuth", "account_creation_failed", "Failed to find or create account for OAuth user", dependency: "accounts", details: new { Provider = provider.ToString(), ProviderId = userInfo.ProviderId });
+                await PublishErrorEventAsync("CompleteOAuth", "account_creation_failed", "Failed to find or create account for OAuth user", dependency: "account", details: new { Provider = provider.ToString(), ProviderId = userInfo.ProviderId });
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -386,7 +386,7 @@ public partial class AuthService : IAuthService
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
-                await PublishErrorEventAsync("VerifySteamAuth", "account_creation_failed", "Failed to find or create account for Steam user", dependency: "accounts", details: new { SteamId = steamId });
+                await PublishErrorEventAsync("VerifySteamAuth", "account_creation_failed", "Failed to find or create account for Steam user", dependency: "account", details: new { SteamId = steamId });
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -454,7 +454,7 @@ public partial class AuthService : IAuthService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to lookup account by ID via AccountClient");
-                await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message, dependency: "accounts");
+                await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message, dependency: "account");
                 return (StatusCodes.InternalServerError, null);
             }
 

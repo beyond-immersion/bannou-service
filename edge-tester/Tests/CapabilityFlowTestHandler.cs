@@ -624,7 +624,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             {
                 var response = (await adminClient.InvokeAsync<object, JsonElement>(
                     "POST",
-                    "/permissions/update-session-state",
+                    "/permission/update-session-state",
                     stateUpdate,
                     timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 

@@ -220,7 +220,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Step 3: Looking up account ID for {authResult.Value.email}...");
                     var accountLookupResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/accounts/by-email",
+                        "/account/by-email",
                         new { email = authResult.Value.email },
                         timeout: TimeSpan.FromSeconds(5));
 
@@ -243,7 +243,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 4: Creating subscription...");
                     var subResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/create",
+                        "/subscription/create",
                         new
                         {
                             accountId = accountId,

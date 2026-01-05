@@ -296,7 +296,7 @@ public class ConnectServiceTests
         // Arrange
         var sessionId1 = "session-123";
         var sessionId2 = "session-456";
-        var serviceName = "accounts";
+        var serviceName = "account";
 
         // Act
         var guid1 = GuidGenerator.GenerateServiceGuid(sessionId1, serviceName, _testServerSalt);
@@ -360,7 +360,7 @@ public class ConnectServiceTests
     public void MessageRouter_AnalyzeMessage_ShouldExtractCorrectInformation()
     {
         // Arrange
-        var serviceGuid = GuidGenerator.GenerateServiceGuid("test-session", "accounts", _testServerSalt);
+        var serviceGuid = GuidGenerator.GenerateServiceGuid("test-session", "account", _testServerSalt);
         var message = BinaryMessage.FromJson(
             100, // channel
             200, // sequence
@@ -370,7 +370,7 @@ public class ConnectServiceTests
         );
 
         var connectionState = new ConnectionState("test-session-123");
-        connectionState.AddServiceMapping("accounts", serviceGuid);
+        connectionState.AddServiceMapping("account", serviceGuid);
 
         // Act
         var routingInfo = MessageRouter.AnalyzeMessage(message, connectionState);
@@ -379,7 +379,7 @@ public class ConnectServiceTests
         Assert.NotNull(routingInfo);
         Assert.True(routingInfo.IsValid);
         Assert.Equal(100, routingInfo.Channel);
-        Assert.Equal("accounts", routingInfo.ServiceName);
+        Assert.Equal("account", routingInfo.ServiceName);
         Assert.Equal(RouteType.Service, routingInfo.RouteType);
     }
 

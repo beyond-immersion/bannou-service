@@ -40,7 +40,7 @@ public class SessionShortcutTests
     {
         // Arrange
         var sessionId = "test-session-123";
-        var serviceGuid = GuidGenerator.GenerateServiceGuid(sessionId, "accounts", _testServerSalt);
+        var serviceGuid = GuidGenerator.GenerateServiceGuid(sessionId, "account", _testServerSalt);
         var clientGuid = GuidGenerator.GenerateClientGuid(sessionId, "other-session", _testServerSalt);
         var shortcutGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "my_shortcut", "test-service", _testServerSalt);
 

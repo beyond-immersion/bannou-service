@@ -287,7 +287,7 @@ public static class BinaryProtocolTests
         var regularMessage = BinaryMessage.FromJson(
             0, // Channel
             1, // Sequence
-            GuidGenerator.GenerateServiceGuid("session-123", "accounts", "server-salt"),
+            GuidGenerator.GenerateServiceGuid("session-123", "account", "server-salt"),
             GuidGenerator.GenerateMessageId(),
             "{\"id\":\"test\"}"
         );
@@ -302,7 +302,7 @@ public static class BinaryProtocolTests
             MessageFlags.Meta,
             (ushort)MetaType.FullSchema,
             1,
-            GuidGenerator.GenerateServiceGuid("session-123", "accounts", "server-salt"),
+            GuidGenerator.GenerateServiceGuid("session-123", "account", "server-salt"),
             GuidGenerator.GenerateMessageId(),
             Array.Empty<byte>() // Meta requests have empty payload
         );
@@ -341,7 +341,7 @@ public static class BinaryProtocolTests
                 MessageFlags.Meta,
                 (ushort)metaType, // MetaType encoded in Channel
                 1,
-                GuidGenerator.GenerateServiceGuid("session-123", "accounts", "server-salt"),
+                GuidGenerator.GenerateServiceGuid("session-123", "account", "server-salt"),
                 GuidGenerator.GenerateMessageId(),
                 Array.Empty<byte>()
             );

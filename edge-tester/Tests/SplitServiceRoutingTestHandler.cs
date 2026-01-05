@@ -13,7 +13,7 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// These tests deploy a split topology via orchestrator and validate:
 /// 1. Orchestrator can deploy multi-node configurations in real-time
 /// 2. ServiceMappingEvents flow correctly through RabbitMQ
-/// 3. Dynamic routing works (auth/accounts -> bannou-auth node)
+/// 3. Dynamic routing works (auth/account -> bannou-auth node)
 /// 4. WebSocket connections survive topology changes
 ///
 /// IMPORTANT: These tests should run LAST as they modify the deployment topology.
@@ -36,13 +36,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     private static string? _relayedDeploymentError = null;
 
     /// <summary>
-    /// Checks if split deployment (auth/accounts) succeeded.
+    /// Checks if split deployment (auth/account) succeeded.
     /// </summary>
     private static bool RequiresSplitDeployment(string testName)
     {
         if (_splitDeploymentSucceeded) return true;
 
-        Console.WriteLine($"   SKIPPED: {testName} requires successful auth/accounts deployment");
+        Console.WriteLine($"   SKIPPED: {testName} requires successful auth/account deployment");
         if (!string.IsNullOrEmpty(_splitDeploymentError))
         {
             Console.WriteLine($"   Deployment failed with: {_splitDeploymentError}");
@@ -77,7 +77,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         return new ServiceTest[]
         {
-            // Phase 1: Deploy auth/accounts split topology
+            // Phase 1: Deploy auth/account split topology
             new ServiceTest(TestDeploySplitTopology, "SplitRouting - Deploy Split Topology", "Orchestrator",
                 "Deploy split-auth-routing-test preset via orchestrator (requires admin)"),
             new ServiceTest(TestConnectionSurvivedDeployment, "SplitRouting - Connection Survived", "WebSocket",
@@ -87,7 +87,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             new ServiceTest(TestAuthRoutesToSplitNode, "SplitRouting - Auth Routes Correctly", "Routing",
                 "Verify auth API calls route to bannou-auth node"),
             new ServiceTest(TestAccountsRoutesToSplitNode, "SplitRouting - Accounts Routes Correctly", "Routing",
-                "Verify accounts API calls route to bannou-auth node"),
+                "Verify account API calls route to bannou-auth node"),
             new ServiceTest(TestConnectStillOnMainNode, "SplitRouting - Connect on Main", "Routing",
                 "Verify connect service still on bannou-main node"),
 
@@ -299,7 +299,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Verify ServiceMappings reflect the split topology.
-    /// After deployment, auth and accounts should map to bannou-auth.
+    /// After deployment, auth and account should map to bannou-auth.
     /// </summary>
     private void TestServiceMappingsUpdated(string[] args)
     {
@@ -411,10 +411,10 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             // Check for expected split mappings
             var authMapping = mappings["auth"]?.GetValue<string>();
-            var accountsMapping = mappings["accounts"]?.GetValue<string>();
+            var accountsMapping = mappings["account"]?.GetValue<string>();
 
             Console.WriteLine($"   auth -> {authMapping ?? "(not set)"}");
-            Console.WriteLine($"   accounts -> {accountsMapping ?? "(not set)"}");
+            Console.WriteLine($"   "account" -> {accountsMapping ?? "(not set)"}");
 
             // In split mode, these MUST map to bannou-auth
             if (authMapping != "bannou-auth")
@@ -425,7 +425,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (accountsMapping != "bannou-auth")
             {
-                Console.WriteLine($"❌ accounts should map to 'bannou-auth', got '{accountsMapping ?? "(null)"}'");
+                Console.WriteLine($"❌ account should map to 'bannou-auth', got '{accountsMapping ?? "(null)"}'");
                 return false;
             }
 
@@ -520,8 +520,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Verify accounts API calls route to bannou-auth node.
-    /// Makes a real accounts API call to verify routing works.
+    /// Verify account API calls route to bannou-auth node.
+    /// Makes a real account API call to verify routing works.
     /// </summary>
     private void TestAccountsRoutesToSplitNode(string[] args)
     {
@@ -551,7 +551,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     private async Task<bool> TestAccountsRoutingAsync()
     {
-        // Use the admin client to make an accounts API call
+        // Use the admin client to make an account API call
         var adminClient = Program.AdminClient;
         if (adminClient == null || !adminClient.IsConnected)
         {
@@ -559,13 +559,13 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             return false;
         }
 
-        // Try to call an accounts API endpoint that admin has access to
+        // Try to call an account API endpoint that admin has access to
         try
         {
             // List accounts requires admin role
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/accounts/list",
+                "/account/list",
                 new { limit = 1 },
                 timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 

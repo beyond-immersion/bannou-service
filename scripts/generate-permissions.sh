@@ -303,7 +303,7 @@ cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
         var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
 
         var success = await messageBus.TryPublishAsync(
-            "permissions.service-registered",
+            "permission.service-registered",
             registrationEvent);
 
         if (success)

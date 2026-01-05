@@ -27418,7 +27418,7 @@
             Gets the service GUID for a specific API endpoint.
             </summary>
             <param name="method">HTTP method (GET, POST, etc.)</param>
-            <param name="path">API path (e.g., "/accounts/profile")</param>
+            <param name="path">API path (e.g., "/account/profile")</param>
             <returns>The client-salted GUID, or null if not found</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.InvokeAsync``2(System.String,System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
@@ -27428,7 +27428,7 @@
             <typeparam name="TRequest">Request model type</typeparam>
             <typeparam name="TResponse">Response model type</typeparam>
             <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-            <param name="path">API path (e.g., "/accounts/profile")</param>
+            <param name="path">API path (e.g., "/account/profile")</param>
             <param name="request">Request payload</param>
             <param name="channel">Message channel for ordering (default 0)</param>
             <param name="timeout">Request timeout</param>
@@ -27454,7 +27454,7 @@
             </summary>
             <typeparam name="T">The expected data type for the meta response (e.g., JsonSchemaData, EndpointInfoData)</typeparam>
             <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-            <param name="path">API path (e.g., "/accounts/get")</param>
+            <param name="path">API path (e.g., "/account/get")</param>
             <param name="metaType">Type of metadata to request</param>
             <param name="timeout">Request timeout (default 10 seconds)</param>
             <param name="cancellationToken">Cancellation token</param>
@@ -27560,7 +27560,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.ErrorResponse.Path">
             <summary>
-            The path of the original request (e.g., "/subscriptions/create").
+            The path of the original request (e.g., "/subscription/create").
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.ApiResponse`1">
@@ -27656,7 +27656,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Path">
             <summary>
-            Endpoint path (e.g., "/accounts/get")
+            Endpoint path (e.g., "/account/get")
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Data">

@@ -57,7 +57,7 @@ public class MetaResponse<T>
     public string Method { get; set; } = "";
 
     /// <summary>
-    /// Endpoint path (e.g., "/accounts/get")
+    /// Endpoint path (e.g., "/account/get")
     /// </summary>
     [JsonPropertyName("path")]
     public string Path { get; set; } = "";

@@ -1317,23 +1317,23 @@ public class PluginLoaderTests
             Assert.False(result3, "Service should be disabled when SERVICES_ENABLED=true and X_SERVICE_DISABLED=true");
 
             // Test 4: Different service - accounts
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", "true");
-            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", "true");
+            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result4 = result4Obj != null && (bool)result4Obj;
-            Assert.False(result4, "Accounts service should be disabled when SERVICES_ENABLED=true and ACCOUNTS_SERVICE_DISABLED=true");
+            Assert.False(result4, "Account service should be disabled when SERVICES_ENABLED=true and ACCOUNT_SERVICE_DISABLED=true");
 
             // Test 5: Accounts with no disable flag - should be enabled
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", null);
-            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", null);
+            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result5 = result5Obj != null && (bool)result5Obj;
-            Assert.True(result5, "Accounts service should be enabled when SERVICES_ENABLED=true and no disable flag");
+            Assert.True(result5, "Account service should be enabled when SERVICES_ENABLED=true and no disable flag");
         }
         finally
         {
             // Cleanup
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
             Environment.SetEnvironmentVariable("TESTING_SERVICE_DISABLED", null);
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", null);
         }
     }
 
@@ -1378,23 +1378,23 @@ public class PluginLoaderTests
             Assert.True(result3, "Service should be enabled when SERVICES_ENABLED=false and X_SERVICE_ENABLED=true");
 
             // Test 4: Different service - accounts
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_ENABLED", "true");
-            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", "true");
+            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result4 = result4Obj != null && (bool)result4Obj;
-            Assert.True(result4, "Accounts service should be enabled when SERVICES_ENABLED=false and ACCOUNTS_SERVICE_ENABLED=true");
+            Assert.True(result4, "Account service should be enabled when SERVICES_ENABLED=false and ACCOUNT_SERVICE_ENABLED=true");
 
             // Test 5: Accounts with no enable flag - should be disabled
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_ENABLED", null);
-            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", null);
+            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result5 = result5Obj != null && (bool)result5Obj;
-            Assert.False(result5, "Accounts service should be disabled when SERVICES_ENABLED=false and no enable flag");
+            Assert.False(result5, "Account service should be disabled when SERVICES_ENABLED=false and no enable flag");
         }
         finally
         {
             // Cleanup
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
             Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", null);
         }
     }
 
@@ -1468,7 +1468,7 @@ public class PluginLoaderTests
         {
             // Infrastructure test configuration: SERVICES_ENABLED=true with all other services disabled
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "true");
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("AUTH_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("CONNECT_SERVICE_DISABLED", "true");
@@ -1482,9 +1482,9 @@ public class PluginLoaderTests
             var testingEnabled = testingEnabledObj != null && (bool)testingEnabledObj;
             Assert.True(testingEnabled, "Testing service should be enabled in infrastructure test scenario");
 
-            var accountsEnabledObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            var accountsEnabledObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var accountsEnabled = accountsEnabledObj != null && (bool)accountsEnabledObj;
-            Assert.False(accountsEnabled, "Accounts service should be disabled in infrastructure test scenario");
+            Assert.False(accountsEnabled, "Account service should be disabled in infrastructure test scenario");
 
             var authEnabledObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "auth" });
             var authEnabled = authEnabledObj != null && (bool)authEnabledObj;
@@ -1502,7 +1502,7 @@ public class PluginLoaderTests
         {
             // Cleanup
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("AUTH_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("CONNECT_SERVICE_DISABLED", null);
@@ -1591,7 +1591,7 @@ public class PluginLoaderTests
         var isServiceEnabledMethod = typeof(PluginLoader)
             .GetMethod("IsServiceEnabled", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        var testServices = new[] { "testing", "accounts", "auth", "connect", "behavior" };
+        var testServices = new[] { "testing", "account", "auth", "connect", "behavior" };
 
         try
         {
@@ -1614,17 +1614,17 @@ public class PluginLoaderTests
             }
 
             // Disable individual services
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("AUTH_SERVICE_DISABLED", "true");
 
-            var accountsResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            var accountsResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var accountsResult = accountsResultObj != null && (bool)accountsResultObj;
             var authResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "auth" });
             var authResult = authResultObj != null && (bool)authResultObj;
             var testingResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "testing" });
             var testingResult = testingResultObj != null && (bool)testingResultObj;
 
-            Assert.False(accountsResult, "Accounts should be disabled with X_SERVICE_DISABLED=true");
+            Assert.False(accountsResult, "Account should be disabled with X_SERVICE_DISABLED=true");
             Assert.False(authResult, "Auth should be disabled with X_SERVICE_DISABLED=true");
             Assert.True(testingResult, "Testing should remain enabled without disable flag");
 
@@ -1654,12 +1654,12 @@ public class PluginLoaderTests
             var testingResult2 = testingResult2Obj != null && (bool)testingResult2Obj;
             var connectResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "connect" });
             var connectResult = connectResultObj != null && (bool)connectResultObj;
-            var accountsResult2Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            var accountsResult2Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var accountsResult2 = accountsResult2Obj != null && (bool)accountsResult2Obj;
 
             Assert.True(testingResult2, "Testing should be enabled with X_SERVICE_ENABLED=true");
             Assert.True(connectResult, "Connect should be enabled with X_SERVICE_ENABLED=true");
-            Assert.False(accountsResult2, "Accounts should remain disabled without enable flag");
+            Assert.False(accountsResult2, "Account should remain disabled without enable flag");
         }
         finally
         {
