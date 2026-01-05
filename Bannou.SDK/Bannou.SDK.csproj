@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BeyondImmersion.Bannou.SDK</RootNamespace>
 
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
     <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.SDK</PackageId>
     <Authors>BeyondImmersion</Authors>
