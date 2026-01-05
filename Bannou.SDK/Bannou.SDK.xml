@@ -8037,6 +8037,14 @@
             Maximum auto-spawned instances (0 = unlimited)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.AutoSpawnConfig.CharacterIdCaptureGroup">
+            <summary>
+            1-based regex capture group index for extracting CharacterId from actor ID.
+            <br/>Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
+            <br/>actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Actor.ActorTemplateResponse">
             <summary>
             Response containing actor template details
