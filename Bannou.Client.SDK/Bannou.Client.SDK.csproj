@@ -38,7 +38,7 @@
   <!-- Minimal dependencies - this is for game clients only -->
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
-    <PackageReference Include="MessagePack" Version="2.6.101" />
+    <PackageReference Include="MessagePack" Version="3.1.4" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->

@@ -38,7 +38,7 @@
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
-    <PackageReference Include="MessagePack" Version="2.6.101" />
+    <PackageReference Include="MessagePack" Version="3.1.4" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->
@@ -83,6 +83,7 @@
   <!-- Game transport protocol primitives -->
   <ItemGroup>
     <Compile Include="../GameProtocol/*.cs" />
+    <Compile Include="../GameTransport/*.cs" />
   </ItemGroup>
 
   <!-- SDK Source Files (shared with Client SDK) -->
