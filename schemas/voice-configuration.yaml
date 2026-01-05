@@ -52,6 +52,7 @@ x-service-configuration:
       type: string
       description: Salt for SIP password generation (REQUIRED when ScaledTierEnabled=true - service fails fast if missing)
       env: VOICE_SIP_PASSWORD_SALT
+      example: "your-sip-password-salt-for-voice"
     SipDomain:
       type: string
       description: SIP domain for voice communication

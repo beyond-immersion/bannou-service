@@ -43,11 +43,13 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (only needed for Portainer backend)
       description: Portainer API URL
       env: ORCHESTRATOR_PORTAINER_URL
+      example: "https://portainer.example.com:9443"
     PortainerApiKey:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable (only needed for Portainer backend)
       description: Portainer API key
       env: ORCHESTRATOR_PORTAINER_API_KEY
+      example: "ptr_your-portainer-api-key-here"
     PortainerEndpointId:
       type: integer
       description: Portainer endpoint ID
@@ -104,13 +106,16 @@ x-service-configuration:
       nullable: true
       description: Path to kubeconfig file (null uses default ~/.kube/config)
       env: ORCHESTRATOR_KUBECONFIG_PATH
+      example: "/path/to/.kube/config"
 
     # Infrastructure Connection Strings (IMPLEMENTATION TENETS - no insecure defaults)
     RedisConnectionString:
       type: string
       description: Redis connection string for orchestrator state (REQUIRED - service fails fast if missing)
       env: ORCHESTRATOR_REDIS_CONNECTION_STRING
+      example: "redis:6379"
     RabbitMqConnectionString:
       type: string
       description: RabbitMQ connection string for orchestrator messaging (REQUIRED - service fails fast if missing)
       env: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
+      example: "amqp://guest:guest@rabbitmq:5672"

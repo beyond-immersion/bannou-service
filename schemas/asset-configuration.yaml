@@ -35,12 +35,14 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage access key/username
       env: ASSET_STORAGE_ACCESS_KEY
+      example: "minioadmin"
 
     StorageSecretKey:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage secret key/password
       env: ASSET_STORAGE_SECRET_KEY
+      example: "your-minio-secret-key"
 
     StorageRegion:
       type: string
@@ -116,6 +118,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (only set in worker mode)
       description: Worker pool identifier when running in worker mode
       env: ASSET_WORKER_POOL
+      example: "texture-processor-pool"
 
     # Processor Pool Configuration
     ProcessorNodeId:
@@ -123,6 +126,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (set by orchestrator when spawning worker)
       description: Unique processor node ID (set by orchestrator when spawning worker)
       env: ASSET_PROCESSOR_NODE_ID
+      example: "processor-node-001"
 
     ProcessorIdleTimeoutSeconds:
       type: integer
@@ -154,6 +158,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (uses system PATH if not set)
       description: Path to FFmpeg binary (empty = use system PATH)
       env: ASSET_FFMPEG_PATH
+      example: "/usr/bin/ffmpeg"
 
     FfmpegWorkingDirectory:
       type: string
@@ -199,6 +204,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (webhooks disabled if not set)
       description: Secret for validating MinIO webhook requests
       env: ASSET_MINIO_WEBHOOK_SECRET
+      example: "your-minio-webhook-secret"
 
     # === Storage Path Prefixes (Tier 1) ===
     TempUploadPathPrefix:

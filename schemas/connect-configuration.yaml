@@ -79,11 +79,13 @@ x-service-configuration:
       type: string
       description: RabbitMQ connection string for client event subscriptions (REQUIRED - service fails fast if missing)
       env: CONNECT_RABBITMQ_CONNECTION_STRING
+      example: "amqp://guest:guest@rabbitmq:5672"
     ServerSalt:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable (generates random salt if not set)
       description: Server salt for client GUID generation. Must be shared across all Connect instances.
       env: CONNECT_SERVER_SALT
+      example: "your-server-salt-for-guid-generation"
     ConnectUrl:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable
@@ -107,6 +109,7 @@ x-service-configuration:
       nullable: true
       description: "Secret for X-Service-Token validation when InternalAuthMode is service-token"
       env: CONNECT_INTERNAL_SERVICE_TOKEN
+      example: "your-internal-service-token-secret"
 
     # === Session/Connection TTLs (Tier 1) ===
     SessionTtlSeconds:

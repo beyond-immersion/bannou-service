@@ -280,6 +280,16 @@ else
 fi
 echo ""
 
+# Generate .env.example from configuration schemas
+echo -e "${BLUE}📋 Generating .env.example from configuration schemas...${NC}"
+if python3 "$SCRIPT_DIR/generate-env-example.py"; then
+    echo -e "${GREEN}✅ .env.example generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate .env.example${NC}"
+    exit 1
+fi
+echo ""
+
 # Print summary
 echo -e "${BLUE}📊 Generation Summary:${NC}"
 echo "=========================="
