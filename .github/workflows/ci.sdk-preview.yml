@@ -50,6 +50,16 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Restore NuGet Packages
+        run: |
+          echo "📦 Restoring NuGet packages..."
+          dotnet restore
+
+      - name: Install NSwag Global Tool
+        run: |
+          echo "🔧 Installing NSwag as global tool..."
+          dotnet tool install --global NSwag.ConsoleCore --version 14.2.0 || echo "NSwag already installed"
+
       - name: Install Python Dependencies
         run: |
           echo "🐍 Installing Python dependencies for code generation..."

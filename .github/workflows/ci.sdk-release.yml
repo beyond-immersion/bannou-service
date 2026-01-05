@@ -189,6 +189,18 @@ jobs:
           echo "${{ steps.new_version.outputs.new_version }}" > SDK_VERSION
           echo "✅ Updated SDK_VERSION to ${{ steps.new_version.outputs.new_version }}"
 
+      - name: Restore NuGet Packages
+        if: steps.new_version.outputs.new_version != ''
+        run: |
+          echo "📦 Restoring NuGet packages..."
+          dotnet restore
+
+      - name: Install NSwag Global Tool
+        if: steps.new_version.outputs.new_version != ''
+        run: |
+          echo "🔧 Installing NSwag as global tool..."
+          dotnet tool install --global NSwag.ConsoleCore --version 14.2.0 || echo "NSwag already installed"
+
       - name: Install Python Dependencies
         if: steps.new_version.outputs.new_version != ''
         run: |
