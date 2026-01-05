@@ -102,9 +102,9 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
     /// </summary>
     private static readonly string[] KnownRoutableServices =
     {
-        "auth", "account", "connect", "website", "permissions",
+        "auth", "account", "connect", "website", "permission",
         "behavior", "character", "species", "realm", "location",
-        "relationship", "relationship-type", "subscriptions",
+        "relationship", "relationship-type", "subscription",
         "game-session", "orchestrator", "documentation",
         "service", "voice", "asset", "actor"
     };

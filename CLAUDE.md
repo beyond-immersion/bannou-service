@@ -185,7 +185,7 @@ Reference the Makefile in the repository root for all available commands and est
 
 **🚨 CRITICAL RULE - SERVICE IMPLEMENTATION ONLY**:
 **NEVER edit ANY file in a service plugin except the service implementation class (e.g., `ConnectService.cs`)**
-- **Generated Files**: NEVER edit any files in `*/Generated/` directories or `.Generated.cs` files
+- **Generated Files**: NEVER edit any files in `*/Generated/` directories
 - **Controllers**: NEVER create or edit controller files - they are auto-generated wrappers
 - **Interfaces**: NEVER edit generated interfaces - service implementation is the source of truth
 - **Models**: NEVER edit generated models - they come from OpenAPI schemas
@@ -210,7 +210,7 @@ Reference the Makefile in the repository root for all available commands and est
 
 **Architecture Rules**:
 - **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom enum
-- **Never Edit Generated Files**: Any `*/Generated/` or `.Generated.cs` files are auto-generated
+- **Never Edit Generated Files**: Any files in `*/Generated/` directories are auto-generated
 - **Use Generated Clients**: Service-to-service calls use NSwag-generated clients, not direct interfaces
 - **Infrastructure Libs Pattern**: Use lib-state, lib-messaging, and lib-mesh for all infrastructure (never direct Redis/RabbitMQ/HTTP)
 - **Controller = Service Wrapper**: Generated controllers are just wrappers around service implementations
@@ -245,9 +245,9 @@ Reference the Makefile in the repository root for all available commands and est
 
 ### Service Architecture
 ```
-lib-{service}/                        # Single consolidated service plugin  
+lib-{service}/                        # Single consolidated service plugin
 ├── Generated/                        # NSwag auto-generated files
-│   ├── {Service}Controller.Generated.cs  # Abstract controller base  
+│   ├── {Service}Controller.cs        # Abstract controller base
 │   ├── I{Service}Service.cs          # Service interface (generated from controller)
 │   ├── {Service}Client.cs            # Service client for inter-service calls
 │   └── {Service}ServiceConfiguration.cs  # Generated configuration class

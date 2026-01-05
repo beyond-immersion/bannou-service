@@ -161,7 +161,16 @@ external-login: ## Login with test admin account and display JWT
 	@echo ""
 	@echo "💡 Use the accessToken above for authenticated requests"
 
-clean: ## Clean generated files and caches (add PLUGIN=name for specific plugin)
+clean-build-artifacts: ## Remove bin/obj directories and build-output.txt (improves grep results)
+	@echo "🧹 Cleaning build artifacts (bin/obj directories)..."
+	@rm -f build-output.txt 2>/dev/null || true
+	@find . -type d \( -name "bin" -o -name "obj" \) \
+		-not -path "./.git/*" \
+		-not -path "./node_modules/*" \
+		-exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ Build artifacts cleaned"
+
+clean: ## Clean generated files, build artifacts, and caches (add PLUGIN=name for specific plugin)
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧹 Cleaning plugin: $(PLUGIN)..."; \
 		if [ -d "./lib-$(PLUGIN)/Generated" ]; then \
@@ -172,8 +181,10 @@ clean: ## Clean generated files and caches (add PLUGIN=name for specific plugin)
 		fi; \
 		echo "✅ Clean completed for plugin: $(PLUGIN)"; \
 	else \
+		$(MAKE) clean-build-artifacts; \
 		echo "🧹 Cleaning all generated files..."; \
 		find . -path "./lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		rm -rf bannou-service/Generated 2>/dev/null || true; \
 		rm -rf Bannou.Client.SDK 2>/dev/null || true; \
 		echo "🧹 Cleaning caches and resources..."; \
 		git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean; \

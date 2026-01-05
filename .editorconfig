@@ -273,13 +273,6 @@ dotnet_diagnostic.CS8602.severity = none
 dotnet_diagnostic.CS8603.severity = none
 dotnet_diagnostic.CS8604.severity = none
 
-[*.Generated.cs]
-dotnet_diagnostic.CS8618.severity = none  # Non-nullable not initialized - NSwag uses = default!
-dotnet_diagnostic.CS8600.severity = none  # Converting null literal - NSwag nullable parameters
-dotnet_diagnostic.CS8602.severity = none  # Dereference possibly null - NSwag serialization patterns
-dotnet_diagnostic.CS8603.severity = none  # Possible null return - NSwag deserialization
-dotnet_diagnostic.CS8604.severity = none  # Null argument - NSwag nullable body → non-null interface
-
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 tab_width = 4

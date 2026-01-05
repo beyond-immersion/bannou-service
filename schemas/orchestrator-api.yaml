@@ -461,7 +461,7 @@ paths:
         description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n    \
         \            \"services\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
         \                 \"type\": \"string\"\n                    },\n                    \"description\": \"Services enabled
-        on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permissions\\\
+        on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permission\\\
         \"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"integer\",\n      \
         \              \"default\": 1,\n                    \"description\": \"Number of replicas for this node\"\n      \
         \          },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n     \
@@ -623,7 +623,7 @@ paths:
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
         Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
+        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
         ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
@@ -724,7 +724,7 @@ paths:
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
         Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
+        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
         ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
@@ -940,7 +940,7 @@ paths:
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
         Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
+        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
         ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
@@ -1361,7 +1361,7 @@ paths:
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
         Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
+        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
         ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
@@ -1423,7 +1423,7 @@ paths:
         (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"services\": {\n        \
         \            \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n\
         \                    },\n                    \"description\": \"Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true
-        pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permissions\\\"]\\n\"\n                },\n              \
+        pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permission\\\"]\\n\"\n                },\n              \
         \  \"replicas\": {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n            \
         \        \"description\": \"Number of replicas for this node\"\n                },\n                \"resources\"\
         : {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits
@@ -2712,7 +2712,7 @@ components:
           description: |
             Services enabled on this node.
             Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-            Example: ["account", "auth", "permissions"]
+            Example: ["account", "auth", "permission"]
         replicas:
           type: integer
           default: 1

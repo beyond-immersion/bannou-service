@@ -1462,7 +1462,7 @@ public class OrchestratorResetToDefaultTests
             Services = new Dictionary<string, ServiceDeploymentConfig>
             {
                 ["auth"] = new() { Enabled = true, AppId = "bannou-auth" },
-                ["permissions"] = new() { Enabled = true, AppId = "bannou-auth" }
+                ["permission"] = new() { Enabled = true, AppId = "bannou-auth" }
             }
         };
 

@@ -5,8 +5,8 @@ using BeyondImmersion.Bannou.Client.SDK;
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
-/// WebSocket-based test handler for subscriptions service API endpoints.
-/// Tests the subscriptions service APIs through the Connect service WebSocket binary protocol.
+/// WebSocket-based test handler for Subscription service API endpoints.
+/// Tests the Subscription service APIs through the Connect service WebSocket binary protocol.
 ///
 /// Tests comprehensive CRUD operations, error handling, and edge cases per IMPLEMENTATION TENETS.
 /// </summary>
@@ -17,21 +17,21 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
         return new ServiceTest[]
         {
             // Empty list tests (must run first before any data is created)
-            new ServiceTest(TestEmptyAccountSubscriptionsViaWebSocket, "Subscriptions - Empty List (WebSocket)", "WebSocket",
+            new ServiceTest(TestEmptyAccountSubscriptionsViaWebSocket, "Subscription - Empty List (WebSocket)", "WebSocket",
                 "Test that account subscriptions returns empty list for non-existent account"),
 
             // CRUD operations
-            new ServiceTest(TestCreateAndGetSubscriptionViaWebSocket, "Subscriptions - Create and Get (WebSocket)", "WebSocket",
+            new ServiceTest(TestCreateAndGetSubscriptionViaWebSocket, "Subscription - Create and Get (WebSocket)", "WebSocket",
                 "Test subscription creation and retrieval via WebSocket binary protocol"),
-            new ServiceTest(TestSubscriptionLifecycleViaWebSocket, "Subscriptions - Full Lifecycle (WebSocket)", "WebSocket",
+            new ServiceTest(TestSubscriptionLifecycleViaWebSocket, "Subscription - Full Lifecycle (WebSocket)", "WebSocket",
                 "Test complete subscription lifecycle: create -> update -> cancel -> renew"),
-            new ServiceTest(TestGetCurrentSubscriptionsViaWebSocket, "Subscriptions - Account List (WebSocket)", "WebSocket",
+            new ServiceTest(TestGetCurrentSubscriptionsViaWebSocket, "Subscription - Account List (WebSocket)", "WebSocket",
                 "Test getting account subscriptions returns expected stub names"),
 
             // Error handling tests
-            new ServiceTest(TestGetNonExistentSubscriptionViaWebSocket, "Subscriptions - 404 Not Found (WebSocket)", "WebSocket",
+            new ServiceTest(TestGetNonExistentSubscriptionViaWebSocket, "Subscription - 404 Not Found (WebSocket)", "WebSocket",
                 "Test that getting a non-existent subscription returns proper error"),
-            new ServiceTest(TestDuplicateSubscriptionViaWebSocket, "Subscriptions - 409 Conflict (WebSocket)", "WebSocket",
+            new ServiceTest(TestDuplicateSubscriptionViaWebSocket, "Subscription - 409 Conflict (WebSocket)", "WebSocket",
                 "Test that creating duplicate subscription returns conflict error"),
         };
     }
@@ -115,7 +115,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
 
     private void TestEmptyAccountSubscriptionsViaWebSocket(string[] args)
     {
-        Console.WriteLine("=== Subscriptions Empty List Test (WebSocket) ===");
+        Console.WriteLine("=== Subscription Empty List Test (WebSocket) ===");
         Console.WriteLine("Testing /subscriptions/account/list returns empty array for non-existent account...");
 
         try
@@ -174,19 +174,19 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             }).Result;
 
             if (result)
-                Console.WriteLine("   Subscriptions empty list test PASSED");
+                Console.WriteLine("   Subscription empty list test PASSED");
             else
-                Console.WriteLine("   Subscriptions empty list test FAILED");
+                Console.WriteLine("   Subscription empty list test FAILED");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Subscriptions empty list test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Subscription empty list test FAILED with exception: {ex.Message}");
         }
     }
 
     private void TestCreateAndGetSubscriptionViaWebSocket(string[] args)
     {
-        Console.WriteLine("=== Subscriptions Create and Get Test (WebSocket) ===");
+        Console.WriteLine("=== Subscription Create and Get Test (WebSocket) ===");
         Console.WriteLine("Testing /subscriptions/create and /subscriptions/get via shared admin WebSocket...");
 
         try
@@ -262,19 +262,19 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             }).Result;
 
             if (result)
-                Console.WriteLine("   Subscriptions create and get test PASSED");
+                Console.WriteLine("   Subscription create and get test PASSED");
             else
-                Console.WriteLine("   Subscriptions create and get test FAILED");
+                Console.WriteLine("   Subscription create and get test FAILED");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Subscriptions create and get test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Subscription create and get test FAILED with exception: {ex.Message}");
         }
     }
 
     private void TestSubscriptionLifecycleViaWebSocket(string[] args)
     {
-        Console.WriteLine("=== Subscriptions Full Lifecycle Test (WebSocket) ===");
+        Console.WriteLine("=== Subscription Full Lifecycle Test (WebSocket) ===");
         Console.WriteLine("Testing complete subscription lifecycle via shared admin WebSocket...");
 
         try
@@ -409,19 +409,19 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             }).Result;
 
             if (result)
-                Console.WriteLine("   Subscriptions lifecycle test PASSED");
+                Console.WriteLine("   Subscription lifecycle test PASSED");
             else
-                Console.WriteLine("   Subscriptions lifecycle test FAILED");
+                Console.WriteLine("   Subscription lifecycle test FAILED");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Subscriptions lifecycle test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Subscription lifecycle test FAILED with exception: {ex.Message}");
         }
     }
 
     private void TestGetCurrentSubscriptionsViaWebSocket(string[] args)
     {
-        Console.WriteLine("=== Subscriptions Account List Test (WebSocket) ===");
+        Console.WriteLine("=== Subscription Account List Test (WebSocket) ===");
         Console.WriteLine("Testing /subscriptions/account/list returns subscriptions for account...");
 
         try
@@ -511,19 +511,19 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             }).Result;
 
             if (result)
-                Console.WriteLine("   Subscriptions account list test PASSED");
+                Console.WriteLine("   Subscription account list test PASSED");
             else
-                Console.WriteLine("   Subscriptions account list test FAILED");
+                Console.WriteLine("   Subscription account list test FAILED");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Subscriptions account list test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Subscription account list test FAILED with exception: {ex.Message}");
         }
     }
 
     private void TestGetNonExistentSubscriptionViaWebSocket(string[] args)
     {
-        Console.WriteLine("=== Subscriptions 404 Not Found Test (WebSocket) ===");
+        Console.WriteLine("=== Subscription 404 Not Found Test (WebSocket) ===");
         Console.WriteLine("Testing /subscriptions/get returns proper error for non-existent subscription...");
 
         try
@@ -587,19 +587,19 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             }).Result;
 
             if (result)
-                Console.WriteLine("   Subscriptions 404 test PASSED");
+                Console.WriteLine("   Subscription 404 test PASSED");
             else
-                Console.WriteLine("   Subscriptions 404 test FAILED");
+                Console.WriteLine("   Subscription 404 test FAILED");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Subscriptions 404 test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Subscription 404 test FAILED with exception: {ex.Message}");
         }
     }
 
     private void TestDuplicateSubscriptionViaWebSocket(string[] args)
     {
-        Console.WriteLine("=== Subscriptions 409 Conflict Test (WebSocket) ===");
+        Console.WriteLine("=== Subscription 409 Conflict Test (WebSocket) ===");
         Console.WriteLine("Testing /subscriptions/create returns conflict for duplicate subscription...");
 
         try
@@ -703,13 +703,13 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             }).Result;
 
             if (result)
-                Console.WriteLine("   Subscriptions 409 conflict test PASSED");
+                Console.WriteLine("   Subscription 409 conflict test PASSED");
             else
-                Console.WriteLine("   Subscriptions 409 conflict test FAILED");
+                Console.WriteLine("   Subscription 409 conflict test FAILED");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Subscriptions 409 conflict test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Subscription 409 conflict test FAILED with exception: {ex.Message}");
         }
     }
 }

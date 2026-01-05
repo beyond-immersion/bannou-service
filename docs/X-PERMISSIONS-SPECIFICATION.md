@@ -159,7 +159,7 @@ When services start, they call `RegisterServicePermissionsAsync()` which publish
 ## Integration Flow
 
 1. **Build Time**: `generate-permissions.sh` extracts x-permissions from schema
-2. **Generated Code**: Creates `{Service}PermissionRegistration.Generated.cs` with permission matrix
+2. **Generated Code**: Creates `{Service}PermissionRegistration.cs` in `Generated/` with permission matrix
 3. **Service Startup**: `RegisterServicePermissionsAsync()` publishes `ServiceRegistrationEvent`
 4. **Permission Service**: Receives event, updates Redis permission matrices
 5. **Session Recompilation**: All active sessions get updated capabilities

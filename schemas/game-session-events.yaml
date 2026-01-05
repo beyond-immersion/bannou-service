@@ -20,7 +20,7 @@ info:
     - topic: session.reconnected
       event: SessionReconnectedEvent
       handler: HandleSessionReconnected
-    # Subscription changes from Subscriptions service
+    # Subscription changes from Subscription service
     - topic: subscription.updated
       event: SubscriptionUpdatedEvent
       handler: HandleSubscriptionUpdated

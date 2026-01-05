@@ -2,7 +2,7 @@
 
 # Generate ClientEventWhitelist.cs from all client event schemas
 # Extracts all event_name enum values and creates a HashSet for O(1) validation
-# Output: bannou-service/Generated/ClientEventWhitelist.Generated.cs
+# Output: bannou-service/Generated/ClientEventWhitelist.cs
 
 set -e
 
@@ -18,7 +18,7 @@ log_info "🔐 Generating client event whitelist"
 # Output file
 TARGET_DIR="../bannou-service/Generated"
 mkdir -p "$TARGET_DIR"
-OUTPUT_FILE="$TARGET_DIR/ClientEventWhitelist.Generated.cs"
+OUTPUT_FILE="$TARGET_DIR/ClientEventWhitelist.cs"
 
 # Collect all event names from all client event schemas
 declare -a EVENT_NAMES=()

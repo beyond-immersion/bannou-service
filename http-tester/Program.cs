@@ -430,9 +430,9 @@ public class Program
             "auth",
             "account",
             "documentation",
-            "permissions",
-            "subscriptions",  // Required for auth service login flow
-            "service"         // Required by subscriptions service
+            "permission",
+            "subscription",  // Required for auth service login flow
+            "service"         // Required by subscription service
         };
 
         Console.WriteLine($"Waiting for service registration (timeout: {timeout.TotalSeconds}s)...");

@@ -90,7 +90,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             // Redis stores (ephemeral/session data)
             ["auth-statestore"] = (StateBackend.Redis, "auth", false),
             ["connect-statestore"] = (StateBackend.Redis, "connect", false),
-            ["permissions-statestore"] = (StateBackend.Redis, "permissions", false),
+            ["permission-statestore"] = (StateBackend.Redis, "permission", false),
             ["voice-statestore"] = (StateBackend.Redis, "voice", false),
             ["asset-statestore"] = (StateBackend.Redis, "asset", false),
 
@@ -126,7 +126,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["relationship-type-statestore"] = (StateBackend.MySql, null, false),
             ["service-statestore"] = (StateBackend.MySql, null, false),
             ["species-statestore"] = (StateBackend.MySql, null, false),
-            ["subscriptions-statestore"] = (StateBackend.MySql, null, false),
+            ["subscription-statestore"] = (StateBackend.MySql, null, false),
         };
 
         foreach (var (storeName, (backend, prefix, enableSearch)) in defaultStores)

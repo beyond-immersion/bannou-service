@@ -9,7 +9,7 @@ Bannou services are implemented as **plugins** - independent .NET assemblies tha
 ```
 lib-{service}/
 ├── Generated/                    # Auto-generated (never edit)
-│   ├── {Service}Controller.Generated.cs
+│   ├── {Service}Controller.cs
 │   ├── I{Service}Service.cs
 │   ├── {Service}Models.cs
 │   └── {Service}ServiceConfiguration.cs

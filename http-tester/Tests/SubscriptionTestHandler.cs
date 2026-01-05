@@ -14,17 +14,17 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
     public override ServiceTest[] GetServiceTests() =>
     [
         // Core CRUD operations
-        new ServiceTest(TestCreateSubscription, "CreateSubscription", "Subscriptions", "Test subscription creation endpoint"),
-        new ServiceTest(TestGetSubscription, "GetSubscription", "Subscriptions", "Test subscription retrieval by ID"),
-        new ServiceTest(TestGetAccountSubscriptions, "GetAccountSubscriptions", "Subscriptions", "Test subscription listing for account"),
-        new ServiceTest(TestQueryCurrentSubscriptions, "QueryCurrentSubscriptions", "Subscriptions", "Test active subscription authorization strings"),
-        new ServiceTest(TestUpdateSubscription, "UpdateSubscription", "Subscriptions", "Test subscription update endpoint"),
-        new ServiceTest(TestCancelSubscription, "CancelSubscription", "Subscriptions", "Test subscription cancellation endpoint"),
-        new ServiceTest(TestRenewSubscription, "RenewSubscription", "Subscriptions", "Test subscription renewal endpoint"),
+        new ServiceTest(TestCreateSubscription, "CreateSubscription", "Subscription", "Test subscription creation endpoint"),
+        new ServiceTest(TestGetSubscription, "GetSubscription", "Subscription", "Test subscription retrieval by ID"),
+        new ServiceTest(TestGetAccountSubscriptions, "GetAccountSubscriptions", "Subscription", "Test subscription listing for account"),
+        new ServiceTest(TestQueryCurrentSubscriptions, "QueryCurrentSubscriptions", "Subscription", "Test active subscription authorization strings"),
+        new ServiceTest(TestUpdateSubscription, "UpdateSubscription", "Subscription", "Test subscription update endpoint"),
+        new ServiceTest(TestCancelSubscription, "CancelSubscription", "Subscription", "Test subscription cancellation endpoint"),
+        new ServiceTest(TestRenewSubscription, "RenewSubscription", "Subscription", "Test subscription renewal endpoint"),
 
         // Validation tests
-        new ServiceTest(TestCreateSubscriptionServiceNotFound, "CreateSubscriptionServiceNotFound", "Subscriptions", "Test 404 when service doesn't exist"),
-        new ServiceTest(TestCreateSubscriptionDuplicate, "CreateSubscriptionDuplicate", "Subscriptions", "Test conflict on duplicate active subscription"),
+        new ServiceTest(TestCreateSubscriptionServiceNotFound, "CreateSubscriptionServiceNotFound", "Subscription", "Test 404 when service doesn't exist"),
+        new ServiceTest(TestCreateSubscriptionDuplicate, "CreateSubscriptionDuplicate", "Subscription", "Test conflict on duplicate active subscription"),
     ];
 
     /// <summary>

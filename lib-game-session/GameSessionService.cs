@@ -62,7 +62,7 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Local cache of subscribed accounts: AccountId -> Set of subscribed stubNames.
     /// Used for fast filtering of session.connected events - we only care about subscribed accounts.
-    /// Loaded on service startup from Subscriptions service, updated via subscription.updated events.
+    /// Loaded on service startup from Subscription service, updated via subscription.updated events.
     /// This is a local filter cache - authoritative subscriber session state is in lib-state.
     /// </summary>
     private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
@@ -118,7 +118,7 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="clientEventPublisher">Client event publisher for pushing events to WebSocket clients.</param>
     /// <param name="voiceClient">Voice client for voice room coordination.</param>
     /// <param name="permissionClient">Permission client for setting game-session:in_game state.</param>
-    /// <param name="subscriptionClient">Subscriptions client for fetching account subscriptions.</param>
+    /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
     public GameSessionService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -703,8 +703,8 @@ public partial class GameSessionService : IGameSessionService
                     "ClearSessionState",
                     ex.GetType().Name,
                     ex.Message,
-                    dependency: "permissions",
-                    endpoint: "post:/permissions/clear-session-state",
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
                     details: new { SessionId = body.SessionId },
                     stack: ex.StackTrace);
             }
@@ -1100,7 +1100,7 @@ public partial class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// Handles subscription.updated event from Subscriptions service.
+    /// Handles subscription.updated event from Subscription service.
     /// Updates subscription cache and publishes/revokes shortcuts for affected connected sessions.
     /// Called internally by GameSessionEventsController.
     /// </summary>
@@ -1167,7 +1167,7 @@ public partial class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// Fetches and caches subscriptions for an account from the Subscriptions service.
+    /// Fetches and caches subscriptions for an account from the Subscription service.
     /// </summary>
     private async Task FetchAndCacheSubscriptionsAsync(Guid accountId)
     {

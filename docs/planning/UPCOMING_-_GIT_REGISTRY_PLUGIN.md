@@ -119,7 +119,7 @@ public async Task<Stream> HandleUploadPackAsync(string repositoryPath, Stream re
 ```
 lib-git/
 ├── Generated/                           # NSwag auto-generated
-│   ├── GitController.Generated.cs       # Repository management API
+│   ├── GitController.cs                 # Repository management API
 │   ├── IGitService.cs
 │   ├── GitClient.cs
 │   ├── GitModels.cs

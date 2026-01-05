@@ -3,7 +3,7 @@
 # This validates the core multi-node routing architecture
 #
 # Topology:
-# - Main node (already running): connect, permissions, game-session, behavior, orchestrator, etc.
+# - Main node (already running): connect, permission, game-session, behavior, orchestrator, etc.
 # - bannou-auth (deployed by this preset): account, auth
 #
 # NOTE: The main node is NOT included here - orchestrator never deploys itself.

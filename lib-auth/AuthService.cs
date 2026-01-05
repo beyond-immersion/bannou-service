@@ -2498,7 +2498,7 @@ public partial class AuthService : IAuthService
         {
             _logger.LogInformation("Propagating subscription changes for account {AccountId}", accountId);
 
-            // Fetch fresh authorizations from Subscriptions service
+            // Fetch fresh authorizations from Subscription service
             var authorizations = new List<string>();
             var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
                 new QueryCurrentSubscriptionsRequest { AccountId = accountId },

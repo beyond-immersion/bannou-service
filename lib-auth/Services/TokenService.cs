@@ -94,7 +94,7 @@ public class TokenService : ITokenService
                 "GenerateAccessToken",
                 ex.GetType().Name,
                 ex.Message,
-                dependency: "subscriptions",
+                dependency: "subscription",
                 endpoint: "post:/auth/login",
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);

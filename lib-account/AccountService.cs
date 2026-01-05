@@ -1313,7 +1313,7 @@ public partial class AccountService : IAccountService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Account service permissions");
-            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permission");
             throw;
         }
     }

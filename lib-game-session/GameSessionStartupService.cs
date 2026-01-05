@@ -26,7 +26,7 @@ public class GameSessionStartupService : BackgroundService
     /// <summary>
     /// Creates a new GameSessionStartupService instance.
     /// </summary>
-    /// <param name="subscriptionClient">Subscriptions client for fetching account subscriptions.</param>
+    /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
     /// <param name="logger">Logger for this service.</param>
     public GameSessionStartupService(
         ISubscriptionClient subscriptionClient,

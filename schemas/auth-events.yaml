@@ -16,7 +16,7 @@ info:
     - topic: account.updated
       event: AccountUpdatedEvent
       handler: HandleAccountUpdated
-    # Subscription changes from Subscriptions service
+    # Subscription changes from Subscription service
     - topic: subscription.updated
       event: SubscriptionUpdatedEvent
       handler: HandleSubscriptionUpdated

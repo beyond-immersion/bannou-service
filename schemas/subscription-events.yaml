@@ -2,13 +2,13 @@ openapi: 3.0.3
 info:
   title: Subscription Service Events
   description: |
-    Event models for subscriptions service RabbitMQ pub/sub via MassTransit.
+    Event models for Subscription service RabbitMQ pub/sub via MassTransit.
     Publishes subscription state change events consumed by Auth and GameSession services.
 
     **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
-  x-event-subscriptions: []  # Subscriptions service doesn't subscribe to external events
+  x-event-subscriptions: []  # Subscription service doesn't subscribe to external events
   x-event-publications:
     # Subscription state change events
     - topic: subscription.updated

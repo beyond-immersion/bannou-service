@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Testing;
 /// This class manually registers the testing endpoints with the permissions system
 /// so that BannouClient (via WebSocket) can receive GUIDs for these endpoints.
 ///
-/// This follows the same pattern as the generated *PermissionRegistration.Generated.cs
+/// This follows the same pattern as the generated *PermissionRegistration.cs
 /// files but is manually maintained since there's no testing-api.yaml schema.
 /// </summary>
 public static class TestingPermissionRegistration

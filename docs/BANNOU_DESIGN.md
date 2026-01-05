@@ -96,7 +96,7 @@ Each service is an independent **plugin** - a .NET assembly that can be loaded o
 ```
 lib-account/            # Account service plugin
 ├── Generated/          # Auto-generated from schema (never edit)
-│   ├── AccountController.Generated.cs
+│   ├── AccountController.cs
 │   ├── IAccountService.cs
 │   └── AccountModels.cs
 ├── AccountService.cs   # Business logic (only manual file)

@@ -2651,7 +2651,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Connect service permissions");
-            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permission");
             throw;
         }
     }

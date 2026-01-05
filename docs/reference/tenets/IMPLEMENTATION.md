@@ -211,9 +211,9 @@ Local instance caches are acceptable when **both** conditions are met:
 2. **Kept current via events**: Cache subscribes to relevant pub/sub events to stay synchronized with changes
 
 **Example**: `_accountSubscriptions` in GameSessionService
-- Loaded from SubscriptionsClient on session connect
+- Loaded from SubscriptionClient on session connect
 - Updated via `subscription.changed` events
-- Authoritative state lives in Subscriptions service
+- Authoritative state lives in Subscription service
 - Local cache is purely for performance (avoid API call per operation)
 
 ```csharp
