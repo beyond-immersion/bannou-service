@@ -24,7 +24,7 @@ namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// WebSocket-first edge gateway service providing zero-copy message routing.
-/// Uses Permissions service for dynamic API discovery and capability management.
+/// Uses Permission service for dynamic API discovery and capability management.
 /// </summary>
 [BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public partial class ConnectService : IConnectService
@@ -160,7 +160,7 @@ public partial class ConnectService : IConnectService
                 body.TargetService, body.Method, body.TargetEndpoint);
 
             // Validate session has access to this API via local capability mappings
-            // Session capabilities are pushed via SessionCapabilitiesEvent from Permissions service
+            // Session capabilities are pushed via SessionCapabilitiesEvent from Permission service
             var endpointKey = $"{body.TargetService}:{body.Method}:{body.TargetEndpoint}";
             var hasAccess = false;
 
@@ -301,7 +301,7 @@ public partial class ConnectService : IConnectService
 
     // REMOVED: PublishServiceMappingUpdateAsync - Service mapping events belong to Orchestrator
     // REMOVED: GetServiceMappingsAsync - Service routing is now in Orchestrator API
-    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permissions service
+    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permission service
     // Connect service ONLY handles WebSocket connections and message routing
 
     /// <summary>
@@ -687,7 +687,7 @@ public partial class ConnectService : IConnectService
             sessionMappings = new Dictionary<string, Guid>(fallbackMappings);
         }
 
-        // If no mappings exist, initialize capabilities from Permissions service
+        // If no mappings exist, initialize capabilities from Permission service
         if (sessionMappings == null || sessionMappings.Count == 0)
         {
             // Determine the highest-priority role for capability initialization
@@ -1747,16 +1747,16 @@ public partial class ConnectService : IConnectService
             {
                 if (eventData.EventType == AuthEventType.Login)
                 {
-                    // User logged in - Permissions service will automatically recompile capabilities
+                    // User logged in - Permission service will automatically recompile capabilities
                     // and push updated connect.capability_manifest to client
-                    _logger.LogDebug("Auth login event for session {SessionId} - capabilities will be updated by Permissions service",
+                    _logger.LogDebug("Auth login event for session {SessionId} - capabilities will be updated by Permission service",
                         eventData.SessionId);
                 }
                 else if (eventData.EventType == AuthEventType.Logout)
                 {
-                    // User logged out - Permissions service will automatically recompile capabilities
+                    // User logged out - Permission service will automatically recompile capabilities
                     // and push updated connect.capability_manifest to client
-                    _logger.LogDebug("Auth logout event for session {SessionId} - capabilities will be updated by Permissions service",
+                    _logger.LogDebug("Auth logout event for session {SessionId} - capabilities will be updated by Permission service",
                         eventData.SessionId);
 
                     // Optionally close the WebSocket connection on logout
@@ -2276,7 +2276,7 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Placeholder for session capability initialization. Capabilities are delivered via
-    /// SessionCapabilitiesEvent from Permissions service after session.connected event.
+    /// SessionCapabilitiesEvent from Permission service after session.connected event.
     /// This method exists for reconnection scenarios where existing mappings may be restored.
     /// </summary>
     internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
@@ -2336,7 +2336,7 @@ public partial class ConnectService : IConnectService
                 var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
                 var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
 
-                // CRITICAL: Skip endpoints with path templates (e.g., /accounts/{accountId})
+                // CRITICAL: Skip endpoints with path templates (e.g., /account/{accountId})
                 // WebSocket binary protocol requires POST endpoints with JSON body parameters
                 // Template paths would require Connect to parse the payload, breaking zero-copy routing
                 if (path.Contains('{'))
@@ -2432,9 +2432,9 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Processes capabilities received from Permissions service via SessionCapabilitiesEvent.
+    /// Processes capabilities received from Permission service via SessionCapabilitiesEvent.
     /// Generates client-salted GUIDs, updates connection state, and sends manifest to client.
-    /// NO API call to Permissions - capabilities are passed directly from the event.
+    /// NO API call to Permission service - capabilities are passed directly from the event.
     /// </summary>
     private async Task ProcessCapabilitiesAsync(string sessionId, Dictionary<string, List<string>> permissions, string reason, CancellationToken cancellationToken = default)
     {
@@ -2637,7 +2637,7 @@ public partial class ConnectService : IConnectService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

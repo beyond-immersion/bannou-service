@@ -3,7 +3,7 @@ using BeyondImmersion.BannouService.Plugins;
 namespace BeyondImmersion.BannouService.Permission;
 
 /// <summary>
-/// Plugin wrapper for Permissions service enabling plugin-based discovery and lifecycle management.
+/// Plugin wrapper for Permission service enabling plugin-based discovery and lifecycle management.
 /// </summary>
 public class PermissionServicePlugin : StandardServicePlugin<IPermissionService>
 {

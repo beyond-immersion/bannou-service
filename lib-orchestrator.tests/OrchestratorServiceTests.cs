@@ -196,7 +196,7 @@ public class OrchestratorServiceTests
             HealthPercentage = 100.0f,
             HealthyServices = new List<ServiceHealthStatus>
             {
-                new() { ServiceId = "accounts", Status = "healthy" },
+                new() { ServiceId = "account", Status = "healthy" },
                 new() { ServiceId = "auth", Status = "healthy" },
                 new() { ServiceId = "connect", Status = "healthy" }
             },
@@ -231,14 +231,14 @@ public class OrchestratorServiceTests
         // Arrange
         var request = new ServiceRestartRequest
         {
-            ServiceName = "accounts",
+            ServiceName = "account",
             Force = false
         };
 
         var expectedResult = new ServiceRestartResult
         {
             Success = true,
-            ServiceName = "accounts",
+            ServiceName = "account",
             Duration = "00:00:05",
             PreviousStatus = "degraded",
             CurrentStatus = "healthy",
@@ -258,7 +258,7 @@ public class OrchestratorServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
-        Assert.Equal("accounts", response.ServiceName);
+        Assert.Equal("account", response.ServiceName);
     }
 
     [Fact]
@@ -267,14 +267,14 @@ public class OrchestratorServiceTests
         // Arrange
         var request = new ServiceRestartRequest
         {
-            ServiceName = "accounts",
+            ServiceName = "account",
             Force = false
         };
 
         var expectedResult = new ServiceRestartResult
         {
             Success = false,
-            ServiceName = "accounts",
+            ServiceName = "account",
             Message = "Restart not needed: service is healthy"
         };
 
@@ -301,17 +301,17 @@ public class OrchestratorServiceTests
     public async Task ShouldRestartServiceAsync_ShouldReturnRecommendationFromMonitor()
     {
         // Arrange
-        var request = new ShouldRestartServiceRequest { ServiceName = "accounts" };
+        var request = new ShouldRestartServiceRequest { ServiceName = "account" };
         var expectedRecommendation = new RestartRecommendation
         {
             ShouldRestart = false,
-            ServiceName = "accounts",
+            ServiceName = "account",
             CurrentStatus = "healthy",
             Reason = "Service is healthy - no restart needed"
         };
 
         _mockHealthMonitor
-            .Setup(x => x.ShouldRestartServiceAsync("accounts"))
+            .Setup(x => x.ShouldRestartServiceAsync("account"))
             .ReturnsAsync(expectedRecommendation);
 
         var service = CreateService();
@@ -499,7 +499,7 @@ public class OrchestratorServiceTests
         var serviceRoutings = new Dictionary<string, ServiceRouting>
         {
             ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
-            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["account"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
             ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
         };
 
@@ -519,7 +519,7 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.Equal(3, response.Mappings.Count);
         Assert.Equal("bannou-auth", response.Mappings["auth"]);
-        Assert.Equal("bannou-auth", response.Mappings["accounts"]);
+        Assert.Equal("bannou-auth", response.Mappings["account"]);
         Assert.Equal("bannou-main", response.Mappings["connect"]);
         Assert.Equal("bannou", response.DefaultAppId);
     }
@@ -554,7 +554,7 @@ public class OrchestratorServiceTests
         var serviceRoutings = new Dictionary<string, ServiceRouting>
         {
             ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
-            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["account"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
             ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
         };
 
@@ -574,7 +574,7 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.Equal(2, response.Mappings.Count);
         Assert.True(response.Mappings.ContainsKey("auth"));
-        Assert.True(response.Mappings.ContainsKey("accounts"));
+        Assert.True(response.Mappings.ContainsKey("account"));
         Assert.False(response.Mappings.ContainsKey("connect"));
     }
 
@@ -1078,7 +1078,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Return the list of services that were updated
         _mockStateManager
             .Setup(x => x.SetAllServiceRoutingsToDefaultAsync(It.IsAny<string>()))
-            .ReturnsAsync(new List<string> { "auth", "accounts" });
+            .ReturnsAsync(new List<string> { "auth", "account" });
 
         _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
@@ -1090,7 +1090,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // First, set some routings
         await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
-        await monitor.SetServiceRoutingAsync("accounts", "bannou-accounts");
+        await monitor.SetServiceRoutingAsync("account", "bannou-account");
 
         // Act
         await monitor.ResetAllMappingsToDefaultAsync();
@@ -1631,7 +1631,7 @@ public class OrchestratorResetToDefaultTests
             Services = new Dictionary<string, ServiceDeploymentConfig>
             {
                 ["auth"] = new() { Enabled = true, AppId = "bannou" },
-                ["accounts"] = new() { Enabled = true, AppId = "bannou" }
+                ["account"] = new() { Enabled = true, AppId = "bannou" }
             }
         };
 

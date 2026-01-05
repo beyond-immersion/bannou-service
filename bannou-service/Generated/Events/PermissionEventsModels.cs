@@ -57,7 +57,7 @@ public partial class PermissionCapabilityUpdate
     /// <summary>
     /// Complete capability map (for full updates or initial connection).
     /// <br/>Key: service_id, Value: array of allowed endpoints.
-    /// <br/>Example: {"accounts": ["GET:/accounts", "PUT:/accounts/{id}"]}
+    /// <br/>Example: {"account": ["GET:/account", "PUT:/account/{id}"]}
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fullCapabilities")]
@@ -102,7 +102,7 @@ public partial class PermissionCapabilityUpdate
 
 /// <summary>
 /// Published by services when a session's state changes within that service.
-/// <br/>Triggers permission recompilation in the Permissions service.
+/// <br/>Triggers permission recompilation in the Permission service.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

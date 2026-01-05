@@ -1021,9 +1021,9 @@ public class PermissionServiceTests
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         var compiledPermissions = new Dictionary<string, object>
         {
-            ["accounts"] = BannouJson.SerializeToElement(new List<string>
+            ["account"] = BannouJson.SerializeToElement(new List<string>
             {
-                "GET:/accounts/profile"
+                "GET:/account/profile"
             })
         };
 

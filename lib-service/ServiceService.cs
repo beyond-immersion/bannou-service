@@ -378,7 +378,7 @@ public partial class ServiceService : IServiceService
     #region Service Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

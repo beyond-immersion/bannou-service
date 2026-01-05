@@ -86,7 +86,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "Verify ServiceMappings reflect split topology"),
             new ServiceTest(TestAuthRoutesToSplitNode, "SplitRouting - Auth Routes Correctly", "Routing",
                 "Verify auth API calls route to bannou-auth node"),
-            new ServiceTest(TestAccountsRoutesToSplitNode, "SplitRouting - Accounts Routes Correctly", "Routing",
+            new ServiceTest(TestAccountRoutesToSplitNode, "SplitRouting - Account Routes Correctly", "Routing",
                 "Verify account API calls route to bannou-auth node"),
             new ServiceTest(TestConnectStillOnMainNode, "SplitRouting - Connect on Main", "Routing",
                 "Verify connect service still on bannou-main node"),
@@ -411,10 +411,10 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             // Check for expected split mappings
             var authMapping = mappings["auth"]?.GetValue<string>();
-            var accountsMapping = mappings["account"]?.GetValue<string>();
+            var accountMapping = mappings["account"]?.GetValue<string>();
 
             Console.WriteLine($"   auth -> {authMapping ?? "(not set)"}");
-            Console.WriteLine($"   "account" -> {accountsMapping ?? "(not set)"}");
+            Console.WriteLine($"   account -> {accountMapping ?? "(not set)"}");
 
             // In split mode, these MUST map to bannou-auth
             if (authMapping != "bannou-auth")
@@ -423,9 +423,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 return false;
             }
 
-            if (accountsMapping != "bannou-auth")
+            if (accountMapping != "bannou-auth")
             {
-                Console.WriteLine($"❌ account should map to 'bannou-auth', got '{accountsMapping ?? "(null)"}'");
+                Console.WriteLine($"❌ account should map to 'bannou-auth', got '{accountMapping ?? "(null)"}'");
                 return false;
             }
 
@@ -523,39 +523,39 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     /// Verify account API calls route to bannou-auth node.
     /// Makes a real account API call to verify routing works.
     /// </summary>
-    private void TestAccountsRoutesToSplitNode(string[] args)
+    private void TestAccountRoutesToSplitNode(string[] args)
     {
-        Console.WriteLine("=== Accounts Routes to Split Node Test ===");
+        Console.WriteLine("=== Account Routes to Split Node Test ===");
 
-        if (!RequiresSplitDeployment("Accounts routing test"))
+        if (!RequiresSplitDeployment("Account routing test"))
             return;
 
         try
         {
-            var result = Task.Run(async () => await TestAccountsRoutingAsync()).Result;
+            var result = Task.Run(async () => await TestAccountRoutingAsync()).Result;
 
             if (result)
             {
-                Console.WriteLine("✅ Accounts routing test PASSED");
+                Console.WriteLine("✅ Account routing test PASSED");
             }
             else
             {
-                Console.WriteLine("❌ Accounts routing test FAILED");
+                Console.WriteLine("❌ Account routing test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Accounts routing test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"❌ Account routing test FAILED with exception: {ex.Message}");
         }
     }
 
-    private async Task<bool> TestAccountsRoutingAsync()
+    private async Task<bool> TestAccountRoutingAsync()
     {
         // Use the admin client to make an account API call
         var adminClient = Program.AdminClient;
         if (adminClient == null || !adminClient.IsConnected)
         {
-            Console.WriteLine("   Admin client not connected - cannot test accounts routing");
+            Console.WriteLine("   Admin client not connected - cannot test account routing");
             return false;
         }
 
@@ -570,21 +570,21 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var content = response.GetRawText();
-            Console.WriteLine($"   Accounts API response: {content[..Math.Min(200, content.Length)]}...");
+            Console.WriteLine($"   Account API response: {content[..Math.Min(200, content.Length)]}...");
 
             // If we got a response, routing is working
-            Console.WriteLine("   ✅ Accounts API call succeeded - routing to bannou-auth node works");
+            Console.WriteLine("   ✅ Account API call succeeded - routing to bannou-auth node works");
             return true;
         }
         catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
         {
-            Console.WriteLine($"   Accounts API not available in capability manifest");
-            Console.WriteLine("   Admin may not have access to accounts list API");
+            Console.WriteLine($"   Account API not available in capability manifest");
+            Console.WriteLine("   Admin may not have access to account list API");
             return false;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   Accounts API call failed: {ex.Message}");
+            Console.WriteLine($"   Account API call failed: {ex.Message}");
             return false;
         }
     }

@@ -9,7 +9,7 @@ info:
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
-    # Account lifecycle events from Accounts service
+    # Account lifecycle events from Account service
     - topic: account.deleted
       event: AccountDeletedEvent
       handler: HandleAccountDeleted
@@ -93,7 +93,7 @@ components:
       additionalProperties: false
       description: |
         Published when a session's roles or authorizations change.
-        Permissions service subscribes to update capability compilation.
+        Permission service subscribes to update capability compilation.
       required:
         - accountId
         - sessionId

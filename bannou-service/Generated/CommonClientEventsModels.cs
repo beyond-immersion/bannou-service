@@ -95,7 +95,7 @@ public partial class ClientCapabilityEntry
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Service name (e.g., "accounts", "game-session")
+    /// Service name (e.g., "account", "game-session")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -112,7 +112,7 @@ public partial class ClientCapabilityEntry
     public ClientCapabilityEntryMethod Method { get; set; } = default!;
 
     /// <summary>
-    /// API endpoint path (e.g., "/accounts/get")
+    /// API endpoint path (e.g., "/account/get")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("path")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -120,7 +120,7 @@ public partial class ClientCapabilityEntry
     public string Path { get; set; } = default!;
 
     /// <summary>
-    /// Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
+    /// Full endpoint key for routing (e.g., "account:POST:/account/get")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpointKey")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -247,7 +247,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Map of ServiceID -&gt; List of available methods (e.g., "accounts" -&gt; ["POST:/get-account"])
+    /// Map of ServiceID -&gt; List of available methods (e.g., "account" -&gt; ["POST:/get-account"])
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]

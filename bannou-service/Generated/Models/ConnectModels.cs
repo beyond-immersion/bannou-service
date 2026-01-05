@@ -180,7 +180,7 @@ public partial class ClientCapability
     public System.Guid Guid { get; set; } = default!;
 
     /// <summary>
-    /// Service name (e.g., "accounts", "auth")
+    /// Service name (e.g., "account", "auth")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("service")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -188,7 +188,7 @@ public partial class ClientCapability
     public string Service { get; set; } = default!;
 
     /// <summary>
-    /// API endpoint path (e.g., "/accounts/create")
+    /// API endpoint path (e.g., "/account/create")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -310,7 +310,7 @@ public partial class InternalProxyRequest
     public string SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Target service name (e.g., "accounts", "auth", "behavior")
+    /// Target service name (e.g., "account", "auth", "behavior")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetService")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -318,7 +318,7 @@ public partial class InternalProxyRequest
     public string TargetService { get; set; } = default!;
 
     /// <summary>
-    /// Target API endpoint path (e.g., "/accounts/{id}")
+    /// Target API endpoint path (e.g., "/account/{id}")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetEndpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

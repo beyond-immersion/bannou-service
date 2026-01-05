@@ -149,9 +149,9 @@ paths:
         schema from common-events.yaml.\\n\",\n            \"required\": [\n                \"serviceId\",\n             \
         \   \"appId\",\n                \"status\",\n                \"lastSeen\"\n            ],\n            \"properties\"\
         : {\n                \"serviceId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Service ID (e.g., \\\"behavior\\\", \\\"accounts\\\")\"\n                },\n                \"appId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"App-id for mesh routing (e.g., \\\
-        \"bannou\\\", \\\"npc-omega-01\\\")\"\n                },\n                \"status\": {\n                    \"type\"\
+        : \"Service ID (e.g., \\\"behavior\\\", \\\"account\\\")\"\n                },\n                \"appId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"description\": \"App-id for mesh routing (e.g., \\\"\
+        bannou\\\", \\\"npc-omega-01\\\")\"\n                },\n                \"status\": {\n                    \"type\"\
         : \"string\",\n                    \"description\": \"Service status from heartbeat\"\n                },\n      \
         \          \"lastSeen\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"Last heartbeat timestamp\"\n                },\n                \"capacity\"\
@@ -390,7 +390,7 @@ paths:
         - `local-testing`: Test environment with infrastructure services
         - `integration-http`: HTTP integration testing preset
         - `integration-edge`: WebSocket/edge testing preset
-        - `split-auth-accounts`: Auth and Accounts in separate containers
+        - `split-auth-account`: Auth and Account in separate containers
         - `distributed-npc`: NPC processing distributed across nodes
       operationId: GetPresets
       x-permissions:
@@ -461,7 +461,7 @@ paths:
         description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n    \
         \            \"services\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
         \                 \"type\": \"string\"\n                    },\n                    \"description\": \"Services enabled
-        on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"accounts\\\", \\\"auth\\\", \\\"permissions\\\
+        on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permissions\\\
         \"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"integer\",\n      \
         \              \"default\": 1,\n                    \"description\": \"Number of replicas for this node\"\n      \
         \          },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n     \
@@ -525,7 +525,7 @@ paths:
         available deployment presets from the orchestrator's preset directory.\\nPresets define service combinations and configuration
         for specific use cases.\\n\\nBuilt-in presets:\\n- `local-development`: All services in single container with mesh
         infrastructure\\n- `local-testing`: Test environment with infrastructure services\\n- `integration-http`: HTTP integration
-        testing preset\\n- `integration-edge`: WebSocket/edge testing preset\\n- `split-auth-accounts`: Auth and Accounts
+        testing preset\\n- `integration-edge`: WebSocket/edge testing preset\\n- `split-auth-account`: Auth and Account
         in separate containers\\n- `distributed-npc`: NPC processing distributed across nodes\\n\",\n    \"tags\": [],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"GetPresets\"\n}"
   /orchestrator/deploy:
@@ -546,7 +546,7 @@ paths:
 
         **Live Topology Changes**:
         Supports changing service distribution without full restart:
-        - Move auth/accounts to separate container while keeping other services together
+        - Move auth/account to separate container while keeping other services together
         - Scale specific services to additional nodes
         - Update environment variables without restart (where supported)
       operationId: Deploy
@@ -622,7 +622,7 @@ paths:
         \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"accounts\\\", \\\"auth\\\
+        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
         \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
@@ -723,7 +723,7 @@ paths:
         \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"accounts\\\", \\\"auth\\\
+        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
         \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
@@ -801,7 +801,7 @@ paths:
         n- `force`: Immediately apply changes (may interrupt active connections)\\n- `clean`: Tear down completely and rebuild
         from scratch\\n\\n**Backend Selection**:\\n- If `backend` not specified, uses highest-priority available backend\\
         n- If `backend` specified but unavailable, returns error (no fallback)\\n\\n**Live Topology Changes**:\\nSupports
-        changing service distribution without full restart:\\n- Move auth/accounts to separate container while keeping other
+        changing service distribution without full restart:\\n- Move auth/account to separate container while keeping other
         services together\\n- Scale specific services to additional nodes\\n- Update environment variables without restart
         (where supported)\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"Deploy\"\n}"
   /orchestrator/service-routing:
@@ -849,7 +849,7 @@ paths:
         \      \"generatedAt\"\n            ],\n            \"properties\": {\n                \"mappings\": {\n         \
         \           \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
         : \"string\"\n                    },\n                    \"description\": \"Map of service names to Bannou app-id
-        routing destinations.\\nExample: { \\\"accounts\\\": \\\"bannou\\\", \\\"behavior\\\": \\\"npc-processing-01\\\" }\\\
+        routing destinations.\\nExample: { \\\"account\\\": \\\"bannou\\\", \\\"behavior\\\": \\\"npc-processing-01\\\" }\\\
         n\"\n                },\n                \"defaultAppId\": {\n                    \"type\": \"string\",\n        \
         \            \"description\": \"Default app-id used when no specific mapping exists\",\n                    \"default\"\
         : \"bannou\"\n                },\n                \"generatedAt\": {\n                    \"type\": \"string\",\n\
@@ -939,7 +939,7 @@ paths:
         \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"accounts\\\", \\\"auth\\\
+        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
         \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
@@ -1360,7 +1360,7 @@ paths:
         \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
         \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"accounts\\\", \\\"auth\\\
+        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
         \", \\\"permissions\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\":
         \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
         node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
@@ -1423,7 +1423,7 @@ paths:
         (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"services\": {\n        \
         \            \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n\
         \                    },\n                    \"description\": \"Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true
-        pattern.\\nExample: [\\\"accounts\\\", \\\"auth\\\", \\\"permissions\\\"]\\n\"\n                },\n             \
+        pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permissions\\\"]\\n\"\n                },\n             \
         \   \"replicas\": {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n           \
         \         \"description\": \"Number of replicas for this node\"\n                },\n                \"resources\"\
         : {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits
@@ -2101,7 +2101,7 @@ components:
             type: string
           description: |
             Map of service names to Bannou app-id routing destinations.
-            Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
+            Example: { "account": "bannou", "behavior": "npc-processing-01" }
         defaultAppId:
           type: string
           description: Default app-id used when no specific mapping exists
@@ -2358,7 +2358,7 @@ components:
       properties:
         serviceId:
           type: string
-          description: Service ID (e.g., "behavior", "accounts")
+          description: Service ID (e.g., "behavior", "account")
         appId:
           type: string
           description: App-id for mesh routing (e.g., "bannou", "npc-omega-01")
@@ -2712,7 +2712,7 @@ components:
           description: |
             Services enabled on this node.
             Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-            Example: ["accounts", "auth", "permissions"]
+            Example: ["account", "auth", "permissions"]
         replicas:
           type: integer
           default: 1

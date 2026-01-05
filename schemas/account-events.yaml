@@ -2,13 +2,13 @@ openapi: 3.0.3
 info:
   title: Account Service Events
   description: |
-    Event models for Accounts service RabbitMQ pub/sub via MassTransit.
+    Event models for Account service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
     **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
-  x-event-subscriptions: []  # Accounts service doesn't subscribe to external events
+  x-event-subscriptions: []  # Account service doesn't subscribe to external events
   x-event-publications:
     # Account lifecycle events (auto-generated from x-lifecycle)
     - topic: account.created
@@ -22,7 +22,7 @@ info:
       description: Published when an account is soft-deleted
 
 # Lifecycle events auto-generated from this definition
-# Output: schemas/Generated/accounts-lifecycle-events.yaml
+# Output: schemas/Generated/account-lifecycle-events.yaml
 x-lifecycle:
   Account:
     model:
@@ -40,7 +40,7 @@ paths: {}  # Events don't have HTTP paths
 
 # Note: AccountCreatedEvent, AccountUpdatedEvent, AccountDeletedEvent are auto-generated
 # from the x-lifecycle definition above. Do not define them manually here.
-# See: schemas/Generated/accounts-lifecycle-events.yaml for the generated events.
+# See: schemas/Generated/account-lifecycle-events.yaml for the generated events.
 
 components:
   schemas: {}  # All account events are auto-generated from x-lifecycle

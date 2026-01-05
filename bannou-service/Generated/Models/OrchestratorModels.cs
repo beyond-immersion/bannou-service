@@ -79,7 +79,7 @@ public partial class ServiceRoutingResponse
 
     /// <summary>
     /// Map of service names to Bannou app-id routing destinations.
-    /// <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
+    /// <br/>Example: { "account": "bannou", "behavior": "npc-processing-01" }
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mappings")]
@@ -471,7 +471,7 @@ public partial class ServiceHealthStatus
 {
 
     /// <summary>
-    /// Service ID (e.g., "behavior", "accounts")
+    /// Service ID (e.g., "behavior", "account")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

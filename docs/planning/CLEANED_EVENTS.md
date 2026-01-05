@@ -76,8 +76,8 @@ Events defined in `schemas/state-events.yaml` but never implemented:
 **Reason for removal:** Would be expensive; config flag for enabling was never used.
 **Future use:** Implement as opt-in for debugging state issues.
 
-### Permissions Service Events
-Events defined in `schemas/permissions-events.yaml` but never implemented:
+### Permission Service Events
+Events defined in `schemas/permission-events.yaml` but never implemented:
 
 | Event | Topic | Intended Purpose |
 |-------|-------|------------------|

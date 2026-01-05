@@ -572,7 +572,7 @@ a=rtpmap:111 opus/48000/2";
 
                 // Client 2 sends SDP answer to Client 1
                 // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer_joined event
-                // due to race condition between Permissions service capability push and Voice service event publish.
+                // due to race condition between Permission service capability push and Voice service event publish.
                 // Retry up to 5 times (4 seconds total) for "Unknown endpoint" errors.
                 Console.WriteLine("   Client 2 sending SDP answer to Client 1...");
 

@@ -28,7 +28,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
         new ServiceTest(TestInternalProxyWithBody, "ProxyWithBody", "Connect", "Test proxy correctly forwards request body"),
         new ServiceTest(TestInternalProxyWithHeaders, "ProxyWithHeaders", "Connect", "Test proxy correctly forwards custom headers"),
         new ServiceTest(TestInternalProxyEmptyEndpoint, "ProxyEmptyEndpoint", "Connect", "Test proxy handles empty endpoint"),
-        new ServiceTest(TestInternalProxyToAccountsService, "ProxyAccounts", "Connect", "Test proxy to accounts service"),
+        new ServiceTest(TestInternalProxyToAccountService, "ProxyAccount", "Connect", "Test proxy to account service"),
 
         // Session validation tests (dependencies for WebSocket upgrade)
         new ServiceTest(TestTokenValidationForWebSocket, "WSTokenValidation", "Connect", "Test token validation used in WebSocket upgrade"),
@@ -145,8 +145,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var proxyRequest = new InternalProxyRequest
             {
                 SessionId = testSessionId,
-                TargetService = "accounts",
-                TargetEndpoint = "/accounts",
+                TargetService = "account",
+                TargetEndpoint = "/account",
                 Method = InternalProxyRequestMethod.GET,
                 Headers = new Dictionary<string, string>
                 {
@@ -219,8 +219,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var proxyRequest = new InternalProxyRequest
             {
                 SessionId = "", // Empty session ID
-                TargetService = "accounts",
-                TargetEndpoint = "/accounts",
+                TargetService = "account",
+                TargetEndpoint = "/account",
                 Method = InternalProxyRequestMethod.GET
             };
 
@@ -270,8 +270,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
                     var proxyRequest = new InternalProxyRequest
                     {
                         SessionId = testSessionId,
-                        TargetService = "accounts",
-                        TargetEndpoint = "/accounts",
+                        TargetService = "account",
+                        TargetEndpoint = "/account",
                         Method = method
                     };
 
@@ -319,8 +319,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var proxyRequest = new InternalProxyRequest
             {
                 SessionId = testSessionId,
-                TargetService = "accounts",
-                TargetEndpoint = "/accounts",
+                TargetService = "account",
+                TargetEndpoint = "/account",
                 Method = InternalProxyRequestMethod.POST,
                 Body = new
                 {
@@ -355,8 +355,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var proxyRequest = new InternalProxyRequest
             {
                 SessionId = testSessionId,
-                TargetService = "accounts",
-                TargetEndpoint = "/accounts",
+                TargetService = "account",
+                TargetEndpoint = "/account",
                 Method = InternalProxyRequestMethod.GET,
                 Headers = new Dictionary<string, string>
                 {
@@ -391,7 +391,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var proxyRequest = new InternalProxyRequest
             {
                 SessionId = testSessionId,
-                TargetService = "accounts",
+                TargetService = "account",
                 TargetEndpoint = "", // Empty endpoint
                 Method = InternalProxyRequestMethod.GET
             };
@@ -416,19 +416,19 @@ public class ConnectTestHandler : BaseHttpTestHandler
         }, "Proxy with empty endpoint");
 
     /// <summary>
-    /// Test proxy to accounts service specifically.
+    /// Test proxy to account service specifically.
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyToAccountsService(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestInternalProxyToAccountService(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
             var connectClient = GetServiceClient<IConnectClient>();
-            var testSessionId = $"proxy-accounts-{Guid.NewGuid():N}";
+            var testSessionId = $"proxy-account-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
             {
                 SessionId = testSessionId,
-                TargetService = "accounts",
-                TargetEndpoint = "/accounts",
+                TargetService = "account",
+                TargetEndpoint = "/account",
                 Method = InternalProxyRequestMethod.GET,
                 QueryParameters = new Dictionary<string, string>
                 {
@@ -444,20 +444,20 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 if (response == null)
                     return TestResult.Failed("Proxy response is null");
 
-                // Check if we got a valid response from accounts service
+                // Check if we got a valid response from account service
                 if (response.Success && response.StatusCode == 200)
                 {
-                    return TestResult.Successful($"Proxy successfully routed to accounts service - got {response.Response?.Length ?? 0} chars response");
+                    return TestResult.Successful($"Proxy successfully routed to account service - got {response.Response?.Length ?? 0} chars response");
                 }
 
-                return TestResult.Successful($"Proxy to accounts service completed - Success: {response.Success}, Status: {response.StatusCode}");
+                return TestResult.Successful($"Proxy to account service completed - Success: {response.Success}, Status: {response.StatusCode}");
             }
             catch (ApiException ex) when (ex.StatusCode == 403)
             {
                 // 403 is expected - permission denied without auth
                 return TestResult.Successful("Proxy correctly returned 403 (permission denied without auth)");
             }
-        }, "Proxy to accounts service");
+        }, "Proxy to account service");
 
     #region Session Validation Tests (WebSocket Dependencies)
 

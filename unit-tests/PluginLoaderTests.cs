@@ -1316,7 +1316,7 @@ public class PluginLoaderTests
             var result3 = result3Obj != null && (bool)result3Obj;
             Assert.False(result3, "Service should be disabled when SERVICES_ENABLED=true and X_SERVICE_DISABLED=true");
 
-            // Test 4: Different service - accounts
+            // Test 4: Different service - account
             Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", "true");
             var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result4 = result4Obj != null && (bool)result4Obj;
@@ -1377,7 +1377,7 @@ public class PluginLoaderTests
             var result3 = result3Obj != null && (bool)result3Obj;
             Assert.True(result3, "Service should be enabled when SERVICES_ENABLED=false and X_SERVICE_ENABLED=true");
 
-            // Test 4: Different service - accounts
+            // Test 4: Different service - account
             Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", "true");
             var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result4 = result4Obj != null && (bool)result4Obj;
@@ -1473,7 +1473,7 @@ public class PluginLoaderTests
             Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("CONNECT_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("GAME_SESSION_SERVICE_DISABLED", "true");
-            Environment.SetEnvironmentVariable("PERMISSIONS_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("PERMISSION_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("WEBSITE_SERVICE_DISABLED", "true");
             // Note: TESTING_SERVICE_DISABLED is not set, so testing should be enabled
 
@@ -1507,7 +1507,7 @@ public class PluginLoaderTests
             Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("CONNECT_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("GAME_SESSION_SERVICE_DISABLED", null);
-            Environment.SetEnvironmentVariable("PERMISSIONS_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("PERMISSION_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("WEBSITE_SERVICE_DISABLED", null);
         }
     }

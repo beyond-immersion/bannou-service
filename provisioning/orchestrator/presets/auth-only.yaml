@@ -10,7 +10,7 @@ topology:
   nodes:
     - name: bannou-auth
       services:
-        - accounts
+        - account
         - auth
         - testing
       replicas: 1

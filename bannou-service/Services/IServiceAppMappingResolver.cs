@@ -31,7 +31,7 @@ public interface IServiceAppMappingResolver
     /// Defaults to "bannou" (omnipotent local node) but can be overridden
     /// by service mapping events from RabbitMQ.
     /// </summary>
-    /// <param name="serviceName">The service name (e.g., "accounts", "character-agent"). Can be null.</param>
+    /// <param name="serviceName">The service name (e.g., "account", "character-agent"). Can be null.</param>
     /// <returns>The app-id to route requests to</returns>
     string GetAppIdForService(string? serviceName);
 

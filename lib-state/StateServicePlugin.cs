@@ -63,7 +63,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
         });
         services.AddSingleton<IStateStoreFactory, StateStoreFactory>();
 
-        // Register distributed lock provider (used by Permissions service and others)
+        // Register distributed lock provider (used by Permission service and others)
         services.AddSingleton<IDistributedLockProvider, Services.RedisDistributedLockProvider>();
 
         Logger?.LogDebug("State service dependencies configured");
@@ -117,7 +117,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["test-search-statestore"] = (StateBackend.Redis, "test-search", true),
 
             // MySQL stores (durable data)
-            ["accounts-statestore"] = (StateBackend.MySql, null, false),
+            ["account-statestore"] = (StateBackend.MySql, null, false),
             ["character-statestore"] = (StateBackend.MySql, null, false),
             ["game-session-statestore"] = (StateBackend.MySql, null, false),
             ["location-statestore"] = (StateBackend.MySql, null, false),

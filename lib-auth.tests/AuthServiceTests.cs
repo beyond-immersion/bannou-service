@@ -802,7 +802,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_WithNonExistentEmail_ShouldReturnOkToPreventEnumeration()
     {
-        // Arrange - accounts client throws 404 for non-existent email
+        // Arrange - account client throws 404 for non-existent email
         _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
             It.IsAny<GetAccountByEmailRequest>(),
             It.IsAny<CancellationToken>()))

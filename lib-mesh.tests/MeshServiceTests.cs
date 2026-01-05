@@ -100,7 +100,7 @@ public class MeshServiceTests
         // Arrange
         var endpoints = new List<MeshEndpoint>
         {
-            new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "auth", "accounts" } },
+            new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "auth", "account" } },
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "connect" } }
         };
 
@@ -238,7 +238,7 @@ public class MeshServiceTests
             AppId = "bannou",
             Host = "localhost",
             Port = 3500,
-            Services = new List<string> { "auth", "accounts" }
+            Services = new List<string> { "auth", "account" }
         };
 
         // Act
@@ -787,7 +787,7 @@ public class MeshServiceTests
             Mappings = new Dictionary<string, string>
             {
                 ["auth"] = "bannou-auth",
-                ["accounts"] = "bannou-accounts"
+                ["account"] = "bannou-account"
             }
         };
 
@@ -799,7 +799,7 @@ public class MeshServiceTests
             It.Is<IReadOnlyDictionary<string, string>>(m =>
                 m.Count == 2 &&
                 m["auth"] == "bannou-auth" &&
-                m["accounts"] == "bannou-accounts"),
+                m["account"] == "bannou-account"),
             "bannou",
             10L),
             Times.Once);

@@ -85,7 +85,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
         {
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/accounts/create",
+                "/account/create",
                 new
                 {
                     email = $"sub-test-{uniqueCode}@test.local",

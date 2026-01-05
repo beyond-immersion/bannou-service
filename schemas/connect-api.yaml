@@ -77,10 +77,10 @@ paths:
         \          \"targetEndpoint\",\n                \"method\"\n            ],\n            \"properties\": {\n      \
         \          \"sessionId\": {\n                    \"type\": \"string\",\n                    \"description\": \"WebSocket
         session ID making the request\"\n                },\n                \"targetService\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Target service name (e.g., \\\"accounts\\\", \\\"auth\\\
+        type\": \"string\",\n                    \"description\": \"Target service name (e.g., \\\"account\\\", \\\"auth\\\
         \", \\\"behavior\\\")\"\n                },\n                \"targetEndpoint\": {\n                    \"type\":
-        \"string\",\n                    \"description\": \"Target API endpoint path (e.g., \\\"/accounts/{id}\\\")\"\n  \
-        \              },\n                \"method\": {\n                    \"type\": \"string\",\n                    \"\
+        \"string\",\n                    \"description\": \"Target API endpoint path (e.g., \\\"/account/{id}\\\")\"\n   \
+        \             },\n                \"method\": {\n                    \"type\": \"string\",\n                    \"\
         enum\": [\n                        \"GET\",\n                        \"POST\",\n                        \"PUT\",\n\
         \                        \"DELETE\",\n                        \"PATCH\"\n                    ],\n                \
         \    \"description\": \"HTTP method for the target endpoint\"\n                },\n                \"headers\": {\n\
@@ -197,9 +197,9 @@ paths:
         endpoint\",\n                \"method\"\n            ],\n            \"properties\": {\n                \"guid\":
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Client-salted GUID for this API endpoint (unique per session)\"\n                },\n                \"service\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Service name (e.g., \\\"accounts\\\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Service name (e.g., \\\"account\\\
         \", \\\"auth\\\")\"\n                },\n                \"endpoint\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"API endpoint path (e.g., \\\"/accounts/create\\\")\"\n                },\n\
+        ,\n                    \"description\": \"API endpoint path (e.g., \\\"/account/create\\\")\"\n                },\n\
         \                \"method\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n     \
         \                   \"GET\",\n                        \"POST\",\n                        \"PUT\",\n              \
         \          \"DELETE\",\n                        \"PATCH\"\n                    ],\n                    \"description\"\
@@ -623,10 +623,10 @@ components:
           description: Client-salted GUID for this API endpoint (unique per session)
         service:
           type: string
-          description: Service name (e.g., "accounts", "auth")
+          description: Service name (e.g., "account", "auth")
         endpoint:
           type: string
-          description: API endpoint path (e.g., "/accounts/create")
+          description: API endpoint path (e.g., "/account/create")
         method:
           type: string
           enum: [GET, POST, PUT, DELETE, PATCH]
@@ -708,10 +708,10 @@ components:
           description: WebSocket session ID making the request
         targetService:
           type: string
-          description: Target service name (e.g., "accounts", "auth", "behavior")
+          description: Target service name (e.g., "account", "auth", "behavior")
         targetEndpoint:
           type: string
-          description: Target API endpoint path (e.g., "/accounts/{id}")
+          description: Target API endpoint path (e.g., "/account/{id}")
         method:
           type: string
           enum: [GET, POST, PUT, DELETE, PATCH]
@@ -1304,7 +1304,7 @@ components:
         JWT access token containing user claims:
         - jti: Client/User ID
         - roles: Array of role claims (e.g., ["user", "administrator"])
-        - scopes: Array of scope claims (e.g., ["connect", "accounts"])
+        - scopes: Array of scope claims (e.g., ["connect", "account"])
         - services: Array of accessible service names
 
     ReconnectAuth:

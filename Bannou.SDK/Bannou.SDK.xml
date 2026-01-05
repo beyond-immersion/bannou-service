@@ -64,7 +64,7 @@
             Defaults to "bannou" (omnipotent local node) but can be overridden
             by service mapping events from RabbitMQ.
             </summary>
-            <param name="serviceName">The service name (e.g., "accounts", "character-agent"). Can be null.</param>
+            <param name="serviceName">The service name (e.g., "account", "character-agent"). Can be null.</param>
             <returns>The app-id to route requests to</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.UpdateServiceMapping(System.String,System.String)">
@@ -122,7 +122,7 @@
             <typeparam name="TRequest">Request body type.</typeparam>
             <typeparam name="TResponse">Response body type.</typeparam>
             <param name="appId">Target app-id (e.g., "bannou", "auth-service").</param>
-            <param name="methodName">Method path (e.g., "auth/login", "accounts/get").</param>
+            <param name="methodName">Method path (e.g., "auth/login", "account/get").</param>
             <param name="request">Request body.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Deserialized response.</returns>
@@ -975,7 +975,7 @@
         <member name="T:BeyondImmersion.BannouService.Events.SessionUpdatedEvent">
             <summary>
             Published when a session's roles or authorizations change.
-            <br/>Permissions service subscribes to update capability compilation.
+            <br/>Permission service subscribes to update capability compilation.
             <br/>
             </summary>
         </member>
@@ -4007,7 +4007,7 @@
             <summary>
             Complete capability map (for full updates or initial connection).
             <br/>Key: service_id, Value: array of allowed endpoints.
-            <br/>Example: {"accounts": ["GET:/accounts", "PUT:/accounts/{id}"]}
+            <br/>Example: {"account": ["GET:/account", "PUT:/account/{id}"]}
             <br/>
             </summary>
         </member>
@@ -4043,7 +4043,7 @@
         <member name="T:BeyondImmersion.BannouService.Events.SessionStateChangeEvent">
             <summary>
             Published by services when a session's state changes within that service.
-            <br/>Triggers permission recompilation in the Permissions service.
+            <br/>Triggers permission recompilation in the Permission service.
             <br/>
             </summary>
         </member>
@@ -4075,7 +4075,7 @@
         <member name="T:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent">
             <summary>
             Published by any service during startup to register its API endpoints
-            <br/>and permission requirements with the Permissions service.
+            <br/>and permission requirements with the Permission service.
             <br/>
             </summary>
         </member>
@@ -4091,7 +4091,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.ServiceName">
             <summary>
-            Service ID that registered (e.g., "behavior", "accounts")
+            Service ID that registered (e.g., "behavior", "account")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.Version">
@@ -4123,7 +4123,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceEndpoint.Path">
             <summary>
-            API endpoint path (e.g., "/accounts/{id}")
+            API endpoint path (e.g., "/account/{id}")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceEndpoint.Method">
@@ -4143,7 +4143,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceEndpoint.Category">
             <summary>
-            API category (auth, accounts, game, social, etc.)
+            API category (auth, account, game, social, etc.)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.PermissionRequirement">
@@ -4231,7 +4231,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceStatus.ServiceName">
             <summary>
-            Service name (e.g., "auth", "accounts", "behavior")
+            Service name (e.g., "auth", "account", "behavior")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceStatus.Status">
@@ -4293,7 +4293,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.ServiceName">
             <summary>
-            Logical service name emitting the error (e.g., "accounts")
+            Logical service name emitting the error (e.g., "account")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.AppId">
@@ -4328,12 +4328,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Dependency">
             <summary>
-            Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
+            Dependency implicated in the failure (e.g., redis, pubsub, http:account)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Endpoint">
             <summary>
-            Service endpoint involved (e.g., POST /accounts/create)
+            Service endpoint involved (e.g., POST /account/create)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Details">
@@ -4400,9 +4400,9 @@
             Published by Connect service when a WebSocket connection is fully established.
             <br/>This event ensures the RabbitMQ exchange exists before any service publishes
             <br/>to the session-specific topic (CONNECT_SESSION_{sessionId}).
-            <br/>Permissions service uses this to track activeConnections and compile capabilities.
+            <br/>Permission service uses this to track activeConnections and compile capabilities.
             <br/>The roles and authorizations enable event-driven capability compilation without
-            <br/>synchronous API calls from Connect to Permissions.
+            <br/>synchronous API calls from Connect to Permission.
             <br/>
             </summary>
         </member>
@@ -4452,7 +4452,7 @@
         <member name="T:BeyondImmersion.BannouService.Events.SessionDisconnectedEvent">
             <summary>
             Published by Connect service when a WebSocket connection is closed.
-            <br/>Used by Permissions service to remove session from activeConnections.
+            <br/>Used by Permission service to remove session from activeConnections.
             <br/>Also enables cleanup of session-specific resources across services.
             <br/>
             </summary>
@@ -4789,7 +4789,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.ServiceName">
             <summary>
-            Service name (e.g., "accounts", "game-session")
+            Service name (e.g., "account", "game-session")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Method">
@@ -4799,12 +4799,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Path">
             <summary>
-            API endpoint path (e.g., "/accounts/get")
+            API endpoint path (e.g., "/account/get")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.EndpointKey">
             <summary>
-            Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
+            Full endpoint key for routing (e.g., "account:POST:/account/get")
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent">
@@ -4896,7 +4896,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Permissions">
             <summary>
-            Map of ServiceID -&gt; List of available methods (e.g., "accounts" -&gt; ["POST:/get-account"])
+            Map of ServiceID -&gt; List of available methods (e.g., "account" -&gt; ["POST:/get-account"])
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Reason">
@@ -6249,12 +6249,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Service">
             <summary>
-            Service name (e.g., "accounts", "auth")
+            Service name (e.g., "account", "auth")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Endpoint">
             <summary>
-            API endpoint path (e.g., "/accounts/create")
+            API endpoint path (e.g., "/account/create")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Method">
@@ -6339,12 +6339,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.TargetService">
             <summary>
-            Target service name (e.g., "accounts", "auth", "behavior")
+            Target service name (e.g., "account", "auth", "behavior")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.TargetEndpoint">
             <summary>
-            Target API endpoint path (e.g., "/accounts/{id}")
+            Target API endpoint path (e.g., "/account/{id}")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.Method">
@@ -17456,7 +17456,7 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.Mappings">
             <summary>
             Map of service names to Bannou app-id routing destinations.
-            <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
+            <br/>Example: { "account": "bannou", "behavior": "npc-processing-01" }
             <br/>
             </summary>
         </member>
@@ -17724,7 +17724,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.ServiceId">
             <summary>
-            Service ID (e.g., "behavior", "accounts")
+            Service ID (e.g., "behavior", "account")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.AppId">
@@ -27641,12 +27641,12 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.EndpointKey">
             <summary>
-            Endpoint key in format "METHOD:/path" (e.g., "POST:/accounts/get")
+            Endpoint key in format "METHOD:/path" (e.g., "POST:/account/get")
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.ServiceName">
             <summary>
-            Service name that owns this endpoint (e.g., "Accounts")
+            Service name that owns this endpoint (e.g., "Account")
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Method">

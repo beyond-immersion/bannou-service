@@ -347,7 +347,7 @@ public interface IBannouService
         => GetType().GetServiceName();
 
     /// <summary>
-    /// Registers service permissions with the Permissions service on startup.
+    /// Registers service permissions with the Permission service on startup.
     /// This method is automatically called by PluginLoader and should be generated
     /// based on x-permissions sections in the service's OpenAPI schema.
     /// Override this method if the service has custom permission registration logic.

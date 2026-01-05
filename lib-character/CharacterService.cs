@@ -804,7 +804,7 @@ public partial class CharacterService : ICharacterService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {

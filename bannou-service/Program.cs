@@ -418,10 +418,10 @@ public static class Program
                 HeartbeatManager.StartPeriodicHeartbeats();
 
                 // Register service permissions now that Bannou pub/sub is confirmed ready
-                // This ensures permission registration events are delivered to the Permissions service
+                // This ensures permission registration events are delivered to the Permission service
                 if (PluginLoader != null)
                 {
-                    Logger.Log(LogLevel.Information, null, "Registering service permissions with Permissions service...");
+                    Logger.Log(LogLevel.Information, null, "Registering service permissions with Permission service...");
                     if (!await PluginLoader.RegisterServicePermissionsAsync())
                     {
                         Logger.Log(LogLevel.Error, null, "Service permission registration failed - exiting application.");

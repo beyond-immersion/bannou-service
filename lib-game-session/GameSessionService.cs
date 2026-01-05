@@ -469,7 +469,7 @@ public partial class GameSessionService : IGameSessionService
                 model.Status = GameSessionResponseStatus.Active;
             }
 
-            // Set game-session:in_game state via permissions service (required for API access)
+            // Set game-session:in_game state via Permission service (required for API access)
             try
             {
                 await _permissionClient.UpdateSessionStateAsync(new Permission.SessionStateUpdate
@@ -684,7 +684,7 @@ public partial class GameSessionService : IGameSessionService
                 return StatusCodes.NotFound;
             }
 
-            // Clear game-session:in_game state via permissions service
+            // Clear game-session:in_game state via Permission service
             try
             {
                 await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
@@ -1606,7 +1606,7 @@ public partial class GameSessionService : IGameSessionService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

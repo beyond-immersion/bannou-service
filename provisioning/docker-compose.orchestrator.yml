@@ -30,7 +30,7 @@ services:
       - BEHAVIOR_SERVICE_ENABLED=false
       - CONNECT_SERVICE_ENABLED=false
       - GAME_SESSION_SERVICE_ENABLED=false
-      - PERMISSIONS_SERVICE_ENABLED=false
+      - PERMISSION_SERVICE_ENABLED=false
       - WEBSITE_SERVICE_ENABLED=false
       # Direct infrastructure connections for orchestrator's own monitoring
       - ORCHESTRATOR_REDIS_CONNECTION_STRING=bannou-redis:6379

@@ -1223,7 +1223,7 @@ public partial class AuthService : IAuthService
             // 3. JWT contains only opaque "session_key" claim - points to Redis session data
             // 4. ValidateTokenAsync reads roles from Redis session data (NOT from JWT claims)
             // 5. Connect service receives roles from ValidateTokenAsync response
-            // 6. Permissions service compiles capabilities based on role from session
+            // 6. Permission service compiles capabilities based on role from session
             //
             // This architecture:
             // - Prevents clients from seeing/manipulating authorization levels in JWT
@@ -2460,7 +2460,7 @@ public partial class AuthService : IAuthService
 
                         await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
-                        // Publish session.updated event for Permissions service
+                        // Publish session.updated event for Permission service
                         await PublishSessionUpdatedEventAsync(
                             accountId,
                             session.SessionId,
@@ -2532,7 +2532,7 @@ public partial class AuthService : IAuthService
 
                         await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
-                        // Publish session.updated event for Permissions service
+                        // Publish session.updated event for Permission service
                         await PublishSessionUpdatedEventAsync(
                             accountId,
                             session.SessionId,
@@ -2561,7 +2561,7 @@ public partial class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Publish SessionUpdatedEvent to notify Permissions service about role/authorization changes.
+    /// Publish SessionUpdatedEvent to notify Permission service about role/authorization changes.
     /// </summary>
     private async Task PublishSessionUpdatedEventAsync(
         Guid accountId,
@@ -2609,7 +2609,7 @@ public partial class AuthService : IAuthService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

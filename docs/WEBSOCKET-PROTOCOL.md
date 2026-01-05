@@ -170,8 +170,8 @@ Server sends available API endpoints with client-salted GUIDs. Each endpoint get
     {
       "serviceGuid": "550e8400-e29b-41d4-a716-446655440000",
       "method": "POST",
-      "path": "/accounts/get",
-      "endpointKey": "POST:/accounts/get"
+      "path": "/account/get",
+      "endpointKey": "POST:/account/get"
     },
     {
       "serviceGuid": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
@@ -185,7 +185,7 @@ Server sends available API endpoints with client-salted GUIDs. Each endpoint get
 }
 ```
 
-**Key Format**: The `endpointKey` format is `METHOD:/path` (e.g., `POST:/accounts/get`). This is the key clients use to look up the GUID for an endpoint. Service names are internal routing information and are NOT exposed to clients.
+**Key Format**: The `endpointKey` format is `METHOD:/path` (e.g., `POST:/account/get`). This is the key clients use to look up the GUID for an endpoint. Service names are internal routing information and are NOT exposed to clients.
 
 ### 4. Binary Messaging
 
@@ -197,7 +197,7 @@ Header (31 bytes):
   Byte 0:     0x00 (Flags: JSON, request, expects response)
   Bytes 1-2:  0x0000 (Channel: 0)
   Bytes 3-6:  0x00000001 (Sequence: 1)
-  Bytes 7-22: <accounts service GUID>
+  Bytes 7-22: <account service GUID>
   Bytes 23-30: 0x0123456789ABCDEF (MessageId)
 
 Payload:
@@ -294,14 +294,14 @@ When the Meta flag is set, the **Channel field** is repurposed to specify which 
 2. Client sets **Channel field** to desired meta type (0-3)
 3. Client uses the **same Service GUID** as the target endpoint
 4. Connect service intercepts and transforms the path:
-   - Original: `POST:/accounts/get`
-   - Transformed: `GET:/accounts/get/meta/{suffix}` where suffix is `info`, `request-schema`, `response-schema`, or `schema`
+   - Original: `POST:/account/get`
+   - Transformed: `GET:/account/get/meta/{suffix}` where suffix is `info`, `request-schema`, `response-schema`, or `schema`
 5. Routes to companion endpoint (always HTTP GET)
 6. Returns MetaResponse with schema data
 
 ### Meta Request Example
 
-**Request metadata for POST /accounts/get (response schema):**
+**Request metadata for POST /account/get (response schema):**
 ```
 Header (31 bytes):
   Byte 0:     0x80 (Flags: Meta)
@@ -317,10 +317,10 @@ Payload: (empty - meta requests have no body)
 ```json
 {
   "metaType": "response-schema",
-  "endpointKey": "POST:/accounts/get",
-  "serviceName": "Accounts",
+  "endpointKey": "POST:/account/get",
+  "serviceName": "Account",
   "method": "POST",
-  "path": "/accounts/get",
+  "path": "/account/get",
   "data": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",

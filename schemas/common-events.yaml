@@ -51,7 +51,7 @@ components:
       additionalProperties: false
       description: |
         Published by any service during startup to register its API endpoints
-        and permission requirements with the Permissions service.
+        and permission requirements with the Permission service.
       required:
         - eventName
         - eventId
@@ -72,7 +72,7 @@ components:
           description: Unique GUID identifying this bannou instance (for log correlation/debugging)
         serviceName:
           type: string
-          description: Service ID that registered (e.g., "behavior", "accounts")
+          description: Service ID that registered (e.g., "behavior", "account")
         version:
           type: string
           description: Service API version for change tracking
@@ -103,7 +103,7 @@ components:
       properties:
         path:
           type: string
-          description: API endpoint path (e.g., "/accounts/{id}")
+          description: API endpoint path (e.g., "/account/{id}")
         method:
           type: string
           enum: [GET, POST, PUT, DELETE, PATCH]
@@ -120,7 +120,7 @@ components:
         category:
           type: string
           nullable: true  # NRT: Optional property MUST be nullable
-          description: API category (auth, accounts, game, social, etc.)
+          description: API category (auth, account, game, social, etc.)
 
     PermissionRequirement:
       type: object
@@ -218,7 +218,7 @@ components:
           description: Unique GUID identifying this plugin instance (for log correlation/debugging)
         serviceName:
           type: string
-          description: Service name (e.g., "auth", "accounts", "behavior")
+          description: Service name (e.g., "auth", "account", "behavior")
         status:
           type: string
           enum: [healthy, degraded, unavailable]
@@ -286,7 +286,7 @@ components:
           description: Unique GUID identifying this plugin instance (for log correlation/debugging)
         serviceName:
           type: string
-          description: Logical service name emitting the error (e.g., "accounts")
+          description: Logical service name emitting the error (e.g., "account")
         appId:
           type: string
           description: Bannou app-id of the instance emitting the error
@@ -311,11 +311,11 @@ components:
         dependency:
           type: string
           nullable: true
-          description: Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
+          description: Dependency implicated in the failure (e.g., redis, pubsub, http:account)
         endpoint:
           type: string
           nullable: true
-          description: Service endpoint involved (e.g., POST /accounts/create)
+          description: Service endpoint involved (e.g., POST /account/create)
         details:
           type: object
           nullable: true
@@ -387,9 +387,9 @@ components:
         Published by Connect service when a WebSocket connection is fully established.
         This event ensures the RabbitMQ exchange exists before any service publishes
         to the session-specific topic (CONNECT_SESSION_{sessionId}).
-        Permissions service uses this to track activeConnections and compile capabilities.
+        Permission service uses this to track activeConnections and compile capabilities.
         The roles and authorizations enable event-driven capability compilation without
-        synchronous API calls from Connect to Permissions.
+        synchronous API calls from Connect to Permission.
       required:
         - eventName
         - eventId
@@ -447,7 +447,7 @@ components:
       additionalProperties: false
       description: |
         Published by Connect service when a WebSocket connection is closed.
-        Used by Permissions service to remove session from activeConnections.
+        Used by Permission service to remove session from activeConnections.
         Also enables cleanup of session-specific resources across services.
       required:
         - eventName

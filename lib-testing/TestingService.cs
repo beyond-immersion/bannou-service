@@ -315,7 +315,7 @@ public partial class TestingService : ITestingService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Unlike other services which use generated permission registration, Testing service
     /// uses a manually maintained registration since there's no testing-api.yaml schema.
     /// </summary>

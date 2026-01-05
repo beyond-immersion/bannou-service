@@ -209,7 +209,7 @@ public class PluginLoader
     /// IMPORTANT: Required infrastructure plugins (messaging, state, mesh) are ALWAYS enabled.
     /// These cannot be disabled via environment variables as they provide core functionality.
     /// </summary>
-    /// <param name="serviceName">Name of the service (e.g., "auth", "accounts")</param>
+    /// <param name="serviceName">Name of the service (e.g., "auth", "account")</param>
     /// <returns>True if service should be enabled, false if disabled</returns>
     private bool IsServiceEnabled(string serviceName)
     {
@@ -958,7 +958,7 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Registers service permissions for all enabled plugins with the Permissions service.
+    /// Registers service permissions for all enabled plugins with the Permission service.
     /// This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
     /// </summary>
     /// <returns>True if all permissions were registered successfully</returns>

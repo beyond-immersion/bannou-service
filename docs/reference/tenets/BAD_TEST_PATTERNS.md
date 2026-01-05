@@ -543,9 +543,9 @@ Added 21 new tests for previously untested high-risk methods:
 **Test Impact**: All `Constructor_WithNull*_ShouldThrow` tests (marked W) should be **deleted** - they test behavior that no longer exists.
 
 **Services cleaned**:
-- AccountsService, AuthService, PermissionsService, BehaviorService, CharacterService
+- AccountService, AuthService, PermissionService, BehaviorService, CharacterService
 - SpeciesService, RealmService, LocationService, RelationshipService, RelationshipTypeService
-- SubscriptionsService, ServicedataService, StateService, MeshService, WebsiteService
+- SubscriptionService, ServicedataService, StateService, MeshService, WebsiteService
 - TestingService, MessagingService, SubscriptionExpirationService, AssetService
 - GameSessionService, ConnectService, VoiceService, OrchestratorService, ActorService
 - DocumentationService
@@ -557,8 +557,8 @@ Added 21 new tests for previously untested high-risk methods:
 These tests demonstrate the patterns other tests should follow:
 
 1. **TokenService.GenerateAccessTokenAsync_ShouldSaveSessionWithCorrectData** - Perfect capture pattern
-2. **PermissionsService.UpdateSessionRoleAsync_IncludesLowerRoleEndpoints** - State capture with role inheritance
-3. **PermissionsService.RegisterServicePermissionsAsync_PublishesOnlyToActiveConnections** - Tests critical bug fix
+2. **PermissionService.UpdateSessionRoleAsync_IncludesLowerRoleEndpoints** - State capture with role inheritance
+3. **PermissionService.RegisterServicePermissionsAsync_PublishesOnlyToActiveConnections** - Tests critical bug fix
 4. **SessionService.InvalidateAllSessionsForAccountAsync_WithSessions_ShouldDeleteAllAndPublishEvent** - Event capture
 5. **ConnectService.GuidGenerator_GenerateServiceGuid_ShouldBeDeterministic** - Determinism testing
 6. **SessionShortcutTests.ShortcutOperations_ShouldBeThreadSafe** - Concurrency testing

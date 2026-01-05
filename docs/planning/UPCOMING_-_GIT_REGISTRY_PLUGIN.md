@@ -149,7 +149,7 @@ lib-git/
 │       │                │           │  │  (lib-state store)    │  │ │
 │       ▼                ▼           │  └───────────────────────┘  │ │
 │  ┌──────────────────────────┐     │           │                  │ │
-│  │   Permissions Service    │     │           ▼                  │ │
+│  │    Permission Service    │     │           ▼                  │ │
 │  │  - git.repo.read         │◄────│  ┌───────────────────────┐  │ │
 │  │  - git.repo.write        │     │  │  Git Protocol Handler │  │ │
 │  │  - git.repo.admin        │     │  └───────────────────────┘  │ │
@@ -369,7 +369,7 @@ public class GitProtocolController : ControllerBase
         string owner, string repo,
         [FromQuery] string service)
     {
-        // Validate permissions via lib-mesh call to Permissions service
+        // Validate permissions via lib-mesh call to Permission service
         // Return ref advertisement with capabilities
     }
 
@@ -583,7 +583,7 @@ x-service-configuration:
 **Week 2: Repository Management**
 - [ ] Implement `RepositoryManager` (bare repo creation/deletion)
 - [ ] Authentication integration via Auth service JWT validation
-- [ ] Permission checks via Permissions service (lib-mesh calls)
+- [ ] Permission checks via Permission service (lib-mesh calls)
 - [ ] State store integration for repository metadata
 
 ### Phase 2: Management API (2 weeks)

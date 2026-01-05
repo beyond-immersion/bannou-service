@@ -276,7 +276,7 @@ public class Program
         // Expected API paths that indicate services have registered their permissions.
         // These are sanitized paths from the capability manifest, not full URLs.
         // NOTE: The main client is a regular user, so we expect user-role endpoints with "default" state.
-        // Admin-only endpoints (like /accounts, /permissions/services) are tested via AdminClient.
+        // Admin-only endpoints (like /account, /permissions/services) are tested via AdminClient.
         // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {

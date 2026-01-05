@@ -59,7 +59,7 @@ public class MetaResponseBuilderTests
     public void BuildInfoResponse_ShouldCreateValidMetaResponse()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
         var path = "/account/get";
 
@@ -85,7 +85,7 @@ public class MetaResponseBuilderTests
     public void BuildSchemaResponse_RequestSchema_ShouldCreateValidMetaResponse()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
         var path = "/account/get";
         var metaType = "request-schema";
@@ -109,7 +109,7 @@ public class MetaResponseBuilderTests
     public void BuildSchemaResponse_ResponseSchema_ShouldCreateValidMetaResponse()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
         var path = "/account/get";
         var metaType = "response-schema";
@@ -130,7 +130,7 @@ public class MetaResponseBuilderTests
     public void BuildFullSchemaResponse_ShouldCombineAllSchemas()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
         var path = "/account/get";
 

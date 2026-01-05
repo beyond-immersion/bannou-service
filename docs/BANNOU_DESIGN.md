@@ -75,13 +75,13 @@ All Bannou service APIs use POST requests exclusively. This isn't RESTful tradit
 
 **The problem with path parameters**:
 ```
-GET /accounts/{accountId}     # accountId varies - can't map to single GUID
-GET /accounts/abc123          # Different path than /accounts/xyz789
+GET /account/{accountId}     # accountId varies - can't map to single GUID
+GET /account/abc123          # Different path than /account/xyz789
 ```
 
 **The solution**:
 ```
-POST /accounts/get            # Static path - maps to exactly one GUID
+POST /account/get            # Static path - maps to exactly one GUID
 Body: {"account_id": "abc123"}
 ```
 
@@ -111,8 +111,8 @@ lib-account/            # Account service plugin
 
 **Service registration**:
 ```csharp
-[BannouService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
-public class AccountsService : IAccountsService
+[BannouService("account", typeof(IAccountService), lifetime: ServiceLifetime.Scoped)]
+public class AccountService : IAccountService
 {
     // Business logic implementation
 }
@@ -128,7 +128,7 @@ Bannou uses three infrastructure libraries to abstract infrastructure concerns, 
 Services don't know if they're using Redis, MySQL, or any other store:
 ```csharp
 // In constructor
-_stateStore = stateStoreFactory.Create<AccountModel>("accounts");
+_stateStore = stateStoreFactory.Create<AccountModel>("account");
 
 // Usage
 await _stateStore.SaveAsync(key, data);
@@ -219,8 +219,8 @@ Messages use binary headers for routing, JSON payloads for data:
 
 **Client-salted GUIDs**: Each client gets unique GUIDs for the same endpoints, preventing cross-client security exploits:
 ```
-Client A: /accounts/get → GUID abc123...
-Client B: /accounts/get → GUID xyz789...  (different!)
+Client A: /account/get → GUID abc123...
+Client B: /account/get → GUID xyz789...  (different!)
 ```
 
 ### Capability Manifest
@@ -230,7 +230,7 @@ Clients receive a dynamic list of available APIs when connecting:
 {
   "capabilities": [
     {
-      "name": "accounts/get",
+      "name": "account/get",
       "guid": "abc123...",
       "method": "POST",
       "requires_auth": true
@@ -285,7 +285,7 @@ The Orchestrator service can dynamically manage deployments using presets:
 # provisioning/orchestrator/presets/http-tests.yaml
 services:
   - auth
-  - accounts
+  - account
   - testing
 ```
 

@@ -24,7 +24,7 @@ using System = global::System;
 
 /// <summary>
 /// Published by any service during startup to register its API endpoints
-/// <br/>and permission requirements with the Permissions service.
+/// <br/>and permission requirements with the Permission service.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -48,7 +48,7 @@ public partial class ServiceRegistrationEvent : BaseServiceEvent
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Service ID that registered (e.g., "behavior", "accounts")
+    /// Service ID that registered (e.g., "behavior", "account")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -97,7 +97,7 @@ public partial class ServiceEndpoint
 {
 
     /// <summary>
-    /// API endpoint path (e.g., "/accounts/{id}")
+    /// API endpoint path (e.g., "/account/{id}")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("path")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -128,7 +128,7 @@ public partial class ServiceEndpoint
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// API category (auth, accounts, game, social, etc.)
+    /// API category (auth, account, game, social, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     public string? Category { get; set; } = default!;
@@ -258,7 +258,7 @@ public partial class ServiceStatus
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Service name (e.g., "auth", "accounts", "behavior")
+    /// Service name (e.g., "auth", "account", "behavior")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -347,7 +347,7 @@ public partial class ServiceErrorEvent : BaseServiceEvent
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Logical service name emitting the error (e.g., "accounts")
+    /// Logical service name emitting the error (e.g., "account")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -400,13 +400,13 @@ public partial class ServiceErrorEvent : BaseServiceEvent
     public ServiceErrorEventSeverity Severity { get; set; } = BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error;
 
     /// <summary>
-    /// Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
+    /// Dependency implicated in the failure (e.g., redis, pubsub, http:account)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("dependency")]
     public string? Dependency { get; set; } = default!;
 
     /// <summary>
-    /// Service endpoint involved (e.g., POST /accounts/create)
+    /// Service endpoint involved (e.g., POST /account/create)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
     public string? Endpoint { get; set; } = default!;
@@ -494,9 +494,9 @@ public partial class FullServiceMappingsEvent : BaseServiceEvent
 /// Published by Connect service when a WebSocket connection is fully established.
 /// <br/>This event ensures the RabbitMQ exchange exists before any service publishes
 /// <br/>to the session-specific topic (CONNECT_SESSION_{sessionId}).
-/// <br/>Permissions service uses this to track activeConnections and compile capabilities.
+/// <br/>Permission service uses this to track activeConnections and compile capabilities.
 /// <br/>The roles and authorizations enable event-driven capability compilation without
-/// <br/>synchronous API calls from Connect to Permissions.
+/// <br/>synchronous API calls from Connect to Permission.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -564,7 +564,7 @@ public partial class SessionConnectedEvent : BaseServiceEvent
 
 /// <summary>
 /// Published by Connect service when a WebSocket connection is closed.
-/// <br/>Used by Permissions service to remove session from activeConnections.
+/// <br/>Used by Permission service to remove session from activeConnections.
 /// <br/>Also enables cleanup of session-specific resources across services.
 /// <br/>
 /// </summary>

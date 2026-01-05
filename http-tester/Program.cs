@@ -412,7 +412,7 @@ public class Program
     }
 
     /// <summary>
-    /// Waits for services to register their permissions with the Permissions service.
+    /// Waits for services to register their permissions with the Permission service.
     /// Services only register after fully initializing, so this is a reliable readiness signal.
     /// </summary>
     /// <param name="permissionClient">The permissions client to use for checking registered services.</param>
@@ -428,7 +428,7 @@ public class Program
         var expectedServices = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "auth",
-            "accounts",
+            "account",
             "documentation",
             "permissions",
             "subscriptions",  // Required for auth service login flow

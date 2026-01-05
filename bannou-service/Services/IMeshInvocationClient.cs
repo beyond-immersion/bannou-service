@@ -15,7 +15,7 @@ public interface IMeshInvocationClient
     /// <typeparam name="TRequest">Request body type.</typeparam>
     /// <typeparam name="TResponse">Response body type.</typeparam>
     /// <param name="appId">Target app-id (e.g., "bannou", "auth-service").</param>
-    /// <param name="methodName">Method path (e.g., "auth/login", "accounts/get").</param>
+    /// <param name="methodName">Method path (e.g., "auth/login", "account/get").</param>
     /// <param name="request">Request body.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Deserialized response.</returns>

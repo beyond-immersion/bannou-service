@@ -111,7 +111,7 @@ public interface IMessageBus
     /// Similar to Sentry/error tracking services.
     /// </para>
     /// </remarks>
-    /// <param name="serviceName">Service name (e.g., "accounts", "auth")</param>
+    /// <param name="serviceName">Service name (e.g., "account", "auth")</param>
     /// <param name="operation">Operation that failed (e.g., "GetAccount", "ValidateToken")</param>
     /// <param name="errorType">Exception type name</param>
     /// <param name="message">Error message</param>

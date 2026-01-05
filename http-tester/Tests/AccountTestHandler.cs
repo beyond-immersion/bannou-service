@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
 /// Test handler for account-related API endpoints using generated clients.
-/// Tests the accounts service APIs directly via NSwag-generated AccountClient.
+/// Tests the account service APIs directly via NSwag-generated AccountClient.
 /// </summary>
 public class AccountTestHandler : BaseHttpTestHandler
 {

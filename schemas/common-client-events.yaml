@@ -113,17 +113,17 @@ components:
           description: Client-salted GUID for this endpoint (unique per client)
         serviceName:
           type: string
-          description: Service name (e.g., "accounts", "game-session")
+          description: Service name (e.g., "account", "game-session")
         method:
           type: string
           enum: [GET, POST]
           description: HTTP method for WebSocket routing
         path:
           type: string
-          description: API endpoint path (e.g., "/accounts/get")
+          description: API endpoint path (e.g., "/account/get")
         endpointKey:
           type: string
-          description: Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
+          description: Full endpoint key for routing (e.g., "account:POST:/account/get")
 
     DisconnectNotificationEvent:
       allOf:
@@ -224,7 +224,7 @@ components:
             type: array
             items:
               type: string
-          description: Map of ServiceID -> List of available methods (e.g., "accounts" -> ["POST:/get-account"])
+          description: Map of ServiceID -> List of available methods (e.g., "account" -> ["POST:/get-account"])
         reason:
           type: string
           nullable: true
