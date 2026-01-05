@@ -1,33 +1,33 @@
-using BeyondImmersion.BannouService.Service;
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
-/// Test handler for Service service API endpoints.
-/// Tests game service registry CRUD operations via NSwag-generated ServiceClient.
+/// Test handler for Game Service API endpoints.
+/// Tests game service registry CRUD operations via NSwag-generated GameServiceClient.
 /// </summary>
-public class ServiceTestHandler : BaseHttpTestHandler
+public class GameServiceTestHandler : BaseHttpTestHandler
 {
     public override ServiceTest[] GetServiceTests() =>
     [
         // Core CRUD operations
-        new ServiceTest(TestCreateService, "CreateService", "Service", "Test service creation endpoint"),
-        new ServiceTest(TestGetServiceById, "GetServiceById", "Service", "Test service retrieval by ID"),
-        new ServiceTest(TestGetServiceByStubName, "GetServiceByStubName", "Service", "Test service retrieval by stub name"),
-        new ServiceTest(TestListServices, "ListServices", "Service", "Test service listing endpoint"),
-        new ServiceTest(TestUpdateService, "UpdateService", "Service", "Test service update endpoint"),
-        new ServiceTest(TestDeleteService, "DeleteService", "Service", "Test service deletion endpoint"),
+        new ServiceTest(TestCreateService, "CreateService", "GameService", "Test service creation endpoint"),
+        new ServiceTest(TestGetServiceById, "GetServiceById", "GameService", "Test service retrieval by ID"),
+        new ServiceTest(TestGetServiceByStubName, "GetServiceByStubName", "GameService", "Test service retrieval by stub name"),
+        new ServiceTest(TestListServices, "ListServices", "GameService", "Test service listing endpoint"),
+        new ServiceTest(TestUpdateService, "UpdateService", "GameService", "Test service update endpoint"),
+        new ServiceTest(TestDeleteService, "DeleteService", "GameService", "Test service deletion endpoint"),
 
         // Validation tests
-        new ServiceTest(TestCreateServiceDuplicateStubName, "CreateServiceDuplicateStubName", "Service", "Test conflict on duplicate stub name"),
-        new ServiceTest(TestListServicesActiveOnly, "ListServicesActiveOnly", "Service", "Test active-only filter on list"),
+        new ServiceTest(TestCreateServiceDuplicateStubName, "CreateServiceDuplicateStubName", "GameService", "Test conflict on duplicate stub name"),
+        new ServiceTest(TestListServicesActiveOnly, "ListServicesActiveOnly", "GameService", "Test active-only filter on list"),
     ];
 
     private static async Task<TestResult> TestCreateService(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var testStubName = GenerateTestSlug("test-service");
 
             var createRequest = new CreateServiceRequest
@@ -55,7 +55,7 @@ public class ServiceTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetServiceById(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var testStubName = GenerateTestSlug("get-by-id");
 
             // First create a test service
@@ -91,7 +91,7 @@ public class ServiceTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetServiceByStubName(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var testStubName = GenerateTestSlug("get-by-stub");
 
             // First create a test service
@@ -124,7 +124,7 @@ public class ServiceTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestListServices(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
 
             // Create a test service to ensure list is not empty
             var testStubName = GenerateTestSlug("list-test");
@@ -153,7 +153,7 @@ public class ServiceTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestUpdateService(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var testStubName = GenerateTestSlug("update-test");
 
             // Create a test service
@@ -201,7 +201,7 @@ public class ServiceTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestDeleteService(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var testStubName = GenerateTestSlug("delete-test");
 
             // Create a service to delete
@@ -236,7 +236,7 @@ public class ServiceTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestCreateServiceDuplicateStubName(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var testStubName = GenerateTestSlug("duplicate-test");
 
             // Create first service
@@ -275,7 +275,7 @@ public class ServiceTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestListServicesActiveOnly(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var testPrefix = GenerateTestSlug("active-filter");
 
             // Create an active service

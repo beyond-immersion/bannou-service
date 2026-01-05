@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Bannou Service Service API
+  title: Bannou Game Service API
   description: |
     Registry service for game services that users can subscribe to.
     Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
@@ -16,13 +16,13 @@ servers:
   description: Bannou service endpoint (internal only)
 
 paths:
-  /service/services/list:
+  /game-service/services/list:
     post:
       summary: List all registered game services
       description: Returns all game services, optionally filtered by active status.
       operationId: listServices
       tags:
-      - Service Registry
+      - Game Service Registry
       x-permissions:
       - role: user
         states: {}
@@ -73,15 +73,15 @@ paths:
         \           \"description\": \"When the service was last updated\"\n                }\n            }\n        }\n\
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all registered game services\",\n    \"description\": \"Returns all
-        game services, optionally filtered by active status.\",\n    \"tags\": [\n        \"Service Registry\"\n    ],\n \
-        \   \"deprecated\": false,\n    \"operationId\": \"listServices\"\n}"
-  /service/services/get:
+        game services, optionally filtered by active status.\",\n    \"tags\": [\n        \"Game Service Registry\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"listServices\"\n}"
+  /game-service/services/get:
     post:
       summary: Get service by ID or stub name
       description: Retrieves a single service by either serviceId (GUID) or stubName.
       operationId: getService
       tags:
-      - Service Registry
+      - Game Service Registry
       x-permissions:
       - role: user
         states: {}
@@ -129,15 +129,15 @@ paths:
         \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
         When the service was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get service by ID or stub name\",\n    \"description\": \"Retrieves a single
-        service by either serviceId (GUID) or stubName.\",\n    \"tags\": [\n        \"Service Registry\"\n    ],\n    \"\
-        deprecated\": false,\n    \"operationId\": \"getService\"\n}"
-  /service/services/create:
+        service by either serviceId (GUID) or stubName.\",\n    \"tags\": [\n        \"Game Service Registry\"\n    ],\n \
+        \   \"deprecated\": false,\n    \"operationId\": \"getService\"\n}"
+  /game-service/services/create:
     post:
       summary: Create a new game service entry
       description: Admin-only endpoint to register a new game service in the registry.
       operationId: createService
       tags:
-      - Service Registry
+      - Game Service Registry
       x-permissions:
       - role: admin
         states: {}
@@ -192,15 +192,15 @@ paths:
         \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
         When the service was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new game service entry\",\n    \"description\": \"Admin-only endpoint
-        to register a new game service in the registry.\",\n    \"tags\": [\n        \"Service Registry\"\n    ],\n    \"\
-        deprecated\": false,\n    \"operationId\": \"createService\"\n}"
-  /service/services/update:
+        to register a new game service in the registry.\",\n    \"tags\": [\n        \"Game Service Registry\"\n    ],\n \
+        \   \"deprecated\": false,\n    \"operationId\": \"createService\"\n}"
+  /game-service/services/update:
     post:
       summary: Update a game service entry
       description: Admin-only endpoint to update an existing game service.
       operationId: updateService
       tags:
-      - Service Registry
+      - Game Service Registry
       x-permissions:
       - role: admin
         states: {}
@@ -253,15 +253,15 @@ paths:
         \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
         When the service was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a game service entry\",\n    \"description\": \"Admin-only endpoint
-        to update an existing game service.\",\n    \"tags\": [\n        \"Service Registry\"\n    ],\n    \"deprecated\"\
+        to update an existing game service.\",\n    \"tags\": [\n        \"Game Service Registry\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"updateService\"\n}"
-  /service/services/delete:
+  /game-service/services/delete:
     post:
       summary: Delete a game service entry
       description: Admin-only endpoint to remove a game service from the registry.
       operationId: deleteService
       tags:
-      - Service Registry
+      - Game Service Registry
       x-permissions:
       - role: admin
         states: {}
@@ -287,8 +287,8 @@ paths:
         : \"ID of the service to delete\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a game service entry\",\n    \"description\": \"Admin-only endpoint
-        to remove a game service from the registry.\",\n    \"tags\": [\n        \"Service Registry\"\n    ],\n    \"deprecated\"\
-        : false,\n    \"operationId\": \"deleteService\"\n}"
+        to remove a game service from the registry.\",\n    \"tags\": [\n        \"Game Service Registry\"\n    ],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"deleteService\"\n}"
 components:
   schemas:
     # Request Models

@@ -18,10 +18,10 @@
 #nullable enable
 
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Service;
+using BeyondImmersion.BannouService.GameService;
 
 
-namespace BeyondImmersion.BannouService.Service;
+namespace BeyondImmersion.BannouService.GameService;
 
 using System = global::System;
 

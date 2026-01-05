@@ -19,19 +19,19 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ServiceClients;
-using BeyondImmersion.BannouService.Service;
+using BeyondImmersion.BannouService.GameService;
 
 
-namespace BeyondImmersion.BannouService.Service;
+namespace BeyondImmersion.BannouService.GameService;
 
 using System = global::System;
 
 /// <summary>
-/// Client interface for the Service service.
+/// Client interface for the GameService service.
 /// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial interface IServiceClient
+public partial interface IGameServiceClient
 {
 
     /// <param name="body">The body parameter.</param>
@@ -96,23 +96,23 @@ public partial interface IServiceClient
 }
 
 /// <summary>
-/// Client implementation for the Service service.
+/// Client implementation for the GameService service.
 /// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<ServiceClient>
+public partial class GameServiceClient : IGameServiceClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<GameServiceClient>
 {
     // Use centralized BannouJson serialization helper
     private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
 
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
-    private readonly Microsoft.Extensions.Logging.ILogger<ServiceClient>? _logger;
+    private readonly Microsoft.Extensions.Logging.ILogger<GameServiceClient>? _logger;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
     /// </summary>
-    private static readonly string _serviceName = "service";
+    private static readonly string _serviceName = "gameservice";
 
     /// <summary>
     /// The name of the service this client communicates with.
@@ -121,12 +121,12 @@ public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouServi
     public string ServiceName => _serviceName;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ServiceClient"/> class.
+    /// Initializes a new instance of the <see cref="GameServiceClient"/> class.
     /// </summary>
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
-    public ServiceClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<ServiceClient>? logger = null)
+    public GameServiceClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<GameServiceClient>? logger = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
@@ -176,7 +176,7 @@ public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouServi
     /// </summary>
     /// <param name="token">JWT token or authorization value</param>
     /// <returns>This client instance for method chaining</returns>
-    public ServiceClient WithAuthorization(string? token)
+    public GameServiceClient WithAuthorization(string? token)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -250,8 +250,8 @@ public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouServi
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "service/services/list"
-        urlBuilder_.Append("service/services/list");
+        // Operation Path: "game-service/services/list"
+        urlBuilder_.Append("game-service/services/list");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -333,8 +333,8 @@ public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouServi
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "service/services/get"
-        urlBuilder_.Append("service/services/get");
+        // Operation Path: "game-service/services/get"
+        urlBuilder_.Append("game-service/services/get");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -422,8 +422,8 @@ public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouServi
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "service/services/create"
-        urlBuilder_.Append("service/services/create");
+        // Operation Path: "game-service/services/create"
+        urlBuilder_.Append("game-service/services/create");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -517,8 +517,8 @@ public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouServi
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "service/services/update"
-        urlBuilder_.Append("service/services/update");
+        // Operation Path: "game-service/services/update"
+        urlBuilder_.Append("game-service/services/update");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -612,8 +612,8 @@ public partial class ServiceClient : IServiceClient, BeyondImmersion.BannouServi
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "service/services/delete"
-        urlBuilder_.Append("service/services/delete");
+        // Operation Path: "game-service/services/delete"
+        urlBuilder_.Append("game-service/services/delete");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);

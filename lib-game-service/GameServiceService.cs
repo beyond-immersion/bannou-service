@@ -7,30 +7,30 @@ using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace BeyondImmersion.BannouService.Service;
+namespace BeyondImmersion.BannouService.GameService;
 
 /// <summary>
-/// Implementation of the Service service.
+/// Implementation of the Game Service service.
 /// Provides a minimal registry of game services (games/applications) that users can subscribe to.
 /// </summary>
-[BannouService("service", typeof(IServiceService), lifetime: ServiceLifetime.Singleton)]
-public partial class ServiceService : IServiceService
+[BannouService("game-service", typeof(IGameServiceService), lifetime: ServiceLifetime.Singleton)]
+public partial class GameServiceService : IGameServiceService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<ServiceService> _logger;
-    private readonly ServiceServiceConfiguration _configuration;
+    private readonly ILogger<GameServiceService> _logger;
+    private readonly GameServiceServiceConfiguration _configuration;
 
     // Key patterns for state store
-    private const string SERVICE_KEY_PREFIX = "service:";
-    private const string SERVICE_STUB_INDEX_PREFIX = "service-stub:";
-    private const string SERVICE_LIST_KEY = "service-list";
+    private const string SERVICE_KEY_PREFIX = "game-service:";
+    private const string SERVICE_STUB_INDEX_PREFIX = "game-service-stub:";
+    private const string SERVICE_LIST_KEY = "game-service-list";
 
-    public ServiceService(
+    public GameServiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
-        ILogger<ServiceService> logger,
-        ServiceServiceConfiguration configuration,
+        ILogger<GameServiceService> logger,
+        GameServiceServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -38,11 +38,11 @@ public partial class ServiceService : IServiceService
         _logger = logger;
         _configuration = configuration;
 
-        // Register event handlers via partial class (ServiceServiceEvents.cs)
+        // Register event handlers via partial class (GameServiceServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
-    private string StateStoreName => _configuration.StateStoreName ?? "service-statestore";
+    private string StateStoreName => _configuration.StateStoreName ?? "game-service-statestore";
 
     /// <summary>
     /// List all registered game services, optionally filtered by active status.
@@ -58,7 +58,7 @@ public partial class ServiceService : IServiceService
             var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
 
             var services = new List<ServiceInfo>();
-            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
             if (serviceIds != null)
             {
@@ -104,8 +104,8 @@ public partial class ServiceService : IServiceService
 
         try
         {
-            ServiceRegistryModel? serviceModel = null;
-            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
+            GameServiceRegistryModel? serviceModel = null;
+            var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
             // Try by service ID first
@@ -167,7 +167,7 @@ public partial class ServiceService : IServiceService
 
             var normalizedStubName = body.StubName.ToLowerInvariant();
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
-            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
             // Check if stub name already exists
             var existingServiceId = await stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", cancellationToken);
@@ -182,7 +182,7 @@ public partial class ServiceService : IServiceService
             var serviceId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
-            var serviceModel = new ServiceRegistryModel
+            var serviceModel = new GameServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = normalizedStubName,
@@ -230,7 +230,7 @@ public partial class ServiceService : IServiceService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
             // Get existing service
             var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
@@ -288,7 +288,7 @@ public partial class ServiceService : IServiceService
                 return StatusCodes.BadRequest;
             }
 
-            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
             // Get existing service to get stub name for index cleanup
@@ -357,7 +357,7 @@ public partial class ServiceService : IServiceService
     /// <summary>
     /// Map internal storage model to API response model.
     /// </summary>
-    private static ServiceInfo MapToServiceInfo(ServiceRegistryModel model)
+    private static ServiceInfo MapToServiceInfo(GameServiceRegistryModel model)
     {
         return new ServiceInfo
         {
@@ -383,8 +383,8 @@ public partial class ServiceService : IServiceService
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
-        _logger.LogInformation("Registering Service service permissions...");
-        await ServicePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+        _logger.LogInformation("Registering Game Service service permissions...");
+        await GameServicePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion
@@ -403,7 +403,7 @@ public partial class ServiceService : IServiceService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceName: "service",
+            serviceName: "game-service",
             operation: operation,
             errorType: errorType,
             message: message,
@@ -418,7 +418,7 @@ public partial class ServiceService : IServiceService
 /// Internal storage model using Unix timestamps to avoid serialization issues.
 /// Accessible to test project via InternalsVisibleTo attribute.
 /// </summary>
-internal class ServiceRegistryModel
+internal class GameServiceRegistryModel
 {
     public string ServiceId { get; set; } = string.Empty;
     public string StubName { get; set; } = string.Empty;

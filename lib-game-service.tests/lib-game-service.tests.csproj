@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <RootNamespace>BeyondImmersion.BannouService.Service.Tests</RootNamespace>
+    <RootNamespace>BeyondImmersion.BannouService.GameService.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,12 +23,12 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.2" />
     <PackageReference Include="Moq" Version="4.20.72" />
-    <!-- Logging.Abstractions come from lib-service → bannou-service -->
+    <!-- Logging.Abstractions come from lib-game-service → bannou-service -->
   </ItemGroup>
 
   <ItemGroup>
-    <!-- bannou-service comes transitively via lib-service -->
-    <ProjectReference Include="../lib-service/lib-service.csproj" />
+    <!-- bannou-service comes transitively via lib-game-service -->
+    <ProjectReference Include="../lib-game-service/lib-game-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
     <ProjectReference Include="../test-utilities/test-utilities.csproj" />

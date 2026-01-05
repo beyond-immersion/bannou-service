@@ -10,7 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
-    <ProjectReference Include="../lib-service/lib-service.csproj" />
+    <ProjectReference Include="../lib-game-service/lib-game-service.csproj" />
     <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
 

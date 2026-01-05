@@ -1,5 +1,5 @@
 using BeyondImmersion.BannouService.Account;
-using BeyondImmersion.BannouService.Service;
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Testing;
 
@@ -30,7 +30,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
     /// <summary>
     /// Helper to create a test service for subscription tests.
     /// </summary>
-    private static async Task<ServiceInfo?> CreateTestService(IServiceClient serviceClient, string stubName)
+    private static async Task<ServiceInfo?> CreateTestService(IGameServiceClient serviceClient, string stubName)
     {
         var createRequest = new CreateServiceRequest
         {
@@ -62,7 +62,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;
@@ -118,7 +118,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;
@@ -164,7 +164,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;
@@ -210,7 +210,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;
@@ -264,7 +264,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;
@@ -306,7 +306,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;
@@ -352,7 +352,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;
@@ -436,7 +436,7 @@ public class SubscriptionTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var subscriptionClient = GetServiceClient<ISubscriptionClient>();
-            var serviceClient = GetServiceClient<IServiceClient>();
+            var serviceClient = GetServiceClient<IGameServiceClient>();
             var accountClient = GetServiceClient<IAccountClient>();
 
             var testId = DateTime.Now.Ticks;

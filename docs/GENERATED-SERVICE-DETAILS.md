@@ -18,6 +18,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
+| [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
@@ -27,7 +28,6 @@ Des... |
 | [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
-| [Service](#service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
 | [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
@@ -349,6 +349,25 @@ All endpoints return voice-friendly summaries alongside detaile...
 
 ---
 
+## Game Service {#game-service}
+
+**Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml`
+
+Registry service for game services that users can subscribe to.
+Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
+
+### Game Service Registry
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/game-service/services/create` | Create a new game service entry | admin |
+| `POST` | `/game-service/services/delete` | Delete a game service entry | admin |
+| `POST` | `/game-service/services/get` | Get service by ID or stub name | user |
+| `POST` | `/game-service/services/list` | List all registered game services | user |
+| `POST` | `/game-service/services/update` | Update a game service entry | admin |
+
+---
+
 ## Game Session {#game-session}
 
 **Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml`
@@ -617,25 +636,6 @@ Relationship type management service for Arcadia game world.
 | `POST` | `/relationship-type/seed` | Seed relationship types from configuration | admin |
 | `POST` | `/relationship-type/undeprecate` | Restore a deprecated relationship type | admin |
 | `POST` | `/relationship-type/update` | Update relationship type | admin |
-
----
-
-## Service {#service}
-
-**Version**: 1.0.0 | **Schema**: `schemas/service-api.yaml`
-
-Registry service for game services that users can subscribe to.
-Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
-
-### Service Registry
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/service/services/create` | Create a new game service entry | admin |
-| `POST` | `/service/services/delete` | Delete a game service entry | admin |
-| `POST` | `/service/services/get` | Get service by ID or stub name | user |
-| `POST` | `/service/services/list` | List all registered game services | user |
-| `POST` | `/service/services/update` | Update a game service entry | admin |
 
 ---
 

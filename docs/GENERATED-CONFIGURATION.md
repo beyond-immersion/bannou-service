@@ -161,6 +161,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
 | `DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH` | int | `200` | Maximum characters for voice summaries |
 
+### Game Service
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `GAME_SERVICE_STATE_STORE_NAME` | string | `game-service-statestore` | State store name for game service data |
+
 ### Game Session
 
 | Environment Variable | Type | Default | Description |
@@ -282,12 +288,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
-
-### Service
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `SERVICE_STATE_STORE_NAME` | string | `service-statestore` | State store name for service data |
 
 ### Species
 

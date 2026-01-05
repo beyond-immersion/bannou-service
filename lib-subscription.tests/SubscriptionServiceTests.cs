@@ -1,7 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.Service;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscription;
@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Subscription.Tests;
 
 /// <summary>
 /// Unit tests for SubscriptionService.
-/// Tests business logic with mocked IStateStoreFactory and IServiceClient.
+/// Tests business logic with mocked IStateStoreFactory and IGameServiceClient.
 /// </summary>
 public class SubscriptionServiceTests
 {
@@ -26,7 +26,7 @@ public class SubscriptionServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<SubscriptionService>> _mockLogger;
     private readonly SubscriptionServiceConfiguration _configuration;
-    private readonly Mock<IServiceClient> _mockServiceClient;
+    private readonly Mock<IGameServiceClient> _mockServiceClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "subscription-statestore";
 
@@ -38,7 +38,7 @@ public class SubscriptionServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<SubscriptionService>>();
         _configuration = new SubscriptionServiceConfiguration();
-        _mockServiceClient = new Mock<IServiceClient>();
+        _mockServiceClient = new Mock<IGameServiceClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores

@@ -21156,6 +21156,384 @@
             Reason for leaving (death, transfer, deletion)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.IGameServiceClient">
+            <summary>
+            Client interface for the GameService service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.IGameServiceClient.ListServicesAsync(BeyondImmersion.BannouService.GameService.ListServicesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all registered game services
+            </summary>
+            <remarks>
+            Returns all game services, optionally filtered by active status.
+            </remarks>
+            <returns>Services retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.IGameServiceClient.GetServiceAsync(BeyondImmersion.BannouService.GameService.GetServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get service by ID or stub name
+            </summary>
+            <remarks>
+            Retrieves a single service by either serviceId (GUID) or stubName.
+            </remarks>
+            <returns>Service retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.IGameServiceClient.CreateServiceAsync(BeyondImmersion.BannouService.GameService.CreateServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to register a new game service in the registry.
+            </remarks>
+            <returns>Service created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.IGameServiceClient.UpdateServiceAsync(BeyondImmersion.BannouService.GameService.UpdateServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to update an existing game service.
+            </remarks>
+            <returns>Service updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.IGameServiceClient.DeleteServiceAsync(BeyondImmersion.BannouService.GameService.DeleteServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to remove a game service from the registry.
+            </remarks>
+            <returns>Service deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.GameServiceClient">
+            <summary>
+            Client implementation for the GameService service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.GameService.GameServiceClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.GameServiceClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.GameService.GameServiceClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.GameService.GameServiceClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.GameServiceClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.GameService.GameServiceClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.GameService.GameServiceClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.ListServicesAsync(BeyondImmersion.BannouService.GameService.ListServicesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all registered game services
+            </summary>
+            <remarks>
+            Returns all game services, optionally filtered by active status.
+            </remarks>
+            <returns>Services retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.GetServiceAsync(BeyondImmersion.BannouService.GameService.GetServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get service by ID or stub name
+            </summary>
+            <remarks>
+            Retrieves a single service by either serviceId (GUID) or stubName.
+            </remarks>
+            <returns>Service retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.CreateServiceAsync(BeyondImmersion.BannouService.GameService.CreateServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to register a new game service in the registry.
+            </remarks>
+            <returns>Service created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.UpdateServiceAsync(BeyondImmersion.BannouService.GameService.UpdateServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to update an existing game service.
+            </remarks>
+            <returns>Service updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.DeleteServiceAsync(BeyondImmersion.BannouService.GameService.DeleteServiceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to remove a game service from the registry.
+            </remarks>
+            <returns>Service deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.GameServiceClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.GameService.GameServiceClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.GameServiceClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.GameServiceClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.GameServiceClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameService.GameServiceClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.ListServicesRequest">
+            <summary>
+            Request to list all game services
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ListServicesRequest.ActiveOnly">
+            <summary>
+            If true, only return active services
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.GetServiceRequest">
+            <summary>
+            Request to get a service by ID or stub name (provide either one)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.GetServiceRequest.ServiceId">
+            <summary>
+            ID of the service to retrieve (null if using stubName)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.GetServiceRequest.StubName">
+            <summary>
+            Stub name of the service to retrieve (null if using serviceId)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.CreateServiceRequest">
+            <summary>
+            Request to create a new game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.StubName">
+            <summary>
+            URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.DisplayName">
+            <summary>
+            Human-readable name for the service (e.g., "Arcadia Online")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.Description">
+            <summary>
+            Optional description of the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.CreateServiceRequest.IsActive">
+            <summary>
+            Whether the service is currently active
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.UpdateServiceRequest">
+            <summary>
+            Request to update an existing game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.UpdateServiceRequest.ServiceId">
+            <summary>
+            ID of the service to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.UpdateServiceRequest.DisplayName">
+            <summary>
+            New display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.UpdateServiceRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.UpdateServiceRequest.IsActive">
+            <summary>
+            New active status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.DeleteServiceRequest">
+            <summary>
+            Request to delete a game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.DeleteServiceRequest.ServiceId">
+            <summary>
+            ID of the service to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.ServiceInfo">
+            <summary>
+            Information about a game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.ServiceId">
+            <summary>
+            Unique identifier for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.StubName">
+            <summary>
+            URL-safe identifier (e.g., "arcadia")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.DisplayName">
+            <summary>
+            Human-readable name (e.g., "Arcadia Online")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.Description">
+            <summary>
+            Optional description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.IsActive">
+            <summary>
+            Whether the service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.CreatedAt">
+            <summary>
+            When the service was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ServiceInfo.UpdatedAt">
+            <summary>
+            When the service was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameService.ListServicesResponse">
+            <summary>
+            Response containing list of game services
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ListServicesResponse.Services">
+            <summary>
+            List of game services matching the request criteria
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.ListServicesResponse.TotalCount">
+            <summary>
+            Total number of services matching the filter
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.IAssetClient">
             <summary>
             Client interface for the Asset service.
@@ -26227,384 +26605,6 @@
         <member name="P:BeyondImmersion.BannouService.Species.MergeSpeciesResponse.SourceDeleted">
             <summary>
             Whether the source species was hard-deleted after merge
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.IServiceClient">
-            <summary>
-            Client interface for the Service service.
-            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.IServiceClient.ListServicesAsync(BeyondImmersion.BannouService.Service.ListServicesRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            List all registered game services
-            </summary>
-            <remarks>
-            Returns all game services, optionally filtered by active status.
-            </remarks>
-            <returns>Services retrieved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.IServiceClient.GetServiceAsync(BeyondImmersion.BannouService.Service.GetServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get service by ID or stub name
-            </summary>
-            <remarks>
-            Retrieves a single service by either serviceId (GUID) or stubName.
-            </remarks>
-            <returns>Service retrieved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.IServiceClient.CreateServiceAsync(BeyondImmersion.BannouService.Service.CreateServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Create a new game service entry
-            </summary>
-            <remarks>
-            Admin-only endpoint to register a new game service in the registry.
-            </remarks>
-            <returns>Service created successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.IServiceClient.UpdateServiceAsync(BeyondImmersion.BannouService.Service.UpdateServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Update a game service entry
-            </summary>
-            <remarks>
-            Admin-only endpoint to update an existing game service.
-            </remarks>
-            <returns>Service updated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.IServiceClient.DeleteServiceAsync(BeyondImmersion.BannouService.Service.DeleteServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Delete a game service entry
-            </summary>
-            <remarks>
-            Admin-only endpoint to remove a game service from the registry.
-            </remarks>
-            <returns>Service deleted successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.ServiceClient">
-            <summary>
-            Client implementation for the Service service.
-            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Service.ServiceClient._serviceName">
-            <summary>
-            Service name used for app-id resolution. Extracted from class name.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceClient.ServiceName">
-            <summary>
-            The name of the service this client communicates with.
-            Implements IServiceClient.ServiceName.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Service.ServiceClient})">
-            <summary>
-            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Service.ServiceClient"/> class.
-            </summary>
-            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
-            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
-            <param name="logger">Optional logger for diagnostic output.</param>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceClient.JsonSerializerSettings">
-            <summary>
-            Gets the JSON serializer settings used for request and response serialization.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Service.ServiceClient._customHeaders">
-            <summary>
-            Storage for custom headers to be applied to the next request.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Service.ServiceClient._authorizationHeader">
-            <summary>
-            Authorization header value for the next request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.SetHeader(System.String,System.String)">
-            <summary>
-            Sets a custom header for the next service request.
-            Headers are applied once and then cleared.
-            </summary>
-            <param name="name">Header name (e.g., "X-Custom-Header")</param>
-            <param name="value">Header value</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.WithAuthorization(System.String)">
-            <summary>
-            Sets the Authorization header for the next request.
-            Automatically prefixes with "Bearer " if not already present.
-            Returns this instance for method chaining.
-            </summary>
-            <param name="token">JWT token or authorization value</param>
-            <returns>This client instance for method chaining</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.ClearAuthorization">
-            <summary>
-            Clears the Authorization header.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.ClearHeaders">
-            <summary>
-            Clears all custom headers and authorization for a fresh request.
-            Called automatically after each request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
-            <summary>
-            Applies stored headers to a request message.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.ListServicesAsync(BeyondImmersion.BannouService.Service.ListServicesRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            List all registered game services
-            </summary>
-            <remarks>
-            Returns all game services, optionally filtered by active status.
-            </remarks>
-            <returns>Services retrieved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.GetServiceAsync(BeyondImmersion.BannouService.Service.GetServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get service by ID or stub name
-            </summary>
-            <remarks>
-            Retrieves a single service by either serviceId (GUID) or stubName.
-            </remarks>
-            <returns>Service retrieved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.CreateServiceAsync(BeyondImmersion.BannouService.Service.CreateServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Create a new game service entry
-            </summary>
-            <remarks>
-            Admin-only endpoint to register a new game service in the registry.
-            </remarks>
-            <returns>Service created successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.UpdateServiceAsync(BeyondImmersion.BannouService.Service.UpdateServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Update a game service entry
-            </summary>
-            <remarks>
-            Admin-only endpoint to update an existing game service.
-            </remarks>
-            <returns>Service updated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.DeleteServiceAsync(BeyondImmersion.BannouService.Service.DeleteServiceRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Delete a game service entry
-            </summary>
-            <remarks>
-            Admin-only endpoint to remove a game service from the registry.
-            </remarks>
-            <returns>Service deleted successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.ServiceClient.ObjectResponseResult`1">
-            <summary>
-            Represents the result of deserializing an HTTP response into an object.
-            </summary>
-            <typeparam name="T">The type of the deserialized response object.</typeparam>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.ObjectResponseResult`1.#ctor(`0,System.String)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Service.ServiceClient.ObjectResponseResult`1"/> struct.
-            </summary>
-            <param name="responseObject">The deserialized response object.</param>
-            <param name="responseText">The raw response text.</param>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceClient.ObjectResponseResult`1.Object">
-            <summary>
-            Gets the deserialized response object.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceClient.ObjectResponseResult`1.Text">
-            <summary>
-            Gets the raw response text.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceClient.ReadResponseAsString">
-            <summary>
-            Gets or sets a value indicating whether to read the response as a string before deserialization.
-            When true, the response is read as text first; when false, it's streamed directly.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Service.ServiceClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
-            <summary>
-            Reads and deserializes an HTTP response into the specified type.
-            </summary>
-            <typeparam name="T">The type to deserialize the response into.</typeparam>
-            <param name="response">The HTTP response message to read.</param>
-            <param name="headers">The response headers.</param>
-            <param name="cancellationToken">A cancellation token.</param>
-            <returns>The deserialized response object and raw text.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.ListServicesRequest">
-            <summary>
-            Request to list all game services
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ListServicesRequest.ActiveOnly">
-            <summary>
-            If true, only return active services
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.GetServiceRequest">
-            <summary>
-            Request to get a service by ID or stub name (provide either one)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.GetServiceRequest.ServiceId">
-            <summary>
-            ID of the service to retrieve (null if using stubName)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.GetServiceRequest.StubName">
-            <summary>
-            Stub name of the service to retrieve (null if using serviceId)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.CreateServiceRequest">
-            <summary>
-            Request to create a new game service
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.CreateServiceRequest.StubName">
-            <summary>
-            URL-safe identifier for the service (e.g., "arcadia", "fantasia")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.CreateServiceRequest.DisplayName">
-            <summary>
-            Human-readable name for the service (e.g., "Arcadia Online")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.CreateServiceRequest.Description">
-            <summary>
-            Optional description of the service
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.CreateServiceRequest.IsActive">
-            <summary>
-            Whether the service is currently active
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.UpdateServiceRequest">
-            <summary>
-            Request to update an existing game service
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.UpdateServiceRequest.ServiceId">
-            <summary>
-            ID of the service to update
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.UpdateServiceRequest.DisplayName">
-            <summary>
-            New display name
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.UpdateServiceRequest.Description">
-            <summary>
-            New description
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.UpdateServiceRequest.IsActive">
-            <summary>
-            New active status
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.DeleteServiceRequest">
-            <summary>
-            Request to delete a game service
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.DeleteServiceRequest.ServiceId">
-            <summary>
-            ID of the service to delete
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.ServiceInfo">
-            <summary>
-            Information about a game service
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceInfo.ServiceId">
-            <summary>
-            Unique identifier for the service
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceInfo.StubName">
-            <summary>
-            URL-safe identifier (e.g., "arcadia")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceInfo.DisplayName">
-            <summary>
-            Human-readable name (e.g., "Arcadia Online")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceInfo.Description">
-            <summary>
-            Optional description
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceInfo.IsActive">
-            <summary>
-            Whether the service is currently active
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceInfo.CreatedAt">
-            <summary>
-            When the service was created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ServiceInfo.UpdatedAt">
-            <summary>
-            When the service was last updated
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Service.ListServicesResponse">
-            <summary>
-            Response containing list of game services
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ListServicesResponse.Services">
-            <summary>
-            List of game services matching the request criteria
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Service.ListServicesResponse.TotalCount">
-            <summary>
-            Total number of services matching the filter
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Realm.IRealmClient">

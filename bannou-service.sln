@@ -45,9 +45,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription", "lib-sub
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription.tests", "lib-subscription.tests\lib-subscription.tests.csproj", "{286A644A-F156-4AC1-A39D-D22274CEC723}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-service", "lib-service\lib-service.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service", "lib-game-service\lib-game-service.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-service.tests", "lib-service.tests\lib-service.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service.tests", "lib-game-service.tests\lib-game-service.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-character", "lib-character\lib-character.csproj", "{14AE0BB9-08E9-4E97-8D76-47178A8D0D10}"
 EndProject

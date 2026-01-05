@@ -1,8 +1,8 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Messaging.Services;
-using BeyondImmersion.BannouService.Service;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +22,7 @@ public partial class SubscriptionService : ISubscriptionService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<SubscriptionService> _logger;
     private readonly SubscriptionServiceConfiguration _configuration;
-    private readonly IServiceClient _serviceClient;
+    private readonly IGameServiceClient _serviceClient;
 
     // Key patterns for state store
     private const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
@@ -37,7 +37,7 @@ public partial class SubscriptionService : ISubscriptionService
         IMessageBus messageBus,
         ILogger<SubscriptionService> logger,
         SubscriptionServiceConfiguration configuration,
-        IServiceClient serviceClient,
+        IGameServiceClient serviceClient,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory;

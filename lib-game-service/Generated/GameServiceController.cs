@@ -18,12 +18,12 @@
 #nullable enable
 
 
-namespace BeyondImmersion.BannouService.Service;
+namespace BeyondImmersion.BannouService.GameService;
 
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IServiceController : BeyondImmersion.BannouService.Controllers.IBannouController
+public interface IGameServiceController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -90,11 +90,11 @@ public interface IServiceController : BeyondImmersion.BannouService.Controllers.
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 
-public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
+public partial class GameServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
-    private IServiceService _implementation;
+    private IGameServiceService _implementation;
 
-    public ServiceController(IServiceService implementation)
+    public GameServiceController(IGameServiceService implementation)
     {
         _implementation = implementation;
     }
@@ -142,7 +142,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Returns all game services, optionally filtered by active status.
     /// </remarks>
     /// <returns>Services retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("service/services/list")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("game-service/services/list")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListServicesResponse>> ListServices([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -158,7 +158,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Retrieves a single service by either serviceId (GUID) or stubName.
     /// </remarks>
     /// <returns>Service retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("service/services/get")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("game-service/services/get")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> GetService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -174,7 +174,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Admin-only endpoint to register a new game service in the registry.
     /// </remarks>
     /// <returns>Service created successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("service/services/create")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("game-service/services/create")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> CreateService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -190,7 +190,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Admin-only endpoint to update an existing game service.
     /// </remarks>
     /// <returns>Service updated successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("service/services/update")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("game-service/services/update")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceInfo>> UpdateService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -206,7 +206,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Admin-only endpoint to remove a game service from the registry.
     /// </remarks>
     /// <returns>Service deleted successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("service/services/delete")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("game-service/services/delete")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -323,7 +323,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     "summary": "List all registered game services",
     "description": "Returns all game services, optionally filtered by active status.",
     "tags": [
-        "Service Registry"
+        "Game Service Registry"
     ],
     "deprecated": false,
     "operationId": "listServices"
@@ -331,41 +331,41 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 """;
 
     /// <summary>Returns endpoint information for ListServices</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/list/meta/info")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/list/meta/info")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/list",
+            "game-service/services/list",
             _ListServices_Info));
 
     /// <summary>Returns request schema for ListServices</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/list/meta/request-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/list/meta/request-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/list",
+            "game-service/services/list",
             "request-schema",
             _ListServices_RequestSchema));
 
     /// <summary>Returns response schema for ListServices</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/list/meta/response-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/list/meta/response-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/list",
+            "game-service/services/list",
             "response-schema",
             _ListServices_ResponseSchema));
 
     /// <summary>Returns full schema for ListServices</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/list/meta/schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/list/meta/schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/list",
+            "game-service/services/list",
             _ListServices_Info,
             _ListServices_RequestSchema,
             _ListServices_ResponseSchema));
@@ -462,7 +462,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     "summary": "Get service by ID or stub name",
     "description": "Retrieves a single service by either serviceId (GUID) or stubName.",
     "tags": [
-        "Service Registry"
+        "Game Service Registry"
     ],
     "deprecated": false,
     "operationId": "getService"
@@ -470,41 +470,41 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 """;
 
     /// <summary>Returns endpoint information for GetService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/get/meta/info")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/get/meta/info")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/get",
+            "game-service/services/get",
             _GetService_Info));
 
     /// <summary>Returns request schema for GetService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/get/meta/request-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/get/meta/request-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/get",
+            "game-service/services/get",
             "request-schema",
             _GetService_RequestSchema));
 
     /// <summary>Returns response schema for GetService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/get/meta/response-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/get/meta/response-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/get",
+            "game-service/services/get",
             "response-schema",
             _GetService_ResponseSchema));
 
     /// <summary>Returns full schema for GetService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/get/meta/schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/get/meta/schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/get",
+            "game-service/services/get",
             _GetService_Info,
             _GetService_RequestSchema,
             _GetService_ResponseSchema));
@@ -618,7 +618,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     "summary": "Create a new game service entry",
     "description": "Admin-only endpoint to register a new game service in the registry.",
     "tags": [
-        "Service Registry"
+        "Game Service Registry"
     ],
     "deprecated": false,
     "operationId": "createService"
@@ -626,41 +626,41 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 """;
 
     /// <summary>Returns endpoint information for CreateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/create/meta/info")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/create/meta/info")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/create",
+            "game-service/services/create",
             _CreateService_Info));
 
     /// <summary>Returns request schema for CreateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/create/meta/request-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/create/meta/request-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/create",
+            "game-service/services/create",
             "request-schema",
             _CreateService_RequestSchema));
 
     /// <summary>Returns response schema for CreateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/create/meta/response-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/create/meta/response-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/create",
+            "game-service/services/create",
             "response-schema",
             _CreateService_ResponseSchema));
 
     /// <summary>Returns full schema for CreateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/create/meta/schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/create/meta/schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/create",
+            "game-service/services/create",
             _CreateService_Info,
             _CreateService_RequestSchema,
             _CreateService_ResponseSchema));
@@ -771,7 +771,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     "summary": "Update a game service entry",
     "description": "Admin-only endpoint to update an existing game service.",
     "tags": [
-        "Service Registry"
+        "Game Service Registry"
     ],
     "deprecated": false,
     "operationId": "updateService"
@@ -779,41 +779,41 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 """;
 
     /// <summary>Returns endpoint information for UpdateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/update/meta/info")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/update/meta/info")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/update",
+            "game-service/services/update",
             _UpdateService_Info));
 
     /// <summary>Returns request schema for UpdateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/update/meta/request-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/update/meta/request-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/update",
+            "game-service/services/update",
             "request-schema",
             _UpdateService_RequestSchema));
 
     /// <summary>Returns response schema for UpdateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/update/meta/response-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/update/meta/response-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/update",
+            "game-service/services/update",
             "response-schema",
             _UpdateService_ResponseSchema));
 
     /// <summary>Returns full schema for UpdateService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/update/meta/schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/update/meta/schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/update",
+            "game-service/services/update",
             _UpdateService_Info,
             _UpdateService_RequestSchema,
             _UpdateService_ResponseSchema));
@@ -855,7 +855,7 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     "summary": "Delete a game service entry",
     "description": "Admin-only endpoint to remove a game service from the registry.",
     "tags": [
-        "Service Registry"
+        "Game Service Registry"
     ],
     "deprecated": false,
     "operationId": "deleteService"
@@ -863,41 +863,41 @@ public partial class ServiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 """;
 
     /// <summary>Returns endpoint information for DeleteService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/delete/meta/info")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/delete/meta/info")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/delete",
+            "game-service/services/delete",
             _DeleteService_Info));
 
     /// <summary>Returns request schema for DeleteService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/delete/meta/request-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/delete/meta/request-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/delete",
+            "game-service/services/delete",
             "request-schema",
             _DeleteService_RequestSchema));
 
     /// <summary>Returns response schema for DeleteService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/delete/meta/response-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/delete/meta/response-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/delete",
+            "game-service/services/delete",
             "response-schema",
             _DeleteService_ResponseSchema));
 
     /// <summary>Returns full schema for DeleteService</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service/services/delete/meta/schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("game-service/services/delete/meta/schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Service",
+            "GameService",
             "Post",
-            "service/services/delete",
+            "game-service/services/delete",
             _DeleteService_Info,
             _DeleteService_RequestSchema,
             _DeleteService_ResponseSchema));

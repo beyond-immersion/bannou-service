@@ -236,7 +236,7 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Realm.IRealmClient, BeyondImmersion.BannouService.Realm.RealmClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Relationship.IRelationshipClient, BeyondImmersion.BannouService.Relationship.RelationshipClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient, BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Service.IServiceClient, BeyondImmersion.BannouService.Service.ServiceClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.GameService.IGameServiceClient, BeyondImmersion.BannouService.GameService.GameServiceClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Species.ISpeciesClient, BeyondImmersion.BannouService.Species.SpeciesClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscription.ISubscriptionClient, BeyondImmersion.BannouService.Subscription.SubscriptionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
@@ -432,7 +432,7 @@ public class Program
             "documentation",
             "permission",
             "subscription",  // Required for auth service login flow
-            "service"         // Required by subscription service
+            "game-service"    // Required by subscription service
         };
 
         Console.WriteLine($"Waiting for service registration (timeout: {timeout.TotalSeconds}s)...");
