@@ -91,7 +91,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
                 ExchangeType = PublishOptionsExchangeType.Direct,
                 RoutingKey = routingKey
             };
-            await _messageBus.PublishAsync(routingKey, eventData, options, cancellationToken);
+            await _messageBus.TryPublishAsync(routingKey, eventData, options, cancellationToken: cancellationToken);
 
             _logger.LogDebug(
                 "Published client event {EventName} to session {SessionId}",
@@ -152,7 +152,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
                         ExchangeType = PublishOptionsExchangeType.Direct,
                         RoutingKey = routingKey
                     };
-                    await _messageBus.PublishAsync(routingKey, eventData, options, cancellationToken);
+                    await _messageBus.TryPublishAsync(routingKey, eventData, options, cancellationToken: cancellationToken);
                     Interlocked.Increment(ref successCount);
 
                     _logger.LogDebug(
@@ -217,7 +217,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
         // If no property declared on derived type, fall back to base class property
         if (eventNameProp == null)
         {
-            return eventData.Event_name;
+            return eventData.EventName;
         }
 
         // Property is shadowed on derived type - get its value
@@ -225,7 +225,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
         if (value == null)
         {
             // Fall back to base property
-            return eventData.Event_name;
+            return eventData.EventName;
         }
 
         // If it's an enum, extract the string value from EnumMember attribute

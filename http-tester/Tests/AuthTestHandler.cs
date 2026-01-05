@@ -46,8 +46,8 @@ public class AuthTestHandler : BaseHttpTestHandler
         new ServiceTest(TestSessionExpiresAtReturned, "SessionExpiresAt", "Auth", "Test session validation returns valid RemainingTime"),
     ];
 
-    private static Task<TestResult> TestRegisterFlow(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRegisterFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -68,8 +68,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Registration flow completed successfully for user {testUsername}");
         }, "User registration");
 
-    private static Task<TestResult> TestLoginFlow(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestLoginFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -99,8 +99,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Login flow completed successfully for user {testUsername}");
         }, "User login");
 
-    private static Task<TestResult> TestTokenValidation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTokenValidation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -121,8 +121,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             }
         }, "Token validation");
 
-    private static Task<TestResult> TestTokenRefresh(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTokenRefresh(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -144,8 +144,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             }
         }, "Token refresh");
 
-    private static Task<TestResult> TestOAuthFlow(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestOAuthFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -167,8 +167,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             }
         }, "OAuth flow");
 
-    private static Task<TestResult> TestSteamAuthFlow(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSteamAuthFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -195,8 +195,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             }
         }, "Steam auth");
 
-    private static Task<TestResult> TestGetSessions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetSessions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -213,8 +213,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             }
         }, "Get sessions");
 
-    private static Task<TestResult> TestCompleteAuthFlow(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteAuthFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var connectClient = GetServiceClient<IConnectClient>();
@@ -253,14 +253,14 @@ public class AuthTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Token validation returned Valid=false for legitimate token");
 
             // Step 4: Verify session ID was returned
-            if (string.IsNullOrEmpty(validationResponse.SessionId))
+            if (validationResponse.SessionId == Guid.Empty)
                 return TestResult.Failed("Token validation succeeded but no SessionId returned");
 
             return TestResult.Successful($"Complete auth flow tested successfully for user {testUsername}");
         }, "Complete auth flow");
 
-    private static Task<TestResult> TestDuplicateRegistration(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDuplicateRegistration(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = GenerateTestId("duptest");
@@ -283,8 +283,8 @@ public class AuthTestHandler : BaseHttpTestHandler
                 "Duplicate registration");
         }, "Duplicate registration");
 
-    private static Task<TestResult> TestInvalidLogin(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInvalidLogin(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -300,8 +300,8 @@ public class AuthTestHandler : BaseHttpTestHandler
                 "Invalid credentials");
         }, "Invalid login");
 
-    private static Task<TestResult> TestLogout(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestLogout(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -332,8 +332,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Logout completed successfully");
         }, "Logout");
 
-    private static Task<TestResult> TestLogoutAllSessions(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestLogoutAllSessions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -364,8 +364,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Logout all sessions completed successfully");
         }, "Logout all sessions");
 
-    private static Task<TestResult> TestTerminateSession(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestTerminateSession(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -403,8 +403,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             }
         }, "Terminate session");
 
-    private static Task<TestResult> TestPasswordResetRequest(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPasswordResetRequest(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -418,8 +418,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Password reset request completed successfully");
         }, "Password reset request");
 
-    private static Task<TestResult> TestPasswordResetConfirm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPasswordResetConfirm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
@@ -437,8 +437,8 @@ public class AuthTestHandler : BaseHttpTestHandler
 
     #region Session Validation Isolation Tests
 
-    private static Task<TestResult> TestSessionValidationAfterMultipleLogins(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionValidationAfterMultipleLogins(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = GenerateTestId("multilogin");
@@ -500,8 +500,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"All 3 sessions remain valid after multiple logins. RemainingTime: A={validationA3.RemainingTime}s, B={validationB2.RemainingTime}s, C={validationC.RemainingTime}s");
         }, "Session validation after multiple logins");
 
-    private static Task<TestResult> TestSessionValidationRoundTrip(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionValidationRoundTrip(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = GenerateTestId("roundtrip");
@@ -535,8 +535,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Immediate round-trip validation succeeded. SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s");
         }, "Session validation round-trip");
 
-    private static Task<TestResult> TestSessionValidationWithDelay(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionValidationWithDelay(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = GenerateTestId("delay");
@@ -582,8 +582,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Session remains valid after 2s delay. RemainingTime: {remainingTime1} -> {remainingTime2}");
         }, "Session validation with delay");
 
-    private static Task<TestResult> TestMultipleSessionsSameUser(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestMultipleSessionsSameUser(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = GenerateTestId("multisession");
@@ -624,8 +624,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"All 5 concurrent sessions valid. RemainingTimes: {string.Join(", ", remainingTimes)}s");
         }, "Multiple sessions same user");
 
-    private static Task<TestResult> TestSessionExpiresAtReturned(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSessionExpiresAtReturned(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = GenerateTestId("expiresat");

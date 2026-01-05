@@ -1,0 +1,10 @@
+version: "2.0"
+metadata:
+  id: stop_after
+flows:
+  start:
+    actions:
+      - goto: nowhere
+      - log: "This should NOT run (default stops after error)"
+    on_error:
+      - log: "Error handled"

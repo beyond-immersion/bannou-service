@@ -6,10 +6,7 @@ using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-state.tests")]
 
 namespace BeyondImmersion.BannouService.State;
 
@@ -31,10 +28,10 @@ public partial class StateService : IStateService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _logger = logger;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
     }
 
     /// <inheritdoc />

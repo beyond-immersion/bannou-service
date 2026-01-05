@@ -1,9 +1,11 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Collections.Generic;
@@ -21,8 +23,9 @@ public class TokenServiceTests
 
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<ISubscriptionsClient> _mockSubscriptionsClient;
+    private readonly Mock<ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<ISessionService> _mockSessionService;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<TokenService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly TokenService _service;
@@ -31,8 +34,9 @@ public class TokenServiceTests
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockSubscriptionsClient = new Mock<ISubscriptionsClient>();
+        _mockSubscriptionClient = new Mock<ISubscriptionClient>();
         _mockSessionService = new Mock<ISessionService>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<TokenService>>();
 
         _configuration = new AuthServiceConfiguration
@@ -49,79 +53,20 @@ public class TokenServiceTests
 
         _service = new TokenService(
             _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
+            _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             _configuration,
+            _mockMessageBus.Object,
             _mockLogger.Object);
     }
 
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act & Assert
+        ServiceConstructorValidator.ValidateServiceConstructor<TokenService>();
         Assert.NotNull(_service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            null!,
-            _mockSubscriptionsClient.Object,
-            _mockSessionService.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSubscriptionsClient_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockSessionService.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSessionService_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
-            null!,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
-            _mockSessionService.Object,
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
-            _mockSessionService.Object,
-            _configuration,
-            null!));
     }
 
     #endregion
@@ -345,9 +290,10 @@ public class TokenServiceTests
 
         var service = new TokenService(
             _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
+            _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             configWithNoSecret,
+            _mockMessageBus.Object,
             _mockLogger.Object);
 
         // Act & Assert
@@ -370,9 +316,10 @@ public class TokenServiceTests
 
         var service = new TokenService(
             _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
+            _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             configWithNoIssuer,
+            _mockMessageBus.Object,
             _mockLogger.Object);
 
         // Act & Assert
@@ -395,9 +342,10 @@ public class TokenServiceTests
 
         var service = new TokenService(
             _mockStateStoreFactory.Object,
-            _mockSubscriptionsClient.Object,
+            _mockSubscriptionClient.Object,
             _mockSessionService.Object,
             configWithNoAudience,
+            _mockMessageBus.Object,
             _mockLogger.Object);
 
         // Act & Assert
@@ -411,12 +359,17 @@ public class TokenServiceTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CurrentSubscriptionsResponse
+            .ReturnsAsync(new QuerySubscriptionsResponse
             {
-                Authorizations = new List<string> { "auth1", "auth2" }
+                Subscriptions = new List<SubscriptionInfo>
+                {
+                    new() { StubName = "auth1", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow },
+                    new() { StubName = "auth2", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow }
+                },
+                TotalCount = 2
             });
 
         _mockSessionService.Setup(s => s.SaveSessionAsync(
@@ -454,8 +407,8 @@ public class TokenServiceTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
 
@@ -493,8 +446,8 @@ public class TokenServiceTests
         // Arrange
         var account = CreateTestAccount();
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Server error"));
 
@@ -510,12 +463,16 @@ public class TokenServiceTests
         var account = CreateTestAccount();
         SessionDataModel? capturedSession = null;
 
-        _mockSubscriptionsClient.Setup(c => c.GetCurrentSubscriptionsAsync(
-            It.IsAny<GetCurrentSubscriptionsRequest>(),
+        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(
+            It.IsAny<QueryCurrentSubscriptionsRequest>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CurrentSubscriptionsResponse
+            .ReturnsAsync(new QuerySubscriptionsResponse
             {
-                Authorizations = new List<string> { "auth1" }
+                Subscriptions = new List<SubscriptionInfo>
+                {
+                    new() { StubName = "auth1", SubscriptionId = Guid.NewGuid(), ServiceId = Guid.NewGuid(), StartDate = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow }
+                },
+                TotalCount = 1
             });
 
         _mockSessionService.Setup(s => s.SaveSessionAsync(

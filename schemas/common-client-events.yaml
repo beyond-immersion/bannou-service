@@ -9,6 +9,9 @@ info:
     These events are different from service-to-service events:
     - Service events: RabbitMQ pub/sub between services via MassTransit
     - Client events: Services → RabbitMQ → Connect service → WebSocket → Client
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -21,23 +24,24 @@ components:
   schemas:
     BaseClientEvent:
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Base schema for all server-to-client push events.
         All client events MUST include these fields.
-        The event_name field is used for whitelist validation in Connect service.
+        The eventName field is used for whitelist validation in Connect service.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
       properties:
-        event_name:
+        eventName:
           type: string
           description: |
             Unique event type identifier (e.g., "connect.capability_manifest").
             Must be in the generated ClientEventWhitelist or will be rejected.
-            Convention: {service}.{event_type}
-        event_id:
+            Convention: {service}.{event_name}
+        eventId:
           type: string
           format: uuid
           description: Unique identifier for this event instance
@@ -45,36 +49,31 @@ components:
           type: string
           format: date-time
           description: When the event was generated (ISO 8601 format)
-        correlation_id:
-          type: string
-          nullable: true
-          description: Optional correlation ID for request tracing
 
     CapabilityManifestEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to client when their available API capabilities change.
         Contains the complete list of service GUIDs the client can access.
         Delivered on initial connection and when permissions change.
       required:
-        - event_name
-        - event_id
-        - timestamp
-        - session_id
-        - available_apis
+        - sessionId
+        - availableApis
         - version
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["connect.capability_manifest"]
+          default: "connect.capability_manifest"
           description: Fixed event type identifier
-        session_id:
+        sessionId:
           type: string
+          format: uuid
           description: Session ID this manifest applies to
-        available_apis:
+        availableApis:
           type: array
           items:
             $ref: '#/components/schemas/ClientCapabilityEntry'
@@ -86,59 +85,68 @@ components:
           type: string
           nullable: true
           description: Reason for manifest update (e.g., "initial_connection", "capabilities_updated", "role_changed")
+        peerGuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Unique GUID for peer-to-peer routing on this Connect node.
+            Other connections on the same Connect node can route messages directly
+            to this connection using this GUID with the Client flag (0x20).
+            Enables zero-copy message forwarding between Game Servers, Actor Pool Nodes, and clients.
+            Note: Only valid while connected to the same Connect instance.
 
     ClientCapabilityEntry:
       type: object
+      additionalProperties: false
       description: Individual API capability entry with routing information
       required:
-        - service_guid
-        - service_name
+        - serviceId
+        - serviceName
         - method
         - path
-        - endpoint_key
+        - endpointKey
       properties:
-        service_guid:
+        serviceId:
           type: string
           format: uuid
           description: Client-salted GUID for this endpoint (unique per client)
-        service_name:
+        serviceName:
           type: string
-          description: Service name (e.g., "accounts", "game-session")
+          description: Service name (e.g., "account", "game-session")
         method:
           type: string
           enum: [GET, POST]
           description: HTTP method for WebSocket routing
         path:
           type: string
-          description: API endpoint path (e.g., "/accounts/get")
-        endpoint_key:
+          description: API endpoint path (e.g., "/account/get")
+        endpointKey:
           type: string
-          description: Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
+          description: Full endpoint key for routing (e.g., "account:POST:/account/get")
 
     DisconnectNotificationEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to client before WebSocket connection is closed.
         If reconnectable, includes a token for session restoration.
       required:
-        - event_name
-        - event_id
-        - timestamp
         - reconnectable
         - reason
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["connect.disconnect_notification"]
+          default: "connect.disconnect_notification"
           description: Fixed event type identifier
-        reconnection_token:
+        reconnectionToken:
           type: string
           nullable: true
           description: Token for reconnecting to the same session (valid for 5 minutes)
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           nullable: true
@@ -159,22 +167,20 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Generic error notification sent to client.
         Used for recoverable errors that the client should be aware of.
       required:
-        - event_name
-        - event_id
-        - timestamp
-        - error_code
+        - errorCode
         - message
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["system.error"]
+          default: "system.error"
           description: Fixed event type identifier
-        error_code:
+        errorCode:
           type: string
           description: Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
         message:
@@ -194,24 +200,23 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
-        Internal event carrying compiled capabilities from Permissions to Connect.
+        Internal event carrying compiled capabilities from Permission to Connect.
         NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
         and sends CapabilityManifestEvent to the client.
       required:
-        - event_name
-        - event_id
-        - timestamp
-        - session_id
+        - sessionId
         - permissions
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["permissions.session_capabilities"]
+          default: "permission.session_capabilities"
           description: Fixed event type identifier (internal, not forwarded to client)
-        session_id:
+        sessionId:
           type: string
+          format: uuid
           description: Session ID these capabilities apply to
         permissions:
           type: object
@@ -219,7 +224,7 @@ components:
             type: array
             items:
               type: string
-          description: Map of ServiceID -> List of available methods (e.g., "accounts" -> ["POST:/get-account"])
+          description: Map of ServiceID -> List of available methods (e.g., "account" -> ["POST:/get-account"])
         reason:
           type: string
           nullable: true
@@ -229,22 +234,20 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Generic notification event for system-level messages.
         Used for announcements, maintenance notices, etc.
       required:
-        - event_name
-        - event_id
-        - timestamp
-        - notification_type
+        - notificationType
         - message
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["system.notification"]
+          default: "system.notification"
           description: Fixed event type identifier
-        notification_type:
+        notificationType:
           type: string
           enum: [info, warning, maintenance, announcement]
           description: Type of notification
@@ -255,11 +258,11 @@ components:
           type: string
           nullable: true
           description: Optional notification title
-        action_url:
+        actionUrl:
           type: string
           nullable: true
           description: Optional URL for more information
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           nullable: true
@@ -277,72 +280,71 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Published by services to create or update a session shortcut.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
         Connect handles this event internally and does NOT forward to the client.
       required:
-        - event_name
-        - event_id
-        - timestamp
-        - session_id
+        - sessionId
         - shortcut
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["session.shortcut_published"]
+          default: "session.shortcut_published"
           description: Fixed event type identifier.
-        session_id:
+        sessionId:
           type: string
+          format: uuid
           description: Target session for this shortcut.
         shortcut:
           $ref: '#/components/schemas/SessionShortcut'
-        replace_existing:
+          description: The session shortcut definition containing the pre-bound payload and routing information.
+        replaceExisting:
           type: boolean
           default: true
           description: |
-            If true and a shortcut with the same route_guid exists, replace it.
+            If true and a shortcut with the same routeGuid exists, replace it.
             If false and shortcut exists, the event is ignored.
 
     ShortcutRevokedEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Published by services to remove shortcuts.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
-        Supports both single-shortcut revocation (by route_guid) and
-        bulk revocation (all shortcuts from a source_service).
+        Supports both single-shortcut revocation (by routeGuid) and
+        bulk revocation (all shortcuts from a sourceService).
       required:
-        - event_name
-        - event_id
-        - timestamp
-        - session_id
+        - sessionId
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["session.shortcut_revoked"]
+          default: "session.shortcut_revoked"
           description: Fixed event type identifier.
-        session_id:
+        sessionId:
           type: string
+          format: uuid
           description: Target session for revocation.
-        route_guid:
+        routeGuid:
           type: string
           format: uuid
           nullable: true
           description: |
             Specific shortcut to revoke.
             If provided, only this shortcut is removed.
-            Mutually exclusive with revoke_by_service.
-        revoke_by_service:
+            Mutually exclusive with revokeByService.
+        revokeByService:
           type: string
           nullable: true
           description: |
             Revoke ALL shortcuts from this source service.
             Used when a service needs to clear all its shortcuts.
-            Mutually exclusive with route_guid.
+            Mutually exclusive with routeGuid.
         reason:
           type: string
           nullable: true
@@ -350,43 +352,46 @@ components:
 
     SessionShortcut:
       type: object
+      additionalProperties: false
       description: |
         A pre-bound API call that clients can invoke with a single GUID.
-        The bound_payload is injected by Connect when the shortcut is invoked.
+        The boundPayload is injected by Connect when the shortcut is invoked.
       required:
-        - route_guid
-        - target_guid
-        - bound_payload
+        - routeGuid
+        - targetGuid
+        - boundPayload
         - metadata
       properties:
-        route_guid:
+        routeGuid:
           type: string
           format: uuid
           description: |
             Client-salted GUID for invoking this shortcut.
             Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
-        target_guid:
+        targetGuid:
           type: string
           format: uuid
           description: |
             The actual service capability GUID this shortcut invokes.
             Must be a valid capability in the client's current capability manifest.
-        bound_payload:
+        boundPayload:
           type: string
           description: |
             Pre-serialized JSON payload passed unchanged to the target service.
             Connect treats this as opaque bytes - no deserialization or modification.
         metadata:
           $ref: '#/components/schemas/SessionShortcutMetadata'
+          description: Metadata about the shortcut including display name, source service, and lifecycle information.
 
     SessionShortcutMetadata:
       type: object
+      additionalProperties: false
       description: |
         Metadata about a session shortcut for display, debugging, and lifecycle management.
       required:
         - name
-        - source_service
-        - created_at
+        - sourceService
+        - createdAt
       properties:
         name:
           type: string
@@ -400,24 +405,27 @@ components:
           maxLength: 500
           nullable: true
           description: Human-readable description of what this shortcut does.
-        source_service:
+        sourceService:
           type: string
           description: The service that created this shortcut.
-        target_service:
+        targetService:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: The target service for routing.
-        target_method:
+        targetMethod:
           type: string
           default: "POST"
+          nullable: true  # NRT: Optional property MUST be nullable
           description: The target HTTP method for routing.
-        target_endpoint:
+        targetEndpoint:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: The target endpoint for routing.
-        created_at:
+        createdAt:
           type: string
           format: date-time
           description: When this shortcut was created.
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           nullable: true
@@ -430,7 +438,7 @@ components:
             type: string
           nullable: true
           description: Optional categorization tags for client-side organization.
-        display_name:
+        displayName:
           type: string
           maxLength: 64
           nullable: true

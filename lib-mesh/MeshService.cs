@@ -14,6 +14,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Implementation of the Mesh service.
 /// Provides service discovery, endpoint registration, load balancing, and routing.
 /// Uses direct Redis connection (NOT via mesh) to avoid circular dependencies.
+/// Service mappings are managed via IServiceAppMappingResolver (shared across all services).
 /// </summary>
 [BannouService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped)]
 public partial class MeshService : IMeshService
@@ -22,11 +23,7 @@ public partial class MeshService : IMeshService
     private readonly ILogger<MeshService> _logger;
     private readonly MeshServiceConfiguration _configuration;
     private readonly IMeshRedisManager _redisManager;
-
-    // Local cache for service mappings (thread-safe, updated via events)
-    private static readonly ConcurrentDictionary<string, string> _serviceMappingsCache = new();
-    private static long _mappingsCacheVersion = 0;
-    private static readonly object _versionLock = new();
+    private readonly IServiceAppMappingResolver _mappingResolver;
 
     // Round-robin counter for load balancing (per app-id)
     private static readonly ConcurrentDictionary<string, int> _roundRobinCounters = new();
@@ -43,22 +40,23 @@ public partial class MeshService : IMeshService
     /// <param name="messageBus">The message bus for pub/sub operations (replaces mesh client).</param>
     /// <param name="logger">The logger.</param>
     /// <param name="configuration">The service configuration.</param>
-    /// <param name="errorEventEmitter">The error event emitter.</param>
     /// <param name="redisManager">The Redis manager for direct Redis access.</param>
+    /// <param name="mappingResolver">The service-to-app-id mapping resolver (shared across all services).</param>
     /// <param name="eventConsumer">The event consumer for registering event handlers.</param>
     public MeshService(
         IMessageBus messageBus,
         ILogger<MeshService> logger,
         MeshServiceConfiguration configuration,
         IMeshRedisManager redisManager,
+        IServiceAppMappingResolver mappingResolver,
         IEventConsumer eventConsumer)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _redisManager = redisManager;
+        _mappingResolver = mappingResolver;
 
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 
@@ -207,7 +205,7 @@ public partial class MeshService : IMeshService
                 TtlSeconds = DEFAULT_TTL_SECONDS
             };
 
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -227,7 +225,7 @@ public partial class MeshService : IMeshService
     /// Deregister an endpoint from the mesh.
     /// Called on graceful shutdown.
     /// </summary>
-    public async Task<(StatusCodes, object?)> DeregisterEndpointAsync(
+    public async Task<StatusCodes> DeregisterEndpointAsync(
         DeregisterEndpointRequest body,
         CancellationToken cancellationToken)
     {
@@ -240,7 +238,7 @@ public partial class MeshService : IMeshService
             if (endpoint == null)
             {
                 _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             var success = await _redisManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
@@ -248,7 +246,7 @@ public partial class MeshService : IMeshService
             if (!success)
             {
                 _logger.LogWarning("Failed to deregister endpoint {InstanceId}", body.InstanceId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Publish deregistration event
@@ -258,7 +256,7 @@ public partial class MeshService : IMeshService
                 MeshEndpointDeregisteredEventReason.Graceful,
                 cancellationToken);
 
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -270,7 +268,7 @@ public partial class MeshService : IMeshService
                 ex.Message,
                 dependency: "redis",
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -301,9 +299,9 @@ public partial class MeshService : IMeshService
             var success = await _redisManager.UpdateHeartbeatAsync(
                 body.InstanceId,
                 endpoint.AppId,
-                body.Status,
-                body.LoadPercent,
-                body.CurrentConnections,
+                body.Status ?? EndpointStatus.Healthy,
+                body.LoadPercent ?? 0,
+                body.CurrentConnections ?? 0,
                 DEFAULT_TTL_SECONDS);
 
             if (!success)
@@ -407,40 +405,40 @@ public partial class MeshService : IMeshService
     /// <summary>
     /// Get the current service-to-app-id mappings.
     /// Used for routing decisions based on service name.
-    /// Mappings are populated via FullServiceMappingsEvent from RabbitMQ.
+    /// Mappings are managed via IServiceAppMappingResolver, updated by FullServiceMappingsEvent from RabbitMQ.
     /// </summary>
-    public Task<(StatusCodes, GetMappingsResponse?)> GetMappingsAsync(
+    public async Task<(StatusCodes, GetMappingsResponse?)> GetMappingsAsync(
         GetMappingsRequest body,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Getting service mappings");
 
-        // Get mappings from local cache (populated via RabbitMQ events)
-        Dictionary<string, string> mappings;
-        long version;
-
-        lock (_versionLock)
-        {
-            mappings = _serviceMappingsCache.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-            version = _mappingsCacheVersion;
-        }
+        // Get mappings from shared resolver (populated via RabbitMQ events)
+        var allMappings = _mappingResolver.GetAllMappings();
+        var version = _mappingResolver.CurrentVersion;
 
         // Apply filter if specified
+        Dictionary<string, string> mappings;
         if (!string.IsNullOrEmpty(body.ServiceNameFilter))
         {
-            mappings = mappings
+            mappings = allMappings
                 .Where(kvp => kvp.Key.StartsWith(body.ServiceNameFilter, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+        else
+        {
+            mappings = new Dictionary<string, string>(allMappings);
         }
 
         var response = new GetMappingsResponse
         {
             Mappings = mappings,
-            DefaultAppId = "bannou",
+            DefaultAppId = AppConstants.DEFAULT_APP_NAME,
             Version = version
         };
 
-        return Task.FromResult<(StatusCodes, GetMappingsResponse?)>((StatusCodes.OK, response));
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -595,6 +593,7 @@ public partial class MeshService : IMeshService
         {
             var evt = new MeshEndpointRegisteredEvent
             {
+                EventName = "mesh.endpoint_registered",
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = endpoint.InstanceId,
@@ -604,7 +603,7 @@ public partial class MeshService : IMeshService
                 Services = endpoint.Services
             };
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "mesh.endpoint.registered",
                 evt,
                 cancellationToken: cancellationToken);
@@ -627,6 +626,7 @@ public partial class MeshService : IMeshService
         {
             var evt = new MeshEndpointDeregisteredEvent
             {
+                EventName = "mesh.endpoint_deregistered",
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = instanceId,
@@ -634,7 +634,7 @@ public partial class MeshService : IMeshService
                 Reason = reason
             };
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "mesh.endpoint.deregistered",
                 evt,
                 cancellationToken: cancellationToken);
@@ -649,54 +649,15 @@ public partial class MeshService : IMeshService
 
     #endregion
 
-    #region Cache Management
+    #region Test Helpers
 
     /// <summary>
-    /// Update the local mappings cache with new values.
-    /// Used by event handlers when FullServiceMappingsEvent is received.
+    /// Reset the static round-robin counters for test isolation. For testing purposes only.
+    /// Service mappings are managed by IServiceAppMappingResolver (use ClearAllMappingsForTests there).
     /// </summary>
-    internal static bool UpdateMappingsCache(Dictionary<string, string> mappings, long version)
+    internal static void ResetRoundRobinForTesting()
     {
-        lock (_versionLock)
-        {
-            if (version <= _mappingsCacheVersion)
-            {
-                return false;
-            }
-
-            _serviceMappingsCache.Clear();
-            foreach (var kvp in mappings)
-            {
-                _serviceMappingsCache[kvp.Key] = kvp.Value;
-            }
-            _mappingsCacheVersion = version;
-            return true;
-        }
-    }
-
-    /// <summary>
-    /// Gets the current cache version. For testing purposes only.
-    /// </summary>
-    internal static long GetCacheVersion()
-    {
-        lock (_versionLock)
-        {
-            return _mappingsCacheVersion;
-        }
-    }
-
-    /// <summary>
-    /// Reset the static cache for test isolation. For testing purposes only.
-    /// This method clears all cached mappings and resets the version to 0.
-    /// </summary>
-    internal static void ResetCacheForTesting()
-    {
-        lock (_versionLock)
-        {
-            _serviceMappingsCache.Clear();
-            _mappingsCacheVersion = 0;
-            _roundRobinCounters.Clear();
-        }
+        _roundRobinCounters.Clear();
     }
 
     #endregion

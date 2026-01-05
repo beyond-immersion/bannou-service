@@ -1,0 +1,7 @@
+version: "2.0"
+metadata:
+  id: initial_scope
+flows:
+  start:
+    actions:
+      - log: { message: "Name: ${player_name}, Level: ${player_level}" }

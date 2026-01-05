@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -30,8 +31,10 @@ public class ConnectServiceTests
     private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IServiceAppMappingResolver> _mockAppMappingResolver;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ISessionManager> _mockSessionManager;
     private readonly string _testServerSalt = "test-server-salt-2025";
 
     public ConnectServiceTests()
@@ -50,21 +53,43 @@ public class ConnectServiceTests
         _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockAppMappingResolver = new Mock<IServiceAppMappingResolver>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockSessionManager = new Mock<ISessionManager>();
     }
 
     #region Basic Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    [Obsolete]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act & Assert
-        var exception = Record.Exception(() => CreateConnectService());
-        Assert.Null(exception);
-    }
+    public void ConnectService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<ConnectService>();
 
+    /// <summary>
+    /// Business logic validation: ServerSalt is required for security.
+    /// This is NOT covered by ServiceConstructorValidator since it's a business rule, not a null check.
+    /// </summary>
+    [Fact]
+    public void Constructor_WithEmptyServerSalt_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var configWithoutSalt = new ConnectServiceConfiguration { BinaryProtocolVersion = "2.0", ServerSalt = "" };
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() =>
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object));
+    }
 
     #endregion
 
@@ -271,7 +296,7 @@ public class ConnectServiceTests
         // Arrange
         var sessionId1 = "session-123";
         var sessionId2 = "session-456";
-        var serviceName = "accounts";
+        var serviceName = "account";
 
         // Act
         var guid1 = GuidGenerator.GenerateServiceGuid(sessionId1, serviceName, _testServerSalt);
@@ -335,7 +360,7 @@ public class ConnectServiceTests
     public void MessageRouter_AnalyzeMessage_ShouldExtractCorrectInformation()
     {
         // Arrange
-        var serviceGuid = GuidGenerator.GenerateServiceGuid("test-session", "accounts", _testServerSalt);
+        var serviceGuid = GuidGenerator.GenerateServiceGuid("test-session", "account", _testServerSalt);
         var message = BinaryMessage.FromJson(
             100, // channel
             200, // sequence
@@ -345,7 +370,7 @@ public class ConnectServiceTests
         );
 
         var connectionState = new ConnectionState("test-session-123");
-        connectionState.AddServiceMapping("accounts", serviceGuid);
+        connectionState.AddServiceMapping("account", serviceGuid);
 
         // Act
         var routingInfo = MessageRouter.AnalyzeMessage(message, connectionState);
@@ -354,7 +379,7 @@ public class ConnectServiceTests
         Assert.NotNull(routingInfo);
         Assert.True(routingInfo.IsValid);
         Assert.Equal(100, routingInfo.Channel);
-        Assert.Equal("accounts", routingInfo.ServiceName);
+        Assert.Equal("account", routingInfo.ServiceName);
         Assert.Equal(RouteType.Service, routingInfo.RouteType);
     }
 
@@ -415,11 +440,10 @@ public class ConnectServiceTests
     // PushCapabilityUpdateAsync(sessionId) for each affected session.
 
     [Fact]
-    [Obsolete]
     public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()
     {
         // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
+        var service = CreateConnectService();
         var eventData = new AuthEvent
         {
             SessionId = "test-session-456",
@@ -441,14 +465,15 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    [Obsolete]
     public async Task ProcessServiceRegistrationAsync_WithValidEvent_ShouldPublishRecompileEvent()
     {
         // Arrange
         var service = CreateConnectService();
+        var serviceId = Guid.NewGuid();
         var eventData = new ServiceRegistrationEvent
         {
-            ServiceId = "new-service-123",
+            ServiceId = serviceId,
+            ServiceName = "new-service-123",
             Timestamp = DateTimeOffset.UtcNow
         };
 
@@ -461,22 +486,22 @@ public class ConnectServiceTests
         var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
+        Assert.Equal(serviceId.ToString(), resultDict["serviceId"].ToString());
 
         // Verify that PublishAsync was called for permission recompilation via IMessageBus
-        _mockMessageBus.Verify(x => x.PublishAsync(
+        _mockMessageBus.Verify(x => x.TryPublishAsync(
             "bannou-permission-recompile",
             It.IsAny<PermissionRecompileEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    [Obsolete]
-    public async Task ProcessClientMessageEventAsync_WithConnectedClient_ShouldDeliverMessage()
+    public async Task ProcessClientMessageEventAsync_WhenClientNotConnected_ReturnsError()
     {
         // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
+        var service = CreateConnectService();
         var eventData = new ClientMessageEvent
         {
             ClientId = "client-789",
@@ -488,24 +513,24 @@ public class ConnectServiceTests
             Flags = 0
         };
 
-        // Act
+        // Act - no connection mocked, so client won't be found
         var result = await service.ProcessClientMessageEventAsync(eventData);
 
-        // Assert
+        // Assert - expects error since no WebSocket connection exists in unit test
+        // Actual message delivery is tested via edge-tester WebSocket integration tests
         Assert.NotNull(result);
         var resultJson = BannouJson.Serialize(result);
         var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
-        Assert.Equal("delivered", resultDict["status"].ToString());
+        Assert.Equal("client_not_found", resultDict["error"].ToString());
         Assert.Equal("client-789", resultDict["clientId"].ToString());
     }
 
     [Fact]
-    [Obsolete]
-    public async Task ProcessClientRPCEventAsync_WithConnectedClient_ShouldSendRPCMessage()
+    public async Task ProcessClientRPCEventAsync_WhenClientNotConnected_ReturnsError()
     {
         // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
+        var service = CreateConnectService();
         var eventData = new ClientRPCEvent
         {
             ClientId = "client-rpc-999",
@@ -517,147 +542,342 @@ public class ConnectServiceTests
             Flags = 0
         };
 
-        // Act
+        // Act - no connection mocked, so client won't be found
         var result = await service.ProcessClientRPCEventAsync(eventData);
 
-        // Assert
+        // Assert - expects error since no WebSocket connection exists in unit test
+        // Actual RPC delivery is tested via edge-tester WebSocket integration tests
         Assert.NotNull(result);
         var resultJson = BannouJson.Serialize(result);
         var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
-        Assert.Equal("sent", resultDict["status"].ToString());
+        Assert.Equal("client_not_found", resultDict["error"].ToString());
         Assert.Equal("client-rpc-999", resultDict["clientId"].ToString());
     }
 
-    [Fact]
-    [Obsolete]
-    public void HasConnection_WithExistingConnection_ShouldReturnTrue()
-    {
-        // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
-        var sessionId = "existing-session";
-
-        // Act
-        var result = service.HasConnection(sessionId);
-
-        // Assert
-        Assert.True(result);
-    }
-
-    [Fact]
-    [Obsolete]
-    public void HasConnection_WithNonExistentConnection_ShouldReturnFalse()
-    {
-        // Arrange
-        var service = CreateConnectServiceWithConnectionManager(false);
-        var sessionId = "non-existent-session";
-
-        // Act
-        var result = service.HasConnection(sessionId);
-
-        // Assert
-        Assert.False(result);
-    }
-
-    [Fact]
-    [Obsolete]
-    public async Task SendMessageAsync_WithValidConnection_ShouldReturnTrue()
-    {
-        // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
-        var sessionId = "test-session";
-        var message = BinaryMessage.FromJson(1, 0, Guid.NewGuid(), 123, "{\"test\": true}");
-
-        // Act
-        var result = await service.SendMessageAsync(sessionId, message, CancellationToken.None);
-
-        // Assert
-        Assert.True(result);
-    }
+    // NOTE: HasConnection and SendMessageAsync tests were removed because they used reflection
+    // to inject a mock connection manager, which tests mock behavior rather than service behavior.
+    // Connection behavior should be tested via WebSocket integration tests (edge-tester).
 
     #endregion
 
     #region Helper Methods
 
-    [Obsolete]
     private ConnectService CreateConnectService()
     {
         return new ConnectService(
             _mockAuthClient.Object,
             _mockMeshClient.Object,
             _mockMessageBus.Object,
+            _mockMessageSubscriber.Object,
             _mockHttpClientFactory.Object,
             _mockAppMappingResolver.Object,
             _configuration,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
-            _mockEventConsumer.Object
+            _mockEventConsumer.Object,
+            _mockSessionManager.Object
         );
-    }
-
-    [Obsolete]
-    private ConnectService CreateConnectServiceWithConnectionManager(bool hasConnection = true)
-    {
-        // Create a mock connection manager that simulates having connections
-        var mockConnectionManager = new Mock<WebSocketConnectionManager>();
-
-        WebSocketConnection? connection = null;
-        if (hasConnection)
-        {
-            // Create mock dependencies for WebSocketConnection
-            var mockWebSocket = new Mock<WebSocket>();
-            var connectionState = new ConnectionState("test-session");
-            connection = new WebSocketConnection("test-session", mockWebSocket.Object, connectionState);
-        }
-
-        mockConnectionManager.Setup(x => x.GetConnection(It.IsAny<string>()))
-            .Returns(connection);
-
-        mockConnectionManager.Setup(x => x.SendMessageAsync(It.IsAny<string>(), It.IsAny<BinaryMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(hasConnection);
-
-        // Use reflection to create service with mocked connection manager
-        var service = CreateConnectService();
-        var connectionManagerField = typeof(ConnectService).GetField("_connectionManager",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        connectionManagerField?.SetValue(service, mockConnectionManager.Object);
-
-        return service;
     }
 
 
     #endregion
 
-    #region HTTP Routing Optimization Tests
+    #region ConnectionMode Configuration Tests
 
     /// <summary>
-    /// Tests that static header values are properly initialized for request optimization.
-    /// These static fields avoid per-request allocation of MediaType headers.
+    /// Tests that ConnectionMode defaults to "external" when not specified.
     /// </summary>
     [Fact]
-    public void StaticHeaders_ShouldBeProperlyInitialized()
+    public void Configuration_ConnectionMode_DefaultsToExternal()
     {
-        // Arrange - access static fields via reflection
-        var acceptHeaderField = typeof(ConnectService).GetField("s_jsonAcceptHeader",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        var contentTypeField = typeof(ConnectService).GetField("s_jsonContentType",
-            BindingFlags.NonPublic | BindingFlags.Static);
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
+        };
 
-        // Assert - fields exist
-        Assert.NotNull(acceptHeaderField);
-        Assert.NotNull(contentTypeField);
-
-        // Act - get values
-        var acceptHeader = acceptHeaderField?.GetValue(null) as MediaTypeWithQualityHeaderValue;
-        var contentType = contentTypeField?.GetValue(null) as MediaTypeHeaderValue;
-
-        // Assert - values are correct
-        Assert.NotNull(acceptHeader);
-        Assert.NotNull(contentType);
-        Assert.Equal("application/json", acceptHeader?.MediaType);
-        Assert.Equal("application/json", contentType?.MediaType);
-        Assert.Equal("utf-8", contentType?.CharSet);
+        // Assert
+        Assert.Equal("external", config.ConnectionMode);
     }
+
+    /// <summary>
+    /// Tests that InternalAuthMode defaults to "service-token" when not specified.
+    /// </summary>
+    [Fact]
+    public void Configuration_InternalAuthMode_DefaultsToServiceToken()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
+        };
+
+        // Assert
+        Assert.Equal("service-token", config.InternalAuthMode);
+    }
+
+    /// <summary>
+    /// Tests that InternalServiceToken is nullable and defaults to null.
+    /// </summary>
+    [Fact]
+    public void Configuration_InternalServiceToken_IsNullable()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
+        };
+
+        // Assert
+        Assert.Null(config.InternalServiceToken);
+    }
+
+    /// <summary>
+    /// Tests that constructor throws when Internal mode with service-token auth is missing the token.
+    /// </summary>
+    [Fact]
+    public void Constructor_InternalModeServiceToken_WithMissingToken_ShouldThrow()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "internal",
+            InternalAuthMode = "service-token",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
+
+        Assert.Contains("CONNECT_INTERNAL_SERVICE_TOKEN", exception.Message);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts Internal mode with service-token auth when token is provided.
+    /// </summary>
+    [Fact]
+    public void Constructor_InternalModeServiceToken_WithToken_ShouldNotThrow()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "internal",
+            InternalAuthMode = "service-token",
+            InternalServiceToken = "test-secret-token"
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts Internal mode with network-trust auth without token.
+    /// </summary>
+    [Fact]
+    public void Constructor_InternalModeNetworkTrust_WithoutToken_ShouldNotThrow()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "internal",
+            InternalAuthMode = "network-trust",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts External mode without any internal auth configuration.
+    /// </summary>
+    [Fact]
+    public void Constructor_ExternalMode_ShouldNotRequireInternalToken()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "external",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Tests that constructor accepts Relayed mode without internal auth configuration.
+    /// </summary>
+    [Fact]
+    public void Constructor_RelayedMode_ShouldNotRequireInternalToken()
+    {
+        // Arrange
+        var config = new ConnectServiceConfiguration
+        {
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt,
+            ConnectionMode = "relayed",
+            InternalServiceToken = null
+        };
+
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            new ConnectService(
+                _mockAuthClient.Object,
+                _mockMeshClient.Object,
+                _mockMessageBus.Object,
+                _mockMessageSubscriber.Object,
+                _mockHttpClientFactory.Object,
+                _mockAppMappingResolver.Object,
+                config,
+                _mockLogger.Object,
+                _mockLoggerFactory.Object,
+                _mockEventConsumer.Object,
+                _mockSessionManager.Object));
+
+        Assert.Null(exception);
+    }
+
+    #endregion
+
+    #region Broadcast Message Routing Tests
+
+    /// <summary>
+    /// Tests that MessageRouter detects broadcast GUID with Client flag correctly.
+    /// </summary>
+    [Fact]
+    public void MessageRouter_BroadcastGuid_WithClientFlag_ShouldReturnBroadcastRoute()
+    {
+        // Arrange
+        var connectionState = new ConnectionState("test-session");
+        var message = new BinaryMessage(
+            MessageFlags.Client, // Client flag (0x20) required for broadcast
+            100,
+            1,
+            AppConstants.BROADCAST_GUID,
+            GuidGenerator.GenerateMessageId(),
+            System.Text.Encoding.UTF8.GetBytes("{\"test\":\"broadcast\"}")
+        );
+
+        // Act
+        var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
+
+        // Assert
+        Assert.True(routeInfo.IsValid);
+        Assert.Equal(RouteType.Broadcast, routeInfo.RouteType);
+        Assert.Equal("broadcast", routeInfo.TargetType);
+        Assert.Equal("all-peers", routeInfo.TargetId);
+    }
+
+    /// <summary>
+    /// Tests that MessageRouter rejects broadcast GUID without Client flag.
+    /// </summary>
+    [Fact]
+    public void MessageRouter_BroadcastGuid_WithoutClientFlag_ShouldReturnError()
+    {
+        // Arrange
+        var connectionState = new ConnectionState("test-session");
+        var message = new BinaryMessage(
+            MessageFlags.None, // No Client flag - invalid for broadcast
+            100,
+            1,
+            AppConstants.BROADCAST_GUID,
+            GuidGenerator.GenerateMessageId(),
+            System.Text.Encoding.UTF8.GetBytes("{\"test\":\"broadcast\"}")
+        );
+
+        // Act
+        var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
+
+        // Assert
+        Assert.False(routeInfo.IsValid);
+        Assert.Equal(ResponseCodes.RequestError, routeInfo.ErrorCode);
+        Assert.Contains("Client flag", routeInfo.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Tests that BROADCAST_GUID constant has the expected value.
+    /// </summary>
+    [Fact]
+    public void AppConstants_BroadcastGuid_ShouldBeAllFs()
+    {
+        // Assert
+        Assert.Equal(new Guid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), AppConstants.BROADCAST_GUID);
+    }
+
+    #endregion
+
+    #region HTTP Routing Optimization Tests
+
+    // NOTE: StaticHeaders_ShouldBeProperlyInitialized test was removed because it tested
+    // implementation details (private static fields) via reflection. Static header values
+    // are implementation optimization details that should not be tested directly.
 
     /// <summary>
     /// Tests that BinaryMessage.Payload provides direct access to raw bytes,

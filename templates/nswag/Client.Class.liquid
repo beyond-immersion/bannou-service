@@ -1,4 +1,8 @@
 {% template Client.Class.Annotations %}
+/// <summary>
+/// Client implementation for the {{ Class | replace: "Client", "" }} service.
+/// Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "{{ ToolchainVersion }}")]
 {{ ClientClassAccessModifier }} partial class {{ Class }} {% if GenerateClientInterfaces %}: I{{ Class }}, BeyondImmersion.BannouService.ServiceClients.IServiceClient<{{ Class }}>{% endif %}
 {
@@ -21,6 +25,12 @@
     public string ServiceName => _serviceName;
 
 {% assign constructorParameters = "BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<" | append: Class | append: ">? logger = null" -%}
+    /// <summary>
+    /// Initializes a new instance of the <see cref="{{ Class }}"/> class.
+    /// </summary>
+    /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+    /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+    /// <param name="logger">Optional logger for diagnostic output.</param>
     public {{ Class }}({{ constructorParameters }})
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
@@ -36,9 +46,18 @@
 {%     assign serializerSettingsAccessModifier = "protected" %}
 {% endif -%}
 {% if UseRequestAndResponseSerializationSettings -%}
+    /// <summary>
+    /// Gets the JSON serializer settings used for serializing request bodies.
+    /// </summary>
     {{ serializerSettingsAccessModifier }} {{ JsonSerializerSettingsType }} RequestJsonSerializerSettings { get { return _jsonOptions; } }
+    /// <summary>
+    /// Gets the JSON serializer settings used for deserializing response bodies.
+    /// </summary>
     {{ serializerSettingsAccessModifier }} {{ JsonSerializerSettingsType }} ResponseJsonSerializerSettings { get { return _jsonOptions; } }
 {% else -%}
+    /// <summary>
+    /// Gets the JSON serializer settings used for request and response serialization.
+    /// </summary>
     {{ serializerSettingsAccessModifier }} {{ JsonSerializerSettingsType }} JsonSerializerSettings { get { return _jsonOptions; } }
 {% endif -%}
 
@@ -66,8 +85,10 @@
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new System.ArgumentException("Header name cannot be null or empty", nameof(name));
+        if (value == null)
+            throw new System.ArgumentNullException(nameof(value));
 
-        _customHeaders[name] = value ?? string.Empty;
+        _customHeaders[name] = value;
     }
 
     /// <summary>
@@ -153,6 +174,11 @@
     }
 
 {%     endif -%}
+{%     for parameter in operation.Parameters -%}
+{%         unless parameter.Description and parameter.Description != "" -%}
+    /// <param name="{{ parameter.VariableName }}">The {{ parameter.VariableName }} parameter.</param>
+{%         endunless -%}
+{%     endfor -%}
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     {% template Client.Method.Documentation %}
     {% template Client.Method.Annotations %}
@@ -440,16 +466,31 @@
     }
 
 {% endfor %}
+    /// <summary>
+    /// Represents the result of deserializing an HTTP response into an object.
+    /// </summary>
+    /// <typeparam name="T">The type of the deserialized response object.</typeparam>
     protected struct ObjectResponseResult<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectResponseResult{T}"/> struct.
+        /// </summary>
+        /// <param name="responseObject">The deserialized response object.</param>
+        /// <param name="responseText">The raw response text.</param>
         public ObjectResponseResult(T responseObject, string responseText)
         {
             this.Object = responseObject;
             this.Text = responseText;
         }
 
+        /// <summary>
+        /// Gets the deserialized response object.
+        /// </summary>
         public T Object { get; }
 
+        /// <summary>
+        /// Gets the raw response text.
+        /// </summary>
         public string Text { get; }
     }
 

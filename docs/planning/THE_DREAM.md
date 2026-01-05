@@ -2,7 +2,7 @@
 
 > **Status**: VISION DOCUMENT
 > **Created**: 2025-12-28
-> **Related**: [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [UPCOMING_-_ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md), [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [UPCOMING_-_MAP_SERVICE.md](./UPCOMING_-_MAP_SERVICE.md)
+> **Related**: [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [UPCOMING_-_ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md), [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [UPCOMING_-_MAP_SERVICE.md](./UPCOMING_-_MAP_SERVICE.md)
 
 ---
 
@@ -978,7 +978,158 @@ The Dream is too large for a single implementation push. Here's a phased approac
 
 ---
 
-## 12. Success Criteria
+## 12. Academic Foundations and Prior Art
+
+THE DREAM's architecture draws from and extends several academic and industry patterns. Understanding this context helps explain why certain design decisions were made and highlights what makes this approach genuinely novel.
+
+### 12.1 Recommended Terminology
+
+| Our Concept | Academic Term | Industry Term |
+|-------------|---------------|---------------|
+| Continuation points | **Delimited Continuations** with effect handlers | Extension Points, Join Points |
+| Wait-with-timeout-then-fallback | **Algebraic Effect Handlers** with resumption | Novel - no direct equivalent |
+| Late-bound behavior attachment | **Runtime Weaving** | Plugin Architecture |
+| Multi-channel parallel execution | **Barrier Synchronization** | Fork-Join with Sync Points |
+| Event Brain orchestration | **Drama Manager** | AI Director |
+| Runtime option generation | **Dynamic Scripting** / HTN Planning | GOAP |
+| Character Agent query pattern | **Capability Oracle** | Blackboard Pattern |
+
+**Composite academic term for the full system:**
+
+> **"Streaming Behavioral Choreography with Delimited Continuation Points and Drama Management"**
+
+Or more accessibly:
+
+> **"Late-Bound Behavioral Composition with Graceful Degradation"**
+
+### 12.2 Theoretical Foundations
+
+**Algebraic Effects and Handlers** (Plotkin & Pretnar, 2009; Koka language)
+
+Our continuation points are essentially typed, named algebraic effect operations. When execution reaches a continuation point, it "performs an effect" that yields control to a handler. The handler can:
+- Provide an extension (resume with new content)
+- Let it timeout (resume with default)
+- The key innovation: async delivery with deadline
+
+From Microsoft Research's foundational paper:
+> "Effect handlers generalize many control-flow abstractions such as exception handling, iterators, async/await, or backtracking."
+
+**Delimited Continuations** (Danvy & Filinski, 1990)
+
+Unlike full continuations that capture "the rest of the program," delimited continuations capture only up to a delimiter. Our continuation points work similarly - they capture "the rest of the cinematic" and allow it to be replaced or extended.
+
+```
+# Conceptually, a continuation point is:
+reset {
+  ... earlier actions ...
+  shift(name="before_resolution", timeout=2s) { k =>
+    if extension_arrived:
+      extension.execute()
+    else:
+      k()  # Resume with default
+  }
+  ... default ending (captured in k) ...
+}
+```
+
+**Drama Management** (Mateas & Stern, 2003; Riedl, 2009)
+
+The Event Brain is a drama manager - an omniscient background agent that guides experiences toward dramatic coherence. Unlike player-facing characters, drama managers influence indirectly by:
+- Selecting which events occur
+- Timing dramatic revelations
+- Ensuring pacing follows dramatic arcs
+
+The Left 4 Dead AI Director popularized this pattern for action games, but operated at macro level (spawn timing). Our Event Brain operates at micro level (individual combat moves).
+
+### 12.3 Closest Existing Implementations
+
+| System | What It Does | Similarity to THE DREAM |
+|--------|--------------|------------------------|
+| **Left 4 Dead AI Director** | Monitors player intensity, adjusts spawn timing, creates dramatic pacing | Same drama manager concept, but macro-level (hordes) not micro-level (moves) |
+| **Sifu / Absolver Combat** | Context-aware animation selection based on environment | Similar environment awareness, but pre-authored animations, not procedural choreography |
+| **For Honor Motion Matching** | Searches mocap data for poses matching desired parameters | Frame-level matching, not sequence-level generation |
+| **GOAP (F.E.A.R.)** | Plans action sequences from preconditions and effects | Generates action sequences, but synchronous and blocking |
+| **Dynamic Behavior Trees** | Query nodes filled at runtime | Same concept as continuation points, but synchronous resolution |
+| **Assassin's Creed Odyssey** | Procedural cinematics for dialogue scenes | Pre-generated before playback, not streaming composition |
+| **Temporal Workflow Signals** | Async message passing with await semantics | Same async pattern, but for business workflows, not game choreography |
+| **Facade (Mateas & Stern)** | ABL-driven drama manager selecting story beats | Academic precursor, but text/animation selection, not physical choreography |
+
+### 12.4 What Makes THE DREAM Novel
+
+No existing system combines all four properties:
+
+| Property | L4D Director | Sifu | AC Odyssey | Behavior Trees | **THE DREAM** |
+|----------|--------------|------|------------|----------------|---------------|
+| **Graceful degradation** | ✅ | N/A | ✅ (template) | ❌ | ✅ |
+| **Precise choreography** | ❌ | ✅ | ✅ | ❌ | ✅ |
+| **Runtime extension** | ❌ | ❌ | ❌ | ✅ (sync) | ✅ (async) |
+| **Async delivery with timeout** | N/A | N/A | N/A | ❌ | ✅ |
+
+**The unique combination:**
+
+1. **Streaming composition with timeout fallback** - Extensions arrive mid-execution, but missing extensions never break the experience
+
+2. **Named typed continuation points** - Unlike general continuations, ours are:
+   - Named (referenced by string ID)
+   - Typed (associated with specific document context)
+   - Have explicit timeout semantics
+   - Have fallback behavior
+
+3. **Agent-as-director for micro-level choreography** - Existing AI directors work at macro level (spawn hordes, pace difficulty). Ours works at action level (specific combat moves, camera angles, environmental interactions)
+
+4. **Character Agent as capability oracle** - Instead of static capability databases, we query agents that have intimate context (injuries, emotions, relationships) affecting what options make sense
+
+### 12.5 Why This Hasn't Been Done Before
+
+**Domain mismatch**: Programming language researchers work on effects and continuations theoretically; game developers use behavior trees pragmatically. The cross-pollination hasn't happened.
+
+**Timing requirements**: Games need frame-precise timing. Most "extensible" systems are either compile-time (AOP) or blocking (behavior tree query nodes). Async-with-timeout-and-fallback is operationally complex.
+
+**Choreography gap**: Existing AI directors work at macro level (pacing). Animation systems work at micro level (frame blending). The middle layer - sequence-level dynamic choreography - is underserved.
+
+**Streaming composition novelty**: The idea that the base experience starts immediately and enrichments arrive during playback is common in video streaming (adaptive bitrate) but hasn't been applied to behavioral scripting.
+
+### 12.6 Related Academic Work
+
+**Foundational Papers:**
+- Plotkin & Pretnar (2009) - "Handlers of Algebraic Effects" - Theoretical foundation for effect handlers
+- Danvy & Filinski (1990) - "Abstracting Control" - Delimited continuations (shift/reset)
+- Microsoft Research (2016) - "Algebraic Effects for Functional Programming" - Practical effect systems
+
+**Game AI:**
+- Orkin (2006) - "Three States and a Plan: The A.I. of F.E.A.R." - GOAP introduction
+- Isla (2005) - "Handling Complexity in the Halo 2 AI" - Behavior tree evolution
+- Booth (2009) - "The AI Systems of Left 4 Dead" - AI Director design
+
+**Interactive Narrative:**
+- Mateas & Stern (2003) - "Façade: An Experiment in Building a Fully-Realized Interactive Drama"
+- Riedl & Young (2010) - "Narrative Planning: Balancing Plot and Character"
+
+**Behavior Trees:**
+- Colledanchise & Ögren (2018) - "Behavior Trees in Robotics and AI" - Comprehensive survey
+- Marcotte & Hamilton (2017) - "Dynamic Behavior Trees" - Runtime query nodes
+
+### 12.7 Industry Implementations for Reference
+
+**Theme Park Systems (Disney Imagineering):**
+- Automatronics (Vyloo characters) - Autonomous characters with personality algorithms making independent decisions based on sensor input
+- Real-time puppeteering systems - LLM-driven animatronic interaction
+
+**Show Control:**
+- QLab / VenueMagic - Timeline-based cue systems with MIDI Show Control integration
+- Demonstrates how complex multi-track experiences can be orchestrated with sync points
+
+**Training Simulations:**
+- Military scenario generators using hierarchical decomposition
+- Medical VR simulations with adaptive scenarios based on learner performance
+
+**LLM NPC Systems:**
+- Inworld AI / Ubisoft NEO - Character personality constraints with LLM improvisation
+- Similar "improvisation within bounds" concept, but for dialogue not physical choreography
+
+---
+
+## 13. Success Criteria
 
 How do we know when we've achieved THE DREAM?
 
@@ -1004,7 +1155,7 @@ How do we know when we've achieved THE DREAM?
 
 ---
 
-## 13. Conclusion
+## 14. Conclusion
 
 THE DREAM is ambitious but achievable. Three key insights make it so:
 
@@ -1032,7 +1183,7 @@ The living world isn't just NPCs having schedules. It's NPCs having *memorable m
 ## Related Documents
 
 - [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md) - Behavior markup language
-- [UPCOMING_-_ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Distributed actor system
+- [UPCOMING_-_ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md) - Distributed actor system
 - [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md) - GOAP and behavior execution
 - [UPCOMING_-_MAP_SERVICE.md](./UPCOMING_-_MAP_SERVICE.md) - Spatial awareness and affordances
 - [arcadia-kb: Player-Character Dual Agency](~/repos/arcadia-kb/04%20-%20Game%20Systems/Player-Character%20Dual%20Agency%20Training%20System.md) - Guardian spirit possession model

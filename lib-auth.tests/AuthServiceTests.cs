@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Events;
@@ -7,7 +7,7 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -22,8 +22,8 @@ public class AuthServiceTests
 {
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
-    private readonly Mock<IAccountsClient> _mockAccountsClient;
-    private readonly Mock<ISubscriptionsClient> _mockSubscriptionsClient;
+    private readonly Mock<IAccountClient> _mockAccountClient;
+    private readonly Mock<ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<AuthService.PasswordResetData>> _mockPasswordResetStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
@@ -60,8 +60,8 @@ public class AuthServiceTests
             SteamApiKey = "test-steam-api-key",
             SteamAppId = "123456"
         };
-        _mockAccountsClient = new Mock<IAccountsClient>();
-        _mockSubscriptionsClient = new Mock<ISubscriptionsClient>();
+        _mockAccountClient = new Mock<IAccountClient>();
+        _mockSubscriptionClient = new Mock<ISubscriptionClient>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockPasswordResetStore = new Mock<IStateStore<AuthService.PasswordResetData>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
@@ -95,8 +95,8 @@ public class AuthServiceTests
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
-        _mockMessageBus.Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Setup default HttpClient for mock factory
         var mockHttpClient = new HttpClient();
@@ -109,8 +109,8 @@ public class AuthServiceTests
     private AuthService CreateAuthService()
     {
         return new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
+            _mockAccountClient.Object,
+            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
@@ -121,16 +121,6 @@ public class AuthServiceTests
             _mockOAuthService.Object,
             _mockEventConsumer.Object);
     }
-
-    [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act & Assert
-        var service = CreateAuthService();
-
-        Assert.NotNull(service);
-    }
-
 
     [Fact]
     public void AuthServiceConfiguration_ShouldBindFromEnvironmentVariables()
@@ -233,13 +223,16 @@ public class AuthServiceTests
     [Fact]
     public void AuthPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
     {
+        // Arrange
+        var instanceId = Guid.NewGuid();
+
         // Act
-        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent();
+        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent(instanceId);
 
         // Assert
         Assert.NotNull(registrationEvent);
-        Assert.Equal("auth", registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.EventId);
+        Assert.Equal("auth", registrationEvent.ServiceName);
+        Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
         Assert.Equal(12, registrationEvent.Endpoints.Count); // 12 endpoints (removed steam/init)
         Assert.NotEmpty(registrationEvent.Version);
@@ -280,7 +273,7 @@ public class AuthServiceTests
 
     // NOTE: Complex role handling tests requiring mesh client mocking with internal SessionDataModel
     // are better suited for integration testing where real Redis can be used.
-    // The permission flow is fully tested in PermissionsServiceTests.
+    // The permission flow is fully tested in PermissionServiceTests.
     // Role storage in Redis is verified through HTTP integration tests (http-tester).
 
     #endregion
@@ -513,11 +506,10 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.LogoutAsync("", null);
+        var status = await service.LogoutAsync("", null);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
-        Assert.Null(response);
     }
 
     [Fact]
@@ -536,205 +528,19 @@ public class AuthServiceTests
 
     #endregion
 
-    #region Configuration Validation Tests
+    #region Constructor Validation Tests
 
+    /// <summary>
+    /// Comprehensive constructor validation that catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults)
+    /// - Missing null checks
+    /// - Wrong parameter names in ArgumentNullException
+    /// This single test replaces 11+ individual constructor null-check tests.
+    /// </summary>
     [Fact]
-    public void Constructor_WithNullAccountsClient_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            null!,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSubscriptionsClient_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            null!,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            null!,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            null!,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            null!,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpClientFactory_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            null!,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullTokenService_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            null!,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSessionService_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            null!,
-            _mockOAuthService.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullOAuthService_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            null!,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object,
-            _mockTokenService.Object,
-            _mockSessionService.Object,
-            _mockOAuthService.Object,
-            null!));
-    }
+    public void AuthService_ConstructorIsValid() =>
+        TestUtilities.ServiceConstructorValidator.ValidateServiceConstructor<AuthService>();
 
     [Fact]
     public void AuthServiceConfiguration_DefaultValues_ShouldHaveReasonableDefaults()
@@ -769,20 +575,6 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task InitSteamAuthAsync_ShouldReturnAuthorizationUrl()
-    {
-        // Arrange
-        var service = CreateAuthService();
-
-        // Act
-        var (status, response) = await service.InitSteamAuthAsync("https://example.com/steam-callback");
-
-        // Assert
-        Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
-    }
-
-    [Fact]
     public async Task RequestPasswordResetAsync_WithValidEmail_ShouldReturnOK()
     {
         // Arrange
@@ -794,11 +586,10 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
-        // Assert
+        // Assert - per schema, this endpoint returns no body (prevents email enumeration)
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
     }
 
     [Fact]
@@ -829,11 +620,10 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
-        // Assert
+        // Assert - per schema, this endpoint returns no body
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
     }
 
     [Fact]
@@ -849,7 +639,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -888,13 +678,14 @@ public class AuthServiceTests
         await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
 
         // Assert - verify session invalidation event was published
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
                 e.Reason == SessionInvalidatedEventReason.Account_deleted &&
                 e.DisconnectClients == true),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -926,10 +717,11 @@ public class AuthServiceTests
         await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
 
         // Assert - no event should be published since there were no sessions
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -965,7 +757,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -983,7 +775,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1001,7 +793,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1010,8 +802,8 @@ public class AuthServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_WithNonExistentEmail_ShouldReturnOkToPreventEnumeration()
     {
-        // Arrange - accounts client throws 404 for non-existent email
-        _mockAccountsClient.Setup(c => c.GetAccountByEmailAsync(
+        // Arrange - account client throws 404 for non-existent email
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
             It.IsAny<GetAccountByEmailRequest>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
@@ -1024,7 +816,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert - should return OK to prevent email enumeration attacks
         Assert.Equal(StatusCodes.OK, status);
@@ -1043,7 +835,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1062,7 +854,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);

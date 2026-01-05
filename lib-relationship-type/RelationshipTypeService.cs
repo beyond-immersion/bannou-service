@@ -8,9 +8,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-relationship-type.tests")]
 
 namespace BeyondImmersion.BannouService.RelationshipType;
 
@@ -41,14 +38,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         IRelationshipClient relationshipClient,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _relationshipClient = relationshipClient ?? throw new ArgumentNullException(nameof(relationshipClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _relationshipClient = relationshipClient;
 
         // Register event handlers via partial class (RelationshipTypeServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -461,7 +457,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             await PublishRelationshipTypeCreatedEventAsync(model, cancellationToken);
 
             var response = await MapToResponseAsync(model, cancellationToken);
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -588,7 +584,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         }
     }
 
-    public async Task<(StatusCodes, object?)> DeleteRelationshipTypeAsync(
+    public async Task<StatusCodes> DeleteRelationshipTypeAsync(
         DeleteRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -602,7 +598,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (existing == null)
             {
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check if type has children
@@ -610,7 +606,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             if (childIds.Count > 0)
             {
                 _logger.LogWarning("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Delete the type
@@ -632,13 +628,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             await PublishRelationshipTypeDeletedEventAsync(existing, cancellationToken);
 
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting relationship type: {TypeId}", body.RelationshipTypeId);
             await EmitErrorAsync("DeleteRelationshipType", "post:/relationship-type/delete", ex);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -760,7 +756,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                             }
 
                             var (status, response) = await CreateRelationshipTypeAsync(createRequest, cancellationToken);
-                            if (status == StatusCodes.Created && response != null)
+                            if (status == StatusCodes.OK && response != null)
                             {
                                 codeToId[code] = response.RelationshipTypeId.ToString();
                                 created++;
@@ -929,6 +925,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             // Migrate all relationships from source type to target type
             var migratedCount = 0;
             var failedCount = 0;
+            var migrationErrors = new List<MigrationError>();
+            const int maxErrorsToTrack = 100;
             var page = 1;
             const int pageSize = 100;
             var hasMorePages = true;
@@ -968,9 +966,19 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                         }
                         catch (Exception relEx)
                         {
-                            _logger.LogWarning(relEx, "Failed to migrate relationship {RelationshipId} from type {SourceId} to {TargetId}",
+                            _logger.LogError(relEx, "Failed to migrate relationship {RelationshipId} from type {SourceId} to {TargetId}",
                                 relationship.RelationshipId, body.SourceTypeId, body.TargetTypeId);
                             failedCount++;
+
+                            // Track error details (limited to avoid unbounded memory usage)
+                            if (migrationErrors.Count < maxErrorsToTrack)
+                            {
+                                migrationErrors.Add(new MigrationError
+                                {
+                                    RelationshipId = relationship.RelationshipId,
+                                    Error = relEx.Message
+                                });
+                            }
                         }
                     }
 
@@ -979,14 +987,26 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error fetching relationships for type migration at page {Page}", page);
+                    _logger.LogError(ex, "Error fetching relationships for type migration at page {Page}", page);
                     hasMorePages = false;
                 }
             }
 
             if (failedCount > 0)
             {
-                _logger.LogWarning("Relationship type merge completed with {FailedCount} failed relationship migrations", failedCount);
+                _logger.LogError("Relationship type merge completed with {FailedCount} failed relationship migrations", failedCount);
+
+                // Publish error event for monitoring/alerting
+                await _messageBus.TryPublishErrorAsync(
+                    "relationship-type",
+                    "MergeRelationshipType",
+                    "PartialMigrationFailure",
+                    $"Failed to migrate {failedCount} relationships from type {body.SourceTypeId} to {body.TargetTypeId}",
+                    dependency: "relationship-service",
+                    endpoint: "post:/relationship-type/merge",
+                    details: new { SourceTypeId = body.SourceTypeId, TargetTypeId = body.TargetTypeId, FailedCount = failedCount, MigratedCount = migratedCount },
+                    stack: null,
+                    cancellationToken: cancellationToken);
             }
 
             _logger.LogInformation("Merged relationship type {SourceId} into {TargetId}, migrated {MigratedCount} relationships (failed: {FailedCount})",
@@ -997,6 +1017,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 SourceTypeId = body.SourceTypeId,
                 TargetTypeId = body.TargetTypeId,
                 RelationshipsMigrated = migratedCount,
+                RelationshipsFailed = failedCount,
+                MigrationErrors = migrationErrors,
                 SourceDeleted = false // Source remains as deprecated for historical references
             });
         }
@@ -1086,9 +1108,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         }
     }
 
-    private Task<RelationshipTypeResponse> MapToResponseAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
+    private async Task<RelationshipTypeResponse> MapToResponseAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
     {
-        return Task.FromResult(new RelationshipTypeResponse
+        await Task.CompletedTask;
+        return new RelationshipTypeResponse
         {
             RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
             Code = model.Code,
@@ -1107,7 +1130,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
-        });
+        };
     }
 
     private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
@@ -1141,11 +1164,11 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
                 Code = model.Code,
                 Name = model.Name,
-                Category = model.Category ?? string.Empty,
+                Category = model.Category,
                 ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId)
             };
 
-            await _messageBus.PublishAsync("relationship-type.created", eventModel);
+            await _messageBus.TryPublishAsync("relationship-type.created", eventModel);
             _logger.LogDebug("Published relationship-type.created event for {TypeId}", model.RelationshipTypeId);
         }
         catch (Exception ex)
@@ -1169,21 +1192,21 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId),
                 InverseTypeId = string.IsNullOrEmpty(model.InverseTypeId) ? Guid.Empty : Guid.Parse(model.InverseTypeId),
                 IsBidirectional = model.IsBidirectional,
                 Depth = model.Depth,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.PublishAsync("relationship-type.updated", eventModel);
+            await _messageBus.TryPublishAsync("relationship-type.updated", eventModel);
             _logger.LogDebug("Published relationship-type.updated event for {TypeId} with changed fields: {ChangedFields}",
                 model.RelationshipTypeId, string.Join(", ", changedFields));
         }
@@ -1208,7 +1231,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 Code = model.Code
             };
 
-            await _messageBus.PublishAsync("relationship-type.deleted", eventModel);
+            await _messageBus.TryPublishAsync("relationship-type.deleted", eventModel);
             _logger.LogDebug("Published relationship-type.deleted event for {TypeId}", model.RelationshipTypeId);
         }
         catch (Exception ex)
@@ -1222,7 +1245,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

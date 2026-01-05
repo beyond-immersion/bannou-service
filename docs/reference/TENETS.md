@@ -10,6 +10,30 @@ This document is the authoritative index for Bannou development standards. All s
 
 ---
 
+## Tenet 0: Never Reference Tenet Numbers in Source Code
+
+When documenting tenet compliance in source code comments, **NEVER use specific tenet numbers** (e.g., "T9", "Tenet 21", "TENET T4"). Tenet numbers change over time as tenets are added, removed, or reorganized.
+
+**Instead, use category names:**
+- `FOUNDATION TENETS` - for T1, T2, T4, T5, T6, T13, T15, T18
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23
+- `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
+
+**Examples:**
+```csharp
+// WRONG: Uses specific tenet number (will become stale)
+// Use distributed state per T9
+// Tenet 21 compliant
+
+// CORRECT: Uses category name (stable)
+// Use distributed state per IMPLEMENTATION TENETS
+// IMPLEMENTATION TENETS compliant
+```
+
+This rule applies to: source code comments, schema descriptions, generator scripts, and any non-documentation files. The tenet definition documents (`docs/reference/tenets/*.md`) are the only place where specific numbers should appear.
+
+---
+
 ## Tenet Categories
 
 Tenets are organized into three categories based on when they're needed:
@@ -17,8 +41,8 @@ Tenets are organized into three categories based on when they're needed:
 | Category | Tenets | When to Reference |
 |----------|--------|-------------------|
 | [**Foundation**](tenets/FOUNDATION.md) | T1, T2, T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21 | While actively writing service code |
-| [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19 | During code review or before PR submission |
+| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23 | While actively writing service code |
+| [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 ---
 
@@ -53,6 +77,7 @@ Tenets are organized into three categories based on when they're needed:
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
 | **T20** | JSON Serialization | Always use BannouJson; never direct JsonSerializer |
 | **T21** | Configuration-First | Use generated config classes; no direct Environment.GetEnvironmentVariable |
+| **T23** | Async Method Pattern | Task-returning methods must be async with await |
 
 ---
 
@@ -67,6 +92,7 @@ Tenets are organized into three categories based on when they're needed:
 | **T12** | Test Integrity | Never weaken tests to pass; failing test = fix implementation |
 | **T16** | Naming Conventions | Consistent patterns for methods, models, events, topics |
 | **T19** | XML Documentation | All public APIs documented with summary, params, returns |
+| **T22** | Warning Suppression | Forbidden except Moq/NSwag/enum exceptions; fix warnings, don't hide them |
 
 ---
 
@@ -74,8 +100,13 @@ Tenets are organized into three categories based on when they're needed:
 
 | Violation | Tenet | Fix |
 |-----------|-------|-----|
+| Using "T9" or "Tenet 21" in source code | T0 | Use category name: FOUNDATION/IMPLEMENTATION/QUALITY TENETS |
 | Editing Generated/ files | T1, T2 | Edit schema, regenerate |
+| Missing `description` on schema property | T1 | Add description field (causes CS1591) |
 | Wrong env var format (`JWTSECRET`) | T2 | Use `{SERVICE}_{PROPERTY}` pattern |
+| Missing `env:` key in config schema | T2 | Add explicit `env:` with proper naming |
+| Missing service prefix (`REDIS_CONNECTION_STRING`) | T2 | Add prefix (e.g., `STATE_REDIS_CONNECTION_STRING`) |
+| Hyphen in env var prefix (`GAME-SESSION_`) | T2 | Use underscore (`GAME_SESSION_`) |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use generated clients via lib-mesh |
@@ -93,11 +124,18 @@ Tenets are organized into three categories based on when they're needed:
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
 | Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
 | Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
+| Non-async Task-returning method | T23 | Add async keyword and await |
+| `Task.FromResult` without async | T23 | Use async method with await |
+| `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
+| `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
+| Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
+| Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
+| CS1591 warning on schema property/class | T1, T22 | Add `description` to schema (enums auto-suppressed) |
 
 ---
 

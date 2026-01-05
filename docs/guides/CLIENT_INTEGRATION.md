@@ -147,7 +147,7 @@ After authentication, you receive a capability manifest listing available APIs:
   "session_id": "session-uuid",
   "capabilities": [
     {
-      "name": "accounts/get",
+      "name": "account/get",
       "guid": "abc123-...",
       "method": "POST",
       "requires_auth": true,
@@ -204,7 +204,7 @@ function sendRequest(capabilityName, payload) {
 }
 
 // Example usage
-sendRequest('accounts/get', { account_id: 'abc123' });
+sendRequest('account/get', { account_id: 'abc123' });
 ```
 
 ### Handling Responses
@@ -423,7 +423,7 @@ await client.connect(session.token);
 await client.waitForCapabilities();
 
 // Make API calls
-const account = await client.call('accounts/get', {
+const account = await client.call('account/get', {
   account_id: session.account_id
 });
 

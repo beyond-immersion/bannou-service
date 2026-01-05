@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -17,18 +16,15 @@ using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-connect.tests")]
 
 namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// WebSocket-first edge gateway service providing zero-copy message routing.
-/// Uses Permissions service for dynamic API discovery and capability management.
+/// Uses Permission service for dynamic API discovery and capability management.
 /// </summary>
 [BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public partial class ConnectService : IConnectService
@@ -49,49 +45,71 @@ public partial class ConnectService : IConnectService
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
-    private readonly ISessionManager? _sessionManager;
+    private readonly ISessionManager _sessionManager;
 
-    // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
-    private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
+    // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
+    private readonly IMessageSubscriber _messageSubscriber;
+    private readonly ConcurrentDictionary<string, IAsyncDisposable> _sessionSubscriptions = new();
     private readonly ILoggerFactory _loggerFactory;
-    [Obsolete]
-    private readonly ClientEventQueueManager? _clientEventQueueManager;
-    private readonly string? _rabbitMqConnectionString;
+
+    // Pending RPCs awaiting client responses (MessageId -> RPC info for response forwarding)
+    private readonly ConcurrentDictionary<ulong, PendingRPCInfo> _pendingRPCs = new();
+
+    /// <summary>
+    /// Prefix for session-specific queue routing keys.
+    /// Must match the routing key used by MessageBusClientEventPublisher.
+    /// </summary>
+    private const string SESSION_TOPIC_PREFIX = "CONNECT_SESSION_";
+
+    /// <summary>
+    /// Dedicated direct exchange for client events.
+    /// Defined in provisioning/rabbitmq/definitions.json.
+    /// </summary>
+    private const string CLIENT_EVENTS_EXCHANGE = "bannou-client-events";
+
+    /// <summary>
+    /// Reconnection window duration. During this time after disconnect:
+    /// - Session state is preserved in Redis
+    /// - Client event queue buffers messages
+    /// - Client can reconnect with reconnection token
+    /// </summary>
+    private static readonly TimeSpan RECONNECTION_WINDOW = TimeSpan.FromMinutes(5);
 
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
-    [Obsolete]
+    // Connection mode configuration
+    private readonly string _connectionMode;
+    private readonly string _internalAuthMode;
+    private readonly string? _internalServiceToken;
+
     public ConnectService(
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
         IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
         IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
         IEventConsumer eventConsumer,
-        ISessionManager? sessionManager = null,
-        ClientEventQueueManager? clientEventQueueManager = null)
+        ISessionManager sessionManager)
     {
-        _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _sessionManager = sessionManager; // Optional mesh-based session management
-        _clientEventQueueManager = clientEventQueueManager; // Optional client event queuing
+        _authClient = authClient;
+        _meshClient = meshClient;
+        _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
+        _httpClientFactory = httpClientFactory;
+        _appMappingResolver = appMappingResolver;
+        _logger = logger;
+        _loggerFactory = loggerFactory;
+        _sessionManager = sessionManager;
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
-
-        // Store configuration values for later use
-        _rabbitMqConnectionString = configuration.RabbitMqConnectionString;
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly
@@ -106,11 +124,26 @@ public partial class ConnectService : IConnectService
         _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
 
-        _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
-            _instanceId, sessionManager != null ? "Enabled" : "Disabled");
+        // Connection mode configuration
+        _connectionMode = configuration.ConnectionMode ?? "external";
+        _internalAuthMode = configuration.InternalAuthMode ?? "service-token";
+        _internalServiceToken = string.IsNullOrEmpty(configuration.InternalServiceToken)
+            ? null
+            : configuration.InternalServiceToken;
+
+        // Validate Internal mode configuration
+        if (_connectionMode == "internal" &&
+            _internalAuthMode == "service-token" &&
+            string.IsNullOrEmpty(_internalServiceToken))
+        {
+            throw new InvalidOperationException(
+                "CONNECT_INTERNAL_SERVICE_TOKEN is required when ConnectionMode is 'internal' and InternalAuthMode is 'service-token'");
+        }
+
+        _logger.LogInformation("Connect service initialized: InstanceId={InstanceId}, Mode={ConnectionMode}",
+            _instanceId, _connectionMode);
     }
 
     /// <summary>
@@ -127,7 +160,7 @@ public partial class ConnectService : IConnectService
                 body.TargetService, body.Method, body.TargetEndpoint);
 
             // Validate session has access to this API via local capability mappings
-            // Session capabilities are pushed via SessionCapabilitiesEvent from Permissions service
+            // Session capabilities are pushed via SessionCapabilitiesEvent from Permission service
             var endpointKey = $"{body.TargetService}:{body.Method}:{body.TargetEndpoint}";
             var hasAccess = false;
 
@@ -268,12 +301,12 @@ public partial class ConnectService : IConnectService
 
     // REMOVED: PublishServiceMappingUpdateAsync - Service mapping events belong to Orchestrator
     // REMOVED: GetServiceMappingsAsync - Service routing is now in Orchestrator API
-    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permissions service
+    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permission service
     // Connect service ONLY handles WebSocket connections and message routing
 
     /// <summary>
-    /// Gets the client capability manifest (GUID to API mappings) for the authenticated session.
-    /// Each client receives unique GUIDs for security isolation.
+    /// Gets the client capability manifest (GUID to API mappings) for a connected session.
+    /// Debugging endpoint to inspect what capabilities a WebSocket client currently has.
     /// </summary>
     public async Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
         GetClientCapabilitiesRequest body,
@@ -282,32 +315,147 @@ public partial class ConnectService : IConnectService
         await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
-            // For now, return a placeholder response until full capability system is integrated
-            // TODO: Integrate with Permissions service to get actual capabilities for the session
-            _logger.LogDebug("GetClientCapabilitiesAsync called with serviceFilter: {Filter}",
-                body.ServiceFilter ?? "(none)");
+            _logger.LogDebug("GetClientCapabilitiesAsync called for session {SessionId} with filter: {Filter}",
+                body.SessionId, body.ServiceFilter ?? "(none)");
 
-            // This would normally:
-            // 1. Get the session ID from context/auth
-            // 2. Query Permissions service for session capabilities
-            // 3. Generate client-salted GUIDs for each capability
-            // 4. Return the manifest
+            // Look up the connection by session ID
+            var connection = _connectionManager.GetConnection(body.SessionId);
+            if (connection == null)
+            {
+                _logger.LogWarning("No active WebSocket connection found for session {SessionId}", body.SessionId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var connectionState = connection.ConnectionState;
+            var capabilities = new List<ClientCapability>();
+            var shortcuts = new List<ClientShortcut>();
+
+            // Build capabilities from service mappings
+            foreach (var mapping in connectionState.ServiceMappings)
+            {
+                var endpointKey = mapping.Key;
+                var guid = mapping.Value;
+
+                var firstColon = endpointKey.IndexOf(':');
+                if (firstColon <= 0) continue;
+
+                var serviceName = endpointKey[..firstColon];
+                var methodAndPath = endpointKey[(firstColon + 1)..];
+
+                // Apply service filter if provided
+                if (!string.IsNullOrEmpty(body.ServiceFilter) &&
+                    !serviceName.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var methodPathColon = methodAndPath.IndexOf(':');
+                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
+                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+
+                // Skip template endpoints (zero-copy routing requirement)
+                if (path.Contains('{')) continue;
+
+                // Only expose POST endpoints to WebSocket clients
+                if (method != "POST") continue;
+
+                capabilities.Add(new ClientCapability
+                {
+                    Guid = guid,
+                    Service = serviceName,
+                    Endpoint = path,
+                    Method = ClientCapabilityMethod.POST
+                });
+            }
+
+            // Build shortcuts from connection state
+            foreach (var shortcut in connectionState.GetAllShortcuts())
+            {
+                // Skip expired shortcuts
+                if (shortcut.IsExpired)
+                {
+                    connectionState.RemoveShortcut(shortcut.RouteGuid);
+                    continue;
+                }
+
+                // Validate required fields - these should never be null after validation during creation
+                if (string.IsNullOrEmpty(shortcut.TargetService) || string.IsNullOrEmpty(shortcut.TargetEndpoint))
+                {
+                    _logger.LogError(
+                        "Invalid shortcut {RouteGuid} has null/empty required fields: TargetService={TargetService}, TargetEndpoint={TargetEndpoint}",
+                        shortcut.RouteGuid, shortcut.TargetService, shortcut.TargetEndpoint);
+                    await PublishErrorEventAsync(
+                        "GetClientCapabilities",
+                        "invalid_shortcut_data",
+                        $"Shortcut {shortcut.RouteGuid} has null/empty required fields",
+                        details: new { shortcut.RouteGuid, shortcut.TargetService, shortcut.TargetEndpoint });
+                    connectionState.RemoveShortcut(shortcut.RouteGuid);
+                    continue;
+                }
+
+                shortcuts.Add(new ClientShortcut
+                {
+                    Guid = shortcut.RouteGuid,
+                    TargetService = shortcut.TargetService,
+                    TargetEndpoint = shortcut.TargetEndpoint,
+                    Name = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    Description = shortcut.Description
+                });
+            }
 
             var response = new ClientCapabilitiesResponse
             {
-                SessionId = "placeholder-session-id",
-                Capabilities = new List<ClientCapability>(),
+                SessionId = body.SessionId,
+                Capabilities = capabilities,
+                Shortcuts = shortcuts.Count > 0 ? shortcuts : null,
                 Version = 1,
                 GeneratedAt = DateTimeOffset.UtcNow
             };
 
-            _logger.LogInformation("Returning client capabilities (placeholder implementation)");
+            _logger.LogInformation("Returning {CapabilityCount} capabilities and {ShortcutCount} shortcuts for session {SessionId}",
+                capabilities.Count, shortcuts.Count, body.SessionId);
+
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving client capabilities");
-            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message);
+            _logger.LogError(ex, "Error retrieving client capabilities for session {SessionId}", body.SessionId);
+            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message, details: new { SessionId = body.SessionId });
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets all active WebSocket session IDs for an account.
+    /// Internal endpoint for service-to-service session discovery.
+    /// </summary>
+    public async Task<(StatusCodes, GetAccountSessionsResponse?)> GetAccountSessionsAsync(
+        GetAccountSessionsRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("GetAccountSessionsAsync called for account {AccountId}", body.AccountId);
+
+            var sessions = await _sessionManager.GetSessionsForAccountAsync(body.AccountId);
+
+            var response = new GetAccountSessionsResponse
+            {
+                AccountId = body.AccountId,
+                SessionIds = sessions.ToList(),
+                Count = sessions.Count,
+                RetrievedAt = DateTimeOffset.UtcNow
+            };
+
+            _logger.LogInformation("Returning {Count} sessions for account {AccountId}",
+                sessions.Count, body.AccountId);
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving sessions for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync("GetAccountSessions", ex.GetType().Name, ex.Message, details: new { AccountId = body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -316,12 +464,50 @@ public partial class ConnectService : IConnectService
     /// Validates JWT token and extracts session ID and user roles.
     /// Returns a tuple with session ID, roles, and whether this is a reconnection for capability initialization.
     /// </summary>
+    /// <param name="authorization">Authorization header (Bearer token or Reconnect token).</param>
+    /// <param name="serviceTokenHeader">Optional X-Service-Token header for Internal mode authentication.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<(string? SessionId, Guid? AccountId, ICollection<string>? Roles, ICollection<string>? Authorizations, bool IsReconnection)> ValidateJWTAndExtractSessionAsync(
-        string authorization,
+        string? authorization,
+        string? serviceTokenHeader,
         CancellationToken cancellationToken)
     {
         try
         {
+            // Internal mode authentication - bypass JWT validation
+            if (_connectionMode == "internal")
+            {
+                if (_internalAuthMode == "network-trust")
+                {
+                    // Network trust: Accept connection without authentication
+                    var sessionId = Guid.NewGuid().ToString();
+                    _logger.LogInformation("Internal mode (network-trust): Creating session {SessionId}", sessionId);
+                    return (sessionId, null, new List<string> { "internal" }, null, false);
+                }
+
+                if (_internalAuthMode == "service-token")
+                {
+                    // Service token: Validate X-Service-Token header
+                    if (string.IsNullOrEmpty(serviceTokenHeader))
+                    {
+                        _logger.LogWarning("Internal mode requires X-Service-Token header");
+                        return (null, null, null, null, false);
+                    }
+
+                    if (serviceTokenHeader != _internalServiceToken)
+                    {
+                        _logger.LogWarning("Invalid X-Service-Token provided");
+                        return (null, null, null, null, false);
+                    }
+
+                    // Valid service token - create session
+                    var sessionId = Guid.NewGuid().ToString();
+                    _logger.LogInformation("Internal mode (service-token): Creating session {SessionId}", sessionId);
+                    return (sessionId, null, new List<string> { "internal" }, null, false);
+                }
+            }
+
+            // External/Relayed mode: Require JWT authentication
             _logger.LogDebug("JWT validation starting, AuthorizationLength: {Length}, HasBearerPrefix: {IsBearer}",
                 authorization?.Length ?? 0, authorization?.StartsWith("Bearer ") ?? false);
 
@@ -354,22 +540,22 @@ public partial class ConnectService : IConnectService
 
                 _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
                     validationResponse.Valid,
-                    validationResponse.SessionId ?? "(null)",
+                    validationResponse.SessionId,
                     validationResponse.AccountId,
                     validationResponse.Roles?.Count ?? 0,
                     validationResponse.Authorizations?.Count ?? 0);
 
-                if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
+                if (validationResponse.Valid && validationResponse.SessionId != Guid.Empty)
                 {
                     _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
                     // Return session ID, account ID, roles, and authorizations for capability initialization
                     // This is a new connection (Bearer token), not a reconnection
-                    return (validationResponse.SessionId, validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
+                    return (validationResponse.SessionId.ToString(), validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
                 }
                 else
                 {
                     _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionId: {SessionId}",
-                        validationResponse.Valid, validationResponse.SessionId ?? "(null)");
+                        validationResponse.Valid, validationResponse.SessionId);
                 }
             }
             // Handle "Reconnect <token>" format for session reconnection
@@ -384,33 +570,25 @@ public partial class ConnectService : IConnectService
                 }
 
                 // Use Redis session manager to validate reconnection token
-                if (_sessionManager != null)
-                {
-                    var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
+                var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
 
-                    if (!string.IsNullOrEmpty(sessionId))
+                if (!string.IsNullOrEmpty(sessionId))
+                {
+                    // Restore the session from reconnection state
+                    var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
+
+                    if (restoredState != null)
                     {
-                        // Restore the session from reconnection state
-                        var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
-
-                        if (restoredState != null)
-                        {
-                            _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
-                            // Return stored roles and authorizations from reconnection state
-                            // Parse AccountId from string back to Guid (stored as string for Redis serialization)
-                            // Mark as reconnection so services can re-publish shortcuts
-                            Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
-                            return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations, true);
-                        }
+                        _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
+                        // Return stored roles and authorizations from reconnection state
+                        // Parse AccountId from string back to Guid (stored as string for Redis serialization)
+                        // Mark as reconnection so services can re-publish shortcuts
+                        Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
+                        return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations, true);
                     }
-
-                    _logger.LogWarning("Invalid or expired reconnection token");
-                }
-                else
-                {
-                    _logger.LogWarning("Reconnection requires Redis session manager - not configured");
                 }
 
+                _logger.LogWarning("Invalid or expired reconnection token");
                 return (null, null, null, null, false);
             }
 
@@ -456,7 +634,6 @@ public partial class ConnectService : IConnectService
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
-    [Obsolete]
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
@@ -469,14 +646,40 @@ public partial class ConnectService : IConnectService
         // Create connection state with service mappings from discovery
         var connectionState = new ConnectionState(sessionId);
 
-        // Transfer service mappings from session discovery to connection state
-        Dictionary<string, Guid>? sessionMappings = null;
-
-        if (_sessionManager != null)
+        // INTERNAL MODE: Skip all capability initialization - just peer routing
+        if (_connectionMode == "internal")
         {
-            // Try to get mappings from Redis first
-            sessionMappings = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
+            // Add connection to manager (enables peer routing via PeerGuid)
+            _connectionManager.AddConnection(sessionId, webSocket, connectionState);
+
+            // Send minimal response with sessionId and peerGuid
+            var internalResponse = new
+            {
+                sessionId = sessionId,
+                peerGuid = connectionState.PeerGuid.ToString()
+            };
+            var responseJson = BannouJson.Serialize(internalResponse);
+            var responseBytes = Encoding.UTF8.GetBytes(responseJson);
+
+            await webSocket.SendAsync(
+                new ArraySegment<byte>(responseBytes),
+                WebSocketMessageType.Text,
+                endOfMessage: true,
+                cancellationToken);
+
+            _logger.LogInformation("Internal mode: Session {SessionId} connected with PeerGuid {PeerGuid}",
+                sessionId, connectionState.PeerGuid);
+
+            // Enter simplified message loop - only binary messages, no capability/event handling
+            await HandleInternalModeMessageLoopAsync(webSocket, sessionId, connectionState, cancellationToken);
+            return;
         }
+
+        // EXTERNAL/RELAYED MODE: Full capability initialization
+
+        // Transfer service mappings from session discovery to connection state
+        // Try to get mappings from Redis first
+        var sessionMappings = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
 
         if (sessionMappings == null && _sessionServiceMappings.TryGetValue(sessionId, out var fallbackMappings))
         {
@@ -484,7 +687,7 @@ public partial class ConnectService : IConnectService
             sessionMappings = new Dictionary<string, Guid>(fallbackMappings);
         }
 
-        // If no mappings exist, initialize capabilities from Permissions service
+        // If no mappings exist, initialize capabilities from Permission service
         if (sessionMappings == null || sessionMappings.Count == 0)
         {
             // Determine the highest-priority role for capability initialization
@@ -513,118 +716,101 @@ public partial class ConnectService : IConnectService
             _logger.LogInformation("WebSocket connection established for session {SessionId}", sessionId);
 
             // Update session heartbeat in Redis
-            if (_sessionManager != null)
+            await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+
+            // Create initial connection state in Redis for reconnection support
+            var connectionStateData = new ConnectionStateData
             {
-                await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+                SessionId = sessionId,
+                AccountId = accountId?.ToString(),
+                ConnectedAt = DateTimeOffset.UtcNow,
+                LastActivity = DateTimeOffset.UtcNow,
+                UserRoles = userRoles?.ToList(),
+                Authorizations = authorizations?.ToList()
+            };
+            await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
+            _logger.LogDebug("Created connection state in Redis for session {SessionId}, AccountId {AccountId}", sessionId, accountId);
 
-                // Create initial connection state in Redis for reconnection support
-                var connectionStateData = new ConnectionStateData
-                {
-                    SessionId = sessionId,
-                    AccountId = accountId?.ToString(),
-                    ConnectedAt = DateTimeOffset.UtcNow,
-                    LastActivity = DateTimeOffset.UtcNow,
-                    UserRoles = userRoles?.ToList(),
-                    Authorizations = authorizations?.ToList()
-                };
-                await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
-                _logger.LogDebug("Created connection state in Redis for session {SessionId}, AccountId {AccountId}", sessionId, accountId);
-            }
-
-            // Subscribe to session-specific client events via RabbitMQ
+            // Subscribe to session-specific client events via lib-messaging
             // IMPORTANT: Must subscribe BEFORE sending capability manifest to avoid race condition
             // where events published during capability compilation are lost
-            if (_clientEventSubscriber != null)
+            try
             {
-                var subscribed = await _clientEventSubscriber.SubscribeToSessionAsync(sessionId, cancellationToken);
-                if (subscribed)
-                {
-                    _logger.LogDebug("Subscribed to client events for session {SessionId}", sessionId);
+                var topic = $"{SESSION_TOPIC_PREFIX}{sessionId}";
+                // Use deterministic queue name based on session ID for reconnection support
+                // Queue survives disconnect with TTL matching reconnection window - messages buffer during disconnect
+                var queueName = $"session.events.{sessionId}";
+                var subscription = await _messageSubscriber.SubscribeDynamicRawAsync(
+                    topic: topic,
+                    handler: (bytes, ct) => HandleClientEventAsync(sessionId, bytes),
+                    exchange: CLIENT_EVENTS_EXCHANGE,
+                    exchangeType: SubscriptionExchangeType.Direct,
+                    queueName: queueName,
+                    queueTtl: RECONNECTION_WINDOW,
+                    cancellationToken: cancellationToken);
 
-                    // CRITICAL: Publish session.connected event AFTER RabbitMQ subscription
-                    // This ensures the exchange exists before any service tries to publish to it
-                    // Fixes race condition where services publish to non-existent exchange (crashes RabbitMQ channel)
-                    var sessionConnectedEvent = new SessionConnectedEvent
+                _sessionSubscriptions[sessionId] = subscription;
+                _logger.LogDebug("Subscribed to client events for session {SessionId} on queue {QueueName} (TTL: {TtlMinutes}min)",
+                    sessionId, queueName, RECONNECTION_WINDOW.TotalMinutes);
+
+                // CRITICAL: Publish session.connected event AFTER RabbitMQ subscription
+                // This ensures the exchange exists before any service tries to publish to it
+                // Fixes race condition where services publish to non-existent exchange (crashes RabbitMQ channel)
+                var sessionConnectedEvent = new SessionConnectedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = accountId ?? Guid.Empty,
+                    Roles = userRoles?.ToList(),
+                    Authorizations = authorizations?.ToList(),
+                    ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
+                        ? instanceGuid : (Guid?)null,
+                    PeerGuid = connectionState.PeerGuid
+                };
+                await _messageBus.TryPublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
+                _logger.LogInformation("Published session.connected event for session {SessionId} with PeerGuid {PeerGuid}",
+                    sessionId, connectionState.PeerGuid);
+
+                // Add to account session index for distributed lookup
+                if (accountId.HasValue && accountId.Value != Guid.Empty)
+                {
+                    await _sessionManager.AddSessionToAccountAsync(accountId.Value, sessionId);
+                }
+
+                // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
+                // Shortcuts don't survive reconnection - services must re-evaluate and re-publish them
+                // Note: PeerGuid is a NEW GUID for this connection - peers must be notified of the change
+                if (isReconnection)
+                {
+                    var sessionReconnectedEvent = new SessionReconnectedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
-                        SessionId = sessionId,
-                        AccountId = accountId?.ToString() ?? string.Empty,
+                        SessionId = Guid.Parse(sessionId),
+                        AccountId = accountId ?? Guid.Empty,
                         Roles = userRoles?.ToList(),
                         Authorizations = authorizations?.ToList(),
-                        ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
-                            ? instanceGuid : (Guid?)null
-                    };
-                    await _messageBus.PublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
-                    _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
-
-                    // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
-                    // Shortcuts don't survive reconnection - services must re-evaluate and re-publish them
-                    if (isReconnection)
-                    {
-                        var sessionReconnectedEvent = new SessionReconnectedEvent
+                        PreviousDisconnectAt = connectionState.DisconnectedAt,
+                        PeerGuid = connectionState.PeerGuid,
+                        ReconnectionContext = new Dictionary<string, object>
                         {
-                            EventId = Guid.NewGuid(),
-                            Timestamp = DateTimeOffset.UtcNow,
-                            SessionId = sessionId,
-                            AccountId = accountId?.ToString() ?? string.Empty,
-                            Roles = userRoles?.ToList(),
-                            Authorizations = authorizations?.ToList(),
-                            PreviousDisconnectAt = connectionState.DisconnectedAt,
-                            ReconnectionContext = new Dictionary<string, object>
-                            {
-                                ["connect_instance_id"] = _instanceId
-                            }
-                        };
-                        await _messageBus.PublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
-                        _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to subscribe to client events for session {SessionId}", sessionId);
-                }
-            }
-
-            // OBSOLETE: Redis event queue - transitional code only
-            // Primary buffering is now handled by RabbitMQ queue (see ClientEventRabbitMQSubscriber).
-            // When we re-subscribe above, RabbitMQ delivers pending messages automatically.
-            // This Redis code only handles events queued BEFORE the architecture change.
-            // TODO: Remove this section once RabbitMQ buffering is confirmed stable in production.
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (_clientEventQueueManager != null)
-            {
-                var queuedEvents = await _clientEventQueueManager.DequeueEventsAsync(sessionId, cancellationToken);
-                if (queuedEvents.Count > 0)
-                {
-                    _logger.LogInformation("Delivering {Count} LEGACY Redis-queued events to session {SessionId}",
-                        queuedEvents.Count, sessionId);
-
-                    foreach (var eventPayload in queuedEvents)
-                    {
-                        var eventMessage = new BinaryMessage(
-                            flags: MessageFlags.Event,
-                            channel: 0,
-                            sequenceNumber: 0,
-                            serviceGuid: Guid.Empty,
-                            messageId: GuidGenerator.GenerateMessageId(),
-                            payload: eventPayload
-                        );
-
-                        var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, cancellationToken);
-                        if (!sent)
-                        {
-                            _logger.LogWarning("Failed to deliver legacy queued event to session {SessionId}", sessionId);
-                            break;
+                            ["connect_instance_id"] = _instanceId
                         }
-                    }
+                    };
+                    await _messageBus.TryPublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
+                    _logger.LogInformation("Published session.reconnected event for session {SessionId} with new PeerGuid {PeerGuid} - services should re-publish shortcuts",
+                        sessionId, connectionState.PeerGuid);
                 }
             }
-#pragma warning restore CS0618
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to subscribe to client events for session {SessionId}", sessionId);
+            }
 
             // Capability manifest is delivered via event-driven flow:
             // 1. session.connected event published above
-            // 2. Permissions compiles capabilities and publishes SessionCapabilitiesEvent
+            // 2. Permission compiles capabilities and publishes SessionCapabilitiesEvent
             // 3. RabbitMQ subscriber receives event and calls ProcessCapabilitiesAsync
             // 4. ProcessCapabilitiesAsync sends the manifest with real APIs
             // DO NOT send an empty placeholder manifest here - it causes race conditions
@@ -683,7 +869,7 @@ public partial class ConnectService : IConnectService
             var isForcedDisconnect = connection?.Metadata?.ContainsKey("forced_disconnect") == true;
 
             // CRITICAL: Publish session.disconnected event BEFORE unsubscribing from RabbitMQ
-            // This ensures Permissions removes session from activeConnections before the exchange is torn down
+            // This ensures Permission removes session from activeConnections before the exchange is torn down
             // Without this, services could still try to publish to the session during the brief cleanup window
             try
             {
@@ -691,14 +877,20 @@ public partial class ConnectService : IConnectService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = accountId?.ToString(),
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = accountId ?? Guid.Empty,
                     Reconnectable = !isForcedDisconnect,
                     Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
                 };
-                await _messageBus.PublishAsync("session.disconnected", sessionDisconnectedEvent);
+                await _messageBus.TryPublishAsync("session.disconnected", sessionDisconnectedEvent);
                 _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
                     sessionId, !isForcedDisconnect);
+
+                // Remove from account session index
+                if (accountId.HasValue && accountId.Value != Guid.Empty)
+                {
+                    await _sessionManager.RemoveSessionFromAccountAsync(accountId.Value, sessionId);
+                }
             }
             catch (Exception ex)
             {
@@ -709,7 +901,7 @@ public partial class ConnectService : IConnectService
 
             // Remove from connection manager - use instance-matching removal to prevent
             // race condition during session subsume where old connection's cleanup could
-            // accidentally remove a new connection that replaced it (Tenet 4 compliance)
+            // accidentally remove a new connection that replaced it (FOUNDATION TENETS compliance)
             var wasRemoved = _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
 
             // CRITICAL: If wasRemoved is false, this connection was SUBSUMED by a new connection
@@ -722,15 +914,15 @@ public partial class ConnectService : IConnectService
                 _logger.LogDebug("Session {SessionId} was subsumed by new connection - skipping cleanup", sessionId);
                 // Skip all cleanup - new connection owns this session now
             }
-            else if (_sessionManager != null)
+            else
             {
                 // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
                 if (isForcedDisconnect)
                 {
                     // Forced disconnect - unsubscribe from RabbitMQ and clean up immediately
-                    if (_clientEventSubscriber != null)
+                    if (_sessionSubscriptions.TryRemove(sessionId, out var subscription))
                     {
-                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        await subscription.DisposeAsync();
                         _logger.LogDebug("Unsubscribed from client events for forced disconnect session {SessionId}", sessionId);
                     }
 
@@ -744,22 +936,22 @@ public partial class ConnectService : IConnectService
                     // Cancel RabbitMQ consumer - queue will buffer messages automatically
                     // RabbitMQ handles buffering natively: queue persists, messages accumulate
                     // On reconnect, we re-subscribe and get all pending messages from queue
-                    if (_clientEventSubscriber != null)
+                    if (_sessionSubscriptions.TryRemove(sessionId, out var subscription))
                     {
-                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        await subscription.DisposeAsync();
                         _logger.LogDebug("Cancelled RabbitMQ consumer for session {SessionId} - queue will buffer messages",
                             sessionId);
                     }
 
                     var reconnectionToken = connectionState.InitiateReconnectionWindow(
-                        reconnectionWindowMinutes: 5,
+                        reconnectionWindowMinutes: (int)RECONNECTION_WINDOW.TotalMinutes,
                         userRoles: userRoles);
 
                     // Store reconnection state in Redis
                     await _sessionManager.InitiateReconnectionWindowAsync(
                         sessionId,
                         reconnectionToken,
-                        TimeSpan.FromMinutes(5),
+                        RECONNECTION_WINDOW,
                         userRoles);
 
                     // Publish disconnect event with reconnection info
@@ -786,7 +978,7 @@ public partial class ConnectService : IConnectService
                     {
                         var disconnectNotification = new
                         {
-                            event_name = "connect.disconnect_notification",
+                            eventName = "connect.disconnect_notification",
                             reconnectionToken = connectionState.ReconnectionToken,
                             expiresAt = connectionState.ReconnectionExpiresAt?.ToString("O"),
                             reconnectable = true,
@@ -845,6 +1037,13 @@ public partial class ConnectService : IConnectService
 
             _logger.LogDebug("Binary message from session {SessionId}: {Message}",
                 sessionId, message.ToString());
+
+            // RPC RESPONSE INTERCEPTION: Check if this is a response to a pending RPC
+            if (message.IsResponse && _pendingRPCs.TryRemove(message.MessageId, out var pendingRPC))
+            {
+                await ForwardRPCResponseAsync(message, pendingRPC, sessionId, cancellationToken);
+                return;
+            }
 
             // Analyze message for routing
             var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
@@ -938,6 +1137,22 @@ public partial class ConnectService : IConnectService
             {
                 await RouteToClientAsync(message, routeInfo, sessionId, cancellationToken);
             }
+            else if (routeInfo.RouteType == RouteType.Broadcast)
+            {
+                // Broadcast: Send to all connected peers (except sender)
+                // Mode enforcement: External mode rejects broadcast with BroadcastNotAllowed
+                if (_connectionMode == "external")
+                {
+                    _logger.LogWarning("Broadcast rejected in External mode for session {SessionId}", sessionId);
+                    var errorResponse = MessageRouter.CreateErrorResponse(
+                        message, ResponseCodes.BroadcastNotAllowed, "Broadcast not allowed in External mode");
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
+                // Relayed or Internal mode: Allow broadcast
+                await RouteToBroadcastAsync(message, routeInfo, sessionId, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
@@ -1025,8 +1240,12 @@ public partial class ConnectService : IConnectService
                 // Use static cached Accept header to avoid per-request allocation
                 request.Headers.Accept.Add(s_jsonAcceptHeader);
 
-                // Pass client's WebSocket session ID to downstream services
-                // This enables services like Voice to set permissions for the correct client session
+                // TRACING ONLY: Pass client's WebSocket session ID to downstream services for request correlation.
+                // WARNING: This header is ONLY for distributed tracing and logging correlation.
+                // DO NOT use this for ownership, attribution, or access control decisions.
+                // For ownership/audit trail, services must receive an explicit "owner" field in request bodies
+                // containing either a service name (for service-initiated operations) or an accountId
+                // (for user-initiated operations).
                 request.Headers.Add("X-Bannou-Session-Id", sessionId);
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning
@@ -1157,8 +1376,15 @@ public partial class ConnectService : IConnectService
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
+        // ServiceName must be validated by caller before invoking this method
+        if (routeInfo.ServiceName == null)
+        {
+            throw new InvalidOperationException(
+                "HandleMetaRequestAsync called with null ServiceName - caller must validate");
+        }
+
         // Parse endpoint key: "serviceName:METHOD:/path"
-        var parts = routeInfo.ServiceName!.Split(':', 3);
+        var parts = routeInfo.ServiceName.Split(':', 3);
         if (parts.Length < 3)
         {
             _logger.LogWarning("Invalid endpoint key format for meta request: {EndpointKey}", routeInfo.ServiceName);
@@ -1208,7 +1434,9 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Routes a message to another WebSocket client (client-to-client communication).
+    /// Routes a message to another WebSocket client (peer-to-peer communication).
+    /// Uses the ServiceGuid from the message header to look up the target peer's connection.
+    /// The payload is forwarded zero-copy without deserialization.
     /// </summary>
     private async Task RouteToClientAsync(
         BinaryMessage message,
@@ -1218,33 +1446,51 @@ public partial class ConnectService : IConnectService
     {
         try
         {
-            var targetSessionId = routeInfo.TargetId;
-            if (string.IsNullOrEmpty(targetSessionId))
+            // For peer-to-peer routing, the ServiceGuid in the message header is the target peer's GUID
+            var targetPeerGuid = message.ServiceGuid;
+
+            if (targetPeerGuid == Guid.Empty)
             {
                 var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.ClientNotFound, "Target client ID not specified");
+                    message, ResponseCodes.ClientNotFound, "Target peer GUID not specified");
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
                 return;
             }
 
-            // Try to send message to target client
+            // Look up the target peer's session ID using the peer GUID registry
+            if (!_connectionManager.TryGetSessionIdByPeerGuid(targetPeerGuid, out var targetSessionId) || targetSessionId == null)
+            {
+                _logger.LogDebug("Peer GUID {PeerGuid} not found in registry for session {SessionId}",
+                    targetPeerGuid, sessionId);
+
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.ClientNotFound, $"Target peer {targetPeerGuid} not connected");
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                return;
+            }
+
+            _logger.LogDebug("Routing peer-to-peer message from {SourceSession} to peer {TargetPeerGuid} (session {TargetSession}), payload size {PayloadSize}",
+                sessionId, targetPeerGuid, targetSessionId, message.Payload.Length);
+
+            // Forward the message zero-copy to the target peer
             var sent = await _connectionManager.SendMessageAsync(targetSessionId, message, cancellationToken);
 
             if (!sent)
             {
                 var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.ClientNotFound, $"Target client {targetSessionId} not connected");
+                    message, ResponseCodes.ClientNotFound, $"Target peer {targetPeerGuid} disconnected");
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
             else if (message.ExpectsResponse)
             {
-                // For client-to-client, we send an acknowledgment that the message was delivered
+                // For peer-to-peer, send acknowledgment that the message was delivered
                 var ackPayload = new
                 {
                     status = "delivered",
-                    targetClient = targetSessionId,
+                    targetPeerGuid = targetPeerGuid.ToString(),
                     originalMessageId = message.MessageId
                 };
 
@@ -1256,16 +1502,154 @@ public partial class ConnectService : IConnectService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error routing message to client {TargetClient}", routeInfo.TargetId);
-            await PublishErrorEventAsync("RouteToClient", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, TargetClient = routeInfo.TargetId });
+            _logger.LogError(ex, "Error routing peer-to-peer message to {TargetPeerGuid}", message.ServiceGuid);
+            await PublishErrorEventAsync("RouteToClient", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, TargetPeerGuid = message.ServiceGuid });
 
             if (message.ExpectsResponse)
             {
                 var errorResponse = MessageRouter.CreateErrorResponse(
-                    message, ResponseCodes.RequestError, "Client routing failed");
+                    message, ResponseCodes.RequestError, "Peer routing failed");
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
+        }
+    }
+
+    /// <summary>
+    /// Routes a message to all connected WebSocket clients (broadcast).
+    /// Only allowed in Relayed and Internal connection modes - External mode blocks broadcast.
+    /// </summary>
+    private async Task RouteToBroadcastAsync(
+        BinaryMessage message,
+        MessageRouteInfo routeInfo,
+        string senderSessionId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get all active session IDs except sender
+            var allSessionIds = _connectionManager.GetActiveSessionIds()
+                .Where(id => id != senderSessionId)
+                .ToList();
+
+            _logger.LogDebug("Broadcasting message from session {SessionId} to {PeerCount} peers, payload size {PayloadSize}",
+                senderSessionId, allSessionIds.Count, message.Payload.Length);
+
+            if (allSessionIds.Count == 0)
+            {
+                _logger.LogDebug("No other peers to broadcast to from session {SessionId}", senderSessionId);
+
+                // If sender expects response, send acknowledgment with zero recipients
+                if (message.ExpectsResponse)
+                {
+                    var ackPayload = new
+                    {
+                        status = "broadcast_complete",
+                        recipientCount = 0,
+                        originalMessageId = message.MessageId
+                    };
+
+                    var ackMessage = BinaryMessage.CreateResponse(
+                        message, ResponseCodes.OK, Encoding.UTF8.GetBytes(BannouJson.Serialize(ackPayload)));
+
+                    await _connectionManager.SendMessageAsync(senderSessionId, ackMessage, cancellationToken);
+                }
+                return;
+            }
+
+            // Forward message to all peers (excluding sender) in parallel
+            var tasks = allSessionIds.Select(targetSessionId =>
+                _connectionManager.SendMessageAsync(targetSessionId, message, cancellationToken));
+
+            var results = await Task.WhenAll(tasks);
+            var successCount = results.Count(r => r);
+
+            _logger.LogInformation("Broadcast from {SessionId} sent to {SuccessCount}/{TotalCount} peers",
+                senderSessionId, successCount, allSessionIds.Count);
+
+            // If sender expects response, send acknowledgment
+            if (message.ExpectsResponse)
+            {
+                var ackPayload = new
+                {
+                    status = "broadcast_complete",
+                    recipientCount = successCount,
+                    originalMessageId = message.MessageId
+                };
+
+                var ackMessage = BinaryMessage.CreateResponse(
+                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(BannouJson.Serialize(ackPayload)));
+
+                await _connectionManager.SendMessageAsync(senderSessionId, ackMessage, cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting message from session {SessionId}", senderSessionId);
+            await PublishErrorEventAsync("RouteToBroadcast", ex.GetType().Name, ex.Message, details: new { SessionId = senderSessionId });
+
+            if (message.ExpectsResponse)
+            {
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.RequestError, "Broadcast failed");
+
+                await _connectionManager.SendMessageAsync(senderSessionId, errorResponse, cancellationToken);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Simplified message loop for Internal mode connections.
+    /// Only handles binary messages for peer routing and broadcast - no capability/event handling.
+    /// </summary>
+    private async Task HandleInternalModeMessageLoopAsync(
+        WebSocket webSocket,
+        string sessionId,
+        ConnectionState connectionState,
+        CancellationToken cancellationToken)
+    {
+        var buffer = new byte[65536];
+
+        try
+        {
+            while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
+            {
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    _logger.LogInformation("Internal mode: WebSocket close requested for session {SessionId}", sessionId);
+                    break;
+                }
+
+                connectionState.UpdateActivity();
+
+                if (result.MessageType == WebSocketMessageType.Binary)
+                {
+                    await HandleBinaryMessageAsync(sessionId, connectionState, buffer, result.Count, cancellationToken);
+                }
+                // Internal mode ignores text messages - binary protocol only
+            }
+        }
+        catch (WebSocketException wsEx)
+        {
+            _logger.LogWarning(wsEx, "Internal mode: WebSocket error for session {SessionId}: {Error}",
+                sessionId, wsEx.Message);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Internal mode: WebSocket operation cancelled for session {SessionId}", sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Internal mode: Unexpected error for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("InternalModeMessageLoop", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
+        }
+        finally
+        {
+            // Clean up connection
+            _connectionManager.RemoveConnection(sessionId);
+            _logger.LogInformation("Internal mode: Session {SessionId} disconnected", sessionId);
         }
     }
 
@@ -1314,6 +1698,7 @@ public partial class ConnectService : IConnectService
     /// </summary>
     public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
         // Register auth event handler (subscribes via MassTransit, not mesh Topics)
@@ -1334,33 +1719,9 @@ public partial class ConnectService : IConnectService
 
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
 
-        // Initialize direct RabbitMQ subscriber for session-specific client events
-        // TENET exception: mesh doesn't support dynamic runtime subscriptions
-        if (string.IsNullOrEmpty(_rabbitMqConnectionString))
-        {
-            _logger.LogWarning("CONNECT_RABBITMQ_CONNECTION_STRING not configured - client events will not be delivered");
-        }
-        else
-        {
-            _logger.LogInformation("Initializing client event RabbitMQ subscriber");
-            var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
-            _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
-                _rabbitMqConnectionString,
-                subscriberLogger,
-                HandleClientEventAsync,
-                _instanceId);
-
-            var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
-            if (subscriberInitialized)
-            {
-                _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to initialize RabbitMQ subscriber - client events will not be delivered");
-                _clientEventSubscriber = null;
-            }
-        }
+        // Client event subscriptions are created dynamically per-session via lib-messaging
+        // using SubscribeDynamicRawAsync when sessions connect
+        _logger.LogInformation("Client event subscriptions will be created per-session via lib-messaging");
     }
 
     #endregion
@@ -1386,16 +1747,16 @@ public partial class ConnectService : IConnectService
             {
                 if (eventData.EventType == AuthEventType.Login)
                 {
-                    // User logged in - Permissions service will automatically recompile capabilities
+                    // User logged in - Permission service will automatically recompile capabilities
                     // and push updated connect.capability_manifest to client
-                    _logger.LogDebug("Auth login event for session {SessionId} - capabilities will be updated by Permissions service",
+                    _logger.LogDebug("Auth login event for session {SessionId} - capabilities will be updated by Permission service",
                         eventData.SessionId);
                 }
                 else if (eventData.EventType == AuthEventType.Logout)
                 {
-                    // User logged out - Permissions service will automatically recompile capabilities
+                    // User logged out - Permission service will automatically recompile capabilities
                     // and push updated connect.capability_manifest to client
-                    _logger.LogDebug("Auth logout event for session {SessionId} - capabilities will be updated by Permissions service",
+                    _logger.LogDebug("Auth logout event for session {SessionId} - capabilities will be updated by Permission service",
                         eventData.SessionId);
 
                     // Optionally close the WebSocket connection on logout
@@ -1439,14 +1800,14 @@ public partial class ConnectService : IConnectService
 
             // Notify permission service that a new service was registered
             // This will trigger permission recompilation for all sessions
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "bannou-permission-recompile",
                 new PermissionRecompileEvent
                 {
                     EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     Reason = PermissionRecompileEventReason.Service_registered,
-                    ServiceId = eventData.ServiceId,
+                    ServiceId = eventData.ServiceName,
                     Metadata = new Dictionary<string, object>
                     {
                         { "triggeredBy", "connect-service" },
@@ -1546,11 +1907,22 @@ public partial class ConnectService : IConnectService
 
                 if (sent)
                 {
-                    _logger.LogDebug("Sent RPC message to client {ClientId}, waiting for response", eventData.ClientId);
+                    // Register pending RPC for response forwarding
+                    var now = DateTimeOffset.UtcNow;
+                    var pendingRPC = new PendingRPCInfo
+                    {
+                        ClientSessionId = eventData.ClientId,
+                        ServiceName = eventData.ServiceName ?? "unknown",
+                        ResponseChannel = eventData.ResponseChannel,
+                        ServiceGuid = eventData.ServiceGuid,
+                        SentAt = now,
+                        TimeoutAt = now.AddSeconds(eventData.TimeoutSeconds > 0 ? eventData.TimeoutSeconds : 30)
+                    };
 
-                    // TODO: Implement response timeout and forwarding back to service
-                    // The client response will come back through the normal WebSocket message handling
-                    // and should be routed back to the originating service via RabbitMQ
+                    _pendingRPCs[(ulong)eventData.MessageId] = pendingRPC;
+
+                    _logger.LogDebug("Sent RPC message {MessageId} to client {ClientId}, awaiting response for channel {ResponseChannel}",
+                        eventData.MessageId, eventData.ClientId, eventData.ResponseChannel);
 
                     return new { status = "sent", clientId = eventData.ClientId, messageId = eventData.MessageId };
                 }
@@ -1574,20 +1946,61 @@ public partial class ConnectService : IConnectService
         }
     }
 
+    /// <summary>
+    /// Forwards an RPC response from a client back to the originating service.
+    /// </summary>
+    private async Task ForwardRPCResponseAsync(
+        BinaryMessage response,
+        PendingRPCInfo pendingRPC,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug(
+            "Forwarding RPC response from session {SessionId} to service {ServiceName} via channel {ResponseChannel}",
+            sessionId, pendingRPC.ServiceName, pendingRPC.ResponseChannel);
+
+        try
+        {
+            // Create typed response event
+            var responseEvent = new ClientRPCResponseEvent
+            {
+                ClientId = sessionId,
+                ServiceName = pendingRPC.ServiceName,
+                ServiceGuid = pendingRPC.ServiceGuid,
+                MessageId = (long)response.MessageId,
+                Payload = response.Payload.ToArray(),
+                ResponseCode = response.ResponseCode,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            await _messageBus.TryPublishAsync(
+                pendingRPC.ResponseChannel,
+                responseEvent,
+                cancellationToken: cancellationToken);
+
+            _logger.LogDebug("RPC response forwarded to {ResponseChannel} for message {MessageId}",
+                pendingRPC.ResponseChannel, response.MessageId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to forward RPC response to {ResponseChannel}", pendingRPC.ResponseChannel);
+        }
+    }
+
     #endregion
 
     #region Helper Methods for Event Handling
 
     /// <summary>
     /// Handles client events received from RabbitMQ and routes them to WebSocket connections.
-    /// This is the callback invoked by ClientEventRabbitMQSubscriber when events arrive.
+    /// This is the callback invoked by lib-messaging's SubscribeDynamicRawAsync when events arrive.
     /// Internal events (like CapabilitiesRefreshEvent) are handled locally without forwarding to client.
     /// </summary>
     /// <remarks>
     /// <para>
     /// IMPORTANT: This method throws exceptions on delivery failure to trigger RabbitMQ message requeue.
-    /// The subscriber NACKs with requeue=true when this method throws, causing RabbitMQ to buffer
-    /// the message until the client reconnects.
+    /// The lib-messaging subscriber NACKs with requeue=false when this method throws.
+    /// Message buffering relies on RabbitMQ queue persistence during disconnect windows.
     /// </para>
     /// <para>
     /// Delivery failure cases:
@@ -1681,18 +2094,15 @@ public partial class ConnectService : IConnectService
 
             // Unwrap MassTransit envelope - MassTransit wraps messages with metadata,
             // and the actual event data is in the "message" property
-            if (root.TryGetProperty("message", out var messageElement))
+            if (root.TryGetProperty("message", out var messageElement) &&
+                messageElement.ValueKind == JsonValueKind.Object)
             {
                 root = messageElement;
             }
 
-            if (!root.TryGetProperty("event_name", out var eventNameElement))
+            if (!root.TryGetProperty("eventName", out var eventNameElement))
             {
-                // Also try Event_name (NSwag naming without JsonPropertyName)
-                if (!root.TryGetProperty("Event_name", out eventNameElement))
-                {
-                    return false; // Not a valid event, let normal handling proceed
-                }
+                return false; // Not a valid event, let normal handling proceed
             }
 
             var eventName = eventNameElement.GetString();
@@ -1703,7 +2113,7 @@ public partial class ConnectService : IConnectService
 
             // Handle SessionCapabilitiesEvent - extract permissions and send to client
             // Check both the EnumMember value and the C# enum name (JsonStringEnumConverter uses C# name)
-            if (eventName == "permissions.session_capabilities" ||
+            if (eventName == "permission.session_capabilities" ||
                 eventName == "Permissions_session_capabilities")
             {
                 _logger.LogDebug("Handling SessionCapabilitiesEvent for session {SessionId}", sessionId);
@@ -1833,10 +2243,7 @@ public partial class ConnectService : IConnectService
             _connectionManager.RemoveConnection(sessionId);
 
             // Clean up Redis session data (forced disconnect = no reconnection)
-            if (_sessionManager != null)
-            {
-                await _sessionManager.RemoveSessionAsync(sessionId);
-            }
+            await _sessionManager.RemoveSessionAsync(sessionId);
 
             _logger.LogInformation("Force disconnected session {SessionId}: {Reason}", sessionId, reason);
         }
@@ -1869,7 +2276,7 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Placeholder for session capability initialization. Capabilities are delivered via
-    /// SessionCapabilitiesEvent from Permissions service after session.connected event.
+    /// SessionCapabilitiesEvent from Permission service after session.connected event.
     /// This method exists for reconnection scenarios where existing mappings may be restored.
     /// </summary>
     internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
@@ -1881,7 +2288,7 @@ public partial class ConnectService : IConnectService
         await Task.CompletedTask; // Satisfy async requirement for sync method
         // Capabilities are delivered via event-driven flow:
         // 1. Connect publishes session.connected with roles/authorizations
-        // 2. Permissions receives event, compiles capabilities, publishes SessionCapabilitiesEvent
+        // 2. Permission receives event, compiles capabilities, publishes SessionCapabilitiesEvent
         // 3. Connect receives SessionCapabilitiesEvent and calls ProcessCapabilitiesAsync
         //
         // For reconnection scenarios, existing mappings are loaded from session manager.
@@ -1929,7 +2336,7 @@ public partial class ConnectService : IConnectService
                 var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
                 var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
 
-                // CRITICAL: Skip endpoints with path templates (e.g., /accounts/{accountId})
+                // CRITICAL: Skip endpoints with path templates (e.g., /account/{accountId})
                 // WebSocket binary protocol requires POST endpoints with JSON body parameters
                 // Template paths would require Connect to parse the payload, breaking zero-copy routing
                 if (path.Contains('{'))
@@ -1981,11 +2388,12 @@ public partial class ConnectService : IConnectService
 
             var capabilityManifest = new
             {
-                event_name = "connect.capability_manifest",
+                eventName = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                peerGuid = connectionState.PeerGuid.ToString()
             };
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);
@@ -2024,9 +2432,9 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Processes capabilities received from Permissions service via SessionCapabilitiesEvent.
+    /// Processes capabilities received from Permission service via SessionCapabilitiesEvent.
     /// Generates client-salted GUIDs, updates connection state, and sends manifest to client.
-    /// NO API call to Permissions - capabilities are passed directly from the event.
+    /// NO API call to Permission service - capabilities are passed directly from the event.
     /// </summary>
     private async Task ProcessCapabilitiesAsync(string sessionId, Dictionary<string, List<string>> permissions, string reason, CancellationToken cancellationToken = default)
     {
@@ -2123,15 +2531,24 @@ public partial class ConnectService : IConnectService
                 });
             }
 
-            var capabilityManifest = new
+            // Build manifest as dictionary for conditional peerGuid inclusion
+            // External mode: No peerGuid (clients cannot route to each other)
+            // Relayed/Internal mode: Include peerGuid (enables peer-to-peer routing)
+            var capabilityManifest = new Dictionary<string, object>
             {
-                event_name = "connect.capability_manifest",
-                sessionId = sessionId,
-                availableAPIs = availableApis,
-                version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                reason = reason
+                ["eventName"] = "connect.capability_manifest",
+                ["sessionId"] = sessionId,
+                ["availableAPIs"] = availableApis,
+                ["version"] = 1,
+                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["reason"] = reason
             };
+
+            // Include peerGuid only in relayed/internal modes where peer routing is supported
+            if (_connectionMode != "external")
+            {
+                capabilityManifest["peerGuid"] = connectionState.PeerGuid.ToString();
+            }
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);
             var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
@@ -2173,10 +2590,7 @@ public partial class ConnectService : IConnectService
             {
                 _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
                 // Still clean up Redis in case session exists there
-                if (_sessionManager != null)
-                {
-                    await _sessionManager.RemoveSessionAsync(sessionId);
-                }
+                await _sessionManager.RemoveSessionAsync(sessionId);
                 return;
             }
 
@@ -2204,10 +2618,7 @@ public partial class ConnectService : IConnectService
             _connectionManager.RemoveConnectionIfMatch(sessionId, connection.WebSocket);
 
             // Clean up Redis session data (forced disconnect = no reconnection)
-            if (_sessionManager != null)
-            {
-                await _sessionManager.RemoveSessionAsync(sessionId);
-            }
+            await _sessionManager.RemoveSessionAsync(sessionId);
         }
         catch (Exception ex)
         {
@@ -2226,7 +2637,7 @@ public partial class ConnectService : IConnectService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
@@ -2240,7 +2651,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Connect service permissions");
-            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permission");
             throw;
         }
     }
@@ -2274,38 +2685,35 @@ public partial class ConnectService : IConnectService
                 return;
             }
 
-            // Extract route_guid
-            if (!shortcutElement.TryGetProperty("route_guid", out var routeGuidElement) &&
-                !shortcutElement.TryGetProperty("Route_guid", out routeGuidElement))
+            // Extract routeGuid
+            if (!shortcutElement.TryGetProperty("routeGuid", out var routeGuidElement))
             {
-                _logger.LogWarning("Shortcut missing route_guid for session {SessionId}", sessionId);
+                _logger.LogWarning("Shortcut missing routeGuid for session {SessionId}", sessionId);
                 return;
             }
 
             if (!Guid.TryParse(routeGuidElement.GetString(), out var routeGuid))
             {
-                _logger.LogWarning("Invalid route_guid format for session {SessionId}", sessionId);
+                _logger.LogWarning("Invalid routeGuid format for session {SessionId}", sessionId);
                 return;
             }
 
-            // Extract target_guid
-            if (!shortcutElement.TryGetProperty("target_guid", out var targetGuidElement) &&
-                !shortcutElement.TryGetProperty("Target_guid", out targetGuidElement))
+            // Extract targetGuid
+            if (!shortcutElement.TryGetProperty("targetGuid", out var targetGuidElement))
             {
-                _logger.LogWarning("Shortcut missing target_guid for session {SessionId}", sessionId);
+                _logger.LogWarning("Shortcut missing targetGuid for session {SessionId}", sessionId);
                 return;
             }
 
             if (!Guid.TryParse(targetGuidElement.GetString(), out var targetGuid))
             {
-                _logger.LogWarning("Invalid target_guid format for session {SessionId}", sessionId);
+                _logger.LogWarning("Invalid targetGuid format for session {SessionId}", sessionId);
                 return;
             }
 
-            // Extract bound_payload (can be base64 encoded or raw JSON string)
+            // Extract boundPayload (can be base64 encoded or raw JSON string)
             byte[] boundPayload = Array.Empty<byte>();
-            if (shortcutElement.TryGetProperty("bound_payload", out var payloadElement) ||
-                shortcutElement.TryGetProperty("Bound_payload", out payloadElement))
+            if (shortcutElement.TryGetProperty("boundPayload", out var payloadElement))
             {
                 var payloadStr = payloadElement.GetString();
                 if (!string.IsNullOrEmpty(payloadStr))
@@ -2337,39 +2745,35 @@ public partial class ConnectService : IConnectService
 
             if (hasMetadata)
             {
-                // Parse name
+                // Parse name (optional metadata)
                 if (metadataElement.TryGetProperty("name", out var nameElement) ||
                     metadataElement.TryGetProperty("Name", out nameElement))
                 {
-                    shortcutData.Name = nameElement.GetString() ?? string.Empty;
+                    shortcutData.Name = nameElement.GetString();
                 }
 
-                // Parse source_service
-                if (metadataElement.TryGetProperty("source_service", out var sourceElement) ||
-                    metadataElement.TryGetProperty("Source_service", out sourceElement))
+                // Parse sourceService (optional metadata)
+                if (metadataElement.TryGetProperty("sourceService", out var sourceElement))
                 {
-                    shortcutData.SourceService = sourceElement.GetString() ?? string.Empty;
+                    shortcutData.SourceService = sourceElement.GetString();
                 }
 
-                // Parse target_service (required for shortcut-only endpoints)
-                if (metadataElement.TryGetProperty("target_service", out var targetServiceElement) ||
-                    metadataElement.TryGetProperty("Target_service", out targetServiceElement))
+                // Parse targetService (required - validation at end catches null/empty)
+                if (metadataElement.TryGetProperty("targetService", out var targetServiceElement))
                 {
-                    shortcutData.TargetService = targetServiceElement.GetString() ?? string.Empty;
+                    shortcutData.TargetService = targetServiceElement.GetString();
                 }
 
-                // Parse target_method (required for routing, e.g., "POST")
-                if (metadataElement.TryGetProperty("target_method", out var targetMethodElement) ||
-                    metadataElement.TryGetProperty("Target_method", out targetMethodElement))
+                // Parse targetMethod (required - validation at end catches null/empty)
+                if (metadataElement.TryGetProperty("targetMethod", out var targetMethodElement))
                 {
-                    shortcutData.TargetMethod = targetMethodElement.GetString() ?? string.Empty;
+                    shortcutData.TargetMethod = targetMethodElement.GetString();
                 }
 
-                // Parse target_endpoint (required for routing, e.g., "/sessions/join")
-                if (metadataElement.TryGetProperty("target_endpoint", out var targetEndpointElement) ||
-                    metadataElement.TryGetProperty("Target_endpoint", out targetEndpointElement))
+                // Parse targetEndpoint (required - validation at end catches null/empty)
+                if (metadataElement.TryGetProperty("targetEndpoint", out var targetEndpointElement))
                 {
-                    shortcutData.TargetEndpoint = targetEndpointElement.GetString() ?? string.Empty;
+                    shortcutData.TargetEndpoint = targetEndpointElement.GetString();
                 }
 
                 // Parse optional fields
@@ -2379,8 +2783,7 @@ public partial class ConnectService : IConnectService
                     shortcutData.Description = descElement.GetString();
                 }
 
-                if (metadataElement.TryGetProperty("display_name", out var displayElement) ||
-                    metadataElement.TryGetProperty("Display_name", out displayElement))
+                if (metadataElement.TryGetProperty("displayName", out var displayElement))
                 {
                     shortcutData.DisplayName = displayElement.GetString();
                 }
@@ -2480,9 +2883,8 @@ public partial class ConnectService : IConnectService
                 reason = reasonElement.GetString();
             }
 
-            // Check for single shortcut revocation by route_guid
-            if (root.TryGetProperty("route_guid", out var routeGuidElement) ||
-                root.TryGetProperty("Route_guid", out routeGuidElement))
+            // Check for single shortcut revocation by routeGuid
+            if (root.TryGetProperty("routeGuid", out var routeGuidElement))
             {
                 var routeGuidStr = routeGuidElement.GetString();
                 if (!string.IsNullOrEmpty(routeGuidStr) && Guid.TryParse(routeGuidStr, out var routeGuid))
@@ -2500,8 +2902,7 @@ public partial class ConnectService : IConnectService
                 }
             }
             // Check for bulk revocation by source service
-            else if (root.TryGetProperty("revoke_by_service", out var serviceElement) ||
-                    root.TryGetProperty("Revoke_by_service", out serviceElement))
+            else if (root.TryGetProperty("revokeByService", out var serviceElement))
             {
                 var sourceService = serviceElement.GetString();
                 if (!string.IsNullOrEmpty(sourceService))
@@ -2513,7 +2914,7 @@ public partial class ConnectService : IConnectService
             }
             else
             {
-                _logger.LogWarning("ShortcutRevokedEvent missing both route_guid and revoke_by_service for session {SessionId}", sessionId);
+                _logger.LogWarning("ShortcutRevokedEvent missing both routeGuid and revokeByService for session {SessionId}", sessionId);
                 return;
             }
 
@@ -2599,11 +3000,12 @@ public partial class ConnectService : IConnectService
 
             var capabilityManifest = new
             {
-                event_name = "connect.capability_manifest",
+                eventName = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                peerGuid = connectionState.PeerGuid.ToString()
             };
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);
@@ -2653,7 +3055,7 @@ public partial class ConnectService : IConnectService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "connect",
+            serviceName: "connect",
             operation: operation,
             errorType: errorType,
             message: message,

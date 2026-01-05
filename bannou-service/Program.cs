@@ -5,15 +5,10 @@ using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebSockets;
 using Serilog;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
-[assembly: ApiController]
-[assembly: InternalsVisibleTo("unit-tests")]
-[assembly: InternalsVisibleTo("lib-testing")]
 namespace BeyondImmersion.BannouService;
 
 /// <summary>
@@ -143,7 +138,7 @@ public static class Program
                     if (string.IsNullOrEmpty(Configuration.JwtSecret))
                     {
                         throw new InvalidOperationException(
-                            "JWT secret not configured. Set BANNOU_JWTSECRET environment variable.");
+                            "JWT secret not configured. Set BANNOU_JWT_SECRET environment variable.");
                     }
 
                     var key = System.Text.Encoding.ASCII.GetBytes(Configuration.JwtSecret);
@@ -198,9 +193,6 @@ public static class Program
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { });
 
-            // NOTE: mesh client is already registered by AddBannouServices() above with proper serializer config
-            // Do NOT call Addmesh client() here - it would be ignored due to TryAddSingleton pattern
-
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();
 
@@ -241,6 +233,15 @@ public static class Program
                         .AddSerilog()
                         .SetMinimumLevel(Configuration.WebHostLoggingLevel);
                 });
+
+            // Enable DI validation to catch missing service registrations at startup
+            // ValidateScopes: Ensures scoped services aren't resolved from root provider
+            // ValidateOnBuild: Validates all service registrations when Build() is called
+            webAppBuilder.Host.UseDefaultServiceProvider(options =>
+            {
+                options.ValidateScopes = true;
+                options.ValidateOnBuild = true;
+            });
         }
         catch (Exception exc)
         {
@@ -275,16 +276,16 @@ public static class Program
             webApp.Use(async (context, next) =>
             {
                 var requestId = Guid.NewGuid().ToString();
-                Logger.Log(LogLevel.Debug, null, $"[{requestId}] Request starting: {context.Request.Method} {context.Request.Path}");
+                Logger.Log(LogLevel.Debug, null, "Request {RequestId} starting: {Method} {Path}", requestId, context.Request.Method, context.Request.Path);
 
                 try
                 {
                     await next();
-                    Logger.Log(LogLevel.Debug, null, $"[{requestId}] Request completed: Status {context.Response.StatusCode}");
+                    Logger.Log(LogLevel.Debug, null, "Request {RequestId} completed: Status {StatusCode}", requestId, context.Response.StatusCode);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Log(LogLevel.Error, ex, $"[{requestId}] Request failed with exception");
+                    Logger.Log(LogLevel.Error, ex, "Request {RequestId} failed with exception", requestId);
                     throw;
                 }
             });
@@ -355,13 +356,9 @@ public static class Program
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Create heartbeat manager for mesh connectivity check and ongoing health reporting
-            // HEARTBEAT_ENABLED defaults to true - only set to false for minimal infrastructure testing
+            // HeartbeatEnabled defaults to true - only set to false for minimal infrastructure testing
             // where Bannou pub/sub components are intentionally not configured
-            var heartbeatEnabledEnv = Environment.GetEnvironmentVariable("HEARTBEAT_ENABLED");
-            var heartbeatEnabled = string.IsNullOrEmpty(heartbeatEnabledEnv) ||
-                !string.Equals(heartbeatEnabledEnv, "false", StringComparison.OrdinalIgnoreCase);
-
-            if (heartbeatEnabled)
+            if (Configuration.HeartbeatEnabled)
             {
                 if (PluginLoader == null)
                 {
@@ -376,7 +373,7 @@ public static class Program
                 HeartbeatManager = new ServiceHeartbeatManager(messageBus, heartbeatLogger, PluginLoader, mappingResolver, Configuration);
 
                 // Initialize mesh invocation client for service-to-service communication
-                MeshInvocationClient = webApp.Services.GetService<IMeshInvocationClient>();
+                MeshInvocationClient = webApp.Services.GetRequiredService<IMeshInvocationClient>();
 
                 // Wait for message bus connectivity using heartbeat publishing as the test
                 // Publishing a heartbeat proves RabbitMQ pub/sub readiness
@@ -421,10 +418,10 @@ public static class Program
                 HeartbeatManager.StartPeriodicHeartbeats();
 
                 // Register service permissions now that Bannou pub/sub is confirmed ready
-                // This ensures permission registration events are delivered to the Permissions service
+                // This ensures permission registration events are delivered to the Permission service
                 if (PluginLoader != null)
                 {
-                    Logger.Log(LogLevel.Information, null, "Registering service permissions with Permissions service...");
+                    Logger.Log(LogLevel.Information, null, "Registering service permissions with Permission service...");
                     if (!await PluginLoader.RegisterServicePermissionsAsync())
                     {
                         Logger.Log(LogLevel.Error, null, "Service permission registration failed - exiting application.");
@@ -434,7 +431,7 @@ public static class Program
             }
             else
             {
-                Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via HEARTBEAT_ENABLED=false (infrastructure testing mode).");
+                Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via BANNOU_HEARTBEAT_ENABLED=false (infrastructure testing mode).");
                 // Do NOT register permissions here: infra profile uses empty components (no pubsub),
                 // and permission registration publishes over pubsub. Calling it would fail startup.
             }
@@ -512,7 +509,7 @@ public static class Program
         if (pluginsLoaded == 0)
             Logger.Log(LogLevel.Warning, null, "No plugins were loaded. Running with existing IBannouService implementations only.");
         else
-            Logger.Log(LogLevel.Information, null, $"Successfully loaded {pluginsLoaded} plugins.");
+            Logger.Log(LogLevel.Information, null, "Successfully loaded {PluginsLoaded} plugins.", pluginsLoaded);
 
         return true;
     }
@@ -607,7 +604,7 @@ public static class Program
             }
             catch (Exception exc)
             {
-                Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
+                Logger.Log(LogLevel.Error, exc, "Failed to load assembly at path: {AssemblyPath}", assemblyPath);
             }
         }
 
@@ -660,18 +657,11 @@ public static class Program
 
                     if (mappingsResponse?.Mappings != null)
                     {
-                        var resolver = webApp.Services.GetService<IServiceAppMappingResolver>();
-                        if (resolver != null)
-                        {
-                            resolver.ImportMappings(mappingsResponse.Mappings);
-                            Logger.Log(LogLevel.Information, null,
-                                $"Successfully imported {mappingsResponse.TotalServices} service mappings from {sourceAppId}");
-                            return true;
-                        }
-                        else
-                        {
-                            Logger.Log(LogLevel.Error, null, "ServiceAppMappingResolver not found in DI container");
-                        }
+                        var resolver = webApp.Services.GetRequiredService<IServiceAppMappingResolver>();
+                        resolver.ImportMappings(mappingsResponse.Mappings);
+                        Logger.Log(LogLevel.Information, null,
+                            $"Successfully imported {mappingsResponse.TotalServices} service mappings from {sourceAppId}");
+                        return true;
                     }
                 }
                 else

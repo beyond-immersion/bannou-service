@@ -1,4 +1,3 @@
-using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -13,12 +12,11 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
     public override string PluginName => "connect";
     public override string DisplayName => "Connect Service";
 
-    [Obsolete]
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Register named HttpClient for mesh proxying (Tenet 4: use IHttpClientFactory)
+        // Register named HttpClient for mesh proxying (FOUNDATION TENETS: use IHttpClientFactory)
         services.AddHttpClient(ConnectService.HttpClientName, client =>
         {
             // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
@@ -31,12 +29,6 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
         // Uses lib-state (connect-statestore) for state storage
         services.AddSingleton<ISessionManager, BannouSessionManager>();
         Logger?.LogDebug("Registered BannouSessionManager for session state management");
-
-        // Register client event queue manager for disconnection handling
-        // Uses lib-state to queue events during client reconnection window
-        // MUST be Singleton because it's used from RabbitMQ consumer callbacks (outside request scope)
-        services.AddSingleton<ClientEventQueueManager>();
-        Logger?.LogDebug("Registered ClientEventQueueManager for event queuing");
 
         Logger?.LogDebug("Service dependencies configured");
     }

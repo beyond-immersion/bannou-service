@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Plugins;
@@ -47,7 +48,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Register the mesh invocation client for service-to-service calls
         // Uses IMeshRedisManager directly (NOT IMeshClient) to avoid circular dependency:
-        // - All generated clients (AccountsClient, etc.) need IMeshInvocationClient
+        // - All generated clients (AccountClient, etc.) need IMeshInvocationClient
         // - If MeshInvocationClient needed IMeshClient, and MeshClient needs IMeshInvocationClient = deadlock
         services.AddSingleton<IMeshInvocationClient>(sp =>
         {
@@ -61,35 +62,19 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("Starting Mesh service");
+        Logger?.LogInformation("Starting Mesh service{Mode}", _useLocalRouting ? " (local routing)" : "");
 
-        // Initialize Redis connection first (Mesh uses direct Redis for service discovery)
-        // In local routing mode, this is a no-op that always succeeds
-        _redisManager = ServiceProvider?.GetService<IMeshRedisManager>();
-        if (_redisManager != null)
+        var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
+        _redisManager = serviceProvider.GetRequiredService<IMeshRedisManager>();
+
+        if (!await _redisManager.InitializeAsync(CancellationToken.None))
         {
-            if (_useLocalRouting)
-            {
-                Logger?.LogInformation("Mesh using local routing mode (no Redis)");
-            }
-            else
-            {
-                Logger?.LogInformation("Initializing Mesh Redis connection...");
-            }
-
-            var redisConnected = await _redisManager.InitializeAsync(CancellationToken.None);
-            if (!redisConnected)
-            {
-                Logger?.LogWarning("Mesh Redis connection not established - service will operate in degraded mode");
-            }
-            else if (!_useLocalRouting)
-            {
-                // Register this instance as a mesh endpoint so other services can discover us
-                await RegisterMeshEndpointAsync();
-            }
+            Logger?.LogError("Mesh initialization failed");
+            return false;
         }
 
-        // Call base to resolve service and call IBannouService.OnStartAsync
+        await RegisterMeshEndpointAsync();
+
         return await base.OnStartAsync();
     }
 
@@ -105,18 +90,16 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             return;
         }
 
-        // Get app configuration for app-id
-        var appConfig = ServiceProvider?.GetService<AppConfiguration>();
-        var appId = appConfig?.AppId ?? "bannou";
+        var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during RegisterMeshEndpointAsync");
 
-        // Determine host and port from environment or defaults
-        // In Docker Compose, the service name is the hostname
-        var endpointHost = Environment.GetEnvironmentVariable("MESH_ENDPOINT_HOST")
-            ?? appConfig?.AppId
-            ?? "bannou";
-        var endpointPort = int.TryParse(
-            Environment.GetEnvironmentVariable("MESH_ENDPOINT_PORT"), out var port)
-            ? port : 80;
+        // Get app configuration for app-id
+        var appConfig = serviceProvider.GetRequiredService<AppConfiguration>();
+        var meshConfig = _cachedConfig ?? serviceProvider.GetRequiredService<MeshServiceConfiguration>();
+        var appId = appConfig.EffectiveAppId;
+
+        // Endpoint host defaults to app-id for Docker Compose compatibility (hostname = service name)
+        var endpointHost = meshConfig.EndpointHost ?? appConfig.EffectiveAppId;
+        var endpointPort = meshConfig.EndpointPort > 0 ? meshConfig.EndpointPort : 80;
 
         // Use the shared Program.ServiceGUID for consistent instance identification
         // This ensures mesh endpoint and heartbeat use the same instance ID

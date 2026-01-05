@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Asset.Bundles;
 /// Converts between ZIP archives and .bannou bundle format.
 /// Provides caching for ZIP downloads to avoid repeated conversion.
 /// </summary>
-public sealed class BundleConverter
+public sealed class BundleConverter : IBundleConverter
 {
     private readonly ILogger<BundleConverter> _logger;
     private readonly string _cacheDirectory;

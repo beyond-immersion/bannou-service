@@ -11,7 +11,7 @@ source "$(dirname "$0")/common.sh"
 # Validate arguments
 if [ $# -lt 2 ]; then
     log_error "Usage: $0 <service-name> <schema-file>"
-    echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+    echo "Example: $0 account ../schemas/account-api.yaml"
     exit 1
 fi
 
@@ -77,12 +77,26 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-$SERVICE_NAME -->
     <ProjectReference Include="../lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>
 EOF
 
     echo -e "${GREEN}✅ Created test project file: $TEST_PROJECT_FILE${NC}"
+
+    # Create AssemblyInfo.cs for assembly-level test attributes
+    ASSEMBLY_INFO_FILE="$TEST_PROJECT_DIR/AssemblyInfo.cs"
+    if [ ! -f "$ASSEMBLY_INFO_FILE" ]; then
+        echo -e "${YELLOW}📝 Creating AssemblyInfo.cs...${NC}"
+        cat > "$ASSEMBLY_INFO_FILE" << 'ASSEMBLYEOF'
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+ASSEMBLYEOF
+        echo -e "${GREEN}✅ Created AssemblyInfo.cs${NC}"
+    fi
 
     # Add project to solution
     # Note: Path must be relative from repo root, not from scripts directory
@@ -146,29 +160,13 @@ if [ ! -f "$GLOBAL_USINGS_FILE" ]; then
     fi
 fi
 
-# Always create/overwrite GlobalSuppressions.cs to ensure latest suppressions are applied
-GLOBAL_SUPPRESSIONS_FILE="$TEST_PROJECT_DIR/GlobalSuppressions.cs"
-echo -e "${YELLOW}📝 Creating GlobalSuppressions.cs...${NC}"
-
-cat > "$GLOBAL_SUPPRESSIONS_FILE" << 'EOF'
-// This file is used to suppress code analysis warnings that are applied project-wide.
-// Note: Compiler warnings (CS8620, CS8602, etc.) are suppressed via Directory.Build.props
-// using the <NoWarn> property, which is the correct MSBuild approach for project-wide suppression.
-
-using System.Diagnostics.CodeAnalysis;
-
-// CA1822: Member does not access instance data and can be marked as static
-// Test methods often don't access instance data but should remain instance methods for test framework compatibility
-[assembly: SuppressMessage("Performance", "CA1822:Mark members as static",
-    Justification = "Test methods should remain instance methods for test framework compatibility")]
-EOF
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Created GlobalSuppressions.cs${NC}"
-else
-    echo -e "${RED}❌ Failed to create GlobalSuppressions.cs${NC}"
-    exit 1
-fi
+# Per QUALITY TENETS: GlobalSuppressions.cs files with blanket CA1822 suppression are forbidden.
+# xUnit does NOT require instance methods - the previous justification was incorrect.
+# If CA1822 fires on a test method, either make it static or fix the underlying issue.
+# See: docs/reference/tenets/QUALITY.md (Warning Suppression)
+#
+# NOTE: This script no longer creates GlobalSuppressions.cs files.
+# Any existing files should be deleted as part of QUALITY TENETS compliance cleanup.
 
 # Create basic service tests if they don't exist
 SERVICE_TESTS_FILE="$TEST_PROJECT_DIR/${SERVICE_PASCAL}ServiceTests.cs"
@@ -176,61 +174,52 @@ if [ ! -f "$SERVICE_TESTS_FILE" ]; then
     echo -e "${YELLOW}📝 Creating service test class...${NC}"
     cat > "$SERVICE_TESTS_FILE" << EOF
 using BeyondImmersion.BannouService.$SERVICE_PASCAL;
+using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL.Tests;
 
 public class ${SERVICE_PASCAL}ServiceTests
 {
-    private Mock<ILogger<${SERVICE_PASCAL}Service>> _mockLogger = null!;
-    private Mock<${SERVICE_PASCAL}ServiceConfiguration> _mockConfiguration = null!;
+    #region Constructor Validation
 
-    public ${SERVICE_PASCAL}ServiceTests()
-    {
-        _mockLogger = new Mock<ILogger<${SERVICE_PASCAL}Service>>();
-        _mockConfiguration = new Mock<${SERVICE_PASCAL}ServiceConfiguration>();
-    }
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
+    [Fact]
+    public void ${SERVICE_PASCAL}Service_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<${SERVICE_PASCAL}Service>();
+
+    #endregion
+
+    #region Configuration Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ${SERVICE_PASCAL}ServiceConfiguration_CanBeInstantiated()
     {
         // Arrange & Act
-        var service = new ${SERVICE_PASCAL}Service(_mockLogger.Object, _mockConfiguration.Object);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ${SERVICE_PASCAL}Service(null!, _mockConfiguration.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ${SERVICE_PASCAL}Service(_mockLogger.Object, null!));
-    }
-
-    // TODO: Add service-specific tests based on schema operations
-    // Schema file: $SCHEMA_FILE
-}
-
-public class ${SERVICE_PASCAL}ConfigurationTests
-{
-    [Fact]
-    public void Configuration_WithValidSettings_ShouldInitializeCorrectly()
-    {
-        // Arrange
         var config = new ${SERVICE_PASCAL}ServiceConfiguration();
 
-        // Act & Assert
+        // Assert
         Assert.NotNull(config);
     }
 
-    // TODO: Add configuration-specific tests
+    #endregion
+
+    // TODO: Add service-specific tests based on schema operations
+    // Schema file: $SCHEMA_FILE
+    //
+    // Guidelines:
+    // - Use the Capture Pattern for event/state verification (see TESTING_PATTERNS.md)
+    // - Verify side effects (saves, events, indices), not just response structure
+    // - Keep Arrange < 50% of test code; extract helpers if needed
 }
 EOF
     echo -e "${GREEN}✅ Created service test class${NC}"

@@ -90,7 +90,31 @@ public static class MessageRouter
             return routeInfo;
         }
 
-        // Determine routing target (non-shortcut path)
+        // Check for broadcast GUID (before client/service routing)
+        if (message.ServiceGuid == AppConstants.BROADCAST_GUID)
+        {
+            if (message.IsClientRouted)
+            {
+                // Valid broadcast request - mode validation done by ConnectService
+                routeInfo.RouteType = RouteType.Broadcast;
+                routeInfo.TargetType = "broadcast";
+                routeInfo.TargetId = "all-peers";
+            }
+            else
+            {
+                // Broadcast requires Client flag (0x20) to distinguish from service routing
+                routeInfo.IsValid = false;
+                routeInfo.ErrorCode = ResponseCodes.RequestError;
+                routeInfo.ErrorMessage = "Broadcast requires Client flag (0x20)";
+            }
+
+            routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
+            routeInfo.Channel = message.Channel;
+            routeInfo.RequiresResponse = message.ExpectsResponse;
+            return routeInfo;
+        }
+
+        // Determine routing target (non-shortcut, non-broadcast path)
         if (message.IsClientRouted)
         {
             routeInfo.RouteType = RouteType.Client;
@@ -245,7 +269,10 @@ public enum RouteType
     Client,
 
     /// <summary>Route via session shortcut (pre-bound payload injection).</summary>
-    SessionShortcut
+    SessionShortcut,
+
+    /// <summary>Broadcast to all connected peers (Relayed/Internal modes only).</summary>
+    Broadcast
 }
 
 /// <summary>

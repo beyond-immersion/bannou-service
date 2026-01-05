@@ -14,7 +14,7 @@ public class MetaResponseBuilderTests
         {
             "summary": "Get an account by ID",
             "description": "Retrieves account details for the specified account ID.",
-            "tags": ["accounts"],
+            "tags": ["account"],
             "deprecated": false,
             "operationId": "GetAccount"
         }
@@ -59,9 +59,9 @@ public class MetaResponseBuilderTests
     public void BuildInfoResponse_ShouldCreateValidMetaResponse()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
-        var path = "/accounts/get";
+        var path = "/account/get";
 
         // Act
         var response = MetaResponseBuilder.BuildInfoResponse(serviceName, method, path, TestInfoJson);
@@ -85,9 +85,9 @@ public class MetaResponseBuilderTests
     public void BuildSchemaResponse_RequestSchema_ShouldCreateValidMetaResponse()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
-        var path = "/accounts/get";
+        var path = "/account/get";
         var metaType = "request-schema";
 
         // Act
@@ -109,9 +109,9 @@ public class MetaResponseBuilderTests
     public void BuildSchemaResponse_ResponseSchema_ShouldCreateValidMetaResponse()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
-        var path = "/accounts/get";
+        var path = "/account/get";
         var metaType = "response-schema";
 
         // Act
@@ -130,9 +130,9 @@ public class MetaResponseBuilderTests
     public void BuildFullSchemaResponse_ShouldCombineAllSchemas()
     {
         // Arrange
-        var serviceName = "Accounts";
+        var serviceName = "Account";
         var method = "POST";
-        var path = "/accounts/get";
+        var path = "/account/get";
 
         // Act
         var response = MetaResponseBuilder.BuildFullSchemaResponse(

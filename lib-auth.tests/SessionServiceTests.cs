@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -63,54 +64,10 @@ public class SessionServiceTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act & Assert
+        ServiceConstructorValidator.ValidateServiceConstructor<SessionService>();
         Assert.NotNull(_service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            null!,
-            _mockMessageBus.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SessionService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _configuration,
-            null!));
     }
 
     #endregion
@@ -523,12 +480,13 @@ public class SessionServiceTests
         _mockListStore.Setup(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _service.InvalidateAllSessionsForAccountAsync(accountId);
@@ -541,12 +499,13 @@ public class SessionServiceTests
         _mockListStore.Verify(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Should publish event
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
                 e.SessionIds.Count == 2),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -562,18 +521,19 @@ public class SessionServiceTests
         var sessionIds = new List<string> { "session1", "session2" };
         var reason = SessionInvalidatedEventReason.Account_deleted;
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _service.PublishSessionInvalidatedEventAsync(accountId, sessionIds, reason);
 
         // Assert
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
@@ -581,6 +541,7 @@ public class SessionServiceTests
                 e.Reason == reason &&
                 e.DisconnectClients == true),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -593,31 +554,34 @@ public class SessionServiceTests
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var sessionId = "test-session-id";
+        var sessionIdGuid = Guid.NewGuid();
+        var sessionId = sessionIdGuid.ToString();
         var roles = new List<string> { "user", "admin" };
         var authorizations = new List<string> { "auth1" };
         var reason = SessionUpdatedEventReason.Role_changed;
 
-        _mockMessageBus.Setup(m => m.PublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.updated",
             It.IsAny<SessionUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         // Act
         await _service.PublishSessionUpdatedEventAsync(accountId, sessionId, roles, authorizations, reason);
 
         // Assert
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "session.updated",
             It.Is<SessionUpdatedEvent>(e =>
                 e.AccountId == accountId &&
-                e.SessionId == sessionId &&
+                e.SessionId == sessionIdGuid &&
                 e.Roles.SequenceEqual(roles) &&
                 e.Authorizations.SequenceEqual(authorizations) &&
                 e.Reason == reason),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -661,7 +625,7 @@ public class SessionServiceTests
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(sessionData.SessionId, result[0].SessionId);
+        Assert.Equal(Guid.Parse(sessionData.SessionId), result[0].SessionId);
     }
 
     [Fact]

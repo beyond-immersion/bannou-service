@@ -17,10 +17,32 @@ These tenets define the architectural foundation of Bannou. Understanding them i
 - Define all endpoints in `/schemas/{service}-api.yaml`
 - Define all events in `/schemas/{service}-events.yaml` or `common-events.yaml`
 - Use `x-permissions` to declare role/state requirements for WebSocket clients
+- **ALL schema properties MUST have `description` fields** - NSwag generates XML documentation from these
 - Run `make generate` to generate all code
 - **NEVER** manually edit files in `*/Generated/` directories
 
 **Important**: Scripts in `/scripts/` assume execution from the solution root directory. Always use Makefile commands rather than running scripts directly.
+
+### Property Documentation (MANDATORY)
+
+Every property in every schema MUST have a `description` field. NSwag converts these to XML `<summary>` tags in generated code. Missing descriptions cause CS1591 compiler warnings.
+
+```yaml
+# CORRECT: Property has description
+properties:
+  accountId:
+    type: string
+    format: uuid
+    description: Unique identifier for the account
+
+# WRONG: Missing description causes CS1591 warning
+properties:
+  accountId:
+    type: string
+    format: uuid
+```
+
+**Why This Matters**: XML documentation enables IntelliSense, auto-generated API docs, and compile-time validation that all public members are documented.
 
 ### Best Practices
 
@@ -46,9 +68,28 @@ lib-{service}/
 
 ### Why POST-Only?
 
-Path parameters (e.g., `/accounts/{id}`) cannot map to static GUIDs for zero-copy binary WebSocket routing. All parameters move to request bodies for static endpoint signatures.
+Path parameters (e.g., `/account/{id}`) cannot map to static GUIDs for zero-copy binary WebSocket routing. All parameters move to request bodies for static endpoint signatures.
 
 **Related**: See Tenet 15 for browser-facing endpoint exceptions (OAuth, Website, WebSocket upgrade).
+
+### Allowed Exceptions
+
+#### 1. Binary Format Specifications (ABML Bytecode)
+
+The ABML Local Runtime uses a binary bytecode format for client-side behavior model execution. This format is specified in dedicated documentation rather than OpenAPI because:
+- Binary formats are not HTTP APIs - OpenAPI is designed for REST/HTTP specifications
+- Bytecode is a compiler output, not a request/response contract
+- The specification document serves as the "schema" defining format, opcodes, and semantics
+
+```
+sdk-sources/Behavior/Runtime/    # ABML bytecode interpreter
+├── BehaviorModel.cs             # Binary format (not OpenAPI)
+├── BehaviorModelInterpreter.cs  # Stack-based VM (not generated)
+├── BehaviorOpcode.cs            # Opcode definitions (not generated)
+└── StateSchema.cs               # Input/output schema (not generated)
+```
+
+**Key Principle**: Binary format specifications use dedicated markdown documentation as their "schema". The format spec is the contract between compiler (server) and interpreter (client).
 
 ---
 
@@ -97,7 +138,12 @@ Run `make generate` to execute the full pipeline in order:
 
 ### Configuration Environment Variable Naming (MANDATORY)
 
-**Rule**: ALL configuration environment variables MUST follow `{SERVICE}_{PROPERTY}` pattern.
+**Rule**: ALL configuration properties MUST have explicit `env:` keys following the `{SERVICE}_{PROPERTY}` pattern.
+
+**Three Inviolable Requirements**:
+1. **Explicit `env:` keys**: Every property MUST have an explicit `env:` field - never rely on auto-generation from property name
+2. **Service prefix**: All env vars MUST start with the service prefix (e.g., `CONNECT_`, `AUTH_`, `STATE_`)
+3. **Underscore separation**: Multi-word properties use underscores between words (e.g., `MAX_CONCURRENT_CONNECTIONS`)
 
 ```yaml
 # In {service}-configuration.yaml
@@ -105,22 +151,29 @@ x-service-configuration:
   properties:
     JwtSecret:
       type: string
-      env: AUTH_JWT_SECRET      # CORRECT: SERVICE_PROPERTY format
-    MaxConnections:
+      env: AUTH_JWT_SECRET           # CORRECT: Explicit env with SERVICE_PROPERTY format
+    MaxConcurrentConnections:
       type: integer
-      env: CONNECT_MAX_CONNECTIONS  # CORRECT: Underscores for multi-word
+      env: CONNECT_MAX_CONCURRENT_CONNECTIONS  # CORRECT: Underscores between words
+    Enabled:
+      type: boolean
+      env: BEHAVIOR_ENABLED          # CORRECT: Even simple properties need explicit env
 ```
 
 **Correct Examples**:
 - `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_MOCK_PROVIDERS`
-- `CONNECT_MAX_CONNECTIONS`, `CONNECT_WEBSOCKET_URL`
-- `BEHAVIOR_CACHE_TTL_SECONDS`
+- `CONNECT_MAX_CONCURRENT_CONNECTIONS`, `CONNECT_HEARTBEAT_INTERVAL_SECONDS`
+- `STATE_REDIS_CONNECTION_STRING`, `STATE_DEFAULT_CONSISTENCY`
+- `GAME_SESSION_MAX_PLAYERS_PER_SESSION` (hyphenated services use underscores)
 
-**Prohibited Patterns** (cause binding failures):
+**Prohibited Patterns** (cause binding failures or inconsistency):
+- Missing `env:` key - Generates `MAXCONCURRENTCONNECTIONS` instead of `MAX_CONCURRENT_CONNECTIONS`
 - `JWTSECRET` - No service prefix, no delimiter
 - `JwtSecret` - camelCase not allowed
 - `auth-jwt-secret` - kebab-case not allowed
 - `AUTH_JWTSECRET` - Missing underscore delimiter in property name
+- `REDIS_CONNECTION_STRING` - Missing service prefix (should be `STATE_REDIS_CONNECTION_STRING`)
+- `GAME-SESSION_ENABLED` - Hyphen in prefix (should be `GAME_SESSION_ENABLED`)
 
 ### Namespace for Generated Events
 
@@ -133,6 +186,27 @@ using BeyondImmersion.BannouService.Events;
 var acctEvent = new AccountDeletedEvent { ... };
 var authEvent = new SessionInvalidatedEvent { ... };
 ```
+
+### Allowed Exceptions
+
+#### 1. Runtime Interpreters for Compiled Artifacts
+
+The ABML behavior model interpreter is handwritten code that **consumes** generated artifacts (compiled bytecode), not **produces** them. The compiler-to-interpreter boundary is:
+- **Compiler (lib-behavior)**: Generated from ABML YAML via `BehaviorCompiler` - follows schema-first
+- **Interpreter (sdk-sources)**: Handwritten VM that executes bytecode - NOT generated
+
+```
+lib-behavior/Compiler/       # Compilation (schema-first via YAML)
+├── BehaviorCompiler.cs      # Orchestrates compilation pipeline
+├── Actions/                 # Action-specific compilers (generated patterns)
+└── Codegen/                 # Bytecode emission
+
+sdk-sources/Behavior/Runtime/  # Execution (handwritten interpreter)
+├── BehaviorModelInterpreter.cs  # Stack-based VM (NOT generated)
+└── CinematicInterpreter.cs      # Streaming composition (NOT generated)
+```
+
+**Key Principle**: Interpreters are analogous to the JVM or .NET CLR - they execute compiled output but are not themselves generated from schemas. The bytecode format spec serves as the interface contract.
 
 ---
 
@@ -169,8 +243,8 @@ var subscription = await _messageSubscriber.SubscribeDynamicAsync<MyEvent>(
 await subscription.DisposeAsync();  // Clean up when session ends
 
 // lib-mesh: Use IMeshInvocationClient or generated clients for service calls
-await _meshClient.InvokeMethodAsync<Request, Response>("accounts", "get-account", request, ct);
-await _accountsClient.GetAccountAsync(request, ct);  // Generated client (preferred)
+await _meshClient.InvokeMethodAsync<Request, Response>("account", "get-account", request, ct);
+await _accountClient.GetAccountAsync(request, ct);  // Generated client (preferred)
 ```
 
 **FORBIDDEN**:
@@ -178,7 +252,7 @@ await _accountsClient.GetAccountAsync(request, ct);  // Generated client (prefer
 new MySqlConnection(connectionString);  // Use lib-state
 ConnectionMultiplexer.Connect(...);     // Use lib-state
 channel.BasicPublish(...);              // Use lib-messaging
-httpClient.PostAsync("http://accounts/api/...");  // Use lib-mesh
+httpClient.PostAsync("http://account/api/...");  // Use lib-mesh
 ```
 
 Generated clients are auto-registered as Singletons and use mesh service resolution internally.
@@ -241,7 +315,26 @@ await client.Containers.StartContainerAsync(containerId, new());
 // In any other service (forbidden - use lib-mesh for service calls)
 ```
 
-**Key Principle**: These exceptions are for infrastructure lib internals or specialized services where the infrastructure IS the domain. Regular service code must always use the three infrastructure libs.
+#### 4. SDK Behavior Runtime (Client-Side Bytecode Execution)
+
+The ABML Local Runtime interpreter in `sdk-sources/Behavior/Runtime/` is client-side code designed for embedded execution in game clients. It does NOT use lib-state, lib-messaging, or lib-mesh because:
+- Runs on game clients, not Bannou servers
+- Designed for offline/embedded execution without network dependencies
+- State is provided by game engine, not Bannou state stores
+- No pub/sub needed - intents are returned synchronously
+
+```csharp
+// In sdk-sources/Behavior/Runtime/ (allowed):
+public void Evaluate(ReadOnlySpan<double> inputState, Span<double> outputState)
+{
+    // Pure computation - no infrastructure dependencies
+    // State provided by game client, outputs returned directly
+}
+```
+
+**Key Principle**: Client SDK code designed for embedded execution is exempt from infrastructure lib requirements since it runs outside the Bannou service context.
+
+**Key Principle (General)**: These exceptions are for infrastructure lib internals or specialized services where the infrastructure IS the domain. Regular service code must always use the three infrastructure libs.
 
 ---
 
@@ -384,7 +477,7 @@ components:
 components:
   schemas:
     AccountDeletedEvent:
-      $ref: './accounts-events.yaml#/components/schemas/AccountDeletedEvent'  # NO!
+      $ref: './account-events.yaml#/components/schemas/AccountDeletedEvent'  # NO!
 ```
 
 ---
@@ -428,14 +521,11 @@ Only create this file when your service needs to handle events from the message 
 [BannouService("service-name", typeof(IServiceNameService), lifetime: ServiceLifetime.Scoped)]
 public partial class ServiceNameService : IServiceNameService
 {
-    // Required dependencies (always available)
     private readonly IStateStore<ServiceModel> _stateStore;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ServiceNameService> _logger;
     private readonly ServiceNameServiceConfiguration _configuration;
-
-    // Optional dependencies (nullable - may not be registered)
-    private readonly IAuthClient? _authClient;
+    private readonly IAuthClient _authClient;
 
     public ServiceNameService(
         IStateStoreFactory stateStoreFactory,
@@ -443,13 +533,13 @@ public partial class ServiceNameService : IServiceNameService
         ILogger<ServiceNameService> logger,
         ServiceNameServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IAuthClient? authClient = null)
+        IAuthClient authClient)
     {
         _stateStore = stateStoreFactory.Create<ServiceModel>("service-name");
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _authClient = authClient;  // May be null - check before use
+        _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
 
         // Register event handlers via partial class
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -479,14 +569,9 @@ public partial class ServiceNameService : IServiceNameService
 | `ILogger<T>` | Structured logging |
 | `{Service}ServiceConfiguration` | Generated configuration class |
 | `IEventConsumer` | Register event handlers for pub/sub fan-out |
-
-**Context-Dependent** (may not be registered):
-
-| Dependency | When Available |
-|------------|----------------|
-| `I{Service}Client` | When the service plugin is loaded |
-| `IDistributedLockProvider` | When Redis-backed locking is configured |
-| `IClientEventPublisher` | When Connect service plugin is loaded (for pushing events to WebSocket clients) |
+| `I{Service}Client` | Generated service clients for inter-service calls |
+| `IDistributedLockProvider` | Redis-backed distributed locking |
+| `IClientEventPublisher` | Push events to WebSocket clients (via Connect service) |
 
 ### Helper Service Decomposition
 
@@ -616,6 +701,9 @@ When a package changes license, pin to the last permissive version with XML comm
 |-----------|-------|-----|
 | Editing Generated/ files | T1, T2 | Edit schema, regenerate |
 | Wrong env var format (`JWTSECRET`) | T2 | Use `{SERVICE}_{PROPERTY}` pattern |
+| Missing `env:` key in config schema | T2 | Add explicit `env:` with proper naming |
+| Missing service prefix (`REDIS_CONNECTION_STRING`) | T2 | Add prefix (e.g., `STATE_REDIS_CONNECTION_STRING`) |
+| Hyphen in env var prefix (`GAME-SESSION_`) | T2 | Use underscore (`GAME_SESSION_`) |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use IMeshInvocationClient or generated clients via lib-mesh |

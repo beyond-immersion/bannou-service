@@ -7,9 +7,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-relationship.tests")]
 
 namespace BeyondImmersion.BannouService.Relationship;
 
@@ -47,13 +44,12 @@ public partial class RelationshipService : IRelationshipService
         RelationshipServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
 
         // Register event handlers via partial class (RelationshipServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -125,9 +121,14 @@ public partial class RelationshipService : IRelationshipService
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
-            foreach (var (_, model) in bulkResults)
+            foreach (var (key, model) in bulkResults)
             {
-                if (model != null) relationships.Add(model);
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
+                relationships.Add(model);
             }
 
             // Apply filters
@@ -219,9 +220,13 @@ public partial class RelationshipService : IRelationshipService
             var relationships = new List<RelationshipModel>();
             var entity2IdStr = body.Entity2Id.ToString();
 
-            foreach (var (_, model) in bulkResults)
+            foreach (var (key, model) in bulkResults)
             {
-                if (model == null) continue;
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
 
                 // Filter to only include relationships with entity2
                 if (model.Entity1Id == entity2IdStr || model.Entity2Id == entity2IdStr)
@@ -297,9 +302,14 @@ public partial class RelationshipService : IRelationshipService
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
-            foreach (var (_, model) in bulkResults)
+            foreach (var (key, model) in bulkResults)
             {
-                if (model != null) relationships.Add(model);
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
+                relationships.Add(model);
             }
 
             // Apply filters
@@ -437,7 +447,7 @@ public partial class RelationshipService : IRelationshipService
             await PublishRelationshipCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created relationship: {RelationshipId}", relationshipId);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {
@@ -537,7 +547,7 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="body">Request containing relationship ID and optional end timestamp.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Status code indicating success.</returns>
-    public async Task<(StatusCodes, object?)> EndRelationshipAsync(
+    public async Task<StatusCodes> EndRelationshipAsync(
         EndRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -552,14 +562,14 @@ public partial class RelationshipService : IRelationshipService
             if (model == null)
             {
                 _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check if already ended
             if (model.EndedAt.HasValue)
             {
                 _logger.LogWarning("Relationship already ended: {RelationshipId}", body.RelationshipId);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Set ended timestamp (use current time if not specified or default)
@@ -581,13 +591,13 @@ public partial class RelationshipService : IRelationshipService
             await PublishRelationshipDeletedEventAsync(model, "Relationship ended", cancellationToken);
 
             _logger.LogInformation("Ended relationship: {RelationshipId}", body.RelationshipId);
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error ending relationship: {RelationshipId}", body.RelationshipId);
             await EmitErrorAsync("EndRelationship", "post:/relationship/end", ex);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -741,107 +751,84 @@ public partial class RelationshipService : IRelationshipService
     }
 
     /// <summary>
-    /// Publishes a relationship created event to the message bus.
+    /// Publishes a relationship created event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
     private async Task PublishRelationshipCreatedEventAsync(RelationshipModel model, CancellationToken cancellationToken)
     {
-        try
+        var eventModel = new RelationshipCreatedEvent
         {
-            var eventModel = new RelationshipCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipId = Guid.Parse(model.RelationshipId),
-                Entity1Id = Guid.Parse(model.Entity1Id),
-                Entity1Type = model.Entity1Type,
-                Entity2Id = Guid.Parse(model.Entity2Id),
-                Entity2Type = model.Entity2Type,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
-                StartedAt = model.StartedAt,
-                Metadata = model.Metadata ?? new Dictionary<string, object>(),
-                CreatedAt = model.CreatedAt
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt
+        };
 
-            await _messageBus.PublishAsync("relationship.created", eventModel);
-            _logger.LogDebug("Published relationship.created event for {RelationshipId}", model.RelationshipId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship.created event for {RelationshipId}", model.RelationshipId);
-        }
+        await _messageBus.TryPublishAsync("relationship.created", eventModel);
+        _logger.LogDebug("Published relationship.created event for {RelationshipId}", model.RelationshipId);
     }
 
     /// <summary>
-    /// Publishes a relationship updated event to the message bus.
-    /// Event contains current state plus list of changed fields.
+    /// Publishes a relationship updated event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
     private async Task PublishRelationshipUpdatedEventAsync(
         RelationshipModel model,
         IEnumerable<string> changedFields,
         CancellationToken cancellationToken)
     {
-        try
+        var eventModel = new RelationshipUpdatedEvent
         {
-            var eventModel = new RelationshipUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipId = Guid.Parse(model.RelationshipId),
-                Entity1Id = Guid.Parse(model.Entity1Id),
-                Entity1Type = model.Entity1Type,
-                Entity2Id = Guid.Parse(model.Entity2Id),
-                Entity2Type = model.Entity2Type,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
-                StartedAt = model.StartedAt,
-                EndedAt = model.EndedAt ?? default,
-                Metadata = model.Metadata ?? new Dictionary<string, object>(),
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
-                ChangedFields = changedFields.ToList()
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            EndedAt = model.EndedAt ?? default,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
+            ChangedFields = changedFields.ToList()
+        };
 
-            await _messageBus.PublishAsync("relationship.updated", eventModel);
-            _logger.LogDebug("Published relationship.updated event for {RelationshipId}", model.RelationshipId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship.updated event for {RelationshipId}", model.RelationshipId);
-        }
+        await _messageBus.TryPublishAsync("relationship.updated", eventModel);
+        _logger.LogDebug("Published relationship.updated event for {RelationshipId}", model.RelationshipId);
     }
 
     /// <summary>
-    /// Publishes a relationship deleted event to the message bus.
-    /// Used when a relationship is ended or permanently removed.
+    /// Publishes a relationship deleted event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
     private async Task PublishRelationshipDeletedEventAsync(RelationshipModel model, string? deletedReason, CancellationToken cancellationToken)
     {
-        try
+        var eventModel = new RelationshipDeletedEvent
         {
-            var eventModel = new RelationshipDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipId = Guid.Parse(model.RelationshipId),
-                Entity1Id = Guid.Parse(model.Entity1Id),
-                Entity1Type = model.Entity1Type,
-                Entity2Id = Guid.Parse(model.Entity2Id),
-                Entity2Type = model.Entity2Type,
-                RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
-                StartedAt = model.StartedAt,
-                EndedAt = model.EndedAt ?? DateTimeOffset.UtcNow,
-                Metadata = model.Metadata ?? new Dictionary<string, object>(),
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
-                DeletedReason = deletedReason
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            EndedAt = model.EndedAt ?? DateTimeOffset.UtcNow,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
+            DeletedReason = deletedReason
+        };
 
-            await _messageBus.PublishAsync("relationship.deleted", eventModel);
-            _logger.LogDebug("Published relationship.deleted event for {RelationshipId}", model.RelationshipId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship.deleted event for {RelationshipId}", model.RelationshipId);
-        }
+        await _messageBus.TryPublishAsync("relationship.deleted", eventModel);
+        _logger.LogDebug("Published relationship.deleted event for {RelationshipId}", model.RelationshipId);
     }
 
     /// <summary>
@@ -865,7 +852,7 @@ public partial class RelationshipService : IRelationshipService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

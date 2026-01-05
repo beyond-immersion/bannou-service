@@ -70,7 +70,7 @@ public class ServiceClientResolutionTests
         var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
 
         // Act & Assert
-        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("account"));
         Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
         Assert.Equal("bannou", resolver.GetAppIdForService("behavior"));
         Assert.Equal("bannou", resolver.GetAppIdForService("nonexistent"));
@@ -92,13 +92,13 @@ public class ServiceClientResolutionTests
         var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
 
         // Verify default first
-        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("account"));
 
         // Act - Update the mapping to point to a different app-id
-        resolver.UpdateServiceMapping("accounts", "bannou-accounts-node");
+        resolver.UpdateServiceMapping("account", "bannou-account-node");
 
         // Assert - Now it should return the new mapping
-        Assert.Equal("bannou-accounts-node", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou-account-node", resolver.GetAppIdForService("account"));
 
         // Other services should still use default
         Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
@@ -121,13 +121,13 @@ public class ServiceClientResolutionTests
         var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
 
         // Act - Map different services to different nodes
-        resolver.UpdateServiceMapping("accounts", "bannou-auth-accounts-node");
-        resolver.UpdateServiceMapping("auth", "bannou-auth-accounts-node");
+        resolver.UpdateServiceMapping("account", "bannou-auth-account-node");
+        resolver.UpdateServiceMapping("auth", "bannou-auth-account-node");
         resolver.UpdateServiceMapping("behavior", "bannou-behavior-node");
 
         // Assert - Each service routes to its designated node
-        Assert.Equal("bannou-auth-accounts-node", resolver.GetAppIdForService("accounts"));
-        Assert.Equal("bannou-auth-accounts-node", resolver.GetAppIdForService("auth"));
+        Assert.Equal("bannou-auth-account-node", resolver.GetAppIdForService("account"));
+        Assert.Equal("bannou-auth-account-node", resolver.GetAppIdForService("auth"));
         Assert.Equal("bannou-behavior-node", resolver.GetAppIdForService("behavior"));
 
         // Unmapped services still default to bannou
@@ -150,14 +150,14 @@ public class ServiceClientResolutionTests
         var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
 
         // Set up a mapping first
-        resolver.UpdateServiceMapping("accounts", "bannou-accounts-node");
-        Assert.Equal("bannou-accounts-node", resolver.GetAppIdForService("accounts"));
+        resolver.UpdateServiceMapping("account", "bannou-account-node");
+        Assert.Equal("bannou-account-node", resolver.GetAppIdForService("account"));
 
         // Act - Remove the mapping
-        resolver.RemoveServiceMapping("accounts");
+        resolver.RemoveServiceMapping("account");
 
         // Assert - Should revert to default
-        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("account"));
     }
 
     /// <summary>
@@ -180,21 +180,21 @@ public class ServiceClientResolutionTests
         Assert.Empty(initialMappings);
 
         // Act - Add some mappings
-        resolver.UpdateServiceMapping("accounts", "node-1");
+        resolver.UpdateServiceMapping("account", "node-1");
         resolver.UpdateServiceMapping("auth", "node-2");
 
         var currentMappings = resolver.GetAllMappings();
 
         // Assert
         Assert.Equal(2, currentMappings.Count);
-        Assert.Equal("node-1", currentMappings["accounts"]);
+        Assert.Equal("node-1", currentMappings["account"]);
         Assert.Equal("node-2", currentMappings["auth"]);
 
         // Verify removal updates the mapping state
-        resolver.RemoveServiceMapping("accounts");
+        resolver.RemoveServiceMapping("account");
         var afterRemoval = resolver.GetAllMappings();
         Assert.Single(afterRemoval);
-        Assert.False(afterRemoval.ContainsKey("accounts"));
+        Assert.False(afterRemoval.ContainsKey("account"));
         Assert.True(afterRemoval.ContainsKey("auth"));
     }
 
@@ -271,7 +271,7 @@ public class ServiceClientResolutionTests
 
         // Verify default first
         Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
-        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("account"));
 
         // Simulate receiving ServiceMappingEvent with Register action
         // (This is what the ServiceMappingEventsController should do)
@@ -288,7 +288,7 @@ public class ServiceClientResolutionTests
         // Assert - Mapping should be updated
         Assert.Equal("bannou-auth", resolver.GetAppIdForService("auth"));
         // Other services should still use default
-        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("account"));
     }
 
     /// <summary>
@@ -342,15 +342,15 @@ public class ServiceClientResolutionTests
 
         // Verify all default initially
         Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
-        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("account"));
         Assert.Equal("bannou", resolver.GetAppIdForService("game-session"));
 
         // Simulate orchestrator deploying split-auth-routing-test preset
-        // This sends mapping events for auth and accounts to bannou-auth node
+        // This sends mapping events for auth and account to bannou-auth node
         var mappingEvents = new[]
         {
             new ServiceMappingEventTestData { ServiceName = "auth", AppId = "bannou-auth", Action = "Register" },
-            new ServiceMappingEventTestData { ServiceName = "accounts", AppId = "bannou-auth", Action = "Register" },
+            new ServiceMappingEventTestData { ServiceName = "account", AppId = "bannou-auth", Action = "Register" },
         };
 
         // Act - Apply all mapping events
@@ -359,9 +359,9 @@ public class ServiceClientResolutionTests
             resolver.UpdateServiceMapping(evt.ServiceName, evt.AppId);
         }
 
-        // Assert - auth and accounts should route to bannou-auth
+        // Assert - auth and account should route to bannou-auth
         Assert.Equal("bannou-auth", resolver.GetAppIdForService("auth"));
-        Assert.Equal("bannou-auth", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou-auth", resolver.GetAppIdForService("account"));
         // game-session should still route to default bannou
         Assert.Equal("bannou", resolver.GetAppIdForService("game-session"));
 
@@ -369,7 +369,7 @@ public class ServiceClientResolutionTests
         var mappings = resolver.GetAllMappings();
         Assert.Equal(2, mappings.Count);
         Assert.Equal("bannou-auth", mappings["auth"]);
-        Assert.Equal("bannou-auth", mappings["accounts"]);
+        Assert.Equal("bannou-auth", mappings["account"]);
     }
 
     /// <summary>
@@ -413,8 +413,8 @@ public class ServiceClientResolutionTests
         Assert.NotNull(httpClientFactory);
 
         // Verify routing behavior
-        var accountsAppId = resolver.GetAppIdForService("accounts");
-        Assert.Equal("bannou", accountsAppId); // Development default
+        var accountAppId = resolver.GetAppIdForService("account");
+        Assert.Equal("bannou", accountAppId); // Development default
     }
 
     /// <summary>

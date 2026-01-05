@@ -32,7 +32,7 @@ fi
 
 echo ""
 echo "📖 Usage examples:"
-echo "  make build-plugins SERVICES=\"auth accounts\""
-echo "  make build-compose-services SERVICES=\"auth accounts connect\""
-echo "  make validate-compose-services SERVICES=\"auth accounts connect\""
-echo "  docker build --build-arg BANNOU_SERVICES=\"auth accounts\" -f provisioning/Dockerfile ."
+echo "  make build-plugins SERVICES=\"auth account\""
+echo "  make build-compose-services SERVICES=\"auth account connect\""
+echo "  make validate-compose-services SERVICES=\"auth account connect\""
+echo "  docker build --build-arg BANNOU_SERVICES=\"auth account\" -f provisioning/Dockerfile ."

@@ -13,7 +13,7 @@ Server SDK for the Bannou service platform. Use this for **game servers** and **
 
 ## Features
 
-- ✅ Type-safe service clients (`AccountsClient`, `AuthClient`, etc.)
+- ✅ Type-safe service clients (`AccountClient`, `AuthClient`, etc.)
 - ✅ Request/Response models for all APIs
 - ✅ Event models for pub/sub messaging
 - ✅ WebSocket binary protocol (31-byte header)
@@ -25,14 +25,14 @@ Server SDK for the Bannou service platform. Use this for **game servers** and **
 ### Using Service Clients
 
 ```csharp
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 
 // Service clients use mesh routing
-var accountsClient = new AccountsClient();
+var accountClient = new AccountClient();
 var authClient = new AuthClient();
 
-var response = await accountsClient.CreateAccountAsync(new CreateAccountRequest
+var response = await accountClient.CreateAccountAsync(new CreateAccountRequest
 {
     Username = "user",
     Password = "password"

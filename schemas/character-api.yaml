@@ -19,6 +19,8 @@ info:
 
     **Relationships**: Character relationships are managed by the separate Relationship
     service, which handles entity-agnostic relationships between any two entities.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
@@ -43,7 +45,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateCharacterRequest'
       responses:
-        '201':
+        '200':
           description: Character created successfully
           content:
             application/json:
@@ -54,38 +56,53 @@ paths:
         '409':
           description: Character already exists
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateCharacterRequest\"\
-        ,\n  \"$defs\": {\n    \"CreateCharacterRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
-        \ \"name\",\n        \"realmId\",\n        \"speciesId\",\n        \"birthDate\"\n      ],\n      \"properties\":
-        {\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"maxLength\": 100,\n\
-        \          \"description\": \"Character name\"\n        },\n        \"realmId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"description\": \"Realm ID (foreign key to future Realm service, partition
-        key)\"\n        },\n        \"speciesId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n \
-        \         \"description\": \"Species ID (foreign key to future Species service)\"\n        },\n        \"birthDate\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"In-game birth
-        timestamp\"\n        },\n        \"status\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"\
-        #/$defs/CharacterStatus\"\n            }\n          ],\n          \"default\": \"alive\"\n        }\n      }\n   \
-        \ },\n    \"CharacterStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Character lifecycle status\"\
-        ,\n      \"enum\": [\n        \"alive\",\n        \"dead\",\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CharacterResponse\"\
-        ,\n  \"$defs\": {\n    \"CharacterResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"characterId\"\
-        ,\n        \"name\",\n        \"realmId\",\n        \"speciesId\",\n        \"birthDate\",\n        \"status\",\n\
-        \        \"createdAt\"\n      ],\n      \"properties\": {\n        \"characterId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Realm ID (partition key)\"\n        },\n        \"speciesId\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\"\n        },\n        \"birthDate\": {\n          \"type\": \"string\",\n          \"format\": \"\
-        date-time\",\n          \"description\": \"In-game birth timestamp\"\n        },\n        \"deathDate\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
-        : \"In-game death timestamp\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/CharacterStatus\"\n\
-        \        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n   \
-        \       \"description\": \"Real-world creation timestamp\"\n        },\n        \"updatedAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
-        Real-world last update timestamp\"\n        }\n      }\n    },\n    \"CharacterStatus\": {\n      \"type\": \"string\"\
-        ,\n      \"description\": \"Character lifecycle status\",\n      \"enum\": [\n        \"alive\",\n        \"dead\"\
-        ,\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Create new character\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
-        Character Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createCharacter\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateCharacterRequest\": {\n            \"description\": \"Request payload for creating
+        a new character in the game world\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"name\",\n                \"realmId\",\n                \"speciesId\"\
+        ,\n                \"birthDate\"\n            ],\n            \"properties\": {\n                \"name\": {\n   \
+        \                 \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Character name\"\n                },\n                \"realmId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Realm ID (foreign key to future Realm service, partition key)\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Species ID (foreign key to future Species service)\"\n                },\n                \"birthDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"status\": {\n            \
+        \        \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\
+        \n                        }\n                    ],\n                    \"default\": \"alive\",\n               \
+        \     \"description\": \"Initial lifecycle status for the character\"\n                }\n            }\n        },\n\
+        \        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle
+        status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\
+        \n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
+        from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\"\
+        ,\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier for the character\"\n                },\n                \"name\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Display name of the character\"\n                },\n          \
+        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
+        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
+        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create new character\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createCharacter\"\n}"
   /character/get:
     post:
       summary: Get character by ID
@@ -111,30 +128,41 @@ paths:
         '404':
           description: Character not found
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetCharacterRequest\"\
-        ,\n  \"$defs\": {\n    \"GetCharacterRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        characterId\"\n      ],\n      \"properties\": {\n        \"characterId\": {\n          \"type\": \"string\",\n  \
-        \        \"format\": \"uuid\",\n          \"description\": \"ID of the character to retrieve\"\n        }\n      }\n\
-        \    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CharacterResponse\"\
-        ,\n  \"$defs\": {\n    \"CharacterResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"characterId\"\
-        ,\n        \"name\",\n        \"realmId\",\n        \"speciesId\",\n        \"birthDate\",\n        \"status\",\n\
-        \        \"createdAt\"\n      ],\n      \"properties\": {\n        \"characterId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Realm ID (partition key)\"\n        },\n        \"speciesId\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\"\n        },\n        \"birthDate\": {\n          \"type\": \"string\",\n          \"format\": \"\
-        date-time\",\n          \"description\": \"In-game birth timestamp\"\n        },\n        \"deathDate\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
-        : \"In-game death timestamp\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/CharacterStatus\"\n\
-        \        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n   \
-        \       \"description\": \"Real-world creation timestamp\"\n        },\n        \"updatedAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
-        Real-world last update timestamp\"\n        }\n      }\n    },\n    \"CharacterStatus\": {\n      \"type\": \"string\"\
-        ,\n      \"description\": \"Character lifecycle status\",\n      \"enum\": [\n        \"alive\",\n        \"dead\"\
-        ,\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get character by ID\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Character
-        Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getCharacter\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCharacterRequest\": {\n            \"description\": \"Request payload for retrieving
+        a single character by ID\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n      \
+        \          \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the character to retrieve\"\n                }\n            }\n  \
+        \      }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
+        from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\"\
+        ,\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier for the character\"\n                },\n                \"name\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Display name of the character\"\n                },\n          \
+        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
+        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
+        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get character by ID\",\n    \"description\": \"\",\n    \"tags\": [\n \
+        \       \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCharacter\"\n}"
   /character/update:
     post:
       summary: Update character
@@ -162,38 +190,53 @@ paths:
         '400':
           description: Invalid update data
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateCharacterRequest\"\
-        ,\n  \"$defs\": {\n    \"UpdateCharacterRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
-        \ \"characterId\"\n      ],\n      \"properties\": {\n        \"characterId\": {\n          \"type\": \"string\",\n\
-        \          \"format\": \"uuid\",\n          \"description\": \"ID of the character to update\"\n        },\n     \
-        \   \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"maxLength\": 100,\n   \
-        \       \"nullable\": true\n        },\n        \"speciesId\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Update character's species (used for species
-        merge migrations)\"\n        },\n        \"status\": {\n          \"allOf\": [\n            {\n              \"$ref\"\
-        : \"#/$defs/CharacterStatus\"\n            }\n          ],\n          \"nullable\": true\n        },\n        \"deathDate\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
-        \    \"description\": \"In-game death timestamp (sets status to dead)\"\n        }\n      }\n    },\n    \"CharacterStatus\"\
-        : {\n      \"type\": \"string\",\n      \"description\": \"Character lifecycle status\",\n      \"enum\": [\n    \
-        \    \"alive\",\n        \"dead\",\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CharacterResponse\"\
-        ,\n  \"$defs\": {\n    \"CharacterResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"characterId\"\
-        ,\n        \"name\",\n        \"realmId\",\n        \"speciesId\",\n        \"birthDate\",\n        \"status\",\n\
-        \        \"createdAt\"\n      ],\n      \"properties\": {\n        \"characterId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n \
-        \       \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"Realm ID (partition key)\"\n        },\n        \"speciesId\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\"\n        },\n        \"birthDate\": {\n          \"type\": \"string\",\n          \"format\": \"\
-        date-time\",\n          \"description\": \"In-game birth timestamp\"\n        },\n        \"deathDate\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\"\
-        : \"In-game death timestamp\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/CharacterStatus\"\n\
-        \        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n   \
-        \       \"description\": \"Real-world creation timestamp\"\n        },\n        \"updatedAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"\
-        Real-world last update timestamp\"\n        }\n      }\n    },\n    \"CharacterStatus\": {\n      \"type\": \"string\"\
-        ,\n      \"description\": \"Character lifecycle status\",\n      \"enum\": [\n        \"alive\",\n        \"dead\"\
-        ,\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Update character\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Character
-        Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"updateCharacter\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateCharacterRequest\": {\n            \"description\": \"Request payload for updating
+        an existing character's properties\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
+        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the character to update\"\n                },\n                \"\
+        name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"\
+        maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"New name for the
+        character\"\n                },\n                \"speciesId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Update character's species (used for species merge migrations)\"\n                },\n                \"status\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"New lifecycle status for the character\"\n                },\n                \"deathDate\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"In-game death timestamp (sets status to dead)\"\n  \
+        \              }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Character lifecycle status\",\n            \"enum\": [\n                \"alive\",\n\
+        \                \"dead\",\n                \"dormant\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
+        from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\"\
+        ,\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier for the character\"\n                },\n                \"name\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Display name of the character\"\n                },\n          \
+        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
+        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
+        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update character\",\n    \"description\": \"\",\n    \"tags\": [\n    \
+        \    \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateCharacter\"\n}"
   /character/delete:
     post:
       summary: Delete character (permanent removal)
@@ -210,19 +253,22 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteCharacterRequest'
       responses:
-        '204':
+        '200':
           description: Character deleted successfully
         '404':
           description: Character not found
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteCharacterRequest\"\
-        ,\n  \"$defs\": {\n    \"DeleteCharacterRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
-        \ \"characterId\"\n      ],\n      \"properties\": {\n        \"characterId\": {\n          \"type\": \"string\",\n\
-        \          \"format\": \"uuid\",\n          \"description\": \"ID of the character to delete\"\n        }\n      }\n\
-        \    }\n  }\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteCharacterRequest\": {\n            \"description\": \"Request payload for permanently
+        deleting a character\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n          \
+        \      \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"ID of the character to delete\"\n                }\n            }\n      \
+        \  }\n    }\n}"
       x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n  \"summary\": \"Delete character (permanent removal)\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"Character Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"deleteCharacter\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete character (permanent removal)\",\n    \"description\": \"\",\n \
+        \   \"tags\": [\n        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteCharacter\"\
+        \n}"
   /character/list:
     post:
       summary: List characters with filtering
@@ -246,43 +292,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/CharacterListResponse'
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListCharactersRequest\"\
-        ,\n  \"$defs\": {\n    \"ListCharactersRequest\": {\n      \"type\": \"object\",\n      \"properties\": {\n      \
-        \  \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Filter by realm\"\n        },\n        \"speciesId\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Filter by species\"\
-        \n        },\n        \"status\": {\n          \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/CharacterStatus\"\
-        \n            }\n          ],\n          \"nullable\": true,\n          \"description\": \"Filter by status\"\n  \
-        \      },\n        \"page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\"\
-        : 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"\
-        maximum\": 100,\n          \"default\": 20\n        }\n      }\n    },\n    \"CharacterStatus\": {\n      \"type\"\
-        : \"string\",\n      \"description\": \"Character lifecycle status\",\n      \"enum\": [\n        \"alive\",\n   \
-        \     \"dead\",\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CharacterListResponse\"\
-        ,\n  \"$defs\": {\n    \"CharacterListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        characters\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
-        \        \"characters\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/CharacterResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"CharacterResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"characterId\",\n        \"name\",\n        \"realmId\",\n        \"speciesId\"\
-        ,\n        \"birthDate\",\n        \"status\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n       \
-        \ \"characterId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"name\"\
-        : {\n          \"type\": \"string\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"uuid\",\n          \"description\": \"Realm ID (partition key)\"\n        },\n        \"speciesId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"birthDate\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"In-game birth timestamp\"\
-        \n        },\n        \"deathDate\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n  \
-        \        \"nullable\": true,\n          \"description\": \"In-game death timestamp\"\n        },\n        \"status\"\
-        : {\n          \"$ref\": \"#/$defs/CharacterStatus\"\n        },\n        \"createdAt\": {\n          \"type\": \"\
-        string\",\n          \"format\": \"date-time\",\n          \"description\": \"Real-world creation timestamp\"\n  \
-        \      },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n     \
-        \     \"nullable\": true,\n          \"description\": \"Real-world last update timestamp\"\n        }\n      }\n \
-        \   },\n    \"CharacterStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Character lifecycle status\"\
-        ,\n      \"enum\": [\n        \"alive\",\n        \"dead\",\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"List characters with filtering\",\n  \"description\": \"\",\n  \"tags\":
-        [\n    \"Character Management\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listCharacters\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCharactersRequest\"\
+        ,\n    \"$defs\": {\n        \"ListCharactersRequest\": {\n            \"description\": \"Request payload for listing
+        characters with optional filtering and pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by realm\"\n                },\n                \"speciesId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by species\"\n                },\n                \"status\": {\n                    \"allOf\": [\n   \
+        \                     {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\n                     \
+        \   }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"Filter
+        by status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n       \
+        \             \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number
+        for pagination (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\"\
+        : 20,\n                    \"description\": \"Number of results per page\"\n                }\n            }\n   \
+        \     },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
+        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
+        \    \"dormant\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
+        ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"Paginated list of characters
+        with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characters\",\n                \"totalCount\",\n                \"\
+        page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"characters\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/CharacterResponse\"\n                    },\n                    \"description\": \"List of characters
+        matching the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Total number of characters matching the filter criteria\"\n            \
+        \    },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Current page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n        \
+        \        \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        there are more results after this page\"\n                },\n                \"hasPreviousPage\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"description\": \"Whether there are results before this page\"\
+        \n                }\n            }\n        },\n        \"CharacterResponse\": {\n            \"description\": \"\
+        Complete character data returned from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"name\",\n             \
+        \   \"realmId\",\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n  \
+        \              \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the character\"\n                },\n                \"name\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Display name of the character\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
+        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
+        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List characters with filtering\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCharacters\"\
+        \n}"
   /character/by-realm:
     post:
       summary: Get all characters in a realm (primary query pattern)
@@ -306,45 +376,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/CharacterListResponse'
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetCharactersByRealmRequest\"\
-        ,\n  \"$defs\": {\n    \"GetCharactersByRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
-        \      \"realmId\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n \
-        \         \"format\": \"uuid\",\n          \"description\": \"Realm ID to query (uses partition key for efficiency)\"\
-        \n        },\n        \"speciesId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
-        \   \"nullable\": true,\n          \"description\": \"Filter by species\"\n        },\n        \"status\": {\n   \
-        \       \"allOf\": [\n            {\n              \"$ref\": \"#/$defs/CharacterStatus\"\n            }\n        \
-        \  ],\n          \"nullable\": true,\n          \"description\": \"Optional status filter\"\n        },\n        \"\
-        page\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1\n        },\n   \
-        \     \"pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n\
-        \          \"default\": 20\n        }\n      }\n    },\n    \"CharacterStatus\": {\n      \"type\": \"string\",\n\
-        \      \"description\": \"Character lifecycle status\",\n      \"enum\": [\n        \"alive\",\n        \"dead\",\n\
-        \        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CharacterListResponse\"\
-        ,\n  \"$defs\": {\n    \"CharacterListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        characters\",\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n\
-        \        \"characters\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/CharacterResponse\"\
-        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
-        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
-        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"CharacterResponse\": {\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"characterId\",\n        \"name\",\n        \"realmId\",\n        \"speciesId\"\
-        ,\n        \"birthDate\",\n        \"status\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n       \
-        \ \"characterId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"name\"\
-        : {\n          \"type\": \"string\"\n        },\n        \"realmId\": {\n          \"type\": \"string\",\n       \
-        \   \"format\": \"uuid\",\n          \"description\": \"Realm ID (partition key)\"\n        },\n        \"speciesId\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"birthDate\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"In-game birth timestamp\"\
-        \n        },\n        \"deathDate\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n  \
-        \        \"nullable\": true,\n          \"description\": \"In-game death timestamp\"\n        },\n        \"status\"\
-        : {\n          \"$ref\": \"#/$defs/CharacterStatus\"\n        },\n        \"createdAt\": {\n          \"type\": \"\
-        string\",\n          \"format\": \"date-time\",\n          \"description\": \"Real-world creation timestamp\"\n  \
-        \      },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n     \
-        \     \"nullable\": true,\n          \"description\": \"Real-world last update timestamp\"\n        }\n      }\n \
-        \   },\n    \"CharacterStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Character lifecycle status\"\
-        ,\n      \"enum\": [\n        \"alive\",\n        \"dead\",\n        \"dormant\"\n      ]\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get all characters in a realm (primary query pattern)\",\n  \"description\"\
-        : \"\",\n  \"tags\": [\n    \"Character Lookup\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getCharactersByRealm\"\
-        \n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCharactersByRealmRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCharactersByRealmRequest\": {\n            \"description\": \"Request payload for
+        retrieving all characters within a specific realm\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm ID to query (uses partition key for efficiency)\"\n              \
+        \  },\n                \"speciesId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by species\"\n\
+        \                },\n                \"status\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"$ref\": \"#/$defs/CharacterStatus\"\n                        }\n                  \
+        \  ],\n                    \"nullable\": true,\n                    \"description\": \"Optional status filter\"\n\
+        \                },\n                \"page\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number for pagination
+        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n \
+        \                   \"description\": \"Number of results per page\"\n                }\n            }\n        },\n\
+        \        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle
+        status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\
+        \n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
+        ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"Paginated list of characters
+        with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characters\",\n                \"totalCount\",\n                \"\
+        page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"characters\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/CharacterResponse\"\n                    },\n                    \"description\": \"List of characters
+        matching the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Total number of characters matching the filter criteria\"\n            \
+        \    },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Current page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n        \
+        \        \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        there are more results after this page\"\n                },\n                \"hasPreviousPage\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"description\": \"Whether there are results before this page\"\
+        \n                }\n            }\n        },\n        \"CharacterResponse\": {\n            \"description\": \"\
+        Complete character data returned from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"name\",\n             \
+        \   \"realmId\",\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n  \
+        \              \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the character\"\n                },\n                \"name\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Display name of the character\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
+        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
+        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get all characters in a realm (primary query pattern)\",\n    \"description\"\
+        : \"\",\n    \"tags\": [\n        \"Character Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        getCharactersByRealm\"\n}"
 components:
   schemas:
     # Shared Enum Definitions
@@ -355,7 +448,9 @@ components:
 
     # Request Models for POST-only pattern
     CreateCharacterRequest:
+      description: Request payload for creating a new character in the game world
       type: object
+      additionalProperties: false
       required:
       - name
       - realmId
@@ -383,9 +478,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           default: alive
+          description: Initial lifecycle status for the character
 
     GetCharacterRequest:
+      description: Request payload for retrieving a single character by ID
       type: object
+      additionalProperties: false
       required:
       - characterId
       properties:
@@ -395,7 +493,9 @@ components:
           description: ID of the character to retrieve
 
     UpdateCharacterRequest:
+      description: Request payload for updating an existing character's properties
       type: object
+      additionalProperties: false
       required:
       - characterId
       properties:
@@ -408,6 +508,7 @@ components:
           minLength: 1
           maxLength: 100
           nullable: true
+          description: New name for the character
         speciesId:
           type: string
           format: uuid
@@ -417,6 +518,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           nullable: true
+          description: New lifecycle status for the character
         deathDate:
           type: string
           format: date-time
@@ -424,7 +526,9 @@ components:
           description: In-game death timestamp (sets status to dead)
 
     DeleteCharacterRequest:
+      description: Request payload for permanently deleting a character
       type: object
+      additionalProperties: false
       required:
       - characterId
       properties:
@@ -434,7 +538,9 @@ components:
           description: ID of the character to delete
 
     ListCharactersRequest:
+      description: Request payload for listing characters with optional filtering and pagination
       type: object
+      additionalProperties: false
       properties:
         realmId:
           type: string
@@ -455,14 +561,18 @@ components:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-based)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     GetCharactersByRealmRequest:
+      description: Request payload for retrieving all characters within a specific realm
       type: object
+      additionalProperties: false
       required:
       - realmId
       properties:
@@ -484,15 +594,19 @@ components:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-based)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     # Response Models
     CharacterResponse:
+      description: Complete character data returned from character operations
       type: object
+      additionalProperties: false
       required:
       - characterId
       - name
@@ -505,8 +619,10 @@ components:
         characterId:
           type: string
           format: uuid
+          description: Unique identifier for the character
         name:
           type: string
+          description: Display name of the character
         realmId:
           type: string
           format: uuid
@@ -514,6 +630,7 @@ components:
         speciesId:
           type: string
           format: uuid
+          description: Species ID (foreign key to Species service)
         birthDate:
           type: string
           format: date-time
@@ -525,6 +642,7 @@ components:
           description: In-game death timestamp
         status:
           $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status of the character
         createdAt:
           type: string
           format: date-time
@@ -536,7 +654,9 @@ components:
           description: Real-world last update timestamp
 
     CharacterListResponse:
+      description: Paginated list of characters with metadata for navigation
       type: object
+      additionalProperties: false
       required:
       - characters
       - totalCount
@@ -547,21 +667,28 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CharacterResponse'
+          description: List of characters matching the query
         totalCount:
           type: integer
+          description: Total number of characters matching the filter criteria
         page:
           type: integer
+          description: Current page number (1-based)
         pageSize:
           type: integer
+          description: Number of results per page
         hasNextPage:
           type: boolean
+          description: Whether there are more results after this page
         hasPreviousPage:
           type: boolean
+          description: Whether there are results before this page
 
     # Realm Transition Events (custom, not lifecycle)
     CharacterRealmJoinedEvent:
       type: object
       description: Event published when a character joins a realm
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -570,10 +697,11 @@ components:
       properties:
         eventId:
           type: string
-          format: uuid
+          description: Unique identifier for this event instance
         timestamp:
           type: string
           format: date-time
+          description: When the event occurred
         characterId:
           type: string
           format: uuid
@@ -591,6 +719,7 @@ components:
     CharacterRealmLeftEvent:
       type: object
       description: Event published when a character leaves a realm
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -599,10 +728,11 @@ components:
       properties:
         eventId:
           type: string
-          format: uuid
+          description: Unique identifier for this event instance
         timestamp:
           type: string
           format: date-time
+          description: When the event occurred
         characterId:
           type: string
           format: uuid
@@ -613,5 +743,6 @@ components:
           description: Realm being left
         reason:
           type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
           description: Reason for leaving (death, transfer, deletion)
-

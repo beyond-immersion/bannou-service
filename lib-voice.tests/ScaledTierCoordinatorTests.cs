@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
@@ -12,6 +14,7 @@ public class ScaledTierCoordinatorTests
     private readonly Mock<IKamailioClient> _mockKamailioClient;
     private readonly Mock<IRtpEngineClient> _mockRtpEngineClient;
     private readonly Mock<ILogger<ScaledTierCoordinator>> _mockLogger;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly VoiceServiceConfiguration _configuration;
 
     public ScaledTierCoordinatorTests()
@@ -19,6 +22,7 @@ public class ScaledTierCoordinatorTests
         _mockKamailioClient = new Mock<IKamailioClient>();
         _mockRtpEngineClient = new Mock<IRtpEngineClient>();
         _mockLogger = new Mock<ILogger<ScaledTierCoordinator>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _configuration = new VoiceServiceConfiguration
         {
             ScaledMaxParticipants = 100,
@@ -38,63 +42,17 @@ public class ScaledTierCoordinatorTests
             _mockKamailioClient.Object,
             _mockRtpEngineClient.Object,
             _mockLogger.Object,
+            _mockMessageBus.Object,
             _configuration);
     }
 
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var coordinator = CreateCoordinator();
-
-        // Assert
-        Assert.NotNull(coordinator);
-    }
-
-    [Fact]
-    public void Constructor_WithNullKamailioClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ScaledTierCoordinator(
-            null!,
-            _mockRtpEngineClient.Object,
-            _mockLogger.Object,
-            _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullRtpEngineClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ScaledTierCoordinator(
-            _mockKamailioClient.Object,
-            null!,
-            _mockLogger.Object,
-            _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ScaledTierCoordinator(
-            _mockKamailioClient.Object,
-            _mockRtpEngineClient.Object,
-            null!,
-            _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ScaledTierCoordinator(
-            _mockKamailioClient.Object,
-            _mockRtpEngineClient.Object,
-            _mockLogger.Object,
-            null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<ScaledTierCoordinator>();
+        Assert.NotNull(CreateCoordinator());
     }
 
     #endregion
@@ -169,6 +127,7 @@ public class ScaledTierCoordinatorTests
             _mockKamailioClient.Object,
             _mockRtpEngineClient.Object,
             _mockLogger.Object,
+            _mockMessageBus.Object,
             config);
 
         // Act

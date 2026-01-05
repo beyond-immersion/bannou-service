@@ -1,0 +1,49 @@
+# Relayed Connect Preset
+# Deploys a Connect service in Relayed mode for peer-to-peer routing tests.
+#
+# Topology:
+# - Main node (already running): all services in External mode (default)
+# - bannou-relayed (deployed by this preset): Connect only in Relayed mode
+#
+# When deployed, new WebSocket connections can be routed to this node,
+# enabling peer-to-peer message routing between connected clients.
+#
+# Use Case:
+# - Edge tests deploy this preset to test peer-to-peer routing
+# - Validates Connect service responsibility handoff to new node
+# - Tests that Relayed mode correctly includes peerGuid in capability manifest
+
+name: relayed-connect
+description: Relayed Connect node for peer-to-peer routing tests
+category: testing
+
+topology:
+  nodes:
+    # Relayed Connect node - handles peer-to-peer WebSocket routing
+    - name: bannou-relayed
+      services:
+        - connect
+      replicas: 1
+      environment:
+        # Enable Relayed mode for peer-to-peer routing
+        CONNECT_CONNECTION_MODE: "relayed"
+        # Node-specific marker
+        BANNOU_IS_RELAYED_NODE: "true"
+
+  infrastructure:
+    mysql:
+      enabled: true
+      version: "8.0"
+    redis:
+      enabled: true
+      version: "7"
+    rabbitmq:
+      enabled: true
+      version: "4.0-management"
+
+environment:
+  # Debug logging for test visibility
+  BANNOU_APP_LOGGING_LEVEL: Debug
+
+requiredBackends:
+  - docker-compose

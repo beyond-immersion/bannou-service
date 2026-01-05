@@ -32,6 +32,13 @@ public sealed class UploadSession
     public AssetMetadataInput? Metadata { get; set; }
 
     /// <summary>
+    /// Owner of this upload session. NOT a session ID.
+    /// For user-initiated uploads: the accountId (UUID format).
+    /// For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+    /// </summary>
+    public string Owner { get; set; } = string.Empty;
+
+    /// <summary>
     /// Storage key where the file will be stored in MinIO.
     /// </summary>
     public string StorageKey { get; set; } = string.Empty;

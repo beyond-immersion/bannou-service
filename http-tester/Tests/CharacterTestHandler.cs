@@ -74,8 +74,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
         return species;
     }
 
-    private static Task<TestResult> TestCreateCharacter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateCharacter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("CREATE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "CREATE");
@@ -104,8 +104,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Character created successfully: ID={response.CharacterId}, Name={response.Name}");
         }, "Create character");
 
-    private static Task<TestResult> TestGetCharacter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetCharacter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("GET");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "GET");
@@ -135,8 +135,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Character retrieved successfully: ID={response.CharacterId}, Name={response.Name}");
         }, "Get character");
 
-    private static Task<TestResult> TestUpdateCharacter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateCharacter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("UPDATE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "UPDATE");
@@ -172,8 +172,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Character updated successfully: ID={response.CharacterId}, Name={response.Name}, Status={response.Status}");
         }, "Update character");
 
-    private static Task<TestResult> TestDeleteCharacter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteCharacter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("DELETE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "DELETE");
@@ -206,8 +206,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Character deleted successfully: ID={createResponse.CharacterId}");
         }, "Delete character");
 
-    private static Task<TestResult> TestListCharacters(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListCharacters(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("LIST");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "LIST");
@@ -244,8 +244,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Characters.Count} characters (Total: {response.TotalCount}, Page: {response.Page}, HasNext: {response.HasNextPage})");
         }, "List characters");
 
-    private static Task<TestResult> TestGetCharactersByRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetCharactersByRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("REALM");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "REALM");
@@ -288,7 +288,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved {response.Characters.Count} characters from realm {realm.RealmId}");
         }, "Get characters by realm");
 
-    private static Task<TestResult> TestGetNonExistentCharacter(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentCharacter(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -298,8 +299,8 @@ public class CharacterTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent character");
 
-    private static Task<TestResult> TestCompleteCharacterLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteCharacterLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realm = await CreateTestRealmAsync("LIFECYCLE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "LIFECYCLE");

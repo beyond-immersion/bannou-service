@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: call_return
+flows:
+  start:
+    actions:
+      - call: { flow: calculate }
+      - log: { message: "Result: ${_result}" }
+  calculate:
+    actions:
+      - set:
+          variable: sum
+          value: "${2 + 3}"
+      - return: { value: "${sum}" }

@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -96,67 +97,18 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        var service = CreateService();
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockLogger.Object,
-            Configuration,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!,
-            Configuration,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            null!));
-    }
+    public void RealmService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<RealmService>();
 
     #endregion
 
@@ -419,8 +371,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<RealmModel>(), null, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
-            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -471,8 +423,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify no event was published (no changes)
-        _mockMessageBus.Verify(m => m.PublishAsync(
-            It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -492,7 +444,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var (status, response) = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -512,7 +464,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(existingModel);
 
         // Act
-        var (status, response) = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -540,10 +492,10 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(new List<string> { realmId.ToString() });
 
         // Act
-        var (status, response) = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request);
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, status);
+        Assert.Equal(StatusCodes.OK, status);
 
         // Verify delete operations
         _mockRealmStore.Verify(s => s.DeleteAsync(
@@ -552,8 +504,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             $"{CODE_INDEX_PREFIX}DELETED", It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
-            "realm.deleted", It.IsAny<RealmDeletedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "realm.deleted", It.IsAny<RealmDeletedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -623,8 +575,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.NotNull(response.DeprecatedAt);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
-            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -694,8 +646,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Null(response.DeprecatedAt);
 
         // Verify event was published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
-            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

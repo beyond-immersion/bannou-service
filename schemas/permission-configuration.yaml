@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: Permission Service Configuration
+  description: |
+    Configuration schema for Permission service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    Enabled:
+      type: boolean
+      description: Enable/disable Permission service
+      default: true
+      env: PERMISSION_ENABLED

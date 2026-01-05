@@ -13,7 +13,6 @@ Usage:
 
 import sys
 from pathlib import Path
-from datetime import datetime
 
 # Use ruamel.yaml to parse YAML files
 try:
@@ -135,7 +134,6 @@ def generate_markdown(stores: list) -> str:
     lines = [
         "# Generated State Store Reference",
         "",
-        f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "> **Source**: `provisioning/state-stores/*.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
@@ -173,7 +171,7 @@ def generate_markdown(stores: list) -> str:
         "# All Redis state stores point to same instance",
         "auth-statestore:     bannou-redis:6379",
         "connect-statestore:  bannou-redis:6379",
-        "permissions-statestore: bannou-redis:6379",
+        "permission-statestore: bannou-redis:6379",
         "```",
         "",
         "### Example: Production (Dedicated Infrastructure)",
@@ -182,7 +180,7 @@ def generate_markdown(stores: list) -> str:
         "# Each service can have its own infrastructure",
         "auth-statestore:     auth-redis-cluster.prod:6379",
         "connect-statestore:  connect-redis-cluster.prod:6379",
-        "permissions-statestore: permissions-redis.prod:6379",
+        "permission-statestore: permission-redis.prod:6379",
         "```",
         "",
         "---",

@@ -12,8 +12,8 @@ source "$(dirname "$0")/common.sh"
 # Validate arguments
 if [ $# -lt 1 ]; then
     log_error "Usage: $0 <service-name> [schema-file]"
-    echo "Example: $0 accounts"
-    echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+    echo "Example: $0 account"
+    echo "Example: $0 account ../schemas/account-api.yaml"
     exit 1
 fi
 
@@ -60,6 +60,20 @@ echo -e "${YELLOW}🔄 Running NSwag model generation...${NC}"
 
 # Check if generation succeeded
 if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
+    # Post-process: Add [JsonRequired] after each [Required] attribute
+    # NSwag generates [System.ComponentModel.DataAnnotations.Required] which is ignored by System.Text.Json
+    # We add [System.Text.Json.Serialization.JsonRequired] which IS enforced during deserialization
+    echo -e "${YELLOW}🔄 Post-processing: Adding [JsonRequired] attributes...${NC}"
+    sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$OUTPUT_FILE"
+
+    # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
+    echo -e "${YELLOW}🔄 Post-processing: Adding enum CS1591 suppressions...${NC}"
+    postprocess_enum_suppressions "$OUTPUT_FILE"
+
+    # Post-process: Add XML docs to AdditionalProperties
+    echo -e "${YELLOW}🔄 Post-processing: Adding AdditionalProperties XML docs...${NC}"
+    postprocess_additional_properties_docs "$OUTPUT_FILE"
+
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
 else
@@ -88,13 +102,30 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
         "/templateDirectory:../templates/nswag"
 
     if [ $? -eq 0 ] && [ -f "$LIFECYCLE_OUTPUT_FILE" ]; then
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding [JsonRequired] attributes...${NC}"
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$LIFECYCLE_OUTPUT_FILE"
+
+        # Post-process: Fix EventName shadowing - add 'override' keyword
+        # Base class has 'virtual string EventName', generated classes shadow it without override
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Fixing EventName override...${NC}"
+        sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$LIFECYCLE_OUTPUT_FILE"
+
+        # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding enum CS1591 suppressions...${NC}"
+        postprocess_enum_suppressions "$LIFECYCLE_OUTPUT_FILE"
+
+        # Post-process: Add XML docs to AdditionalProperties
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding AdditionalProperties XML docs...${NC}"
+        postprocess_additional_properties_docs "$LIFECYCLE_OUTPUT_FILE"
+
         LIFECYCLE_FILE_SIZE=$(wc -l < "$LIFECYCLE_OUTPUT_FILE" 2>/dev/null || echo "0")
         echo -e "${GREEN}✅ Generated lifecycle event models ($LIFECYCLE_FILE_SIZE lines)${NC}"
     else

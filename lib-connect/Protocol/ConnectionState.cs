@@ -54,6 +54,17 @@ public class ConnectionState
     /// </summary>
     public ConnectionFlags Flags { get; set; }
 
+    #region Peer-to-Peer Routing
+
+    /// <summary>
+    /// Unique GUID for peer-to-peer routing.
+    /// Other connections can route messages to this connection using this GUID.
+    /// Generated on connection establishment and stable for the connection lifetime.
+    /// </summary>
+    public Guid PeerGuid { get; }
+
+    #endregion
+
     #region Session Shortcuts
 
     /// <summary>
@@ -118,6 +129,7 @@ public class ConnectionState
         SessionShortcuts = new ConcurrentDictionary<Guid, SessionShortcutData>();
         ShortcutsByService = new ConcurrentDictionary<string, HashSet<Guid>>();
         Flags = ConnectionFlags.None;
+        PeerGuid = Guid.NewGuid();
     }
 
     /// <summary>
@@ -302,11 +314,14 @@ public class ConnectionState
         // Add to main shortcuts dictionary
         SessionShortcuts[shortcut.RouteGuid] = shortcut;
 
-        // Add to service index for bulk revocation
-        var guids = ShortcutsByService.GetOrAdd(shortcut.SourceService, _ => new HashSet<Guid>());
-        lock (guids)
+        // Add to service index for bulk revocation (only if SourceService is specified)
+        if (!string.IsNullOrEmpty(shortcut.SourceService))
         {
-            guids.Add(shortcut.RouteGuid);
+            var guids = ShortcutsByService.GetOrAdd(shortcut.SourceService, _ => new HashSet<Guid>());
+            lock (guids)
+            {
+                guids.Add(shortcut.RouteGuid);
+            }
         }
     }
 
@@ -320,8 +335,9 @@ public class ConnectionState
         if (!SessionShortcuts.TryRemove(routeGuid, out var shortcut))
             return false;
 
-        // Remove from service index
-        if (ShortcutsByService.TryGetValue(shortcut.SourceService, out var guids))
+        // Remove from service index (only if SourceService was specified)
+        if (!string.IsNullOrEmpty(shortcut.SourceService) &&
+            ShortcutsByService.TryGetValue(shortcut.SourceService, out var guids))
         {
             lock (guids)
             {
@@ -424,6 +440,43 @@ public class PendingMessageInfo
 }
 
 /// <summary>
+/// Information about a pending RPC call awaiting client response.
+/// Used to track service-to-client RPC calls and forward responses back.
+/// </summary>
+public class PendingRPCInfo
+{
+    /// <summary>
+    /// Session ID of the client that received the RPC.
+    /// </summary>
+    public string ClientSessionId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Name of the service that initiated the RPC.
+    /// </summary>
+    public string ServiceName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// RabbitMQ channel where the response should be published.
+    /// </summary>
+    public string ResponseChannel { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Service GUID used for the RPC (for correlation).
+    /// </summary>
+    public Guid ServiceGuid { get; set; }
+
+    /// <summary>
+    /// When the RPC was sent.
+    /// </summary>
+    public DateTimeOffset SentAt { get; set; }
+
+    /// <summary>
+    /// When the RPC will be considered timed out.
+    /// </summary>
+    public DateTimeOffset TimeoutAt { get; set; }
+}
+
+/// <summary>
 /// Connection capability flags.
 /// </summary>
 [Flags]
@@ -474,14 +527,14 @@ public class SessionShortcutData
 
     /// <summary>
     /// The service that created this shortcut.
-    /// Used for bulk revocation and audit logging.
+    /// Used for bulk revocation and audit logging. Null if not specified.
     /// </summary>
-    public string SourceService { get; set; } = string.Empty;
+    public string? SourceService { get; set; }
 
     /// <summary>
-    /// Machine-readable shortcut identifier.
+    /// Machine-readable shortcut identifier. Null if not specified.
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    public string? Name { get; set; }
 
     /// <summary>
     /// Human-readable description of what this shortcut does.

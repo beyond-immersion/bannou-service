@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using BeyondImmersion.BannouService.Voice.Clients;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -16,11 +18,13 @@ public class KamailioClientTests
 {
     private readonly Mock<ILogger<KamailioClient>> _mockLogger;
     private readonly Mock<HttpMessageHandler> _mockHandler;
+    private readonly Mock<IMessageBus> _mockMessageBus;
 
     public KamailioClientTests()
     {
         _mockLogger = new Mock<ILogger<KamailioClient>>();
         _mockHandler = new Mock<HttpMessageHandler>();
+        _mockMessageBus = new Mock<IMessageBus>();
     }
 
     private HttpClient CreateMockedHttpClient(HttpStatusCode statusCode, string? content = null)
@@ -43,44 +47,17 @@ public class KamailioClientTests
 
     private KamailioClient CreateClient(HttpClient httpClient)
     {
-        return new KamailioClient(httpClient, "localhost", 5080, _mockLogger.Object);
+        return new KamailioClient(httpClient, "localhost", 5080, _mockLogger.Object, _mockMessageBus.Object);
     }
 
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange
-        var httpClient = new HttpClient();
-
-        // Act
-        var client = new KamailioClient(httpClient, "localhost", 5080, _mockLogger.Object);
-
-        // Assert
+        ServiceConstructorValidator.ValidateServiceConstructor<KamailioClient>();
+        var client = new KamailioClient(new HttpClient(), "localhost", 5080, _mockLogger.Object, _mockMessageBus.Object);
         Assert.NotNull(client);
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new KamailioClient(
-            null!,
-            "localhost",
-            5080,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new KamailioClient(
-            new HttpClient(),
-            "localhost",
-            5080,
-            null!));
     }
 
     #endregion

@@ -1,6 +1,5 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-28 02:41:54
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -12,14 +11,26 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` | Base schema for all service-to-service events. |
+| `CharacterStateUpdateEvent` | Custom | `character-state-update` | Published by Actor service when an actor updates a... |
 | `FullServiceMappingsEvent` | Custom | `full-service-mappings` | Published periodically by Orchestrator as the auth... |
 | `ServiceErrorEvent` | Error | `service.error` | Structured error event for unexpected service fail... |
 | `ServiceHeartbeatEvent` | Health | `service.heartbeat` | Published periodically by each bannou instance to ... |
-| `ServiceMappingEvent` | Custom | `service-mapping` | Legacy event for individual service-to-app-id mapp... |
 | `ServiceRegistrationEvent` | Custom | `service-registration` | Published by any service during startup to registe... |
 | `SessionConnectedEvent` | Session | `session.connected` | Published by Connect service when a WebSocket conn... |
 | `SessionDisconnectedEvent` | Session | `session.disconnected` | Published by Connect service when a WebSocket conn... |
 | `SessionReconnectedEvent` | Session | `session-reconnected` | Published by Connect service when a WebSocket sess... |
+
+### Actor
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ActorCompletedEvent` | Custom | `actor-completed` | Published when an actor completes execution (self-... |
+| `ActorStatusChangedEvent` | Custom | `actor-status-changed` | Published when an actor's status changes. |
+| `PoolNodeDrainingEvent` | Custom | `pool-node-draining` | Published when a pool node begins graceful shutdow... |
+| `PoolNodeHeartbeatEvent` | Health | `pool-node.heartbeat` | Periodic heartbeat from pool nodes to control plan... |
+| `PoolNodeRegisteredEvent` | Registration | `pool-node.registered` | Published when a pool node starts and registers wi... |
+| `PoolNodeUnhealthyEvent` | Custom | `pool-node-unhealthy` | Published by control plane when a pool node is det... |
 
 ### Asset
 
@@ -30,6 +41,7 @@ This document lists all events defined in Bannou's event schemas.
 | `AssetReadyEvent` | Custom | `asset-ready` | Event published when an asset is fully processed a... |
 | `AssetUploadCompletedEvent` | Custom | `asset-upload-completed` | Event published when an upload is completed and fi... |
 | `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
 
 ### Asset (client)
@@ -48,6 +60,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
@@ -70,12 +83,9 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `DocumentViewedEvent` | Custom | `document-viewed` | Published when a document is viewed |
 | `DocumentationArchiveCreatedEvent` | Lifecycle (Created) | `documentation-archive.created` | Published when a documentation archive is created |
 | `DocumentationBindingCreatedEvent` | Lifecycle (Created) | `documentation-binding.created` | Published when a repository binding is created |
 | `DocumentationBindingRemovedEvent` | Custom | `documentation-binding-removed` | Published when a repository binding is removed |
-| `DocumentationImportCompletedEvent` | Custom | `documentation-import-completed` | Published when an import operation completes |
-| `DocumentationImportStartedEvent` | Custom | `documentation-import-started` | Published when an import operation starts |
 | `DocumentationQueriedEvent` | Custom | `documentation-queried` | Published when documentation is queried with natur... |
 | `DocumentationSearchedEvent` | Custom | `documentation-searched` | Published when documentation is searched with keyw... |
 | `DocumentationSyncCompletedEvent` | Custom | `documentation-sync-completed` | Published when a repository sync completes |
@@ -85,6 +95,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `GameSessionActionPerformedEvent` | Custom | `game-session-action-performed` | Published when a game action is performed in a ses... |
 | `GameSessionPlayerJoinedEvent` | Custom | `game-session-player-joined` | Published when a player joins a game session |
 | `GameSessionPlayerLeftEvent` | Custom | `game-session-player-left` | Published when a player leaves a game session |
 
@@ -104,58 +115,48 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
-| `MeshEndpointStatusChangedEvent` | Custom | `mesh-endpoint-status-changed` | Published when an endpoint's health status changes... |
-| `MeshRoutingTableUpdatedEvent` | Lifecycle (Updated) | `mesh-routing-table.updated` | Published when the routing table changes. |
 
 ### Messaging
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `MessagePublishedEvent` | Custom | `message-published` | Internal event for message tracking/debugging |
-| `SubscriptionCreatedEvent` | Lifecycle (Created) | `subscription.created` | Published when a dynamic subscription is created |
-| `SubscriptionRemovedEvent` | Custom | `subscription-removed` | Published when a subscription is removed |
+| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Orchestrator
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
 
-### Permissions
+### Permission
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `AuthSessionEvent` | Custom | `auth-session` | Authentication-related session events (login, logo... |
-| `PermissionRecompileRequest` | Custom | `permission-recompile-request` | Request to trigger bulk permission recompilation. |
-| `RedisOperationEvent` | Custom | `redis-operation` | Internal event for Redis operation tracking and mo... |
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
 ### State
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `StateChangedEvent` | Custom | `state-changed` | Published when state changes (optional, for debugg... |
-| `StoreHealthEvent` | Custom | `store-health` | Published for store health monitoring |
-| `StoreMigrationEvent` | Custom | `store-migration` | Published during store migration operations (e.g.,... |
+| `BaseServiceEvent` | Custom | `base-service` |  |
 
-### Subscriptions
+### Subscription
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
 
 ### Voice
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `VoiceParticipantJoinedEvent` | Custom | `voice-participant-joined` | Published when a participant joins a voice room. |
-| `VoiceParticipantLeftEvent` | Custom | `voice-participant-left` | Published when a participant leaves a voice room. |
-| `VoiceRoomCreatedEvent` | Lifecycle (Created) | `voice-room.created` | Published when a new voice room is created. |
-| `VoiceRoomDeletedEvent` | Lifecycle (Deleted) | `voice-room.deleted` | Published when a voice room is deleted. |
-| `VoiceTierUpgradeCompletedEvent` | Custom | `voice-tier-upgrade-completed` | Published when a voice room tier upgrade is comple... |
-| `VoiceTierUpgradeRequestedEvent` | Custom | `voice-tier-upgrade-requested` | Published when a voice room needs to upgrade from ... |
+| `BaseServiceEvent` | Custom | `base-service` |  |
 
 ### Voice (client)
 

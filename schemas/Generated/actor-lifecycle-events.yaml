@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: Actor Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for actor service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: actor-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ActorTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor-template.created when a actortemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - category
+      - behaviorRef
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: actor-template.created
+          description: 'Event type identifier: actor-template.created'
+        templateId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for the actor template
+        category: &id002
+          type: string
+          description: Category identifier for the template
+        behaviorRef: &id003
+          type: string
+          description: Reference to behavior in lib-assets
+        createdAt: &id004
+          type: string
+          format: date-time
+          description: When the template was created
+    ActorTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor-template.updated when a actortemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - category
+      - behaviorRef
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: actor-template.updated
+          description: 'Event type identifier: actor-template.updated'
+        templateId: *id001
+        category: *id002
+        behaviorRef: *id003
+        createdAt: *id004
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ActorTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor-template.deleted when a actortemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - category
+      - behaviorRef
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: actor-template.deleted
+          description: 'Event type identifier: actor-template.deleted'
+        templateId: *id001
+        category: *id002
+        behaviorRef: *id003
+        createdAt: *id004
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ActorInstanceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor-instance.created when a actorinstance is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - actorId
+      - templateId
+      - status
+      - startedAt
+      properties:
+        eventName:
+          type: string
+          default: actor-instance.created
+          description: 'Event type identifier: actor-instance.created'
+        actorId: &id005
+          type: string
+          description: Unique identifier for the actor instance
+        templateId: &id006
+          type: string
+          format: uuid
+          description: Template this actor was instantiated from
+        characterId: &id007
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID for NPC brains
+        nodeId: &id008
+          type: string
+          nullable: true
+          description: Pool node running this actor
+        status: &id009
+          type: string
+          description: Current actor lifecycle state
+        startedAt: &id010
+          type: string
+          format: date-time
+          description: When the actor started running
+    ActorInstanceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor-instance.updated when a actorinstance is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - actorId
+      - templateId
+      - status
+      - startedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: actor-instance.updated
+          description: 'Event type identifier: actor-instance.updated'
+        actorId: *id005
+        templateId: *id006
+        characterId: *id007
+        nodeId: *id008
+        status: *id009
+        startedAt: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ActorInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor-instance.deleted when a actorinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - actorId
+      - templateId
+      - status
+      - startedAt
+      properties:
+        eventName:
+          type: string
+          default: actor-instance.deleted
+          description: 'Event type identifier: actor-instance.deleted'
+        actorId: *id005
+        templateId: *id006
+        characterId: *id007
+        nodeId: *id008
+        status: *id009
+        startedAt: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

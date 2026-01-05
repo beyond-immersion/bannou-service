@@ -105,9 +105,9 @@ public static class BannouJson
     /// <summary>
     /// Async serialize to stream using Bannou's standard configuration.
     /// </summary>
-    public static Task SerializeAsync<T>(Stream utf8Json, T value, CancellationToken cancellationToken = default)
+    public static async Task SerializeAsync<T>(Stream utf8Json, T value, CancellationToken cancellationToken = default)
     {
-        return JsonSerializer.SerializeAsync(utf8Json, value, Options, cancellationToken);
+        await JsonSerializer.SerializeAsync(utf8Json, value, Options, cancellationToken);
     }
 
     /// <summary>

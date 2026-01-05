@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: continue_after
+flows:
+  start:
+    actions:
+      - goto: nowhere
+      - log: "This SHOULD run (error_handled=true)"
+    on_error:
+      - log: "Error handled"
+      - set:
+          variable: _error_handled
+          value: "${true}"

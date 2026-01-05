@@ -4,25 +4,40 @@ info:
   description: |
     Event models for Realm service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
+  x-event-subscriptions: []  # Realm service doesn't subscribe to external events
+  x-event-publications:
+    # Realm lifecycle events (auto-generated from x-lifecycle)
+    - topic: realm.created
+      event: RealmCreatedEvent
+      description: Published when a new realm is created
+    - topic: realm.updated
+      event: RealmUpdatedEvent
+      description: Published when a realm is updated
+    - topic: realm.deleted
+      event: RealmDeletedEvent
+      description: Published when a realm is soft-deleted
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/realm-lifecycle-events.yaml
 x-lifecycle:
   Realm:
     model:
-      realmId: { type: string, format: uuid, primary: true, required: true }
-      code: { type: string, required: true }
-      name: { type: string, required: true }
-      description: { type: string }
-      category: { type: string }
-      isActive: { type: boolean, required: true }
-      isDeprecated: { type: boolean, required: true }
-      deprecatedAt: { type: string, format: date-time }
-      deprecationReason: { type: string }
-      metadata: { type: object, additionalProperties: true }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time, required: true }
+      realmId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the realm" }
+      code: { type: string, required: true, description: "Short code identifier for the realm used in URLs and references" }
+      name: { type: string, required: true, description: "Display name of the realm" }
+      description: { type: string, nullable: true, description: "Detailed description of the realm and its purpose" }
+      category: { type: string, nullable: true, description: "Category classification for organizing realms" }
+      isActive: { type: boolean, required: true, description: "Whether the realm is currently active and accessible" }
+      isDeprecated: { type: boolean, required: true, description: "Whether the realm has been marked as deprecated" }
+      deprecatedAt: { type: string, format: date-time, description: "Timestamp when the realm was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Explanation for why the realm was deprecated" }
+      metadata: { type: object, additionalProperties: true, description: "Additional custom key-value data associated with the realm" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the realm was created" }
+      updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the realm was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 

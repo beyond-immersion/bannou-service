@@ -43,7 +43,7 @@ Bannou implements a **progressive CI/CD pipeline** with comprehensive testing co
 make test                      # All 189+ tests across all services
 
 # Test specific services
-make test PLUGIN=accounts      # Test accounts service only
+make test PLUGIN=account       # Test account service only
 make test PLUGIN=auth          # Test auth service only
 make test PLUGIN=connect       # Test connect service only
 
@@ -69,8 +69,8 @@ Before understanding the specific test types, you must understand the strict iso
 **Rule**: Each service plugin is completely isolated and cannot reference other service plugins.
 
 **What this means**:
-- `lib-auth.tests` CANNOT reference `lib-accounts` or any other `lib-*` plugin
-- `lib-testing` CANNOT reference `lib-auth`, `lib-accounts`, or any other `lib-*` plugin
+- `lib-auth.tests` CANNOT reference `lib-account` or any other `lib-*` plugin
+- `lib-testing` CANNOT reference `lib-auth`, `lib-account`, or any other `lib-*` plugin
 - `unit-tests` CANNOT reference ANY `lib-*` plugin (they are not loaded in unit test context)
 
 **Why**: Plugins are dynamically loaded at runtime. In test contexts, only specific plugins are loaded, so cross-plugin references will fail.
@@ -133,12 +133,12 @@ Before understanding the specific test types, you must understand the strict iso
 **Service Test Structure**: Each service has comprehensive unit tests in `lib-{service}.tests/`:
 
 ```
-lib-accounts.tests/           # Accounts service tests
+lib-account.tests/           # Account service tests
 lib-auth.tests/              # Authentication service tests
 lib-behavior.tests/          # Behavior service tests
 lib-connect.tests/           # Connect service tests
 lib-game-session.tests/      # Game session tests
-lib-permissions.tests/       # Permissions service tests
+lib-permission.tests/        # Permission service tests
 lib-website.tests/           # Website service tests
 unit-tests/                  # Core framework tests (155 tests)
 ```
@@ -146,15 +146,15 @@ unit-tests/                  # Core framework tests (155 tests)
 **Generated Test Structure**: Tests follow xUnit patterns with proper dependency injection:
 
 ```csharp
-public class AccountsServiceTests
+public class AccountServiceTests
 {
-    private Mock<ILogger<AccountsService>> _mockLogger = null!;
-    private Mock<AccountsServiceConfiguration> _mockConfiguration = null!;
+    private Mock<ILogger<AccountService>> _mockLogger = null!;
+    private Mock<AccountServiceConfiguration> _mockConfiguration = null!;
 
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
-        var service = new AccountsService(_mockLogger.Object, _mockConfiguration.Object);
+        var service = new AccountService(_mockLogger.Object, _mockConfiguration.Object);
         Assert.NotNull(service);
     }
 }
@@ -297,9 +297,9 @@ make test-edge-daemon                   # WebSocket protocol testing
 
 ```bash
 # Develop and test specific services
-make clean PLUGIN=accounts             # Clean accounts service only
-make generate-services PLUGIN=accounts # Generate accounts service only
-make test PLUGIN=accounts              # Test accounts service only
+make clean PLUGIN=account              # Clean account service only
+make generate-services PLUGIN=account  # Generate account service only
+make test PLUGIN=account               # Test account service only
 
 # Complete service development cycle
 make clean PLUGIN=behavior
@@ -316,10 +316,10 @@ make test PLUGIN=behavior
 **Generated Components**: Controllers, models, clients, interfaces, configurations
 
 **Example Schema Testing Flow**:
-1. Define API in `schemas/accounts-api.yaml`
-2. Generate service with `make generate-services PLUGIN=accounts`
-3. Implement business logic in `AccountsService.cs`
-4. Test with `make test PLUGIN=accounts`
+1. Define API in `schemas/account-api.yaml`
+2. Generate service with `make generate-services PLUGIN=account`
+3. Implement business logic in `AccountService.cs`
+4. Test with `make test PLUGIN=account`
 5. Validate via `make test-http` and `make test-edge`
 
 ### Automatic Test Generation

@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: circular_b
+
+imports:
+  - file: "import_circular_a.yml"
+    as: "a"
+
+flows:
+  start:
+    actions:
+      - log: { message: "B" }

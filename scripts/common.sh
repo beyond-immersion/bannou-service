@@ -161,8 +161,8 @@ validate_schema_file() {
 validate_service_args() {
     if [ $# -lt 1 ]; then
         log_error "Usage: $0 <service-name> [schema-file]"
-        echo "Example: $0 accounts"
-        echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+        echo "Example: $0 account"
+        echo "Example: $0 account ../schemas/account-api.yaml"
         exit 1
     fi
 }
@@ -182,4 +182,111 @@ get_script_dir() {
 get_repo_root() {
     local script_dir=$(get_script_dir)
     echo "$(cd "$script_dir/.." && pwd)"
+}
+
+# -----------------------------------------------------------------------------
+# Post-Processing Functions
+# -----------------------------------------------------------------------------
+
+# Wrap enum declarations with CS1591 pragma suppressions
+# OpenAPI cannot document individual enum members, only the enum type itself.
+# This function adds #pragma warning disable/restore CS1591 around enums.
+# Usage: postprocess_enum_suppressions "$OUTPUT_FILE"
+postprocess_enum_suppressions() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        log_error "File not found for enum suppression post-processing: $file"
+        return 1
+    fi
+
+    # Use awk to wrap enums with pragma suppressions
+    # Pattern: [GeneratedCode...] followed by "public enum" on next line
+    awk '
+    BEGIN { in_enum = 0; prev_line = ""; has_prev = 0 }
+    {
+        if (has_prev) {
+            if (/^public enum /) {
+                # Previous line was GeneratedCode, this is enum - wrap it
+                print "#pragma warning disable CS1591 // Enum members cannot have XML documentation"
+                print prev_line
+                in_enum = 1
+            } else {
+                # Previous line was GeneratedCode but not followed by enum
+                print prev_line
+            }
+            has_prev = 0
+        }
+
+        if (/^\[System\.CodeDom\.Compiler\.GeneratedCode/) {
+            # Store this line and check next line
+            prev_line = $0
+            has_prev = 1
+            next
+        }
+
+        if (in_enum && /^}$/) {
+            # End of enum
+            print $0
+            print "#pragma warning restore CS1591"
+            in_enum = 0
+            next
+        }
+
+        print $0
+    }
+    END {
+        # Handle case where file ends with GeneratedCode line (unlikely but safe)
+        if (has_prev) print prev_line
+    }
+    ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+}
+
+# Add XML documentation comments to AdditionalProperties declarations
+# NSwag generates AdditionalProperties for additionalProperties: true schemas
+# but doesn't add XML documentation, causing CS1591 warnings.
+# Usage: postprocess_additional_properties_docs "$OUTPUT_FILE"
+postprocess_additional_properties_docs() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        log_error "File not found for AdditionalProperties post-processing: $file"
+        return 1
+    fi
+
+    # Use awk to add XML doc comment before [JsonExtensionData] AdditionalProperties
+    # Pattern: [System.Text.Json.Serialization.JsonExtensionData] followed by AdditionalProperties
+    # Matches regardless of leading whitespace
+    awk '
+    BEGIN { prev_line = ""; has_prev = 0; indent = "" }
+    {
+        if (has_prev) {
+            if (/^[[:space:]]*public System\.Collections\.Generic\.IDictionary<string, object>\?? AdditionalProperties/) {
+                # Previous line was JsonExtensionData, this is AdditionalProperties - add XML doc
+                # Preserve the indentation from the current line
+                match($0, /^[[:space:]]*/)
+                indent = substr($0, RSTART, RLENGTH)
+                print indent "/// <summary>"
+                print indent "/// Gets or sets additional properties not defined in the schema."
+                print indent "/// </summary>"
+                print prev_line
+            } else {
+                # Previous line was JsonExtensionData but not followed by AdditionalProperties
+                print prev_line
+            }
+            has_prev = 0
+        }
+
+        if (/^[[:space:]]*\[System\.Text\.Json\.Serialization\.JsonExtensionData\]/) {
+            # Store this line and check next line
+            prev_line = $0
+            has_prev = 1
+            next
+        }
+
+        print $0
+    }
+    END {
+        # Handle case where file ends with JsonExtensionData line (unlikely but safe)
+        if (has_prev) print prev_line
+    }
+    ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
 }

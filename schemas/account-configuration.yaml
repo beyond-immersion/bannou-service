@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Account Service Configuration
+  description: |
+    Configuration schema for Account service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Admin Configuration
+    AdminEmails:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable
+      description: Comma-separated list of admin email addresses
+      env: ACCOUNT_ADMIN_EMAILS
+    AdminEmailDomain:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable
+      description: Email domain that grants admin access (e.g., "@company.com")
+      env: ACCOUNT_ADMIN_EMAIL_DOMAIN

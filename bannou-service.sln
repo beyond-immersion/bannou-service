@@ -9,85 +9,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-testing", "lib-testing\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "unit-tests", "unit-tests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-		Makefile = Makefile
-		ServiceLib.targets = ServiceLib.targets
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{6905E47E-6C04-4CF6-894F-2643528E490D}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
-		provisioning\docker-compose.ek.yml = provisioning\docker-compose.ek.yml
-		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
-		provisioning\docker-compose.ingress.yml = provisioning\docker-compose.ingress.yml
-		provisioning\docker-compose.local.ingress.yml = provisioning\docker-compose.local.ingress.yml
-		provisioning\docker-compose.local.yml = provisioning\docker-compose.local.yml
-		provisioning\docker-compose.yml = provisioning\docker-compose.yml
-		provisioning\Dockerfile = provisioning\Dockerfile
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
-	ProjectSection(SolutionItems) = preProject
-		.github\dependabot.yml = .github\dependabot.yml
-		.github\pull_request_template.md = .github\pull_request_template.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{1E4033CE-EDE2-4140-ABB1-0B55250255F9}"
-	ProjectSection(SolutionItems) = preProject
-		.github\CONTRIBUTING.md = .github\CONTRIBUTING.md
-		LICENSE = LICENSE
-		README.md = README.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4F07AA77-C49C-498D-BFA1-B47D0139E021}"
-	ProjectSection(SolutionItems) = preProject
-		build-service-libs.sh = build-service-libs.sh
-		infrastructure-tests.sh = infrastructure-tests.sh
-		wait-for-health.sh = wait-for-health.sh
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{9DF51A7F-2307-41EC-97DD-EBC30BF8B859}"
-	ProjectSection(SolutionItems) = preProject
-		.github\workflows\ci.integration.yml = .github\workflows\ci.integration.yml
-		.github\workflows\ci.lint.yml = .github\workflows\ci.lint.yml
-		.github\workflows\ci.unit.yml = .github\workflows\ci.unit.yml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mysql", "mysql", "{4D5FB375-61CA-4538-8393-1C74FA1F8E8F}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\mysql\my.cnf = provisioning\mysql\my.cnf
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logstash", "logstash", "{1BA3E060-714F-483C-9369-9339C75CF1AC}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\logstash\logstash.elk.conf = provisioning\logstash\logstash.elk.conf
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "filebeat", "filebeat", "{5D22D6B5-738C-41F6-9AE3-AFEF67B7C4A1}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\filebeat\filebeat.console.yml = provisioning\filebeat\filebeat.console.yml
-		provisioning\filebeat\filebeat.ek.yml = provisioning\filebeat\filebeat.ek.yml
-		provisioning\filebeat\filebeat.elk.yml = provisioning\filebeat\filebeat.elk.yml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "run-init", "run-init", "{FD9DCE8B-2D61-48A1-B215-EC10C5AFA54A}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\mysql\run-init\grant-permissions.sql = provisioning\mysql\run-init\grant-permissions.sql
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior", "lib-behavior\lib-behavior.csproj", "{BE805579-8F99-455F-BEFA-10D86C5398CD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website", "lib-website\lib-website.csproj", "{A93EB50A-5892-4C20-AAFB-B865313171F9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session", "lib-game-session\lib-game-session.csproj", "{DCD62DD4-D16A-484B-ACF8-77FB2A107F41}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permissions", "lib-permissions\lib-permissions.csproj", "{32F4896D-B2FF-428F-8A1E-8DAC8BFB6A5E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission", "lib-permission\lib-permission.csproj", "{32F4896D-B2FF-428F-8A1E-8DAC8BFB6A5E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect.tests", "lib-connect.tests\lib-connect.tests.csproj", "{1F56F922-2110-41AD-8BF3-3D939D3F2208}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-accounts.tests", "lib-accounts.tests\lib-accounts.tests.csproj", "{1673C5ED-F3D5-4CAF-AC85-30F4B08B327A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account.tests", "lib-account.tests\lib-account.tests.csproj", "{1673C5ED-F3D5-4CAF-AC85-30F4B08B327A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth.tests", "lib-auth.tests\lib-auth.tests.csproj", "{EC3E7182-F8E6-4EC5-8CA8-A66450C6F8A0}"
 EndProject
@@ -95,41 +27,27 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior.tests", "lib-b
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session.tests", "lib-game-session.tests\lib-game-session.tests.csproj", "{50202130-A677-4C70-8B69-F41CD4AED472}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permissions.tests", "lib-permissions.tests\lib-permissions.tests.csproj", "{4E46D6F6-F9BC-4F0F-8738-4B9981E1B2E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission.tests", "lib-permission.tests\lib-permission.tests.csproj", "{4E46D6F6-F9BC-4F0F-8738-4B9981E1B2E8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website.tests", "lib-website.tests\lib-website.tests.csproj", "{A84EE6E4-8AE3-49BF-B2E3-84C3E6887FCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-accounts", "lib-accounts\lib-accounts.csproj", "{82C90F41-327D-6127-E805-1C7F1457A851}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account", "lib-account\lib-account.csproj", "{82C90F41-327D-6127-E805-1C7F1457A851}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth", "lib-auth\lib-auth.csproj", "{27572A97-101F-0A9C-1C17-F1EA1541A562}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect", "lib-connect\lib-connect.csproj", "{12EF86E5-D398-AE42-DAF8-DA3F02333D25}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schemas", "Schemas", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
-	ProjectSection(SolutionItems) = preProject
-		schemas\accounts-api.yaml = schemas\accounts-api.yaml
-		schemas\accounts-events.yaml = schemas\accounts-events.yaml
-		schemas\auth-api.yaml = schemas\auth-api.yaml
-		schemas\behavior-api.yaml = schemas\behavior-api.yaml
-		schemas\common-events.yaml = schemas\common-events.yaml
-		schemas\connect-api.yaml = schemas\connect-api.yaml
-		schemas\game-session-api.yaml = schemas\game-session-api.yaml
-		schemas\permissions-api.yaml = schemas\permissions-api.yaml
-		schemas\permissions-events.yaml = schemas\permissions-events.yaml
-		schemas\website-api.yaml = schemas\website-api.yaml
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator", "lib-orchestrator\lib-orchestrator.csproj", "{A60FBB3F-4A2F-4BE7-A5A6-DDCB284E3136}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator.tests", "lib-orchestrator.tests\lib-orchestrator.tests.csproj", "{0ED390BD-B6C1-460D-A084-A5250F644EB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscriptions", "lib-subscriptions\lib-subscriptions.csproj", "{A11EF205-6F26-437A-83AB-DC7D9F63E30A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription", "lib-subscription\lib-subscription.csproj", "{A11EF205-6F26-437A-83AB-DC7D9F63E30A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscriptions.tests", "lib-subscriptions.tests\lib-subscriptions.tests.csproj", "{286A644A-F156-4AC1-A39D-D22274CEC723}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription.tests", "lib-subscription.tests\lib-subscription.tests.csproj", "{286A644A-F156-4AC1-A39D-D22274CEC723}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-servicedata", "lib-servicedata\lib-servicedata.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service", "lib-game-service\lib-game-service.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-servicedata.tests", "lib-servicedata.tests\lib-servicedata.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service.tests", "lib-game-service.tests\lib-game-service.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-character", "lib-character\lib-character.csproj", "{14AE0BB9-08E9-4E97-8D76-47178A8D0D10}"
 EndProject
@@ -180,6 +98,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-state", "lib-state\lib-state.csproj", "{66B5BDF3-A0D0-4D18-8FDB-8410BAFA7045}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-state.tests", "lib-state.tests\lib-state.tests.csproj", "{0F559C1B-A619-47F3-8C36-6B8354A4F61E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor", "lib-actor\lib-actor.csproj", "{6B4D6512-2D58-4205-A7A6-455D2C44F638}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor.tests", "lib-actor.tests\lib-actor.tests.csproj", "{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test-utilities", "test-utilities\test-utilities.csproj", "{D303EBC6-3680-47B2-9130-2CD8DFF42573}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1058,21 +982,63 @@ Global
 		{0F559C1B-A619-47F3-8C36-6B8354A4F61E}.Release|x64.Build.0 = Release|Any CPU
 		{0F559C1B-A619-47F3-8C36-6B8354A4F61E}.Release|x86.ActiveCfg = Release|Any CPU
 		{0F559C1B-A619-47F3-8C36-6B8354A4F61E}.Release|x86.Build.0 = Release|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Debug|x64.Build.0 = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Debug|x86.Build.0 = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Development|x64.ActiveCfg = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Development|x64.Build.0 = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Development|x86.ActiveCfg = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Development|x86.Build.0 = Debug|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Release|x64.ActiveCfg = Release|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Release|x64.Build.0 = Release|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Release|x86.ActiveCfg = Release|Any CPU
+		{6B4D6512-2D58-4205-A7A6-455D2C44F638}.Release|x86.Build.0 = Release|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Debug|x64.Build.0 = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Debug|x86.Build.0 = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Development|x64.ActiveCfg = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Development|x64.Build.0 = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Development|x86.ActiveCfg = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Development|x86.Build.0 = Debug|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|x64.ActiveCfg = Release|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|x64.Build.0 = Release|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|x86.ActiveCfg = Release|Any CPU
+		{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}.Release|x86.Build.0 = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x64.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Debug|x86.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x64.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x64.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x86.ActiveCfg = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Development|x86.Build.0 = Debug|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x64.ActiveCfg = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x64.Build.0 = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x86.ActiveCfg = Release|Any CPU
+		{D303EBC6-3680-47B2-9130-2CD8DFF42573}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{6905E47E-6C04-4CF6-894F-2643528E490D} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{8104DBD9-C9EB-460A-842B-9385C32836C6} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{1E4033CE-EDE2-4140-ABB1-0B55250255F9} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{4F07AA77-C49C-498D-BFA1-B47D0139E021} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{9DF51A7F-2307-41EC-97DD-EBC30BF8B859} = {8104DBD9-C9EB-460A-842B-9385C32836C6}
-		{4D5FB375-61CA-4538-8393-1C74FA1F8E8F} = {6905E47E-6C04-4CF6-894F-2643528E490D}
-		{1BA3E060-714F-483C-9369-9339C75CF1AC} = {6905E47E-6C04-4CF6-894F-2643528E490D}
-		{5D22D6B5-738C-41F6-9AE3-AFEF67B7C4A1} = {6905E47E-6C04-4CF6-894F-2643528E490D}
-		{FD9DCE8B-2D61-48A1-B215-EC10C5AFA54A} = {4D5FB375-61CA-4538-8393-1C74FA1F8E8F}
-		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}

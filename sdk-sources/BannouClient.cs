@@ -174,7 +174,7 @@ public class BannouClient : IAsyncDisposable
     /// Gets the service GUID for a specific API endpoint.
     /// </summary>
     /// <param name="method">HTTP method (GET, POST, etc.)</param>
-    /// <param name="path">API path (e.g., "/accounts/profile")</param>
+    /// <param name="path">API path (e.g., "/account/profile")</param>
     /// <returns>The client-salted GUID, or null if not found</returns>
     public Guid? GetServiceGuid(string method, string path)
     {
@@ -189,7 +189,7 @@ public class BannouClient : IAsyncDisposable
     /// <typeparam name="TRequest">Request model type</typeparam>
     /// <typeparam name="TResponse">Response model type</typeparam>
     /// <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-    /// <param name="path">API path (e.g., "/accounts/profile")</param>
+    /// <param name="path">API path (e.g., "/account/profile")</param>
     /// <param name="request">Request payload</param>
     /// <param name="channel">Message channel for ordering (default 0)</param>
     /// <param name="timeout">Request timeout</param>
@@ -376,7 +376,7 @@ public class BannouClient : IAsyncDisposable
     /// </summary>
     /// <typeparam name="T">The expected data type for the meta response (e.g., JsonSchemaData, EndpointInfoData)</typeparam>
     /// <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
-    /// <param name="path">API path (e.g., "/accounts/get")</param>
+    /// <param name="path">API path (e.g., "/account/get")</param>
     /// <param name="metaType">Type of metadata to request</param>
     /// <param name="timeout">Request timeout (default 10 seconds)</param>
     /// <param name="cancellationToken">Cancellation token</param>
@@ -632,7 +632,7 @@ public class BannouClient : IAsyncDisposable
 
     private async Task<bool> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken)
     {
-        // Registration goes through the Auth service, not Accounts
+        // Registration goes through the Auth service, not Account
         var registerUrl = $"{_serverBaseUrl}/auth/register";
 
         var registerRequest = new { username, email, password };
@@ -810,8 +810,8 @@ public class BannouClient : IAsyncDisposable
             using var document = JsonDocument.Parse(payloadJson);
             var root = document.RootElement;
 
-            // All events use event_name property for consistency
-            if (root.TryGetProperty("event_name", out var eventNameElement))
+            // All events use eventName property for consistency
+            if (root.TryGetProperty("eventName", out var eventNameElement))
             {
                 var eventName = eventNameElement.GetString();
 
@@ -960,7 +960,7 @@ public class ErrorResponse
     public string Method { get; init; } = string.Empty;
 
     /// <summary>
-    /// The path of the original request (e.g., "/subscriptions/create").
+    /// The path of the original request (e.g., "/subscription/create").
     /// </summary>
     public string Path { get; init; } = string.Empty;
 }

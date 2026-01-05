@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Models;
+using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -12,13 +13,10 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using StorageModels = BeyondImmersion.BannouService.Storage;
-
-[assembly: InternalsVisibleTo("lib-asset.tests")]
 
 namespace BeyondImmersion.BannouService.Asset;
 
@@ -36,7 +34,8 @@ public partial class AssetService : IAssetService
     private readonly IAssetEventEmitter _eventEmitter;
     private readonly StorageModels.IAssetStorageProvider _storageProvider;
     private readonly IOrchestratorClient _orchestratorClient;
-    private readonly BundleConverter _bundleConverter;
+    private readonly IAssetProcessorPoolManager _processorPoolManager;
+    private readonly IBundleConverter _bundleConverter;
 
     private const string STATE_STORE = "asset-statestore";
     private const string UPLOAD_SESSION_PREFIX = "upload:";
@@ -55,6 +54,7 @@ public partial class AssetService : IAssetService
     /// <param name="eventEmitter">Client event emitter for WebSocket notifications.</param>
     /// <param name="storageProvider">Storage provider abstraction for S3/MinIO.</param>
     /// <param name="orchestratorClient">Orchestrator client for processor pool management.</param>
+    /// <param name="processorPoolManager">Pool manager for tracking processor node state.</param>
     /// <param name="bundleConverter">Bundle format converter (.bannou ↔ .zip).</param>
     /// <param name="eventConsumer">Event consumer for pub/sub event handling.</param>
     public AssetService(
@@ -65,20 +65,21 @@ public partial class AssetService : IAssetService
         IAssetEventEmitter eventEmitter,
         StorageModels.IAssetStorageProvider storageProvider,
         IOrchestratorClient orchestratorClient,
-        BundleConverter bundleConverter,
+        IAssetProcessorPoolManager processorPoolManager,
+        IBundleConverter bundleConverter,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _eventEmitter = eventEmitter ?? throw new ArgumentNullException(nameof(eventEmitter));
-        _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
-        _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
-        _bundleConverter = bundleConverter ?? throw new ArgumentNullException(nameof(bundleConverter));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _eventEmitter = eventEmitter;
+        _storageProvider = storageProvider;
+        _orchestratorClient = orchestratorClient;
+        _processorPoolManager = processorPoolManager;
+        _bundleConverter = bundleConverter;
 
         // Register event handlers via partial class
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 
@@ -89,7 +90,7 @@ public partial class AssetService : IAssetService
     public async Task<(StatusCodes, UploadResponse?)> RequestUploadAsync(UploadRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("RequestUpload: filename={Filename}, size={Size}, contentType={ContentType}",
-            body.Filename, body.Size, body.Content_type);
+            body.Filename, body.Size, body.ContentType);
 
         try
         {
@@ -107,7 +108,7 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (string.IsNullOrWhiteSpace(body.Content_type))
+            if (string.IsNullOrWhiteSpace(body.ContentType))
             {
                 _logger.LogWarning("RequestUpload: Empty content type");
                 return (StatusCodes.BadRequest, null);
@@ -134,30 +135,30 @@ public partial class AssetService : IAssetService
                 var multipartResult = await _storageProvider.InitiateMultipartUploadAsync(
                     _configuration.StorageBucket,
                     storageKey,
-                    body.Content_type,
+                    body.ContentType,
                     partCount,
                     expiration).ConfigureAwait(false);
 
                 // Build response with multipart config
                 var uploadUrls = multipartResult.Parts.Select(p => new PartUploadInfo
                 {
-                    Part_number = p.PartNumber,
-                    Upload_url = new Uri(p.UploadUrl),
-                    Min_size = p.MinSize,
-                    Max_size = p.MaxSize
+                    PartNumber = p.PartNumber,
+                    UploadUrl = new Uri(p.UploadUrl),
+                    MinSize = p.MinSize,
+                    MaxSize = p.MaxSize
                 }).ToList();
 
                 response = new UploadResponse
                 {
-                    Upload_id = uploadId,
-                    Upload_url = new Uri(multipartResult.Parts.First().UploadUrl), // First part URL as primary
-                    Expires_at = multipartResult.ExpiresAt,
+                    UploadId = uploadId,
+                    UploadUrl = new Uri(multipartResult.Parts.First().UploadUrl), // First part URL as primary
+                    ExpiresAt = multipartResult.ExpiresAt,
                     Multipart = new MultipartConfig
                     {
                         Required = true,
-                        Part_size = (int)partSizeBytes,
-                        Max_parts = partCount,
-                        Upload_urls = uploadUrls
+                        PartSize = (int)partSizeBytes,
+                        MaxParts = partCount,
+                        UploadUrls = uploadUrls
                     }
                 };
 
@@ -167,8 +168,9 @@ public partial class AssetService : IAssetService
                     UploadId = uploadId,
                     Filename = body.Filename,
                     Size = body.Size,
-                    ContentType = body.Content_type,
+                    ContentType = body.ContentType,
                     Metadata = body.Metadata,
+                    Owner = body.Owner,
                     StorageKey = storageKey,
                     IsMultipart = true,
                     PartCount = partCount,
@@ -185,7 +187,7 @@ public partial class AssetService : IAssetService
                 var uploadResult = await _storageProvider.GenerateUploadUrlAsync(
                     _configuration.StorageBucket,
                     storageKey,
-                    body.Content_type,
+                    body.ContentType,
                     body.Size,
                     expiration,
                     body.Metadata?.Tags != null ? new Dictionary<string, string> { { "tags", string.Join(",", body.Metadata.Tags) } } : null)
@@ -193,15 +195,15 @@ public partial class AssetService : IAssetService
 
                 response = new UploadResponse
                 {
-                    Upload_id = uploadId,
-                    Upload_url = new Uri(uploadResult.UploadUrl),
-                    Expires_at = uploadResult.ExpiresAt,
+                    UploadId = uploadId,
+                    UploadUrl = new Uri(uploadResult.UploadUrl),
+                    ExpiresAt = uploadResult.ExpiresAt,
                     Multipart = new MultipartConfig
                     {
                         Required = false,
-                        Part_size = 0,
-                        Max_parts = 0,
-                        Upload_urls = Array.Empty<PartUploadInfo>()
+                        PartSize = 0,
+                        MaxParts = 0,
+                        UploadUrls = Array.Empty<PartUploadInfo>()
                     }
                 };
 
@@ -211,8 +213,9 @@ public partial class AssetService : IAssetService
                     UploadId = uploadId,
                     Filename = body.Filename,
                     Size = body.Size,
-                    ContentType = body.Content_type,
+                    ContentType = body.ContentType,
                     Metadata = body.Metadata,
+                    Owner = body.Owner,
                     StorageKey = storageKey,
                     IsMultipart = false,
                     PartCount = 0,
@@ -251,25 +254,25 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, AssetMetadata?)> CompleteUploadAsync(CompleteUploadRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("CompleteUpload: uploadId={UploadId}", body.Upload_id);
+        _logger.LogInformation("CompleteUpload: uploadId={UploadId}", body.UploadId);
 
         try
         {
             // Retrieve upload session
             var sessionStore = _stateStoreFactory.GetStore<UploadSession>(STATE_STORE);
-            var session = await sessionStore.GetAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
+            var session = await sessionStore.GetAsync($"{UPLOAD_SESSION_PREFIX}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
 
             if (session == null)
             {
-                _logger.LogWarning("CompleteUpload: Upload session not found {UploadId}", body.Upload_id);
+                _logger.LogWarning("CompleteUpload: Upload session not found {UploadId}", body.UploadId);
                 return (StatusCodes.NotFound, null);
             }
 
             // Check expiration
             if (DateTimeOffset.UtcNow > session.ExpiresAt)
             {
-                _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.Upload_id);
-                await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
+                _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.UploadId);
+                await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
                 return (StatusCodes.BadRequest, null); // Session expired
             }
 
@@ -283,11 +286,11 @@ public partial class AssetService : IAssetService
                     return (StatusCodes.BadRequest, null);
                 }
 
-                var storageParts = body.Parts.Select(p => new StorageModels.StorageCompletedPart(p.Part_number, p.Etag)).ToList();
+                var storageParts = body.Parts.Select(p => new StorageModels.StorageCompletedPart(p.PartNumber, p.Etag)).ToList();
                 await _storageProvider.CompleteMultipartUploadAsync(
                     _configuration.StorageBucket,
                     session.StorageKey,
-                    body.Upload_id.ToString("N"),
+                    body.UploadId.ToString("N"),
                     storageParts).ConfigureAwait(false);
             }
 
@@ -312,7 +315,7 @@ public partial class AssetService : IAssetService
             var assetId = GenerateAssetId(session.ContentType, contentHash);
 
             // Determine final storage key
-            var assetType = session.Metadata?.Asset_type ?? AssetType.Other;
+            var assetType = session.Metadata?.AssetType ?? AssetType.Other;
             var extension = Path.GetExtension(session.Filename);
             var finalKey = $"assets/{assetType.ToString().ToLowerInvariant()}/{assetId}{extension}";
 
@@ -341,7 +344,7 @@ public partial class AssetService : IAssetService
                 Filename = session.Filename,
                 ContentType = session.ContentType,
                 Size = assetRef.Size,
-                AssetType = session.Metadata?.Asset_type ?? AssetType.Other,
+                AssetType = session.Metadata?.AssetType ?? AssetType.Other,
                 Realm = session.Metadata?.Realm ?? Asset.Realm.Shared,
                 Tags = session.Metadata?.Tags ?? new List<string>(),
                 ProcessingStatus = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
@@ -357,27 +360,27 @@ public partial class AssetService : IAssetService
 
             // Convert to public metadata for return value and events
             var assetMetadata = internalRecord.ToPublicMetadata();
-            assetMetadata.Is_archived = false; // New assets are always in standard storage
+            assetMetadata.IsArchived = false; // New assets are always in standard storage
 
             // Store index entries for search
             await IndexAssetAsync(assetMetadata, cancellationToken).ConfigureAwait(false);
 
             // Delete upload session
-            await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
+            await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CompleteUpload: Asset created {AssetId}, finalKey={FinalKey}, requiresProcessing={RequiresProcessing}",
                 assetId, finalKey, requiresProcessing);
 
             // Publish asset.upload.completed event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "asset.upload.completed",
                 new BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     AssetId = assetId,
-                    UploadId = body.Upload_id,
-                    SessionId = "system", // TODO: Get from context when auth is integrated
+                    UploadId = body.UploadId,
+                    Owner = session.Owner,
                     AccountId = null,
                     Bucket = _configuration.StorageBucket,
                     Key = finalKey,
@@ -392,7 +395,7 @@ public partial class AssetService : IAssetService
                 await DelegateToProcessingPoolAsync(assetId, assetMetadata, finalKey, cancellationToken).ConfigureAwait(false);
             }
 
-            return (StatusCodes.Created, assetMetadata);
+            return (StatusCodes.OK, assetMetadata);
         }
         catch (Exception ex)
         {
@@ -416,17 +419,17 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, AssetWithDownloadUrl?)> GetAssetAsync(GetAssetRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("GetAsset: assetId={AssetId}, version={Version}", body.Asset_id, body.Version);
+        _logger.LogInformation("GetAsset: assetId={AssetId}, version={Version}", body.AssetId, body.Version);
 
         try
         {
             // Retrieve internal asset record (includes storage details)
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
-            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.Asset_id}", cancellationToken).ConfigureAwait(false);
+            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.AssetId}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
             {
-                _logger.LogWarning("GetAsset: Asset not found {AssetId}", body.Asset_id);
+                _logger.LogWarning("GetAsset: Asset not found {AssetId}", body.AssetId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -450,13 +453,13 @@ public partial class AssetService : IAssetService
 
             var response = new AssetWithDownloadUrl
             {
-                Asset_id = internalRecord.AssetId,
-                Version_id = versionId ?? "latest",
-                Download_url = new Uri(downloadResult.DownloadUrl),
-                Expires_at = downloadResult.ExpiresAt,
+                AssetId = internalRecord.AssetId,
+                VersionId = versionId ?? "latest",
+                DownloadUrl = new Uri(downloadResult.DownloadUrl),
+                ExpiresAt = downloadResult.ExpiresAt,
                 Size = internalRecord.Size,
-                Content_hash = internalRecord.ContentHash,
-                Content_type = internalRecord.ContentType,
+                ContentHash = internalRecord.ContentHash,
+                ContentType = internalRecord.ContentType,
                 Metadata = metadata
             };
 
@@ -484,17 +487,17 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, AssetVersionList?)> ListAssetVersionsAsync(ListVersionsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("ListAssetVersions: assetId={AssetId}", body.Asset_id);
+        _logger.LogInformation("ListAssetVersions: assetId={AssetId}", body.AssetId);
 
         try
         {
             // Retrieve internal asset record to verify it exists and get storage details
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
-            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.Asset_id}", cancellationToken).ConfigureAwait(false);
+            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.AssetId}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
             {
-                _logger.LogWarning("ListAssetVersions: Asset not found {AssetId}", body.Asset_id);
+                _logger.LogWarning("ListAssetVersions: Asset not found {AssetId}", body.AssetId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -510,16 +513,16 @@ public partial class AssetService : IAssetService
                 .Take(body.Limit)
                 .Select(v => new AssetVersion
                 {
-                    Version_id = v.VersionId,
-                    Created_at = v.LastModified,
+                    VersionId = v.VersionId,
+                    CreatedAt = v.LastModified,
                     Size = v.Size,
-                    Is_archived = v.IsArchived // Uses StorageClass to detect archival tier
+                    IsArchived = v.IsArchived // Uses StorageClass to detect archival tier
                 })
                 .ToList();
 
             var response = new AssetVersionList
             {
-                Asset_id = body.Asset_id,
+                AssetId = body.AssetId,
                 Versions = paginatedVersions,
                 Total = total,
                 Limit = body.Limit,
@@ -553,7 +556,7 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("SearchAssets: tags={Tags}, assetType={AssetType}, realm={Realm}",
             body.Tags != null ? string.Join(",", body.Tags) : "none",
-            body.Asset_type,
+            body.AssetType,
             body.Realm);
 
         try
@@ -571,14 +574,14 @@ public partial class AssetService : IAssetService
             // Format: @asset_type:{type} @realm:{realm} [@content_type:{content_type}]
             var queryParts = new List<string>
             {
-                $"@asset_type:{{{body.Asset_type}}}",
+                $"@asset_type:{{{body.AssetType}}}",
                 $"@realm:{{{body.Realm}}}"
             };
 
-            if (!string.IsNullOrEmpty(body.Content_type))
+            if (!string.IsNullOrEmpty(body.ContentType))
             {
                 // Escape special characters in content type
-                var escapedContentType = body.Content_type.Replace("/", "\\/");
+                var escapedContentType = body.ContentType.Replace("/", "\\/");
                 queryParts.Add($"@content_type:{{{escapedContentType}}}");
             }
 
@@ -616,7 +619,7 @@ public partial class AssetService : IAssetService
 
             var response = new AssetSearchResult
             {
-                Assets = paginatedAssets!,
+                Assets = paginatedAssets,
                 Total = total,
                 Limit = body.Limit,
                 Offset = body.Offset
@@ -627,7 +630,16 @@ public partial class AssetService : IAssetService
         catch (InvalidOperationException ex) when (ex.Message.Contains("search") || ex.Message.Contains("Search"))
         {
             // Search not available, fall back to index-based search
-            _logger.LogWarning(ex, "Search store not available, falling back to index-based search");
+            _logger.LogError(ex, "Search store not available, falling back to index-based search - infrastructure degraded");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "SearchAssets",
+                "search_infrastructure_degraded",
+                "RedisSearch not available, using fallback search",
+                dependency: "redis_search",
+                endpoint: "post:/assets/search",
+                details: ex.Message,
+                stack: ex.StackTrace);
             return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -660,7 +672,7 @@ public partial class AssetService : IAssetService
         var indexStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
         var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
 
-        var indexKey = $"{ASSET_INDEX_PREFIX}type:{body.Asset_type.ToString().ToLowerInvariant()}";
+        var indexKey = $"{ASSET_INDEX_PREFIX}type:{body.AssetType.ToString().ToLowerInvariant()}";
         var assetIds = await indexStore.GetAsync(indexKey, cancellationToken).ConfigureAwait(false);
 
         if (assetIds != null)
@@ -675,8 +687,8 @@ public partial class AssetService : IAssetService
                     var matchesRealm = internalRecord.Realm == body.Realm;
                     var matchesTags = body.Tags == null || body.Tags.Count == 0 ||
                         (internalRecord.Tags != null && body.Tags.All(t => internalRecord.Tags.Contains(t)));
-                    var matchesContentType = string.IsNullOrEmpty(body.Content_type) ||
-                        internalRecord.ContentType == body.Content_type;
+                    var matchesContentType = string.IsNullOrEmpty(body.ContentType) ||
+                        internalRecord.ContentType == body.ContentType;
 
                     if (matchesRealm && matchesTags && matchesContentType)
                     {
@@ -689,7 +701,7 @@ public partial class AssetService : IAssetService
         // Apply pagination
         var total = matchingAssets.Count;
         var paginatedAssets = matchingAssets
-            .OrderByDescending(a => a.Created_at)
+            .OrderByDescending(a => a.CreatedAt)
             .Skip(body.Offset)
             .Take(body.Limit)
             .ToList();
@@ -713,18 +725,18 @@ public partial class AssetService : IAssetService
     public async Task<(StatusCodes, CreateBundleResponse?)> CreateBundleAsync(CreateBundleRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("CreateBundle: bundleId={BundleId}, assetCount={AssetCount}",
-            body.Bundle_id, body.Asset_ids?.Count ?? 0);
+            body.BundleId, body.AssetIds?.Count ?? 0);
 
         try
         {
             // Validate request
-            if (string.IsNullOrWhiteSpace(body.Bundle_id))
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("CreateBundle: Empty bundle_id");
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (body.Asset_ids == null || body.Asset_ids.Count == 0)
+            if (body.AssetIds == null || body.AssetIds.Count == 0)
             {
                 _logger.LogWarning("CreateBundle: No asset_ids provided");
                 return (StatusCodes.BadRequest, null);
@@ -734,12 +746,12 @@ public partial class AssetService : IAssetService
             var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
 
-            var bundleKey = $"{BUNDLE_PREFIX}{body.Bundle_id}";
+            var bundleKey = $"{BUNDLE_PREFIX}{body.BundleId}";
             var existingBundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
 
             if (existingBundle != null)
             {
-                _logger.LogWarning("CreateBundle: Bundle {BundleId} already exists", body.Bundle_id);
+                _logger.LogWarning("CreateBundle: Bundle {BundleId} already exists", body.BundleId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -747,7 +759,7 @@ public partial class AssetService : IAssetService
             var assetRecords = new List<InternalAssetRecord>();
             long totalSize = 0;
 
-            foreach (var assetId in body.Asset_ids)
+            foreach (var assetId in body.AssetIds)
             {
                 var assetKey = $"{ASSET_PREFIX}{assetId}";
                 var assetRecord = await assetStore.GetAsync(assetKey, cancellationToken);
@@ -773,9 +785,9 @@ public partial class AssetService : IAssetService
                 var job = new BundleCreationJob
                 {
                     JobId = jobId,
-                    BundleId = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Version = body.Version ?? "1.0.0",
-                    AssetIds = body.Asset_ids.ToList(),
+                    AssetIds = body.AssetIds.ToList(),
                     Compression = body.Compression,
                     Metadata = ConvertMetadataToDictionary(body.Metadata),
                     Status = BundleCreationStatus.Queued,
@@ -788,23 +800,24 @@ public partial class AssetService : IAssetService
                 await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken);
 
                 // Publish job event for processing pool
-                await _messageBus.PublishAsync("asset.bundle.create", job);
+                await _messageBus.TryPublishAsync("asset.bundle.create", job);
 
                 _logger.LogInformation(
                     "CreateBundle: Queued bundle creation job {JobId} for bundle {BundleId}",
                     jobId,
-                    body.Bundle_id);
+                    body.BundleId);
 
-                return (StatusCodes.Accepted, new CreateBundleResponse
+                // Return OK - the Status field in the response tells client it's queued
+                return (StatusCodes.OK, new CreateBundleResponse
                 {
-                    Bundle_id = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Status = CreateBundleResponseStatus.Queued,
-                    Estimated_size = totalSize
+                    EstimatedSize = totalSize
                 });
             }
 
             // For smaller bundles, create inline
-            var bundlePath = $"bundles/current/{body.Bundle_id}.bundle";
+            var bundlePath = $"bundles/current/{body.BundleId}.bundle";
             var bucket = _configuration.StorageBucket;
 
             // Create bundle in memory and upload
@@ -828,8 +841,8 @@ public partial class AssetService : IAssetService
             }
 
             writer.Finalize(
-                body.Bundle_id,
-                body.Bundle_id,
+                body.BundleId,
+                body.BundleId,
                 body.Version ?? "1.0.0",
                 "system",
                 null,
@@ -847,9 +860,9 @@ public partial class AssetService : IAssetService
             // Store bundle metadata
             var bundleMetadata = new BundleMetadata
             {
-                BundleId = body.Bundle_id,
+                BundleId = body.BundleId,
                 Version = body.Version ?? "1.0.0",
-                AssetIds = body.Asset_ids.ToList(),
+                AssetIds = body.AssetIds.ToList(),
                 StorageKey = bundlePath,
                 SizeBytes = bundleStream.Length,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -860,32 +873,32 @@ public partial class AssetService : IAssetService
 
             _logger.LogInformation(
                 "CreateBundle: Created bundle {BundleId} with {AssetCount} assets ({Size} bytes)",
-                body.Bundle_id,
-                body.Asset_ids.Count,
+                body.BundleId,
+                body.AssetIds.Count,
                 bundleStream.Length);
 
             // Publish asset.bundle.created event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 "asset.bundle.created",
                 new BeyondImmersion.BannouService.Events.BundleCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    BundleId = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Version = body.Version ?? "1.0.0",
                     Bucket = _configuration.StorageBucket,
                     Key = bundlePath,
                     Size = bundleStream.Length,
-                    AssetCount = body.Asset_ids.Count,
+                    AssetCount = body.AssetIds.Count,
                     Compression = null, // TODO: Map compression type when implemented
-                    CreatedBy = null // TODO: Get from context when auth is integrated
+                    Owner = body.Owner
                 }).ConfigureAwait(false);
 
             return (StatusCodes.OK, new CreateBundleResponse
             {
-                Bundle_id = body.Bundle_id,
+                BundleId = body.BundleId,
                 Status = CreateBundleResponseStatus.Ready,
-                Estimated_size = bundleStream.Length
+                EstimatedSize = bundleStream.Length
             });
         }
         catch (Exception ex)
@@ -906,28 +919,29 @@ public partial class AssetService : IAssetService
 
     /// <summary>
     /// Implementation of GetBundle operation.
-    /// TODO: Implement in Phase 5 (Bundle System).
+    /// Returns bundle metadata and a pre-signed download URL.
+    /// Supports both native .bannou format and ZIP conversion (cached).
     /// </summary>
     public async Task<(StatusCodes, BundleWithDownloadUrl?)> GetBundleAsync(GetBundleRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("GetBundle: bundleId={BundleId}, format={Format}", body.Bundle_id, body.Format);
+        _logger.LogInformation("GetBundle: bundleId={BundleId}, format={Format}", body.BundleId, body.Format);
 
         try
         {
             // Validate input
-            if (string.IsNullOrWhiteSpace(body.Bundle_id))
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 return (StatusCodes.BadRequest, null);
             }
 
             // Look up bundle metadata
             var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
-            var bundleKey = $"{BUNDLE_PREFIX}{body.Bundle_id}";
+            var bundleKey = $"{BUNDLE_PREFIX}{body.BundleId}";
             var bundleMetadata = await bundleStore.GetAsync(bundleKey, cancellationToken);
 
             if (bundleMetadata == null)
             {
-                _logger.LogWarning("GetBundle: Bundle not found: {BundleId}", body.Bundle_id);
+                _logger.LogWarning("GetBundle: Bundle not found: {BundleId}", body.BundleId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -935,7 +949,7 @@ public partial class AssetService : IAssetService
             if (bundleMetadata.Status != BundleStatus.Ready)
             {
                 _logger.LogWarning("GetBundle: Bundle not ready: {BundleId}, status={Status}",
-                    body.Bundle_id, bundleMetadata.Status);
+                    body.BundleId, bundleMetadata.Status);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -947,7 +961,7 @@ public partial class AssetService : IAssetService
             if (body.Format == BundleFormat.Zip)
             {
                 // Check ZIP cache
-                var zipCachePath = $"bundles/zip-cache/{body.Bundle_id}.zip";
+                var zipCachePath = $"bundles/zip-cache/{body.BundleId}.zip";
                 var cacheExists = await _storageProvider.ObjectExistsAsync(bucket, zipCachePath);
 
                 if (cacheExists)
@@ -957,12 +971,12 @@ public partial class AssetService : IAssetService
                     fromCache = true;
                     var cachedMeta = await _storageProvider.GetObjectMetadataAsync(bucket, zipCachePath);
                     downloadSize = cachedMeta.ContentLength;
-                    _logger.LogDebug("GetBundle: Using cached ZIP for {BundleId}", body.Bundle_id);
+                    _logger.LogDebug("GetBundle: Using cached ZIP for {BundleId}", body.BundleId);
                 }
                 else
                 {
                     // Download bundle, convert to ZIP, cache, and return
-                    _logger.LogDebug("GetBundle: Converting bundle to ZIP for {BundleId}", body.Bundle_id);
+                    _logger.LogDebug("GetBundle: Converting bundle to ZIP for {BundleId}", body.BundleId);
 
                     using var bundleStream = await _storageProvider.GetObjectAsync(
                         bucket, bundleMetadata.StorageKey);
@@ -971,12 +985,12 @@ public partial class AssetService : IAssetService
                     var converted = await _bundleConverter.ConvertBundleToZipAsync(
                         bundleStream,
                         zipStream,
-                        body.Bundle_id,
+                        body.BundleId,
                         cancellationToken);
 
                     if (!converted)
                     {
-                        _logger.LogError("GetBundle: Failed to convert bundle to ZIP: {BundleId}", body.Bundle_id);
+                        _logger.LogError("GetBundle: Failed to convert bundle to ZIP: {BundleId}", body.BundleId);
                         return (StatusCodes.InternalServerError, null);
                     }
 
@@ -1011,7 +1025,7 @@ public partial class AssetService : IAssetService
                 $"bundle-download:{downloadToken}",
                 new BundleDownloadToken
                 {
-                    BundleId = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Format = body.Format,
                     Path = downloadPath,
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -1028,18 +1042,18 @@ public partial class AssetService : IAssetService
 
             _logger.LogInformation(
                 "GetBundle: Generated download URL for bundle {BundleId}, format={Format}, fromCache={FromCache}",
-                body.Bundle_id, body.Format, fromCache);
+                body.BundleId, body.Format, fromCache);
 
             return (StatusCodes.OK, new BundleWithDownloadUrl
             {
-                Bundle_id = body.Bundle_id,
+                BundleId = body.BundleId,
                 Version = bundleMetadata.Version,
-                Download_url = new Uri(downloadResult.DownloadUrl),
+                DownloadUrl = new Uri(downloadResult.DownloadUrl),
                 Format = body.Format,
-                Expires_at = downloadResult.ExpiresAt,
+                ExpiresAt = downloadResult.ExpiresAt,
                 Size = downloadSize,
-                Asset_count = bundleMetadata.AssetIds.Count,
-                From_cache = fromCache
+                AssetCount = bundleMetadata.AssetIds.Count,
+                FromCache = fromCache
             });
         }
         catch (Exception ex)
@@ -1090,8 +1104,8 @@ public partial class AssetService : IAssetService
             }
 
             // Validate manifest preview
-            if (body.Manifest_preview == null ||
-                string.IsNullOrWhiteSpace(body.Manifest_preview.Bundle_id))
+            if (body.ManifestPreview == null ||
+                string.IsNullOrWhiteSpace(body.ManifestPreview.BundleId))
             {
                 _logger.LogWarning("RequestBundleUpload: Missing manifest preview");
                 return (StatusCodes.BadRequest, null);
@@ -1099,12 +1113,12 @@ public partial class AssetService : IAssetService
 
             // Check if bundle already exists
             var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
-            var existingBundle = await bundleStore.GetAsync($"{BUNDLE_PREFIX}{body.Manifest_preview.Bundle_id}", cancellationToken);
+            var existingBundle = await bundleStore.GetAsync($"{BUNDLE_PREFIX}{body.ManifestPreview.BundleId}", cancellationToken);
 
             if (existingBundle != null)
             {
                 _logger.LogWarning("RequestBundleUpload: Bundle already exists: {BundleId}",
-                    body.Manifest_preview.Bundle_id);
+                    body.ManifestPreview.BundleId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -1130,7 +1144,7 @@ public partial class AssetService : IAssetService
                 tokenTtl,
                 new Dictionary<string, string>
                 {
-                    { "bundle-id", body.Manifest_preview.Bundle_id },
+                    { "bundle-id", body.ManifestPreview.BundleId },
                     { "upload-id", uploadId },
                     { "validation-required", "true" }
                 });
@@ -1139,13 +1153,13 @@ public partial class AssetService : IAssetService
             var uploadSession = new BundleUploadSession
             {
                 UploadId = uploadId,
-                BundleId = body.Manifest_preview.Bundle_id,
+                BundleId = body.ManifestPreview.BundleId,
                 Filename = sanitizedFilename,
                 ContentType = contentType,
                 SizeBytes = body.Size,
                 StorageKey = storageKey,
-                ManifestPreview = body.Manifest_preview,
-                SessionId = "system", // TODO: Get from context when auth is integrated
+                ManifestPreview = body.ManifestPreview,
+                Owner = body.Owner,
                 CreatedAt = DateTimeOffset.UtcNow,
                 ExpiresAt = DateTimeOffset.UtcNow.Add(tokenTtl)
             };
@@ -1159,23 +1173,19 @@ public partial class AssetService : IAssetService
 
             _logger.LogInformation(
                 "RequestBundleUpload: Generated upload URL for bundle {BundleId}, uploadId={UploadId}",
-                body.Manifest_preview.Bundle_id, uploadId);
+                body.ManifestPreview.BundleId, uploadId);
 
             var response = new UploadResponse
             {
-                Upload_id = uploadIdGuid,
-                Upload_url = new Uri(uploadResult.UploadUrl),
-                Expires_at = uploadResult.ExpiresAt
+                UploadId = uploadIdGuid,
+                UploadUrl = new Uri(uploadResult.UploadUrl),
+                ExpiresAt = uploadResult.ExpiresAt
             };
 
-            // Add required headers to additional properties if any
+            // Add required headers if any
             if (uploadResult.RequiredHeaders != null)
             {
-                response.AdditionalProperties ??= new Dictionary<string, object>();
-                foreach (var header in uploadResult.RequiredHeaders)
-                {
-                    response.AdditionalProperties[$"header_{header.Key}"] = header.Value;
-                }
+                response.RequiredHeaders = new Dictionary<string, string>(uploadResult.RequiredHeaders);
             }
 
             return (StatusCodes.OK, response);
@@ -1225,12 +1235,12 @@ public partial class AssetService : IAssetService
     private async Task IndexAssetAsync(AssetMetadata asset, CancellationToken cancellationToken)
     {
         // Index by asset type
-        var typeIndexKey = $"{ASSET_INDEX_PREFIX}type:{asset.Asset_type.ToString().ToLowerInvariant()}";
-        await AddToIndexWithOptimisticConcurrencyAsync(typeIndexKey, asset.Asset_id, cancellationToken).ConfigureAwait(false);
+        var typeIndexKey = $"{ASSET_INDEX_PREFIX}type:{asset.AssetType.ToString().ToLowerInvariant()}";
+        await AddToIndexWithOptimisticConcurrencyAsync(typeIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
 
         // Index by realm
         var realmIndexKey = $"{ASSET_INDEX_PREFIX}realm:{asset.Realm.ToString().ToLowerInvariant()}";
-        await AddToIndexWithOptimisticConcurrencyAsync(realmIndexKey, asset.Asset_id, cancellationToken).ConfigureAwait(false);
+        await AddToIndexWithOptimisticConcurrencyAsync(realmIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
 
         // Index by tags
         if (asset.Tags != null)
@@ -1238,7 +1248,7 @@ public partial class AssetService : IAssetService
             foreach (var tag in asset.Tags)
             {
                 var tagIndexKey = $"{ASSET_INDEX_PREFIX}tag:{tag.ToLowerInvariant()}";
-                await AddToIndexWithOptimisticConcurrencyAsync(tagIndexKey, asset.Asset_id, cancellationToken).ConfigureAwait(false);
+                await AddToIndexWithOptimisticConcurrencyAsync(tagIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -1360,8 +1370,87 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
+    /// Ensures at least one processor is available for the given pool type.
+    /// If no processors are available, spawns a new one via the orchestrator.
+    /// </summary>
+    /// <param name="poolType">The pool type to check/spawn.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if a processor is available (or was spawned), false if spawning failed.</returns>
+    private async Task<bool> EnsureProcessorAvailableAsync(
+        string poolType,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Check if any processors are available in the pool
+            var availableCount = await _processorPoolManager.GetAvailableCountAsync(poolType, cancellationToken);
+
+            if (availableCount > 0)
+            {
+                _logger.LogDebug(
+                    "EnsureProcessorAvailable: {Count} processors available in pool {PoolType}",
+                    availableCount, poolType);
+                return true;
+            }
+
+            // No processors available - spawn one via orchestrator
+            _logger.LogInformation(
+                "EnsureProcessorAvailable: No processors available in pool {PoolType}, spawning new instance",
+                poolType);
+
+            // Get current total count to calculate target
+            var totalCount = await _processorPoolManager.GetTotalNodeCountAsync(poolType, cancellationToken);
+
+            // Request orchestrator to scale up by 1
+            var scaleResponse = await _orchestratorClient.ScalePoolAsync(
+                new ScalePoolRequest
+                {
+                    PoolType = poolType,
+                    TargetInstances = totalCount + 1
+                },
+                cancellationToken);
+
+            _logger.LogInformation(
+                "EnsureProcessorAvailable: Orchestrator scaled pool {PoolType} from {Previous} to {Current} instances",
+                poolType, scaleResponse.PreviousInstances, scaleResponse.CurrentInstances);
+
+            // Wait for the new processor to register (poll state)
+            var maxWait = TimeSpan.FromSeconds(60);
+            var pollInterval = TimeSpan.FromSeconds(2);
+            var elapsed = TimeSpan.Zero;
+
+            while (elapsed < maxWait)
+            {
+                await Task.Delay(pollInterval, cancellationToken);
+                elapsed += pollInterval;
+
+                availableCount = await _processorPoolManager.GetAvailableCountAsync(poolType, cancellationToken);
+                if (availableCount > 0)
+                {
+                    _logger.LogInformation(
+                        "EnsureProcessorAvailable: Processor registered in pool {PoolType} after {Elapsed:F1}s",
+                        poolType, elapsed.TotalSeconds);
+                    return true;
+                }
+            }
+
+            _logger.LogWarning(
+                "EnsureProcessorAvailable: Spawned processor did not register within {Timeout}s timeout for pool {PoolType}",
+                maxWait.TotalSeconds, poolType);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "EnsureProcessorAvailable: Failed to ensure processor availability for pool {PoolType}",
+                poolType);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Delegates processing to the processing pool.
-    /// If no processor is available (429), queues for retry via pub/sub.
+    /// Spawns a processor if none available, then acquires and publishes job.
     /// </summary>
     private async Task DelegateToProcessingPoolAsync(
         string assetId,
@@ -1369,11 +1458,35 @@ public partial class AssetService : IAssetService
         string storageKey,
         CancellationToken cancellationToken)
     {
-        var poolType = GetProcessorPoolType(metadata.Content_type);
+        var poolType = GetProcessorPoolType(metadata.ContentType);
         var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(STATE_STORE);
 
         try
         {
+            // Ensure at least one processor is available, spawning if needed
+            var ensured = await EnsureProcessorAvailableAsync(poolType, cancellationToken);
+            if (!ensured)
+            {
+                _logger.LogWarning(
+                    "DelegateToProcessingPool: Could not ensure processor availability for pool {PoolType}, queueing asset {AssetId} for retry",
+                    poolType, assetId);
+
+                // Publish delayed retry event
+                var retryEvent = new AssetProcessingRetryEvent
+                {
+                    AssetId = assetId,
+                    StorageKey = storageKey,
+                    ContentType = metadata.ContentType,
+                    PoolType = poolType,
+                    RetryCount = 0,
+                    MaxRetries = 5,
+                    RetryDelaySeconds = 30
+                };
+
+                await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+                return;
+            }
+
             _logger.LogInformation(
                 "DelegateToProcessingPool: Acquiring processor from pool {PoolType} for asset {AssetId}",
                 poolType, assetId);
@@ -1382,34 +1495,34 @@ public partial class AssetService : IAssetService
             var processorResponse = await _orchestratorClient.AcquireProcessorAsync(
                 new AcquireProcessorRequest
                 {
-                    Pool_type = poolType,
+                    PoolType = poolType,
                     Priority = 0,
-                    Timeout_seconds = 600, // 10 minutes for processing
+                    TimeoutSeconds = 600, // 10 minutes for processing
                     Metadata = new { AssetId = assetId, StorageKey = storageKey }
                 },
                 cancellationToken).ConfigureAwait(false);
 
             // Update asset metadata to Processing status
-            metadata.Processing_status = ProcessingStatus.Processing;
+            metadata.ProcessingStatus = ProcessingStatus.Processing;
             await assetStore.SaveAsync($"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "DelegateToProcessingPool: Acquired processor {ProcessorId} from pool {PoolType} for asset {AssetId}, lease expires at {ExpiresAt}",
-                processorResponse.Processor_id, poolType, assetId, processorResponse.Expires_at);
+                processorResponse.ProcessorId, poolType, assetId, processorResponse.ExpiresAt);
 
             // Publish processing job event for the processor to pick up
             var processingJob = new AssetProcessingJobEvent
             {
                 AssetId = assetId,
                 StorageKey = storageKey,
-                ContentType = metadata.Content_type,
-                ProcessorId = processorResponse.Processor_id,
-                AppId = processorResponse.App_id,
-                LeaseId = processorResponse.Lease_id,
-                ExpiresAt = processorResponse.Expires_at
+                ContentType = metadata.ContentType,
+                ProcessorId = processorResponse.ProcessorId,
+                AppId = processorResponse.AppId,
+                LeaseId = processorResponse.LeaseId,
+                ExpiresAt = processorResponse.ExpiresAt
             };
 
-            await _messageBus.PublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
+            await _messageBus.TryPublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
         }
         catch (ApiException ex) when (ex.StatusCode == 429)
         {
@@ -1423,14 +1536,14 @@ public partial class AssetService : IAssetService
             {
                 AssetId = assetId,
                 StorageKey = storageKey,
-                ContentType = metadata.Content_type,
+                ContentType = metadata.ContentType,
                 PoolType = poolType,
                 RetryCount = 0,
                 MaxRetries = 5,
                 RetryDelaySeconds = 30
             };
 
-            await _messageBus.PublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+            await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1439,7 +1552,7 @@ public partial class AssetService : IAssetService
                 assetId, poolType);
 
             // Mark as failed
-            metadata.Processing_status = ProcessingStatus.Failed;
+            metadata.ProcessingStatus = ProcessingStatus.Failed;
             await assetStore.SaveAsync($"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
@@ -1464,7 +1577,11 @@ public partial class AssetService : IAssetService
             var result = new Dictionary<string, object>();
             foreach (var property in jsonElement.EnumerateObject())
             {
-                result[property.Name] = GetJsonValue(property.Value);
+                var value = GetJsonValue(property.Value);
+                if (value != null)
+                {
+                    result[property.Name] = value;
+                }
             }
             return result;
         }
@@ -1509,7 +1626,7 @@ public partial class AssetService : IAssetService
     /// <summary>
     /// Extracts a .NET value from a JsonElement.
     /// </summary>
-    private static object GetJsonValue(JsonElement element)
+    private static object? GetJsonValue(JsonElement element)
     {
         return element.ValueKind switch
         {
@@ -1517,7 +1634,7 @@ public partial class AssetService : IAssetService
             JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
             JsonValueKind.True => true,
             JsonValueKind.False => false,
-            JsonValueKind.Null => null!,
+            JsonValueKind.Null => null,
             JsonValueKind.Array => element.EnumerateArray().Select(GetJsonValue).ToList(),
             JsonValueKind.Object => element.EnumerateObject()
                 .ToDictionary(p => p.Name, p => GetJsonValue(p.Value)),
@@ -1539,7 +1656,11 @@ public sealed class AssetProcessingJobEvent
     public string ContentType { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
     public string Filename { get; set; } = string.Empty;
-    public string SessionId { get; set; } = string.Empty;
+    /// <summary>
+    /// Owner of this processing job. NOT a session ID.
+    /// Contains either an accountId or service name.
+    /// </summary>
+    public string Owner { get; set; } = string.Empty;
     public string? RealmId { get; set; }
     public Dictionary<string, string>? Tags { get; set; }
     public Dictionary<string, object>? ProcessingOptions { get; set; }

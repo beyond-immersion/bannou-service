@@ -1,0 +1,9 @@
+version: "2.0"
+metadata:
+  id: log_level_test
+flows:
+  start:
+    actions:
+      - log:
+          message: "Error occurred"
+          level: error

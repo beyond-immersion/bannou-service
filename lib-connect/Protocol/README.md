@@ -63,7 +63,7 @@ string jsonPayload = receivedMessage.GetJsonPayload();
 ```csharp
 var serviceGuid = GuidGenerator.GenerateServiceGuid(
     sessionId: "user-session-123",
-    serviceName: "accounts",
+    serviceName: "account",
     serverSalt: "server-provided-salt"
 );
 ```

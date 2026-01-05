@@ -1,0 +1,17 @@
+version: "2.0"
+metadata:
+  id: test
+
+context:
+  variables:
+    x: { type: float, default: 10 }
+
+flows:
+  main:
+    actions:
+      - cond:
+          - when: "${x > 5}"
+            then:
+              - log: { message: "Greater" }
+          - otherwise:
+              - log: { message: "Less" }

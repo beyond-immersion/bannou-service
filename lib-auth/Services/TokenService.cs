@@ -1,9 +1,10 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,9 +20,10 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 public class TokenService : ITokenService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly ISubscriptionsClient _subscriptionsClient;
+    private readonly ISubscriptionClient _subscriptionClient;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<TokenService> _logger;
     private const string REDIS_STATE_STORE = "auth-statestore";
 
@@ -30,15 +32,17 @@ public class TokenService : ITokenService
     /// </summary>
     public TokenService(
         IStateStoreFactory stateStoreFactory,
-        ISubscriptionsClient subscriptionsClient,
+        ISubscriptionClient subscriptionClient,
         ISessionService sessionService,
         AuthServiceConfiguration configuration,
+        IMessageBus messageBus,
         ILogger<TokenService> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
+        _subscriptionClient = subscriptionClient ?? throw new ArgumentNullException(nameof(subscriptionClient));
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -67,13 +71,13 @@ public class TokenService : ITokenService
         var authorizations = new List<string>();
         try
         {
-            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                new GetCurrentSubscriptionsRequest { AccountId = account.AccountId },
+            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
+                new QueryCurrentSubscriptionsRequest { AccountId = account.AccountId },
                 cancellationToken);
 
-            if (subscriptionsResponse?.Authorizations != null)
+            if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Authorizations.ToList();
+                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
                 _logger.LogDebug("Fetched {Count} authorizations for account {AccountId}",
                     authorizations.Count, account.AccountId);
             }
@@ -85,6 +89,15 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch subscriptions for account {AccountId} - login rejected", account.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "GenerateAccessToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "subscription",
+                endpoint: "post:/auth/login",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             throw;
         }
 
@@ -93,7 +106,7 @@ public class TokenService : ITokenService
         {
             AccountId = account.AccountId,
             Email = account.Email,
-            DisplayName = account.DisplayName ?? string.Empty,
+            DisplayName = account.DisplayName,
             Roles = account.Roles?.ToList() ?? new List<string>(),
             Authorizations = authorizations,
             SessionId = sessionId,
@@ -170,6 +183,15 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate refresh token");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ValidateRefreshToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/auth/refresh",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -245,7 +267,7 @@ public class TokenService : ITokenService
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
-                    SessionId = sessionKey,
+                    SessionId = Guid.Parse(sessionKey),
                     Roles = sessionData.Roles ?? new List<string>(),
                     Authorizations = sessionData.Authorizations ?? new List<string>(),
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
@@ -266,6 +288,15 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during token validation");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ValidateToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/auth/validate",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -273,7 +304,6 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task<string?> ExtractSessionKeyFromJwtAsync(string jwt)
     {
-        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -284,6 +314,12 @@ public class TokenService : ITokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error extracting session_key from JWT");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExtractSessionKeyFromJwt",
+                ex.GetType().Name,
+                ex.Message,
+                endpoint: "post:/auth/validate");
             return null;
         }
     }

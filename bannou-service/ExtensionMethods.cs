@@ -62,7 +62,6 @@ public static partial class ExtensionMethods
             return httpStatusCode switch
             {
                 StatusCodes.OK => new StatusCodeResult(200),
-                StatusCodes.Accepted => new StatusCodeResult(202),
                 StatusCodes.BadRequest => new StatusCodeResult(400),
                 StatusCodes.Forbidden => new StatusCodeResult(403),
                 StatusCodes.NotFound => new StatusCodeResult(404),
@@ -73,20 +72,12 @@ public static partial class ExtensionMethods
         return httpStatusCode switch
         {
             StatusCodes.OK => new ObjectResult(value) { StatusCode = 200 },
-            StatusCodes.Accepted => new ObjectResult(value) { StatusCode = 202 },
             StatusCodes.BadRequest => new ObjectResult(value) { StatusCode = 400 },
             StatusCodes.Forbidden => new ObjectResult(value) { StatusCode = 403 },
             StatusCodes.NotFound => new ObjectResult(value) { StatusCode = 404 },
             _ => new ObjectResult(value) { StatusCode = 500 }
         };
     }
-
-    /// <summary>
-    /// Logging extension/helper methods, for including additional context as JSON.
-    /// </summary>
-    public static void Log(this ILogger logger, LogLevel level, Exception? exc, string message,
-        [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
-        => logger.Log(level, exc, message, null, callerName, callerFile, lineNumber);
 
     /// <summary>
     /// Check if field or property has the "Obsolete" attribute attached.

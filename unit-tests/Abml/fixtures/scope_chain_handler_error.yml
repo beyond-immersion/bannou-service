@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: chain_handler_error
+flows:
+  start:
+    actions:
+      - failing_action:
+          param: value
+          on_error:
+            - goto: nowhere
+    on_error:
+      - log: "Flow caught handler error"

@@ -23,8 +23,8 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     CREATE DATABASE IF NOT EXISTS relationships;
     CREATE DATABASE IF NOT EXISTS relationship_types;
     CREATE DATABASE IF NOT EXISTS species;
-    CREATE DATABASE IF NOT EXISTS servicedata;
-    CREATE DATABASE IF NOT EXISTS subscriptions;
+    CREATE DATABASE IF NOT EXISTS game_service;
+    CREATE DATABASE IF NOT EXISTS subscription;
     CREATE DATABASE IF NOT EXISTS bannou_state;
 
     -- Grant full privileges on accounts database (created by MYSQL_DATABASE)
@@ -63,17 +63,17 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     GRANT ALL PRIVILEGES ON relationship_types.* TO '$MYSQL_USER'@'172.%.%.%';
     GRANT ALL PRIVILEGES ON relationship_types.* TO '$MYSQL_USER'@'192.168.%.%';
 
-    -- Grant full privileges on servicedata database
-    GRANT ALL PRIVILEGES ON servicedata.* TO '$MYSQL_USER'@'%';
-    GRANT ALL PRIVILEGES ON servicedata.* TO '$MYSQL_USER'@'localhost';
-    GRANT ALL PRIVILEGES ON servicedata.* TO '$MYSQL_USER'@'172.%.%.%';
-    GRANT ALL PRIVILEGES ON servicedata.* TO '$MYSQL_USER'@'192.168.%.%';
+    -- Grant full privileges on game_service database
+    GRANT ALL PRIVILEGES ON game_service.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON game_service.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON game_service.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON game_service.* TO '$MYSQL_USER'@'192.168.%.%';
 
-    -- Grant full privileges on subscriptions database
-    GRANT ALL PRIVILEGES ON subscriptions.* TO '$MYSQL_USER'@'%';
-    GRANT ALL PRIVILEGES ON subscriptions.* TO '$MYSQL_USER'@'localhost';
-    GRANT ALL PRIVILEGES ON subscriptions.* TO '$MYSQL_USER'@'172.%.%.%';
-    GRANT ALL PRIVILEGES ON subscriptions.* TO '$MYSQL_USER'@'192.168.%.%';
+    -- Grant full privileges on subscription database
+    GRANT ALL PRIVILEGES ON subscription.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON subscription.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON subscription.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON subscription.* TO '$MYSQL_USER'@'192.168.%.%';
 
     -- Grant full privileges on species database
     GRANT ALL PRIVILEGES ON species.* TO '$MYSQL_USER'@'%';
@@ -91,4 +91,4 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
 EOSQL
 
 echo "Permissions granted successfully for user: $MYSQL_USER"
-echo "Databases created: accounts (via env), characters, realms, locations, relationships, relationship_types, species, servicedata, subscriptions, bannou_state"
+echo "Databases created: accounts (via env), characters, realms, locations, relationships, relationship_types, species, game_service, subscription, bannou_state"

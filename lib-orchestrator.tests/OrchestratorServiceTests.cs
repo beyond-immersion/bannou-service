@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.Logging;
@@ -68,206 +69,20 @@ public class OrchestratorServiceTests
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Act
-        var service = CreateService();
-
-        // Assert - Verify service was created and implements expected interface
-        Assert.NotNull(service);
-        Assert.IsAssignableFrom<IOrchestratorService>(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            null!,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("messageBus", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            null!,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("logger", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("loggerFactory", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            null!,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("configuration", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            null!,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("stateManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            null!,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("eventManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullHealthMonitor_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            null!,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("healthMonitor", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullRestartManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            null!,
-            _mockBackendDetector.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("restartManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullBackendDetector_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            null!,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("backendDetector", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockLoggerFactory.Object,
-            _configuration,
-            _mockStateManager.Object,
-            _mockEventManager.Object,
-            _mockHealthMonitor.Object,
-            _mockRestartManager.Object,
-            _mockBackendDetector.Object,
-            null!));
-
-        Assert.Equal("eventConsumer", exception.ParamName);
-    }
+    public void OrchestratorService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<OrchestratorService>();
 
     #endregion
 
@@ -283,12 +98,13 @@ public class OrchestratorServiceTests
 
         // Pub/sub healthy via IMessageBus
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .ReturnsAsync(true);
 
         var service = CreateService();
 
@@ -311,10 +127,11 @@ public class OrchestratorServiceTests
 
         // Pub/sub failure via IMessageBus
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Message bus unavailable"));
 
@@ -342,10 +159,11 @@ public class OrchestratorServiceTests
 
         // Pub/sub unhealthy via IMessageBus publish failure
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Message bus unavailable"));
 
@@ -378,7 +196,7 @@ public class OrchestratorServiceTests
             HealthPercentage = 100.0f,
             HealthyServices = new List<ServiceHealthStatus>
             {
-                new() { ServiceId = "accounts", Status = "healthy" },
+                new() { ServiceId = "account", Status = "healthy" },
                 new() { ServiceId = "auth", Status = "healthy" },
                 new() { ServiceId = "connect", Status = "healthy" }
             },
@@ -413,14 +231,14 @@ public class OrchestratorServiceTests
         // Arrange
         var request = new ServiceRestartRequest
         {
-            ServiceName = "accounts",
+            ServiceName = "account",
             Force = false
         };
 
         var expectedResult = new ServiceRestartResult
         {
             Success = true,
-            ServiceName = "accounts",
+            ServiceName = "account",
             Duration = "00:00:05",
             PreviousStatus = "degraded",
             CurrentStatus = "healthy",
@@ -440,7 +258,7 @@ public class OrchestratorServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
-        Assert.Equal("accounts", response.ServiceName);
+        Assert.Equal("account", response.ServiceName);
     }
 
     [Fact]
@@ -449,14 +267,14 @@ public class OrchestratorServiceTests
         // Arrange
         var request = new ServiceRestartRequest
         {
-            ServiceName = "accounts",
+            ServiceName = "account",
             Force = false
         };
 
         var expectedResult = new ServiceRestartResult
         {
             Success = false,
-            ServiceName = "accounts",
+            ServiceName = "account",
             Message = "Restart not needed: service is healthy"
         };
 
@@ -483,17 +301,17 @@ public class OrchestratorServiceTests
     public async Task ShouldRestartServiceAsync_ShouldReturnRecommendationFromMonitor()
     {
         // Arrange
-        var request = new ShouldRestartServiceRequest { ServiceName = "accounts" };
+        var request = new ShouldRestartServiceRequest { ServiceName = "account" };
         var expectedRecommendation = new RestartRecommendation
         {
             ShouldRestart = false,
-            ServiceName = "accounts",
+            ServiceName = "account",
             CurrentStatus = "healthy",
             Reason = "Service is healthy - no restart needed"
         };
 
         _mockHealthMonitor
-            .Setup(x => x.ShouldRestartServiceAsync("accounts"))
+            .Setup(x => x.ShouldRestartServiceAsync("account"))
             .ReturnsAsync(expectedRecommendation);
 
         var service = CreateService();
@@ -681,7 +499,7 @@ public class OrchestratorServiceTests
         var serviceRoutings = new Dictionary<string, ServiceRouting>
         {
             ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
-            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["account"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
             ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
         };
 
@@ -701,7 +519,7 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.Equal(3, response.Mappings.Count);
         Assert.Equal("bannou-auth", response.Mappings["auth"]);
-        Assert.Equal("bannou-auth", response.Mappings["accounts"]);
+        Assert.Equal("bannou-auth", response.Mappings["account"]);
         Assert.Equal("bannou-main", response.Mappings["connect"]);
         Assert.Equal("bannou", response.DefaultAppId);
     }
@@ -736,7 +554,7 @@ public class OrchestratorServiceTests
         var serviceRoutings = new Dictionary<string, ServiceRouting>
         {
             ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
-            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["account"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
             ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
         };
 
@@ -756,7 +574,7 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.Equal(2, response.Mappings.Count);
         Assert.True(response.Mappings.ContainsKey("auth"));
-        Assert.True(response.Mappings.ContainsKey("accounts"));
+        Assert.True(response.Mappings.ContainsKey("account"));
         Assert.False(response.Mappings.ContainsKey("connect"));
     }
 
@@ -1028,9 +846,12 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
+        // Use a non-control-plane app-id to test heartbeat routing initialization.
+        // Heartbeats from "bannou" (control plane) are intentionally filtered to prevent
+        // the orchestrator from claiming services before deployed nodes can.
         var heartbeat = new ServiceHeartbeatEvent
         {
-            AppId = "bannou",
+            AppId = "bannou-deployed-node",
             ServiceId = Guid.NewGuid(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
@@ -1057,7 +878,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // Assert - routing should be initialized
         Assert.NotNull(capturedRouting);
-        Assert.Equal("bannou", capturedRouting.AppId);
+        Assert.Equal("bannou-deployed-node", capturedRouting.AppId);
     }
 
     [Fact]
@@ -1159,10 +980,11 @@ public class ServiceHealthMonitorRoutingProtectionTests
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
-        // First, let heartbeat initialize routing
+        // First, let heartbeat initialize routing.
+        // Use a non-control-plane app-id since "bannou" heartbeats are filtered.
         var heartbeat = new ServiceHeartbeatEvent
         {
-            AppId = "bannou",
+            AppId = "bannou-deployed-node",
             ServiceId = Guid.NewGuid(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
@@ -1174,7 +996,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _heartbeatHandler?.Invoke(heartbeat);
         await Task.Delay(50);
 
-        Assert.Equal("bannou", lastCapturedRouting?.AppId);
+        Assert.Equal("bannou-deployed-node", lastCapturedRouting?.AppId);
 
         // Now set an explicit mapping that routes to different app-id
         await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
@@ -1185,41 +1007,39 @@ public class ServiceHealthMonitorRoutingProtectionTests
     }
 
     [Fact]
-    public async Task RemoveServiceRoutingAsync_ShouldRemoveRouting()
+    public async Task RestoreServiceRoutingToDefaultAsync_ShouldSetRoutingToDefault()
     {
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
+        ServiceRouting? capturedRouting = null;
         _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Callback<string, ServiceRouting>((_, r) => capturedRouting = r)
             .Returns(Task.CompletedTask);
 
-        _mockStateManager
-            .Setup(x => x.RemoveServiceRoutingAsync("auth"))
-            .Returns(Task.CompletedTask);
-
-        // First, set a routing
+        // First, set a custom routing
         await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
+        Assert.Equal("bannou-auth", capturedRouting?.AppId);
 
-        // Act - remove the routing
-        await monitor.RemoveServiceRoutingAsync("auth");
+        // Act - restore the routing to default
+        await monitor.RestoreServiceRoutingToDefaultAsync("auth");
 
-        // Assert - RemoveServiceRoutingAsync was called on redis
-        _mockStateManager.Verify(
-            x => x.RemoveServiceRoutingAsync("auth"),
-            Times.Once(),
-            "RemoveServiceRoutingAsync should be called on redis manager");
+        // Assert - The routing was set to the default app-id
+        Assert.NotNull(capturedRouting);
+        Assert.Equal(Program.Configuration.EffectiveAppId, capturedRouting.AppId);
     }
 
     [Fact]
-    public async Task ResetAllMappingsToDefaultAsync_ShouldClearAllRoutingsAndPublishMappings()
+    public async Task ResetAllMappingsToDefaultAsync_ShouldSetAllRoutingsToDefaultAndPublishMappings()
     {
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
+        // Setup to return an empty list (no services in the routing index)
         _mockStateManager
-            .Setup(x => x.ClearAllServiceRoutingsAsync())
-            .Returns(Task.CompletedTask);
+            .Setup(x => x.SetAllServiceRoutingsToDefaultAsync(It.IsAny<string>()))
+            .ReturnsAsync(new List<string>());
 
         _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
@@ -1232,19 +1052,21 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Act
         await monitor.ResetAllMappingsToDefaultAsync();
 
-        // Assert
-        _mockStateManager.Verify(x => x.ClearAllServiceRoutingsAsync(), Times.Once(),
-            "ClearAllServiceRoutingsAsync should be called to clear Redis routing keys");
+        // Assert - SetAllServiceRoutingsToDefaultAsync should be called (not ClearAllServiceRoutingsAsync)
+        _mockStateManager.Verify(
+            x => x.SetAllServiceRoutingsToDefaultAsync(Program.Configuration.EffectiveAppId),
+            Times.Once(),
+            "SetAllServiceRoutingsToDefaultAsync should be called to set all routes to default");
 
         _mockEventManager.Verify(
             x => x.PublishFullMappingsAsync(It.Is<FullServiceMappingsEvent>(e =>
-                e.DefaultAppId == "bannou" && e.TotalServices == 0)),
+                e.DefaultAppId == Program.Configuration.EffectiveAppId)),
             Times.Once(),
-            "Should publish full mappings event with empty mappings");
+            "Should publish full mappings event");
     }
 
     [Fact]
-    public async Task ResetAllMappingsToDefaultAsync_ShouldClearInMemoryCache()
+    public async Task ResetAllMappingsToDefaultAsync_ShouldUpdateInMemoryCacheToDefaults()
     {
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
@@ -1253,9 +1075,10 @@ public class ServiceHealthMonitorRoutingProtectionTests
             .Setup(x => x.WriteServiceRoutingAsync(It.IsAny<string>(), It.IsAny<ServiceRouting>()))
             .Returns(Task.CompletedTask);
 
+        // Return the list of services that were updated
         _mockStateManager
-            .Setup(x => x.ClearAllServiceRoutingsAsync())
-            .Returns(Task.CompletedTask);
+            .Setup(x => x.SetAllServiceRoutingsToDefaultAsync(It.IsAny<string>()))
+            .ReturnsAsync(new List<string> { "auth", "account" });
 
         _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
@@ -1267,40 +1090,20 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // First, set some routings
         await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
-        await monitor.SetServiceRoutingAsync("accounts", "bannou-accounts");
+        await monitor.SetServiceRoutingAsync("account", "bannou-account");
 
         // Act
         await monitor.ResetAllMappingsToDefaultAsync();
 
-        // Now simulate a heartbeat - it should be able to initialize routing again
-        // (because in-memory cache was cleared)
-        _mockStateManager
-            .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
-            .Returns(Task.CompletedTask);
+        // Assert - SetAllServiceRoutingsToDefaultAsync was called
+        _mockStateManager.Verify(
+            x => x.SetAllServiceRoutingsToDefaultAsync(Program.Configuration.EffectiveAppId),
+            Times.Once(),
+            "SetAllServiceRoutingsToDefaultAsync should be called");
 
-        var heartbeat = new ServiceHeartbeatEvent
-        {
-            AppId = "bannou",
-            ServiceId = Guid.NewGuid(),
-            Status = ServiceHeartbeatEventStatus.Healthy,
-            Services = new List<ServiceStatus>
-            {
-                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
-            }
-        };
-
-        ServiceRouting? capturedRouting = null;
-        _mockStateManager
-            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
-            .Callback<string, ServiceRouting>((name, routing) => capturedRouting = routing)
-            .Returns(Task.CompletedTask);
-
-        _heartbeatHandler?.Invoke(heartbeat);
-        await Task.Delay(100);
-
-        // Assert - heartbeat should initialize routing (cache was cleared)
-        Assert.NotNull(capturedRouting);
-        Assert.Equal("bannou", capturedRouting.AppId);
+        // The in-memory cache should now have default routing (not be cleared)
+        // Reset sets routes to EffectiveAppId rather than deleting them, ensuring
+        // routing proxies (OpenResty) always have explicit routing data to read
     }
 }
 
@@ -1349,34 +1152,12 @@ public class OrchestratorStateManagerTests
     #region OrchestratorStateManager Implementation Tests
 
     [Fact]
-    public void OrchestratorStateManager_Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
+    public void OrchestratorStateManager_ConstructorIsValid()
     {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
-            null!,
-            Mock.Of<ILogger<OrchestratorStateManager>>()));
-        Assert.Equal("stateStoreFactory", ex.ParamName);
-    }
-
-    [Fact]
-    public void OrchestratorStateManager_Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
-            Mock.Of<IStateStoreFactory>(),
-            null!));
-        Assert.Equal("logger", ex.ParamName);
-    }
-
-    [Fact]
-    public void OrchestratorStateManager_Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
+        ServiceConstructorValidator.ValidateServiceConstructor<OrchestratorStateManager>();
         var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
-
-        // Assert
         Assert.NotNull(manager);
     }
 
@@ -1681,7 +1462,7 @@ public class OrchestratorResetToDefaultTests
             Services = new Dictionary<string, ServiceDeploymentConfig>
             {
                 ["auth"] = new() { Enabled = true, AppId = "bannou-auth" },
-                ["permissions"] = new() { Enabled = true, AppId = "bannou-auth" }
+                ["permission"] = new() { Enabled = true, AppId = "bannou-auth" }
             }
         };
 
@@ -1850,7 +1631,7 @@ public class OrchestratorResetToDefaultTests
             Services = new Dictionary<string, ServiceDeploymentConfig>
             {
                 ["auth"] = new() { Enabled = true, AppId = "bannou" },
-                ["accounts"] = new() { Enabled = true, AppId = "bannou" }
+                ["account"] = new() { Enabled = true, AppId = "bannou" }
             }
         };
 
@@ -1893,4 +1674,553 @@ public class OrchestratorResetToDefaultTests
         _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Once(),
             "ResetAllMappingsToDefaultAsync should be called");
     }
+}
+
+/// <summary>
+/// Tests for processing pool functionality in OrchestratorService.
+/// Covers ScalePoolAsync, pool configuration, and container deployment.
+/// </summary>
+public class OrchestratorProcessingPoolTests
+{
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+
+    public OrchestratorProcessingPoolTests()
+    {
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            RedisConnectionString = "redis:6379",
+            RabbitMqConnectionString = "amqp://guest:guest@rabbitmq:5672",
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _mockStateManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockEventConsumer.Object);
+    }
+
+    #region ScalePoolAsync Validation Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_WithEmptyPoolType_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ScalePoolRequest { PoolType = "", TargetInstances = 5 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ScalePoolAsync_WithNegativeTargetInstances_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = -1 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, statusCode);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ScalePoolAsync_WithNoPoolConfiguration_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // No pool configuration exists
+        _mockStateManager
+            .Setup(x => x.GetValueAsync<OrchestratorService.PoolConfiguration>(It.Is<string>(s => s.Contains("pool:config"))))
+            .ReturnsAsync((OrchestratorService.PoolConfiguration?)null);
+
+        var request = new ScalePoolRequest { PoolType = "unknown-pool", TargetInstances = 5 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal("unknown-pool", response.PoolType);
+        Assert.Equal(0, response.ScaledUp);
+    }
+
+    #endregion
+
+    #region ScalePoolAsync Scale-Up Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_ScaleUp_ShouldCallDeployServiceAsync()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        mockOrchestrator
+            .Setup(x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeployServiceResult { Success = true, AppId = "test-app" });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+
+        // Pool configuration exists
+        SetupPoolConfiguration("actor-shared", "actor");
+
+        // No existing instances
+        _mockStateManager
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains("pool:instances"))))
+            .ReturnsAsync((List<OrchestratorService.ProcessorInstance>?)null);
+        _mockStateManager
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains("pool:available"))))
+            .ReturnsAsync((List<OrchestratorService.ProcessorInstance>?)null);
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(It.Is<string>(s => s.Contains("pool:leases"))))
+            .ReturnsAsync((Dictionary<string, OrchestratorService.ProcessorLease>?)null);
+
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ScaledUp);
+        Assert.Equal(0, response.PreviousInstances);
+        Assert.Equal(2, response.CurrentInstances);
+
+        // Verify DeployServiceAsync was called twice (for 2 new instances)
+        mockOrchestrator.Verify(
+            x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.Is<Dictionary<string, string>>(env =>
+                    env.ContainsKey("BANNOU_APP_ID") &&
+                    env.ContainsKey("ACTOR_POOL_NODE_ID")),
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    #endregion
+
+    #region ScalePoolAsync Scale-Down Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_ScaleDown_ShouldCallTeardownServiceAsync()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult { Success = true });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+
+        // Pool configuration exists
+        SetupPoolConfiguration("actor-shared", "actor");
+
+        // 3 existing instances (all available)
+        SetupExistingPoolInstances("actor-shared", 3, 3);
+
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 1 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ScaledDown);
+        Assert.Equal(3, response.PreviousInstances);
+        Assert.Equal(1, response.CurrentInstances);
+
+        // Verify TeardownServiceAsync was called twice (removing 2 instances)
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync(
+                It.IsAny<string>(),
+                false,
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    #endregion
+
+    #region ScalePoolAsync No-Op Tests
+
+    [Fact]
+    public async Task ScalePoolAsync_WhenTargetEqualsCurrent_ShouldNotDeployOrTeardown()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+
+        _mockBackendDetector
+            .Setup(x => x.CreateBestOrchestratorAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockOrchestrator.Object);
+
+        // Pool configuration exists
+        SetupPoolConfiguration("actor-shared", "actor");
+
+        // 2 existing instances
+        SetupExistingPoolInstances("actor-shared", 2, 2);
+
+        var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
+
+        // Act
+        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.ScaledUp);
+        Assert.Equal(0, response.ScaledDown);
+        Assert.Equal(2, response.PreviousInstances);
+        Assert.Equal(2, response.CurrentInstances);
+
+        // Verify no deploy or teardown calls
+        mockOrchestrator.Verify(
+            x => x.DeployServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never());
+
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync(
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never());
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private void SetupPoolConfiguration(string poolType, string serviceName)
+    {
+        var config = new OrchestratorService.PoolConfiguration
+        {
+            PoolType = poolType,
+            ServiceName = serviceName,
+            Image = null,
+            Environment = new Dictionary<string, string>
+            {
+                ["SERVICES_ENABLED"] = "false",
+                [$"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED"] = "true"
+            },
+            MinInstances = 1,
+            MaxInstances = 10,
+            ScaleUpThreshold = 0.8,
+            ScaleDownThreshold = 0.2,
+            IdleTimeoutMinutes = 5
+        };
+
+        _mockStateManager
+            .Setup(x => x.GetValueAsync<OrchestratorService.PoolConfiguration>(It.Is<string>(s => s.Contains($"pool:{poolType}:config"))))
+            .ReturnsAsync(config);
+    }
+
+    private void SetupExistingPoolInstances(string poolType, int totalCount, int availableCount)
+    {
+        var instances = Enumerable.Range(0, totalCount).Select(i => new OrchestratorService.ProcessorInstance
+        {
+            ProcessorId = $"{poolType}-{Guid.NewGuid():N}",
+            AppId = $"bannou-pool-{poolType}-{i:D4}",
+            PoolType = poolType,
+            Status = i < availableCount ? "available" : "busy",
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+            LastUpdated = DateTimeOffset.UtcNow.AddMinutes(-1)
+        }).ToList();
+
+        var availableInstances = instances.Take(availableCount).ToList();
+
+        _mockStateManager
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains($"pool:{poolType}:instances"))))
+            .ReturnsAsync(instances);
+
+        _mockStateManager
+            .Setup(x => x.GetListAsync<OrchestratorService.ProcessorInstance>(It.Is<string>(s => s.Contains($"pool:{poolType}:available"))))
+            .ReturnsAsync(availableInstances);
+
+        _mockStateManager
+            .Setup(x => x.GetHashAsync<OrchestratorService.ProcessorLease>(It.Is<string>(s => s.Contains($"pool:{poolType}:leases"))))
+            .ReturnsAsync(new Dictionary<string, OrchestratorService.ProcessorLease>());
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for PresetLoader and PresetProcessingPool YAML parsing.
+/// </summary>
+public class PresetLoaderTests
+{
+    private readonly Mock<ILogger<PresetLoader>> _mockLogger;
+    private readonly string _testPresetsDirectory;
+    private static readonly string FixturesDirectory = Path.Combine(AppContext.BaseDirectory, "fixtures");
+
+    public PresetLoaderTests()
+    {
+        _mockLogger = new Mock<ILogger<PresetLoader>>();
+        _testPresetsDirectory = Path.Combine(Path.GetTempPath(), $"preset-tests-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_testPresetsDirectory);
+    }
+
+    private PresetLoader CreateLoader()
+    {
+        return new PresetLoader(_mockLogger.Object, _testPresetsDirectory);
+    }
+
+    private async Task CreatePresetFileAsync(string name, string content)
+    {
+        var filePath = Path.Combine(_testPresetsDirectory, $"{name}.yaml");
+        await File.WriteAllTextAsync(filePath, content);
+    }
+
+    /// <summary>
+    /// Copies a fixture YAML file to the test presets directory.
+    /// Use this for YAML with complex indentation that gets mangled by formatters.
+    /// </summary>
+    private async Task CopyFixtureAsync(string fixtureName)
+    {
+        var sourcePath = Path.Combine(FixturesDirectory, $"{fixtureName}.yaml");
+        var destPath = Path.Combine(_testPresetsDirectory, $"{fixtureName}.yaml");
+        var content = await File.ReadAllTextAsync(sourcePath);
+        await File.WriteAllTextAsync(destPath, content);
+    }
+
+    #region ProcessingPools YAML Parsing Tests
+
+    [Fact]
+    public async Task LoadPresetAsync_WithProcessingPools_ShouldParseCorrectly()
+    {
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("actor-pools");
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("actor-pools");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.Equal("actor-pools", preset.Name);
+        Assert.Equal("Actor pool configuration", preset.Description);
+        Assert.Equal("processing", preset.Category);
+        Assert.NotNull(preset.ProcessingPools);
+        Assert.Equal(2, preset.ProcessingPools.Count);
+
+        // Verify first pool
+        var sharedPool = preset.ProcessingPools[0];
+        Assert.Equal("actor-shared", sharedPool.PoolType);
+        Assert.Equal("actor", sharedPool.Plugin);
+        Assert.Equal(1, sharedPool.MinInstances);
+        Assert.Equal(10, sharedPool.MaxInstances);
+        Assert.Equal(0.8, sharedPool.ScaleUpThreshold);
+        Assert.Equal(0.2, sharedPool.ScaleDownThreshold);
+        Assert.Equal(5, sharedPool.IdleTimeoutMinutes);
+        Assert.NotNull(sharedPool.Environment);
+        Assert.Equal("pool-node", sharedPool.Environment["ACTOR_DEPLOYMENT_MODE"]);
+        Assert.Equal("50", sharedPool.Environment["ACTOR_POOL_NODE_CAPACITY"]);
+
+        // Verify second pool
+        var npcBrainPool = preset.ProcessingPools[1];
+        Assert.Equal("actor-npc-brain", npcBrainPool.PoolType);
+        Assert.Equal(2, npcBrainPool.MinInstances);
+        Assert.Equal(20, npcBrainPool.MaxInstances);
+        Assert.Equal(10, npcBrainPool.IdleTimeoutMinutes);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithNoProcessingPools_ShouldReturnNullProcessingPools()
+    {
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("simple-preset");
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("simple-preset");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.Equal("simple-preset", preset.Name);
+        Assert.Null(preset.ProcessingPools);
+        Assert.NotNull(preset.Topology);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithEmptyProcessingPools_ShouldReturnEmptyList()
+    {
+        // Arrange - uses fixture file
+        await CopyFixtureAsync("empty-pools");
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("empty-pools");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.NotNull(preset.ProcessingPools);
+        Assert.Empty(preset.ProcessingPools);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithPoolImage_ShouldParseImage()
+    {
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("custom-image-pool");
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("custom-image-pool");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.NotNull(preset.ProcessingPools);
+        Assert.Single(preset.ProcessingPools);
+        Assert.Equal("myregistry/asset-processor:v2", preset.ProcessingPools[0].Image);
+    }
+
+    [Fact]
+    public async Task LoadPresetAsync_WithDefaultValues_ShouldUseDefaults()
+    {
+        // Arrange - uses fixture file to preserve YAML indentation
+        await CopyFixtureAsync("minimal-pool");
+        var loader = CreateLoader();
+
+        // Act
+        var preset = await loader.LoadPresetAsync("minimal-pool");
+
+        // Assert
+        Assert.NotNull(preset);
+        Assert.NotNull(preset.ProcessingPools);
+        var pool = preset.ProcessingPools[0];
+        Assert.Equal("test-pool", pool.PoolType);
+        Assert.Equal("test", pool.Plugin);
+        Assert.Null(pool.Image); // No custom image
+        Assert.Equal(1, pool.MinInstances); // Default
+        Assert.Equal(5, pool.MaxInstances); // Default
+        Assert.Equal(0.8, pool.ScaleUpThreshold); // Default
+        Assert.Equal(0.2, pool.ScaleDownThreshold); // Default
+        Assert.Equal(5, pool.IdleTimeoutMinutes); // Default
+    }
+
+    #endregion
+
+    #region ListPresetsAsync Tests
+
+    [Fact]
+    public async Task ListPresetsAsync_ShouldReturnPresetMetadata()
+    {
+        // Arrange
+        const string preset1 = @"name: preset-one
+description: First preset
+category: development
+requiredBackends:
+  - docker-compose
+";
+        const string preset2 = @"name: preset-two
+description: Second preset
+category: production
+requiredBackends:
+  - kubernetes
+  - docker-swarm
+";
+
+        await CreatePresetFileAsync("preset-one", preset1);
+        await CreatePresetFileAsync("preset-two", preset2);
+        var loader = CreateLoader();
+
+        // Act
+        var presets = await loader.ListPresetsAsync();
+
+        // Assert
+        Assert.Equal(2, presets.Count);
+
+        var firstPreset = presets.FirstOrDefault(p => p.Name == "preset-one");
+        Assert.NotNull(firstPreset);
+        Assert.Equal("First preset", firstPreset.Description);
+        Assert.Equal("development", firstPreset.Category);
+        Assert.Single(firstPreset.RequiredBackends);
+        Assert.Contains("docker-compose", firstPreset.RequiredBackends);
+
+        var secondPreset = presets.FirstOrDefault(p => p.Name == "preset-two");
+        Assert.NotNull(secondPreset);
+        Assert.Equal("Second preset", secondPreset.Description);
+        Assert.Equal("production", secondPreset.Category);
+        Assert.Equal(2, secondPreset.RequiredBackends.Count);
+    }
+
+    [Fact]
+    public async Task ListPresetsAsync_WithNonexistentDirectory_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var loader = new PresetLoader(_mockLogger.Object, "/nonexistent/directory");
+
+        // Act
+        var presets = await loader.ListPresetsAsync();
+
+        // Assert
+        Assert.Empty(presets);
+    }
+
+    #endregion
 }

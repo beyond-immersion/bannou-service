@@ -67,8 +67,8 @@ public class LocationTestHandler : BaseHttpTestHandler
         });
     }
 
-    private static Task<TestResult> TestCreateLocation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateLocation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -98,8 +98,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created location: ID={response.LocationId}, Code={response.Code}");
         }, "Create location");
 
-    private static Task<TestResult> TestGetLocation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetLocation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -128,8 +128,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved location: ID={response.LocationId}, Code={response.Code}");
         }, "Get location");
 
-    private static Task<TestResult> TestGetLocationByCode(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetLocationByCode(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -160,8 +160,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved location by code: ID={response.LocationId}");
         }, "Get location by code");
 
-    private static Task<TestResult> TestUpdateLocation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateLocation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -196,8 +196,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Updated location: ID={response.LocationId}, Name={response.Name}");
         }, "Update location");
 
-    private static Task<TestResult> TestDeleteLocation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteLocation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -243,8 +243,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Deleted location: ID={created.LocationId}");
         }, "Delete location");
 
-    private static Task<TestResult> TestListLocations(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListLocations(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -274,8 +274,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Locations.Count} locations in realm");
         }, "List locations");
 
-    private static Task<TestResult> TestListLocationsByRealm(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListLocationsByRealm(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -305,8 +305,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Locations.Count} locations in realm");
         }, "List locations by realm");
 
-    private static Task<TestResult> TestListRootLocations(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListRootLocations(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -340,8 +340,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Locations.Count} root locations");
         }, "List root locations");
 
-    private static Task<TestResult> TestSetLocationParent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSetLocationParent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -381,8 +381,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Set parent: child={child.LocationId}, parent={parent.LocationId}");
         }, "Set location parent");
 
-    private static Task<TestResult> TestRemoveLocationParent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRemoveLocationParent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -425,8 +425,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Removed parent from location {child.LocationId}");
         }, "Remove location parent");
 
-    private static Task<TestResult> TestListLocationsByParent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListLocationsByParent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -466,8 +466,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Locations.Count} child locations");
         }, "List locations by parent");
 
-    private static Task<TestResult> TestGetLocationAncestors(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetLocationAncestors(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -519,8 +519,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Got {response.Locations.Count} ancestors");
         }, "Get location ancestors");
 
-    private static Task<TestResult> TestGetLocationDescendants(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetLocationDescendants(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -572,8 +572,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Got {response.Locations.Count} descendants");
         }, "Get location descendants");
 
-    private static Task<TestResult> TestDeprecateLocation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeprecateLocation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -604,8 +604,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Deprecated location: ID={location.LocationId}");
         }, "Deprecate location");
 
-    private static Task<TestResult> TestUndeprecateLocation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUndeprecateLocation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -637,8 +637,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Undeprecated location: ID={location.LocationId}");
         }, "Undeprecate location");
 
-    private static Task<TestResult> TestLocationExists(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestLocationExists(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -677,7 +677,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful("Location existence check passed");
         }, "Check location existence");
 
-    private static Task<TestResult> TestGetNonExistentLocation(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentLocation(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -690,8 +691,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent location");
 
-    private static Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
@@ -724,8 +725,8 @@ public class LocationTestHandler : BaseHttpTestHandler
                 "Duplicate code");
         }, "Duplicate code conflict");
 
-    private static Task<TestResult> TestSeedLocations(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSeedLocations(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
             var locationClient = GetServiceClient<ILocationClient>();
@@ -770,8 +771,8 @@ public class LocationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Seed completed: Created={response.Created}, Updated={response.Updated}, Skipped={response.Skipped}");
         }, "Seed locations");
 
-    private static Task<TestResult> TestCompleteLocationLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteLocationLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var realmClient = GetServiceClient<IRealmClient>();
             var locationClient = GetServiceClient<ILocationClient>();

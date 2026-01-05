@@ -1,0 +1,17 @@
+version: "2.0"
+metadata:
+  id: chain_nested
+on_error: doc_handler
+flows:
+  start:
+    actions:
+      - call: { flow: level1 }
+  level1:
+    actions:
+      - call: { flow: level2 }
+  level2:
+    actions:
+      - goto: nowhere
+  doc_handler:
+    actions:
+      - log: { message: "Caught from: ${_error.flow}" }

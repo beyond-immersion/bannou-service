@@ -42,19 +42,19 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     public async Task PublishServiceRestartEventAsync(ServiceRestartEvent restartEvent)
     {
-        await _messageBus.PublishAsync(RESTART_TOPIC, restartEvent);
+        await _messageBus.TryPublishAsync(RESTART_TOPIC, restartEvent);
         _logger.LogInformation("Published service restart event for {Service}", restartEvent.ServiceName);
     }
 
     public async Task PublishDeploymentEventAsync(DeploymentEvent deploymentEvent)
     {
-        await _messageBus.PublishAsync(DEPLOYMENT_TOPIC, deploymentEvent);
+        await _messageBus.TryPublishAsync(DEPLOYMENT_TOPIC, deploymentEvent);
         _logger.LogInformation("Published deployment event: {Action} ({DeploymentId})", deploymentEvent.Action, deploymentEvent.DeploymentId);
     }
 
     public async Task PublishFullMappingsAsync(FullServiceMappingsEvent mappingsEvent)
     {
-        await _messageBus.PublishAsync(FULL_MAPPINGS_TOPIC, mappingsEvent);
+        await _messageBus.TryPublishAsync(FULL_MAPPINGS_TOPIC, mappingsEvent);
         _logger.LogInformation(
             "Published full service mappings v{Version} with {Count} services",
             mappingsEvent.Version,

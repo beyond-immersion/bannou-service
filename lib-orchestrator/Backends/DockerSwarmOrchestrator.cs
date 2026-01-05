@@ -333,21 +333,22 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <summary>
     /// Gets tasks for a specific service.
     /// </summary>
-    private Task<IList<TaskResponse>> GetServiceTasksAsync(
+    private async Task<IList<TaskResponse>> GetServiceTasksAsync(
         string serviceId,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         try
         {
             // Note: Docker.DotNet doesn't have a direct ListTasksAsync on Swarm
             // We'd need to use the Tasks endpoint if available
             // For now, return empty list - this would need investigation
             // of available methods in Docker.DotNet for task listing
-            return Task.FromResult<IList<TaskResponse>>(Array.Empty<TaskResponse>());
+            return Array.Empty<TaskResponse>();
         }
         catch
         {
-            return Task.FromResult<IList<TaskResponse>>(Array.Empty<TaskResponse>());
+            return Array.Empty<TaskResponse>();
         }
     }
 
@@ -373,7 +374,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
                 $"BANNOU_APP_ID={appId}",
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 "DAEMON_MODE=true",
-                "HEARTBEAT_ENABLED=true"
+                "BANNOU_HEARTBEAT_ENABLED=true"
             };
 
             if (environment != null)

@@ -76,9 +76,9 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         _mappingResolver.MappingChanged += OnMappingChanged;
 
         // Resolve app-id from configuration
-        AppId = configuration.AppId ?? AppConstants.DEFAULT_APP_NAME;
+        AppId = configuration.EffectiveAppId;
 
-        // Get heartbeat settings from configuration (Tenet 21 compliant)
+        // Get heartbeat settings from configuration (IMPLEMENTATION TENETS compliant)
         HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0
             ? configuration.HeartbeatIntervalSeconds
             : 30;
@@ -105,13 +105,13 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Healthy);
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat,
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation(
-                "✅ Startup heartbeat published successfully: AppId={AppId}, Services=[{Services}]",
+                "Startup heartbeat published successfully: AppId={AppId}, Services=[{Services}]",
                 AppId,
                 string.Join(", ", heartbeat.Services.Select(s => s.ServiceName)));
 
@@ -210,7 +210,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(DetermineOverallStatus());
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat);
 
@@ -268,7 +268,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Shutting_down);
 
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat,
                 cancellationToken: cancellationToken);
@@ -378,7 +378,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
         return new ServiceHeartbeatEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = InstanceId,
             AppId = AppId,

@@ -197,7 +197,7 @@ public class Program
         }
 
         // Phase 2: Wait for mesh to be ready by making a warmup login attempt
-        // The login endpoint calls AccountsClient through mesh to look up the account, so this
+        // The login endpoint calls AccountClient through mesh to look up the account, so this
         // exercises the full mesh dependency chain. We use a non-existent account to get 401,
         // which avoids publishing any events (unlike registration which publishes account.created).
         // We expect 401 (not found) when working, but 500/502/503 when mesh isn't ready yet.
@@ -211,7 +211,7 @@ public class Program
             {
                 // Make a login request with a non-existent account - exercises mesh without publishing events
                 var warmupContent = new StringContent(
-                    "{\"username\":\"mesh-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
+                    "{\"email\":\"mesh-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
                     Encoding.UTF8,
                     "application/json");
                 var warmupResponse = await HttpClient.PostAsync(loginUrl, warmupContent);
@@ -276,7 +276,7 @@ public class Program
         // Expected API paths that indicate services have registered their permissions.
         // These are sanitized paths from the capability manifest, not full URLs.
         // NOTE: The main client is a regular user, so we expect user-role endpoints with "default" state.
-        // Admin-only endpoints (like /accounts, /permissions/services) are tested via AdminClient.
+        // Admin-only endpoints (like /account, /permission/services) are tested via AdminClient.
         // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -572,8 +572,8 @@ public class Program
         // Include at least one endpoint from each service that has edge tests.
         var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "/accounts/delete",   // Accounts service - admin role, needed for account deletion tests
-            "/accounts",          // Accounts service - admin role, list/get operations
+            "/account/delete",    // Account service - admin role, needed for account deletion tests
+            "/account",           // Account service - admin role, list/get operations
             "/realm/create",      // Realm service - admin role
             "/location/create",   // Location service - admin role
             "/species/create",    // Species service - admin role
@@ -791,6 +791,11 @@ public class Program
         foreach (ServiceTest serviceTest in connectTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load peer-to-peer routing tests
+        var peerRoutingTestHandler = new PeerRoutingTestHandler();
+        foreach (ServiceTest serviceTest in peerRoutingTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load capability flow tests (permission discovery and GUID routing)
         var capabilityTestHandler = new Tests.CapabilityFlowTestHandler();
         foreach (ServiceTest serviceTest in capabilityTestHandler.GetServiceTests())
@@ -842,7 +847,7 @@ public class Program
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         // load subscription websocket tests
-        var subscriptionTestHandler = new SubscriptionsWebSocketTestHandler();
+        var subscriptionTestHandler = new SubscriptionWebSocketTestHandler();
         foreach (ServiceTest serviceTest in subscriptionTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 

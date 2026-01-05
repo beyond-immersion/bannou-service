@@ -8,9 +8,13 @@ paths: {}
 components:
   schemas:
     GameSessionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to game-session.created when a gamesession is created
       required:
+      - eventName
       - eventId
       - timestamp
       - sessionId
@@ -18,38 +22,53 @@ components:
       - status
       - createdAt
       properties:
-        eventId: &id001
+        eventName:
+          type: string
+          default: game-session.created
+          description: 'Event type identifier: game-session.created'
+        sessionId: &id001
           type: string
           format: uuid
-          description: Unique identifier for this event
-        timestamp: &id002
+          description: "Unique identifier for the game session"
+        gameType: &id002
           type: string
-          format: date-time
-          description: When this event occurred
-        sessionId: &id003
+          description: "Type of game being played in this session"
+        sessionName: &id003
           type: string
-        gameType: &id004
+          nullable: true
+          description: "Human-readable name for the session"
+        status: &id004
           type: string
-        sessionName: &id005
-          type: string
-        status: &id006
-          type: string
-        maxPlayers: &id007
+          description: "Current status of the game session (e.g., waiting, active, completed)"
+        maxPlayers: &id005
           type: integer
-        currentPlayers: &id008
+          nullable: true
+          description: "Maximum number of players allowed in the session"
+        currentPlayers: &id006
           type: integer
-        isPrivate: &id009
+          nullable: true
+          description: "Current number of players in the session"
+        isPrivate: &id007
           type: boolean
-        owner: &id010
+          nullable: true
+          description: "Whether the session is private (invite-only)"
+        owner: &id008
           type: string
           format: uuid
-        createdAt: &id011
+          nullable: true
+          description: "Account ID of the session owner"
+        createdAt: &id009
           type: string
           format: date-time
+          description: "Timestamp when the session was created"
     GameSessionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to game-session.updated when a gamesession is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - sessionId
@@ -58,26 +77,32 @@ components:
       - createdAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        sessionId: *id003
-        gameType: *id004
-        sessionName: *id005
-        status: *id006
-        maxPlayers: *id007
-        currentPlayers: *id008
-        isPrivate: *id009
-        owner: *id010
-        createdAt: *id011
+        eventName:
+          type: string
+          default: game-session.updated
+          description: 'Event type identifier: game-session.updated'
+        sessionId: *id001
+        gameType: *id002
+        sessionName: *id003
+        status: *id004
+        maxPlayers: *id005
+        currentPlayers: *id006
+        isPrivate: *id007
+        owner: *id008
+        createdAt: *id009
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     GameSessionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to game-session.deleted when a gamesession is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - sessionId
@@ -85,17 +110,19 @@ components:
       - status
       - createdAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        sessionId: *id003
-        gameType: *id004
-        sessionName: *id005
-        status: *id006
-        maxPlayers: *id007
-        currentPlayers: *id008
-        isPrivate: *id009
-        owner: *id010
-        createdAt: *id011
+        eventName:
+          type: string
+          default: game-session.deleted
+          description: 'Event type identifier: game-session.deleted'
+        sessionId: *id001
+        gameType: *id002
+        sessionName: *id003
+        status: *id004
+        maxPlayers: *id005
+        currentPlayers: *id006
+        isPrivate: *id007
+        owner: *id008
+        createdAt: *id009
         deletedReason:
           type: string
           nullable: true

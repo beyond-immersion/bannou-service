@@ -20,6 +20,8 @@ info:
     - Asset search by type, tags, realm
     - Processing pipeline for textures, models, audio, behaviors
 
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint
@@ -61,48 +63,75 @@ paths:
         '403':
           description: Insufficient permissions
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UploadRequest\"\
-        ,\n  \"$defs\": {\n    \"UploadRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"filename\"\
-        ,\n        \"size\",\n        \"content_type\"\n      ],\n      \"properties\": {\n        \"filename\": {\n     \
-        \     \"type\": \"string\",\n          \"description\": \"Original filename with extension\"\n        },\n       \
-        \ \"size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n          \"description\": \"File
-        size in bytes\"\n        },\n        \"content_type\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"MIME content type (e.g., image/png, model/gltf-binary)\"\n        },\n        \"metadata\": {\n          \"$ref\"\
-        : \"#/$defs/AssetMetadataInput\"\n        }\n      }\n    },\n    \"AssetMetadataInput\": {\n      \"type\": \"object\"\
-        ,\n      \"description\": \"User-provided metadata for asset categorization\",\n      \"properties\": {\n        \"\
-        asset_type\": {\n          \"$ref\": \"#/$defs/AssetType\"\n        },\n        \"realm\": {\n          \"$ref\":
-        \"#/$defs/Realm\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n     \
-        \       \"type\": \"string\"\n          },\n          \"description\": \"Searchable tags for the asset\"\n       \
-        \ }\n      }\n    },\n    \"AssetType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"texture\",\n\
-        \        \"model\",\n        \"audio\",\n        \"behavior\",\n        \"bundle\",\n        \"prefab\",\n       \
-        \ \"other\"\n      ],\n      \"description\": \"Type classification for assets\"\n    },\n    \"Realm\": {\n     \
-        \ \"type\": \"string\",\n      \"enum\": [\n        \"omega\",\n        \"arcadia\",\n        \"fantasia\",\n    \
-        \    \"shared\"\n      ],\n      \"description\": \"Game realm the asset belongs to\"\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UploadResponse\"\
-        ,\n  \"$defs\": {\n    \"UploadResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"upload_id\"\
-        ,\n        \"upload_url\",\n        \"expires_at\"\n      ],\n      \"properties\": {\n        \"upload_id\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique upload session
-        identifier\"\n        },\n        \"upload_url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\"\
-        ,\n          \"description\": \"Pre-signed URL for uploading the file\"\n        },\n        \"expires_at\": {\n \
-        \         \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When the upload
-        URL expires\"\n        },\n        \"multipart\": {\n          \"$ref\": \"#/$defs/MultipartConfig\"\n        }\n\
-        \      }\n    },\n    \"MultipartConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"required\"\
-        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether multipart upload is required for this
-        file size\"\n        },\n        \"part_size\": {\n          \"type\": \"integer\",\n          \"description\": \"\
-        Size of each part in bytes\"\n        },\n        \"max_parts\": {\n          \"type\": \"integer\",\n          \"\
-        description\": \"Maximum number of parts\"\n        },\n        \"upload_urls\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/PartUploadInfo\"\n          }\n        }\n      }\n   \
-        \ },\n    \"PartUploadInfo\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"part_number\",\n  \
-        \      \"upload_url\"\n      ],\n      \"properties\": {\n        \"part_number\": {\n          \"type\": \"integer\"\
-        ,\n          \"description\": \"Part number (1-based)\"\n        },\n        \"upload_url\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uri\",\n          \"description\": \"Pre-signed URL for uploading this part\"\
-        \n        },\n        \"min_size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n      \
-        \    \"description\": \"Minimum size for this part\"\n        },\n        \"max_size\": {\n          \"type\": \"\
-        integer\",\n          \"format\": \"int64\",\n          \"description\": \"Maximum size for this part\"\n        }\n\
-        \      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Request upload URL for a new asset\",\n  \"description\": \"Generate a pre-signed
-        URL for uploading a new asset directly to storage.\\nFor large files (>50MB), returns multipart upload configuration.\\\
-        n\",\n  \"tags\": [\n    \"Assets\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"requestUpload\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UploadRequest\"\
+        ,\n    \"$defs\": {\n        \"UploadRequest\": {\n            \"description\": \"Request to initiate an asset upload
+        and receive a pre-signed URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"filename\",\n                \"size\",\n                \"contentType\"\
+        ,\n                \"owner\"\n            ],\n            \"properties\": {\n                \"owner\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Owner of this asset operation. NOT a
+        session ID.\\nFor user-initiated uploads: the accountId (UUID format).\\nFor service-initiated uploads: the service
+        name (e.g., \\\"behavior\\\", \\\"orchestrator\\\").\\n\"\n                },\n                \"filename\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Original filename with extension\"\
+        \n                },\n                \"size\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n                },\n     \
+        \           \"contentType\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        MIME content type (e.g., image/png, model/gltf-binary)\"\n                },\n                \"metadata\": {\n  \
+        \                  \"$ref\": \"#/$defs/AssetMetadataInput\",\n                    \"description\": \"Optional metadata
+        for asset categorization\"\n                }\n            }\n        },\n        \"AssetMetadataInput\": {\n    \
+        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"User-provided
+        metadata for asset categorization\",\n            \"properties\": {\n                \"assetType\": {\n          \
+        \          \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification for the asset\"\
+        \n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n           \
+        \         \"description\": \"Game realm the asset belongs to\"\n                },\n                \"tags\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\n       \
+        \         }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
+        behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
+        \            \"description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n         \
+        \       \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset
+        belongs to\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UploadResponse\"\
+        ,\n    \"$defs\": {\n        \"UploadResponse\": {\n            \"description\": \"Response containing pre-signed
+        URL and configuration for uploading an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"uploadId\",\n                \"uploadUrl\",\n           \
+        \     \"expiresAt\"\n            ],\n            \"properties\": {\n                \"uploadId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Unique upload session identifier\"\n                },\n                \"uploadUrl\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uri\",\n                    \"description\": \"Pre-signed URL for
+        uploading the file\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the upload URL expires\"\
+        \n                },\n                \"multipart\": {\n                    \"$ref\": \"#/$defs/MultipartConfig\"\
+        ,\n                    \"description\": \"Configuration for multipart uploads if file size requires it\"\n       \
+        \         },\n                \"requiredHeaders\": {\n                    \"type\": \"object\",\n                \
+        \    \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n         \
+        \           \"description\": \"Headers the client must include when uploading to the pre-signed URL\"\n          \
+        \      }\n            }\n        },\n        \"MultipartConfig\": {\n            \"description\": \"Configuration
+        for multipart uploads of large files\",\n            \"type\": \"object\",\n            \"additionalProperties\":
+        false,\n            \"properties\": {\n                \"required\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether multipart upload is required for this file size\"\n            \
+        \    },\n                \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n           \
+        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n\
+        \            }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a
+        single part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n   \
+        \         \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\"\
+        : \"Pre-signed URL for uploading this part\"\n                },\n                \"minSize\": {\n               \
+        \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        Minimum size for this part\"\n                },\n                \"maxSize\": {\n                    \"type\": \"\
+        integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Maximum size for this
+        part\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Request upload URL for a new asset\",\n    \"description\": \"Generate
+        a pre-signed URL for uploading a new asset directly to storage.\\nFor large files (>50MB), returns multipart upload
+        configuration.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"requestUpload\"\n}"
   /assets/upload/complete:
     post:
       summary: Mark upload as complete, trigger processing
@@ -123,7 +152,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CompleteUploadRequest'
       responses:
-        '201':
+        '200':
           description: Asset created, processing started
           content:
             application/json:
@@ -138,43 +167,63 @@ paths:
   # Asset Retrieval Operations
   # ==========================================================================
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CompleteUploadRequest\"\
-        ,\n  \"$defs\": {\n    \"CompleteUploadRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        upload_id\"\n      ],\n      \"properties\": {\n        \"upload_id\": {\n          \"type\": \"string\",\n      \
-        \    \"format\": \"uuid\",\n          \"description\": \"Upload session ID from requestUpload\"\n        },\n    \
-        \    \"parts\": {\n          \"type\": \"array\",\n          \"description\": \"For multipart uploads - ETags of completed
-        parts\",\n          \"items\": {\n            \"$ref\": \"#/$defs/CompletedPart\"\n          }\n        }\n      }\n\
-        \    },\n    \"CompletedPart\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"part_number\",\n\
-        \        \"etag\"\n      ],\n      \"properties\": {\n        \"part_number\": {\n          \"type\": \"integer\"\
-        ,\n          \"description\": \"Part number (1-based)\"\n        },\n        \"etag\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"ETag returned from part upload\"\n        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetMetadata\"\
-        ,\n  \"$defs\": {\n    \"AssetMetadata\": {\n      \"type\": \"object\",\n      \"description\": \"Complete asset
-        metadata including system-generated fields\",\n      \"properties\": {\n        \"asset_id\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"Unique asset identifier\"\n        },\n        \"content_hash\": {\n \
-        \         \"type\": \"string\",\n          \"description\": \"SHA256 hash of file contents\"\n        },\n       \
-        \ \"filename\": {\n          \"type\": \"string\",\n          \"description\": \"Original filename\"\n        },\n\
-        \        \"content_type\": {\n          \"type\": \"string\",\n          \"description\": \"MIME content type\"\n\
-        \        },\n        \"size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n          \"\
-        description\": \"File size in bytes\"\n        },\n        \"asset_type\": {\n          \"$ref\": \"#/$defs/AssetType\"\
-        \n        },\n        \"realm\": {\n          \"$ref\": \"#/$defs/Realm\"\n        },\n        \"tags\": {\n     \
-        \     \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n  \
-        \      \"processing_status\": {\n          \"$ref\": \"#/$defs/ProcessingStatus\"\n        },\n        \"is_archived\"\
-        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the asset is in cold/archival storage\"\
-        ,\n          \"default\": false\n        },\n        \"created_at\": {\n          \"type\": \"string\",\n        \
-        \  \"format\": \"date-time\"\n        },\n        \"updated_at\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"date-time\"\n        }\n      }\n    },\n    \"AssetType\": {\n      \"type\": \"string\",\n      \"enum\"\
-        : [\n        \"texture\",\n        \"model\",\n        \"audio\",\n        \"behavior\",\n        \"bundle\",\n  \
-        \      \"prefab\",\n        \"other\"\n      ],\n      \"description\": \"Type classification for assets\"\n    },\n\
-        \    \"Realm\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"omega\",\n        \"arcadia\",\n    \
-        \    \"fantasia\",\n        \"shared\"\n      ],\n      \"description\": \"Game realm the asset belongs to\"\n   \
-        \ },\n    \"ProcessingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"\
-        processing\",\n        \"complete\",\n        \"failed\"\n      ],\n      \"description\": \"Asset processing pipeline
-        status\"\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Mark upload as complete, trigger processing\",\n  \"description\": \"Called
-        after the client has uploaded the file to the pre-signed URL.\\nTriggers the asset processing pipeline (texture conversion,
-        model validation, etc.)\\nand emits completion events via WebSocket.\\n\",\n  \"tags\": [\n    \"Assets\"\n  ],\n\
-        \  \"deprecated\": false,\n  \"operationId\": \"completeUpload\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompleteUploadRequest\"\
+        ,\n    \"$defs\": {\n        \"CompleteUploadRequest\": {\n            \"description\": \"Request to finalize an upload
+        and trigger asset processing\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"uploadId\"\n            ],\n            \"properties\": {\n      \
+        \          \"uploadId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Upload session ID from requestUpload\"\n                },\n             \
+        \   \"parts\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"For multipart uploads - ETags of completed parts (null for single-file uploads)\",\n \
+        \                   \"items\": {\n                        \"$ref\": \"#/$defs/CompletedPart\"\n                  \
+        \  }\n                }\n            }\n        },\n        \"CompletedPart\": {\n            \"description\": \"\
+        Information about a completed part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"partNumber\",\n                \"etag\"\n            ],\n\
+        \            \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"description\": \"Part number (1-based)\"\n                },\n                \"etag\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"ETag returned from part upload\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetMetadata\"\
+        ,\n    \"$defs\": {\n        \"AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Complete asset metadata including system-generated fields\",\n          \
+        \  \"required\": [\n                \"assetId\",\n                \"contentHash\",\n                \"filename\",\n\
+        \                \"contentType\",\n                \"size\",\n                \"assetType\",\n                \"realm\"\
+        ,\n                \"tags\",\n                \"processingStatus\",\n                \"isArchived\",\n           \
+        \     \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n             \
+        \   \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique asset
+        identifier\"\n                },\n                \"contentHash\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"filename\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Original filename\"\n     \
+        \           },\n                \"contentType\": {\n                    \"type\": \"string\",\n                  \
+        \  \"description\": \"MIME content type\"\n                },\n                \"size\": {\n                    \"\
+        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"File size
+        in bytes\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type classification for the asset\"\n                },\n              \
+        \  \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm
+        the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
+        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
+        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
+        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
+        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
+        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
+        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
+        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
+        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
+        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
+        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
+        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Mark upload as complete, trigger processing\",\n    \"description\": \"\
+        Called after the client has uploaded the file to the pre-signed URL.\\nTriggers the asset processing pipeline (texture
+        conversion, model validation, etc.)\\nand emits completion events via WebSocket.\\n\",\n    \"tags\": [\n        \"\
+        Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"completeUpload\"\n}"
   /assets/get:
     post:
       summary: Get asset metadata and download URL
@@ -203,44 +252,73 @@ paths:
         '404':
           description: Asset not found
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetAssetRequest\"\
-        ,\n  \"$defs\": {\n    \"GetAssetRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"asset_id\"\
-        \n      ],\n      \"properties\": {\n        \"asset_id\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Asset identifier\"\n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"default\"\
-        : \"latest\",\n          \"description\": \"Version ID or 'latest'\"\n        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetWithDownloadUrl\"\
-        ,\n  \"$defs\": {\n    \"AssetWithDownloadUrl\": {\n      \"type\": \"object\",\n      \"properties\": {\n       \
-        \ \"asset_id\": {\n          \"type\": \"string\"\n        },\n        \"version_id\": {\n          \"type\": \"string\"\
-        \n        },\n        \"download_url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n     \
-        \     \"description\": \"Pre-signed download URL\"\n        },\n        \"expires_at\": {\n          \"type\": \"\
-        string\",\n          \"format\": \"date-time\",\n          \"description\": \"When the download URL expires\"\n  \
-        \      },\n        \"size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\"\n        },\n  \
-        \      \"content_hash\": {\n          \"type\": \"string\"\n        },\n        \"content_type\": {\n          \"\
-        type\": \"string\"\n        },\n        \"metadata\": {\n          \"$ref\": \"#/$defs/AssetMetadata\"\n        }\n\
-        \      }\n    },\n    \"AssetMetadata\": {\n      \"type\": \"object\",\n      \"description\": \"Complete asset metadata
-        including system-generated fields\",\n      \"properties\": {\n        \"asset_id\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique asset identifier\"\n        },\n        \"content_hash\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"SHA256 hash of file contents\"\n        },\n        \"filename\": {\n\
-        \          \"type\": \"string\",\n          \"description\": \"Original filename\"\n        },\n        \"content_type\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"MIME content type\"\n        },\n        \"size\"\
-        : {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n          \"description\": \"File size in
-        bytes\"\n        },\n        \"asset_type\": {\n          \"$ref\": \"#/$defs/AssetType\"\n        },\n        \"\
-        realm\": {\n          \"$ref\": \"#/$defs/Realm\"\n        },\n        \"tags\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"processing_status\"\
-        : {\n          \"$ref\": \"#/$defs/ProcessingStatus\"\n        },\n        \"is_archived\": {\n          \"type\"\
-        : \"boolean\",\n          \"description\": \"Whether the asset is in cold/archival storage\",\n          \"default\"\
-        : false\n        },\n        \"created_at\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        },\n        \"updated_at\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n  \
-        \      }\n      }\n    },\n    \"AssetType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"texture\"\
-        ,\n        \"model\",\n        \"audio\",\n        \"behavior\",\n        \"bundle\",\n        \"prefab\",\n     \
-        \   \"other\"\n      ],\n      \"description\": \"Type classification for assets\"\n    },\n    \"Realm\": {\n   \
-        \   \"type\": \"string\",\n      \"enum\": [\n        \"omega\",\n        \"arcadia\",\n        \"fantasia\",\n  \
-        \      \"shared\"\n      ],\n      \"description\": \"Game realm the asset belongs to\"\n    },\n    \"ProcessingStatus\"\
-        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"processing\",\n        \"complete\"\
-        ,\n        \"failed\"\n      ],\n      \"description\": \"Asset processing pipeline status\"\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get asset metadata and download URL\",\n  \"description\": \"Retrieve asset
-        metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for latest.\\\
-        n\",\n  \"tags\": [\n    \"Assets\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getAsset\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetAssetRequest\"\
+        ,\n    \"$defs\": {\n        \"GetAssetRequest\": {\n            \"description\": \"Request to retrieve asset metadata
+        and download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"assetId\"\n            ],\n            \"properties\": {\n                \"\
+        assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Asset identifier\"\
+        \n                },\n                \"version\": {\n                    \"type\": \"string\",\n                \
+        \    \"default\": \"latest\",\n                    \"description\": \"Version ID or 'latest'\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetWithDownloadUrl\"\
+        ,\n    \"$defs\": {\n        \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata combined with
+        a pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"assetId\",\n                \"versionId\",\n                \"downloadUrl\"\
+        ,\n                \"expiresAt\",\n                \"size\",\n                \"contentHash\",\n                \"\
+        contentType\",\n                \"metadata\"\n            ],\n            \"properties\": {\n                \"assetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n\
+        \                },\n                \"versionId\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Version identifier for this specific asset version\"\n                },\n              \
+        \  \"downloadUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n     \
+        \               \"description\": \"Pre-signed download URL\"\n                },\n                \"expiresAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the download URL expires\"\n                },\n                \"size\": {\n              \
+        \      \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        File size in bytes\"\n                },\n                \"contentHash\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"contentType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n     \
+        \           },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/AssetMetadata\",\n      \
+        \              \"description\": \"Complete asset metadata\"\n                }\n            }\n        },\n      \
+        \  \"AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"description\": \"Complete asset metadata including system-generated fields\",\n            \"required\": [\n\
+        \                \"assetId\",\n                \"contentHash\",\n                \"filename\",\n                \"\
+        contentType\",\n                \"size\",\n                \"assetType\",\n                \"realm\",\n          \
+        \      \"tags\",\n                \"processingStatus\",\n                \"isArchived\",\n                \"createdAt\"\
+        ,\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n   \
+        \             },\n                \"contentHash\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"filename\": {\n    \
+        \                \"type\": \"string\",\n                    \"description\": \"Original filename\"\n             \
+        \   },\n                \"contentType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"MIME content type\"\n                },\n                \"size\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n     \
+        \           },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n         \
+        \           \"description\": \"Type classification for the asset\"\n                },\n                \"realm\"\
+        : {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm the asset
+        belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n        \
+        \            \"items\": {\n                        \"type\": \"string\"\n                    },\n                \
+        \    \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
+        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
+        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
+        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
+        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
+        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
+        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
+        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
+        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
+        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
+        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
+        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get asset metadata and download URL\",\n    \"description\": \"Retrieve
+        asset metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for
+        latest.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAsset\"\
+        \n}"
   /assets/list-versions:
     post:
       summary: List all versions of an asset
@@ -269,25 +347,44 @@ paths:
         '404':
           description: Asset not found
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListVersionsRequest\"\
-        ,\n  \"$defs\": {\n    \"ListVersionsRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        asset_id\"\n      ],\n      \"properties\": {\n        \"asset_id\": {\n          \"type\": \"string\"\n        },\n\
-        \        \"limit\": {\n          \"type\": \"integer\",\n          \"default\": 50\n        },\n        \"offset\"\
-        : {\n          \"type\": \"integer\",\n          \"default\": 0\n        }\n      }\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetVersionList\"\
-        ,\n  \"$defs\": {\n    \"AssetVersionList\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"asset_id\"\
-        : {\n          \"type\": \"string\"\n        },\n        \"versions\": {\n          \"type\": \"array\",\n       \
-        \   \"items\": {\n            \"$ref\": \"#/$defs/AssetVersion\"\n          }\n        },\n        \"total\": {\n\
-        \          \"type\": \"integer\"\n        },\n        \"limit\": {\n          \"type\": \"integer\"\n        },\n\
-        \        \"offset\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"AssetVersion\": {\n   \
-        \   \"type\": \"object\",\n      \"properties\": {\n        \"version_id\": {\n          \"type\": \"string\"\n  \
-        \      },\n        \"created_at\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n     \
-        \   },\n        \"size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\"\n        },\n     \
-        \   \"is_archived\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this version is in
-        cold storage\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"List all versions of an asset\",\n  \"description\": \"Retrieve version history
-        for an asset with pagination.\\nIncludes version IDs, creation timestamps, and archive status.\\n\",\n  \"tags\":
-        [\n    \"Assets\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listAssetVersions\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListVersionsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListVersionsRequest\": {\n            \"description\": \"Request to list all versions
+        of an asset with pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"assetId\"\n            ],\n            \"properties\": {\n       \
+        \         \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Asset
+        identifier to list versions for\"\n                },\n                \"limit\": {\n                    \"type\"\
+        : \"integer\",\n                    \"default\": 50,\n                    \"description\": \"Maximum number of versions
+        to return\"\n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n     \
+        \               \"default\": 0,\n                    \"description\": \"Number of versions to skip for pagination\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetVersionList\"\
+        ,\n    \"$defs\": {\n        \"AssetVersionList\": {\n            \"description\": \"Paginated list of asset versions\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"assetId\",\n                \"versions\",\n                \"total\",\n                \"limit\"\
+        ,\n                \"offset\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"description\": \"Asset identifier\"\n             \
+        \   },\n                \"versions\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/AssetVersion\"\n                    },\n                    \"description\"\
+        : \"List of asset versions\"\n                },\n                \"total\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Total number of versions available\"\n                },\n             \
+        \   \"limit\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum number
+        of versions returned per page\"\n                },\n                \"offset\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Number of versions skipped\"\n                }\n           \
+        \ }\n        },\n        \"AssetVersion\": {\n            \"description\": \"Metadata for a specific version of an
+        asset\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"versionId\",\n                \"createdAt\",\n                \"size\",\n                \"\
+        isArchived\"\n            ],\n            \"properties\": {\n                \"versionId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"description\": \"Unique version identifier\"\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when this version was created\"\n                },\n        \
+        \        \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"File size in bytes for this version\"\n                },\n                \"\
+        isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this version
+        is in cold storage\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List all versions of an asset\",\n    \"description\": \"Retrieve version
+        history for an asset with pagination.\\nIncludes version IDs, creation timestamps, and archive status.\\n\",\n   \
+        \ \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAssetVersions\"\n\
+        }"
   /assets/search:
     post:
       summary: Search assets by tags, type, or realm
@@ -318,48 +415,79 @@ paths:
   # Bundle Operations
   # ==========================================================================
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetSearchRequest\"\
-        ,\n  \"$defs\": {\n    \"AssetSearchRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"asset_type\"\
-        ,\n        \"realm\"\n      ],\n      \"properties\": {\n        \"tags\": {\n          \"type\": \"array\",\n   \
-        \       \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"asset_type\": {\n     \
-        \     \"$ref\": \"#/$defs/AssetType\"\n        },\n        \"realm\": {\n          \"$ref\": \"#/$defs/Realm\"\n \
-        \       },\n        \"content_type\": {\n          \"type\": \"string\",\n          \"description\": \"MIME content
-        type filter\"\n        },\n        \"limit\": {\n          \"type\": \"integer\",\n          \"default\": 50\n   \
-        \     },\n        \"offset\": {\n          \"type\": \"integer\",\n          \"default\": 0\n        }\n      }\n\
-        \    },\n    \"AssetType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"texture\",\n        \"model\"\
-        ,\n        \"audio\",\n        \"behavior\",\n        \"bundle\",\n        \"prefab\",\n        \"other\"\n      ],\n\
-        \      \"description\": \"Type classification for assets\"\n    },\n    \"Realm\": {\n      \"type\": \"string\",\n\
-        \      \"enum\": [\n        \"omega\",\n        \"arcadia\",\n        \"fantasia\",\n        \"shared\"\n      ],\n\
-        \      \"description\": \"Game realm the asset belongs to\"\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetSearchResult\"\
-        ,\n  \"$defs\": {\n    \"AssetSearchResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
-        assets\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/AssetMetadata\"\
-        \n          }\n        },\n        \"total\": {\n          \"type\": \"integer\"\n        },\n        \"limit\": {\n\
-        \          \"type\": \"integer\"\n        },\n        \"offset\": {\n          \"type\": \"integer\"\n        }\n\
-        \      }\n    },\n    \"AssetMetadata\": {\n      \"type\": \"object\",\n      \"description\": \"Complete asset metadata
-        including system-generated fields\",\n      \"properties\": {\n        \"asset_id\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Unique asset identifier\"\n        },\n        \"content_hash\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"SHA256 hash of file contents\"\n        },\n        \"filename\": {\n\
-        \          \"type\": \"string\",\n          \"description\": \"Original filename\"\n        },\n        \"content_type\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"MIME content type\"\n        },\n        \"size\"\
-        : {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n          \"description\": \"File size in
-        bytes\"\n        },\n        \"asset_type\": {\n          \"$ref\": \"#/$defs/AssetType\"\n        },\n        \"\
-        realm\": {\n          \"$ref\": \"#/$defs/Realm\"\n        },\n        \"tags\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"processing_status\"\
-        : {\n          \"$ref\": \"#/$defs/ProcessingStatus\"\n        },\n        \"is_archived\": {\n          \"type\"\
-        : \"boolean\",\n          \"description\": \"Whether the asset is in cold/archival storage\",\n          \"default\"\
-        : false\n        },\n        \"created_at\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
-        \n        },\n        \"updated_at\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n  \
-        \      }\n      }\n    },\n    \"AssetType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"texture\"\
-        ,\n        \"model\",\n        \"audio\",\n        \"behavior\",\n        \"bundle\",\n        \"prefab\",\n     \
-        \   \"other\"\n      ],\n      \"description\": \"Type classification for assets\"\n    },\n    \"Realm\": {\n   \
-        \   \"type\": \"string\",\n      \"enum\": [\n        \"omega\",\n        \"arcadia\",\n        \"fantasia\",\n  \
-        \      \"shared\"\n      ],\n      \"description\": \"Game realm the asset belongs to\"\n    },\n    \"ProcessingStatus\"\
-        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"processing\",\n        \"complete\"\
-        ,\n        \"failed\"\n      ],\n      \"description\": \"Asset processing pipeline status\"\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Search assets by tags, type, or realm\",\n  \"description\": \"Search assets
-        using various filters with pagination.\\nAll filters are optional and combine with AND logic.\\n\",\n  \"tags\": [\n\
-        \    \"Assets\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"searchAssets\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetSearchRequest\"\
+        ,\n    \"$defs\": {\n        \"AssetSearchRequest\": {\n            \"description\": \"Search criteria for filtering
+        assets with pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"assetType\",\n                \"realm\"\n            ],\n            \"\
+        properties\": {\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Filter by tags (assets must have all specified tags) (null to skip tag filtering)\"\
+        \n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n   \
+        \                 \"description\": \"Filter by asset type\"\n                },\n                \"realm\": {\n  \
+        \                  \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Filter by game realm\"\n \
+        \               },\n                \"contentType\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"MIME content type filter (null to skip content
+        type filtering)\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n\
+        \                    \"default\": 50,\n                    \"description\": \"Maximum number of results to return\"\
+        \n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n                \
+        \    \"default\": 0,\n                    \"description\": \"Number of results to skip for pagination\"\n        \
+        \        }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
+        behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
+        \            \"description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n         \
+        \       \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset
+        belongs to\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetSearchResult\"\
+        ,\n    \"$defs\": {\n        \"AssetSearchResult\": {\n            \"description\": \"Paginated results from an asset
+        search query\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"assets\",\n                \"total\",\n                \"limit\",\n                \"offset\"\
+        \n            ],\n            \"properties\": {\n                \"assets\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetMetadata\"\n               \
+        \     },\n                    \"description\": \"List of matching assets\"\n                },\n                \"\
+        total\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of matching
+        assets\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Maximum number of results returned per page\"\n                },\n               \
+        \ \"offset\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of results
+        skipped\"\n                }\n            }\n        },\n        \"AssetMetadata\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Complete asset metadata including
+        system-generated fields\",\n            \"required\": [\n                \"assetId\",\n                \"contentHash\"\
+        ,\n                \"filename\",\n                \"contentType\",\n                \"size\",\n                \"\
+        assetType\",\n                \"realm\",\n                \"tags\",\n                \"processingStatus\",\n     \
+        \           \"isArchived\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Unique asset identifier\"\n                },\n                \"contentHash\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"SHA256 hash of file contents\"\n\
+        \                },\n                \"filename\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Original filename\"\n                },\n                \"contentType\": {\n            \
+        \        \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n                },\n \
+        \               \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
+        : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
+        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\"\
+        ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
+        tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
+        \n                },\n                \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\"\
+        ,\n                    \"description\": \"Current status of asset processing pipeline\"\n                },\n    \
+        \            \"isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
+        Whether the asset is in cold/archival storage\",\n                    \"default\": false\n                },\n   \
+        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the asset was created\"\n                },\n           \
+        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the asset was last updated\"\n                }\n         \
+        \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
+        \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
+        \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
+        description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
+        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
+        \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
+        \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
+        \n            ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Search assets by tags, type, or realm\",\n    \"description\": \"Search
+        assets using various filters with pagination.\\nAll filters are optional and combine with AND logic.\\n\",\n    \"\
+        tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"searchAssets\"\n}"
   /bundles/create:
     post:
       summary: Create asset bundle from multiple assets
@@ -381,7 +509,13 @@ paths:
               $ref: '#/components/schemas/CreateBundleRequest'
       responses:
         '200':
-          description: Bundle creation started
+          description: Bundle created immediately (small bundles)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBundleResponse'
+        '202':
+          description: Bundle creation queued (large bundles)
           content:
             application/json:
               schema:
@@ -389,29 +523,42 @@ paths:
         '400':
           description: Invalid asset_ids or bundle_id
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateBundleRequest\"\
-        ,\n  \"$defs\": {\n    \"CreateBundleRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        bundle_id\",\n        \"asset_ids\"\n      ],\n      \"properties\": {\n        \"bundle_id\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"Unique bundle identifier\"\n        },\n        \"version\": {\n     \
-        \     \"type\": \"string\",\n          \"default\": \"1.0.0\",\n          \"description\": \"Bundle version string\"\
-        \n        },\n        \"asset_ids\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"List of asset IDs to include in the bundle\"\n        },\n\
-        \        \"compression\": {\n          \"$ref\": \"#/$defs/CompressionType\"\n        },\n        \"metadata\": {\n\
-        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Custom metadata
-        for the bundle\"\n        }\n      }\n    },\n    \"CompressionType\": {\n      \"type\": \"string\",\n      \"enum\"\
-        : [\n        \"lz4\",\n        \"lzma\",\n        \"none\"\n      ],\n      \"description\": \"Compression algorithm
-        for bundles\"\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateBundleResponse\"\
-        ,\n  \"$defs\": {\n    \"CreateBundleResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n       \
-        \ \"bundle_id\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\"\
-        ,\n          \"enum\": [\n            \"queued\",\n            \"processing\",\n            \"ready\",\n         \
-        \   \"failed\"\n          ],\n          \"description\": \"Bundle creation status\"\n        },\n        \"estimated_size\"\
-        : {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n          \"description\": \"Estimated bundle
-        size in bytes\"\n        }\n      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Create asset bundle from multiple assets\",\n  \"description\": \"Create
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateBundleRequest\": {\n            \"description\": \"Request to create a new asset
+        bundle from multiple assets\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"bundleId\",\n                \"assetIds\",\n                \"owner\"\
+        \n            ],\n            \"properties\": {\n                \"owner\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Owner of this bundle. NOT a session ID.\\nFor user-initiated bundles: the
+        accountId (UUID format).\\nFor service-initiated bundles: the service name (e.g., \\\"orchestrator\\\").\\n\"\n  \
+        \              },\n                \"bundleId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"description\": \"Unique bundle identifier\"\n                },\n                \"version\": {\n           \
+        \         \"type\": \"string\",\n                    \"default\": \"1.0.0\",\n                    \"description\"\
+        : \"Bundle version string\"\n                },\n                \"assetIds\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"List of asset IDs to include in the bundle\"\n                },\n       \
+        \         \"compression\": {\n                    \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\"\
+        : \"Compression algorithm to use for the bundle\"\n                },\n                \"metadata\": {\n         \
+        \           \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Custom metadata for the bundle (null if none)\"\n                }\n\
+        \            }\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n            \"\
+        description\": \"Compression algorithm for bundles\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleResponse\"\
+        ,\n    \"$defs\": {\n        \"CreateBundleResponse\": {\n            \"description\": \"Response with bundle creation
+        status and estimated size\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"bundleId\",\n                \"status\",\n                \"estimatedSize\"\
+        \n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Unique bundle identifier\"\n                },\n               \
+        \ \"status\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                    \
+        \    \"queued\",\n                        \"processing\",\n                        \"ready\",\n                  \
+        \      \"failed\"\n                    ],\n                    \"description\": \"Bundle creation status\"\n     \
+        \           },\n                \"estimatedSize\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Estimated bundle size in bytes\"\n          \
+        \      }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create asset bundle from multiple assets\",\n    \"description\": \"Create
         a .bannou bundle containing multiple assets.\\nFor large bundles, processing is delegated to the processing pool.\\
-        nCompletion notification sent via WebSocket event.\\n\",\n  \"tags\": [\n    \"Bundles\"\n  ],\n  \"deprecated\":
-        false,\n  \"operationId\": \"createBundle\"\n}"
+        nCompletion notification sent via WebSocket event.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"createBundle\"\n}"
   /bundles/get:
     post:
       summary: Get bundle manifest and download URL
@@ -440,26 +587,42 @@ paths:
         '404':
           description: Bundle not found
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetBundleRequest\"\
-        ,\n  \"$defs\": {\n    \"GetBundleRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"bundle_id\"\
-        \n      ],\n      \"properties\": {\n        \"bundle_id\": {\n          \"type\": \"string\"\n        },\n      \
-        \  \"format\": {\n          \"$ref\": \"#/$defs/BundleFormat\"\n        }\n      }\n    },\n    \"BundleFormat\":
-        {\n      \"type\": \"string\",\n      \"enum\": [\n        \"bannou\",\n        \"zip\"\n      ],\n      \"description\"\
-        : \"Bundle file format\"\n    }\n  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BundleWithDownloadUrl\"\
-        ,\n  \"$defs\": {\n    \"BundleWithDownloadUrl\": {\n      \"type\": \"object\",\n      \"properties\": {\n      \
-        \  \"bundle_id\": {\n          \"type\": \"string\"\n        },\n        \"version\": {\n          \"type\": \"string\"\
-        \n        },\n        \"download_url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\"\n      \
-        \  },\n        \"format\": {\n          \"$ref\": \"#/$defs/BundleFormat\"\n        },\n        \"expires_at\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"size\": {\n         \
-        \ \"type\": \"integer\",\n          \"format\": \"int64\"\n        },\n        \"asset_count\": {\n          \"type\"\
-        : \"integer\"\n        },\n        \"from_cache\": {\n          \"type\": \"boolean\",\n          \"description\"\
-        : \"True if ZIP format was served from conversion cache\"\n        }\n      }\n    },\n    \"BundleFormat\": {\n \
-        \     \"type\": \"string\",\n      \"enum\": [\n        \"bannou\",\n        \"zip\"\n      ],\n      \"description\"\
-        : \"Bundle file format\"\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Get bundle manifest and download URL\",\n  \"description\": \"Retrieve bundle
-        metadata and generate a pre-signed download URL.\\nSupports both native .bannou format and ZIP conversion (cached).\\\
-        n\",\n  \"tags\": [\n    \"Bundles\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getBundle\"\n}"
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetBundleRequest\"\
+        ,\n    \"$defs\": {\n        \"GetBundleRequest\": {\n            \"description\": \"Request to retrieve bundle metadata
+        and download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"bundleId\"\n            ],\n            \"properties\": {\n                \"\
+        bundleId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Bundle identifier
+        to retrieve\"\n                },\n                \"format\": {\n                    \"$ref\": \"#/$defs/BundleFormat\"\
+        ,\n                    \"description\": \"Desired download format (bannou or zip)\"\n                }\n         \
+        \   }\n        },\n        \"BundleFormat\": {\n            \"type\": \"string\",\n            \"enum\": [\n     \
+        \           \"bannou\",\n                \"zip\"\n            ],\n            \"description\": \"Bundle file format\"\
+        \n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BundleWithDownloadUrl\"\
+        ,\n    \"$defs\": {\n        \"BundleWithDownloadUrl\": {\n            \"description\": \"Bundle metadata combined
+        with a pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"bundleId\",\n                \"version\",\n                \"downloadUrl\"\
+        ,\n                \"format\",\n                \"expiresAt\",\n                \"size\",\n                \"assetCount\"\
+        ,\n                \"fromCache\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Unique bundle identifier\"\n  \
+        \              },\n                \"version\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Bundle version string\"\n                },\n                \"downloadUrl\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\": \"\
+        Pre-signed URL for downloading the bundle\"\n                },\n                \"format\": {\n                 \
+        \   \"$ref\": \"#/$defs/BundleFormat\",\n                    \"description\": \"Format of the downloadable bundle\"\
+        \n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the download URL expires\"\n      \
+        \          },\n                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"description\": \"Bundle file size in bytes\"\n                },\n           \
+        \     \"assetCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of assets contained in the bundle\"\n                },\n                \"fromCache\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"True if ZIP format was served from conversion cache\"\
+        \n                }\n            }\n        },\n        \"BundleFormat\": {\n            \"type\": \"string\",\n \
+        \           \"enum\": [\n                \"bannou\",\n                \"zip\"\n            ],\n            \"description\"\
+        : \"Bundle file format\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get bundle manifest and download URL\",\n    \"description\": \"Retrieve
+        bundle metadata and generate a pre-signed download URL.\\nSupports both native .bannou format and ZIP conversion (cached).\\\
+        n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getBundle\"\
+        \n}"
   /bundles/upload/request:
     post:
       summary: Request upload URL for a pre-made bundle
@@ -488,42 +651,69 @@ paths:
         '400':
           description: Invalid filename or size
 
-      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BundleUploadRequest\"\
-        ,\n  \"$defs\": {\n    \"BundleUploadRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        filename\",\n        \"size\"\n      ],\n      \"properties\": {\n        \"filename\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Must end with .bannou or .zip\"\n        },\n        \"size\": {\n       \
-        \   \"type\": \"integer\",\n          \"format\": \"int64\"\n        },\n        \"manifest_preview\": {\n       \
-        \   \"$ref\": \"#/$defs/BundleManifestPreview\"\n        }\n      }\n    },\n    \"BundleManifestPreview\": {\n  \
-        \    \"type\": \"object\",\n      \"description\": \"Preview of bundle manifest for validation\",\n      \"properties\"\
-        : {\n        \"bundle_id\": {\n          \"type\": \"string\"\n        },\n        \"version\": {\n          \"type\"\
-        : \"string\"\n        },\n        \"asset_count\": {\n          \"type\": \"integer\"\n        }\n      }\n    }\n\
-        \  }\n}"
-      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UploadResponse\"\
-        ,\n  \"$defs\": {\n    \"UploadResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"upload_id\"\
-        ,\n        \"upload_url\",\n        \"expires_at\"\n      ],\n      \"properties\": {\n        \"upload_id\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique upload session
-        identifier\"\n        },\n        \"upload_url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\"\
-        ,\n          \"description\": \"Pre-signed URL for uploading the file\"\n        },\n        \"expires_at\": {\n \
-        \         \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When the upload
-        URL expires\"\n        },\n        \"multipart\": {\n          \"$ref\": \"#/$defs/MultipartConfig\"\n        }\n\
-        \      }\n    },\n    \"MultipartConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"required\"\
-        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether multipart upload is required for this
-        file size\"\n        },\n        \"part_size\": {\n          \"type\": \"integer\",\n          \"description\": \"\
-        Size of each part in bytes\"\n        },\n        \"max_parts\": {\n          \"type\": \"integer\",\n          \"\
-        description\": \"Maximum number of parts\"\n        },\n        \"upload_urls\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/PartUploadInfo\"\n          }\n        }\n      }\n   \
-        \ },\n    \"PartUploadInfo\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"part_number\",\n  \
-        \      \"upload_url\"\n      ],\n      \"properties\": {\n        \"part_number\": {\n          \"type\": \"integer\"\
-        ,\n          \"description\": \"Part number (1-based)\"\n        },\n        \"upload_url\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uri\",\n          \"description\": \"Pre-signed URL for uploading this part\"\
-        \n        },\n        \"min_size\": {\n          \"type\": \"integer\",\n          \"format\": \"int64\",\n      \
-        \    \"description\": \"Minimum size for this part\"\n        },\n        \"max_size\": {\n          \"type\": \"\
-        integer\",\n          \"format\": \"int64\",\n          \"description\": \"Maximum size for this part\"\n        }\n\
-        \      }\n    }\n  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Request upload URL for a pre-made bundle\",\n  \"description\": \"Upload
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BundleUploadRequest\"\
+        ,\n    \"$defs\": {\n        \"BundleUploadRequest\": {\n            \"description\": \"Request to upload a pre-built
+        asset bundle file\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"filename\",\n                \"size\",\n                \"owner\"\n        \
+        \    ],\n            \"properties\": {\n                \"owner\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Owner of this bundle upload. NOT a session ID.\\nFor user-initiated uploads:
+        the accountId (UUID format).\\nFor service-initiated uploads: the service name (e.g., \\\"orchestrator\\\").\\n\"\n\
+        \                },\n                \"filename\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Must end with .bannou or .zip\"\n                },\n                \"size\": {\n       \
+        \             \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Bundle file size in bytes\"\n                },\n                \"manifestPreview\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BundleManifestPreview\"\n \
+        \                       }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Optional preview of bundle manifest for validation\"\n                }\n            }\n        },\n\
+        \        \"BundleManifestPreview\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Preview of bundle manifest for validation\",\n            \"required\": [\n      \
+        \          \"bundleId\",\n                \"version\",\n                \"assetCount\"\n            ],\n         \
+        \   \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"Bundle identifier from the manifest\"\n                },\n                \"version\":
+        {\n                    \"type\": \"string\",\n                    \"description\": \"Bundle version from the manifest\"\
+        \n                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Number of assets declared in the manifest\"\n                }\n            }\n      \
+        \  }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UploadResponse\"\
+        ,\n    \"$defs\": {\n        \"UploadResponse\": {\n            \"description\": \"Response containing pre-signed
+        URL and configuration for uploading an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"uploadId\",\n                \"uploadUrl\",\n           \
+        \     \"expiresAt\"\n            ],\n            \"properties\": {\n                \"uploadId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Unique upload session identifier\"\n                },\n                \"uploadUrl\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uri\",\n                    \"description\": \"Pre-signed URL for
+        uploading the file\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the upload URL expires\"\
+        \n                },\n                \"multipart\": {\n                    \"$ref\": \"#/$defs/MultipartConfig\"\
+        ,\n                    \"description\": \"Configuration for multipart uploads if file size requires it\"\n       \
+        \         },\n                \"requiredHeaders\": {\n                    \"type\": \"object\",\n                \
+        \    \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n         \
+        \           \"description\": \"Headers the client must include when uploading to the pre-signed URL\"\n          \
+        \      }\n            }\n        },\n        \"MultipartConfig\": {\n            \"description\": \"Configuration
+        for multipart uploads of large files\",\n            \"type\": \"object\",\n            \"additionalProperties\":
+        false,\n            \"properties\": {\n                \"required\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether multipart upload is required for this file size\"\n            \
+        \    },\n                \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n           \
+        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n\
+        \            }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a
+        single part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n   \
+        \         \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\"\
+        : \"Pre-signed URL for uploading this part\"\n                },\n                \"minSize\": {\n               \
+        \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        Minimum size for this part\"\n                },\n                \"maxSize\": {\n                    \"type\": \"\
+        integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Maximum size for this
+        part\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Request upload URL for a pre-made bundle\",\n    \"description\": \"Upload
         a pre-built bundle (.bannou or .zip format).\\nAfter upload, the bundle undergoes validation before registration.\\\
-        n\",\n  \"tags\": [\n    \"Bundles\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"requestBundleUpload\"\n\
-        }"
+        n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"requestBundleUpload\"\
+        \n}"
 components:
   schemas:
     # ==========================================================================
@@ -580,12 +770,21 @@ components:
     # ==========================================================================
 
     UploadRequest:
+      description: Request to initiate an asset upload and receive a pre-signed URL
       type: object
+      additionalProperties: false
       required:
       - filename
       - size
-      - content_type
+      - contentType
+      - owner
       properties:
+        owner:
+          type: string
+          description: |
+            Owner of this asset operation. NOT a session ID.
+            For user-initiated uploads: the accountId (UUID format).
+            For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
         filename:
           type: string
           description: Original filename with extension
@@ -593,56 +792,70 @@ components:
           type: integer
           format: int64
           description: File size in bytes
-        content_type:
+        contentType:
           type: string
           description: MIME content type (e.g., image/png, model/gltf-binary)
         metadata:
           $ref: '#/components/schemas/AssetMetadataInput'
+          description: Optional metadata for asset categorization
 
     UploadResponse:
+      description: Response containing pre-signed URL and configuration for uploading an asset
       type: object
+      additionalProperties: false
       required:
-      - upload_id
-      - upload_url
-      - expires_at
+      - uploadId
+      - uploadUrl
+      - expiresAt
       properties:
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Unique upload session identifier
-        upload_url:
+        uploadUrl:
           type: string
           format: uri
           description: Pre-signed URL for uploading the file
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           description: When the upload URL expires
         multipart:
           $ref: '#/components/schemas/MultipartConfig'
+          description: Configuration for multipart uploads if file size requires it
+        requiredHeaders:
+          type: object
+          additionalProperties:
+            type: string
+          description: Headers the client must include when uploading to the pre-signed URL
 
     CompleteUploadRequest:
+      description: Request to finalize an upload and trigger asset processing
       type: object
+      additionalProperties: false
       required:
-      - upload_id
+      - uploadId
       properties:
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Upload session ID from requestUpload
         parts:
           type: array
-          description: For multipart uploads - ETags of completed parts
+          nullable: true
+          description: For multipart uploads - ETags of completed parts (null for single-file uploads)
           items:
             $ref: '#/components/schemas/CompletedPart'
 
     CompletedPart:
+      description: Information about a completed part in a multipart upload
       type: object
+      additionalProperties: false
       required:
-      - part_number
+      - partNumber
       - etag
       properties:
-        part_number:
+        partNumber:
           type: integer
           description: Part number (1-based)
         etag:
@@ -650,40 +863,47 @@ components:
           description: ETag returned from part upload
 
     MultipartConfig:
+      description: Configuration for multipart uploads of large files
       type: object
+      additionalProperties: false
       properties:
         required:
           type: boolean
           description: Whether multipart upload is required for this file size
-        part_size:
+        partSize:
           type: integer
           description: Size of each part in bytes
-        max_parts:
+        maxParts:
           type: integer
           description: Maximum number of parts
-        upload_urls:
+        uploadUrls:
           type: array
+          # NRT: Optional array MUST be nullable (Rule 2)
+          nullable: true
+          description: Pre-signed URLs for each part of the multipart upload
           items:
             $ref: '#/components/schemas/PartUploadInfo'
 
     PartUploadInfo:
+      description: Upload information for a single part in a multipart upload
       type: object
+      additionalProperties: false
       required:
-      - part_number
-      - upload_url
+      - partNumber
+      - uploadUrl
       properties:
-        part_number:
+        partNumber:
           type: integer
           description: Part number (1-based)
-        upload_url:
+        uploadUrl:
           type: string
           format: uri
           description: Pre-signed URL for uploading this part
-        min_size:
+        minSize:
           type: integer
           format: int64
           description: Minimum size for this part
-        max_size:
+        maxSize:
           type: integer
           format: int64
           description: Maximum size for this part
@@ -694,12 +914,15 @@ components:
 
     AssetMetadataInput:
       type: object
+      additionalProperties: false
       description: User-provided metadata for asset categorization
       properties:
-        asset_type:
+        assetType:
           $ref: '#/components/schemas/AssetType'
+          description: Type classification for the asset
         realm:
           $ref: '#/components/schemas/Realm'
+          description: Game realm the asset belongs to
         tags:
           type: array
           items:
@@ -708,55 +931,78 @@ components:
 
     AssetMetadata:
       type: object
+      additionalProperties: false
       description: Complete asset metadata including system-generated fields
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assetId
+      - contentHash
+      - filename
+      - contentType
+      - size
+      - assetType
+      - realm
+      - tags
+      - processingStatus
+      - isArchived
+      - createdAt
+      - updatedAt
       properties:
-        asset_id:
+        assetId:
           type: string
           description: Unique asset identifier
-        content_hash:
+        contentHash:
           type: string
           description: SHA256 hash of file contents
         filename:
           type: string
           description: Original filename
-        content_type:
+        contentType:
           type: string
           description: MIME content type
         size:
           type: integer
           format: int64
           description: File size in bytes
-        asset_type:
+        assetType:
           $ref: '#/components/schemas/AssetType'
+          description: Type classification for the asset
         realm:
           $ref: '#/components/schemas/Realm'
+          description: Game realm the asset belongs to
         tags:
           type: array
           items:
             type: string
-        processing_status:
+          description: Searchable tags for the asset
+        processingStatus:
           $ref: '#/components/schemas/ProcessingStatus'
-        is_archived:
+          description: Current status of asset processing pipeline
+        isArchived:
           type: boolean
           description: Whether the asset is in cold/archival storage
           default: false
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+          description: Timestamp when the asset was created
+        updatedAt:
           type: string
           format: date-time
+          description: Timestamp when the asset was last updated
 
     # ==========================================================================
     # Asset Retrieval
     # ==========================================================================
 
     GetAssetRequest:
+      description: Request to retrieve asset metadata and download URL
       type: object
+      additionalProperties: false
       required:
-      - asset_id
+      - assetId
       properties:
-        asset_id:
+        assetId:
           type: string
           description: Asset identifier
         version:
@@ -765,76 +1011,124 @@ components:
           description: Version ID or 'latest'
 
     AssetWithDownloadUrl:
+      description: Asset metadata combined with a pre-signed download URL
       type: object
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assetId
+      - versionId
+      - downloadUrl
+      - expiresAt
+      - size
+      - contentHash
+      - contentType
+      - metadata
       properties:
-        asset_id:
+        assetId:
           type: string
-        version_id:
+          description: Unique asset identifier
+        versionId:
           type: string
-        download_url:
+          description: Version identifier for this specific asset version
+        downloadUrl:
           type: string
           format: uri
           description: Pre-signed download URL
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           description: When the download URL expires
         size:
           type: integer
           format: int64
-        content_hash:
+          description: File size in bytes
+        contentHash:
           type: string
-        content_type:
+          description: SHA256 hash of file contents
+        contentType:
           type: string
+          description: MIME content type
         metadata:
           $ref: '#/components/schemas/AssetMetadata'
+          description: Complete asset metadata
 
     # ==========================================================================
     # Version Listing
     # ==========================================================================
 
     ListVersionsRequest:
+      description: Request to list all versions of an asset with pagination
       type: object
+      additionalProperties: false
       required:
-      - asset_id
+      - assetId
       properties:
-        asset_id:
+        assetId:
           type: string
+          description: Asset identifier to list versions for
         limit:
           type: integer
           default: 50
+          description: Maximum number of versions to return
         offset:
           type: integer
           default: 0
+          description: Number of versions to skip for pagination
 
     AssetVersionList:
+      description: Paginated list of asset versions
       type: object
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assetId
+      - versions
+      - total
+      - limit
+      - offset
       properties:
-        asset_id:
+        assetId:
           type: string
+          description: Asset identifier
         versions:
           type: array
           items:
             $ref: '#/components/schemas/AssetVersion'
+          description: List of asset versions
         total:
           type: integer
+          description: Total number of versions available
         limit:
           type: integer
+          description: Maximum number of versions returned per page
         offset:
           type: integer
+          description: Number of versions skipped
 
     AssetVersion:
+      description: Metadata for a specific version of an asset
       type: object
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - versionId
+      - createdAt
+      - size
+      - isArchived
       properties:
-        version_id:
+        versionId:
           type: string
-        created_at:
+          description: Unique version identifier
+        createdAt:
           type: string
           format: date-time
+          description: Timestamp when this version was created
         size:
           type: integer
           format: int64
-        is_archived:
+          description: File size in bytes for this version
+        isArchived:
           type: boolean
           description: Whether this version is in cold storage
 
@@ -843,77 +1137,117 @@ components:
     # ==========================================================================
 
     AssetSearchRequest:
+      description: Search criteria for filtering assets with pagination
       type: object
+      additionalProperties: false
       required:
-      - asset_type
+      - assetType
       - realm
       properties:
         tags:
           type: array
           items:
             type: string
-        asset_type:
+          nullable: true
+          description: Filter by tags (assets must have all specified tags) (null to skip tag filtering)
+        assetType:
           $ref: '#/components/schemas/AssetType'
+          description: Filter by asset type
         realm:
           $ref: '#/components/schemas/Realm'
-        content_type:
+          description: Filter by game realm
+        contentType:
           type: string
-          description: MIME content type filter
+          nullable: true
+          description: MIME content type filter (null to skip content type filtering)
         limit:
           type: integer
           default: 50
+          description: Maximum number of results to return
         offset:
           type: integer
           default: 0
+          description: Number of results to skip for pagination
 
     AssetSearchResult:
+      description: Paginated results from an asset search query
       type: object
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - assets
+      - total
+      - limit
+      - offset
       properties:
         assets:
           type: array
           items:
             $ref: '#/components/schemas/AssetMetadata'
+          description: List of matching assets
         total:
           type: integer
+          description: Total number of matching assets
         limit:
           type: integer
+          description: Maximum number of results returned per page
         offset:
           type: integer
+          description: Number of results skipped
 
     # ==========================================================================
     # Bundle Operations
     # ==========================================================================
 
     CreateBundleRequest:
+      description: Request to create a new asset bundle from multiple assets
       type: object
+      additionalProperties: false
       required:
-      - bundle_id
-      - asset_ids
+      - bundleId
+      - assetIds
+      - owner
       properties:
-        bundle_id:
+        owner:
+          type: string
+          description: |
+            Owner of this bundle. NOT a session ID.
+            For user-initiated bundles: the accountId (UUID format).
+            For service-initiated bundles: the service name (e.g., "orchestrator").
+        bundleId:
           type: string
           description: Unique bundle identifier
         version:
           type: string
           default: 1.0.0
           description: Bundle version string
-        asset_ids:
+        assetIds:
           type: array
           items:
             type: string
           description: List of asset IDs to include in the bundle
         compression:
           $ref: '#/components/schemas/CompressionType'
+          description: Compression algorithm to use for the bundle
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata for the bundle
+          nullable: true
+          description: Custom metadata for the bundle (null if none)
 
     CreateBundleResponse:
+      description: Response with bundle creation status and estimated size
       type: object
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - bundleId
+      - status
+      - estimatedSize
       properties:
-        bundle_id:
+        bundleId:
           type: string
+          description: Unique bundle identifier
         status:
           type: string
           enum:
@@ -922,67 +1256,112 @@ components:
           - ready
           - failed
           description: Bundle creation status
-        estimated_size:
+        estimatedSize:
           type: integer
           format: int64
           description: Estimated bundle size in bytes
 
     GetBundleRequest:
+      description: Request to retrieve bundle metadata and download URL
       type: object
+      additionalProperties: false
       required:
-      - bundle_id
+      - bundleId
       properties:
-        bundle_id:
+        bundleId:
           type: string
+          description: Bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
+          description: Desired download format (bannou or zip)
 
     BundleWithDownloadUrl:
+      description: Bundle metadata combined with a pre-signed download URL
       type: object
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - bundleId
+      - version
+      - downloadUrl
+      - format
+      - expiresAt
+      - size
+      - assetCount
+      - fromCache
       properties:
-        bundle_id:
+        bundleId:
           type: string
+          description: Unique bundle identifier
         version:
           type: string
-        download_url:
+          description: Bundle version string
+        downloadUrl:
           type: string
           format: uri
+          description: Pre-signed URL for downloading the bundle
         format:
           $ref: '#/components/schemas/BundleFormat'
-        expires_at:
+          description: Format of the downloadable bundle
+        expiresAt:
           type: string
           format: date-time
+          description: When the download URL expires
         size:
           type: integer
           format: int64
-        asset_count:
+          description: Bundle file size in bytes
+        assetCount:
           type: integer
-        from_cache:
+          description: Number of assets contained in the bundle
+        fromCache:
           type: boolean
           description: True if ZIP format was served from conversion cache
 
     BundleUploadRequest:
+      description: Request to upload a pre-built asset bundle file
       type: object
+      additionalProperties: false
       required:
       - filename
       - size
+      - owner
       properties:
+        owner:
+          type: string
+          description: |
+            Owner of this bundle upload. NOT a session ID.
+            For user-initiated uploads: the accountId (UUID format).
+            For service-initiated uploads: the service name (e.g., "orchestrator").
         filename:
           type: string
           description: Must end with .bannou or .zip
         size:
           type: integer
           format: int64
-        manifest_preview:
-          $ref: '#/components/schemas/BundleManifestPreview'
+          description: Bundle file size in bytes
+        manifestPreview:
+          allOf:
+          - $ref: '#/components/schemas/BundleManifestPreview'
+          nullable: true
+          description: Optional preview of bundle manifest for validation
 
     BundleManifestPreview:
       type: object
+      additionalProperties: false
       description: Preview of bundle manifest for validation
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - bundleId
+      - version
+      - assetCount
       properties:
-        bundle_id:
+        bundleId:
           type: string
+          description: Bundle identifier from the manifest
         version:
           type: string
-        asset_count:
+          description: Bundle version from the manifest
+        assetCount:
           type: integer
+          description: Number of assets declared in the manifest

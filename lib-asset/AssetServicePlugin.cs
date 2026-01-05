@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Metrics;
+using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Asset.Processing;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Plugins;
@@ -24,7 +25,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Register MinIO configuration options from AssetServiceConfiguration (Tenet 21)
+        // Register MinIO configuration options from AssetServiceConfiguration (IMPLEMENTATION TENETS)
         services.AddOptions<MinioStorageOptions>()
             .Configure<AssetServiceConfiguration>((options, config) =>
             {
@@ -73,11 +74,14 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         services.AddScoped<IAssetEventEmitter, AssetEventEmitter>();
 
         // Register bundle services
-        services.AddSingleton<BundleConverter>();
+        services.AddSingleton<IBundleConverter, BundleConverter>();
         services.AddSingleton<BundleValidator>();
 
         // Register metrics
         services.AddSingleton<AssetMetrics>();
+
+        // Register FFmpeg service for audio/video transcoding
+        services.AddSingleton<IFFmpegService, FFmpegService>();
 
         // Register asset processors
         services.AddSingleton<IAssetProcessor, TextureProcessor>();
@@ -85,15 +89,12 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         services.AddSingleton<IAssetProcessor, AudioProcessor>();
         services.AddSingleton<AssetProcessorRegistry>();
 
-        // Register processing worker as hosted service based on processing mode
-        var processingMode = Environment.GetEnvironmentVariable("ASSET_PROCESSING_MODE") ?? "both";
+        // Register processor pool manager for tracking processor node state
+        services.AddSingleton<IAssetProcessorPoolManager, AssetProcessorPoolManager>();
 
-        if (processingMode.Equals("worker", StringComparison.OrdinalIgnoreCase) ||
-            processingMode.Equals("both", StringComparison.OrdinalIgnoreCase))
-        {
-            Logger?.LogInformation("Registering AssetProcessingWorker (mode: {Mode})", processingMode);
-            services.AddHostedService<AssetProcessingWorker>();
-        }
+        // Register background worker for asset processing
+        // Worker checks ProcessingMode from configuration at startup and exits early if mode is "api"
+        services.AddHostedService<AssetProcessingWorker>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: doc_precedence
+on_error: doc_handler
+flows:
+  start:
+    actions:
+      - goto: nowhere
+    on_error:
+      - log: "Flow handled"
+  doc_handler:
+    actions:
+      - log: "Document handled"

@@ -407,7 +407,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 // Parse and validate the capability manifest
                 var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
-                var messageType = responseObj?["event_name"]?.GetValue<string>();
+                var messageType = responseObj?["eventName"]?.GetValue<string>();
 
                 if (messageType == "connect.capability_manifest")
                 {
@@ -613,7 +613,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Tests the complete event chain:
-    /// 1. Account deleted → AccountsService publishes account.deleted
+    /// 1. Account deleted → AccountService publishes account.deleted
     /// 2. AuthService receives account.deleted → invalidates all sessions → publishes session.invalidated
     /// 3. ConnectService receives session.invalidated → disconnects WebSocket connection
     /// </summary>
@@ -767,10 +767,10 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
 
         // Check if the delete endpoint is available
-        var deleteGuid = adminClient.GetServiceGuid("POST", "/accounts/delete");
+        var deleteGuid = adminClient.GetServiceGuid("POST", "/account/delete");
         if (deleteGuid == null)
         {
-            Console.WriteLine("❌ Admin client does not have /accounts/delete in available APIs");
+            Console.WriteLine("❌ Admin client does not have /account/delete in available APIs");
             Console.WriteLine("   Available APIs:");
             foreach (var api in adminClient.AvailableApis.Keys.Take(20))
             {
@@ -787,7 +787,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             var deleteRequest = new { accountId = accountId.ToString() };
             var response = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/accounts/delete",
+                "/account/delete",
                 deleteRequest,
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -1421,7 +1421,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Receives capability manifest and finds the POST:/accounts/delete service GUID.
+    /// Receives capability manifest and finds the POST:/account/delete service GUID.
     /// Waits for capability updates if the endpoint isn't immediately available.
     /// </summary>
     private static async Task<Guid> ReceiveCapabilityManifestAndFindAccountDeleteGuid(ClientWebSocket webSocket)
@@ -1452,15 +1452,15 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                         {
                             Console.WriteLine($"📥 Received capability manifest: {availableAPIs.Count} APIs available");
 
-                            // Look for POST:/accounts/delete
+                            // Look for POST:/account/delete
                             foreach (var api in availableAPIs)
                             {
                                 var method = api?["method"]?.GetValue<string>();
                                 var path = api?["path"]?.GetValue<string>();
                                 var serviceGuidStr = api?["serviceGuid"]?.GetValue<string>();
 
-                                // Match POST /accounts/delete
-                                if (method == "POST" && path == "/accounts/delete")
+                                // Match POST /account/delete
+                                if (method == "POST" && path == "/account/delete")
                                 {
                                     if (Guid.TryParse(serviceGuidStr, out var guid))
                                     {
@@ -1470,7 +1470,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                                 }
                             }
 
-                            Console.WriteLine("   POST:/accounts/delete not found in manifest, waiting for updates...");
+                            Console.WriteLine("   POST:/account/delete not found in manifest, waiting for updates...");
                         }
                     }
                 }
@@ -1534,9 +1534,14 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 JsonObject? manifest;
                 try { manifest = JsonNode.Parse(payloadJson)?.AsObject(); }
-                catch { continue; }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"⚠️ Failed to parse message as JSON: {ex.Message}");
+                    Console.WriteLine($"   Raw payload: {payloadJson[..Math.Min(200, payloadJson.Length)]}...");
+                    continue;
+                }
 
-                var type = manifest?["event_name"]?.GetValue<string>();
+                var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest") continue;
 
                 var availableApis = manifest?["availableAPIs"]?.AsArray();
@@ -1643,7 +1648,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = manifest?["event_name"]?.GetValue<string>();
+                var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest")
                 {
                     Console.WriteLine($"⚠️ Received event type '{type}', waiting for connect.capability_manifest...");
@@ -1776,12 +1781,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     {
                         var payloadJson = Encoding.UTF8.GetString(message.Payload.Span);
                         var eventObj = JsonNode.Parse(payloadJson)?.AsObject();
-                        var eventType = eventObj?["event_name"]?.GetValue<string>();
-                        Console.WriteLine($"   ⏭️ Skipping Event message (event_name: {eventType ?? "unknown"})");
+                        var eventType = eventObj?["eventName"]?.GetValue<string>();
+                        Console.WriteLine($"   ⏭️ Skipping Event message (eventName: {eventType ?? "unknown"})");
                     }
                     catch
                     {
-                        Console.WriteLine($"   ⏭️ Skipping Event message (could not parse event_name)");
+                        Console.WriteLine($"   ⏭️ Skipping Event message (could not parse eventName)");
                     }
                     continue;
                 }
@@ -2217,7 +2222,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = manifest?["event_name"]?.GetValue<string>();
+                var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest")
                 {
                     continue;

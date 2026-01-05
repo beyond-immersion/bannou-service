@@ -22,7 +22,7 @@ public class RedisDistributedLockProviderTests
     /// </summary>
     [Theory]
     [InlineData("auth-abc123def456", "Service ID with hyphen")]
-    [InlineData("permissions-statestore-lock", "Multiple hyphens")]
+    [InlineData("permission-statestore-lock", "Multiple hyphens")]
     [InlineData("service.name.with.dots", "Dots (Lua pattern: any char)")]
     [InlineData("value+plus+signs", "Plus signs (Lua pattern: 1 or more)")]
     [InlineData("value*star", "Asterisk (Lua pattern: 0 or more)")]
@@ -69,7 +69,7 @@ public class RedisDistributedLockProviderTests
     /// </summary>
     [Theory]
     [InlineData("auth-abc123:1735239363", "auth-abc123", true)]
-    [InlineData("permissions-statestore:1735239363", "permissions-statestore", true)]
+    [InlineData("permission-statestore:1735239363", "permission-statestore", true)]
     [InlineData("service.with.dots:1735239363", "service.with.dots", true)]
     [InlineData("other-owner:1735239363", "auth-abc123", false)]
     [InlineData("auth-abc123:1735239363", "auth", false)] // Prefix should match exactly

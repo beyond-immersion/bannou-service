@@ -11,8 +11,8 @@ source "$(dirname "$0")/common.sh"
 # Validate arguments
 if [ $# -lt 1 ]; then
     log_error "Usage: $0 <service-name> [schema-file]"
-    echo "Example: $0 accounts"
-    echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+    echo "Example: $0 account"
+    echo "Example: $0 account ../schemas/account-api.yaml"
     exit 1
 fi
 
@@ -60,8 +60,22 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// Implementation of the $SERVICE_PASCAL service.
 /// This class contains the business logic for all $SERVICE_PASCAL operations.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
+/// Generated code (event handlers, permissions) is placed in companion partial classes.
+/// </para>
+/// <para>
+/// Standard structure:
+/// <list type="bullet">
+///   <item>${SERVICE_PASCAL}Service.cs (this file) - Business logic</item>
+///   <item>${SERVICE_PASCAL}ServiceEvents.cs - Event consumer handlers (generated)</item>
+///   <item>Generated/${SERVICE_PASCAL}PermissionRegistration.cs - Permission registration (generated)</item>
+/// </list>
+/// </para>
+/// </remarks>
 [BannouService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped)]
-public class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
+public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -240,7 +254,7 @@ try:
             // return (StatusCodes.NoContent, default);
             //
             // For event publishing (lib-messaging):
-            // await _messageBus.PublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
+            // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
         }}
         catch (Exception ex)
         {{

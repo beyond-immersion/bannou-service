@@ -1,0 +1,16 @@
+version: "2.0"
+metadata:
+  id: global_set
+flows:
+  start:
+    actions:
+      - call: { flow: nested }
+      - log: { message: "Root: ${result}" }
+  nested:
+    actions:
+      - call: { flow: deep }
+  deep:
+    actions:
+      - global:
+          variable: result
+          value: "from_deep"

@@ -1,10 +1,10 @@
 # Split Service Routing Test Preset
-# Tests dynamic service-to-app-id routing with auth/accounts on separate node
+# Tests dynamic service-to-app-id routing with auth/account on separate node
 # This validates the core multi-node routing architecture
 #
 # Topology:
-# - Main node (already running): connect, permissions, game-session, behavior, orchestrator, etc.
-# - bannou-auth (deployed by this preset): accounts, auth
+# - Main node (already running): connect, permission, game-session, behavior, orchestrator, etc.
+# - bannou-auth (deployed by this preset): account, auth
 #
 # NOTE: The main node is NOT included here - orchestrator never deploys itself.
 # Presets only define ADDITIONAL nodes to deploy alongside the main orchestrator node.
@@ -15,13 +15,13 @@
 # Only specify overrides or node-specific configuration.
 #
 # When deployed, ServiceMappingEvents are published:
-# - accounts -> bannou-auth
+# - account -> bannou-auth
 # - auth -> bannou-auth
 #
 # The ServiceAppMappingResolver receives these events and routes accordingly.
 
 name: split-auth-routing-test
-description: Split service deployment for routing validation - auth/accounts on separate node
+description: Split service deployment for routing validation - auth/account on separate node
 category: testing
 
 topology:
@@ -30,7 +30,7 @@ topology:
     # Deployed as a SEPARATE container from the main orchestrator node
     - name: bannou-auth
       services:
-        - accounts
+        - account
         - auth
       replicas: 1
       environment:
@@ -52,7 +52,6 @@ environment:
   # Only override logging if different from main node
   # All other configuration (AUTH_*, STATE_*, ACCOUNT_*, etc.) is
   # inherited from orchestrator's environment automatically
-  APP_LOGGING_LEVEL: Debug
   BANNOU_APP_LOGGING_LEVEL: Debug
 
 requiredBackends:

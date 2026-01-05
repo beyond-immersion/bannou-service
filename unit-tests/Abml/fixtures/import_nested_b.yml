@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: nested_b
+
+imports:
+  - file: "import_nested_c.yml"
+    as: "c"
+
+flows:
+  call_c:
+    actions:
+      - log: { message: "In B" }
+      - call: { flow: "c.do_work" }  # Context-relative: resolves to B's import of C
+      - log: { message: "Back in B" }

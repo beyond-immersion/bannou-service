@@ -118,7 +118,7 @@ SUCCESSFUL_SERVICES=0
 
 # Process each schema file
 for schema_file in "${SCHEMA_FILES[@]}"; do
-    # Extract service name from schema filename (e.g. "accounts-api.yaml" -> "accounts")
+    # Extract service name from schema filename (e.g. "account-api.yaml" -> "account")
     service_name=$(basename "$schema_file" | sed 's/-api\.yaml$//')
 
     # Skip if specific service requested and this isn't it
@@ -179,6 +179,104 @@ if [ $FIXED_COUNT -gt 0 ]; then
     echo -e "${GREEN}✅ Fixed AdditionalProperties in $FIXED_COUNT files${NC}"
 else
     echo -e "${YELLOW}ℹ️  No AdditionalProperties patterns found to fix${NC}"
+fi
+echo ""
+
+# Post-process generated files to remove NSwag pragma warning blocks
+# Per QUALITY TENETS: Warning suppressions are forbidden except for specific documented exceptions.
+# We remove all pragmas and rely on .editorconfig for the minimal acceptable exceptions.
+# See: docs/reference/tenets/QUALITY.md (Warning Suppression)
+echo -e "${BLUE}🔧 Post-processing: Removing NSwag pragma warning blocks (QUALITY TENETS compliance)...${NC}"
+
+PRAGMA_REMOVED_COUNT=0
+
+for file in "${GENERATED_FILES[@]}"; do
+    if grep -q "^#pragma warning disable 108" "$file" 2>/dev/null; then
+        # Remove all 15 pragma warning disable lines that NSwag generates
+        # These are lines 9-23 in NSwag output, all starting with #pragma warning disable
+        sed -i '/^#pragma warning disable 108/d' "$file"
+        sed -i '/^#pragma warning disable 114/d' "$file"
+        sed -i '/^#pragma warning disable 472/d' "$file"
+        sed -i '/^#pragma warning disable 612/d' "$file"
+        sed -i '/^#pragma warning disable 649/d' "$file"
+        sed -i '/^#pragma warning disable 1573/d' "$file"
+        sed -i '/^#pragma warning disable 1591/d' "$file"
+        sed -i '/^#pragma warning disable 8073/d' "$file"
+        sed -i '/^#pragma warning disable 3016/d' "$file"
+        sed -i '/^#pragma warning disable 8600/d' "$file"
+        sed -i '/^#pragma warning disable 8602/d' "$file"
+        sed -i '/^#pragma warning disable 8603/d' "$file"
+        sed -i '/^#pragma warning disable 8604/d' "$file"
+        sed -i '/^#pragma warning disable 8625/d' "$file"
+        sed -i '/^#pragma warning disable 8765/d' "$file"
+
+        PRAGMA_REMOVED_COUNT=$((PRAGMA_REMOVED_COUNT + 1))
+    fi
+done
+
+if [ $PRAGMA_REMOVED_COUNT -gt 0 ]; then
+    echo -e "${GREEN}✅ Removed pragma blocks from $PRAGMA_REMOVED_COUNT files${NC}"
+else
+    echo -e "${YELLOW}ℹ️  No pragma blocks found to remove${NC}"
+fi
+echo ""
+
+# Post-process generated files to remove null checks on enum parameters (CS0472)
+# NSwag generates null checks for all parameters, but enums are value types that can never be null.
+# These checks cause CS0472: "The result of the expression is always 'false'"
+# Per QUALITY TENETS: Fix via post-processing rather than suppression.
+echo -e "${BLUE}🔧 Post-processing: Removing null checks on enum parameters (CS0472)...${NC}"
+
+ENUM_NULL_CHECK_FIXED=0
+
+# Known enum types from schemas that NSwag generates null checks for
+# Pattern: if (enumVar == null)\n    throw new System.ArgumentNullException("enumVar");
+ENUM_TYPES=("connection" "upgrade" "provider")
+
+for file in "${GENERATED_FILES[@]}"; do
+    for enum_var in "${ENUM_TYPES[@]}"; do
+        # Check if this file has the pattern
+        if grep -q "if (${enum_var} == null)" "$file" 2>/dev/null; then
+            # Remove the two-line null check block using sed with pattern matching
+            # Match: if (enumVar == null)\n followed by throw line
+            sed -i "/${enum_var} == null/,/ArgumentNullException/d" "$file"
+            ENUM_NULL_CHECK_FIXED=$((ENUM_NULL_CHECK_FIXED + 1))
+        fi
+    done
+done
+
+if [ $ENUM_NULL_CHECK_FIXED -gt 0 ]; then
+    echo -e "${GREEN}✅ Removed enum null checks in $ENUM_NULL_CHECK_FIXED locations${NC}"
+else
+    echo -e "${YELLOW}ℹ️  No enum null checks found to remove${NC}"
+fi
+echo ""
+
+# Post-process generated files to replace hardcoded "bannou" app-id defaults with AppConstants.DEFAULT_APP_NAME
+# Per CLAUDE.md: We shouldn't have hardcoded "bannou" values - use the constant for consistency.
+# This replaces specific property defaults that represent the app-id, NOT product names like "bannou-dlx".
+echo -e "${BLUE}🔧 Post-processing: Replacing hardcoded app-id defaults with AppConstants.DEFAULT_APP_NAME...${NC}"
+
+APPID_REPLACED_COUNT=0
+
+# Properties that represent the default app-id and should use the constant
+APPID_PROPERTIES=("DefaultAppId" "DefaultExchange" "DeploymentMode" "ControlPlaneAppId" "Exchange")
+
+for file in "${GENERATED_FILES[@]}"; do
+    for prop in "${APPID_PROPERTIES[@]}"; do
+        # Pattern: public string PropName { get; set; } = "bannou";
+        # Replace with: public string PropName { get; set; } = AppConstants.DEFAULT_APP_NAME;
+        if grep -q "public string ${prop} { get; set; } = \"bannou\";" "$file" 2>/dev/null; then
+            sed -i "s/public string ${prop} { get; set; } = \"bannou\";/public string ${prop} { get; set; } = AppConstants.DEFAULT_APP_NAME;/" "$file"
+            APPID_REPLACED_COUNT=$((APPID_REPLACED_COUNT + 1))
+        fi
+    done
+done
+
+if [ $APPID_REPLACED_COUNT -gt 0 ]; then
+    echo -e "${GREEN}✅ Replaced app-id defaults in $APPID_REPLACED_COUNT locations${NC}"
+else
+    echo -e "${YELLOW}ℹ️  No app-id defaults found to replace${NC}"
 fi
 echo ""
 

@@ -101,7 +101,7 @@ public record GitSyncResult(
     /// <summary>
     /// Creates a successful sync result.
     /// </summary>
-    public static GitSyncResult Succeeded(string commitHash, bool isClone = false)
+    public static GitSyncResult Succeeded(string? commitHash, bool isClone = false)
         => new(true, commitHash, null, isClone);
 
     /// <summary>

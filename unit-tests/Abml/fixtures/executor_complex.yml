@@ -1,0 +1,26 @@
+version: "2.0"
+metadata:
+  id: complex_behavior
+flows:
+  start:
+    actions:
+      - set:
+          variable: energy
+          value: "100"
+      - call: { flow: check_status }
+      - log: { message: "Final energy: ${energy}" }
+
+  check_status:
+    actions:
+      - cond:
+          - when: "${energy > 80}"
+            then:
+              - log: "High energy"
+              - decrement:
+                  variable: energy
+                  by: 30
+          - when: "${energy > 50}"
+            then:
+              - log: "Medium energy"
+          - else:
+              - log: "Low energy"

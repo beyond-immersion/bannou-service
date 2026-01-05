@@ -57,8 +57,12 @@ internal sealed class RepositoryBinding
     /// <summary>Gets or sets when the binding was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 
-    /// <summary>Gets or sets who created the binding.</summary>
-    public Guid CreatedBy { get; set; }
+    /// <summary>
+    /// Gets or sets the owner of this binding. NOT a session ID.
+    /// Contains either an accountId (UUID format) for user-initiated bindings
+    /// or a service name for service-initiated bindings.
+    /// </summary>
+    public string Owner { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the last sync error message.</summary>
     public string? LastSyncError { get; set; }
@@ -126,7 +130,7 @@ internal sealed class SyncResult
     /// <summary>Creates a success result.</summary>
     public static SyncResult Success(
         Guid syncId,
-        string commitHash,
+        string? commitHash,
         int created,
         int updated,
         int deleted,
@@ -247,6 +251,10 @@ internal sealed class DocumentationArchive
     /// <summary>Gets or sets the description of the archive.</summary>
     public string? Description { get; set; }
 
-    /// <summary>Gets or sets who created the archive.</summary>
-    public Guid CreatedBy { get; set; }
+    /// <summary>
+    /// Gets or sets the owner of this archive. NOT a session ID.
+    /// Contains either an accountId (UUID format) for user-initiated archives
+    /// or a service name for service-initiated archives.
+    /// </summary>
+    public string Owner { get; set; } = string.Empty;
 }

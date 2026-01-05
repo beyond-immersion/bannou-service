@@ -1,0 +1,7 @@
+version: "2.0"
+metadata:
+  id: missing_flow
+flows:
+  start:
+    actions:
+      - log: "Hello"

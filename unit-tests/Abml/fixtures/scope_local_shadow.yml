@@ -1,0 +1,17 @@
+version: "2.0"
+metadata:
+  id: local_shadow
+flows:
+  start:
+    actions:
+      - set:
+          variable: x
+          value: "outer"
+      - call: { flow: inner }
+      - log: { message: "After call: ${x}" }
+  inner:
+    actions:
+      - local:
+          variable: x
+          value: "inner"
+      - log: { message: "In inner: ${x}" }

@@ -5,9 +5,19 @@ info:
     Service-to-service pub/sub events for the Voice service.
     These events enable asynchronous communication between Voice service
     and other services (e.g., GameSession, Orchestrator) via RabbitMQ.
+
+    NOTE: Voice service is currently stub-only. Event schemas are planned
+    for future WebRTC/voice integration but are not yet implemented.
+    See docs/CLEANED_EVENTS.md for the planned event inventory.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
+  # No events implemented yet - voice service is stub-only
+  x-event-subscriptions: []
+  x-event-publications: []
 
 servers: []
 
@@ -15,238 +25,18 @@ paths: {}
 
 components:
   schemas:
-    # ============================================
-    # Voice Room Lifecycle Events
-    # ============================================
-
-    VoiceRoomCreatedEvent:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
       type: object
-      description: |
-        Published when a new voice room is created.
-        Consumed by Orchestrator for resource tracking.
+      additionalProperties: false
       required:
         - eventId
         - timestamp
-        - roomId
-        - sessionId
-        - tier
       properties:
         eventId:
           type: string
-          format: uuid
-          description: Unique identifier for this event
+          description: Unique identifier for this event instance
         timestamp:
           type: string
           format: date-time
-          description: When the room was created
-        roomId:
-          type: string
-          format: uuid
-          description: Created voice room ID
-        sessionId:
-          type: string
-          format: uuid
-          description: Associated game session ID
-        tier:
-          type: string
-          enum: [p2p, scaled]
-          description: Initial voice tier
-        maxParticipants:
-          type: integer
-          description: Maximum participants before tier upgrade
-        codec:
-          type: string
-          enum: [opus, g711, g722]
-          description: Audio codec
-
-    VoiceRoomDeletedEvent:
-      type: object
-      description: |
-        Published when a voice room is deleted.
-        Consumed by Orchestrator to release resources.
-      required:
-        - eventId
-        - timestamp
-        - roomId
-        - sessionId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the room was deleted
-        roomId:
-          type: string
-          format: uuid
-          description: Deleted voice room ID
-        sessionId:
-          type: string
-          format: uuid
-          description: Associated game session ID
-        reason:
-          type: string
-          nullable: true
-          description: Reason for deletion
-        finalParticipantCount:
-          type: integer
-          description: Number of participants when deleted
-
-    # ============================================
-    # Tier Management Events
-    # ============================================
-
-    VoiceTierUpgradeRequestedEvent:
-      type: object
-      description: |
-        Published when a voice room needs to upgrade from P2P to scaled tier.
-        Consumed by Orchestrator to provision RTP server resources.
-      required:
-        - eventId
-        - timestamp
-        - roomId
-        - sessionId
-        - currentParticipants
-        - requestedTier
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the upgrade was requested
-        roomId:
-          type: string
-          format: uuid
-          description: Voice room requesting upgrade
-        sessionId:
-          type: string
-          format: uuid
-          description: Associated game session ID
-        currentParticipants:
-          type: integer
-          description: Current number of participants
-        requestedTier:
-          type: string
-          enum: [scaled]
-          description: Tier to upgrade to
-
-    VoiceTierUpgradeCompletedEvent:
-      type: object
-      description: |
-        Published when a voice room tier upgrade is complete.
-        Voice service publishes this after receiving RTP server assignment
-        from Orchestrator.
-      required:
-        - eventId
-        - timestamp
-        - roomId
-        - sessionId
-        - newTier
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the upgrade completed
-        roomId:
-          type: string
-          format: uuid
-          description: Upgraded voice room ID
-        sessionId:
-          type: string
-          format: uuid
-          description: Associated game session ID
-        previousTier:
-          type: string
-          enum: [p2p]
-          description: Previous tier
-        newTier:
-          type: string
-          enum: [scaled]
-          description: New tier after upgrade
-        rtpServerUri:
-          type: string
-          description: Assigned RTP server URI
-
-    # ============================================
-    # Participant Events (for metrics/logging)
-    # ============================================
-
-    VoiceParticipantJoinedEvent:
-      type: object
-      description: |
-        Published when a participant joins a voice room.
-        Used for metrics and capacity tracking.
-      required:
-        - eventId
-        - timestamp
-        - roomId
-        - accountId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the participant joined
-        roomId:
-          type: string
-          format: uuid
-          description: Voice room ID
-        accountId:
-          type: string
-          format: uuid
-          description: Joining participant's account ID
-        currentParticipantCount:
-          type: integer
-          description: Total participants after join
-        tier:
-          type: string
-          enum: [p2p, scaled]
-          description: Current tier
-
-    VoiceParticipantLeftEvent:
-      type: object
-      description: |
-        Published when a participant leaves a voice room.
-        Used for metrics and capacity tracking.
-      required:
-        - eventId
-        - timestamp
-        - roomId
-        - accountId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the participant left
-        roomId:
-          type: string
-          format: uuid
-          description: Voice room ID
-        accountId:
-          type: string
-          format: uuid
-          description: Leaving participant's account ID
-        remainingParticipantCount:
-          type: integer
-          description: Participants remaining after departure
-        reason:
-          type: string
-          nullable: true
-          enum: [voluntary, kicked, timeout, session_ended]
-          description: Reason for leaving
+          description: When the event was created (UTC)

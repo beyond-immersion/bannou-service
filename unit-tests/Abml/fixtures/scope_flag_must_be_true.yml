@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: flag_must_be_true
+flows:
+  start:
+    actions:
+      - goto: nowhere
+      - log: "This should NOT run"
+    on_error:
+      - log: "Error handled"
+      - set:
+          variable: _error_handled
+          value: "yes"

@@ -11,6 +11,9 @@ info:
 
     Event delivery: Published to RabbitMQ channel `CONNECT_{sessionId}`, forwarded
     to client's WebSocket connection with Event flag (0x10).
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -29,33 +32,34 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when an asset upload has completed (success or failure).
         Correlates with the upload_id from requestUpload response.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - upload_id
+        - uploadId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["asset.upload.complete"]
+          default: "asset.upload.complete"
           description: Fixed event type identifier
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Correlates with the upload request
         success:
           type: boolean
           description: Whether the upload completed successfully
-        asset_id:
+        assetId:
           type: string
           nullable: true
           description: Asset ID assigned on success
-        content_hash:
+        contentHash:
           type: string
           nullable: true
           description: SHA256 hash of uploaded content
@@ -64,9 +68,10 @@ components:
           format: int64
           nullable: true
           description: File size in bytes
-        error_code:
+        errorCode:
           $ref: '#/components/schemas/UploadErrorCode'
-        error_message:
+          description: Error code indicating the type of upload failure
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
@@ -79,38 +84,41 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
         May include information about generated derivative assets.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - asset_id
+        - assetId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["asset.processing.complete"]
+          default: "asset.processing.complete"
           description: Fixed event type identifier
-        asset_id:
+        assetId:
           type: string
           description: ID of the asset that was processed
         success:
           type: boolean
           description: Whether processing completed successfully
-        processing_type:
+        processingType:
           $ref: '#/components/schemas/ProcessingType'
+          description: Type of processing that was performed on the asset
         outputs:
           type: array
           nullable: true
           description: Generated derivative assets (mipmaps, LODs, etc.)
           items:
             $ref: '#/components/schemas/ProcessingOutput'
-        error_code:
+        errorCode:
           $ref: '#/components/schemas/ProcessingErrorCode'
-        error_message:
+          description: Error code indicating the type of processing failure
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
@@ -119,34 +127,36 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when asset processing fails. Includes retry information.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - asset_id
-        - error_code
+        - assetId
+        - errorCode
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["asset.processing.failed"]
+          default: "asset.processing.failed"
           description: Fixed event type identifier
-        asset_id:
+        assetId:
           type: string
           description: ID of the asset that failed processing
-        error_code:
+        errorCode:
           $ref: '#/components/schemas/ProcessingErrorCode'
-        error_message:
+          description: Error code indicating the type of processing failure
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
-        retry_available:
+        retryAvailable:
           type: boolean
           default: true
           description: Whether the operation can be retried
-        retry_after_ms:
+        retryAfterMs:
           type: integer
           nullable: true
           description: Suggested retry delay in milliseconds
@@ -159,43 +169,45 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when a bundle upload has been validated and processed.
         Includes information about registered assets and any skipped duplicates.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - upload_id
+        - uploadId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["asset.bundle.validation.complete"]
+          default: "asset.bundle.validation.complete"
           description: Fixed event type identifier
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Correlates with the bundle upload request
         success:
           type: boolean
           description: Whether validation passed
-        bundle_id:
+        bundleId:
           type: string
           nullable: true
           description: Assigned bundle ID on success
-        assets_registered:
+        assetsRegistered:
           type: integer
           nullable: true
           description: Number of assets extracted and registered
-        duplicates_skipped:
+        duplicatesSkipped:
           type: integer
           nullable: true
           description: Assets with matching hash already in storage
         warnings:
           type: array
           nullable: true
+          description: Non-fatal warnings encountered during validation
           items:
             $ref: '#/components/schemas/ValidationWarning'
 
@@ -203,26 +215,28 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when bundle validation fails. Includes detailed error information.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - upload_id
+        - uploadId
         - errors
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["asset.bundle.validation.failed"]
+          default: "asset.bundle.validation.failed"
           description: Fixed event type identifier
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Correlates with the bundle upload request
         errors:
           type: array
+          description: List of validation errors that caused the failure
           items:
             $ref: '#/components/schemas/ValidationError'
 
@@ -230,27 +244,28 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when bundle creation from asset_ids completes.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - bundle_id
+        - bundleId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["asset.bundle.creation.complete"]
+          default: "asset.bundle.creation.complete"
           description: Fixed event type identifier
-        bundle_id:
+        bundleId:
           type: string
           description: ID of the created bundle
         success:
           type: boolean
           description: Whether creation completed successfully
-        download_url:
+        downloadUrl:
           type: string
           format: uri
           nullable: true
@@ -260,15 +275,15 @@ components:
           format: int64
           nullable: true
           description: Bundle file size in bytes
-        asset_count:
+        assetCount:
           type: integer
           nullable: true
           description: Number of assets in the bundle
-        error_code:
+        errorCode:
           type: string
           nullable: true
           description: Error code on failure
-        error_message:
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
@@ -281,28 +296,29 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Final notification that an asset is ready for use.
         Sent after upload and any required processing completes.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - asset_id
+        - assetId
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["asset.ready"]
+          default: "asset.ready"
           description: Fixed event type identifier
-        asset_id:
+        assetId:
           type: string
           description: ID of the asset that is now ready
-        version_id:
+        versionId:
           type: string
           nullable: true
           description: Version ID of this asset
-        content_hash:
+        contentHash:
           type: string
           nullable: true
           description: SHA256 hash of the asset
@@ -311,7 +327,7 @@ components:
           format: int64
           nullable: true
           description: File size in bytes
-        content_type:
+        contentType:
           type: string
           nullable: true
           description: MIME content type
@@ -361,22 +377,31 @@ components:
 
     ProcessingOutput:
       type: object
+      additionalProperties: false
       description: Information about a generated derivative asset
+      required:  # NRT: Required event properties
+        - outputType
+        - assetId
       properties:
-        output_type:
+        outputType:
           type: string
           description: Type of output (e.g., "mipmap_level_1", "lod_2")
-        asset_id:
+        assetId:
           type: string
           description: ID of the generated asset
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Size of the generated asset
 
     ValidationWarning:
       type: object
+      additionalProperties: false
       description: Non-fatal warning from bundle validation
+      required:  # NRT: Required event properties
+        - code
+        - message
       properties:
         code:
           type: string
@@ -384,13 +409,14 @@ components:
         message:
           type: string
           description: Warning message
-        asset_path:
+        assetPath:
           type: string
           nullable: true
           description: Path within bundle where warning occurred
 
     ValidationError:
       type: object
+      additionalProperties: false
       description: Fatal error from bundle validation
       required:
         - code
@@ -398,10 +424,11 @@ components:
       properties:
         code:
           $ref: '#/components/schemas/ValidationErrorCode'
+          description: Error code identifying the type of validation failure
         message:
           type: string
           description: Error message
-        asset_path:
+        assetPath:
           type: string
           nullable: true
           description: Path within bundle where error occurred

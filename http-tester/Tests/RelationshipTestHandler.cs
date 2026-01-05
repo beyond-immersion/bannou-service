@@ -37,8 +37,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCompleteRelationshipLifecycle, "CompleteRelationshipLifecycle", "Relationship", "Test complete relationship lifecycle"),
     ];
 
-    private static Task<TestResult> TestCreateRelationship(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateRelationship(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -80,8 +80,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created relationship: ID={response.RelationshipId}, Entity1={response.Entity1Type}, Entity2={response.Entity2Type}");
         }, "Create relationship");
 
-    private static Task<TestResult> TestGetRelationship(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetRelationship(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -119,8 +119,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved relationship: ID={response.RelationshipId}");
         }, "Get relationship");
 
-    private static Task<TestResult> TestUpdateRelationship(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateRelationship(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -175,8 +175,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Updated relationship: ID={response.RelationshipId}, Metadata type={response.Metadata.GetType().Name}");
         }, "Update relationship");
 
-    private static Task<TestResult> TestEndRelationship(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestEndRelationship(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -219,8 +219,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Ended relationship: ID={created.RelationshipId}, EndedAt={getResponse.EndedAt}");
         }, "End relationship");
 
-    private static Task<TestResult> TestListRelationshipsByEntity(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListRelationshipsByEntity(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -261,8 +261,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Relationships.Count} relationships for entity {entityId}");
         }, "List relationships by entity");
 
-    private static Task<TestResult> TestGetRelationshipsBetween(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetRelationshipsBetween(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -320,8 +320,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Found {response.Relationships.Count} relationships between entities");
         }, "Get relationships between");
 
-    private static Task<TestResult> TestListRelationshipsByType(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListRelationshipsByType(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -360,7 +360,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Relationships.Count} relationships of type {typeResponse.RelationshipTypeId}");
         }, "List relationships by type");
 
-    private static Task<TestResult> TestGetNonExistentRelationship(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentRelationship(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -373,8 +374,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent relationship");
 
-    private static Task<TestResult> TestDuplicateCompositeKeyConflict(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDuplicateCompositeKeyConflict(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
@@ -422,8 +423,8 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             }
         }, "Duplicate composite key conflict");
 
-    private static Task<TestResult> TestCompleteRelationshipLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteRelationshipLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var relationshipClient = GetServiceClient<IRelationshipClient>();
             var testId = DateTime.Now.Ticks;

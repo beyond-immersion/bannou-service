@@ -11,10 +11,15 @@ public class GameSessionServicePlugin : StandardServicePlugin<IGameSessionServic
     public override string PluginName => "game-session";
     public override string DisplayName => "GameSession Service";
 
+    /// <summary>
+    /// Registers additional services required by the GameSession plugin.
+    /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
     public override void ConfigureServices(IServiceCollection services)
     {
-        // Add IHttpContextAccessor so GameSessionService can read the X-Bannou-Session-Id header
-        // This header is set by Connect service when routing WebSocket requests
-        services.AddHttpContextAccessor();
+        base.ConfigureServices(services);
+
+        // Register the startup service to initialize subscription caches on startup
+        services.AddHostedService<GameSessionStartupService>();
     }
 }

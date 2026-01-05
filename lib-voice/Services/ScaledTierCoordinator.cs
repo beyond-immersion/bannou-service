@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
@@ -14,6 +15,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     private readonly IKamailioClient _kamailioClient;
     private readonly IRtpEngineClient _rtpEngineClient;
     private readonly ILogger<ScaledTierCoordinator> _logger;
+    private readonly IMessageBus _messageBus;
     private readonly VoiceServiceConfiguration _configuration;
 
     /// <summary>
@@ -22,25 +24,29 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     /// <param name="kamailioClient">Kamailio client for SIP control.</param>
     /// <param name="rtpEngineClient">RTPEngine client for media control.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="messageBus">Message bus for error event publishing.</param>
     /// <param name="configuration">Voice service configuration.</param>
     public ScaledTierCoordinator(
         IKamailioClient kamailioClient,
         IRtpEngineClient rtpEngineClient,
         ILogger<ScaledTierCoordinator> logger,
+        IMessageBus messageBus,
         VoiceServiceConfiguration configuration)
     {
         _kamailioClient = kamailioClient ?? throw new ArgumentNullException(nameof(kamailioClient));
         _rtpEngineClient = rtpEngineClient ?? throw new ArgumentNullException(nameof(rtpEngineClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     /// <inheritdoc />
-    public Task<bool> CanAcceptNewParticipantAsync(
+    public async Task<bool> CanAcceptNewParticipantAsync(
         Guid roomId,
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var maxParticipants = GetScaledMaxParticipants();
         var canAccept = currentParticipantCount < maxParticipants;
 
@@ -51,7 +57,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
                 roomId, currentParticipantCount, maxParticipants);
         }
 
-        return Task.FromResult(canAccept);
+        return canAccept;
     }
 
     /// <inheritdoc />
@@ -106,13 +112,14 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     }
 
     /// <inheritdoc />
-    public Task<JoinVoiceRoomResponse> BuildScaledConnectionInfoAsync(
+    public async Task<JoinVoiceRoomResponse> BuildScaledConnectionInfoAsync(
         Guid roomId,
         string sessionId,
         string rtpServerUri,
         string codec,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         var credentials = GenerateSipCredentials(sessionId, roomId);
 
         var response = new JoinVoiceRoomResponse
@@ -133,7 +140,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
             "Built scaled connection info for session {SessionId} in room {RoomId}",
             sessionId[..Math.Min(8, sessionId.Length)], roomId);
 
-        return Task.FromResult(response);
+        return response;
     }
 
     /// <inheritdoc />
@@ -151,6 +158,14 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         if (!isHealthy)
         {
             _logger.LogError("RTPEngine is not healthy, cannot allocate for room {RoomId}", roomId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "AllocateRtpServer",
+                "RtpEngineUnhealthy",
+                "RTPEngine health check failed",
+                dependency: "rtpengine",
+                details: new { roomId },
+                cancellationToken: cancellationToken);
             throw new InvalidOperationException("RTPEngine is not available");
         }
 

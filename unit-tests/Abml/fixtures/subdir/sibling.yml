@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: sibling
+
+flows:
+  greet:
+    actions:
+      - log: { message: "Hello from sibling (./sibling.yml)" }

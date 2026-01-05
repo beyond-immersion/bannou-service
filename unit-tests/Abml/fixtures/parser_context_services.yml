@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: services_test
+context:
+  services:
+    - name: economy_service
+      required: true
+    - name: relationship_service
+      required: false
+flows:
+  start:
+    actions: []

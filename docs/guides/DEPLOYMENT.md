@@ -86,18 +86,18 @@ Set environment variables in `.env`:
 
 ```bash
 # JWT Configuration
-BANNOU_JWTSECRET=your-secure-jwt-secret-key
-BANNOU_JWTISSUER=bannou-auth-external
-BANNOU_JWTAUDIENCE=bannou-api-external
+BANNOU_JWT_SECRET=your-secure-jwt-secret-key
+BANNOU_JWT_ISSUER=bannou-auth-external
+BANNOU_JWT_AUDIENCE=bannou-api-external
 
 # WebSocket URL (returned to clients after login)
-BANNOU_CONNECTURL=ws://your-domain.com/connect
+AUTH_CONNECT_URL=ws://your-domain.com/connect
 
 # OAuth Mock Providers (for testing without real OAuth)
-BANNOU_MOCKPROVIDERS=true
+AUTH_MOCK_PROVIDERS=true
 
 # Admin auto-assignment (emails matching this domain get admin role)
-BANNOU_ADMINEMAILDOMAIN=@admin.test.local
+ACCOUNT_ADMIN_EMAIL_DOMAIN=@admin.test.local
 ```
 
 ### Running External Stack
@@ -180,7 +180,7 @@ Group related services on dedicated nodes:
 # Auth Node
 SERVICES_ENABLED=false
 AUTH_SERVICE_ENABLED=true
-ACCOUNTS_SERVICE_ENABLED=true
+ACCOUNT_SERVICE_ENABLED=true
 
 # Game Session Node
 SERVICES_ENABLED=false
@@ -240,14 +240,14 @@ Key environment variables for deployment:
 SERVICES_ENABLED=true|false
 {SERVICE}_SERVICE_ENABLED=true|false
 
-# JWT settings
-BANNOU_JWTSECRET=your-secret-key
-BANNOU_JWTISSUER=bannou-auth
-BANNOU_JWTAUDIENCE=bannou-api
-BANNOU_JWTEXPIRATION_MINUTES=60
+# JWT settings (BANNOU_ for main app validation, AUTH_ for token generation)
+BANNOU_JWT_SECRET=your-secret-key
+BANNOU_JWT_ISSUER=bannou-auth
+BANNOU_JWT_AUDIENCE=bannou-api
+AUTH_JWT_EXPIRATION_MINUTES=60
 
 # WebSocket
-BANNOU_CONNECTURL=ws://your-domain/connect
+AUTH_CONNECT_URL=ws://your-domain/connect
 ```
 
 See [Configuration Reference](../reference/CONFIGURATION.md) for the complete list.

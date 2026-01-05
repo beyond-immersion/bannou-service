@@ -28,7 +28,7 @@ public partial class OrchestratorService
     /// (ServiceHealthMonitor) to update routing tables and deployment status.
     /// </summary>
     /// <param name="evt">The service heartbeat event data.</param>
-    public Task HandleServiceHeartbeatAsync(ServiceHeartbeatEvent evt)
+    public async Task HandleServiceHeartbeatAsync(ServiceHeartbeatEvent evt)
     {
         _logger.LogDebug(
             "Received heartbeat from {AppId} (ServiceId: {ServiceId}, Status: {Status})",
@@ -38,6 +38,6 @@ public partial class OrchestratorService
         // ServiceHealthMonitor subscribes to this for deployment validation
         _eventManager.ReceiveHeartbeat(evt);
 
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 }

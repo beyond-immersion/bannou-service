@@ -1,6 +1,5 @@
 # Generated State Store Reference
 
-> **Auto-generated**: 2025-12-28 02:41:54
 > **Source**: `provisioning/state-stores/*.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -30,7 +29,7 @@ to dedicated infrastructure without code changes.
 # All Redis state stores point to same instance
 auth-statestore:     bannou-redis:6379
 connect-statestore:  bannou-redis:6379
-permissions-statestore: bannou-redis:6379
+permission-statestore: bannou-redis:6379
 ```
 
 ### Example: Production (Dedicated Infrastructure)
@@ -39,7 +38,7 @@ permissions-statestore: bannou-redis:6379
 # Each service can have its own infrastructure
 auth-statestore:     auth-redis-cluster.prod:6379
 connect-statestore:  connect-redis-cluster.prod:6379
-permissions-statestore: permissions-redis.prod:6379
+permission-statestore: permission-redis.prod:6379
 ```
 
 ---

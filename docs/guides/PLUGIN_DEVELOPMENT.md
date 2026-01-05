@@ -9,7 +9,7 @@ Bannou services are implemented as **plugins** - independent .NET assemblies tha
 ```
 lib-{service}/
 ├── Generated/                    # Auto-generated (never edit)
-│   ├── {Service}Controller.Generated.cs
+│   ├── {Service}Controller.cs
 │   ├── I{Service}Service.cs
 │   ├── {Service}Models.cs
 │   └── {Service}ServiceConfiguration.cs
@@ -297,7 +297,7 @@ All service APIs must use POST requests with body parameters:
 **Correct** (Bannou services):
 ```yaml
 paths:
-  /accounts/get:
+  /account/get:
     post:
       requestBody:
         content:
@@ -319,7 +319,7 @@ components:
 **Incorrect** (breaks zero-copy routing):
 ```yaml
 paths:
-  /accounts/{accountId}:
+  /account/{accountId}:
     get:
       parameters:
         - name: accountId

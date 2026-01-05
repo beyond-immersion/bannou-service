@@ -1,0 +1,10 @@
+version: "2.0"
+metadata:
+  id: shared_root
+flows:
+  reader:
+    actions:
+      - log: { message: "Shared: ${shared_data}" }
+  writer:
+    actions:
+      - log: { message: "Writer sees: ${shared_data}" }

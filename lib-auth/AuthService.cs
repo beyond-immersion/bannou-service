@@ -1,6 +1,6 @@
 using BCrypt.Net;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Configuration;
@@ -10,7 +10,7 @@ using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,8 +33,8 @@ namespace BeyondImmersion.BannouService.Auth;
 [BannouService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
 public partial class AuthService : IAuthService
 {
-    private readonly IAccountsClient _accountsClient;
-    private readonly ISubscriptionsClient _subscriptionsClient;
+    private readonly IAccountClient _accountClient;
+    private readonly ISubscriptionClient _subscriptionClient;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
@@ -60,8 +60,8 @@ public partial class AuthService : IAuthService
     private const string STEAM_AUTH_URL = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/";
 
     public AuthService(
-        IAccountsClient accountsClient,
-        ISubscriptionsClient subscriptionsClient,
+        IAccountClient accountClient,
+        ISubscriptionClient subscriptionClient,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
@@ -72,19 +72,18 @@ public partial class AuthService : IAuthService
         IOAuthProviderService oauthService,
         IEventConsumer eventConsumer)
     {
-        _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
-        _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
-        _oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
+        _accountClient = accountClient;
+        _subscriptionClient = subscriptionClient;
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _configuration = configuration;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+        _tokenService = tokenService;
+        _sessionService = sessionService;
+        _oauthService = oauthService;
 
         // Register event handlers via partial class (AuthServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
@@ -105,13 +104,13 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Lookup account by email via AccountsClient
-            _logger.LogInformation("Looking up account by email via AccountsClient: {Email}", body.Email);
+            // Lookup account by email via AccountClient
+            _logger.LogInformation("Looking up account by email via AccountClient: {Email}", body.Email);
 
             AccountResponse account;
             try
             {
-                account = await _accountsClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = body.Email }, cancellationToken);
+                account = await _accountClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = body.Email }, cancellationToken);
                 _logger.LogInformation("Account found via service call: {AccountId}", account?.AccountId);
 
                 if (account == null)
@@ -128,8 +127,8 @@ public partial class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to lookup account by email via AccountsClient");
-                await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message, dependency: "accounts");
+                _logger.LogError(ex, "Failed to lookup account by email via AccountClient");
+                await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message, dependency: "account");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -196,12 +195,12 @@ public partial class AuthService : IAuthService
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: 12);
             _logger.LogInformation("Password hashed successfully for registration");
 
-            // Create account via AccountsClient service call
-            _logger.LogInformation("Creating account via AccountsClient for registration: {Email}", body.Email ?? $"{body.Username}@example.com");
+            // Create account via AccountClient service call
+            _logger.LogInformation("Creating account via AccountClient for registration: {Email}", body.Email);
 
             var createRequest = new CreateAccountRequest
             {
-                Email = body.Email ?? $"{body.Username}@example.com",
+                Email = body.Email,
                 DisplayName = body.Username,
                 PasswordHash = passwordHash, // Store hashed password
                 EmailVerified = false
@@ -210,18 +209,18 @@ public partial class AuthService : IAuthService
             AccountResponse? accountResult;
             try
             {
-                accountResult = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+                accountResult = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
                 _logger.LogInformation("Account created successfully via service call: {AccountId}", accountResult?.AccountId);
 
                 if (accountResult == null)
                 {
-                    _logger.LogWarning("AccountsClient returned null response");
+                    _logger.LogWarning("AccountClient returned null response");
                     return (StatusCodes.InternalServerError, null);
                 }
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
-                _logger.LogWarning("Account with email {Email} already exists", body.Email ?? body.Username);
+                _logger.LogWarning("Account with email {Email} already exists", body.Email);
                 return (StatusCodes.Conflict, null);
             }
             catch (ApiException ex) when (ex.StatusCode == 400)
@@ -231,8 +230,8 @@ public partial class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to create account via AccountsClient");
-                await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message, dependency: "accounts");
+                _logger.LogError(ex, "Failed to create account via AccountClient");
+                await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message, dependency: "account");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -306,7 +305,7 @@ public partial class AuthService : IAuthService
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for OAuth user: {ProviderId}", userInfo.ProviderId);
-                await PublishErrorEventAsync("CompleteOAuth", "account_creation_failed", "Failed to find or create account for OAuth user", dependency: "accounts", details: new { Provider = provider.ToString(), ProviderId = userInfo.ProviderId });
+                await PublishErrorEventAsync("CompleteOAuth", "account_creation_failed", "Failed to find or create account for OAuth user", dependency: "account", details: new { Provider = provider.ToString(), ProviderId = userInfo.ProviderId });
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -387,7 +386,7 @@ public partial class AuthService : IAuthService
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
-                await PublishErrorEventAsync("VerifySteamAuth", "account_creation_failed", "Failed to find or create account for Steam user", dependency: "accounts", details: new { SteamId = steamId });
+                await PublishErrorEventAsync("VerifySteamAuth", "account_creation_failed", "Failed to find or create account for Steam user", dependency: "account", details: new { SteamId = steamId });
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -437,13 +436,13 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.Forbidden, null);
             }
 
-            // Lookup account by ID via AccountsClient
-            _logger.LogInformation("Looking up account by ID via AccountsClient: {AccountId}", accountId);
+            // Lookup account by ID via AccountClient
+            _logger.LogInformation("Looking up account by ID via AccountClient: {AccountId}", accountId);
 
             AccountResponse account;
             try
             {
-                account = await _accountsClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
+                account = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
                 _logger.LogInformation("Account found for refresh: {AccountId}", account?.AccountId);
 
                 if (account == null)
@@ -454,8 +453,8 @@ public partial class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to lookup account by ID via AccountsClient");
-                await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message, dependency: "accounts");
+                _logger.LogError(ex, "Failed to lookup account by ID via AccountClient");
+                await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message, dependency: "account");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -486,7 +485,7 @@ public partial class AuthService : IAuthService
 
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> InitOAuthAsync(
+    public async Task<(StatusCodes, InitOAuthResponse?)> InitOAuthAsync(
         Provider provider,
         string redirectUri,
         string? state,
@@ -541,7 +540,7 @@ public partial class AuthService : IAuthService
             }
 
             _logger.LogDebug("Generated OAuth URL for {Provider}: {Url}", provider, authUrl);
-            return (StatusCodes.OK, new { AuthorizationUrl = authUrl });
+            return (StatusCodes.OK, new InitOAuthResponse { AuthorizationUrl = new Uri(authUrl) });
         }
         catch (Exception ex)
         {
@@ -552,39 +551,7 @@ public partial class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> InitSteamAuthAsync(
-        string returnUrl,
-        CancellationToken cancellationToken = default)
-    {
-        await Task.CompletedTask; // Satisfy async requirement for sync method
-        try
-        {
-            _logger.LogInformation("Steam authentication info requested");
-
-            // Steam uses Session Tickets, not OAuth/OpenID flow
-            // The game client calls ISteamUser::GetAuthTicketForWebApi("bannou")
-            // Then sends the ticket to POST /auth/steam/verify
-            var response = new
-            {
-                Message = "Steam uses Session Tickets, not browser-based OAuth",
-                Endpoint = "/auth/steam/verify",
-                Method = "POST",
-                ClientSide = "Call ISteamUser::GetAuthTicketForWebApi(\"bannou\") in your game client",
-                Documentation = "https://partner.steamgames.com/doc/features/auth#web_api"
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error providing Steam authentication info");
-            await PublishErrorEventAsync("InitSteamAuth", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> LogoutAsync(
+    public async Task<StatusCodes> LogoutAsync(
         string jwt,
         LogoutRequest? body,
         CancellationToken cancellationToken = default)
@@ -596,7 +563,7 @@ public partial class AuthService : IAuthService
             if (string.IsNullOrWhiteSpace(jwt))
             {
                 _logger.LogWarning("JWT token is null or empty for logout");
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             // Validate JWT and extract session key
@@ -604,7 +571,7 @@ public partial class AuthService : IAuthService
             if (validateStatus != StatusCodes.OK || validateResponse == null || !validateResponse.Valid)
             {
                 _logger.LogWarning("Invalid JWT token provided for logout");
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             // Extract session_key from JWT claims to identify which session to logout
@@ -612,7 +579,7 @@ public partial class AuthService : IAuthService
             if (sessionKey == null)
             {
                 _logger.LogWarning("Could not extract session_key from JWT for logout");
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             var invalidatedSessions = new List<string>();
@@ -676,18 +643,18 @@ public partial class AuthService : IAuthService
                     SessionInvalidatedEventReason.Logout);
             }
 
-            return (StatusCodes.OK, new { Message = "Logout successful" });
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during logout");
             await PublishErrorEventAsync("Logout", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> TerminateSessionAsync(
+    public async Task<StatusCodes> TerminateSessionAsync(
         string jwt,
         TerminateSessionRequest body,
         CancellationToken cancellationToken = default)
@@ -704,7 +671,7 @@ public partial class AuthService : IAuthService
             if (sessionKey == null)
             {
                 _logger.LogWarning("Session {SessionId} not found for termination", sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Get session data to find account ID for index cleanup
@@ -724,18 +691,18 @@ public partial class AuthService : IAuthService
             await RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
 
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error terminating session: {SessionId}", body.SessionId);
             await PublishErrorEventAsync("TerminateSession", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> RequestPasswordResetAsync(
+    public async Task<StatusCodes> RequestPasswordResetAsync(
         PasswordResetRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -745,14 +712,14 @@ public partial class AuthService : IAuthService
 
             if (string.IsNullOrWhiteSpace(body.Email))
             {
-                return (StatusCodes.BadRequest, new { Error = "Email is required" });
+                return StatusCodes.BadRequest;
             }
 
             // Verify account exists (but always return success to prevent email enumeration)
             AccountResponse? account = null;
             try
             {
-                account = await _accountsClient.GetAccountByEmailAsync(
+                account = await _accountClient.GetAccountByEmailAsync(
                     new GetAccountByEmailRequest { Email = body.Email },
                     cancellationToken);
             }
@@ -793,13 +760,13 @@ public partial class AuthService : IAuthService
             }
 
             // Always return success to prevent email enumeration attacks
-            return (StatusCodes.OK, new { Message = "If the email exists, a password reset link has been sent" });
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error requesting password reset for email: {Email}", body.Email);
             await PublishErrorEventAsync("RequestPasswordReset", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -844,7 +811,7 @@ public partial class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> ConfirmPasswordResetAsync(
+    public async Task<StatusCodes> ConfirmPasswordResetAsync(
         PasswordResetConfirmRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -856,7 +823,7 @@ public partial class AuthService : IAuthService
             if (string.IsNullOrWhiteSpace(body.Token) || string.IsNullOrWhiteSpace(body.NewPassword))
             {
                 _logger.LogWarning("Invalid password reset confirmation request - missing token or password");
-                return (StatusCodes.BadRequest, null);
+                return StatusCodes.BadRequest;
             }
 
             // Look up the reset token in Redis
@@ -866,7 +833,7 @@ public partial class AuthService : IAuthService
             if (resetData == null)
             {
                 _logger.LogWarning("Invalid or expired password reset token");
-                return (StatusCodes.BadRequest, new { Error = "Invalid or expired reset token" });
+                return StatusCodes.BadRequest;
             }
 
             // Check if token has expired
@@ -875,14 +842,14 @@ public partial class AuthService : IAuthService
                 _logger.LogWarning("Password reset token has expired");
                 // Clean up expired token
                 await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
-                return (StatusCodes.BadRequest, new { Error = "Reset token has expired" });
+                return StatusCodes.BadRequest;
             }
 
             // Hash the new password
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: 12);
 
-            // Update password via AccountsClient
-            await _accountsClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
+            // Update password via AccountClient
+            await _accountClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
             {
                 AccountId = resetData.AccountId,
                 PasswordHash = passwordHash
@@ -892,13 +859,13 @@ public partial class AuthService : IAuthService
             await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
 
             _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
-            return (StatusCodes.OK, new { Message = "Password reset successful" });
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error confirming password reset");
             await PublishErrorEventAsync("ConfirmPasswordReset", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1027,6 +994,16 @@ public partial class AuthService : IAuthService
                     return (StatusCodes.Unauthorized, null);
                 }
 
+                // Validate session data integrity - null roles or authorizations indicates data corruption
+                if (sessionData.Roles == null || sessionData.Authorizations == null)
+                {
+                    _logger.LogError(
+                        "Session data corrupted - null Roles or Authorizations. SessionKey: {SessionKey}, AccountId: {AccountId}, RolesNull: {RolesNull}, AuthNull: {AuthNull}",
+                        sessionKey, sessionData.AccountId, sessionData.Roles == null, sessionData.Authorizations == null);
+                    await PublishErrorEventAsync("ValidateToken", "session_data_corrupted", "Session has null Roles or Authorizations - data integrity failure");
+                    return (StatusCodes.Unauthorized, null);
+                }
+
                 _logger.LogDebug("Token validated successfully, AccountId: {AccountId}, SessionKey: {SessionKey}", sessionData.AccountId, sessionKey);
 
                 // Return session information
@@ -1037,9 +1014,9 @@ public partial class AuthService : IAuthService
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
-                    SessionId = sessionKey,
-                    Roles = sessionData.Roles ?? new List<string>(),
-                    Authorizations = sessionData.Authorizations ?? new List<string>(),
+                    SessionId = Guid.Parse(sessionKey),
+                    Roles = sessionData.Roles,
+                    Authorizations = sessionData.Authorizations,
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
                 });
             }
@@ -1082,7 +1059,7 @@ public partial class AuthService : IAuthService
     {
         public Guid AccountId { get; set; }
         public string Email { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
+        public string? DisplayName { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
         public List<string> Authorizations { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
@@ -1148,13 +1125,13 @@ public partial class AuthService : IAuthService
         var authorizations = new List<string>();
         try
         {
-            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                new GetCurrentSubscriptionsRequest { AccountId = account.AccountId },
+            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
+                new QueryCurrentSubscriptionsRequest { AccountId = account.AccountId },
                 cancellationToken);
 
-            if (subscriptionsResponse?.Authorizations != null)
+            if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Authorizations.ToList();
+                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
                 _logger.LogDebug("Fetched {Count} authorizations for account {AccountId}: {Authorizations}",
                     authorizations.Count, account.AccountId, string.Join(", ", authorizations));
             }
@@ -1171,12 +1148,20 @@ public partial class AuthService : IAuthService
             throw;
         }
 
+        // Validate account data integrity before creating session
+        if (account.Roles == null || account.Roles.Count == 0)
+        {
+            _logger.LogWarning(
+                "Account {AccountId} has null or empty Roles - possible data integrity issue. Session will have limited permissions.",
+                account.AccountId);
+        }
+
         // Store session data in Redis with opaque key
         var sessionData = new SessionDataModel
         {
             AccountId = account.AccountId,
             Email = account.Email,
-            DisplayName = account.DisplayName ?? string.Empty,
+            DisplayName = account.DisplayName,
             Roles = account.Roles?.ToList() ?? new List<string>(),
             Authorizations = authorizations,
             SessionId = sessionId,
@@ -1233,12 +1218,12 @@ public partial class AuthService : IAuthService
             // configuration (e.g., AdminEmailDomain). Clients have no choice in their authorization level.
             //
             // HOW ROLES WORK:
-            // 1. Roles stored in AccountModel (MySQL via lib-state) - assigned by Accounts service
+            // 1. Roles stored in AccountModel (MySQL via lib-state) - assigned by Account service
             // 2. Roles copied to SessionDataModel (Redis) during session creation - stored with session data
             // 3. JWT contains only opaque "session_key" claim - points to Redis session data
             // 4. ValidateTokenAsync reads roles from Redis session data (NOT from JWT claims)
             // 5. Connect service receives roles from ValidateTokenAsync response
-            // 6. Permissions service compiles capabilities based on role from session
+            // 6. Permission service compiles capabilities based on role from session
             //
             // This architecture:
             // - Prevents clients from seeing/manipulating authorization levels in JWT
@@ -1268,7 +1253,7 @@ public partial class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to generate security token for session with ID {sessionKey}.");
+            _logger.LogError(ex, "Failed to generate security token for session with ID {SessionKey}", sessionKey);
             throw;
         }
     }
@@ -1315,7 +1300,16 @@ public partial class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove refresh token");
+            _logger.LogError(ex, "Failed to remove refresh token from state store");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "RemoveRefreshToken",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: null,
+                stack: ex.StackTrace);
         }
     }
 
@@ -1365,6 +1359,15 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add reverse index for session ID {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "AddSessionIdReverseIndex",
+                "state_index_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - session creation should succeed even if index update fails
         }
     }
@@ -1383,7 +1386,16 @@ public partial class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove reverse index for session ID {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to remove reverse index for session ID {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "RemoveSessionIdReverseIndex",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - operation should continue even if cleanup fails
         }
     }
@@ -1442,6 +1454,15 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to add session to account index, AccountId: {AccountId}, SessionKey: {SessionKey}", accountId, sessionKey);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "AddSessionToAccountIndex",
+                "state_index_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"accountId={accountId},sessionKey={sessionKey}",
+                stack: ex.StackTrace);
             // Don't throw - session creation should succeed even if index update fails
         }
     }
@@ -1485,6 +1506,15 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to remove session {SessionKey} from account index for account {AccountId}", sessionKey, accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "RemoveSessionFromAccountIndex",
+                "state_index_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"accountId={accountId},sessionKey={sessionKey}",
+                stack: ex.StackTrace);
             // Don't throw - logout should succeed even if index update fails
         }
     }
@@ -1539,7 +1569,7 @@ public partial class AuthService : IAuthService
                     {
                         sessions.Add(new SessionInfo
                         {
-                            SessionId = result.SessionData.SessionId,
+                            SessionId = Guid.Parse(result.SessionData.SessionId),
                             CreatedAt = result.SessionData.CreatedAt,
                             LastActive = result.SessionData.CreatedAt, // We don't track last active time yet
                             DeviceInfo = new DeviceInfo
@@ -1774,6 +1804,17 @@ public partial class AuthService : IAuthService
     /// </summary>
     private async Task<OAuthUserInfo?> ExchangeDiscordCodeAsync(string code, CancellationToken cancellationToken)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var discordClientId = _configuration.DiscordClientId;
+        var discordClientSecret = _configuration.DiscordClientSecret;
+        var discordRedirectUri = _configuration.DiscordRedirectUri;
+
+        if (discordClientId == null || discordClientSecret == null || discordRedirectUri == null)
+        {
+            _logger.LogError("Discord OAuth not configured - set AUTH_DISCORD_CLIENT_ID, AUTH_DISCORD_CLIENT_SECRET, and AUTH_DISCORD_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
@@ -1781,11 +1822,11 @@ public partial class AuthService : IAuthService
             // Exchange code for access token
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.DiscordClientId },
-                { "client_secret", _configuration.DiscordClientSecret },
+                { "client_id", discordClientId },
+                { "client_secret", discordClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.DiscordRedirectUri }
+                { "redirect_uri", discordRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(DISCORD_TOKEN_URL, tokenRequest, cancellationToken);
@@ -1844,6 +1885,17 @@ public partial class AuthService : IAuthService
     /// </summary>
     private async Task<OAuthUserInfo?> ExchangeGoogleCodeAsync(string code, CancellationToken cancellationToken)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var googleClientId = _configuration.GoogleClientId;
+        var googleClientSecret = _configuration.GoogleClientSecret;
+        var googleRedirectUri = _configuration.GoogleRedirectUri;
+
+        if (googleClientId == null || googleClientSecret == null || googleRedirectUri == null)
+        {
+            _logger.LogError("Google OAuth not configured - set AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET, and AUTH_GOOGLE_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
@@ -1851,11 +1903,11 @@ public partial class AuthService : IAuthService
             // Exchange code for access token
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.GoogleClientId },
-                { "client_secret", _configuration.GoogleClientSecret },
+                { "client_id", googleClientId },
+                { "client_secret", googleClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.GoogleRedirectUri }
+                { "redirect_uri", googleRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(GOOGLE_TOKEN_URL, tokenRequest, cancellationToken);
@@ -1914,6 +1966,17 @@ public partial class AuthService : IAuthService
     /// </summary>
     private async Task<OAuthUserInfo?> ExchangeTwitchCodeAsync(string code, CancellationToken cancellationToken)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var twitchClientId = _configuration.TwitchClientId;
+        var twitchClientSecret = _configuration.TwitchClientSecret;
+        var twitchRedirectUri = _configuration.TwitchRedirectUri;
+
+        if (twitchClientId == null || twitchClientSecret == null || twitchRedirectUri == null)
+        {
+            _logger.LogError("Twitch OAuth not configured - set AUTH_TWITCH_CLIENT_ID, AUTH_TWITCH_CLIENT_SECRET, and AUTH_TWITCH_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
@@ -1921,11 +1984,11 @@ public partial class AuthService : IAuthService
             // Exchange code for access token
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.TwitchClientId },
-                { "client_secret", _configuration.TwitchClientSecret },
+                { "client_id", twitchClientId },
+                { "client_secret", twitchClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.TwitchRedirectUri }
+                { "redirect_uri", twitchRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(TWITCH_TOKEN_URL, tokenRequest, cancellationToken);
@@ -1947,7 +2010,7 @@ public partial class AuthService : IAuthService
             // Get user info
             using var userRequest = new HttpRequestMessage(HttpMethod.Get, TWITCH_USER_URL);
             userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.AccessToken);
-            userRequest.Headers.Add("Client-Id", _configuration.TwitchClientId);
+            userRequest.Headers.Add("Client-Id", twitchClientId);
 
             var userResponse = await httpClient.SendAsync(userRequest, cancellationToken);
             if (!userResponse.IsSuccessStatusCode)
@@ -2057,7 +2120,7 @@ public partial class AuthService : IAuthService
                 // Found existing account link, retrieve the account
                 try
                 {
-                    var account = await _accountsClient.GetAccountAsync(
+                    var account = await _accountClient.GetAccountAsync(
                         new GetAccountRequest { AccountId = existingAccountId.Value },
                         cancellationToken);
                     _logger.LogInformation("Found existing account {AccountId} for {Provider} user {ProviderId}",
@@ -2084,7 +2147,7 @@ public partial class AuthService : IAuthService
             AccountResponse? newAccount;
             try
             {
-                newAccount = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+                newAccount = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
@@ -2093,7 +2156,7 @@ public partial class AuthService : IAuthService
                 {
                     try
                     {
-                        newAccount = await _accountsClient.GetAccountByEmailAsync(
+                        newAccount = await _accountClient.GetAccountByEmailAsync(
                             new GetAccountByEmailRequest { Email = userInfo.Email },
                             cancellationToken);
                         _logger.LogInformation("Found existing account by email {Email} for {Provider} user",
@@ -2352,7 +2415,7 @@ public partial class AuthService : IAuthService
                 DisconnectClients = true
             };
 
-            await _messageBus.PublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
+            await _messageBus.TryPublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
             _logger.LogInformation("Published SessionInvalidatedEvent for account {AccountId}: {SessionCount} sessions, reason: {Reason}",
                 accountId, sessionIds.Count, reason);
         }
@@ -2397,7 +2460,7 @@ public partial class AuthService : IAuthService
 
                         await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
-                        // Publish session.updated event for Permissions service
+                        // Publish session.updated event for Permission service
                         await PublishSessionUpdatedEventAsync(
                             accountId,
                             session.SessionId,
@@ -2435,15 +2498,15 @@ public partial class AuthService : IAuthService
         {
             _logger.LogInformation("Propagating subscription changes for account {AccountId}", accountId);
 
-            // Fetch fresh authorizations from Subscriptions service
+            // Fetch fresh authorizations from Subscription service
             var authorizations = new List<string>();
-            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                new GetCurrentSubscriptionsRequest { AccountId = accountId },
+            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
+                new QueryCurrentSubscriptionsRequest { AccountId = accountId },
                 cancellationToken);
 
-            if (subscriptionsResponse?.Authorizations != null)
+            if (subscriptionsResponse?.Subscriptions != null)
             {
-                authorizations = subscriptionsResponse.Authorizations.ToList();
+                authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
             }
 
             var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
@@ -2469,7 +2532,7 @@ public partial class AuthService : IAuthService
 
                         await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
-                        // Publish session.updated event for Permissions service
+                        // Publish session.updated event for Permission service
                         await PublishSessionUpdatedEventAsync(
                             accountId,
                             session.SessionId,
@@ -2498,7 +2561,7 @@ public partial class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Publish SessionUpdatedEvent to notify Permissions service about role/authorization changes.
+    /// Publish SessionUpdatedEvent to notify Permission service about role/authorization changes.
     /// </summary>
     private async Task PublishSessionUpdatedEventAsync(
         Guid accountId,
@@ -2515,19 +2578,28 @@ public partial class AuthService : IAuthService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Roles = roles,
                 Authorizations = authorizations,
                 Reason = reason
             };
 
-            await _messageBus.PublishAsync(SESSION_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync(SESSION_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published SessionUpdatedEvent for session {SessionId}, reason: {Reason}",
                 sessionId, reason);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish SessionUpdatedEvent for session {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to publish SessionUpdatedEvent for session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "PublishSessionUpdatedEvent",
+                "event_publishing_failed",
+                ex.Message,
+                dependency: "messaging",
+                endpoint: null,
+                details: $"sessionId={sessionId},reason={reason}",
+                stack: ex.StackTrace);
             // Don't throw - session update succeeded, event publishing failure shouldn't fail the operation
         }
     }
@@ -2537,7 +2609,7 @@ public partial class AuthService : IAuthService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
@@ -2562,7 +2634,7 @@ public partial class AuthService : IAuthService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "auth",
+            serviceName: "auth",
             operation: operation,
             errorType: errorType,
             message: message,

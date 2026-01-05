@@ -29,6 +29,8 @@
     <!-- bannou-service comes transitively via lib-voice -->
     <ProjectReference Include="../lib-voice/lib-voice.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

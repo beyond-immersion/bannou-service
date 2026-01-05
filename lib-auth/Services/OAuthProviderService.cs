@@ -1,5 +1,6 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
@@ -18,9 +19,10 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 public class OAuthProviderService : IOAuthProviderService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly IAccountsClient _accountsClient;
+    private readonly IAccountClient _accountClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<OAuthProviderService> _logger;
 
     private const string REDIS_STATE_STORE = "auth-statestore";
@@ -37,15 +39,17 @@ public class OAuthProviderService : IOAuthProviderService
     /// </summary>
     public OAuthProviderService(
         IStateStoreFactory stateStoreFactory,
-        IAccountsClient accountsClient,
+        IAccountClient accountClient,
         IHttpClientFactory httpClientFactory,
         AuthServiceConfiguration configuration,
+        IMessageBus messageBus,
         ILogger<OAuthProviderService> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
+        _accountClient = accountClient ?? throw new ArgumentNullException(nameof(accountClient));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -55,17 +59,28 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo?> ExchangeDiscordCodeAsync(string code, CancellationToken cancellationToken = default)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var discordClientId = _configuration.DiscordClientId;
+        var discordClientSecret = _configuration.DiscordClientSecret;
+        var discordRedirectUri = _configuration.DiscordRedirectUri;
+
+        if (discordClientId == null || discordClientSecret == null || discordRedirectUri == null)
+        {
+            _logger.LogError("Discord OAuth not configured - set AUTH_DISCORD_CLIENT_ID, AUTH_DISCORD_CLIENT_SECRET, and AUTH_DISCORD_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
 
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.DiscordClientId },
-                { "client_secret", _configuration.DiscordClientSecret },
+                { "client_id", discordClientId },
+                { "client_secret", discordClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.DiscordRedirectUri }
+                { "redirect_uri", discordRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(DISCORD_TOKEN_URL, tokenRequest, cancellationToken);
@@ -114,6 +129,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exchanging Discord authorization code");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExchangeDiscordCode",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:discord",
+                endpoint: "post:/auth/oauth/discord/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -121,17 +145,28 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo?> ExchangeGoogleCodeAsync(string code, CancellationToken cancellationToken = default)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var googleClientId = _configuration.GoogleClientId;
+        var googleClientSecret = _configuration.GoogleClientSecret;
+        var googleRedirectUri = _configuration.GoogleRedirectUri;
+
+        if (googleClientId == null || googleClientSecret == null || googleRedirectUri == null)
+        {
+            _logger.LogError("Google OAuth not configured - set AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET, and AUTH_GOOGLE_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
 
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.GoogleClientId },
-                { "client_secret", _configuration.GoogleClientSecret },
+                { "client_id", googleClientId },
+                { "client_secret", googleClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.GoogleRedirectUri }
+                { "redirect_uri", googleRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(GOOGLE_TOKEN_URL, tokenRequest, cancellationToken);
@@ -180,6 +215,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exchanging Google authorization code");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExchangeGoogleCode",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:google",
+                endpoint: "post:/auth/oauth/google/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -187,17 +231,28 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo?> ExchangeTwitchCodeAsync(string code, CancellationToken cancellationToken = default)
     {
+        // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
+        var twitchClientId = _configuration.TwitchClientId;
+        var twitchClientSecret = _configuration.TwitchClientSecret;
+        var twitchRedirectUri = _configuration.TwitchRedirectUri;
+
+        if (twitchClientId == null || twitchClientSecret == null || twitchRedirectUri == null)
+        {
+            _logger.LogError("Twitch OAuth not configured - set AUTH_TWITCH_CLIENT_ID, AUTH_TWITCH_CLIENT_SECRET, and AUTH_TWITCH_REDIRECT_URI");
+            return null;
+        }
+
         try
         {
             using var httpClient = _httpClientFactory.CreateClient();
 
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                { "client_id", _configuration.TwitchClientId },
-                { "client_secret", _configuration.TwitchClientSecret },
+                { "client_id", twitchClientId },
+                { "client_secret", twitchClientSecret },
                 { "code", code },
                 { "grant_type", "authorization_code" },
-                { "redirect_uri", _configuration.TwitchRedirectUri }
+                { "redirect_uri", twitchRedirectUri }
             });
 
             var tokenResponse = await httpClient.PostAsync(TWITCH_TOKEN_URL, tokenRequest, cancellationToken);
@@ -248,6 +303,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exchanging Twitch authorization code");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ExchangeTwitchCode",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:twitch",
+                endpoint: "post:/auth/oauth/twitch/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -304,6 +368,15 @@ public class OAuthProviderService : IOAuthProviderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating Steam ticket");
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "ValidateSteamTicket",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "http:steam",
+                endpoint: "post:/auth/steam/callback",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -332,7 +405,7 @@ public class OAuthProviderService : IOAuthProviderService
             {
                 try
                 {
-                    var account = await _accountsClient.GetAccountAsync(
+                    var account = await _accountClient.GetAccountAsync(
                         new GetAccountRequest { AccountId = existingAccountId },
                         cancellationToken);
                     _logger.LogInformation("Found existing account {AccountId} for {Provider} user {ProviderId}",
@@ -358,7 +431,7 @@ public class OAuthProviderService : IOAuthProviderService
             AccountResponse? newAccount;
             try
             {
-                newAccount = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+                newAccount = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
@@ -366,7 +439,7 @@ public class OAuthProviderService : IOAuthProviderService
                 {
                     try
                     {
-                        newAccount = await _accountsClient.GetAccountByEmailAsync(
+                        newAccount = await _accountClient.GetAccountByEmailAsync(
                             new GetAccountByEmailRequest { Email = userInfo.Email },
                             cancellationToken);
                         _logger.LogInformation("Found existing account by email {Email} for {Provider} user",
@@ -375,6 +448,14 @@ public class OAuthProviderService : IOAuthProviderService
                     catch (Exception innerEx)
                     {
                         _logger.LogError(innerEx, "Email conflict but couldn't find account: {Email}", userInfo.Email);
+                        await _messageBus.TryPublishErrorAsync(
+                            "auth",
+                            "FindOrCreateOAuthAccount",
+                            innerEx.GetType().Name,
+                            innerEx.Message,
+                            dependency: "account",
+                            stack: innerEx.StackTrace,
+                            cancellationToken: cancellationToken);
                         return null;
                     }
                 }
@@ -406,6 +487,14 @@ public class OAuthProviderService : IOAuthProviderService
         {
             _logger.LogError(ex, "Error finding or creating OAuth account for {Provider} user {ProviderId}",
                 providerName, userInfo.ProviderId);
+            await _messageBus.TryPublishErrorAsync(
+                "auth",
+                "FindOrCreateOAuthAccount",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "account",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -451,7 +540,7 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     /// <inheritdoc/>
-    public Task<OAuthUserInfo> GetMockUserInfoAsync(Provider provider, CancellationToken cancellationToken = default)
+    public async Task<OAuthUserInfo> GetMockUserInfoAsync(Provider provider, CancellationToken cancellationToken = default)
     {
         var mockProviderId = provider switch
         {
@@ -461,23 +550,25 @@ public class OAuthProviderService : IOAuthProviderService
             _ => Guid.NewGuid().ToString()
         };
 
-        return Task.FromResult(new OAuthUserInfo
+        await Task.CompletedTask;
+        return new OAuthUserInfo
         {
             ProviderId = mockProviderId,
             Email = $"mock-{provider.ToString().ToLower()}@test.local",
             DisplayName = $"Mock {provider} User"
-        });
+        };
     }
 
     /// <inheritdoc/>
-    public Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default)
+    public async Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new OAuthUserInfo
+        await Task.CompletedTask;
+        return new OAuthUserInfo
         {
             ProviderId = _configuration.MockSteamId,
             Email = null,
             DisplayName = $"Steam_{_configuration.MockSteamId.Substring(_configuration.MockSteamId.Length - 6)}"
-        });
+        };
     }
 
     #region OAuth Response Models

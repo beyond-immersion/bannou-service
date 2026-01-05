@@ -8,9 +8,13 @@ paths: {}
 components:
   schemas:
     LocationCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to location.created when a location is created
       required:
+      - eventName
       - eventId
       - timestamp
       - locationId
@@ -23,53 +27,69 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: &id001
+        eventName:
+          type: string
+          default: location.created
+          description: 'Event type identifier: location.created'
+        locationId: &id001
           type: string
           format: uuid
-          description: Unique identifier for this event
-        timestamp: &id002
-          type: string
-          format: date-time
-          description: When this event occurred
-        locationId: &id003
+          description: "Unique identifier for the location"
+        realmId: &id002
           type: string
           format: uuid
-        realmId: &id004
+          description: "ID of the realm this location belongs to"
+        code: &id003
+          type: string
+          description: "Unique code identifier for the location within its realm"
+        name: &id004
+          type: string
+          description: "Human-readable name of the location"
+        description: &id005
+          type: string
+          nullable: true
+          description: "Detailed description of the location"
+        locationType: &id006
+          type: string
+          description: "Type classification of the location (e.g., room, area, zone)"
+        parentLocationId: &id007
           type: string
           format: uuid
-        code: &id005
-          type: string
-        name: &id006
-          type: string
-        description: &id007
-          type: string
-        locationType: &id008
-          type: string
-        parentLocationId: &id009
-          type: string
-          format: uuid
-        depth: &id010
+          description: "ID of the parent location for hierarchical structures"
+        depth: &id008
           type: integer
-        isDeprecated: &id011
+          description: "Depth level in the location hierarchy (0 for root locations)"
+        isDeprecated: &id009
           type: boolean
-        deprecatedAt: &id012
+          description: "Whether this location has been marked as deprecated"
+        deprecatedAt: &id010
           type: string
           format: date-time
-        deprecationReason: &id013
+          description: "Timestamp when the location was deprecated"
+        deprecationReason: &id011
           type: string
-        metadata: &id014
+          nullable: true
+          description: "Explanation for why the location was deprecated"
+        metadata: &id012
           type: object
           additionalProperties: true
-        createdAt: &id015
+          description: "Additional custom metadata associated with the location"
+        createdAt: &id013
           type: string
           format: date-time
-        updatedAt: &id016
+          description: "Timestamp when the location was created"
+        updatedAt: &id014
           type: string
           format: date-time
+          description: "Timestamp when the location was last updated"
     LocationUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to location.updated when a location is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - locationId
@@ -83,31 +103,37 @@ components:
       - updatedAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        locationId: *id003
-        realmId: *id004
-        code: *id005
-        name: *id006
-        description: *id007
-        locationType: *id008
-        parentLocationId: *id009
-        depth: *id010
-        isDeprecated: *id011
-        deprecatedAt: *id012
-        deprecationReason: *id013
-        metadata: *id014
-        createdAt: *id015
-        updatedAt: *id016
+        eventName:
+          type: string
+          default: location.updated
+          description: 'Event type identifier: location.updated'
+        locationId: *id001
+        realmId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        locationType: *id006
+        parentLocationId: *id007
+        depth: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        metadata: *id012
+        createdAt: *id013
+        updatedAt: *id014
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     LocationDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to location.deleted when a location is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - locationId
@@ -120,22 +146,24 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        locationId: *id003
-        realmId: *id004
-        code: *id005
-        name: *id006
-        description: *id007
-        locationType: *id008
-        parentLocationId: *id009
-        depth: *id010
-        isDeprecated: *id011
-        deprecatedAt: *id012
-        deprecationReason: *id013
-        metadata: *id014
-        createdAt: *id015
-        updatedAt: *id016
+        eventName:
+          type: string
+          default: location.deleted
+          description: 'Event type identifier: location.deleted'
+        locationId: *id001
+        realmId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        locationType: *id006
+        parentLocationId: *id007
+        depth: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        metadata: *id012
+        createdAt: *id013
+        updatedAt: *id014
         deletedReason:
           type: string
           nullable: true

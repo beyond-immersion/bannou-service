@@ -4,6 +4,9 @@ info:
   description: |
     Shared event schemas used across all Bannou services.
     These events enable service-to-service communication via RabbitMQ pub/sub.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -14,29 +17,62 @@ paths: {}
 
 components:
   schemas:
-    ServiceRegistrationEvent:
+    BaseServiceEvent:
       type: object
+      additionalProperties: false
+      description: |
+        Base schema for all service-to-service events.
+        All service events MUST include these fields and inherit from this schema.
+        Implements IBannouEvent interface for uniform event handling in taps.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+      properties:
+        eventName:
+          type: string
+          description: |
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            Must be in the generated ClientEventWhitelist or will be rejected.
+            Convention: {service}.{event_name}
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance (UUID string)
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (ISO 8601 format, UTC)
+
+    ServiceRegistrationEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
       description: |
         Published by any service during startup to register its API endpoints
-        and permission requirements with the Permissions service.
+        and permission requirements with the Permission service.
       required:
+        - eventName
         - eventId
         - timestamp
         - serviceId
+        - serviceName
         - version
         - appId
         - endpoints
       properties:
-        eventId:
+        eventName:
           type: string
-          description: Unique identifier for this registration event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the service registration occurred
+          default: "service.registration"
+          description: Fixed event type identifier
         serviceId:
           type: string
-          description: Service ID that registered (e.g., "behavior", "accounts")
+          format: uuid
+          description: Unique GUID identifying this bannou instance (for log correlation/debugging)
+        serviceName:
+          type: string
+          description: Service ID that registered (e.g., "behavior", "account")
         version:
           type: string
           description: Service API version for change tracking
@@ -56,6 +92,7 @@ components:
 
     ServiceEndpoint:
       type: object
+      additionalProperties: false
       description: |
         Individual API endpoint with permission requirements.
         Extracted from OpenAPI schema x-permissions sections.
@@ -66,7 +103,7 @@ components:
       properties:
         path:
           type: string
-          description: API endpoint path (e.g., "/accounts/{id}")
+          description: API endpoint path (e.g., "/account/{id}")
         method:
           type: string
           enum: [GET, POST, PUT, DELETE, PATCH]
@@ -78,13 +115,16 @@ components:
           description: Permission requirements for this endpoint
         description:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Human-readable endpoint description
         category:
           type: string
-          description: API category (auth, accounts, game, social, etc.)
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: API category (auth, account, game, social, etc.)
 
     PermissionRequirement:
       type: object
+      additionalProperties: false
       description: |
         Permission requirement mapping role and state to endpoint access.
         Defines which roles can access an endpoint in which states.
@@ -105,15 +145,20 @@ components:
             Example: {"game-session": "in_game", "character": "selected"}
         description:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Optional human-readable permission description
 
     ServiceHeartbeatEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published periodically by each bannou instance to indicate health and capacity.
         Contains aggregated information for ALL services hosted by this app instance.
         Used for load balancing and service discovery by the orchestrator.
       required:
+        - eventName
         - eventId
         - timestamp
         - serviceId
@@ -121,13 +166,10 @@ components:
         - status
         - services
       properties:
-        eventId:
+        eventName:
           type: string
-          description: Unique identifier for this heartbeat event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the heartbeat was sent
+          default: "service.heartbeat"
+          description: Fixed event type identifier
         serviceId:
           type: string
           format: uuid
@@ -146,6 +188,7 @@ components:
           description: Status of each service/plugin hosted by this instance
         capacity:
           nullable: true
+          description: Capacity and load information for this instance
           allOf:
             - $ref: '#/components/schemas/InstanceCapacity'
         issues:
@@ -162,6 +205,7 @@ components:
 
     ServiceStatus:
       type: object
+      additionalProperties: false
       description: Status of an individual service/plugin within an app instance
       required:
         - serviceId
@@ -174,13 +218,14 @@ components:
           description: Unique GUID identifying this plugin instance (for log correlation/debugging)
         serviceName:
           type: string
-          description: Service name (e.g., "auth", "accounts", "behavior")
+          description: Service name (e.g., "auth", "account", "behavior")
         status:
           type: string
           enum: [healthy, degraded, unavailable]
           description: Individual service health status
         version:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Service API version
         metadata:
           type: object
@@ -190,48 +235,58 @@ components:
 
     InstanceCapacity:
       type: object
+      additionalProperties: false
       description: Instance-level capacity and load information
       properties:
         maxConnections:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Maximum connections this instance can handle
         currentConnections:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Current active connections
         cpuUsage:
           type: number
           format: float
+          nullable: true  # NRT: Optional property MUST be nullable
           description: CPU usage ratio (0.0 - 1.0)
         memoryUsage:
           type: number
           format: float
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Memory usage ratio (0.0 - 1.0)
 
     ServiceErrorEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Structured error event for unexpected service failures (akin to Sentry).
         Use ONLY for internal faults, not for user/input errors.
       required:
+        - eventName
         - eventId
         - timestamp
         - serviceId
+        - serviceName
         - appId
         - operation
         - errorType
         - message
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this error event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the error occurred
+          default: "service.error"
+          description: Fixed event type identifier
         serviceId:
           type: string
-          description: Logical service name emitting the error (e.g., "accounts")
+          format: uuid
+          description: Unique GUID identifying this plugin instance (for log correlation/debugging)
+        serviceName:
+          type: string
+          description: Logical service name emitting the error (e.g., "account")
         appId:
           type: string
           description: Bannou app-id of the instance emitting the error
@@ -256,11 +311,11 @@ components:
         dependency:
           type: string
           nullable: true
-          description: Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
+          description: Dependency implicated in the failure (e.g., redis, pubsub, http:account)
         endpoint:
           type: string
           nullable: true
-          description: Service endpoint involved (e.g., POST /accounts/create)
+          description: Service endpoint involved (e.g., POST /account/create)
         details:
           type: object
           nullable: true
@@ -280,25 +335,26 @@ components:
           description: Memory usage percentage (0.0 - 1.0)
 
     FullServiceMappingsEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published periodically by Orchestrator as the authoritative source of truth
         for all service-to-app-id mappings across the entire network.
         Consumed by all bannou instances to atomically update their routing tables.
         Published every 30 seconds AND immediately when routing changes.
       required:
+        - eventName
         - eventId
         - timestamp
         - mappings
         - version
       properties:
-        eventId:
+        eventName:
           type: string
-          description: Unique identifier for this mappings event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this mappings snapshot was generated
+          default: "orchestrator.full_service_mappings"
+          description: Fixed event type identifier
         mappings:
           type: object
           additionalProperties:
@@ -306,6 +362,7 @@ components:
           description: Complete dictionary of serviceName -> appId mappings
         defaultAppId:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Default app-id for unmapped services (usually "bannou")
         version:
           type: integer
@@ -314,46 +371,50 @@ components:
         sourceInstanceId:
           type: string
           format: uuid
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Orchestrator instance GUID that published this event
         totalServices:
           type: integer
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Total number of services in the mappings dictionary
 
     SessionConnectedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by Connect service when a WebSocket connection is fully established.
         This event ensures the RabbitMQ exchange exists before any service publishes
         to the session-specific topic (CONNECT_SESSION_{sessionId}).
-        Permissions service uses this to track activeConnections and compile capabilities.
+        Permission service uses this to track activeConnections and compile capabilities.
         The roles and authorizations enable event-driven capability compilation without
-        synchronous API calls from Connect to Permissions.
+        synchronous API calls from Connect to Permission.
       required:
+        - eventName
         - eventId
         - timestamp
         - sessionId
         - accountId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this connection event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the WebSocket connection was established
+          default: "session.connected"
+          description: Fixed event type identifier
         sessionId:
           type: string
+          format: uuid
           description: Session ID that just connected via WebSocket
         accountId:
           type: string
+          format: uuid
           description: Account ID owning the session
         roles:
           type: array
           items:
             type: string
           nullable: true
-          description: User roles from JWT (e.g., ["user", "admin"]). Used by Permissions to compile capabilities.
+          description: User roles from JWT (e.g., ["user", "admin"]). Used by Permission to compile capabilities.
         authorizations:
           type: array
           items:
@@ -365,6 +426,14 @@ components:
           format: uuid
           nullable: true
           description: Connect service instance handling this connection (for debugging)
+        peerGuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Unique GUID for peer-to-peer routing. Other connections on the same Connect node
+            can route messages directly to this connection using this GUID with the Client flag.
+            Enables zero-copy message forwarding between Game Servers, Actor Pool Nodes, and clients.
         clientInfo:
           type: object
           nullable: true
@@ -372,31 +441,33 @@ components:
           description: Optional client metadata (version, platform, etc.)
 
     SessionDisconnectedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by Connect service when a WebSocket connection is closed.
-        Used by Permissions service to remove session from activeConnections.
+        Used by Permission service to remove session from activeConnections.
         Also enables cleanup of session-specific resources across services.
       required:
+        - eventName
         - eventId
         - timestamp
         - sessionId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this disconnection event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the WebSocket connection was closed
+          default: "session.disconnected"
+          description: Fixed event type identifier
         sessionId:
           type: string
+          format: uuid
           description: Session ID that disconnected
         accountId:
           type: string
-          nullable: true
-          description: Account ID that was connected (if known)
+          format: uuid
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: Account ID that was disconnected
         reason:
           type: string
           nullable: true
@@ -411,7 +482,10 @@ components:
           description: How long the session was connected (for metrics)
 
     SessionReconnectedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published by Connect service when a WebSocket session is restored after reconnection.
         Services should subscribe to this event to re-publish any session shortcuts they
@@ -422,24 +496,23 @@ components:
         whether the session should receive shortcuts again (e.g., check subscription status,
         game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
       required:
+        - eventName
         - eventId
         - timestamp
         - sessionId
         - accountId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this reconnection event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the WebSocket reconnection completed
+          default: "session.reconnected"
+          description: Fixed event type identifier
         sessionId:
           type: string
+          format: uuid
           description: Session ID that reconnected
         accountId:
           type: string
+          format: uuid
           description: Account ID owning the reconnected session
         roles:
           type: array
@@ -458,45 +531,196 @@ components:
           format: date-time
           nullable: true
           description: When the previous connection was lost
+        peerGuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            New peer GUID for this reconnected session. Note: This is a NEW GUID -
+            peer GUIDs do not persist across reconnections. Peers must be notified
+            of the new GUID to continue peer-to-peer routing.
         reconnectionContext:
           type: object
           additionalProperties: true
           nullable: true
           description: Optional context from the reconnection (client info, etc.)
 
-    ServiceMappingEvent:
+    # === Character State Events (from Actor service) ===
+    CharacterStateUpdateEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
-        Legacy event for individual service-to-app-id mapping updates.
-        NOTE: The system now uses FullServiceMappingsEvent for atomic full-state updates.
-        This event is retained for backwards compatibility with older consumers.
+        Published by Actor service when an actor updates a character's behavioral state.
+        Game servers subscribe to receive state updates for characters they manage.
+
+        This is NOT physics data (position, velocity) - that's Game Server territory.
+        This is intent/emotional/goal state that the character's behavior stack reads as input.
+
+        Note: Game servers have no knowledge of actors - they only see character state.
       required:
+        - eventName
         - eventId
         - timestamp
-        - serviceName
-        - appId
-        - action
+        - characterId
       properties:
-        eventId:
+        eventName:
+          type: string
+          default: "character.state_update"
+          description: Fixed event type identifier
+        characterId:
           type: string
           format: uuid
-          description: Unique identifier for this mapping event
-        timestamp:
+          description: Character this update applies to
+        actorId:
           type: string
-          format: date-time
-          description: When the mapping change occurred
-        serviceName:
+          nullable: true
+          description: Actor that produced this update (opaque to Game Server)
+        feelings:
+          description: Emotional state values for the character
+          $ref: '#/components/schemas/FeelingState'
+        goals:
+          description: Goal state for the character
+          $ref: '#/components/schemas/GoalState'
+        memories:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/MemoryUpdate'
+          description: Memory updates (add/remove/modify)
+        behaviorChange:
+          description: Changes to the character's behavior composition
+          $ref: '#/components/schemas/BehaviorCompositionChange'
+
+    FeelingState:
+      type: object
+      additionalProperties: false
+      nullable: true
+      description: |
+        Emotional state values (0.0 - 1.0 intensity).
+        The character's behavior stack reads these as inputs to influence decisions.
+      properties:
+        angry:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Anger intensity (0 = calm, 1 = furious)
+        fearful:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Fear intensity (0 = brave, 1 = terrified)
+        happy:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Happiness intensity (0 = neutral, 1 = joyful)
+        sad:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Sadness intensity (0 = content, 1 = devastated)
+        alert:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Alertness intensity (0 = relaxed, 1 = hypervigilant)
+        custom:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          nullable: true
+          description: Additional custom emotional states (game-specific)
+
+    GoalState:
+      type: object
+      additionalProperties: false
+      nullable: true
+      description: |
+        Goal state for the character.
+        Primary goal drives major decisions, secondary goals run in background.
+      properties:
+        primaryGoal:
           type: string
-          description: Name of the service (e.g., "accounts", "character-agent")
-        appId:
-          type: string
-          description: Bannou app-id where the service is running
-        action:
-          type: string
-          enum: [register, update, unregister]
-          description: Type of mapping change
-        metadata:
+          nullable: true
+          description: Current primary goal (e.g., "find_shelter", "confront_enemy")
+        goalParameters:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional service metadata
+          description: Parameters for the primary goal (e.g., target entity, location)
+        secondaryGoals:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Secondary/background goals
+
+    MemoryUpdate:
+      type: object
+      additionalProperties: false
+      description: |
+        A single memory update operation (add, remove, or modify).
+        Memories affect character behavior through recall during cognition.
+      required:
+        - operation
+        - memoryKey
+      properties:
+        operation:
+          type: string
+          enum:
+            - add
+            - remove
+            - modify
+          description: Memory operation type
+        memoryKey:
+          type: string
+          description: Memory identifier (e.g., "betrayed_by", "friend_of", "witnessed_event")
+        memoryValue:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Memory value (entity ID, context, intensity, etc.)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this memory expires (if temporary)
+
+    BehaviorCompositionChange:
+      type: object
+      additionalProperties: false
+      nullable: true
+      description: |
+        Changes to the character's behavior composition.
+        RARE - only happens during learning/growth events.
+        The character's behavior stack is self-sufficient; these changes add new capabilities.
+      properties:
+        added:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Behavior IDs added to composition (e.g., learned skills)
+        removed:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Behavior IDs removed from composition
+        reason:
+          type: string
+          nullable: true
+          description: Why this change happened (for debugging/logging)

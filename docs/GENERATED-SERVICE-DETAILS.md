@@ -1,6 +1,5 @@
 # Generated Service Details Reference
 
-> **Auto-generated**: 2025-12-28 02:41:57
 > **Source**: `schemas/*-api.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -10,36 +9,37 @@ This document provides a compact reference of all Bannou services and their API 
 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
-| [Accounts](#accounts) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
+| [Account](#account) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
+| [Actor](#actor) | 1.0.0 | 10 | Distributed actor management and execution for NPC brains, e... |
 | [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
-| [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
+| [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 6 | Character management service for Arcadia game world. |
-| [Connect](#connect) | 2.0.0 | 4 | Real-time communication and WebSocket connection management ... |
-| [Documentation](#documentation) | 1.0.0 | 26 | Knowledge base API for AI agents to query documentation.
+| [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
+| [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
+| [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
-| [Permissions](#permissions) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
+| [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
-| [Servicedata](#servicedata) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
 | [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
-| [Subscriptions](#subscriptions) | 1.0.0 | 7 | Manages user subscriptions to game services.
+| [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
 Tracks which ac... |
 | [Voice](#voice) | 1.1.0 | 7 | Voice communication coordination service for P2P and room-ba... |
 | [Website](#website) | 1.0.0 | 17 | Public-facing website service for registration, information,... |
 
 ---
 
-## Accounts {#accounts}
+## Account {#account}
 
-**Version**: 2.0.0 | **Schema**: `schemas/accounts-api.yaml`
+**Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml`
 
 Internal account management service (CRUD operations only, never exposed to internet).
 
@@ -47,34 +47,59 @@ Internal account management service (CRUD operations only, never exposed to inte
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/by-email` | Get account by email | admin |
-| `POST` | `/accounts/by-provider` | Get account by external provider ID | admin |
+| `POST` | `/account/by-email` | Get account by email | admin |
+| `POST` | `/account/by-provider` | Get account by external provider ID | admin |
 
 ### Account Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/create` | Create new account | admin |
-| `POST` | `/accounts/delete` | Delete account | admin |
-| `POST` | `/accounts/get` | Get account by ID | admin |
-| `POST` | `/accounts/list` | List accounts with filtering | admin |
-| `POST` | `/accounts/password/update` | Update account password hash | user |
-| `POST` | `/accounts/update` | Update account | admin |
-| `POST` | `/accounts/verification/update` | Update email verification status | user |
+| `POST` | `/account/create` | Create new account | admin |
+| `POST` | `/account/delete` | Delete account | admin |
+| `POST` | `/account/get` | Get account by ID | admin |
+| `POST` | `/account/list` | List accounts with filtering | admin |
+| `POST` | `/account/password/update` | Update account password hash | user |
+| `POST` | `/account/update` | Update account | admin |
+| `POST` | `/account/verification/update` | Update email verification status | user |
 
 ### Authentication Methods
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/auth-methods/add` | Add authentication method to account | admin |
-| `POST` | `/accounts/auth-methods/list` | Get authentication methods for account | admin |
-| `POST` | `/accounts/auth-methods/remove` | Remove authentication method from account | admin |
+| `POST` | `/account/auth-methods/add` | Add authentication method to account | admin |
+| `POST` | `/account/auth-methods/list` | Get authentication methods for account | admin |
+| `POST` | `/account/auth-methods/remove` | Remove authentication method from account | admin |
 
 ### Profile Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/profile/update` | Update account profile | user |
+| `POST` | `/account/profile/update` | Update account profile | user |
+
+---
+
+## Actor {#actor}
+
+**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml`
+
+Distributed actor management and execution for NPC brains, event coordinators,
+and other long-running behavior loops. Actors output behavioral state (feelings,
+goals, memories) to characters - NOT ...
+
+### Other
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/actor/get` | Get actor instance (instantiate-on-access if template allows) | user |
+| `POST` | `/actor/inject-perception` | Inject a perception event into an actor's queue (testing) | developer |
+| `POST` | `/actor/list` | List actors with optional filters | user |
+| `POST` | `/actor/spawn` | Spawn a new actor from a template | developer |
+| `POST` | `/actor/stop` | Stop a running actor | developer |
+| `POST` | `/actor/template/create` | Create an actor template (category definition) | developer |
+| `POST` | `/actor/template/delete` | Delete an actor template | developer |
+| `POST` | `/actor/template/get` | Get an actor template by ID or category | user |
+| `POST` | `/actor/template/list` | List all actor templates | user |
+| `POST` | `/actor/template/update` | Update an actor template | developer |
 
 ---
 
@@ -185,6 +210,13 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 |--------|------|---------|--------|
 | `POST` | `/context/resolve` | Resolve context variables | developer |
 
+### GOAP
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/goap/plan` | Generate GOAP plan | developer |
+| `POST` | `/goap/validate-plan` | Validate existing GOAP plan | developer |
+
 ### Validation
 
 | Method | Path | Summary | Access |
@@ -235,6 +267,12 @@ Real-time communication and WebSocket connection management for Bannou services.
 |--------|------|---------|--------|
 | `POST` | `/internal/proxy` | Internal API proxy for stateless requests | authenticated |
 
+### Session Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/connect/get-account-sessions` | Get all active WebSocket sessions for an account | admin |
+
 ### WebSocket Connection
 
 | Method | Path | Summary | Access |
@@ -280,6 +318,7 @@ All endpoints return voice-friendly summaries alongside detaile...
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `GET` | `/documentation/raw/{slug}` | Get raw markdown content | authenticated |
 | `GET` | `/documentation/view/{slug}` | View documentation page in browser | authenticated |
 
 ### Documents
@@ -307,6 +346,25 @@ All endpoints return voice-friendly summaries alongside detaile...
 | `POST` | `/documentation/query` | Natural language documentation search | anonymous |
 | `POST` | `/documentation/search` | Full-text keyword search | anonymous |
 | `POST` | `/documentation/suggest` | Get related topics and follow-up suggestions | anonymous |
+
+---
+
+## Game Service {#game-service}
+
+**Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml`
+
+Registry service for game services that users can subscribe to.
+Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
+
+### Game Service Registry
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/game-service/services/create` | Create a new game service entry | admin |
+| `POST` | `/game-service/services/delete` | Delete a game service entry | admin |
+| `POST` | `/game-service/services/get` | Get service by ID or stub name | user |
+| `POST` | `/game-service/services/list` | List all registered game services | user |
+| `POST` | `/game-service/services/update` | Update a game service entry | admin |
 
 ---
 
@@ -466,9 +524,9 @@ Central intelligence for Bannou environment management and service orchestration
 
 ---
 
-## Permissions {#permissions}
+## Permission {#permission}
 
-**Version**: 3.0.0 | **Schema**: `schemas/permissions-api.yaml`
+**Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml`
 
 Redis-backed high-performance permission system for WebSocket services.
 
@@ -476,29 +534,29 @@ Redis-backed high-performance permission system for WebSocket services.
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/capabilities` | Get available API methods for session | authenticated |
+| `POST` | `/permission/capabilities` | Get available API methods for session | authenticated |
 
 ### Permission Validation
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/validate` | Validate specific API access for session | authenticated |
+| `POST` | `/permission/validate` | Validate specific API access for session | authenticated |
 
 ### Service Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/register-service` | Register or update service permission matrix | authenticated |
-| `POST` | `/permissions/services/list` | List all registered services | admin |
+| `POST` | `/permission/register-service` | Register or update service permission matrix | authenticated |
+| `POST` | `/permission/services/list` | List all registered services | admin |
 
 ### Session Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/clear-session-state` | Clear session state for specific service | authenticated |
-| `POST` | `/permissions/get-session-info` | Get complete session information | authenticated |
-| `POST` | `/permissions/update-session-role` | Update session role (affects all services) | authenticated |
-| `POST` | `/permissions/update-session-state` | Update session state for specific service | admin |
+| `POST` | `/permission/clear-session-state` | Clear session state for specific service | authenticated |
+| `POST` | `/permission/get-session-info` | Get complete session information | authenticated |
+| `POST` | `/permission/update-session-role` | Update session role (affects all services) | authenticated |
+| `POST` | `/permission/update-session-state` | Update session state for specific service | admin |
 
 ---
 
@@ -581,25 +639,6 @@ Relationship type management service for Arcadia game world.
 
 ---
 
-## Servicedata {#servicedata}
-
-**Version**: 1.0.0 | **Schema**: `schemas/servicedata-api.yaml`
-
-Registry service for game services that users can subscribe to.
-Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
-
-### Service Registry
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/servicedata/services/create` | Create a new game service entry | admin |
-| `POST` | `/servicedata/services/delete` | Delete a game service entry | admin |
-| `POST` | `/servicedata/services/get` | Get service by ID or stub name | user |
-| `POST` | `/servicedata/services/list` | List all registered game services | user |
-| `POST` | `/servicedata/services/update` | Update a game service entry | admin |
-
----
-
 ## Species {#species}
 
 **Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml`
@@ -650,9 +689,9 @@ Repository pattern state management with Redis and MySQL backends.
 
 ---
 
-## Subscriptions {#subscriptions}
+## Subscription {#subscription}
 
-**Version**: 1.0.0 | **Schema**: `schemas/subscriptions-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml`
 
 Manages user subscriptions to game services.
 Tracks which accounts have access to which services (games/applications) with time-limited subscriptions.
@@ -661,13 +700,13 @@ Tracks which accounts have access to which services (games/applications) with ti
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/subscriptions/account/current` | Get current (active, non-expired) subscriptions | user |
-| `POST` | `/subscriptions/account/list` | Get subscriptions for an account | user |
-| `POST` | `/subscriptions/cancel` | Cancel a subscription | user |
-| `POST` | `/subscriptions/create` | Create a new subscription | admin |
-| `POST` | `/subscriptions/get` | Get a specific subscription by ID | user |
-| `POST` | `/subscriptions/renew` | Renew or extend a subscription | admin |
-| `POST` | `/subscriptions/update` | Update a subscription | admin |
+| `POST` | `/subscription/account/list` | Get subscriptions for an account | user |
+| `POST` | `/subscription/cancel` | Cancel a subscription | user |
+| `POST` | `/subscription/create` | Create a new subscription | admin |
+| `POST` | `/subscription/get` | Get a specific subscription by ID | user |
+| `POST` | `/subscription/query` | Query current (active, non-expired) subscriptions | service |
+| `POST` | `/subscription/renew` | Renew or extend a subscription | admin |
+| `POST` | `/subscription/update` | Update a subscription | admin |
 
 ---
 
@@ -700,7 +739,7 @@ Voice communication coordination service for P2P and room-based audio.
 
 **Version**: 1.0.0 | **Schema**: `schemas/website-api.yaml`
 
-Public-facing website service for registration, information, and account management
+Public-facing website service for registration, information, and account management.
 
 ### Account
 
@@ -753,8 +792,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 22
-- **Total endpoints**: 227
+- **Total services**: 23
+- **Total endpoints**: 241
 
 ---
 

@@ -83,17 +83,17 @@ public sealed class InternalAssetRecord
     {
         return new AssetMetadata
         {
-            Asset_id = AssetId,
-            Content_hash = ContentHash,
+            AssetId = AssetId,
+            ContentHash = ContentHash,
             Filename = Filename,
-            Content_type = ContentType,
+            ContentType = ContentType,
             Size = Size,
-            Asset_type = AssetType,
+            AssetType = AssetType,
             Realm = Realm ?? Asset.Realm.Omega,
             Tags = Tags ?? new List<string>(),
-            Processing_status = ProcessingStatus,
-            Created_at = CreatedAt,
-            Updated_at = UpdatedAt
+            ProcessingStatus = ProcessingStatus,
+            CreatedAt = CreatedAt,
+            UpdatedAt = UpdatedAt
         };
     }
 }

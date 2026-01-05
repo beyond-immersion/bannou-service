@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -47,40 +48,14 @@ public class RepositorySyncSchedulerServiceTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
+        ServiceConstructorValidator.ValidateServiceConstructor<RepositorySyncSchedulerService>();
         var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             _configuration);
-
-        // Assert
         Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullServiceProvider_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new RepositorySyncSchedulerService(null!, _mockLogger.Object, _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new RepositorySyncSchedulerService(_mockServiceProvider.Object, null!, _configuration));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new RepositorySyncSchedulerService(_mockServiceProvider.Object, _mockLogger.Object, null!));
     }
 
     #endregion

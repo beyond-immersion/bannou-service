@@ -1,0 +1,22 @@
+version: "2.0"
+metadata:
+  id: multi_error
+flows:
+  start:
+    actions:
+      - failing_action:
+          param: first
+          on_error:
+            - log: "First error handled"
+            - set:
+                variable: _error_handled
+                value: "${true}"
+      - log: "Between errors"
+      - failing_action:
+          param: second
+          on_error:
+            - log: "Second error handled"
+            - set:
+                variable: _error_handled
+                value: "${true}"
+      - log: "After all errors"

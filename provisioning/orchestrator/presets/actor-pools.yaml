@@ -1,0 +1,64 @@
+# Actor Pool Preset
+# Defines pool node configuration for distributed actor execution
+# Supports shared-pool (all categories) and pool-per-type modes
+
+name: actor-pools
+description: Actor pool configuration for distributed behavior execution
+category: processing
+
+processingPools:
+  - poolType: actor-shared
+    plugin: actor
+    minInstances: 1
+    maxInstances: 10
+    scaleUpThreshold: 0.8
+    scaleDownThreshold: 0.2
+    idleTimeoutMinutes: 5
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: shared
+      ACTOR_POOL_NODE_CAPACITY: "50"
+      ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
+      ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
+
+  - poolType: actor-npc-brain
+    plugin: actor
+    minInstances: 1
+    maxInstances: 20
+    scaleUpThreshold: 0.7
+    scaleDownThreshold: 0.3
+    idleTimeoutMinutes: 10
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: npc-brain
+      ACTOR_POOL_NODE_CAPACITY: "100"
+      ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
+      ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
+
+  - poolType: actor-event-coordinator
+    plugin: actor
+    minInstances: 1
+    maxInstances: 5
+    scaleUpThreshold: 0.75
+    scaleDownThreshold: 0.25
+    idleTimeoutMinutes: 15
+    environment:
+      ACTOR_DEPLOYMENT_MODE: pool-node
+      ACTOR_POOL_NODE_TYPE: event-coordinator
+      ACTOR_POOL_NODE_CAPACITY: "20"
+      ACTOR_HEARTBEAT_INTERVAL_SECONDS: "10"
+      ACTOR_HEARTBEAT_TIMEOUT_SECONDS: "30"
+
+# NOTE: This preset only defines processing pools, NOT topology.
+# Actor pools are NOT topology nodes - they are worker containers spawned
+# on-demand by the control plane (similar to asset processors).
+# The control plane runs on the main bannou deployment topology.
+
+environment:
+  BANNOU_APP_LOGGING_LEVEL: Information
+  ACTOR_CONTROL_PLANE_APP_ID: bannou
+
+requiredBackends:
+  - docker-compose
+  - docker-swarm
+  - kubernetes

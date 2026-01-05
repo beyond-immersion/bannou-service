@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Behavior Service Configuration
-  description: "Configuration schema for Behavior service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  description: |
+    Configuration schema for Behavior service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -10,3 +15,4 @@ x-service-configuration:
       type: boolean
       description: Enable/disable Behavior service
       default: true
+      env: BEHAVIOR_ENABLED

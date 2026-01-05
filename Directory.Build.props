@@ -4,20 +4,19 @@
     This file applies common properties across all projects in the repository.
   -->
 
-  <!-- Suppress common nullable warnings in test projects caused by Moq type inference issues -->
-  <!-- Use MSBuildProjectName condition since IsTestProject isn't set yet when props are imported -->
+  <!-- Suppress Moq-specific nullable inference warnings in test projects (T22 compliant) -->
+  <!-- These are caused by Moq's generic type inference and cannot be fixed in our code. -->
+  <!-- See: docs/reference/tenets/QUALITY.md (T22) -->
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.tests'))">
     <!--
       CS8620: Argument of type 'Task<T?>' cannot be used for parameter of type 'Task<T>'
               Moq's Returns() method has nullable inference issues with Task<T?> vs Task<T>
-      CS8602: Dereference of a possibly null reference
-              Test code with controlled mock setups where null is intentionally managed
-      CS8604: Possible null reference argument for parameter
-              Test code where null arguments are intentional for testing null handling
       CS8619: Nullability of reference types in value doesn't match target type
               Moq nullable inference issues in mock setups
+
+      NOTE: CS8602/CS8604 are NOT suppressed - these are real null bugs that should be fixed.
     -->
-    <NoWarn>$(NoWarn);CS8620;CS8602;CS8604;CS8619</NoWarn>
+    <NoWarn>$(NoWarn);CS8620;CS8619</NoWarn>
   </PropertyGroup>
 
 </Project>

@@ -27,9 +27,9 @@ if [ $# -lt 1 ]; then
     echo "  all            - Generate all components (default)"
     echo ""
     echo "Examples:"
-    echo "  $0 accounts all                    # Generate everything"
-    echo "  $0 accounts controller client      # Generate only controller and client"
-    echo "  $0 accounts                        # Generate everything (default)"
+    echo "  $0 account all                    # Generate everything"
+    echo "  $0 account controller client      # Generate only controller and client"
+    echo "  $0 account                        # Generate everything (default)"
     exit 1
 fi
 

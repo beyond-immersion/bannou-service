@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,7 +24,6 @@ public class ConnectController : ConnectControllerBase
     /// <summary>
     /// Handles WebSocket connection via GET upgrade request.
     /// </summary>
-    [Obsolete]
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
@@ -32,7 +32,6 @@ public class ConnectController : ConnectControllerBase
     /// <summary>
     /// Handles WebSocket connection via POST request with optional body.
     /// </summary>
-    [Obsolete]
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
@@ -42,7 +41,6 @@ public class ConnectController : ConnectControllerBase
     /// Common WebSocket connection handling logic.
     /// Validates JWT, accepts WebSocket upgrade, and initiates binary protocol communication.
     /// </summary>
-    [Obsolete]
     private async Task<IActionResult> HandleWebSocketConnectionAsync(
         string authorization,
         CancellationToken cancellationToken = default)
@@ -62,8 +60,15 @@ public class ConnectController : ConnectControllerBase
                 return StatusCode(500, "Service implementation not available");
             }
 
-            // Validate and parse JWT token, extracting session ID, account ID, roles, authorizations, and reconnection flag
-            var (sessionId, accountId, roles, authorizations, isReconnection) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
+            // Extract X-Service-Token header for Internal mode authentication
+            string? serviceTokenHeader = null;
+            if (HttpContext.Request.Headers.TryGetValue("X-Service-Token", out var serviceTokenValues))
+            {
+                serviceTokenHeader = serviceTokenValues.FirstOrDefault();
+            }
+
+            // Validate and parse JWT token (or service token for Internal mode)
+            var (sessionId, accountId, roles, authorizations, isReconnection) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, serviceTokenHeader, cancellationToken);
             if (sessionId == null)
             {
                 return Unauthorized("Invalid or expired JWT token");

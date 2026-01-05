@@ -27,14 +27,13 @@ public partial class TestingService : ITestingService
         IClientEventPublisher clientEventPublisher,
         IEventConsumer eventConsumer)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
+        _logger = logger;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _clientEventPublisher = clientEventPublisher;
 
-        // Required by Tenet 6 - calls default IBannouService.RegisterEventConsumers() no-op
+        // Required by FOUNDATION TENETS - calls default IBannouService.RegisterEventConsumers() no-op
         // Must cast to interface to access default interface implementation
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -265,10 +264,9 @@ public partial class TestingService : ITestingService
 
             var testEvent = new SystemNotificationEvent
             {
-                Event_name = SystemNotificationEventEvent_name.System_notification,
-                Event_id = Guid.NewGuid(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Notification_type = SystemNotificationEventNotification_type.Info,
+                NotificationType = SystemNotificationEventNotificationType.Info,
                 Title = "Test Notification",
                 Message = message ?? "This is a test notification from the Testing service"
             };
@@ -282,7 +280,7 @@ public partial class TestingService : ITestingService
                 {
                     Success = true,
                     Message = "Test event published successfully",
-                    EventId = testEvent.Event_id,
+                    EventId = testEvent.EventId,
                     SessionId = sessionId,
                     Timestamp = DateTime.UtcNow
                 });
@@ -317,7 +315,7 @@ public partial class TestingService : ITestingService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Unlike other services which use generated permission registration, Testing service
     /// uses a manually maintained registration since there's no testing-api.yaml schema.
     /// </summary>

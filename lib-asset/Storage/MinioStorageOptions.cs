@@ -12,13 +12,15 @@ public class MinioStorageOptions
 
     /// <summary>
     /// Access key (username) for authentication.
+    /// Null until configured via ASSET_STORAGE_ACCESS_KEY.
     /// </summary>
-    public string AccessKey { get; set; } = string.Empty;
+    public string? AccessKey { get; set; }
 
     /// <summary>
     /// Secret key (password) for authentication.
+    /// Null until configured via ASSET_STORAGE_SECRET_KEY.
     /// </summary>
-    public string SecretKey { get; set; } = string.Empty;
+    public string? SecretKey { get; set; }
 
     /// <summary>
     /// Whether to use SSL/TLS for connections.

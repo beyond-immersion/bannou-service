@@ -144,12 +144,12 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                         var payloadJson = Encoding.UTF8.GetString(message.Payload.Span);
                         using var doc = JsonDocument.Parse(payloadJson);
 
-                        if (doc.RootElement.TryGetProperty("event_name", out var eventName) &&
+                        if (doc.RootElement.TryGetProperty("eventName", out var eventName) &&
                             eventName.GetString() == "connect.capability_manifest")
                         {
                             Console.WriteLine("✅ Received capability manifest");
 
-                            // Find a valid API endpoint - look for accounts/get which should always exist
+                            // Find a valid API endpoint - look for account/get which should always exist
                             if (doc.RootElement.TryGetProperty("availableAPIs", out var apis) &&
                                 apis.ValueKind == JsonValueKind.Array)
                             {
@@ -158,7 +158,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                                     var key = api.TryGetProperty("endpointKey", out var keyProp) ? keyProp.GetString() : null;
                                     var guidStr = api.TryGetProperty("serviceGuid", out var guidProp) ? guidProp.GetString() : null;
 
-                                    // Use accounts/get as our test endpoint
+                                    // Use account/get as our test endpoint
                                     if (key?.Contains("/get") == true && Guid.TryParse(guidStr, out var guid))
                                     {
                                         apiGuid = guid;

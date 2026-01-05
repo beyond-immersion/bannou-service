@@ -1,6 +1,14 @@
-using BeyondImmersion.Bannou.Asset.ClientEvents;
+// =============================================================================
+// Asset Processing Worker
+// Background worker that processes asset jobs when running in processor node mode.
+// Self-registers, emits heartbeats, and self-terminates after idle timeout.
+// =============================================================================
+
 using BeyondImmersion.BannouService.Asset.Models;
-using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Asset.Pool;
+using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
@@ -10,19 +18,40 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
 /// <summary>
-/// Background worker that processes asset jobs when running in worker mode.
+/// Background worker that processes asset jobs when running in processor node mode.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Deployment:</b> Runs when ProcessorNodeId is set (processor node mode).
+/// </para>
+/// <para>
+/// <b>Lifecycle:</b>
+/// <list type="bullet">
+/// <item>On startup: Registers with pool manager (writes state to Redis)</item>
+/// <item>Periodically: Emits heartbeat updating load and idle count</item>
+/// <item>On idle timeout: Self-terminates (cleans up state, exits process)</item>
+/// <item>On SIGTERM: Graceful shutdown (drains jobs, cleans up state)</item>
+/// </list>
+/// </para>
+/// </remarks>
 public sealed class AssetProcessingWorker : BackgroundService
 {
     private readonly AssetProcessorRegistry _processorRegistry;
     private readonly IStateStore<AssetMetadata> _stateStore;
     private readonly IAssetStorageProvider _storageProvider;
     private readonly IOrchestratorClient _orchestratorClient;
-    private readonly IClientEventPublisher? _clientEventPublisher;
+    private readonly IAssetProcessorPoolManager _poolManager;
+    private readonly IMessageBus _messageBus;
     private readonly AssetServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ILogger<AssetProcessingWorker> _logger;
 
     private const string ASSET_PREFIX = "asset:";
+
+    // Job tracking for load reporting
+    private int _currentJobCount;
+    private readonly object _jobCountLock = new();
 
     /// <summary>
     /// Creates a new AssetProcessingWorker.
@@ -32,38 +61,108 @@ public sealed class AssetProcessingWorker : BackgroundService
         IStateStoreFactory stateStoreFactory,
         IAssetStorageProvider storageProvider,
         IOrchestratorClient orchestratorClient,
+        IAssetProcessorPoolManager poolManager,
+        IMessageBus messageBus,
         AssetServiceConfiguration configuration,
-        ILogger<AssetProcessingWorker> logger,
-        IClientEventPublisher? clientEventPublisher = null)
+        AppConfiguration appConfiguration,
+        IHostApplicationLifetime applicationLifetime,
+        ILogger<AssetProcessingWorker> logger)
     {
         _processorRegistry = processorRegistry ?? throw new ArgumentNullException(nameof(processorRegistry));
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
         _stateStore = stateStoreFactory.GetStore<AssetMetadata>("asset-statestore");
         _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
         _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
-        _clientEventPublisher = clientEventPublisher;
+        _poolManager = poolManager ?? throw new ArgumentNullException(nameof(poolManager));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _appConfiguration = appConfiguration ?? throw new ArgumentNullException(nameof(appConfiguration));
+        _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    /// <summary>
+    /// Gets whether this worker is running as a processor node (has ProcessorNodeId configured).
+    /// </summary>
+    private bool IsProcessorNodeMode => !string.IsNullOrEmpty(_configuration.ProcessorNodeId);
+
+    /// <summary>
+    /// Gets the pool type this processor handles.
+    /// Configured via ASSET_PROCESSING_POOL_TYPE (default: "asset-processor").
+    /// </summary>
+    private string PoolType => _configuration.ProcessingPoolType;
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Check processing mode from configuration - exit early if "api" mode (HTTP only)
+        var processingMode = _configuration.ProcessingMode;
+        if (processingMode.Equals("api", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation(
+                "Asset processing worker disabled (ProcessingMode={Mode})", processingMode);
+            return;
+        }
+
+        if (!IsProcessorNodeMode)
+        {
+            // Not running as processor node - just keep alive for local processing
+            _logger.LogInformation(
+                "Asset processing worker started in local mode (ProcessingMode={Mode}, no ProcessorNodeId configured)",
+                processingMode);
+
+            await KeepAliveAsync(stoppingToken);
+            return;
+        }
+
+        // IMPLEMENTATION TENETS: Fail fast if required config is missing
+        // IsProcessorNodeMode is true, so ProcessorNodeId must be set - validate explicitly
+        var nodeId = _configuration.ProcessorNodeId
+            ?? throw new InvalidOperationException(
+                "ASSET_PROCESSOR_NODE_ID is required when running in processor node mode");
+
+        var appId = _appConfiguration.EffectiveAppId;
+
         _logger.LogInformation(
-            "Asset processing worker started. Worker pool: {WorkerPool}",
-            _configuration.WorkerPool ?? "default");
+            "Starting asset processing worker as processor node: NodeId={NodeId}, AppId={AppId}, PoolType={PoolType}",
+            nodeId, appId, PoolType);
 
-        // The worker receives jobs via MassTransit pub/sub subscription
-        // The actual job processing is done in HandleProcessingJob
-        // This background service just keeps the worker alive
+        // Register with pool manager
+        var registered = await RegisterWithPoolAsync(nodeId, appId, stoppingToken);
+        if (!registered)
+        {
+            _logger.LogError("Failed to register processor node {NodeId}, shutting down", nodeId);
+            return;
+        }
 
+        // Start heartbeat loop
+        var heartbeatTask = RunHeartbeatLoopAsync(nodeId, stoppingToken);
+
+        _logger.LogInformation("Asset processor node {NodeId} started, waiting for jobs", nodeId);
+
+        // Wait for either cancellation or idle timeout triggered shutdown
+        try
+        {
+            await heartbeatTask;
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Expected during shutdown
+        }
+
+        // Graceful shutdown
+        await ShutdownAsync(nodeId);
+    }
+
+    /// <summary>
+    /// Keeps the worker alive when not running as a processor node.
+    /// </summary>
+    private async Task KeepAliveAsync(CancellationToken stoppingToken)
+    {
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                // Heartbeat logging
-                _logger.LogDebug("Asset processing worker heartbeat");
-
                 await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -74,6 +173,218 @@ public sealed class AssetProcessingWorker : BackgroundService
 
         _logger.LogInformation("Asset processing worker stopped");
     }
+
+    #region Pool Registration
+
+    /// <summary>
+    /// Registers this processor node with the pool manager.
+    /// </summary>
+    private async Task<bool> RegisterWithPoolAsync(
+        string nodeId,
+        string appId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var capacity = _configuration.ProcessorMaxConcurrentJobs;
+
+            await _poolManager.RegisterNodeAsync(
+                nodeId,
+                appId,
+                PoolType,
+                capacity,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Registered processor node {NodeId} with pool {PoolType} (capacity: {Capacity})",
+                nodeId, PoolType, capacity);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to register processor node {NodeId}", nodeId);
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region Heartbeat Loop
+
+    /// <summary>
+    /// Runs the heartbeat loop, updating state and checking for idle timeout.
+    /// </summary>
+    private async Task RunHeartbeatLoopAsync(string nodeId, CancellationToken stoppingToken)
+    {
+        var heartbeatInterval = TimeSpan.FromSeconds(_configuration.ProcessorHeartbeatIntervalSeconds);
+        var idleTimeoutSeconds = _configuration.ProcessorIdleTimeoutSeconds;
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                var currentLoad = GetCurrentJobCount();
+
+                // Update heartbeat in pool manager
+                var state = await _poolManager.UpdateHeartbeatAsync(
+                    nodeId,
+                    PoolType,
+                    currentLoad,
+                    stoppingToken);
+
+                if (state == null)
+                {
+                    // Node was removed externally, re-register
+                    _logger.LogWarning(
+                        "Processor node {NodeId} state not found, re-registering",
+                        nodeId);
+
+                    await RegisterWithPoolAsync(nodeId, _appConfiguration.EffectiveAppId, stoppingToken);
+                }
+                else
+                {
+                    // Check for idle timeout
+                    if (idleTimeoutSeconds > 0 && ShouldShutdownDueToIdleTimeout(state, heartbeatInterval, idleTimeoutSeconds))
+                    {
+                        _logger.LogInformation(
+                            "Processor node {NodeId} idle timeout reached ({IdleCount} heartbeats with zero load), initiating shutdown",
+                            nodeId, state.IdleHeartbeatCount);
+
+                        // Trigger application shutdown
+                        _applicationLifetime.StopApplication();
+                        return;
+                    }
+
+                    _logger.LogDebug(
+                        "Heartbeat: NodeId={NodeId}, Load={Load}/{Capacity}, IdleCount={IdleCount}",
+                        nodeId, currentLoad, state.Capacity, state.IdleHeartbeatCount);
+                }
+
+                await Task.Delay(heartbeatInterval, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in heartbeat loop for node {NodeId}", nodeId);
+
+                // Wait before retrying
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines if the node should shut down due to idle timeout.
+    /// </summary>
+    private static bool ShouldShutdownDueToIdleTimeout(
+        ProcessorNodeState state,
+        TimeSpan heartbeatInterval,
+        int idleTimeoutSeconds)
+    {
+        // Calculate total idle time based on heartbeat count
+        var totalIdleSeconds = state.IdleHeartbeatCount * heartbeatInterval.TotalSeconds;
+        return totalIdleSeconds >= idleTimeoutSeconds;
+    }
+
+    #endregion
+
+    #region Graceful Shutdown
+
+    /// <summary>
+    /// Performs graceful shutdown: marks as draining, waits for jobs, cleans up state.
+    /// </summary>
+    private async Task ShutdownAsync(string nodeId)
+    {
+        _logger.LogInformation("Starting graceful shutdown for processor node {NodeId}", nodeId);
+
+        try
+        {
+            // Mark as draining
+            await _poolManager.SetDrainingAsync(nodeId, PoolType);
+
+            // Wait for current jobs to complete (with timeout)
+            var drainTimeout = TimeSpan.FromMinutes(2);
+            var drainStart = DateTimeOffset.UtcNow;
+
+            while (GetCurrentJobCount() > 0)
+            {
+                if (DateTimeOffset.UtcNow - drainStart > drainTimeout)
+                {
+                    _logger.LogWarning(
+                        "Drain timeout reached with {JobCount} jobs still running, forcing shutdown",
+                        GetCurrentJobCount());
+                    break;
+                }
+
+                _logger.LogInformation(
+                    "Waiting for {JobCount} jobs to complete before shutdown",
+                    GetCurrentJobCount());
+
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            }
+
+            // Remove node state
+            await _poolManager.RemoveNodeAsync(nodeId, PoolType);
+
+            _logger.LogInformation("Graceful shutdown complete for processor node {NodeId}", nodeId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during graceful shutdown for node {NodeId}", nodeId);
+        }
+    }
+
+    #endregion
+
+    #region Job Load Tracking
+
+    /// <summary>
+    /// Gets the current number of jobs being processed.
+    /// </summary>
+    private int GetCurrentJobCount()
+    {
+        lock (_jobCountLock)
+        {
+            return _currentJobCount;
+        }
+    }
+
+    /// <summary>
+    /// Increments the job counter when starting a job.
+    /// </summary>
+    private void IncrementJobCount()
+    {
+        lock (_jobCountLock)
+        {
+            _currentJobCount++;
+        }
+    }
+
+    /// <summary>
+    /// Decrements the job counter when completing a job.
+    /// </summary>
+    private void DecrementJobCount()
+    {
+        lock (_jobCountLock)
+        {
+            _currentJobCount = Math.Max(0, _currentJobCount - 1);
+        }
+    }
+
+    #endregion
+
+    #region Job Processing
 
     /// <summary>
     /// Handles a processing job received via pub/sub.
@@ -98,6 +409,9 @@ public sealed class AssetProcessingWorker : BackgroundService
             job.AssetId,
             job.PoolType);
 
+        // Track job for load reporting
+        IncrementJobCount();
+
         try
         {
             // Create processing context
@@ -108,7 +422,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 ContentType = job.ContentType,
                 SizeBytes = job.SizeBytes,
                 Filename = job.Filename,
-                SessionId = job.SessionId,
+                Owner = job.Owner,
                 RealmId = job.RealmId,
                 Tags = job.Tags,
                 ProcessingOptions = job.ProcessingOptions
@@ -157,6 +471,11 @@ public sealed class AssetProcessingWorker : BackgroundService
 
             return false;
         }
+        finally
+        {
+            // Always decrement job count when done
+            DecrementJobCount();
+        }
     }
 
     private async Task UpdateAssetMetadataAsync(
@@ -177,17 +496,17 @@ public sealed class AssetProcessingWorker : BackgroundService
             }
 
             // Update the metadata with processing results
-            existingMetadata.Processing_status = result.Success
+            existingMetadata.ProcessingStatus = result.Success
                 ? ProcessingStatus.Complete
                 : ProcessingStatus.Failed;
-            existingMetadata.Updated_at = DateTimeOffset.UtcNow;
+            existingMetadata.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _stateStore.SaveAsync(stateKey, existingMetadata, null, cancellationToken);
 
             _logger.LogDebug(
                 "Updated metadata for asset {AssetId}: Status={Status}",
                 assetId,
-                existingMetadata.Processing_status);
+                existingMetadata.ProcessingStatus);
         }
         catch (Exception ex)
         {
@@ -208,7 +527,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             await _orchestratorClient.ReleaseProcessorAsync(
                 new ReleaseProcessorRequest
                 {
-                    Lease_id = leaseId,
+                    LeaseId = leaseId,
                     Success = success
                 },
                 cancellationToken);
@@ -232,53 +551,31 @@ public sealed class AssetProcessingWorker : BackgroundService
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {
-        if (_clientEventPublisher == null)
-        {
-            _logger.LogWarning(
-                "Cannot emit processing result event for asset {AssetId}: IClientEventPublisher not available",
-                job.AssetId);
-            return;
-        }
-
         try
         {
-            if (result.Success)
+            // Publish service-level event via message bus (not client event)
+            var processingEvent = new AssetProcessingCompletedEvent
             {
-                var completionEvent = new AssetProcessingCompleteEvent
-                {
-                    Event_id = Guid.NewGuid(),
-                    Event_name = AssetProcessingCompleteEventEvent_name.Asset_processing_complete,
-                    Asset_id = job.AssetId,
-                    Success = true,
-                    Outputs = result.ProcessedStorageKey != null
-                        ? new List<ProcessingOutput>
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AssetId = job.AssetId,
+                ProcessingType = MapProcessingType(job.ContentType),
+                Success = result.Success,
+                ErrorMessage = result.ErrorMessage,
+                Outputs = result.ProcessedStorageKey != null
+                    ? new List<ProcessingOutput>
+                    {
+                        new ProcessingOutput
                         {
-                            new ProcessingOutput
-                            {
-                                Output_type = "processed",
-                                Asset_id = job.AssetId,
-                                Size = result.ProcessedSizeBytes ?? 0
-                            }
+                            OutputType = "processed",
+                            Key = result.ProcessedStorageKey,
+                            Size = result.ProcessedSizeBytes ?? 0
                         }
-                        : null
-                };
+                    }
+                    : null
+            };
 
-                await _clientEventPublisher.PublishToSessionAsync(job.SessionId, completionEvent, cancellationToken);
-            }
-            else
-            {
-                var failureEvent = new AssetProcessingFailedEvent
-                {
-                    Event_id = Guid.NewGuid(),
-                    Event_name = AssetProcessingFailedEventEvent_name.Asset_processing_failed,
-                    Asset_id = job.AssetId,
-                    Error_message = result.ErrorMessage ?? "Unknown error",
-                    Error_code = MapErrorCode(result.ErrorCode),
-                    Retry_available = true
-                };
-
-                await _clientEventPublisher.PublishToSessionAsync(job.SessionId, failureEvent, cancellationToken);
-            }
+            await _messageBus.TryPublishAsync("asset.processing.completed", processingEvent);
         }
         catch (Exception ex)
         {
@@ -289,16 +586,15 @@ public sealed class AssetProcessingWorker : BackgroundService
         }
     }
 
-    private static ProcessingErrorCode? MapErrorCode(string? errorCode)
+    private static ProcessingTypeEnum MapProcessingType(string contentType)
     {
-        return errorCode switch
+        // Map content types to processing types defined in schema
+        return contentType switch
         {
-            "PROCESSING_FAILED" => ProcessingErrorCode.PROCESSING_FAILED,
-            "INVALID_FORMAT" => ProcessingErrorCode.INVALID_FORMAT,
-            "RESOURCE_EXHAUSTED" => ProcessingErrorCode.RESOURCE_EXHAUSTED,
-            "TIMEOUT" => ProcessingErrorCode.TIMEOUT,
-            "PROCESSOR_UNAVAILABLE" => ProcessingErrorCode.PROCESSOR_UNAVAILABLE,
-            _ => ProcessingErrorCode.PROCESSING_FAILED
+            var ct when ct.StartsWith("image/") => ProcessingTypeEnum.Mipmaps,
+            var ct when ct.StartsWith("audio/") => ProcessingTypeEnum.Transcode,
+            var ct when ct.StartsWith("model/") || ct.Contains("gltf") => ProcessingTypeEnum.Lod_generation,
+            _ => ProcessingTypeEnum.Validation
         };
     }
 
@@ -307,27 +603,20 @@ public sealed class AssetProcessingWorker : BackgroundService
         string errorMessage,
         CancellationToken cancellationToken)
     {
-        if (_clientEventPublisher == null)
-        {
-            _logger.LogWarning(
-                "Cannot emit failure event for asset {AssetId}: IClientEventPublisher not available",
-                job.AssetId);
-            return;
-        }
-
         try
         {
-            var failureEvent = new AssetProcessingFailedEvent
+            // Publish service-level event via message bus (not client event)
+            var failureEvent = new AssetProcessingCompletedEvent
             {
-                Event_id = Guid.NewGuid(),
-                Event_name = AssetProcessingFailedEventEvent_name.Asset_processing_failed,
-                Asset_id = job.AssetId,
-                Error_message = errorMessage,
-                Error_code = ProcessingErrorCode.PROCESSING_FAILED,
-                Retry_available = true
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AssetId = job.AssetId,
+                ProcessingType = MapProcessingType(job.ContentType),
+                Success = false,
+                ErrorMessage = errorMessage
             };
 
-            await _clientEventPublisher.PublishToSessionAsync(job.SessionId, failureEvent, cancellationToken);
+            await _messageBus.TryPublishAsync("asset.processing.completed", failureEvent);
         }
         catch (Exception ex)
         {
@@ -337,4 +626,6 @@ public sealed class AssetProcessingWorker : BackgroundService
                 job.AssetId);
         }
     }
+
+    #endregion
 }

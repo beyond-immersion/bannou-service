@@ -13,7 +13,6 @@ Usage:
 
 import sys
 from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
 
 # Use ruamel.yaml to parse YAML files
@@ -34,7 +33,7 @@ def to_title_case(name: str) -> str:
 
 def extract_service_name(filename: str) -> str:
     """Extract service name from configuration schema filename."""
-    # accounts-configuration.yaml -> accounts
+    # account-configuration.yaml -> account
     name = filename.replace('-configuration.yaml', '')
     return name
 
@@ -124,7 +123,6 @@ def generate_markdown(config_by_service: dict) -> str:
     lines = [
         "# Generated Configuration Reference",
         "",
-        f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "> **Source**: `schemas/*-configuration.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
@@ -175,7 +173,7 @@ def generate_markdown(config_by_service: dict) -> str:
     lines.extend([
         "## Environment Variable Naming Convention",
         "",
-        "Per Tenet 2, all configuration environment variables follow `{SERVICE}_{PROPERTY}` pattern:",
+        "Per FOUNDATION TENETS, all configuration environment variables follow `{SERVICE}_{PROPERTY}` pattern:",
         "",
         "```bash",
         "# Service prefix in UPPER_CASE",
@@ -197,7 +195,7 @@ def generate_markdown(config_by_service: dict) -> str:
     lines.extend([
         "## Required Configuration (Fail-Fast)",
         "",
-        "Per Tenet 21, configuration marked as **REQUIRED** will cause the service to",
+        "Per IMPLEMENTATION TENETS, configuration marked as **REQUIRED** will cause the service to",
         "throw an exception at startup if not configured. This prevents running with",
         "insecure defaults or missing critical configuration.",
         "",

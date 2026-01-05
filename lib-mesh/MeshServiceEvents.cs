@@ -41,7 +41,6 @@ public partial class MeshService
         try
         {
             // Check if this instance is already registered
-            // evt.ServiceId is already a Guid in the schema
             var existingEndpoint = await _redisManager.GetEndpointByInstanceIdAsync(evt.ServiceId);
 
             if (existingEndpoint != null)
@@ -95,10 +94,13 @@ public partial class MeshService
 
     /// <summary>
     /// Handle full service mappings events.
-    /// Updates the local service-to-app-id cache atomically.
+    /// Updates the shared IServiceAppMappingResolver atomically so all generated clients
+    /// (AuthClient, AccountClient, etc.) route to the correct app-ids.
+    /// IMPORTANT: Empty mappings events are valid and mean "reset to default routing" -
+    /// all services should route to the default app-id ("bannou").
     /// </summary>
     /// <param name="evt">The full service mappings event.</param>
-    public Task HandleServiceMappingsAsync(FullServiceMappingsEvent evt)
+    public async Task HandleServiceMappingsAsync(FullServiceMappingsEvent evt)
     {
         _logger.LogDebug(
             "Processing service mappings update v{Version} with {Count} mappings",
@@ -107,34 +109,50 @@ public partial class MeshService
 
         try
         {
-            if (evt.Mappings == null || evt.Mappings.Count == 0)
-            {
-                _logger.LogWarning("Received empty service mappings event");
-                return Task.CompletedTask;
-            }
+            // Convert to dictionary - empty is valid (means reset to default)
+            var mappingsDict = evt.Mappings?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                ?? new Dictionary<string, string>();
 
-            var updated = UpdateMappingsCache(
-                evt.Mappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            // Update the shared ServiceAppMappingResolver used by all generated clients.
+            // Empty mappings = reset to default routing (all services -> "bannou").
+            var updated = _mappingResolver.ReplaceAllMappings(
+                mappingsDict,
+                evt.DefaultAppId ?? AppConstants.DEFAULT_APP_NAME,
                 evt.Version);
 
             if (updated)
             {
-                _logger.LogInformation(
-                    "Updated service mappings cache to v{Version} with {Count} mappings",
-                    evt.Version,
-                    evt.Mappings.Count);
+                if (mappingsDict.Count == 0)
+                {
+                    _logger.LogInformation(
+                        "Reset ServiceAppMappingResolver to default routing v{Version} (all services -> {DefaultAppId})",
+                        evt.Version,
+                        evt.DefaultAppId ?? AppConstants.DEFAULT_APP_NAME);
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "Updated ServiceAppMappingResolver to v{Version} with {Count} mappings",
+                        evt.Version,
+                        mappingsDict.Count);
 
-                // Note: Not persisting to Redis here because:
-                // - All active instances receive this event and update their local cache
-                // - Newly deployed containers fetch mappings via HTTP from source app-id
-                // - The orchestrator persists routing data via OrchestratorStateManager
+                    // Log the mappings for debugging
+                    foreach (var mapping in mappingsDict.Take(10))
+                    {
+                        _logger.LogDebug("  {Service} -> {AppId}", mapping.Key, mapping.Value);
+                    }
+                    if (mappingsDict.Count > 10)
+                    {
+                        _logger.LogDebug("  ... and {Count} more", mappingsDict.Count - 10);
+                    }
+                }
             }
             else
             {
                 _logger.LogDebug(
-                    "Skipped stale mappings update v{Version} (current: {Current})",
+                    "Skipped stale mappings update v{Version} (current: v{Current})",
                     evt.Version,
-                    _mappingsCacheVersion);
+                    _mappingResolver.CurrentVersion);
             }
         }
         catch (Exception ex)
@@ -142,7 +160,7 @@ public partial class MeshService
             _logger.LogError(ex, "Error processing service mappings event");
         }
 
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <summary>

@@ -1,7 +1,7 @@
+using BeyondImmersion.BannouService.Configuration;
 using K4os.Compression.LZ4;
 using Microsoft.Extensions.Logging;
 using System.Buffers.Binary;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Asset.Bundles;
 
@@ -91,7 +91,9 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        _manifest = JsonSerializer.Deserialize(manifestBytes, BannouBundleJsonContext.Default.BundleManifest)
+        // Deserialize using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
+        var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
+        _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");
 
         // Read index
@@ -137,7 +139,9 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        _manifest = JsonSerializer.Deserialize(manifestBytes, BannouBundleJsonContext.Default.BundleManifest)
+        // Deserialize using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
+        var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
+        _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");
 
         _index = BundleIndex.ReadFrom(_inputStream);
@@ -155,8 +159,7 @@ public sealed class BannouBundleReader : IDisposable
     /// </summary>
     public BundleAssetEntry? GetAssetEntry(string assetId)
     {
-        EnsureHeaderRead();
-        return _manifest!.Assets.FirstOrDefault(a => a.AssetId == assetId);
+        return Manifest.Assets.FirstOrDefault(a => a.AssetId == assetId);
     }
 
     /// <summary>
@@ -164,14 +167,14 @@ public sealed class BannouBundleReader : IDisposable
     /// </summary>
     public BundleAssetEntry GetAssetEntryByIndex(int index)
     {
-        EnsureHeaderRead();
+        var manifest = Manifest; // Ensures header is read and caches reference
 
-        if (index < 0 || index >= _manifest!.Assets.Count)
+        if (index < 0 || index >= manifest.Assets.Count)
         {
             throw new ArgumentOutOfRangeException(nameof(index));
         }
 
-        return _manifest.Assets[index];
+        return manifest.Assets[index];
     }
 
     /// <summary>
@@ -194,9 +197,7 @@ public sealed class BannouBundleReader : IDisposable
     /// </summary>
     public byte[] ReadAssetByIndex(int index)
     {
-        EnsureHeaderRead();
-
-        var indexEntry = _index!.GetEntry(index);
+        var indexEntry = Index.GetEntry(index);
         var assetEntry = GetAssetEntryByIndex(index);
 
         // Seek to asset data
@@ -247,9 +248,7 @@ public sealed class BannouBundleReader : IDisposable
     /// </summary>
     public async Task<byte[]> ReadAssetByIndexAsync(int index, CancellationToken cancellationToken = default)
     {
-        EnsureHeaderRead();
-
-        var indexEntry = _index!.GetEntry(index);
+        var indexEntry = Index.GetEntry(index);
         var assetEntry = GetAssetEntryByIndex(index);
 
         _inputStream.Position = _dataOffset + indexEntry.Offset;
@@ -295,11 +294,11 @@ public sealed class BannouBundleReader : IDisposable
     /// </summary>
     public IEnumerable<(BundleAssetEntry Entry, byte[] Data)> ReadAllAssets()
     {
-        EnsureHeaderRead();
+        var manifest = Manifest; // Ensures header is read and caches reference
 
-        for (var i = 0; i < _manifest!.Assets.Count; i++)
+        for (var i = 0; i < manifest.Assets.Count; i++)
         {
-            var entry = _manifest.Assets[i];
+            var entry = manifest.Assets[i];
             var data = ReadAssetByIndex(i);
             yield return (entry, data);
         }
@@ -311,11 +310,11 @@ public sealed class BannouBundleReader : IDisposable
     public async IAsyncEnumerable<(BundleAssetEntry Entry, byte[] Data)> ReadAllAssetsAsync(
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        EnsureHeaderRead();
+        var manifest = Manifest; // Ensures header is read and caches reference
 
-        for (var i = 0; i < _manifest!.Assets.Count; i++)
+        for (var i = 0; i < manifest.Assets.Count; i++)
         {
-            var entry = _manifest.Assets[i];
+            var entry = manifest.Assets[i];
             var data = await ReadAssetByIndexAsync(i, cancellationToken);
             yield return (entry, data);
         }

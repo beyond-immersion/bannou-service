@@ -3,160 +3,36 @@ info:
   title: State Service Events
   description: |
     Event models for State service RabbitMQ pub/sub.
-    Contains state change events for debugging/auditing and migration events.
-  version: 1.0.0
-  # No x-event-subscriptions - State service doesn't subscribe to external events
-  x-event-publications:
-    - topic: state.changed
-      event: StateChangedEvent
-      description: Published when state changes (if PublishStateChanges=true)
-    - topic: state.migration
-      event: StoreMigrationEvent
-      description: Published during store migration operations
 
-paths: {} # Events don't have HTTP paths
+    NOTE: This is an INTERNAL service. State change events (StateChanged,
+    StoreMigration, StoreHealth) were planned for debugging/auditing but never
+    implemented. They would be expensive to publish for every operation.
+    See docs/CLEANED_EVENTS.md for documentation of these planned events.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  # No subscriptions - State service doesn't subscribe to external events
+  x-event-subscriptions: []
+  # No events currently implemented - debug/audit events removed as aspirational
+  x-event-publications: []
+
+paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    StateChangedEvent:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
       type: object
-      description: |
-        Published when state changes (optional, for debugging/auditing).
-        Only published if PublishStateChanges=true in configuration.
+      additionalProperties: false
       required:
         - eventId
         - timestamp
-        - storeName
-        - key
-        - operation
       properties:
         eventId:
           type: string
-          format: uuid
-          description: Unique identifier for this event
+          description: Unique identifier for this event instance
         timestamp:
           type: string
           format: date-time
-          description: When the state change occurred
-        storeName:
-          type: string
-          description: Name of the state store
-        key:
-          type: string
-          description: Key that was changed
-        operation:
-          type: string
-          enum:
-            - get
-            - save
-            - delete
-            - bulk_get
-            - query
-          description: Type of operation performed
-        etag:
-          type: string
-          nullable: true
-          description: New ETag after the operation (for save operations)
-        sourceService:
-          type: string
-          nullable: true
-          description: Service that performed the operation
-        previousEtag:
-          type: string
-          nullable: true
-          description: Previous ETag (for optimistic concurrency tracking)
-        success:
-          type: boolean
-          description: Whether the operation succeeded
-
-    StoreMigrationEvent:
-      type: object
-      description: Published during store migration operations (e.g., Redis to MySQL)
-      required:
-        - eventId
-        - timestamp
-        - storeName
-        - status
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this migration event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this status update occurred
-        storeName:
-          type: string
-          description: Name of the store being migrated
-        sourceBackend:
-          type: string
-          enum:
-            - redis
-            - mysql
-          description: Source backend type
-        targetBackend:
-          type: string
-          enum:
-            - redis
-            - mysql
-          description: Target backend type
-        status:
-          type: string
-          enum:
-            - started
-            - progress
-            - completed
-            - failed
-          description: Current migration status
-        keysProcessed:
-          type: integer
-          description: Number of keys processed so far
-        totalKeys:
-          type: integer
-          description: Total keys to migrate
-        errorMessage:
-          type: string
-          nullable: true
-          description: Error message if migration failed
-        estimatedTimeRemaining:
-          type: integer
-          nullable: true
-          description: Estimated seconds remaining
-
-    StoreHealthEvent:
-      type: object
-      description: Published for store health monitoring
-      required:
-        - eventId
-        - timestamp
-        - storeName
-        - healthy
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this health event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the health check occurred
-        storeName:
-          type: string
-          description: Name of the store
-        backend:
-          type: string
-          enum:
-            - redis
-            - mysql
-          description: Backend type
-        healthy:
-          type: boolean
-          description: Whether the store is healthy
-        latencyMs:
-          type: integer
-          description: Health check latency in milliseconds
-        errorMessage:
-          type: string
-          nullable: true
-          description: Error message if unhealthy
+          description: When the event was created (UTC)

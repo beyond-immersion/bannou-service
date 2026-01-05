@@ -36,7 +36,7 @@ SERVICES_ENABLED=true
 
 # Production: Only specific services on this node
 SERVICES_ENABLED=false
-ACCOUNTS_SERVICE_ENABLED=true
+ACCOUNT_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 ```
 
@@ -75,13 +75,13 @@ All Bannou service APIs use POST requests exclusively. This isn't RESTful tradit
 
 **The problem with path parameters**:
 ```
-GET /accounts/{accountId}     # accountId varies - can't map to single GUID
-GET /accounts/abc123          # Different path than /accounts/xyz789
+GET /account/{accountId}     # accountId varies - can't map to single GUID
+GET /account/abc123          # Different path than /account/xyz789
 ```
 
 **The solution**:
 ```
-POST /accounts/get            # Static path - maps to exactly one GUID
+POST /account/get            # Static path - maps to exactly one GUID
 Body: {"account_id": "abc123"}
 ```
 
@@ -94,13 +94,13 @@ When a WebSocket message arrives, the Connect service extracts a 16-byte GUID fr
 Each service is an independent **plugin** - a .NET assembly that can be loaded or excluded at startup:
 
 ```
-lib-accounts/           # Accounts service plugin
+lib-account/            # Account service plugin
 ├── Generated/          # Auto-generated from schema (never edit)
-│   ├── AccountsController.Generated.cs
-│   ├── IAccountsService.cs
-│   └── AccountsModels.cs
-├── AccountsService.cs  # Business logic (only manual file)
-└── lib-accounts.csproj
+│   ├── AccountController.cs
+│   ├── IAccountService.cs
+│   └── AccountModels.cs
+├── AccountService.cs   # Business logic (only manual file)
+└── lib-account.csproj
 ```
 
 **Key principles**:
@@ -111,8 +111,8 @@ lib-accounts/           # Accounts service plugin
 
 **Service registration**:
 ```csharp
-[BannouService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
-public class AccountsService : IAccountsService
+[BannouService("account", typeof(IAccountService), lifetime: ServiceLifetime.Scoped)]
+public class AccountService : IAccountService
 {
     // Business logic implementation
 }
@@ -128,7 +128,7 @@ Bannou uses three infrastructure libraries to abstract infrastructure concerns, 
 Services don't know if they're using Redis, MySQL, or any other store:
 ```csharp
 // In constructor
-_stateStore = stateStoreFactory.Create<AccountModel>("accounts");
+_stateStore = stateStoreFactory.Create<AccountModel>("account");
 
 // Usage
 await _stateStore.SaveAsync(key, data);
@@ -219,8 +219,8 @@ Messages use binary headers for routing, JSON payloads for data:
 
 **Client-salted GUIDs**: Each client gets unique GUIDs for the same endpoints, preventing cross-client security exploits:
 ```
-Client A: /accounts/get → GUID abc123...
-Client B: /accounts/get → GUID xyz789...  (different!)
+Client A: /account/get → GUID abc123...
+Client B: /account/get → GUID xyz789...  (different!)
 ```
 
 ### Capability Manifest
@@ -230,7 +230,7 @@ Clients receive a dynamic list of available APIs when connecting:
 {
   "capabilities": [
     {
-      "name": "accounts/get",
+      "name": "account/get",
       "guid": "abc123...",
       "method": "POST",
       "requires_auth": true
@@ -268,7 +268,7 @@ Services distributed by function:
 ```bash
 # Auth nodes
 AUTH_SERVICE_ENABLED=true
-ACCOUNTS_SERVICE_ENABLED=true
+ACCOUNT_SERVICE_ENABLED=true
 
 # NPC processing nodes
 BEHAVIOR_SERVICE_ENABLED=true
@@ -285,7 +285,7 @@ The Orchestrator service can dynamically manage deployments using presets:
 # provisioning/orchestrator/presets/http-tests.yaml
 services:
   - auth
-  - accounts
+  - account
   - testing
 ```
 

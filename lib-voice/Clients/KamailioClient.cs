@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -7,12 +8,13 @@ namespace BeyondImmersion.BannouService.Voice.Clients;
 
 /// <summary>
 /// HTTP client for Kamailio JSONRPC 2.0 control protocol.
-/// Thread-safe implementation suitable for multi-instance deployments (Tenet 4).
+/// Thread-safe implementation suitable for multi-instance deployments (FOUNDATION TENETS).
 /// </summary>
 public class KamailioClient : IKamailioClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<KamailioClient> _logger;
+    private readonly IMessageBus _messageBus;
     private readonly string _rpcEndpoint;
     private long _requestId;
 
@@ -31,14 +33,17 @@ public class KamailioClient : IKamailioClient
     /// <param name="host">Kamailio host address.</param>
     /// <param name="port">Kamailio JSONRPC port (default 5080).</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="messageBus">Message bus for error event publishing.</param>
     public KamailioClient(
         HttpClient httpClient,
         string host,
         int port,
-        ILogger<KamailioClient> logger)
+        ILogger<KamailioClient> logger,
+        IMessageBus messageBus)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _rpcEndpoint = $"http://{host}:{port}/RPC";
     }
 
@@ -53,6 +58,8 @@ public class KamailioClient : IKamailioClient
                 return Enumerable.Empty<ActiveDialog>();
             }
 
+            // Defensive null coalescing for external Kamailio API response fields
+            // External API may return null for any string field; empty string is safe default
             return response.Dialogs.Select(d => new ActiveDialog
             {
                 DialogId = d.HashEntry ?? string.Empty,
@@ -68,6 +75,14 @@ public class KamailioClient : IKamailioClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get active dialogs from Kamailio");
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "GetActiveDialogs",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "kamailio",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return Enumerable.Empty<ActiveDialog>();
         }
     }
@@ -92,6 +107,15 @@ public class KamailioClient : IKamailioClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to terminate dialog {DialogId}", dialogId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "TerminateDialog",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "kamailio",
+                details: new { dialogId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return false;
         }
     }
@@ -107,6 +131,14 @@ public class KamailioClient : IKamailioClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to reload Kamailio dispatcher");
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "ReloadDispatcher",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "kamailio",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return false;
         }
     }
@@ -139,6 +171,14 @@ public class KamailioClient : IKamailioClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get Kamailio stats");
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "GetStats",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "kamailio",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return new KamailioStats();
         }
     }
@@ -186,7 +226,7 @@ public class KamailioClient : IKamailioClient
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogWarning("Kamailio JSONRPC failed: {StatusCode}", response.StatusCode);
+            _logger.LogError("Kamailio JSONRPC failed: {StatusCode}", response.StatusCode);
             return null;
         }
 
@@ -194,7 +234,7 @@ public class KamailioClient : IKamailioClient
 
         if (jsonResponse?.Error != null)
         {
-            _logger.LogWarning("Kamailio JSONRPC error: {Code} - {Message}",
+            _logger.LogError("Kamailio JSONRPC error: {Code} - {Message}",
                 jsonResponse.Error.Code, jsonResponse.Error.Message);
             return null;
         }

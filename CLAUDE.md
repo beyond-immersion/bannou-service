@@ -6,6 +6,28 @@
 
 ---
 
+## ⛔ FORBIDDEN DESTRUCTIVE COMMANDS ⛔
+
+**The following commands are ABSOLUTELY FORBIDDEN without explicit user approval:**
+
+- `git checkout` - Destroys uncommitted work
+- `git stash` - Hides changes that may be lost
+- `git reset` - Can destroy commit history
+- `mv` (for code files) - Can lose files or break references
+
+**Why these are forbidden:**
+These commands can destroy work in progress, hide changes, or cause data loss. Claude has repeatedly caused damage by using these commands without understanding the consequences.
+
+**If you need to undo changes:**
+1. ASK the user first
+2. Explain what you want to undo and why
+3. Wait for explicit approval
+4. Use the least destructive method possible
+
+**Principle**: Understand before acting. Never assume reverting is safe.
+
+---
+
 ## Core Architecture Reference
 
 @docs/reference/TENETS.md
@@ -59,6 +81,46 @@
 - **Example Incorrect**: `var value = variable!;` or `var value = (Type)null;`
 - **Test Rule**: Tests should use real data, not null casts. If testing null handling, use nullable types properly.
 - **Principle**: Explicit null safety prevents segmentation faults and provides clear error messages
+
+### Null-Coalescing to Empty String (`?? string.Empty`)
+
+**General Rule**: Avoid `?? string.Empty` as it hides bugs by silently coercing null to empty string. Instead:
+- Make the property nullable if empty is meaningless
+- Throw an exception if null indicates a programming error or data corruption
+- Validate and fail early at system boundaries
+
+**Two Acceptable Patterns** (must include explanatory comment):
+
+1. **Compiler Satisfaction**: When the coalesce can NEVER execute because the value is already validated non-null, but the compiler's nullable flow analysis can't track it:
+   ```csharp
+   // GetString() returns string? but cannot return null when ValueKind is String;
+   // coalesce satisfies compiler's nullable analysis (will never execute)
+   JsonValueKind.String => element.GetString() ?? string.Empty,
+
+   // validDocuments only contains docs with non-null Content (filtered above)
+   // The null-coalesce satisfies the compiler but will never execute
+   Content = d.Content ?? string.Empty,
+   ```
+
+2. **External Service Defensive Coding**: When receiving data from third-party services (MinIO, Kamailio, etc.) where we have no control over the response. Must include:
+   - Error log when unexpected null is encountered (not warning - this is a third-party failure, not user error)
+   - Error event publication for monitoring
+   - Comment explaining the defensive nature
+   ```csharp
+   // Defensive coding for external service: MinIO should always provide ETag,
+   // but we handle null gracefully since this is third-party webhook data
+   if (string.IsNullOrEmpty(etag))
+   {
+       _logger.LogError("MinIO webhook: Missing ETag for upload {UploadId}", uploadId);
+       await _messageBus.TryPublishErrorAsync(...);
+   }
+   ETag = etag?.Trim('"') ?? string.Empty, // Defensive: external service may omit ETag
+   ```
+
+**Unacceptable Patterns**:
+- Silent coercion without validation: `Name = request.Name ?? string.Empty`
+- Hiding required field nullability: `StubName = subscription.StubName ?? string.Empty` (should validate and fail)
+- Configuration defaults: `ConnectionString = config.DbConnection ?? string.Empty` (should throw on missing config)
 
 ### NEVER Export Environment Variables
 - **Mandatory**: Never use `export` commands to set environment variables on the local machine. This confuses containerization workflows and creates debugging issues.
@@ -123,7 +185,7 @@ Reference the Makefile in the repository root for all available commands and est
 
 **🚨 CRITICAL RULE - SERVICE IMPLEMENTATION ONLY**:
 **NEVER edit ANY file in a service plugin except the service implementation class (e.g., `ConnectService.cs`)**
-- **Generated Files**: NEVER edit any files in `*/Generated/` directories or `.Generated.cs` files
+- **Generated Files**: NEVER edit any files in `*/Generated/` directories
 - **Controllers**: NEVER create or edit controller files - they are auto-generated wrappers
 - **Interfaces**: NEVER edit generated interfaces - service implementation is the source of truth
 - **Models**: NEVER edit generated models - they come from OpenAPI schemas
@@ -148,7 +210,7 @@ Reference the Makefile in the repository root for all available commands and est
 
 **Architecture Rules**:
 - **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom enum
-- **Never Edit Generated Files**: Any `*/Generated/` or `.Generated.cs` files are auto-generated
+- **Never Edit Generated Files**: Any files in `*/Generated/` directories are auto-generated
 - **Use Generated Clients**: Service-to-service calls use NSwag-generated clients, not direct interfaces
 - **Infrastructure Libs Pattern**: Use lib-state, lib-messaging, and lib-mesh for all infrastructure (never direct Redis/RabbitMQ/HTTP)
 - **Controller = Service Wrapper**: Generated controllers are just wrappers around service implementations
@@ -183,9 +245,9 @@ Reference the Makefile in the repository root for all available commands and est
 
 ### Service Architecture
 ```
-lib-{service}/                        # Single consolidated service plugin  
+lib-{service}/                        # Single consolidated service plugin
 ├── Generated/                        # NSwag auto-generated files
-│   ├── {Service}Controller.Generated.cs  # Abstract controller base  
+│   ├── {Service}Controller.cs        # Abstract controller base
 │   ├── I{Service}Service.cs          # Service interface (generated from controller)
 │   ├── {Service}Client.cs            # Service client for inter-service calls
 │   └── {Service}ServiceConfiguration.cs  # Generated configuration class
@@ -292,7 +354,7 @@ await _messageBus.PublishAsync("event.topic", eventModel);
 **Focus**: NPC Behavior Systems with ABML YAML DSL for autonomous character behaviors
 
 ### Active Services
-**✅ Production Ready**: Accounts, Auth, Connect (WebSocket gateway), Website, Behavior foundation  
+**✅ Production Ready**: Account, Auth, Connect (WebSocket gateway), Website, Behavior foundation  
 **🔧 In Development**: ABML YAML Parser, Character Agent Services, Cross-service event integration
 
 ## Troubleshooting Reference

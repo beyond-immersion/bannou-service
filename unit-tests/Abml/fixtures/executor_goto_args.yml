@@ -1,0 +1,16 @@
+version: "2.0"
+metadata:
+  id: goto_args
+flows:
+  start:
+    actions:
+      - set:
+          variable: x
+          value: "42"
+      - goto:
+          flow: process
+          args:
+            value: "${x}"
+  process:
+    actions:
+      - log: { message: "Value: ${value}" }

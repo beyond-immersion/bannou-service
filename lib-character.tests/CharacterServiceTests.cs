@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -114,61 +115,20 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    ///
+    /// See: docs/reference/tenets/TESTING_PATTERNS.md
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        var service = CreateService();
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullRealmClient_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, null!, _mockSpeciesClient.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullSpeciesClient_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, null!, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, null!));
-    }
+    public void CharacterService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<CharacterService>();
 
     #endregion
 
@@ -291,21 +251,49 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
                 UpdatedAt = DateTimeOffset.UtcNow
             });
 
+        // Capture saved model
+        CharacterModel? savedModel = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        // Capture published event
+        CharacterUpdatedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "character.updated",
+                It.IsAny<CharacterUpdatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterUpdatedEvent, PublishOptions?, Guid?, CancellationToken>((_, e, _, _, _) => capturedEvent = e)
+            .ReturnsAsync(true);
+
         // Act
         var (status, response) = await service.UpdateCharacterAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("Updated Name", response.Name);
         Assert.Equal(CharacterStatus.Dead, response.Status);
 
-        // Verify update event published via IMessageBus
-        _mockMessageBus.Verify(m => m.PublishAsync(
-            "character.updated",
-            It.IsAny<CharacterUpdatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Assert - State was saved with correct values
+        Assert.NotNull(savedModel);
+        Assert.Equal("Updated Name", savedModel.Name);
+        Assert.Equal(CharacterStatus.Dead, savedModel.Status);
+
+        // Assert - Event was published with correct content
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(characterId, capturedEvent.CharacterId);
+        Assert.Contains("name", capturedEvent.ChangedFields);
+        Assert.Contains("status", capturedEvent.ChangedFields);
+        // Verify full event population (all required schema fields)
+        Assert.Equal("Updated Name", capturedEvent.Name);
+        Assert.Equal(realmId, capturedEvent.RealmId);
+        Assert.NotEqual(Guid.Empty, capturedEvent.SpeciesId);
+        Assert.Equal("Dead", capturedEvent.Status);
     }
 
     [Fact]
@@ -342,14 +330,26 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
                 UpdatedAt = DateTimeOffset.UtcNow
             });
 
+        // Capture saved model
+        CharacterModel? savedModel = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
         // Act
         var (status, response) = await service.UpdateCharacterAsync(request);
 
-        // Assert
+        // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(CharacterStatus.Dead, response.Status);
         Assert.Equal(deathDate, response.DeathDate);
+
+        // Assert - State was saved with death date and status correctly set
+        Assert.NotNull(savedModel);
+        Assert.Equal(CharacterStatus.Dead, savedModel.Status);
+        Assert.Equal(deathDate, savedModel.DeathDate);
     }
 
     [Fact]
@@ -407,10 +407,11 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify NO update event published (no changes)
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 

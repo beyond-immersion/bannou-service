@@ -8,9 +8,13 @@ paths: {}
 components:
   schemas:
     RealmCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to realm.created when a realm is created
       required:
+      - eventName
       - eventId
       - timestamp
       - realmId
@@ -21,47 +25,62 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: &id001
+        eventName:
+          type: string
+          default: realm.created
+          description: 'Event type identifier: realm.created'
+        realmId: &id001
           type: string
           format: uuid
-          description: Unique identifier for this event
-        timestamp: &id002
+          description: "Unique identifier for the realm"
+        code: &id002
+          type: string
+          description: "Short code identifier for the realm used in URLs and references"
+        name: &id003
+          type: string
+          description: "Display name of the realm"
+        description: &id004
+          type: string
+          nullable: true
+          description: "Detailed description of the realm and its purpose"
+        category: &id005
+          type: string
+          nullable: true
+          description: "Category classification for organizing realms"
+        isActive: &id006
+          type: boolean
+          description: "Whether the realm is currently active and accessible"
+        isDeprecated: &id007
+          type: boolean
+          description: "Whether the realm has been marked as deprecated"
+        deprecatedAt: &id008
           type: string
           format: date-time
-          description: When this event occurred
-        realmId: &id003
+          description: "Timestamp when the realm was deprecated"
+        deprecationReason: &id009
           type: string
-          format: uuid
-        code: &id004
-          type: string
-        name: &id005
-          type: string
-        description: &id006
-          type: string
-        category: &id007
-          type: string
-        isActive: &id008
-          type: boolean
-        isDeprecated: &id009
-          type: boolean
-        deprecatedAt: &id010
-          type: string
-          format: date-time
-        deprecationReason: &id011
-          type: string
-        metadata: &id012
+          nullable: true
+          description: "Explanation for why the realm was deprecated"
+        metadata: &id010
           type: object
           additionalProperties: true
-        createdAt: &id013
+          description: "Additional custom key-value data associated with the realm"
+        createdAt: &id011
           type: string
           format: date-time
-        updatedAt: &id014
+          description: "Timestamp when the realm was created"
+        updatedAt: &id012
           type: string
           format: date-time
+          description: "Timestamp when the realm was last updated"
     RealmUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to realm.updated when a realm is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - realmId
@@ -73,29 +92,35 @@ components:
       - updatedAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        realmId: *id003
-        code: *id004
-        name: *id005
-        description: *id006
-        category: *id007
-        isActive: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        metadata: *id012
-        createdAt: *id013
-        updatedAt: *id014
+        eventName:
+          type: string
+          default: realm.updated
+          description: 'Event type identifier: realm.updated'
+        realmId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        category: *id005
+        isActive: *id006
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        metadata: *id010
+        createdAt: *id011
+        updatedAt: *id012
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     RealmDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to realm.deleted when a realm is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - realmId
@@ -106,20 +131,22 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        realmId: *id003
-        code: *id004
-        name: *id005
-        description: *id006
-        category: *id007
-        isActive: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        metadata: *id012
-        createdAt: *id013
-        updatedAt: *id014
+        eventName:
+          type: string
+          default: realm.deleted
+          description: 'Event type identifier: realm.deleted'
+        realmId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        category: *id005
+        isActive: *id006
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        metadata: *id010
+        createdAt: *id011
+        updatedAt: *id012
         deletedReason:
           type: string
           nullable: true

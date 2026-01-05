@@ -31,7 +31,8 @@ public class DocumentationServicePlugin : StandardServicePlugin<IDocumentationSe
             if (stateStoreFactory.SupportsSearch("documentation-statestore"))
             {
                 logger.LogInformation("Using Redis Search (FT.*) for documentation full-text search");
-                return new RedisSearchIndexService(stateStoreFactory, logger, config);
+                var messageBus = sp.GetRequiredService<IMessageBus>();
+                return new RedisSearchIndexService(stateStoreFactory, logger, config, messageBus);
             }
             else
             {

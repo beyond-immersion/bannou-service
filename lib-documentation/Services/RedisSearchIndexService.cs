@@ -13,6 +13,7 @@ public class RedisSearchIndexService : ISearchIndexService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<RedisSearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
+    private readonly IMessageBus _messageBus;
 
     private const string STATE_STORE = "documentation-statestore";
     private const string INDEX_PREFIX = "doc-idx:";
@@ -48,11 +49,13 @@ public class RedisSearchIndexService : ISearchIndexService
     public RedisSearchIndexService(
         IStateStoreFactory stateStoreFactory,
         ILogger<RedisSearchIndexService> logger,
-        DocumentationServiceConfiguration configuration)
+        DocumentationServiceConfiguration configuration,
+        IMessageBus messageBus)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
     }
 
     /// <inheritdoc />
@@ -112,6 +115,15 @@ public class RedisSearchIndexService : ISearchIndexService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to ensure Redis Search index '{Index}' exists", indexName);
+            await _messageBus.TryPublishErrorAsync(
+                "documentation",
+                "EnsureIndexExists",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "redis",
+                details: new { indexName, namespaceId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             throw;
         }
     }
@@ -159,6 +171,15 @@ public class RedisSearchIndexService : ISearchIndexService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to rebuild Redis Search index for namespace '{Namespace}'", namespaceId);
+            await _messageBus.TryPublishErrorAsync(
+                "documentation",
+                "RebuildIndex",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "redis",
+                details: new { namespaceId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             throw;
         }
     }
@@ -253,6 +274,15 @@ public class RedisSearchIndexService : ISearchIndexService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Redis Search failed for term '{Term}' in namespace '{Namespace}'", searchTerm, namespaceId);
+            await _messageBus.TryPublishErrorAsync(
+                "documentation",
+                "Search",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "redis",
+                details: new { searchTerm, namespaceId, category },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return Array.Empty<SearchResult>();
         }
     }

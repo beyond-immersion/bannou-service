@@ -39,13 +39,21 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseClientEvent" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
         "/templateDirectory:../templates/nswag"
 
     if [ $? -eq 0 ]; then
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$TARGET_DIR/CommonClientEventsModels.cs"
+        # Post-process: Fix EventName shadowing - add 'override' keyword
+        sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$TARGET_DIR/CommonClientEventsModels.cs"
+        # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
+        postprocess_enum_suppressions "$TARGET_DIR/CommonClientEventsModels.cs"
+        # Post-process: Add XML docs to AdditionalProperties
+        postprocess_additional_properties_docs "$TARGET_DIR/CommonClientEventsModels.cs"
         echo -e "${GREEN}✅ Common client events generated${NC}"
         echo -e "   📁 Output: $TARGET_DIR/CommonClientEventsModels.cs"
         GENERATED_EVENTS+=("BaseClientEvent")
@@ -119,6 +127,15 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
         # This is needed because the generated classes inherit from BaseClientEvent
         output_file="$TARGET_DIR/${pascal_case}ClientEventsModels.cs"
         sed -i 's/namespace BeyondImmersion\.Bannou\.'${pascal_case}'\.ClientEvents;/using BeyondImmersion.BannouService.ClientEvents;\n\nnamespace BeyondImmersion.Bannou.'${pascal_case}'.ClientEvents;/' "$output_file"
+
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$output_file"
+        # Post-process: Fix EventName shadowing - add 'override' keyword
+        sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$output_file"
+        # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
+        postprocess_enum_suppressions "$output_file"
+        # Post-process: Add XML docs to AdditionalProperties
+        postprocess_additional_properties_docs "$output_file"
 
         echo -e "${GREEN}  ✅ $pascal_case client events generated${NC}"
         echo -e "     📁 Output: $TARGET_DIR/${pascal_case}ClientEventsModels.cs"

@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
-using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +21,7 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
     {
         Logger?.LogDebug("Configuring messaging service dependencies");
 
-        // Register named HttpClient for subscription callbacks (Tenet 4: use IHttpClientFactory)
+        // Register named HttpClient for subscription callbacks (FOUNDATION TENETS: use IHttpClientFactory)
         services.AddHttpClient(MessagingService.HttpClientName);
         Logger?.LogDebug("Registered named HttpClient '{ClientName}' for subscription callbacks", MessagingService.HttpClientName);
 
@@ -43,57 +42,48 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             services.AddSingleton<IMessageBus>(sp => sp.GetRequiredService<InMemoryMessageBus>());
             services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<InMemoryMessageBus>());
 
+            // Register in-memory message tap
+            services.AddSingleton<IMessageTap, InMemoryMessageTap>();
+            Logger?.LogDebug("Registered InMemoryMessageTap for in-memory messaging");
+
             Logger?.LogDebug("In-memory messaging configured");
             return;
         }
 
-        // Configure MassTransit with RabbitMQ
-        var connectionTimeoutSeconds = config?.ConnectionTimeoutSeconds ?? 60;
-        var requestTimeoutSeconds = config?.RequestTimeoutSeconds ?? 30;
+        // Configure direct RabbitMQ (no MassTransit)
+        Logger?.LogInformation("Configuring direct RabbitMQ messaging (no MassTransit)");
 
-        Logger?.LogInformation(
-            "Configuring MassTransit with connection timeout {ConnectionTimeout}s, request timeout {RequestTimeout}s",
-            connectionTimeoutSeconds, requestTimeoutSeconds);
+        // Register shared connection manager
+        services.AddSingleton<RabbitMQConnectionManager>();
 
-        services.AddMassTransit(x =>
-        {
-            x.SetKebabCaseEndpointNameFormatter();
+        // Register retry buffer for handling transient publish failures
+        services.AddSingleton<MessageRetryBuffer>();
 
-            x.UsingRabbitMq((context, cfg) =>
-            {
-                var host = config?.RabbitMQHost ?? "rabbitmq";
-                var port = config?.RabbitMQPort ?? 5672;
-                var username = config?.RabbitMQUsername ?? "guest";
-                var password = config?.RabbitMQPassword ?? "guest";
-                var vhost = config?.RabbitMQVirtualHost ?? "/";
+        // Register messaging interfaces with direct RabbitMQ implementations
+        services.AddSingleton<IMessageBus, RabbitMQMessageBus>();
+        services.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
 
-                cfg.Host(host, (ushort)port, vhost, h =>
-                {
-                    h.Username(username);
-                    h.Password(password);
-                    h.RequestedConnectionTimeout(TimeSpan.FromSeconds(connectionTimeoutSeconds));
-                });
-
-                // Configure MassTransit to use BannouJson serializer options for consistency
-                cfg.ConfigureJsonSerializerOptions(opts => BannouJson.ApplyBannouSettings(opts));
-
-                // Set send/publish timeout
-                cfg.SendTopology.ConfigureErrorSettings = settings =>
-                    settings.SetQueueArgument("x-message-ttl", requestTimeoutSeconds * 1000);
-
-                cfg.ConfigureEndpoints(context);
-            });
-        });
-
-        // Register messaging interfaces
-        services.AddSingleton<IMessageBus, MassTransitMessageBus>();
-        services.AddSingleton<IMessageSubscriber, MassTransitMessageSubscriber>();
+        // Register message tap for forwarding events between exchanges
+        services.AddSingleton<IMessageTap, RabbitMQMessageTap>();
+        Logger?.LogDebug("Registered RabbitMQMessageTap for event tapping");
 
         // Register NativeEventConsumerBackend as IHostedService
         // This bridges RabbitMQ subscriptions to existing IEventConsumer fan-out
         // MANDATORY: This is always registered as messaging is required infrastructure
         services.AddHostedService<NativeEventConsumerBackend>();
         Logger?.LogInformation("Registered NativeEventConsumerBackend - messaging is required infrastructure");
+
+        // Register MessagingService concrete type in addition to interface
+        // This allows MessagingSubscriptionRecoveryService to access internal methods
+        // while still using the interface for standard DI patterns
+        services.AddSingleton<MessagingService>(sp =>
+            (MessagingService)sp.GetRequiredService<IMessagingService>());
+        Logger?.LogDebug("Registered MessagingService concrete type for recovery service access");
+
+        // Register subscription recovery service
+        // Recovers external HTTP callback subscriptions from lib-state on startup
+        services.AddHostedService<MessagingSubscriptionRecoveryService>();
+        Logger?.LogDebug("Registered MessagingSubscriptionRecoveryService for external subscription recovery");
 
         Logger?.LogDebug("Messaging service dependencies configured");
     }

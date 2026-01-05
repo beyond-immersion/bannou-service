@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Behavior Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for behavior service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: behavior-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    BehaviorCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to behavior.created when a behavior is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - behaviorId
+      - name
+      - category
+      - assetId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: behavior.created
+          description: 'Event type identifier: behavior.created'
+        behaviorId: &id001
+          type: string
+          description: "Unique identifier for the behavior"
+        name: &id002
+          type: string
+          description: "Human-readable name of the behavior"
+        category: &id003
+          type: string
+          description: "Category classification for the behavior"
+        bundleId: &id004
+          type: string
+          nullable: true
+          description: "Identifier of the bundle this behavior belongs to. Null if not bundled."
+        assetId: &id005
+          type: string
+          description: "Identifier of the asset associated with this behavior"
+        bytecodeSize: &id006
+          type: integer
+          format: int32
+          nullable: true
+          description: "Size of the compiled bytecode in bytes"
+        schemaVersion: &id007
+          type: string
+          nullable: true
+          description: "Version of the schema used for this behavior"
+        createdAt: &id008
+          type: string
+          format: date-time
+          description: "Timestamp when the behavior was created"
+        updatedAt: &id009
+          type: string
+          format: date-time
+          nullable: true
+          description: "Timestamp when the behavior was last updated"
+    BehaviorUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to behavior.updated when a behavior is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - behaviorId
+      - name
+      - category
+      - assetId
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: behavior.updated
+          description: 'Event type identifier: behavior.updated'
+        behaviorId: *id001
+        name: *id002
+        category: *id003
+        bundleId: *id004
+        assetId: *id005
+        bytecodeSize: *id006
+        schemaVersion: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    BehaviorDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to behavior.deleted when a behavior is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - behaviorId
+      - name
+      - category
+      - assetId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: behavior.deleted
+          description: 'Event type identifier: behavior.deleted'
+        behaviorId: *id001
+        name: *id002
+        category: *id003
+        bundleId: *id004
+        assetId: *id005
+        bytecodeSize: *id006
+        schemaVersion: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

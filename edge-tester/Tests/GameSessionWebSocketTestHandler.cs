@@ -154,7 +154,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 1: Creating test service 'arcadia'...");
                     var serviceResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/servicedata/services/create",
+                        "/game-service/services/create",
                         new
                         {
                             stubName = "arcadia",
@@ -177,7 +177,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         Console.WriteLine("   Service 'arcadia' already exists, fetching...");
                         var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
-                            "/servicedata/services/list",
+                            "/game-service/services/list",
                             new { },
                             timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
                         var listJson = System.Text.Json.Nodes.JsonNode.Parse(listResponse.GetRawText())?.AsObject();
@@ -220,7 +220,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Step 3: Looking up account ID for {authResult.Value.email}...");
                     var accountLookupResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/accounts/by-email",
+                        "/account/by-email",
                         new { email = authResult.Value.email },
                         timeout: TimeSpan.FromSeconds(5));
 
@@ -243,7 +243,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 4: Creating subscription...");
                     var subResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/subscriptions/create",
+                        "/subscription/create",
                         new
                         {
                             accountId = accountId,

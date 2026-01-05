@@ -1,7 +1,7 @@
+using BeyondImmersion.BannouService.Configuration;
 using K4os.Compression.LZ4;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Asset.Bundles;
 
@@ -163,8 +163,8 @@ public sealed class BannouBundleWriter : IDisposable
             Tags = tags
         };
 
-        // Write manifest
-        var manifestJson = JsonSerializer.Serialize(manifest, BannouBundleJsonContext.Default.BundleManifest);
+        // Write manifest using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
+        var manifestJson = BannouJson.Serialize(manifest);
         var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
 
         // Write manifest length (4 bytes, big-endian)
@@ -225,7 +225,8 @@ public sealed class BannouBundleWriter : IDisposable
             Tags = tags
         };
 
-        var manifestJson = JsonSerializer.Serialize(manifest, BannouBundleJsonContext.Default.BundleManifest);
+        // Write manifest using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
+        var manifestJson = BannouJson.Serialize(manifest);
         var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
 
         var lengthBuffer = new byte[4];
@@ -272,16 +273,4 @@ public sealed class BannouBundleWriter : IDisposable
         _disposed = true;
         _dataStream.Dispose();
     }
-}
-
-/// <summary>
-/// JSON serialization context for bundle types.
-/// </summary>
-[System.Text.Json.Serialization.JsonSerializable(typeof(BundleManifest))]
-[System.Text.Json.Serialization.JsonSerializable(typeof(BundleAssetEntry))]
-[System.Text.Json.Serialization.JsonSourceGenerationOptions(
-    PropertyNamingPolicy = System.Text.Json.Serialization.JsonKnownNamingPolicy.SnakeCaseLower,
-    WriteIndented = false)]
-public partial class BannouBundleJsonContext : System.Text.Json.Serialization.JsonSerializerContext
-{
 }

@@ -66,9 +66,23 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// <summary>
     /// Handle real-time heartbeat events from RabbitMQ.
     /// Writes heartbeat to Redis and updates service routing for each service in the heartbeat.
+    /// CRITICAL: Filters heartbeats from the control plane (app-id "bannou") to prevent the
+    /// orchestrator's own heartbeat from claiming services before deployed nodes can.
     /// </summary>
     private void OnHeartbeatReceived(ServiceHeartbeatEvent heartbeat)
     {
+        // CRITICAL: Ignore heartbeats from the control plane itself.
+        // The orchestrator runs on "bannou" and publishes heartbeats, but we don't want
+        // those heartbeats to initialize service routing. Only explicitly deployed nodes
+        // (with different app-ids) should claim services via heartbeats.
+        if (string.Equals(heartbeat.AppId, AppConstants.DEFAULT_APP_NAME, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogDebug(
+                "Ignoring heartbeat from control plane (app-id: {AppId})",
+                heartbeat.AppId);
+            return;
+        }
+
         var serviceNames = heartbeat.Services?.Select(s => s.ServiceName) ?? Enumerable.Empty<string>();
         _logger.LogDebug(
             "Aggregated heartbeat from {AppId}: InstanceId={InstanceId}, Status={Status}, Services=[{Services}]",
@@ -140,23 +154,52 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 }
                 else
                 {
-                    // No existing routing - heartbeat can initialize it
-                    var newRouting = new ServiceRouting
+                    // No local cache entry - check Redis first to avoid overwriting orchestrator-managed routing
+                    var redisRouting = await _stateManager.GetServiceRoutingAsync(serviceName);
+                    if (redisRouting != null)
                     {
-                        AppId = heartbeat.AppId,
-                        Host = heartbeat.AppId, // In Docker, container name = app_id
-                        Port = 80,
-                        Status = serviceStatus.Status.ToString().ToLowerInvariant(),
-                        LoadPercent = loadPercent
-                    };
+                        // Routing exists in Redis (set by another node or orchestrator)
+                        // Cache it locally and only update if from same app-id
+                        _currentRoutings[serviceName] = redisRouting;
 
-                    await _stateManager.WriteServiceRoutingAsync(serviceName, newRouting);
-                    _currentRoutings[serviceName] = newRouting;
-                    routingChanged = true;
+                        if (!string.Equals(redisRouting.AppId, heartbeat.AppId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _logger.LogDebug(
+                                "Found existing Redis routing for {ServiceName} -> {RoutedAppId}, ignoring heartbeat from {HeartbeatAppId}",
+                                serviceName, redisRouting.AppId, heartbeat.AppId);
+                            continue;
+                        }
 
-                    _logger.LogInformation(
-                        "Initialized routing for {ServiceName} -> {AppId} (status: {Status})",
-                        serviceName, heartbeat.AppId, serviceStatus.Status);
+                        // Same app-id - update status
+                        redisRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                        redisRouting.LoadPercent = loadPercent;
+                        redisRouting.LastUpdated = DateTimeOffset.UtcNow;
+                        await _stateManager.WriteServiceRoutingAsync(serviceName, redisRouting);
+
+                        _logger.LogDebug(
+                            "Synced routing from Redis for {ServiceName} -> {AppId} (status: {Status})",
+                            serviceName, heartbeat.AppId, serviceStatus.Status);
+                    }
+                    else
+                    {
+                        // No routing anywhere - heartbeat can initialize it
+                        var newRouting = new ServiceRouting
+                        {
+                            AppId = heartbeat.AppId,
+                            Host = heartbeat.AppId, // In Docker, container name = app_id
+                            Port = 80,
+                            Status = serviceStatus.Status.ToString().ToLowerInvariant(),
+                            LoadPercent = loadPercent
+                        };
+
+                        await _stateManager.WriteServiceRoutingAsync(serviceName, newRouting);
+                        _currentRoutings[serviceName] = newRouting;
+                        routingChanged = true;
+
+                        _logger.LogInformation(
+                            "Initialized routing for {ServiceName} -> {AppId} (status: {Status})",
+                            serviceName, heartbeat.AppId, serviceStatus.Status);
+                    }
                 }
             }
 
@@ -196,36 +239,73 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     }
 
     /// <summary>
-    /// Remove service routing. Called by OrchestratorService during teardown.
+    /// Restore service routing to default. Called by OrchestratorService during teardown.
+    /// Instead of deleting the routing entry (which causes proxies to fall back to hardcoded defaults),
+    /// this sets the routing to the orchestrator's EffectiveAppId.
     /// </summary>
-    public async Task RemoveServiceRoutingAsync(string serviceName)
+    public async Task RestoreServiceRoutingToDefaultAsync(string serviceName)
     {
-        await _stateManager.RemoveServiceRoutingAsync(serviceName);
-        _currentRoutings.TryRemove(serviceName, out _);
+        var defaultAppId = Program.Configuration.EffectiveAppId;
+
+        // Set the routing to the default app-id instead of removing it
+        // This ensures routing proxies (like OpenResty) have an explicit route
+        // rather than falling back to hardcoded defaults.
+        var defaultRouting = new ServiceRouting
+        {
+            AppId = defaultAppId,
+            Host = defaultAppId,
+            Port = 80,
+            Status = "healthy",
+            LastUpdated = DateTimeOffset.UtcNow
+        };
+
+        await _stateManager.WriteServiceRoutingAsync(serviceName, defaultRouting);
+        _currentRoutings[serviceName] = defaultRouting;
         MarkRoutingChanged();
 
-        _logger.LogInformation("Removed routing for {ServiceName}", serviceName);
+        _logger.LogInformation(
+            "Restored routing for {ServiceName} to default app-id '{DefaultAppId}'",
+            serviceName, defaultAppId);
     }
 
     /// <summary>
-    /// Reset all service mappings to default ("bannou").
-    /// Clears all custom routing from Redis and in-memory cache, then publishes updated mappings.
+    /// Reset all service mappings to the orchestrator's effective app-id.
+    /// Sets all known service routings to the default app-id (does NOT delete them).
+    /// This ensures routing proxies like OpenResty have explicit routes rather than
+    /// falling back to hardcoded defaults.
     /// </summary>
     public async Task ResetAllMappingsToDefaultAsync()
     {
         try
         {
-            // Clear all service-specific routings from Redis
-            await _stateManager.ClearAllServiceRoutingsAsync();
+            // Use the orchestrator's effective app-id (from configuration, not hardcoded constant)
+            var defaultAppId = Program.Configuration.EffectiveAppId;
 
-            // Clear in-memory cache
-            _currentRoutings.Clear();
+            // Set all service routings to the default app-id (NOT delete them)
+            // This ensures OpenResty has explicit routes rather than
+            // falling back to hardcoded defaults when routes are missing.
+            var updatedServices = await _stateManager.SetAllServiceRoutingsToDefaultAsync(defaultAppId);
+
+            // Update in-memory cache to match - set each service to default routing
+            foreach (var serviceName in updatedServices)
+            {
+                _currentRoutings[serviceName] = new ServiceRouting
+                {
+                    AppId = defaultAppId,
+                    Host = defaultAppId,
+                    Port = 80,
+                    Status = "healthy",
+                    LastUpdated = DateTimeOffset.UtcNow
+                };
+            }
 
             // Mark routing changed and publish immediately
             MarkRoutingChanged();
             await PublishFullMappingsAsync("reset to default topology");
 
-            _logger.LogInformation("Reset all service mappings to default - all services now route to 'bannou'");
+            _logger.LogInformation(
+                "Reset {Count} service mappings to default app-id '{DefaultAppId}'",
+                updatedServices.Count, defaultAppId);
         }
         catch (Exception ex)
         {
@@ -299,10 +379,10 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 
             var fullMappingsEvent = new FullServiceMappingsEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Mappings = mappings,
-                DefaultAppId = "bannou",
+                DefaultAppId = Program.Configuration.EffectiveAppId,
                 Version = version,
                 SourceInstanceId = _instanceId,
                 TotalServices = mappings.Count
@@ -330,8 +410,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             return 0;
         }
 
-        return (int)((double)heartbeat.Capacity.CurrentConnections /
-                    heartbeat.Capacity.MaxConnections * 100);
+        // Capacity values are nullable in event schema; use GetValueOrDefault for calculation
+        return (int)((double)heartbeat.Capacity.CurrentConnections.GetValueOrDefault() /
+                    heartbeat.Capacity.MaxConnections.GetValueOrDefault(1) * 100);
     }
 
     /// <summary>
@@ -450,7 +531,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             ServiceName = serviceName,
             CurrentStatus = worstStatus,
             LastSeen = latestHeartbeat.LastSeen,
-            DegradedDuration = degradedDuration ?? string.Empty,
+            DegradedDuration = degradedDuration, // Nullable per schema - null when not degraded
             Reason = reason
         };
     }

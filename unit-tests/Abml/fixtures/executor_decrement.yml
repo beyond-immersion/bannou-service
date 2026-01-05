@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: decrement
+flows:
+  start:
+    actions:
+      - set:
+          variable: lives
+          value: "3"
+      - decrement:
+          variable: lives
+      - log: { message: "Lives: ${lives}" }

@@ -7,13 +7,6 @@
     <RootNamespace>BeyondImmersion.BannouService.Character</RootNamespace>
     <ServiceLib>character</ServiceLib>
   </PropertyGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="lib-character.tests" />
-    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
   <ItemGroup>
     <!-- All service clients and models are in bannou-service/Generated/ - no cross-service references needed -->
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />

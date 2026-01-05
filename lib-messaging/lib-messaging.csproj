@@ -7,13 +7,6 @@
     <RootNamespace>BeyondImmersion.BannouService.Messaging</RootNamespace>
     <ServiceLib>messaging</ServiceLib>
   </PropertyGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="lib-messaging.tests" />
-    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
   </ItemGroup>
@@ -22,9 +15,8 @@
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <!-- MassTransit for RabbitMQ messaging -->
-    <PackageReference Include="MassTransit" Version="8.4.1" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.1" />
+    <!-- Direct RabbitMQ (no MassTransit) -->
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

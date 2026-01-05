@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: single_channel
+flows:
+  main:
+    actions:
+      - log: { message: "Step 1" }
+      - log: { message: "Step 2" }

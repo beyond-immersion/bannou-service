@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: nested_c
+
+flows:
+  do_work:
+    actions:
+      - log: { message: "In C - doing work" }

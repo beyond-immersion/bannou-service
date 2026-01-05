@@ -1,0 +1,412 @@
+openapi: 3.0.3
+info:
+  title: Actor Service Events
+  version: 1.0.0
+  description: |
+    Events published and subscribed to by the Actor service.
+    Includes lifecycle events for templates and instances, plus event subscriptions.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+
+  x-event-subscriptions:
+    - topic: behavior.updated
+      event: BehaviorUpdatedEvent
+      handler: HandleBehaviorUpdated
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+    - topic: actor.pool-node.registered
+      event: PoolNodeRegisteredEvent
+      handler: HandlePoolNodeRegistered
+    - topic: actor.pool-node.heartbeat
+      event: PoolNodeHeartbeatEvent
+      handler: HandlePoolNodeHeartbeat
+    - topic: actor.pool-node.draining
+      event: PoolNodeDrainingEvent
+      handler: HandlePoolNodeDraining
+    - topic: actor.instance.status-changed
+      event: ActorStatusChangedEvent
+      handler: HandleActorStatusChanged
+    - topic: actor.instance.completed
+      event: ActorCompletedEvent
+      handler: HandleActorCompleted
+
+servers: []
+
+paths: {}
+
+x-lifecycle:
+  ActorTemplate:
+    model:
+      templateId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+        description: Unique identifier for the actor template
+      category:
+        type: string
+        required: true
+        description: Category identifier for the template
+      behaviorRef:
+        type: string
+        required: true
+        description: Reference to behavior in lib-assets
+      createdAt:
+        type: string
+        format: date-time
+        required: true
+        description: When the template was created
+    events:
+      - created
+      - updated
+      - deleted
+
+  ActorInstance:
+    model:
+      actorId:
+        type: string
+        primary: true
+        required: true
+        description: Unique identifier for the actor instance
+      templateId:
+        type: string
+        format: uuid
+        required: true
+        description: Template this actor was instantiated from
+      characterId:
+        type: string
+        format: uuid
+        nullable: true  # NRT: Optional property MUST be nullable
+        description: Associated character ID for NPC brains
+      nodeId:
+        type: string
+        nullable: true  # NRT: Optional property MUST be nullable
+        description: Pool node running this actor
+      status:
+        type: string
+        required: true
+        description: Current actor lifecycle state
+      startedAt:
+        type: string
+        format: date-time
+        required: true
+        description: When the actor started running
+    events:
+      - created
+      - deleted
+
+components:
+  schemas:
+    # === Pool Node Events (from pool nodes to control plane) ===
+    PoolNodeHeartbeatEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Periodic heartbeat from pool nodes to control plane.
+        Used for health monitoring and load balancing decisions.
+      required:
+        - nodeId
+        - currentLoad
+        - capacity
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.heartbeat"
+          description: Event type identifier for pool node heartbeats
+        nodeId:
+          type: string
+          description: Unique identifier for this pool node
+        appId:
+          type: string
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: Pool node's app-id for direct routing
+        currentLoad:
+          type: integer
+          description: Number of actors currently running
+        capacity:
+          type: integer
+          description: Maximum actors this node can run
+        actorSummary:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Map of actorId to status for sync verification
+
+    PoolNodeRegisteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a pool node starts and registers with the control plane.
+        Control plane uses this to add the node to the available pool.
+      required:
+        - nodeId
+        - appId
+        - poolType
+        - capacity
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.registered"
+          description: Event type identifier for pool node registration
+        nodeId:
+          type: string
+          description: Unique identifier for this pool node
+        appId:
+          type: string
+          description: Mesh app-id for direct routing to this node
+        poolType:
+          type: string
+          description: Pool type (shared, npc-brain, event-coordinator, or custom category)
+        capacity:
+          type: integer
+          description: Maximum number of actors this node can run
+
+    PoolNodeDrainingEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a pool node begins graceful shutdown.
+        Control plane stops routing new actors to this node.
+      required:
+        - nodeId
+        - remainingActors
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.draining"
+          description: Event type identifier for pool node draining
+        nodeId:
+          type: string
+          description: Unique identifier of the draining pool node
+        remainingActors:
+          type: integer
+          description: Number of actors still running on this node
+        estimatedDrainTimeSeconds:
+          type: integer
+          nullable: true
+          description: Estimated time to complete draining
+
+    PoolNodeUnhealthyEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published by control plane when a pool node is detected as unhealthy.
+        Triggers actor reassignment and alerts.
+      required:
+        - nodeId
+        - reason
+        - lastHeartbeat
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.unhealthy"
+          description: Event type identifier for unhealthy pool node detection
+        nodeId:
+          type: string
+          description: Unique identifier of the unhealthy pool node
+        appId:
+          type: string
+          nullable: true
+          description: Mesh app-id of the unhealthy node
+        reason:
+          type: string
+          description: Reason the node was marked unhealthy
+        lastHeartbeat:
+          type: string
+          format: date-time
+          description: Timestamp of last successful heartbeat
+        actorCount:
+          type: integer
+          nullable: true
+          description: Number of actors that were on the failed node
+
+    ActorStatusChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor's status changes.
+        Used to keep control plane registry in sync with pool node state.
+      required:
+        - actorId
+        - nodeId
+        - previousStatus
+        - newStatus
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.status-changed"
+          description: Event type identifier for actor status changes
+        actorId:
+          type: string
+          description: Unique identifier of the actor whose status changed
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        previousStatus:
+          type: string
+          description: Actor status before the change
+        newStatus:
+          type: string
+          description: Actor status after the change
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason for status change
+
+    ActorCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor completes execution (self-terminate or external stop).
+        Includes final statistics and exit reason.
+      required:
+        - actorId
+        - nodeId
+        - exitReason
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.completed"
+          description: Event type identifier for actor completion
+        actorId:
+          type: string
+          description: Unique identifier of the completed actor
+        nodeId:
+          type: string
+          description: Pool node where the actor was running
+        exitReason:
+          type: string
+          description: Reason the actor exited
+          enum:
+            - behavior_complete
+            - error
+            - timeout
+            - external_stop
+        exitMessage:
+          type: string
+          nullable: true
+          description: Additional context about the exit
+        loopIterations:
+          type: integer
+          format: int64
+          description: Total behavior loop iterations before exit
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID (for NPC brains)
+
+    # === Internal Commands (control plane to pool nodes) ===
+    SpawnActorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to spawn an actor.
+        Published to topic: actor.node.{poolAppId}.spawn
+      required:
+        - actorId
+        - templateId
+        - behaviorRef
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier for the actor to spawn
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID to instantiate from
+        behaviorRef:
+          type: string
+          description: Asset reference to fetch behavior from lib-assets
+        configuration:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Merged configuration (template + overrides)
+        initialState:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Initial state for the actor
+        tickIntervalMs:
+          type: integer
+          description: Behavior loop interval in milliseconds
+        autoSaveIntervalSeconds:
+          type: integer
+          description: State persistence interval (0 to disable)
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character ID for NPC brain actors
+
+    StopActorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to stop an actor.
+        Published to topic: actor.node.{poolAppId}.stop
+      required:
+        - actorId
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the actor to stop
+        graceful:
+          type: boolean
+          default: true
+          description: If true, allows current tick to complete
+
+    SendMessageCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command to deliver a message to an actor's message queue.
+        Published to topic: actor.node.{poolAppId}.message
+      required:
+        - actorId
+        - messageType
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the target actor
+        messageType:
+          type: string
+          description: Message type identifier (behavior decides handling)
+        payload:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Message payload data
+
+    ReloadBehaviorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command to reload behavior for an actor (hot-reload support).
+        Published to topic: actor.node.{poolAppId}.reload-behavior
+      required:
+        - actorId
+        - newBehaviorRef
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the actor to reload
+        newBehaviorRef:
+          type: string
+          description: New asset reference to fetch

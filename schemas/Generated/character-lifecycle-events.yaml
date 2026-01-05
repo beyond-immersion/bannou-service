@@ -8,9 +8,13 @@ paths: {}
 components:
   schemas:
     CharacterCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to character.created when a character is created
       required:
+      - eventName
       - eventId
       - timestamp
       - characterId
@@ -19,40 +23,51 @@ components:
       - speciesId
       - createdAt
       properties:
-        eventId: &id001
+        eventName:
+          type: string
+          default: character.created
+          description: 'Event type identifier: character.created'
+        characterId: &id001
           type: string
           format: uuid
-          description: Unique identifier for this event
-        timestamp: &id002
+          description: Unique identifier for the character
+        name: &id002
           type: string
-          format: date-time
-          description: When this event occurred
-        characterId: &id003
-          type: string
-          format: uuid
-        name: &id004
-          type: string
-        realmId: &id005
+          description: Display name of the character
+        realmId: &id003
           type: string
           format: uuid
-        speciesId: &id006
+          description: Identifier of the realm the character belongs to
+        speciesId: &id004
           type: string
           format: uuid
-        birthDate: &id007
+          description: Identifier of the species this character is
+        birthDate: &id005
           type: string
           format: date-time
-        status: &id008
+          nullable: true
+          description: In-game birth date of the character
+        status: &id006
           type: string
-        createdAt: &id009
+          nullable: true
+          description: Current status of the character (e.g., active, inactive, deceased)
+        createdAt: &id007
           type: string
           format: date-time
-        updatedAt: &id010
+          description: Timestamp when the character was created
+        updatedAt: &id008
           type: string
           format: date-time
+          nullable: true
+          description: Timestamp when the character was last updated
     CharacterUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to character.updated when a character is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - characterId
@@ -62,25 +77,31 @@ components:
       - createdAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        characterId: *id003
-        name: *id004
-        realmId: *id005
-        speciesId: *id006
-        birthDate: *id007
-        status: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        eventName:
+          type: string
+          default: character.updated
+          description: 'Event type identifier: character.updated'
+        characterId: *id001
+        name: *id002
+        realmId: *id003
+        speciesId: *id004
+        birthDate: *id005
+        status: *id006
+        createdAt: *id007
+        updatedAt: *id008
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     CharacterDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to character.deleted when a character is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - characterId
@@ -89,16 +110,18 @@ components:
       - speciesId
       - createdAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        characterId: *id003
-        name: *id004
-        realmId: *id005
-        speciesId: *id006
-        birthDate: *id007
-        status: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        eventName:
+          type: string
+          default: character.deleted
+          description: 'Event type identifier: character.deleted'
+        characterId: *id001
+        name: *id002
+        realmId: *id003
+        speciesId: *id004
+        birthDate: *id005
+        status: *id006
+        createdAt: *id007
+        updatedAt: *id008
         deletedReason:
           type: string
           nullable: true

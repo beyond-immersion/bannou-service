@@ -51,14 +51,9 @@ public abstract class StandardServicePlugin<TService> : BaseBannouPlugin
             // Get service instance from DI container with proper scope handling
             // Note: CreateScope() is required for Scoped services to avoid
             // "Cannot resolve scoped service from root provider" error
-            using var scope = ServiceProvider?.CreateScope();
-            Service = scope?.ServiceProvider.GetService<TService>();
-
-            if (Service == null)
-            {
-                Logger?.LogError("Failed to resolve {ServiceType} from DI container", typeof(TService).Name);
-                return false;
-            }
+            var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
+            using var scope = serviceProvider.CreateScope();
+            Service = scope.ServiceProvider.GetRequiredService<TService>();
 
             // Call existing IBannouService.OnStartAsync if the service implements it
             if (Service is IBannouService bannouService)

@@ -14,7 +14,7 @@ public interface IServiceConfiguration
     /// Shared serializer options, between all Bannou services/consumers.
     /// References BannouJson.Options as the single source of truth for JSON serialization.
     /// IMPORTANT: Must include JsonStringEnumConverter to ensure enum values serialize
-    /// as strings (e.g., "permissions.capabilities_refresh") instead of numbers (e.g., 0).
+    /// as strings (e.g., "permission.capabilities_refresh") instead of numbers (e.g., 0).
     /// This is critical for client event handling where event_name is matched by string value.
     /// </summary>
     public static readonly JsonSerializerOptions BannouSerializerConfig = BannouJson.Options;
@@ -280,7 +280,6 @@ public interface IServiceConfiguration
     public static IDictionary<string, string?> GetNormalizedEnvVars(string? envPrefix)
     {
         var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-        var prefix = envPrefix ?? string.Empty;
 
         foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
         {
@@ -289,12 +288,13 @@ public interface IServiceConfiguration
                 continue;
 
             // Check if key starts with prefix (case-insensitive)
-            if (!string.IsNullOrEmpty(prefix) &&
-                !key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            // null/empty prefix means no filtering - include all env vars
+            if (!string.IsNullOrEmpty(envPrefix) &&
+                !key.StartsWith(envPrefix, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             // Strip prefix and normalize key
-            var strippedKey = string.IsNullOrEmpty(prefix) ? key : key.Substring(prefix.Length);
+            var strippedKey = string.IsNullOrEmpty(envPrefix) ? key : key.Substring(envPrefix.Length);
             var normalizedKey = NormalizeEnvVarKey(strippedKey);
 
             // Only add if we got a valid normalized key

@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: cond_false
+flows:
+  start:
+    actions:
+      - set:
+          variable: x
+          value: "2"
+      - cond:
+          - when: "${x > 5}"
+            then:
+              - log: "High"
+          - else:
+              - log: "Low"

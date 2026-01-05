@@ -410,6 +410,28 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     }
 
     /// <summary>
+    /// Get a specific service routing mapping.
+    /// </summary>
+    public async Task<ServiceRouting?> GetServiceRoutingAsync(string serviceName)
+    {
+        if (_routingStore == null)
+        {
+            _logger.LogWarning("State stores not initialized. Cannot get routing.");
+            return null;
+        }
+
+        try
+        {
+            return await _routingStore.GetAsync(serviceName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get routing for {ServiceName}", serviceName);
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Update the routing index to include this service name.
     /// </summary>
     private async Task UpdateRoutingIndexAsync(string serviceName)
@@ -605,6 +627,75 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             _logger.LogError(ex, "Failed to clear service routings");
             throw; // Don't mask state store failures - routing clear depends on reliable deletes
         }
+    }
+
+    /// <summary>
+    /// Set all known service routings to the default app-id.
+    /// Unlike ClearAllServiceRoutingsAsync which deletes routes, this method explicitly
+    /// sets each service to route to the specified default app-id.
+    /// </summary>
+    public async Task<List<string>> SetAllServiceRoutingsToDefaultAsync(string defaultAppId)
+    {
+        var updatedServices = new List<string>();
+
+        if (_routingStore == null || _routingIndexStore == null)
+        {
+            _logger.LogWarning("State stores not initialized. Cannot set default routings.");
+            return updatedServices;
+        }
+
+        try
+        {
+            // Get current index of known services
+            var index = await _routingIndexStore.GetAsync(ROUTING_INDEX_KEY);
+            if (index == null || index.ServiceNames.Count == 0)
+            {
+                _logger.LogDebug("No routing index found or index is empty - no services to reset");
+                return updatedServices;
+            }
+
+            // Set each service to route to the default app-id
+            var defaultRouting = new ServiceRouting
+            {
+                AppId = defaultAppId,
+                Host = defaultAppId,
+                Port = 80,
+                Status = "healthy",
+                LastUpdated = DateTimeOffset.UtcNow
+            };
+
+            var options = new StateOptions { Ttl = (int)ROUTING_TTL.TotalSeconds };
+
+            foreach (var serviceName in index.ServiceNames)
+            {
+                try
+                {
+                    await _routingStore.SaveAsync(serviceName, defaultRouting, options);
+                    updatedServices.Add(serviceName);
+
+                    _logger.LogDebug(
+                        "Set default routing: {ServiceName} -> {AppId}",
+                        serviceName, defaultAppId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Failed to set default routing for {ServiceName}",
+                        serviceName);
+                }
+            }
+
+            _logger.LogInformation(
+                "Set {Count} service routings to default app-id '{DefaultAppId}'",
+                updatedServices.Count, defaultAppId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set service routings to default");
+            throw;
+        }
+
+        return updatedServices;
     }
 
     #endregion

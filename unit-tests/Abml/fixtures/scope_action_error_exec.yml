@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: action_error_exec
+flows:
+  start:
+    actions:
+      - failing_action:
+          param: value
+          on_error:
+            - log: { message: "Action caught: ${_error.message}" }
+      - log: "This should NOT run (default stops)"

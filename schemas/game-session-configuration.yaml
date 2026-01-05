@@ -1,8 +1,12 @@
 openapi: 3.0.3
 info:
   title: Game Session Service Configuration
-  description: "Configuration schema for Game Session service.\nProperties are bound to environment variables with BANNOU_
-    prefix."
+  description: |
+    Configuration schema for Game Session service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -11,14 +15,19 @@ x-service-configuration:
       type: boolean
       description: Enable/disable Game Session service
       default: true
+      env: GAME_SESSION_ENABLED
     ServerSalt:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (generates random salt if not set)
       description: Server salt for GUID generation. If not set, generates random salt (OK for development, must be shared in production)
+      env: GAME_SESSION_SERVER_SALT
     MaxPlayersPerSession:
       type: integer
       description: Maximum players allowed per session
       default: 16
+      env: GAME_SESSION_MAX_PLAYERS_PER_SESSION
     DefaultSessionTimeoutSeconds:
       type: integer
       description: Default session timeout in seconds
       default: 7200
+      env: GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS

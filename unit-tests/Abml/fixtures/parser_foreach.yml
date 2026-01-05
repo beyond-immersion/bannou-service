@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: foreach_test
+flows:
+  start:
+    actions:
+      - for_each:
+          variable: item
+          collection: "${items}"
+          do:
+            - log: { message: "${item}" }

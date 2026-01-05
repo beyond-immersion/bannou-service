@@ -378,18 +378,18 @@ public class PluginLoaderTests
         var authClientLifetimeResult = getClientLifetimeMethod?.Invoke(pluginLoader, new object[] { authClientInterface });
         var authClientLifetime = authClientLifetimeResult != null ? (ServiceLifetime)authClientLifetimeResult : ServiceLifetime.Scoped;
 
-        // Create a mock interface for IPermissionsClient
-        var permissionsClientInterface = typeof(IPermissionsClient);
-        var permissionsClientLifetimeResult = getClientLifetimeMethod?.Invoke(pluginLoader, new object[] { permissionsClientInterface });
-        var permissionsClientLifetime = permissionsClientLifetimeResult != null ? (ServiceLifetime)permissionsClientLifetimeResult : ServiceLifetime.Scoped;
+        // Create a mock interface for IPermissionClient
+        var permissionClientInterface = typeof(IPermissionClient);
+        var permissionClientLifetimeResult = getClientLifetimeMethod?.Invoke(pluginLoader, new object[] { permissionClientInterface });
+        var permissionClientLifetime = permissionClientLifetimeResult != null ? (ServiceLifetime)permissionClientLifetimeResult : ServiceLifetime.Scoped;
 
         // Assert - Clients should default to Singleton to avoid DI conflicts
         Assert.Equal(ServiceLifetime.Singleton, authClientLifetime);
-        Assert.Equal(ServiceLifetime.Singleton, permissionsClientLifetime);
+        Assert.Equal(ServiceLifetime.Singleton, permissionClientLifetime);
 
         // Test that this prevents DI validation errors
         newServices.AddSingleton(authClientInterface, Mock.Of<IAuthClient>());
-        newServices.AddSingleton(permissionsClientInterface, Mock.Of<IPermissionsClient>());
+        newServices.AddSingleton(permissionClientInterface, Mock.Of<IPermissionClient>());
 
         var finalServiceProvider = newServices.BuildServiceProvider();
         var connectService = finalServiceProvider.GetService<ConnectService>();
@@ -514,9 +514,9 @@ public class PluginLoaderTests
         productionServices.AddScoped<TestServiceConfiguration>();
 
         // Register clients with lifetimes that match or are compatible with their consumers
-        // IAuthClient and IPermissionsClient: Singleton (compatible with ConnectService Singleton)
+        // IAuthClient and IPermissionClient: Singleton (compatible with ConnectService Singleton)
         productionServices.AddSingleton<IAuthClient>(Mock.Of<IAuthClient>());
-        productionServices.AddSingleton<IPermissionsClient>(Mock.Of<IPermissionsClient>());
+        productionServices.AddSingleton<IPermissionClient>(Mock.Of<IPermissionClient>());
 
         // Act - Build service provider (this is where DI validation would fail)
         ServiceProvider? finalServiceProvider = null;
@@ -706,7 +706,7 @@ public class PluginLoaderTests
 
         // Step 4: Register clients with compatible lifetimes
         services.AddSingleton<IAuthClient>(Mock.Of<IAuthClient>());
-        services.AddSingleton<IPermissionsClient>(Mock.Of<IPermissionsClient>());
+        services.AddSingleton<IPermissionClient>(Mock.Of<IPermissionClient>());
 
         // Act - Build service provider with DI validation
         ServiceProvider? serviceProvider = null;
@@ -779,7 +779,7 @@ public class PluginLoaderTests
 
         // Register required dependencies first
         services.AddSingleton<IAuthClient>(Mock.Of<IAuthClient>());
-        services.AddSingleton<IPermissionsClient>(Mock.Of<IPermissionsClient>());
+        services.AddSingleton<IPermissionClient>(Mock.Of<IPermissionClient>());
 
         // Scenario 1: Singleton service with Singleton configuration (CORRECT)
         services.AddSingleton<TestConnectService>();
@@ -1316,24 +1316,24 @@ public class PluginLoaderTests
             var result3 = result3Obj != null && (bool)result3Obj;
             Assert.False(result3, "Service should be disabled when SERVICES_ENABLED=true and X_SERVICE_DISABLED=true");
 
-            // Test 4: Different service - accounts
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", "true");
-            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            // Test 4: Different service - account
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", "true");
+            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result4 = result4Obj != null && (bool)result4Obj;
-            Assert.False(result4, "Accounts service should be disabled when SERVICES_ENABLED=true and ACCOUNTS_SERVICE_DISABLED=true");
+            Assert.False(result4, "Account service should be disabled when SERVICES_ENABLED=true and ACCOUNT_SERVICE_DISABLED=true");
 
-            // Test 5: Accounts with no disable flag - should be enabled
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", null);
-            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            // Test 5: Account with no disable flag - should be enabled
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", null);
+            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result5 = result5Obj != null && (bool)result5Obj;
-            Assert.True(result5, "Accounts service should be enabled when SERVICES_ENABLED=true and no disable flag");
+            Assert.True(result5, "Account service should be enabled when SERVICES_ENABLED=true and no disable flag");
         }
         finally
         {
             // Cleanup
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
             Environment.SetEnvironmentVariable("TESTING_SERVICE_DISABLED", null);
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", null);
         }
     }
 
@@ -1377,24 +1377,24 @@ public class PluginLoaderTests
             var result3 = result3Obj != null && (bool)result3Obj;
             Assert.True(result3, "Service should be enabled when SERVICES_ENABLED=false and X_SERVICE_ENABLED=true");
 
-            // Test 4: Different service - accounts
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_ENABLED", "true");
-            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            // Test 4: Different service - account
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", "true");
+            var result4Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result4 = result4Obj != null && (bool)result4Obj;
-            Assert.True(result4, "Accounts service should be enabled when SERVICES_ENABLED=false and ACCOUNTS_SERVICE_ENABLED=true");
+            Assert.True(result4, "Account service should be enabled when SERVICES_ENABLED=false and ACCOUNT_SERVICE_ENABLED=true");
 
-            // Test 5: Accounts with no enable flag - should be disabled
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_ENABLED", null);
-            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
+            // Test 5: Account with no enable flag - should be disabled
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", null);
+            var result5Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
             var result5 = result5Obj != null && (bool)result5Obj;
-            Assert.False(result5, "Accounts service should be disabled when SERVICES_ENABLED=false and no enable flag");
+            Assert.False(result5, "Account service should be disabled when SERVICES_ENABLED=false and no enable flag");
         }
         finally
         {
             // Cleanup
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
             Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", null);
         }
     }
 
@@ -1468,12 +1468,12 @@ public class PluginLoaderTests
         {
             // Infrastructure test configuration: SERVICES_ENABLED=true with all other services disabled
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "true");
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("AUTH_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("CONNECT_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("GAME_SESSION_SERVICE_DISABLED", "true");
-            Environment.SetEnvironmentVariable("PERMISSIONS_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("PERMISSION_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("WEBSITE_SERVICE_DISABLED", "true");
             // Note: TESTING_SERVICE_DISABLED is not set, so testing should be enabled
 
@@ -1482,9 +1482,9 @@ public class PluginLoaderTests
             var testingEnabled = testingEnabledObj != null && (bool)testingEnabledObj;
             Assert.True(testingEnabled, "Testing service should be enabled in infrastructure test scenario");
 
-            var accountsEnabledObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
-            var accountsEnabled = accountsEnabledObj != null && (bool)accountsEnabledObj;
-            Assert.False(accountsEnabled, "Accounts service should be disabled in infrastructure test scenario");
+            var accountEnabledObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
+            var accountEnabled = accountEnabledObj != null && (bool)accountEnabledObj;
+            Assert.False(accountEnabled, "Account service should be disabled in infrastructure test scenario");
 
             var authEnabledObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "auth" });
             var authEnabled = authEnabledObj != null && (bool)authEnabledObj;
@@ -1502,12 +1502,12 @@ public class PluginLoaderTests
         {
             // Cleanup
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("AUTH_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("CONNECT_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("GAME_SESSION_SERVICE_DISABLED", null);
-            Environment.SetEnvironmentVariable("PERMISSIONS_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("PERMISSION_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("WEBSITE_SERVICE_DISABLED", null);
         }
     }
@@ -1591,7 +1591,7 @@ public class PluginLoaderTests
         var isServiceEnabledMethod = typeof(PluginLoader)
             .GetMethod("IsServiceEnabled", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        var testServices = new[] { "testing", "accounts", "auth", "connect", "behavior" };
+        var testServices = new[] { "testing", "account", "auth", "connect", "behavior" };
 
         try
         {
@@ -1614,17 +1614,17 @@ public class PluginLoaderTests
             }
 
             // Disable individual services
-            Environment.SetEnvironmentVariable("ACCOUNTS_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_DISABLED", "true");
             Environment.SetEnvironmentVariable("AUTH_SERVICE_DISABLED", "true");
 
-            var accountsResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
-            var accountsResult = accountsResultObj != null && (bool)accountsResultObj;
+            var accountResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
+            var accountResult = accountResultObj != null && (bool)accountResultObj;
             var authResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "auth" });
             var authResult = authResultObj != null && (bool)authResultObj;
             var testingResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "testing" });
             var testingResult = testingResultObj != null && (bool)testingResultObj;
 
-            Assert.False(accountsResult, "Accounts should be disabled with X_SERVICE_DISABLED=true");
+            Assert.False(accountResult, "Account should be disabled with X_SERVICE_DISABLED=true");
             Assert.False(authResult, "Auth should be disabled with X_SERVICE_DISABLED=true");
             Assert.True(testingResult, "Testing should remain enabled without disable flag");
 
@@ -1654,12 +1654,12 @@ public class PluginLoaderTests
             var testingResult2 = testingResult2Obj != null && (bool)testingResult2Obj;
             var connectResultObj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "connect" });
             var connectResult = connectResultObj != null && (bool)connectResultObj;
-            var accountsResult2Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "accounts" });
-            var accountsResult2 = accountsResult2Obj != null && (bool)accountsResult2Obj;
+            var accountResult2Obj = isServiceEnabledMethod?.Invoke(pluginLoader, new object[] { "account" });
+            var accountResult2 = accountResult2Obj != null && (bool)accountResult2Obj;
 
             Assert.True(testingResult2, "Testing should be enabled with X_SERVICE_ENABLED=true");
             Assert.True(connectResult, "Connect should be enabled with X_SERVICE_ENABLED=true");
-            Assert.False(accountsResult2, "Accounts should remain disabled without enable flag");
+            Assert.False(accountResult2, "Account should remain disabled without enable flag");
         }
         finally
         {
@@ -1735,12 +1735,12 @@ public class TestServiceConfiguration
 public class ConnectService
 {
     private readonly IAuthClient _authClient;
-    private readonly IPermissionsClient _permissionsClient;
+    private readonly IPermissionClient _permissionClient;
 
-    public ConnectService(IAuthClient authClient, IPermissionsClient permissionsClient)
+    public ConnectService(IAuthClient authClient, IPermissionClient permissionClient)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
+        _permissionClient = permissionClient ?? throw new ArgumentNullException(nameof(permissionClient));
     }
 }
 
@@ -1762,9 +1762,9 @@ public interface IAuthClient
 }
 
 /// <summary>
-/// Mock IPermissionsClient interface for unit testing.
+/// Mock IPermissionClient interface for unit testing.
 /// </summary>
-public interface IPermissionsClient
+public interface IPermissionClient
 {
     // Empty interface for testing purposes
 }
@@ -1821,16 +1821,16 @@ public class TestConnectService : ITestConnectService
 {
     private readonly TestConnectServiceConfiguration _configuration;
     private readonly IAuthClient _authClient;
-    private readonly IPermissionsClient _permissionsClient;
+    private readonly IPermissionClient _permissionClient;
 
     public TestConnectService(
         TestConnectServiceConfiguration configuration,
         IAuthClient authClient,
-        IPermissionsClient permissionsClient)
+        IPermissionClient permissionClient)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
+        _permissionClient = permissionClient ?? throw new ArgumentNullException(nameof(permissionClient));
     }
 
     public string GetInstanceId() => _configuration.InstanceId;
@@ -1926,7 +1926,7 @@ public class ConfigurationDiscoveryTests
 
         // Register mock dependencies
         services.AddSingleton<IAuthClient>(_ => new Mock<IAuthClient>().Object);
-        services.AddSingleton<IPermissionsClient>(_ => new Mock<IPermissionsClient>().Object);
+        services.AddSingleton<IPermissionClient>(_ => new Mock<IPermissionClient>().Object);
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -2030,7 +2030,7 @@ public class ConfigurationDiscoveryTests
 
         // Register mock dependencies for TestConnectService
         services.AddSingleton<IAuthClient>(_ => new Mock<IAuthClient>().Object);
-        services.AddSingleton<IPermissionsClient>(_ => new Mock<IPermissionsClient>().Object);
+        services.AddSingleton<IPermissionClient>(_ => new Mock<IPermissionClient>().Object);
 
         // Scenario 2: Configuration without matching service (should be skipped gracefully)
         services.AddSingleton<UnmatchedConfiguration>();

@@ -8,7 +8,7 @@ Bannou publishes **two SDK packages** to NuGet for different use cases:
 For **game servers** that need service-to-service calls AND WebSocket support.
 
 **Includes:**
-- Service Clients (`AccountsClient`, `AuthClient`, etc.) for mesh invocation
+- Service Clients (`AccountClient`, `AuthClient`, etc.) for mesh invocation
 - Request/Response Models from all services
 - Event Models for pub/sub messaging
 - WebSocket Binary Protocol (31-byte header)

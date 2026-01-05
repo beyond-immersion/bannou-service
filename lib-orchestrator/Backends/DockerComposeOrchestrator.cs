@@ -73,7 +73,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         // Windows: npipe://./pipe/docker_engine
         _client = new DockerClientConfiguration().CreateClient();
 
-        // Read configuration from injected configuration class (Tenet 21 compliant)
+        // Read configuration from injected configuration class (IMPLEMENTATION TENETS compliant)
         _configuredDockerNetwork = config.DockerNetwork ?? "bannou_default";
         _certificatesHostPath = config.CertificatesHostPath ?? "/app/provisioning/certificates";
         _presetsHostPath = config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
@@ -217,7 +217,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
         // Infrastructure service names that dynamically created containers need to resolve
         // IMPORTANT: DEFAULT_APP_NAME must be included so deployed containers can reach the orchestrator
-        // for fetching initial service mappings via BANNOU_MappingSourceAppId
+        // for fetching initial service mappings via BANNOU_MAPPING_SOURCE_APP_ID
         var serviceNames = new[] { AppConstants.DEFAULT_APP_NAME, "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
 
         try
@@ -701,21 +701,20 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             // Prepare application container environment
             // Get the orchestrator's own app-id to set as the mapping source
-            var orchestratorAppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID")
-                ?? AppConstants.DEFAULT_APP_NAME;
+            var orchestratorAppId = Program.Configuration.EffectiveAppId;
 
             var envList = new List<string>
             {
                 $"BANNOU_APP_ID={appId}",
                 // Tell deployed container to query this orchestrator for initial service mappings
                 // This ensures new containers have correct routing info before participating in network
-                $"BANNOU_MappingSourceAppId={orchestratorAppId}",
+                $"BANNOU_MAPPING_SOURCE_APP_ID={orchestratorAppId}",
                 // Set the HTTP endpoint to the orchestrator so the new container can reach it
                 // via ExtraHosts DNS resolution (not localhost which would hit itself)
-                $"BANNOU_HttpEndpoint=http://{orchestratorAppId}",
+                $"BANNOU_HTTP_ENDPOINT=http://{orchestratorAppId}",
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 "DAEMON_MODE=true",
-                "HEARTBEAT_ENABLED=true"
+                "BANNOU_HEARTBEAT_ENABLED=true"
             };
 
             if (certificatesPath != null)
@@ -990,25 +989,26 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     }
 
     /// <inheritdoc />
-    public Task<ScaleServiceResult> ScaleServiceAsync(
+    public async Task<ScaleServiceResult> ScaleServiceAsync(
         string appName,
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         _logger.LogWarning(
             "Scale operation not supported in Docker Compose mode for {AppName}. Use Docker Swarm for scaling.",
             appName);
 
         // Docker Compose (standalone mode) doesn't support native scaling
         // For scaling, use Docker Swarm or Kubernetes backend
-        return Task.FromResult(new ScaleServiceResult
+        return new ScaleServiceResult
         {
             Success = false,
             AppId = appName,
             PreviousReplicas = 1,
             CurrentReplicas = 1,
             Message = "Scaling not supported in Docker Compose mode. Use Docker Swarm or Kubernetes for scaling capabilities."
-        });
+        };
     }
 
     /// <inheritdoc />

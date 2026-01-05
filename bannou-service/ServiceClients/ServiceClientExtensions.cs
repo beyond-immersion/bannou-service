@@ -25,10 +25,10 @@ public static class ServiceClientExtensions
     /// Registers a Bannou-aware service client with automatic HttpClient configuration.
     /// The client uses dynamic app-id resolution defaulting to "bannou".
     /// </summary>
-    /// <typeparam name="TClient">The service client type (e.g., AccountsClient)</typeparam>
-    /// <typeparam name="TInterface">The service interface type (e.g., IAccountsClient)</typeparam>
+    /// <typeparam name="TClient">The service client type (e.g., AccountClient)</typeparam>
+    /// <typeparam name="TInterface">The service interface type (e.g., IAccountClient)</typeparam>
     /// <param name="services">The service collection to add the client to.</param>
-    /// <param name="serviceName">The service name for app-id resolution (e.g., "accounts")</param>
+    /// <param name="serviceName">The service name for app-id resolution (e.g., "account")</param>
     /// <param name="configureClient">Optional HttpClient configuration</param>
     public static IServiceCollection AddBannouServiceClient<TClient, TInterface>(
         this IServiceCollection services,
@@ -93,7 +93,7 @@ public static class ServiceClientExtensions
 
     /// <summary>
     /// Registers multiple Bannou service clients at once for convenience.
-    /// Uses service name derived from client type name (e.g., AccountsClient -> "accounts").
+    /// Uses service name derived from client type name (e.g., AccountClient -> "account").
     /// </summary>
     public static IServiceCollection AddBannouServiceClients(
         this IServiceCollection services,

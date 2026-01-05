@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+  title: Behavior Service Events
+  description: |
+    Event models for Behavior service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    These events enable other services to be notified when:
+    - New behaviors are compiled and stored (BehaviorCreatedEvent)
+    - Existing behaviors are recompiled/updated (BehaviorUpdatedEvent)
+    - Behaviors are deleted/invalidated (BehaviorDeletedEvent)
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []  # Behavior service doesn't subscribe to external events
+  x-event-publications:
+    # Behavior lifecycle events (auto-generated from x-lifecycle)
+    - topic: behavior.created
+      event: BehaviorCreatedEvent
+      description: Published when a new behavior is compiled and stored
+    - topic: behavior.updated
+      event: BehaviorUpdatedEvent
+      description: Published when a behavior is recompiled/updated
+    - topic: behavior.deleted
+      event: BehaviorDeletedEvent
+      description: Published when a behavior is deleted/invalidated
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/behavior-lifecycle-events.yaml
+x-lifecycle:
+  Behavior:
+    model:
+      behaviorId: { type: string, primary: true, required: true, description: "Unique identifier for the behavior" }
+      name: { type: string, required: true, description: "Human-readable name of the behavior" }
+      category: { type: string, required: true, description: "Category classification for the behavior" }
+      bundleId: { type: string, nullable: true, description: "Identifier of the bundle this behavior belongs to. Null if not bundled." }
+      assetId: { type: string, required: true, description: "Identifier of the asset associated with this behavior" }
+      bytecodeSize: { type: integer, format: int32, nullable: true, description: "Size of the compiled bytecode in bytes" }  # NRT: Optional property MUST be nullable
+      schemaVersion: { type: string, nullable: true, description: "Version of the schema used for this behavior" }  # NRT: Optional property MUST be nullable
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the behavior was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the behavior was last updated" }  # NRT: Optional property MUST be nullable
+    sensitive: []  # No sensitive fields
+
+paths: {}  # Events don't have HTTP paths
+
+# NOTE: No components/schemas section - lifecycle events are auto-generated.
+# BehaviorCreatedEvent, BehaviorUpdatedEvent, BehaviorDeletedEvent
+# are generated to schemas/Generated/behavior-lifecycle-events.yaml

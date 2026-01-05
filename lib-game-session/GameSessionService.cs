@@ -5,13 +5,12 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
-using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Protocol;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Voice;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -35,16 +34,16 @@ public partial class GameSessionService : IGameSessionService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
-    private readonly IVoiceClient? _voiceClient;
-    private readonly IPermissionsClient? _permissionsClient;
-    private readonly ISubscriptionsClient? _subscriptionsClient;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IClientEventPublisher? _clientEventPublisher;
+    private readonly IVoiceClient _voiceClient;
+    private readonly IPermissionClient _permissionClient;
+    private readonly ISubscriptionClient _subscriptionClient;
+    private readonly IClientEventPublisher _clientEventPublisher;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
     private const string LOBBY_KEY_PREFIX = "lobby:";
+    private const string SUBSCRIBER_SESSIONS_PREFIX = "subscriber-sessions:";
     private const string SESSION_CREATED_TOPIC = "game-session.created";
     private const string SESSION_UPDATED_TOPIC = "game-session.updated";
     private const string SESSION_DELETED_TOPIC = "game-session.deleted";
@@ -61,26 +60,50 @@ public partial class GameSessionService : IGameSessionService
     };
 
     /// <summary>
-    /// Tracks connected WebSocket sessions: WebSocket SessionId -> AccountId.
-    /// Static for multi-instance safety (Tenet 4).
-    /// </summary>
-    private static readonly ConcurrentDictionary<string, Guid> _connectedSessions = new();
-
-    /// <summary>
-    /// Caches subscription info: AccountId -> Set of subscribed stubNames.
-    /// Static for multi-instance safety (Tenet 4).
+    /// Local cache of subscribed accounts: AccountId -> Set of subscribed stubNames.
+    /// Used for fast filtering of session.connected events - we only care about subscribed accounts.
+    /// Loaded on service startup from Subscription service, updated via subscription.updated events.
+    /// This is a local filter cache - authoritative subscriber session state is in lib-state.
     /// </summary>
     private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
 
     /// <summary>
-    /// Reverse index for client event publishing: AccountId -> Set of WebSocket session IDs.
-    /// Static for multi-instance safety (Tenet 4).
+    /// Adds an account subscription to the local filter cache.
+    /// Called by GameSessionStartupService during initialization.
+    /// Thread-safe for concurrent access.
     /// </summary>
-    private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSessions = new();
+    /// <param name="accountId">The account ID to add.</param>
+    /// <param name="stubName">The service stub name the account is subscribed to.</param>
+    public static void AddAccountSubscription(Guid accountId, string stubName)
+    {
+        var stubs = _accountSubscriptions.GetOrAdd(accountId, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+        lock (stubs)
+        {
+            stubs.Add(stubName);
+        }
+    }
+
+    /// <summary>
+    /// Removes an account subscription from the local filter cache.
+    /// Called when a subscription is cancelled.
+    /// Thread-safe for concurrent access.
+    /// </summary>
+    /// <param name="accountId">The account ID to update.</param>
+    /// <param name="stubName">The service stub name to remove.</param>
+    public static void RemoveAccountSubscription(Guid accountId, string stubName)
+    {
+        if (_accountSubscriptions.TryGetValue(accountId, out var stubs))
+        {
+            lock (stubs)
+            {
+                stubs.Remove(stubName);
+            }
+        }
+    }
 
     /// <summary>
     /// Server salt for GUID generation. Comes from configuration, with fallback to random generation for development.
-    /// Instance-based to support configuration injection (Tenet 21).
+    /// Instance-based to support configuration injection (IMPLEMENTATION TENETS).
     /// </summary>
     private readonly string _serverSalt;
 
@@ -91,44 +114,40 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="messageBus">Message bus for pub/sub operations.</param>
     /// <param name="logger">Logger for this service.</param>
     /// <param name="configuration">Service configuration.</param>
-    /// <param name="httpContextAccessor">HTTP context accessor for reading request headers.</param>
     /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
-    /// <param name="clientEventPublisher">Optional client event publisher for pushing events to WebSocket clients. May be null in contexts without Connect service.</param>
-    /// <param name="voiceClient">Optional voice client for voice room coordination. May be null if voice service is disabled.</param>
-    /// <param name="permissionsClient">Optional permissions client for setting game-session:in_game state. May be null if Permissions service is not loaded.</param>
-    /// <param name="subscriptionsClient">Optional subscriptions client for fetching account subscriptions. May be null if Subscriptions service is not loaded.</param>
+    /// <param name="clientEventPublisher">Client event publisher for pushing events to WebSocket clients.</param>
+    /// <param name="voiceClient">Voice client for voice room coordination.</param>
+    /// <param name="permissionClient">Permission client for setting game-session:in_game state.</param>
+    /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
     public GameSessionService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         ILogger<GameSessionService> logger,
         GameSessionServiceConfiguration configuration,
-        IHttpContextAccessor httpContextAccessor,
         IEventConsumer eventConsumer,
-        IClientEventPublisher? clientEventPublisher = null,
-        IVoiceClient? voiceClient = null,
-        IPermissionsClient? permissionsClient = null,
-        ISubscriptionsClient? subscriptionsClient = null)
+        IClientEventPublisher clientEventPublisher,
+        IVoiceClient voiceClient,
+        IPermissionClient permissionClient,
+        ISubscriptionClient subscriptionClient)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-        _clientEventPublisher = clientEventPublisher; // Nullable - may not be available in all contexts (Tenet 6)
-        _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 6)
-        _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 6)
-        _subscriptionsClient = subscriptionsClient; // Nullable - subscriptions service may not be loaded (Tenet 6)
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _clientEventPublisher = clientEventPublisher;
+        _voiceClient = voiceClient;
+        _permissionClient = permissionClient;
+        _subscriptionClient = subscriptionClient;
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
         {
             throw new InvalidOperationException(
-                "GAMESESSION_SERVERSALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
+                "GAME_SESSION_SERVER_SALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
         }
         _serverSalt = configuration.ServerSalt;
 
         // Register event handlers via partial class (GameSessionServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 
@@ -153,7 +172,11 @@ public partial class GameSessionService : IGameSessionService
             foreach (var sessionId in sessionIds)
             {
                 var session = await LoadSessionAsync(sessionId, cancellationToken);
-                if (session == null) continue;
+                if (session == null)
+                {
+                    _logger.LogWarning("Session {SessionId} in index but failed to load - possible data inconsistency", sessionId);
+                    continue;
+                }
 
                 // Apply game type filter if provided (non-default value)
                 // Since enums default to first value (Arcadia=0), we can't distinguish "not set" from "arcadia"
@@ -261,15 +284,15 @@ public partial class GameSessionService : IGameSessionService
             await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
 
             // Publish event with full model data
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 SESSION_CREATED_TOPIC,
                 new GameSessionCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = session.SessionId,
+                    SessionId = Guid.Parse(session.SessionId),
                     GameType = session.GameType.ToString(),
-                    SessionName = session.SessionName ?? string.Empty,
+                    SessionName = session.SessionName,
                     Status = session.Status.ToString(),
                     MaxPlayers = session.MaxPlayers,
                     CurrentPlayers = session.CurrentPlayers,
@@ -281,7 +304,7 @@ public partial class GameSessionService : IGameSessionService
             var response = MapModelToResponse(session);
 
             _logger.LogInformation("Game session {SessionId} created successfully", session.SessionId);
-            return (StatusCodes.Created, response);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -345,26 +368,55 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var sessionId = body.SessionId.ToString();
-            _logger.LogInformation("Player joining game session {SessionId}", sessionId);
+            // body.SessionId is the WebSocket session ID (for event delivery)
+            // body.GameType determines which lobby to join
+            // body.AccountId identifies the player
+            var clientSessionId = body.SessionId.ToString();
+            var gameType = body.GameType;
+            var accountId = body.AccountId;
+
+            _logger.LogInformation("Player {AccountId} joining game {GameType} from session {SessionId}",
+                accountId, gameType, clientSessionId);
+
+            // Validate that this session is authorized to join (must be in distributed subscriber sessions)
+            // This check ensures the player has an active subscription and a valid connected session
+            if (!await IsValidSubscriberSessionAsync(accountId, clientSessionId))
+            {
+                _logger.LogWarning("Session {SessionId} for account {AccountId} is not a valid subscriber session",
+                    clientSessionId, accountId);
+                return (StatusCodes.Unauthorized, new JoinGameSessionResponse
+                {
+                    Success = false,
+                    SessionId = body.SessionId,
+                    PlayerRole = JoinGameSessionResponsePlayerRole.Player
+                });
+            }
+
+            // Get the lobby for this game type (don't auto-create for join)
+            var lobbyId = await GetLobbySessionAsync(gameType);
+            if (lobbyId == Guid.Empty)
+            {
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
+                return (StatusCodes.NotFound, null);
+            }
 
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
-            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Game session {SessionId} not found for join", sessionId);
+                _logger.LogWarning("Game lobby {LobbyId} not found for game type {GameType}", lobbyId, gameType);
                 return (StatusCodes.NotFound, null);
             }
 
             // Check if session is full
             if (model.CurrentPlayers >= model.MaxPlayers)
             {
-                _logger.LogWarning("Game session {SessionId} is full", sessionId);
+                _logger.LogWarning("Game lobby {LobbyId} is full", lobbyId);
                 return (StatusCodes.Conflict, new JoinGameSessionResponse
                 {
                     Success = false,
-                    SessionId = sessionId,
+                    SessionId = body.SessionId,
                     PlayerRole = JoinGameSessionResponsePlayerRole.Player
                 });
             }
@@ -372,34 +424,32 @@ public partial class GameSessionService : IGameSessionService
             // Check session status
             if (model.Status == GameSessionResponseStatus.Finished)
             {
-                _logger.LogWarning("Game session {SessionId} is finished", sessionId);
+                _logger.LogWarning("Game lobby {LobbyId} is finished", lobbyId);
                 return (StatusCodes.Conflict, new JoinGameSessionResponse
                 {
                     Success = false,
-                    SessionId = sessionId,
+                    SessionId = body.SessionId,
                     PlayerRole = JoinGameSessionResponsePlayerRole.Player
                 });
             }
-
-            // AccountId comes from the request body (populated by shortcut system)
-            var accountId = body.AccountId;
 
             // Check if player already in session
             if (model.Players.Any(p => p.AccountId == accountId))
             {
-                _logger.LogWarning("Player {AccountId} already in session {SessionId}", accountId, sessionId);
+                _logger.LogWarning("Player {AccountId} already in lobby {LobbyId}", accountId, lobbyId);
                 return (StatusCodes.Conflict, new JoinGameSessionResponse
                 {
                     Success = false,
-                    SessionId = sessionId,
+                    SessionId = body.SessionId,
                     PlayerRole = JoinGameSessionResponsePlayerRole.Player
                 });
             }
 
-            // Add player to session
+            // Add player to session with their WebSocket session ID for event delivery
             var player = new GamePlayer
             {
                 AccountId = accountId,
+                SessionId = clientSessionId,  // WebSocket session for event delivery
                 DisplayName = "Player " + (model.CurrentPlayers + 1),
                 Role = GamePlayerRole.Player,
                 JoinedAt = DateTimeOffset.UtcNow,
@@ -419,136 +469,61 @@ public partial class GameSessionService : IGameSessionService
                 model.Status = GameSessionResponseStatus.Active;
             }
 
-            // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
+            // Set game-session:in_game state via Permission service (required for API access)
+            try
+            {
+                await _permissionClient.UpdateSessionStateAsync(new Permission.SessionStateUpdate
+                {
+                    SessionId = body.SessionId,
+                    ServiceId = "game-session",
+                    NewState = "in_game"
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update session state for {SessionId}", body.SessionId);
+                // Remove the player we just added since they won't have permissions
+                model.Players.Remove(player);
+                return (StatusCodes.InternalServerError, null);
+            }
 
-            // Publish event
-            await _messageBus.PublishAsync(
+            // Save updated session
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, cancellationToken: cancellationToken);
+
+            // Publish event (SessionId in event = lobby ID for game session identification)
+            await _messageBus.TryPublishAsync(
                 PLAYER_JOINED_TOPIC,
                 new GameSessionPlayerJoinedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = accountId.ToString()
+                    SessionId = lobbyId,
+                    AccountId = accountId
                 });
 
-            // Set game-session:in_game state to enable leave/chat/action endpoints (Tenet 10)
-            var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
-            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
-            {
-                try
-                {
-                    await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
-                    {
-                        SessionId = clientSessionId,
-                        ServiceId = "game-session",
-                        NewState = "in_game"
-                    }, cancellationToken);
-                    _logger.LogDebug("Set game-session:in_game state for session {SessionId}", clientSessionId);
-                }
-                catch (Exception ex)
-                {
-                    // Log but don't fail - the join succeeded, state is secondary
-                    _logger.LogWarning(ex, "Failed to set game-session:in_game state for session {SessionId}", clientSessionId);
-                }
-            }
-            else if (_permissionsClient == null)
-            {
-                _logger.LogDebug("Permissions client not available, game-session:in_game state not set");
-            }
-
-            // Build response
+            // Build response (SessionId = lobby ID so client knows which game they joined)
             var response = new JoinGameSessionResponse
             {
                 Success = true,
-                SessionId = sessionId,
+                SessionId = lobbyId,
                 PlayerRole = JoinGameSessionResponsePlayerRole.Player,
-                GameData = model.GameSettings ?? new { },
+                GameData = model.GameSettings ?? new object(),
                 NewPermissions = new List<string>
                 {
-                    $"game-session:{sessionId}:action",
-                    $"game-session:{sessionId}:chat"
+                    $"game-session:{lobbyId}:action",
+                    $"game-session:{lobbyId}:chat"
                 }
             };
 
-            // Join voice room if voice is enabled and voice endpoint provided
-            if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
-            {
-                try
-                {
-                    // Get the client's WebSocket session ID from the X-Bannou-Session-Id header
-                    // This header is set by Connect service when routing WebSocket requests
-                    // Using the actual session ID allows VoiceService to set permissions that the client
-                    // will receive via capability updates (they must match activeConnections)
-                    var voiceSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
-                    if (string.IsNullOrEmpty(voiceSessionId))
-                    {
-                        _logger.LogWarning("X-Bannou-Session-Id header missing - voice join requires WebSocket session context");
-                        // Fall back to generating a session ID for HTTP-only requests (e.g., direct API calls for testing)
-                        voiceSessionId = Guid.NewGuid().ToString();
-                    }
+            // TODO: Voice room join
 
-                    _logger.LogDebug("Player {AccountId} joining voice room {VoiceRoomId} with voice session {VoiceSessionId}",
-                        accountId, model.VoiceRoomId, voiceSessionId);
-
-                    // Convert VoiceSipEndpoint to Voice service SipEndpoint
-                    var sipEndpoint = new SipEndpoint
-                    {
-                        SdpOffer = body.VoiceEndpoint?.SdpOffer ?? string.Empty,
-                        IceCandidates = body.VoiceEndpoint?.IceCandidates?.ToList() ?? new List<string>()
-                    };
-
-                    var voiceResponse = await _voiceClient.JoinVoiceRoomAsync(new JoinVoiceRoomRequest
-                    {
-                        RoomId = model.VoiceRoomId.Value,
-                        SessionId = voiceSessionId,
-                        DisplayName = player.DisplayName,
-                        SipEndpoint = sipEndpoint
-                    }, cancellationToken);
-
-                    if (voiceResponse.Success)
-                    {
-                        // Event-only pattern: Only return minimal voice metadata
-                        // Peers are delivered via VoicePeerJoinedEvent to avoid race conditions
-                        response.Voice = new VoiceConnectionInfo
-                        {
-                            VoiceEnabled = true,
-                            RoomId = voiceResponse.RoomId,
-                            Tier = MapVoiceTierToConnectionInfoTier(voiceResponse.Tier),
-                            Codec = MapVoiceCodecToConnectionInfoCodec(voiceResponse.Codec),
-                            StunServers = voiceResponse.StunServers?.ToList() ?? new List<string>()
-                        };
-
-                        // Store the voice session ID in the player for cleanup on leave
-                        player.VoiceSessionId = voiceSessionId;
-
-                        // Save updated session with VoiceSessionId so leave can properly clean up
-                        await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
-
-                        _logger.LogInformation("Player {AccountId} joined voice room {VoiceRoomId}",
-                            accountId, model.VoiceRoomId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to join voice room {VoiceRoomId} for player {AccountId}",
-                            model.VoiceRoomId, accountId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Voice join failure is non-fatal - player can still participate in session
-                    _logger.LogWarning(ex, "Failed to join voice room for player {AccountId} in session {SessionId}",
-                        accountId, sessionId);
-                }
-            }
-
-            _logger.LogInformation("Player {AccountId} joined game session {SessionId}", accountId, sessionId);
+            _logger.LogInformation("Player {AccountId} joined game {GameType} (lobby {LobbyId}) from session {ClientSessionId}",
+                accountId, gameType, lobbyId, clientSessionId);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to join game session {SessionId}", body.SessionId);
+            _logger.LogError(ex, "Failed to join game {GameType}", body.GameType);
             await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "JoinGameSession",
@@ -571,31 +546,68 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var sessionId = body.SessionId.ToString();
-            _logger.LogInformation("Performing game action {ActionType} in session {SessionId}",
-                body.ActionType, sessionId);
+            // body.SessionId is the WebSocket session ID
+            // body.AccountId is the player performing the action
+            // body.GameType determines which lobby
+            var clientSessionId = body.SessionId.ToString();
+            var accountId = body.AccountId;
+            var gameType = body.GameType;
+
+            _logger.LogInformation("Performing game action {ActionType} in game {GameType} by {AccountId}",
+                body.ActionType, gameType, accountId);
+
+            // Get the lobby for this game type (don't auto-create for action)
+            var lobbyId = await GetLobbySessionAsync(gameType);
+            if (lobbyId == Guid.Empty)
+            {
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
+                return (StatusCodes.NotFound, null);
+            }
 
             var model = await _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE)
-                .GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+                .GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Game session {SessionId} not found for action", sessionId);
+                _logger.LogWarning("Game lobby {LobbyId} not found for action in game {GameType}", lobbyId, gameType);
                 return (StatusCodes.NotFound, null);
             }
 
             if (model.Status == GameSessionResponseStatus.Finished)
             {
-                _logger.LogWarning("Cannot perform action on finished session {SessionId}", sessionId);
+                _logger.LogWarning("Cannot perform action on finished lobby {LobbyId}", lobbyId);
                 return (StatusCodes.BadRequest, new GameActionResponse
                 {
                     Success = false,
-                    ActionId = Guid.NewGuid()
+                    ActionId = Guid.NewGuid(),
+                    Result = new Dictionary<string, object?> { ["error"] = "Cannot perform action on finished session" }
                 });
             }
 
-            // Create action response
+            // Validate action data is present for mutation actions
+            var actionType = body.ActionType;
+            if (body.ActionData == null && actionType != GameActionRequestActionType.Move)
+            {
+                // Move can have empty data for "continue moving" semantics; other actions need data
+                _logger.LogDebug("No action data provided for action type {ActionType} - proceeding with empty data", actionType);
+            }
+
+            // Create action response - success only after all validations pass
             var actionId = Guid.NewGuid();
+            var actionTimestamp = DateTimeOffset.UtcNow;
+
+            // Publish game action event so other systems can react
+            // TryPublishAsync handles buffering, retry, and error logging internally
+            await _messageBus.TryPublishAsync("game-session.action.performed", new GameSessionActionPerformedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = actionTimestamp,
+                SessionId = body.SessionId,
+                ActionId = actionId,
+                ActionType = body.ActionType.ToString(),
+                TargetId = body.TargetId
+            });
+
             var response = new GameActionResponse
             {
                 Success = true,
@@ -603,18 +615,18 @@ public partial class GameSessionService : IGameSessionService
                 Result = new Dictionary<string, object?>
                 {
                     ["actionType"] = body.ActionType.ToString(),
-                    ["timestamp"] = DateTimeOffset.UtcNow.ToString("O")
+                    ["timestamp"] = actionTimestamp.ToString("O")
                 },
-                NewGameState = body.ActionData
+                NewGameState = body.ActionData ?? new Dictionary<string, object?>()
             };
 
-            _logger.LogInformation("Game action {ActionId} performed successfully in session {SessionId}",
-                actionId, sessionId);
+            _logger.LogInformation("Game action {ActionId} performed successfully in lobby {LobbyId}",
+                actionId, lobbyId);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to perform game action in session {SessionId}", body.SessionId);
+            _logger.LogError(ex, "Failed to perform game action in game {GameType}", body.GameType);
             await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "PerformGameAction",
@@ -631,22 +643,34 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Leaves a game session.
     /// </summary>
-    public async Task<(StatusCodes, object?)> LeaveGameSessionAsync(
+    public async Task<StatusCodes> LeaveGameSessionAsync(
         LeaveGameSessionRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var sessionId = body.SessionId.ToString();
-            _logger.LogInformation("Player leaving game session {SessionId}", sessionId);
+            // body.SessionId is the WebSocket session ID
+            // body.GameType determines which lobby to leave
+            var clientSessionId = body.SessionId.ToString();
+            var gameType = body.GameType;
+
+            _logger.LogInformation("Player leaving game {GameType} from session {SessionId}", gameType, clientSessionId);
+
+            // Get the lobby for this game type (don't auto-create for leave)
+            var lobbyId = await GetLobbySessionAsync(gameType);
+            if (lobbyId == Guid.Empty)
+            {
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
+                return StatusCodes.NotFound;
+            }
 
             var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
-            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Game session {SessionId} not found for leave", sessionId);
-                return (StatusCodes.NotFound, null);
+                _logger.LogWarning("Game lobby {LobbyId} not found for game type {GameType}", lobbyId, gameType);
+                return StatusCodes.NotFound;
             }
 
             // AccountId comes from the request body (populated by shortcut system)
@@ -656,14 +680,39 @@ public partial class GameSessionService : IGameSessionService
             var leavingPlayer = model.Players.FirstOrDefault(p => p.AccountId == accountId);
             if (leavingPlayer == null)
             {
-                _logger.LogWarning("Player {AccountId} not found in session {SessionId}", accountId, sessionId);
-                return (StatusCodes.NotFound, null);
+                _logger.LogWarning("Player {AccountId} not found in lobby {LobbyId}", accountId, lobbyId);
+                return StatusCodes.NotFound;
+            }
+
+            // Clear game-session:in_game state via Permission service
+            try
+            {
+                await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
+                {
+                    SessionId = body.SessionId,
+                    ServiceId = "game-session"
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Log error and publish error event - this is an internal failure, not user error
+                // Continue anyway - player wants to leave, don't trap them; state cleaned up on session expiry
+                _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.SessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = body.SessionId },
+                    stack: ex.StackTrace);
             }
 
             model.Players.Remove(leavingPlayer);
             model.CurrentPlayers = model.Players.Count;
 
-            // Leave voice room if voice is enabled and player has a voice session
+            // Leave voice room if voice is enabled and player has a voice session (best effort - has TTL)
             if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
                 && !string.IsNullOrEmpty(leavingPlayer.VoiceSessionId))
             {
@@ -699,8 +748,8 @@ public partial class GameSessionService : IGameSessionService
                 {
                     try
                     {
-                        _logger.LogDebug("Deleting voice room {VoiceRoomId} as session {SessionId} has ended",
-                            model.VoiceRoomId, sessionId);
+                        _logger.LogDebug("Deleting voice room {VoiceRoomId} as lobby {LobbyId} has ended",
+                            model.VoiceRoomId, lobbyId);
 
                         await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
                         {
@@ -708,13 +757,13 @@ public partial class GameSessionService : IGameSessionService
                             Reason = "session_ended"
                         }, cancellationToken);
 
-                        _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended session {SessionId}",
-                            model.VoiceRoomId, sessionId);
+                        _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended lobby {LobbyId}",
+                            model.VoiceRoomId, lobbyId);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for session {SessionId}",
-                            model.VoiceRoomId, sessionId);
+                        _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for lobby {LobbyId}",
+                            model.VoiceRoomId, lobbyId);
                     }
                 }
             }
@@ -724,47 +773,28 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save updated session
-            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), model, cancellationToken: cancellationToken);
 
             // Publish event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = leavingPlayer.AccountId.ToString(),
+                    SessionId = lobbyId,
+                    AccountId = leavingPlayer.AccountId,
                     Kicked = false
                 });
 
-            // Clear game-session:in_game state to remove leave/chat/action endpoint access (Tenet 10)
-            var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
-            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
-            {
-                try
-                {
-                    await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
-                    {
-                        SessionId = clientSessionId,
-                        ServiceId = "game-session"
-                    }, cancellationToken);
-                    _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
-                }
-                catch (Exception ex)
-                {
-                    // Log but don't fail - the leave succeeded, state cleanup is secondary
-                    _logger.LogWarning(ex, "Failed to clear game-session:in_game state for session {SessionId}", clientSessionId);
-                }
-            }
+            _logger.LogInformation("Player {AccountId} left game {GameType} (lobby {LobbyId})",
+                accountId, gameType, lobbyId);
 
-            _logger.LogInformation("Player left game session {SessionId}", sessionId);
-
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to leave game session {SessionId}", body.SessionId);
+            _logger.LogError(ex, "Failed to leave game {GameType}", body.GameType);
             await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "LeaveGameSession",
@@ -774,14 +804,14 @@ public partial class GameSessionService : IGameSessionService
                 endpoint: "post:/game-session/leave",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <summary>
     /// Kicks a player from a game session.
     /// </summary>
-    public async Task<(StatusCodes, object?)> KickPlayerAsync(
+    public async Task<StatusCodes> KickPlayerAsync(
         KickPlayerRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -799,7 +829,7 @@ public partial class GameSessionService : IGameSessionService
             if (model == null)
             {
                 _logger.LogWarning("Game session {SessionId} not found for kick", sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Find and remove the player
@@ -808,7 +838,7 @@ public partial class GameSessionService : IGameSessionService
             {
                 _logger.LogWarning("Player {TargetAccountId} not found in session {SessionId}",
                     targetAccountId, sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             model.Players.Remove(playerToKick);
@@ -824,20 +854,20 @@ public partial class GameSessionService : IGameSessionService
             await sessionStore.SaveAsync(SESSION_KEY_PREFIX + sessionId, model, cancellationToken: cancellationToken);
 
             // Publish event
-            await _messageBus.PublishAsync(
+            await _messageBus.TryPublishAsync(
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = targetAccountId.ToString(),
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = targetAccountId,
                     Kicked = true,
                     Reason = body.Reason
                 });
 
             _logger.LogInformation("Player {TargetAccountId} kicked from session {SessionId}", targetAccountId, sessionId);
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -851,138 +881,128 @@ public partial class GameSessionService : IGameSessionService
                 endpoint: "post:/game-session/kick",
                 details: new { SessionId = body.SessionId, TargetAccountId = body.TargetAccountId },
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <summary>
     /// Sends a chat message in a game session.
     /// </summary>
-    public async Task<(StatusCodes, object?)> SendChatMessageAsync(
+    public async Task<StatusCodes> SendChatMessageAsync(
         ChatMessageRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var sessionId = body.SessionId.ToString();
+            // body.SessionId is the WebSocket session ID
+            // body.AccountId is the sender's account
+            // body.GameType determines which lobby
+            var clientSessionId = body.SessionId.ToString();
+            var senderId = body.AccountId;
+            var gameType = body.GameType;
 
-            _logger.LogInformation("Chat message in session {SessionId}: {MessageType}",
-                sessionId, body.MessageType);
+            _logger.LogInformation("Chat message in game {GameType}: {MessageType}", gameType, body.MessageType);
+
+            // Get the lobby for this game type (don't auto-create for chat)
+            var lobbyId = await GetLobbySessionAsync(gameType);
+            if (lobbyId == Guid.Empty)
+            {
+                _logger.LogWarning("No lobby exists for game type {GameType}", gameType);
+                return StatusCodes.NotFound;
+            }
 
             var model = await _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE)
-                .GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+                .GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
             {
-                _logger.LogWarning("Game session {SessionId} not found for chat", sessionId);
-                return (StatusCodes.NotFound, null);
+                _logger.LogWarning("Game lobby {LobbyId} not found for chat", lobbyId);
+                return StatusCodes.NotFound;
             }
 
-            // Check if client event publisher is available
-            if (_clientEventPublisher == null)
-            {
-                _logger.LogWarning("IClientEventPublisher not available - cannot send chat message to session {SessionId}", sessionId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Get sender info from request context
-            var senderAccountIdStr = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Account-Id"].FirstOrDefault();
-            var senderId = Guid.TryParse(senderAccountIdStr, out var parsedSenderId) ? parsedSenderId : Guid.Empty;
+            // Find the sender player
             var senderPlayer = model.Players.FirstOrDefault(p => p.AccountId == senderId);
 
-            // Build typed client event
+            // Build typed client event (SessionId = lobby ID for game context)
             var chatEvent = new ChatMessageReceivedEvent
             {
-                Event_id = Guid.NewGuid(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Event_name = ChatMessageReceivedEventEvent_name.Game_session_chat_received,
-                Session_id = body.SessionId,
-                Message_id = Guid.NewGuid(),
-                Sender_id = senderId,
-                Sender_name = senderPlayer?.DisplayName,
+                SessionId = lobbyId,
+                MessageId = Guid.NewGuid(),
+                SenderId = senderId,
+                SenderName = senderPlayer?.DisplayName,
                 Message = body.Message,
-                Message_type = MapChatMessageType(body.MessageType),
-                Is_whisper_to_me = false // Will be set per-recipient for whispers
+                MessageType = MapChatMessageType(body.MessageType),
+                IsWhisperToMe = false // Will be set per-recipient for whispers
             };
 
-            // Get WebSocket session IDs for all players in the game session
-            var targetSessionIds = new List<string>();
-            foreach (var player in model.Players)
-            {
-                if (_accountSessions.TryGetValue(player.AccountId, out var sessions))
-                {
-                    lock (sessions)
-                    {
-                        targetSessionIds.AddRange(sessions);
-                    }
-                }
-            }
+            // Get WebSocket session IDs directly from player records (each player.SessionId is the WebSocket session that joined)
+            var targetSessionIds = model.Players
+                .Where(p => !string.IsNullOrEmpty(p.SessionId))
+                .Select(p => p.SessionId)
+                .ToList();
 
             if (targetSessionIds.Count == 0)
             {
-                _logger.LogWarning("No connected WebSocket sessions found for game session {SessionId}", sessionId);
-                return (StatusCodes.OK, null); // Not an error - players may have disconnected
+                _logger.LogWarning("No player sessions found for game {GameType}", gameType);
+                return StatusCodes.OK; // Not an error - players may have left
             }
 
             // Handle whisper messages - only send to sender and target
             if (body.MessageType == ChatMessageRequestMessageType.Whisper && body.TargetPlayerId != Guid.Empty)
             {
-                var whisperTargets = new List<string>();
+                // Find sender and target player sessions
+                var senderSession = senderPlayer?.SessionId;
+                var targetPlayer = model.Players.FirstOrDefault(p => p.AccountId == body.TargetPlayerId);
+                var targetSession = targetPlayer?.SessionId;
 
-                // Add sender's sessions
-                if (_accountSessions.TryGetValue(senderId, out var senderSessions))
+                // Send to target with IsWhisperToMe = true
+                if (!string.IsNullOrEmpty(targetSession))
                 {
-                    lock (senderSessions)
-                    {
-                        whisperTargets.AddRange(senderSessions);
-                    }
-                }
-
-                // Add target's sessions with is_whisper_to_me = true
-                if (_accountSessions.TryGetValue(body.TargetPlayerId, out var targetSessions))
-                {
-                    List<string> targetSessionsCopy;
-                    lock (targetSessions)
-                    {
-                        targetSessionsCopy = targetSessions.ToList();
-                    }
-
-                    // Send to target with is_whisper_to_me = true
                     var targetEvent = new ChatMessageReceivedEvent
                     {
-                        Event_id = chatEvent.Event_id,
+                        EventId = chatEvent.EventId,
                         Timestamp = chatEvent.Timestamp,
-                        Event_name = chatEvent.Event_name,
-                        Session_id = chatEvent.Session_id,
-                        Message_id = chatEvent.Message_id,
-                        Sender_id = chatEvent.Sender_id,
-                        Sender_name = chatEvent.Sender_name,
+                        EventName = chatEvent.EventName,
+                        SessionId = chatEvent.SessionId,
+                        MessageId = chatEvent.MessageId,
+                        SenderId = chatEvent.SenderId,
+                        SenderName = chatEvent.SenderName,
                         Message = chatEvent.Message,
-                        Message_type = chatEvent.Message_type,
-                        Is_whisper_to_me = true
+                        MessageType = chatEvent.MessageType,
+                        IsWhisperToMe = true
                     };
-                    await _clientEventPublisher.PublishToSessionsAsync(targetSessionsCopy, targetEvent, cancellationToken);
+                    await _clientEventPublisher.PublishToSessionAsync(targetSession, targetEvent, cancellationToken);
                 }
 
-                // Send to sender with is_whisper_to_me = false
-                if (whisperTargets.Count > 0)
+                // Send to sender with IsWhisperToMe = false
+                if (!string.IsNullOrEmpty(senderSession))
                 {
-                    await _clientEventPublisher.PublishToSessionsAsync(whisperTargets, chatEvent, cancellationToken);
+                    await _clientEventPublisher.PublishToSessionAsync(senderSession, chatEvent, cancellationToken);
                 }
             }
             else
             {
-                // Public message - send to all session participants
+                // Public message - send to all players in the game session
                 var sentCount = await _clientEventPublisher.PublishToSessionsAsync(targetSessionIds, chatEvent, cancellationToken);
-                _logger.LogDebug("Chat message sent to {SentCount}/{TotalCount} sessions in game session {SessionId}",
-                    sentCount, targetSessionIds.Count, sessionId);
+                _logger.LogDebug("Chat message sent to {SentCount}/{TotalCount} players in game {GameType}",
+                    sentCount, targetSessionIds.Count, gameType);
+
+                // Warn if we had recipients but couldn't deliver to any of them
+                if (sentCount == 0 && targetSessionIds.Count > 0)
+                {
+                    _logger.LogWarning(
+                        "Chat message in game {GameType} had {RecipientCount} target sessions but 0 delivered - possible pubsub issue",
+                        gameType, targetSessionIds.Count);
+                }
             }
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send chat message in session {SessionId}", body.SessionId);
+            _logger.LogError(ex, "Failed to send chat message in game {GameType}", body.GameType);
             await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "SendChatMessage",
@@ -992,7 +1012,7 @@ public partial class GameSessionService : IGameSessionService
                 endpoint: "post:/game-session/chat",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1019,25 +1039,7 @@ public partial class GameSessionService : IGameSessionService
             return;
         }
 
-        // Track this session (forward index: SessionId -> AccountId)
-        _connectedSessions[sessionId] = accountGuid;
-
-        // Maintain reverse index for client event publishing (AccountId -> Set<SessionId>)
-        _accountSessions.AddOrUpdate(
-            accountGuid,
-            _ => new HashSet<string> { sessionId },
-            (_, existingSet) =>
-            {
-                lock (existingSet)
-                {
-                    existingSet.Add(sessionId);
-                }
-                return existingSet;
-            });
-
-        _logger.LogDebug("Tracking session {SessionId} for account {AccountId}", sessionId, accountId);
-
-        // Fetch subscriptions if not cached
+        // Check if account is in our local subscription cache (fast filter)
         if (!_accountSubscriptions.ContainsKey(accountGuid))
         {
             await FetchAndCacheSubscriptionsAsync(accountGuid);
@@ -1047,12 +1049,22 @@ public partial class GameSessionService : IGameSessionService
         if (_accountSubscriptions.TryGetValue(accountGuid, out var stubNames))
         {
             var ourServices = stubNames.Where(IsOurService).ToList();
-            _logger.LogDebug("Account {AccountId} has {Count} subscriptions matching our services: {Services}",
-                accountId, ourServices.Count, string.Join(", ", ourServices));
-
-            foreach (var stubName in ourServices)
+            if (ourServices.Count > 0)
             {
-                await PublishJoinShortcutAsync(sessionId, accountGuid, stubName);
+                _logger.LogDebug("Account {AccountId} has {Count} subscriptions matching our services: {Services}",
+                    accountId, ourServices.Count, string.Join(", ", ourServices));
+
+                // Store subscriber session in lib-state (distributed tracking)
+                await StoreSubscriberSessionAsync(accountGuid, sessionId);
+
+                foreach (var stubName in ourServices)
+                {
+                    await PublishJoinShortcutAsync(sessionId, accountGuid, stubName);
+                }
+            }
+            else
+            {
+                _logger.LogDebug("Account {AccountId} has no subscriptions matching our services", accountId);
             }
         }
         else
@@ -1063,40 +1075,32 @@ public partial class GameSessionService : IGameSessionService
 
     /// <summary>
     /// Handles session.disconnected event from Connect service.
-    /// Removes session from tracking.
+    /// Removes session from distributed subscriber tracking.
     /// Called internally by GameSessionEventsController.
     /// </summary>
     /// <param name="sessionId">WebSocket session ID that disconnected.</param>
-    internal Task HandleSessionDisconnectedInternalAsync(string sessionId)
+    /// <param name="accountId">Account ID from the disconnect event (null if session was unauthenticated).</param>
+    internal async Task HandleSessionDisconnectedInternalAsync(string sessionId, Guid? accountId)
     {
         if (string.IsNullOrEmpty(sessionId))
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        if (_connectedSessions.TryRemove(sessionId, out var accountId))
+        // Only remove from subscriber tracking if the session was authenticated
+        if (accountId.HasValue)
         {
-            // Remove from reverse index
-            if (_accountSessions.TryGetValue(accountId, out var sessions))
-            {
-                lock (sessions)
-                {
-                    sessions.Remove(sessionId);
-                    // Clean up empty sets to prevent memory leaks
-                    if (sessions.Count == 0)
-                    {
-                        _accountSessions.TryRemove(accountId, out _);
-                    }
-                }
-            }
-            _logger.LogDebug("Removed session {SessionId} (account {AccountId}) from tracking", sessionId, accountId);
+            await RemoveSubscriberSessionAsync(accountId.Value, sessionId);
+            _logger.LogDebug("Removed session {SessionId} (account {AccountId}) from subscriber tracking", sessionId, accountId.Value);
         }
-
-        return Task.CompletedTask;
+        else
+        {
+            _logger.LogDebug("Session {SessionId} disconnected (was not authenticated, no subscriber tracking to remove)", sessionId);
+        }
     }
 
     /// <summary>
-    /// Handles subscription.updated event from Subscriptions service.
+    /// Handles subscription.updated event from Subscription service.
     /// Updates subscription cache and publishes/revokes shortcuts for affected connected sessions.
     /// Called internally by GameSessionEventsController.
     /// </summary>
@@ -1144,10 +1148,8 @@ public partial class GameSessionService : IGameSessionService
             return;
         }
 
-        var connectedSessionsForAccount = _connectedSessions
-            .Where(kv => kv.Value == accountId)
-            .Select(kv => kv.Key)
-            .ToList();
+        // Get sessions from lib-state (distributed subscriber tracking)
+        var connectedSessionsForAccount = await GetSubscriberSessionsAsync(accountId);
 
         _logger.LogDebug("Found {Count} connected sessions for account {AccountId}", connectedSessionsForAccount.Count, accountId);
 
@@ -1165,25 +1167,20 @@ public partial class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// Fetches and caches subscriptions for an account from the Subscriptions service.
+    /// Fetches and caches subscriptions for an account from the Subscription service.
     /// </summary>
     private async Task FetchAndCacheSubscriptionsAsync(Guid accountId)
     {
-        if (_subscriptionsClient == null)
-        {
-            _logger.LogDebug("Subscriptions client not available, cannot fetch subscriptions for account {AccountId}", accountId);
-            return;
-        }
-
         try
         {
-            var response = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                new GetCurrentSubscriptionsRequest { AccountId = accountId });
+            var response = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
+                new QueryCurrentSubscriptionsRequest { AccountId = accountId });
 
             if (response?.Subscriptions != null && response.Subscriptions.Count > 0)
             {
+                // Filter first, then select - StubName is required (non-nullable) per schema
                 var stubs = new HashSet<string>(
-                    response.Subscriptions.Select(s => s.StubName ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)),
+                    response.Subscriptions.Where(s => !string.IsNullOrEmpty(s.StubName)).Select(s => s.StubName),
                     StringComparer.OrdinalIgnoreCase);
 
                 _accountSubscriptions[accountId] = stubs;
@@ -1204,15 +1201,114 @@ public partial class GameSessionService : IGameSessionService
     }
 
     /// <summary>
+    /// Stores a subscriber session in distributed state.
+    /// Called when a session connects for a subscribed account.
+    /// </summary>
+    private async Task StoreSubscriberSessionAsync(Guid accountId, string sessionId)
+    {
+        try
+        {
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
+
+            var existing = await store.GetAsync(key) ?? new SubscriberSessionsModel { AccountId = accountId };
+            existing.SessionIds.Add(sessionId);
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
+
+            await store.SaveAsync(key, existing);
+            _logger.LogDebug("Stored subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to store subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+        }
+    }
+
+    /// <summary>
+    /// Removes a subscriber session from distributed state.
+    /// Called when a session disconnects.
+    /// </summary>
+    private async Task RemoveSubscriberSessionAsync(Guid accountId, string sessionId)
+    {
+        try
+        {
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
+
+            var existing = await store.GetAsync(key);
+            if (existing != null)
+            {
+                existing.SessionIds.Remove(sessionId);
+                existing.UpdatedAt = DateTimeOffset.UtcNow;
+
+                if (existing.SessionIds.Count == 0)
+                {
+                    await store.DeleteAsync(key);
+                }
+                else
+                {
+                    await store.SaveAsync(key, existing);
+                }
+            }
+            _logger.LogDebug("Removed subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to remove subscriber session {SessionId} for account {AccountId}", sessionId, accountId);
+        }
+    }
+
+    /// <summary>
+    /// Gets all subscriber sessions for an account from distributed state.
+    /// </summary>
+    private async Task<List<string>> GetSubscriberSessionsAsync(Guid accountId)
+    {
+        try
+        {
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
+
+            var existing = await store.GetAsync(key);
+            return existing?.SessionIds.ToList() ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get subscriber sessions for account {AccountId}", accountId);
+            return new List<string>();
+        }
+    }
+
+    /// <summary>
+    /// Checks if a session is a valid subscriber session for an account.
+    /// Used for join validation.
+    /// </summary>
+    private async Task<bool> IsValidSubscriberSessionAsync(Guid accountId, string sessionId)
+    {
+        try
+        {
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
+
+            var existing = await store.GetAsync(key);
+            return existing?.SessionIds.Contains(sessionId) == true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to validate subscriber session for account {AccountId}", accountId);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Publishes a join shortcut for a session to access a game lobby.
     /// </summary>
     private async Task PublishJoinShortcutAsync(string sessionId, Guid accountId, string stubName)
     {
         try
         {
-            // Get or create the lobby session for this game service
-            var lobbySessionId = await GetOrCreateLobbySessionAsync(stubName);
-            if (lobbySessionId == Guid.Empty)
+            // Get or create the lobby for this game service (internal state ID, not exposed to client)
+            var lobbyId = await GetOrCreateLobbySessionAsync(stubName);
+            if (lobbyId == Guid.Empty)
             {
                 _logger.LogWarning("Failed to get/create lobby for {StubName}, cannot publish shortcut", stubName);
                 return;
@@ -1233,53 +1329,49 @@ public partial class GameSessionService : IGameSessionService
                 "game-session/sessions/join",
                 _serverSalt);
 
-            // Create the pre-bound payload with accountId included
+            // Create the pre-bound payload with WebSocket sessionId, accountId, and gameType
+            // sessionId here is the WebSocket session ID - used for event delivery to this client
+            // gameType determines which lobby to join
             var boundPayload = new JoinGameSessionRequest
             {
-                SessionId = lobbySessionId,
-                AccountId = accountId
+                SessionId = Guid.Parse(sessionId),  // WebSocket session ID
+                AccountId = accountId,
+                GameType = stubName  // e.g., "arcadia", "generic"
             };
 
             var shortcutEvent = new ShortcutPublishedEvent
             {
-                Event_id = Guid.NewGuid(),
-                Event_name = ShortcutPublishedEventEvent_name.Session_shortcut_published,
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Session_id = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Shortcut = new SessionShortcut
                 {
-                    Route_guid = routeGuid,
-                    Target_guid = targetGuid,
-                    Bound_payload = BannouJson.Serialize(boundPayload),
+                    RouteGuid = routeGuid,
+                    TargetGuid = targetGuid,
+                    BoundPayload = BannouJson.Serialize(boundPayload),
                     Metadata = new SessionShortcutMetadata
                     {
                         Name = shortcutName,
                         Description = $"Join the {stubName} game lobby",
-                        Source_service = "game-session",
-                        Target_service = "game-session",
-                        Target_method = "POST",
-                        Target_endpoint = "/sessions/join",
-                        Created_at = DateTimeOffset.UtcNow
+                        SourceService = "game-session",
+                        TargetService = "game-session",
+                        TargetMethod = "POST",
+                        TargetEndpoint = "/sessions/join",
+                        CreatedAt = DateTimeOffset.UtcNow
                     }
                 },
-                Replace_existing = true
+                ReplaceExisting = true
             };
 
             // Publish to session-specific client event channel using direct exchange
-            // CRITICAL: Must use IClientEventPublisher for session-specific events (Tenet 6)
+            // CRITICAL: Must use IClientEventPublisher for session-specific events (IMPLEMENTATION TENETS)
             // Using _messageBus directly would publish to fanout exchange "bannou" instead
             // of direct exchange "bannou-client-events" with proper routing key
-            if (_clientEventPublisher == null)
-            {
-                _logger.LogWarning("IClientEventPublisher not available - cannot publish shortcut to session {SessionId}", sessionId);
-                return;
-            }
-
             var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, shortcutEvent);
             if (published)
             {
                 _logger.LogInformation("Published join shortcut {RouteGuid} for session {SessionId} -> lobby {LobbyId} ({StubName})",
-                    routeGuid, sessionId, lobbySessionId, stubName);
+                    routeGuid, sessionId, lobbyId, stubName);
             }
             else
             {
@@ -1301,22 +1393,15 @@ public partial class GameSessionService : IGameSessionService
         {
             var revokeEvent = new ShortcutRevokedEvent
             {
-                Event_id = Guid.NewGuid(),
-                Event_name = ShortcutRevokedEventEvent_name.Session_shortcut_revoked,
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Session_id = sessionId,
-                Revoke_by_service = "game-session",
+                SessionId = Guid.Parse(sessionId),
+                RevokeByService = "game-session",
                 Reason = $"Subscription to {stubName} ended"
             };
 
             // Publish to session-specific client event channel using direct exchange
-            // CRITICAL: Must use IClientEventPublisher for session-specific events (Tenet 6)
-            if (_clientEventPublisher == null)
-            {
-                _logger.LogWarning("IClientEventPublisher not available - cannot revoke shortcuts for session {SessionId}", sessionId);
-                return;
-            }
-
+            // CRITICAL: Must use IClientEventPublisher for session-specific events (IMPLEMENTATION TENETS)
             var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, revokeEvent);
             if (published)
             {
@@ -1395,6 +1480,36 @@ public partial class GameSessionService : IGameSessionService
     }
 
     /// <summary>
+    /// Gets an existing lobby session for a game type (does NOT create if missing/finished).
+    /// Use this for Join/Leave/Action operations that require an existing active lobby.
+    /// </summary>
+    private async Task<Guid> GetLobbySessionAsync(string gameType)
+    {
+        var lobbyKey = LOBBY_KEY_PREFIX + gameType.ToLowerInvariant();
+
+        try
+        {
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var existingLobby = await sessionStore.GetAsync(lobbyKey);
+
+            if (existingLobby != null)
+            {
+                _logger.LogDebug("Found lobby {LobbyId} for {GameType} with status {Status}",
+                    existingLobby.SessionId, gameType, existingLobby.Status);
+                return Guid.Parse(existingLobby.SessionId);
+            }
+
+            _logger.LogDebug("No lobby found for {GameType}", gameType);
+            return Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get lobby for {GameType}", gameType);
+            return Guid.Empty;
+        }
+    }
+
+    /// <summary>
     /// Checks if a service stub name is handled by this service.
     /// </summary>
     private static bool IsOurService(string stubName)
@@ -1430,9 +1545,9 @@ public partial class GameSessionService : IGameSessionService
     {
         return new GameSessionResponse
         {
-            SessionId = model.SessionId,
+            SessionId = Guid.Parse(model.SessionId),
             GameType = model.GameType,
-            SessionName = model.SessionName ?? string.Empty,
+            SessionName = model.SessionName,
             Status = model.Status,
             MaxPlayers = model.MaxPlayers,
             CurrentPlayers = model.CurrentPlayers,
@@ -1440,7 +1555,7 @@ public partial class GameSessionService : IGameSessionService
             Owner = model.Owner,
             Players = model.Players,
             CreatedAt = model.CreatedAt,
-            GameSettings = model.GameSettings ?? new { }
+            GameSettings = model.GameSettings ?? new object()
         };
     }
 
@@ -1454,14 +1569,14 @@ public partial class GameSessionService : IGameSessionService
         };
     }
 
-    private static ChatMessageReceivedEventMessage_type MapChatMessageType(ChatMessageRequestMessageType messageType)
+    private static ChatMessageReceivedEventMessageType MapChatMessageType(ChatMessageRequestMessageType messageType)
     {
         return messageType switch
         {
-            ChatMessageRequestMessageType.Public => ChatMessageReceivedEventMessage_type.Public,
-            ChatMessageRequestMessageType.Whisper => ChatMessageReceivedEventMessage_type.Whisper,
-            ChatMessageRequestMessageType.System => ChatMessageReceivedEventMessage_type.System,
-            _ => ChatMessageReceivedEventMessage_type.Public
+            ChatMessageRequestMessageType.Public => ChatMessageReceivedEventMessageType.Public,
+            ChatMessageRequestMessageType.Whisper => ChatMessageReceivedEventMessageType.Whisper,
+            ChatMessageRequestMessageType.System => ChatMessageReceivedEventMessageType.System,
+            _ => ChatMessageReceivedEventMessageType.Public
         };
     }
 
@@ -1491,7 +1606,7 @@ public partial class GameSessionService : IGameSessionService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
@@ -1530,4 +1645,26 @@ internal class GameSessionModel
     /// The voice room ID if voice is enabled.
     /// </summary>
     public Guid? VoiceRoomId { get; set; }
+}
+
+/// <summary>
+/// Model for tracking subscriber sessions in distributed state.
+/// Stores which WebSocket sessions are connected for each subscribed account.
+/// </summary>
+internal class SubscriberSessionsModel
+{
+    /// <summary>
+    /// Account ID for this subscriber.
+    /// </summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>
+    /// Set of active WebSocket session IDs for this account.
+    /// </summary>
+    public HashSet<string> SessionIds { get; set; } = new();
+
+    /// <summary>
+    /// When this record was last updated.
+    /// </summary>
+    public DateTimeOffset UpdatedAt { get; set; }
 }

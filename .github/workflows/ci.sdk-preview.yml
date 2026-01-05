@@ -1,0 +1,108 @@
+name: 'SDK Preview Publish (Manual)'
+
+# Manual trigger for publishing preview SDKs without running full CI
+# Use when CI fails for infrastructure reasons but code is known-good
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "publish" to confirm (skips full CI pipeline)'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for manual publish (will be included in Discord notification)'
+        required: true
+        type: string
+
+env:
+  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
+jobs:
+  validate:
+    name: Validate Manual Publish Request
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+    steps:
+      - name: Validate Confirmation
+        id: check
+        run: |
+          if [ "${{ inputs.confirm }}" != "publish" ]; then
+            echo "❌ Confirmation failed. You must type 'publish' to proceed."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "✅ Confirmation accepted"
+          echo "proceed=true" >> $GITHUB_OUTPUT
+
+  build-and-publish:
+    name: Build and Publish Preview SDK
+    runs-on: ubuntu-latest
+    needs: validate
+    if: needs.validate.outputs.proceed == 'true'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Run Quick Validation
+        run: |
+          echo "🔍 Running quick validation (build only, no tests)..."
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          echo "✅ Build succeeded"
+
+      - name: Generate Preview Version
+        id: version
+        run: |
+          BASE_VERSION=$(cat SDK_VERSION | tr -d '[:space:]')
+          # Use timestamp for unique preview versions
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          PREVIEW_VERSION="${BASE_VERSION}-preview.manual.${TIMESTAMP}"
+          echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 Preview version: ${PREVIEW_VERSION}"
+
+      - name: Build and Pack SDKs
+        run: |
+          VERSION="${{ steps.version.outputs.preview_version }}"
+          echo "📦 Building and packing SDKs v${VERSION}..."
+
+          # Build and pack Server SDK (Bannou.SDK)
+          echo "📦 Building Server SDK (Bannou.SDK)..."
+          dotnet build Bannou.SDK --configuration Release --no-restore
+          dotnet pack Bannou.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+
+          # Build and pack Client SDK (Bannou.Client.SDK)
+          echo "📦 Building Client SDK (Bannou.Client.SDK)..."
+          dotnet build Bannou.Client.SDK --configuration Release --no-restore
+          dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+
+          echo "✅ Packages built:"
+          ls -la ./nuget-packages/
+
+      - name: Publish to NuGet
+        run: |
+          echo "🚀 Publishing preview packages to NuGet.org..."
+          dotnet nuget push ./nuget-packages/*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          echo "✅ Preview packages published!"
+
+      - name: Notify Discord
+        if: always()
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "Manual SDK Preview v${{ steps.version.outputs.preview_version }}"
+          status: ${{ job.status }}
+          commit-message: "Manual preview publish - ${{ inputs.reason }}"
+          commit-author: ${{ github.actor }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}

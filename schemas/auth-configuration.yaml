@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Auth Service Configuration
-  description: "Configuration schema for Auth service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  description: |
+    Configuration schema for Auth service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -9,7 +14,7 @@ x-service-configuration:
     # JWT Configuration
     JwtSecret:
       type: string
-      description: Secret key for JWT token signing
+      description: Secret key for JWT token signing (REQUIRED - service fails fast if missing)
       env: AUTH_JWT_SECRET
     JwtIssuer:
       type: string
@@ -59,52 +64,63 @@ x-service-configuration:
     # Discord OAuth
     DiscordClientId:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Discord OAuth client ID
       env: AUTH_DISCORD_CLIENT_ID
     DiscordClientSecret:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Discord OAuth client secret
       env: AUTH_DISCORD_CLIENT_SECRET
     DiscordRedirectUri:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Discord OAuth redirect URI
       env: AUTH_DISCORD_REDIRECT_URI
 
     # Google OAuth
     GoogleClientId:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Google OAuth client ID
       env: AUTH_GOOGLE_CLIENT_ID
     GoogleClientSecret:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Google OAuth client secret
       env: AUTH_GOOGLE_CLIENT_SECRET
     GoogleRedirectUri:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Google OAuth redirect URI
       env: AUTH_GOOGLE_REDIRECT_URI
 
     # Twitch OAuth
     TwitchClientId:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Twitch OAuth client ID
       env: AUTH_TWITCH_CLIENT_ID
     TwitchClientSecret:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Twitch OAuth client secret
       env: AUTH_TWITCH_CLIENT_SECRET
     TwitchRedirectUri:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Twitch OAuth redirect URI
       env: AUTH_TWITCH_REDIRECT_URI
 
     # Steam Authentication
     SteamApiKey:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Steam Web API key for session ticket validation
       env: AUTH_STEAM_API_KEY
     SteamAppId:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Steam application ID
       env: AUTH_STEAM_APP_ID
 
@@ -116,5 +132,6 @@ x-service-configuration:
       default: 30
     PasswordResetBaseUrl:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable
       description: Base URL for password reset page
       env: AUTH_PASSWORD_RESET_BASE_URL

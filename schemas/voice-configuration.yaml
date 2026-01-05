@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Voice Service Configuration
-  description: "Configuration schema for Voice service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  description: |
+    Configuration schema for Voice service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -45,7 +50,7 @@ x-service-configuration:
     # SIP Configuration
     SipPasswordSalt:
       type: string
-      description: Salt for SIP password generation
+      description: Salt for SIP password generation (REQUIRED when ScaledTierEnabled=true - service fails fast if missing)
       env: VOICE_SIP_PASSWORD_SALT
     SipDomain:
       type: string

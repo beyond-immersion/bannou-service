@@ -57,7 +57,7 @@ wait_for_service "$RABBITMQ_HOST" "$RABBITMQ_PORT" "RabbitMQ"
 # Wait for Redis (statestore) - required for all state stores
 wait_for_service "$REDIS_HOST" "$REDIS_PORT" "Redis"
 
-# Wait for MySQL (accounts-statestore) - optional
+# Wait for MySQL (account-statestore) - optional
 wait_for_service "$MYSQL_HOST" "$MYSQL_PORT" "MySQL"
 
 elapsed=$(($(date +%s) - start_time))

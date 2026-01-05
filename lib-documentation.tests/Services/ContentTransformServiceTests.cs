@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Documentation.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -23,20 +24,10 @@ public class ContentTransformServiceTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var service = new ContentTransformService(_mockLogger.Object);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ContentTransformService(null!));
+        ServiceConstructorValidator.ValidateServiceConstructor<ContentTransformService>();
+        Assert.NotNull(_service);
     }
 
     #endregion

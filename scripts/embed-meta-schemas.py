@@ -127,7 +127,7 @@ def create_json_schema(schema_def: Optional[Dict[str, Any]], root_schema: Dict[s
     if defs:
         result['$defs'] = defs
 
-    return json.dumps(result, indent=2)
+    return json.dumps(result, indent=4)
 
 
 def create_info_json(operation: Dict[str, Any]) -> str:
@@ -139,7 +139,7 @@ def create_info_json(operation: Dict[str, Any]) -> str:
         'deprecated': bool(operation.get('deprecated', False)),
         'operationId': str(operation.get('operationId', ''))
     }
-    return json.dumps(info, indent=2)
+    return json.dumps(info, indent=4)
 
 
 def get_request_schema(operation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -242,7 +242,7 @@ def main():
     )
     parser.add_argument(
         '--service',
-        help='Process only this service (e.g., "accounts")'
+        help='Process only this service (e.g., "account")'
     )
     args = parser.parse_args()
 

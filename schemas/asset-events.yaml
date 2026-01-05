@@ -5,6 +5,9 @@ info:
     Event models for Asset service RabbitMQ pub/sub via MassTransit.
     Contains asset-specific service-to-service events for upload tracking,
     processing coordination, and asset lifecycle management.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
     # MinIO webhook notifications (processed internally, not via pub/sub)
@@ -38,37 +41,49 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
     # ==========================================================================
     # Upload Events
     # ==========================================================================
 
     AssetUploadRequestedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when a new upload is initiated via requestUpload API
       required:
-        - eventId
-        - timestamp
         - uploadId
-        - sessionId
+        - owner
         - filename
         - size
         - contentType
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         uploadId:
           type: string
           format: uuid
           description: Upload session identifier
-        sessionId:
+        owner:
           type: string
-          description: WebSocket session ID of the requester
+          description: |
+            Owner of this asset operation. NOT a session ID.
+            For user-initiated uploads: the accountId (UUID format).
+            For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
         accountId:
           type: string
           format: uuid
@@ -86,35 +101,30 @@ components:
           description: MIME content type
         assetType:
           $ref: '#/components/schemas/AssetTypeEnum'
+          description: Category of asset being uploaded
         realm:
           $ref: '#/components/schemas/RealmEnum'
+          description: Game realm the asset belongs to
         isMultipart:
           type: boolean
           default: false
           description: Whether this is a multipart upload
 
     AssetUploadCompletedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when an upload is completed and file is stored
       required:
-        - eventId
-        - timestamp
         - assetId
         - uploadId
-        - sessionId
+        - owner
         - bucket
         - key
         - size
         - contentHash
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Assigned asset identifier
@@ -122,9 +132,12 @@ components:
           type: string
           format: uuid
           description: Upload session identifier
-        sessionId:
+        owner:
           type: string
-          description: WebSocket session ID of the requester
+          description: |
+            Owner of this asset operation. NOT a session ID.
+            For user-initiated uploads: the accountId (UUID format).
+            For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
         accountId:
           type: string
           format: uuid
@@ -145,6 +158,7 @@ components:
           description: SHA256 hash of the file contents
         contentType:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
 
     # ==========================================================================
@@ -152,27 +166,21 @@ components:
     # ==========================================================================
 
     AssetProcessingQueuedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when an asset is queued for processing
       required:
-        - eventId
-        - timestamp
         - assetId
         - processingType
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
         processingType:
           $ref: '#/components/schemas/ProcessingTypeEnum'
+          description: Type of processing to be performed on the asset
         priority:
           type: integer
           default: 5
@@ -187,28 +195,22 @@ components:
           description: Estimated processing duration
 
     AssetProcessingCompletedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when asset processing completes
       required:
-        - eventId
-        - timestamp
         - assetId
         - processingType
         - success
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
         processingType:
           $ref: '#/components/schemas/ProcessingTypeEnum'
+          description: Type of processing that was performed
         success:
           type: boolean
           description: Whether processing completed successfully
@@ -219,6 +221,7 @@ components:
         outputs:
           type: array
           nullable: true
+          description: Generated derivative assets from processing
           items:
             $ref: '#/components/schemas/ProcessingOutput'
         durationMs:
@@ -231,24 +234,17 @@ components:
     # ==========================================================================
 
     AssetReadyEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when an asset is fully processed and available
       required:
-        - eventId
-        - timestamp
         - assetId
         - bucket
         - key
         - contentHash
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
@@ -268,39 +264,36 @@ components:
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: File size in bytes
         contentType:
           type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: MIME content type
         assetType:
           $ref: '#/components/schemas/AssetTypeEnum'
+          description: Category of the asset
         realm:
           $ref: '#/components/schemas/RealmEnum'
+          description: Game realm the asset belongs to
 
     # ==========================================================================
     # Bundle Events
     # ==========================================================================
 
     BundleCreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Event published when a bundle is successfully created
       required:
-        - eventId
-        - timestamp
         - bundleId
         - version
         - bucket
         - key
         - assetCount
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         bundleId:
           type: string
           description: Bundle identifier
@@ -316,17 +309,21 @@ components:
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Bundle file size in bytes
         assetCount:
           type: integer
           description: Number of assets in the bundle
         compression:
           $ref: '#/components/schemas/CompressionTypeEnum'
-        createdBy:
+          description: Compression algorithm used for the bundle
+        owner:
           type: string
-          format: uuid
           nullable: true
-          description: Account ID that created the bundle
+          description: |
+            Owner of this bundle. NOT a session ID.
+            For user-initiated bundles: the accountId (UUID format).
+            For service-initiated bundles: the service name (e.g., "orchestrator").
 
     # ==========================================================================
     # Supporting Types
@@ -334,6 +331,7 @@ components:
 
     AssetTypeEnum:
       type: string
+      description: Category of asset in the system
       enum:
         - texture
         - model
@@ -346,6 +344,7 @@ components:
 
     RealmEnum:
       type: string
+      description: Game realm the asset is associated with
       enum:
         - omega
         - arcadia
@@ -366,6 +365,7 @@ components:
 
     CompressionTypeEnum:
       type: string
+      description: Compression algorithm used for bundle packaging
       enum:
         - lz4
         - lzma
@@ -374,7 +374,11 @@ components:
 
     ProcessingOutput:
       type: object
+      additionalProperties: false
       description: Information about a generated derivative asset
+      required:  # NRT: Required event properties
+        - outputType
+        - key
       properties:
         outputType:
           type: string
@@ -385,4 +389,5 @@ components:
         size:
           type: integer
           format: int64
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Size of the output in bytes

@@ -1,0 +1,19 @@
+version: "2.0"
+metadata:
+  id: call_isolation
+flows:
+  start:
+    actions:
+      - set:
+          variable: x
+          value: "10"
+      - call: { flow: modify }
+      - log: { message: "x = ${x}" }
+  modify:
+    actions:
+      - local:
+          variable: x
+          value: "99"
+      - local:
+          variable: y
+          value: "new"

@@ -26,8 +26,9 @@ public class TestingController : ControllerBase
     /// </summary>
     [HttpGet("run-enabled")]
     [HttpPost("run-enabled")]
-    public Task<IActionResult> RunEnabled()
+    public async Task<IActionResult> RunEnabled()
     {
+        await Task.CompletedTask;
         try
         {
             _logger.LogInformation("Running infrastructure tests for enabled services");
@@ -44,12 +45,12 @@ public class TestingController : ControllerBase
             };
 
             _logger.LogInformation("Infrastructure test successful - testing service operational");
-            return Task.FromResult<IActionResult>(Ok(response));
+            return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Infrastructure test failed");
-            return Task.FromResult<IActionResult>(StatusCode(500, new { Success = false, Message = "Testing service error", Error = ex.Message }));
+            return StatusCode(500, new { Success = false, Message = "Testing service error", Error = ex.Message });
         }
     }
 
@@ -471,30 +472,34 @@ public class TestingController : ControllerBase
         public bool IsAuthenticated => false;
         public string TransportType => "Infrastructure";
 
-        public Task<TestResponse<T>> GetAsync<T>(string endpoint) where T : class
+        public async Task<TestResponse<T>> GetAsync<T>(string endpoint) where T : class
         {
+            await Task.CompletedTask;
             // For infrastructure tests, we don't need actual HTTP calls
             // This is a placeholder implementation
-            return Task.FromResult(TestResponse<T>.Failed(501, "HTTP calls not available in infrastructure test mode"));
+            return TestResponse<T>.Failed(501, "HTTP calls not available in infrastructure test mode");
         }
 
-        public Task<TestResponse<T>> PostAsync<T>(string endpoint, object? requestBody = null) where T : class
+        public async Task<TestResponse<T>> PostAsync<T>(string endpoint, object? requestBody = null) where T : class
         {
+            await Task.CompletedTask;
             // For infrastructure tests, we don't need actual HTTP calls
             // This is a placeholder implementation
-            return Task.FromResult(TestResponse<T>.Failed(501, "HTTP calls not available in infrastructure test mode"));
+            return TestResponse<T>.Failed(501, "HTTP calls not available in infrastructure test mode");
         }
 
-        public Task<bool> RegisterAsync(string username, string password)
+        public async Task<bool> RegisterAsync(string username, string password)
         {
+            await Task.CompletedTask;
             // For infrastructure tests, we don't need actual registration
-            return Task.FromResult(false);
+            return false;
         }
 
-        public Task<bool> LoginAsync(string username, string password)
+        public async Task<bool> LoginAsync(string username, string password)
         {
+            await Task.CompletedTask;
             // For infrastructure tests, we don't need actual login
-            return Task.FromResult(false);
+            return false;
         }
 
         public void Dispose()

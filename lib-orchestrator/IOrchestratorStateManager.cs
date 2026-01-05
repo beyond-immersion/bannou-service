@@ -44,6 +44,13 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     Task WriteServiceRoutingAsync(string serviceName, ServiceRouting routing);
 
     /// <summary>
+    /// Get a specific service routing mapping.
+    /// </summary>
+    /// <param name="serviceName">Name of the service.</param>
+    /// <returns>The routing if found, null otherwise.</returns>
+    Task<ServiceRouting?> GetServiceRoutingAsync(string serviceName);
+
+    /// <summary>
     /// Get all service routing mappings.
     /// Uses index-based pattern to avoid KEYS/SCAN operations.
     /// </summary>
@@ -60,6 +67,16 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     /// Called when resetting to default topology.
     /// </summary>
     Task ClearAllServiceRoutingsAsync();
+
+    /// <summary>
+    /// Set all known service routings to the default app-id.
+    /// Unlike ClearAllServiceRoutingsAsync which deletes routes (causing fallback to hardcoded defaults),
+    /// this method explicitly sets each service to route to the specified default app-id.
+    /// This ensures routing proxies (like OpenResty) have explicit routes rather than relying on fallbacks.
+    /// </summary>
+    /// <param name="defaultAppId">The default app-id to route all services to (typically "bannou").</param>
+    /// <returns>List of service names that were set to default.</returns>
+    Task<List<string>> SetAllServiceRoutingsToDefaultAsync(string defaultAppId);
 
     /// <summary>
     /// Get the current configuration version number.
@@ -147,6 +164,9 @@ public class DeploymentConfiguration
     /// <summary>When this configuration was created.</summary>
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
 
+    /// <summary>Unique identifier for this deployment instance.</summary>
+    public string? DeploymentId { get; set; }
+
     /// <summary>Deployment preset name used (if applicable).</summary>
     public string? PresetName { get; set; }
 
@@ -158,6 +178,13 @@ public class DeploymentConfiguration
 
     /// <summary>Reason/description for this configuration.</summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Previous deployment state for rollback purposes.
+    /// Contains the state before this deployment was applied.
+    /// Only one level deep - PreviousDeploymentState.PreviousDeploymentState is always null.
+    /// </summary>
+    public DeploymentConfiguration? PreviousDeploymentState { get; set; }
 }
 
 /// <summary>

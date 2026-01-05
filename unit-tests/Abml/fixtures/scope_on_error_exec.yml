@@ -1,0 +1,9 @@
+version: "2.0"
+metadata:
+  id: on_error_exec
+flows:
+  start:
+    actions:
+      - goto: nonexistent_flow
+    on_error:
+      - log: { message: "Caught: ${_error.message}" }

@@ -607,4 +607,181 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     }
 
     #endregion
+
+    // ==================== Set Operations ====================
+
+    private string GetSetKey(string key) => $"{_keyPrefix}:set:{key}";
+
+    /// <inheritdoc/>
+    public async Task<bool> AddToSetAsync<TItem>(
+        string key,
+        TItem item,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var setKey = GetSetKey(key);
+        var json = BannouJson.Serialize(item);
+        var added = await _database.SetAddAsync(setKey, json);
+
+        // Apply TTL if specified
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(setKey, ttl);
+        }
+
+        _logger.LogDebug("Added item to set '{Key}' in store '{Store}' (new: {IsNew})",
+            key, _keyPrefix, added);
+
+        return added;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> AddToSetAsync<TItem>(
+        string key,
+        IEnumerable<TItem> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(items);
+
+        var itemList = items.ToList();
+        if (itemList.Count == 0)
+        {
+            return 0;
+        }
+
+        var setKey = GetSetKey(key);
+        var values = itemList.Select(item => (RedisValue)BannouJson.Serialize(item)).ToArray();
+        var added = await _database.SetAddAsync(setKey, values);
+
+        // Apply TTL if specified
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(setKey, ttl);
+        }
+
+        _logger.LogDebug("Added {Count} items to set '{Key}' in store '{Store}' (new: {Added})",
+            itemList.Count, key, _keyPrefix, added);
+
+        return added;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveFromSetAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var setKey = GetSetKey(key);
+        var json = BannouJson.Serialize(item);
+        var removed = await _database.SetRemoveAsync(setKey, json);
+
+        _logger.LogDebug("Removed item from set '{Key}' in store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, removed);
+
+        return removed;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var setKey = GetSetKey(key);
+        var members = await _database.SetMembersAsync(setKey);
+
+        if (members.Length == 0)
+        {
+            _logger.LogDebug("Set '{Key}' is empty or not found in store '{Store}'", key, _keyPrefix);
+            return Array.Empty<TItem>();
+        }
+
+        var result = new List<TItem>(members.Length);
+        foreach (var member in members)
+        {
+            if (!member.IsNullOrEmpty)
+            {
+                var item = BannouJson.Deserialize<TItem>(member!);
+                if (item != null)
+                {
+                    result.Add(item);
+                }
+            }
+        }
+
+        _logger.LogDebug("Retrieved {Count} items from set '{Key}' in store '{Store}'",
+            result.Count, key, _keyPrefix);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> SetContainsAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var setKey = GetSetKey(key);
+        var json = BannouJson.Serialize(item);
+        return await _database.SetContainsAsync(setKey, json);
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> SetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var setKey = GetSetKey(key);
+        return await _database.SetLengthAsync(setKey);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var setKey = GetSetKey(key);
+        var deleted = await _database.KeyDeleteAsync(setKey);
+
+        _logger.LogDebug("Deleted set '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RefreshSetTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var setKey = GetSetKey(key);
+        var ttl = TimeSpan.FromSeconds(ttlSeconds);
+        var updated = await _database.KeyExpireAsync(setKey, ttl);
+
+        _logger.LogDebug("Refreshed TTL on set '{Key}' in store '{Store}' to {Ttl}s (existed: {Existed})",
+            key, _keyPrefix, ttlSeconds, updated);
+
+        return updated;
+    }
 }

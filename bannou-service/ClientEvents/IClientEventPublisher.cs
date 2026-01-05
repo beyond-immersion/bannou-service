@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.ClientEvents;
 /// The Connect service subscribes to these topics and forwards events to the appropriate WebSocket.
 /// </para>
 /// <para>
-/// All events must have a valid event_name that exists in the ClientEventWhitelist.
+/// All events must have a valid eventName that exists in the ClientEventWhitelist.
 /// Events with invalid names will be rejected by the publisher.
 /// </para>
 /// </remarks>

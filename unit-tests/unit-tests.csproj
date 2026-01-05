@@ -31,4 +31,10 @@
     <ProjectReference Include="..\lib-testing\lib-testing.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Abml\fixtures\**\*.yml" LinkBase="Abml\fixtures">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

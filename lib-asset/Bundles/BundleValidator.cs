@@ -108,10 +108,11 @@ public sealed class BundleValidator
         }
     }
 
-    private Task<StructureValidationResult> ValidateStructureAsync(
+    private async Task<StructureValidationResult> ValidateStructureAsync(
         Stream bundleStream,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         var result = new StructureValidationResult { IsValid = true };
 
         try
@@ -130,7 +131,7 @@ public sealed class BundleValidator
                     Message = "Bundle contains no assets",
                     Severity = ValidationSeverity.Error
                 });
-                return Task.FromResult(result);
+                return result;
             }
 
             result.AssetCount = assetIds.Count;
@@ -145,7 +146,7 @@ public sealed class BundleValidator
                     Message = $"Bundle contains {assetIds.Count} assets, maximum is {_options.MaxAssetCount}",
                     Severity = ValidationSeverity.Error
                 });
-                return Task.FromResult(result);
+                return result;
             }
 
             // Check for path traversal in asset IDs
@@ -163,7 +164,7 @@ public sealed class BundleValidator
                 }
             }
 
-            return Task.FromResult(result);
+            return result;
         }
         catch (Exception ex)
         {
@@ -174,15 +175,16 @@ public sealed class BundleValidator
                 Message = $"Invalid bundle structure: {ex.Message}",
                 Severity = ValidationSeverity.Error
             });
-            return Task.FromResult(result);
+            return result;
         }
     }
 
-    private Task<ManifestValidationResult> ValidateManifestAsync(
+    private async Task<ManifestValidationResult> ValidateManifestAsync(
         Stream bundleStream,
         string expectedBundleId,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         var result = new ManifestValidationResult { IsValid = true };
 
         try
@@ -207,7 +209,7 @@ public sealed class BundleValidator
                     Message = "Bundle manifest is missing",
                     Severity = ValidationSeverity.Error
                 });
-                return Task.FromResult(result);
+                return result;
             }
 
             result.Manifest = manifest;
@@ -283,7 +285,7 @@ public sealed class BundleValidator
                 }
             }
 
-            return Task.FromResult(result);
+            return result;
         }
         catch (Exception ex)
         {
@@ -294,14 +296,15 @@ public sealed class BundleValidator
                 Message = $"Manifest validation failed: {ex.Message}",
                 Severity = ValidationSeverity.Error
             });
-            return Task.FromResult(result);
+            return result;
         }
     }
 
-    private Task<ContentValidationResult> ValidateContentAsync(
+    private async Task<ContentValidationResult> ValidateContentAsync(
         Stream bundleStream,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         var result = new ContentValidationResult { IsValid = true };
 
         try
@@ -318,7 +321,7 @@ public sealed class BundleValidator
                     Message = "Cannot validate content without manifest",
                     Severity = ValidationSeverity.Error
                 });
-                return Task.FromResult(result);
+                return result;
             }
 
             foreach (var assetEntry in manifest.Assets)
@@ -376,7 +379,7 @@ public sealed class BundleValidator
                 });
             }
 
-            return Task.FromResult(result);
+            return result;
         }
         catch (Exception ex)
         {
@@ -387,7 +390,7 @@ public sealed class BundleValidator
                 Message = $"Content validation failed: {ex.Message}",
                 Severity = ValidationSeverity.Error
             });
-            return Task.FromResult(result);
+            return result;
         }
     }
 

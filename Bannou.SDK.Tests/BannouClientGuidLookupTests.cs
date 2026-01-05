@@ -39,12 +39,12 @@ public class BannouClientGuidLookupTests
         var expectedGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/accounts/get", expectedGuid }
+            { "POST:/account/get", expectedGuid }
         };
         PopulateApiMappings(client, mappings);
 
         // Act
-        var result = client.GetServiceGuid("POST", "/accounts/get");
+        var result = client.GetServiceGuid("POST", "/account/get");
 
         // Assert
         Assert.NotNull(result);
@@ -61,7 +61,7 @@ public class BannouClientGuidLookupTests
         var client = new BannouClient();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/accounts/get", Guid.NewGuid() }
+            { "POST:/account/get", Guid.NewGuid() }
         };
         PopulateApiMappings(client, mappings);
 
@@ -147,12 +147,12 @@ public class BannouClientGuidLookupTests
         var client = new BannouClient();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/accounts/get", Guid.NewGuid() }
+            { "POST:/account/get", Guid.NewGuid() }
         };
         PopulateApiMappings(client, mappings);
 
         // Act - Try with lowercase method (should not match)
-        var result = client.GetServiceGuid("post", "/accounts/get");
+        var result = client.GetServiceGuid("post", "/account/get");
 
         // Assert - Case mismatch should not find the endpoint
         Assert.Null(result);
@@ -170,14 +170,14 @@ public class BannouClientGuidLookupTests
         var getGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
         {
-            { "POST:/accounts/profile", postGuid },
-            { "GET:/accounts/profile", getGuid }
+            { "POST:/account/profile", postGuid },
+            { "GET:/account/profile", getGuid }
         };
         PopulateApiMappings(client, mappings);
 
         // Act
-        var postResult = client.GetServiceGuid("POST", "/accounts/profile");
-        var getResult = client.GetServiceGuid("GET", "/accounts/profile");
+        var postResult = client.GetServiceGuid("POST", "/account/profile");
+        var getResult = client.GetServiceGuid("GET", "/account/profile");
 
         // Assert
         Assert.NotNull(postResult);

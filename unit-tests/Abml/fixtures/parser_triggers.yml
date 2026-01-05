@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: triggered_flow
+flows:
+  morning:
+    triggers:
+      - event: "wake_up"
+        condition: "${energy > 0}"
+      - time_range: "06:00-09:00"
+    actions:
+      - log: "Good morning"

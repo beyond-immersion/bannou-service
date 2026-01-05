@@ -11,6 +11,9 @@ info:
 
     **Event Delivery**: Events are published to the session-specific RabbitMQ
     channel (CONNECT_SESSION_{sessionId}) and delivered to the client via WebSocket.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   contact:
     name: Bannou Development Team
@@ -29,29 +32,31 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to a client when they join a voice room.
         Contains full room state including peer list and connection info.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - room_id
+        - roomId
         - tier
         - peers
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["voice.room_state"]
+          default: "voice.room_state"
           description: Fixed event type identifier
-        room_id:
+        roomId:
           type: string
           format: uuid
           description: Voice room ID
-        session_id:
+        sessionId:
           type: string
           format: uuid
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Associated game session ID
         tier:
           type: string
@@ -60,20 +65,22 @@ components:
         codec:
           type: string
           enum: [opus, g711, g722]
+          nullable: true  # NRT: Optional property MUST be nullable
           description: Audio codec to use
         peers:
           type: array
           items:
             $ref: '#/components/schemas/VoicePeerInfo'
           description: List of peers to connect to (P2P mode)
-        rtp_server_uri:
+        rtpServerUri:
           type: string
           nullable: true
           description: RTP server URI (scaled mode only)
-        stun_servers:
+        stunServers:
           type: array
           items:
             type: string
+          nullable: true  # NRT: Optional property MUST be nullable
           description: STUN server URIs for NAT traversal
 
     # ============================================
@@ -84,29 +91,30 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to existing room participants when a new peer joins.
         Contains the new peer's connection details for P2P mode.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - room_id
+        - roomId
         - peer
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["voice.peer_joined"]
+          default: "voice.peer_joined"
           description: Fixed event type identifier
-        room_id:
+        roomId:
           type: string
           format: uuid
           description: Voice room ID
         peer:
           $ref: '#/components/schemas/VoicePeerInfo'
           description: New peer's connection details
-        current_participant_count:
+        currentParticipantCount:
           type: integer
           description: Total participants after join
 
@@ -114,32 +122,33 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to remaining room participants when a peer leaves.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - room_id
-        - peer_session_id
+        - roomId
+        - peerSessionId
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["voice.peer_left"]
+          default: "voice.peer_left"
           description: Fixed event type identifier
-        room_id:
+        roomId:
           type: string
           format: uuid
           description: Voice room ID
-        peer_session_id:
+        peerSessionId:
           type: string
           description: WebSocket session ID of the peer who left (ephemeral identifier)
-        display_name:
+        displayName:
           type: string
           nullable: true
           description: Display name for UI notification
-        remaining_participant_count:
+        remainingParticipantCount:
           type: integer
           description: Participants remaining after departure
 
@@ -147,22 +156,23 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
         Clients should update their connection to this peer.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - room_id
+        - roomId
         - peer
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["voice.peer_updated"]
+          default: "voice.peer_updated"
           description: Fixed event type identifier
-        room_id:
+        roomId:
           type: string
           format: uuid
           description: Voice room ID
@@ -178,43 +188,45 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all room participants when the voice tier upgrades.
         Clients should disconnect P2P connections and connect to the RTP server.
         SIP credentials are provided for authenticating with the Kamailio SIP proxy.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - room_id
-        - new_tier
-        - rtp_server_uri
-        - sip_credentials
+        - roomId
+        - newTier
+        - rtpServerUri
+        - sipCredentials
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["voice.tier_upgrade"]
+          default: "voice.tier_upgrade"
           description: Fixed event type identifier
-        room_id:
+        roomId:
           type: string
           format: uuid
           description: Voice room ID
-        previous_tier:
+        previousTier:
           type: string
-          enum: [p2p]
-          description: Previous tier
-        new_tier:
+          default: p2p
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: Previous tier (always p2p for upgrade events)
+        newTier:
           type: string
-          enum: [scaled]
-          description: New tier after upgrade
-        rtp_server_uri:
+          default: scaled
+          description: New tier after upgrade (always scaled for upgrade events)
+        rtpServerUri:
           type: string
           description: RTP server URI to connect to
-        sip_credentials:
+        sipCredentials:
           $ref: '#/components/schemas/SipCredentials'
           description: Credentials for SIP registration with Kamailio
-        migration_deadline_ms:
+        migrationDeadlineMs:
           type: integer
           default: 5000
           description: Milliseconds to complete migration before P2P disconnects
@@ -227,22 +239,23 @@ components:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
+      additionalProperties: false
       x-client-event: true
       description: |
         Sent to all room participants when the voice room is closed.
         Clients should disconnect all voice connections.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - room_id
+        - roomId
         - reason
       properties:
-        event_name:
+        eventName:
           type: string
-          enum: ["voice.room_closed"]
+          default: "voice.room_closed"
           description: Fixed event type identifier
-        room_id:
+        roomId:
           type: string
           format: uuid
           description: Voice room ID that was closed
@@ -257,34 +270,36 @@ components:
 
     VoicePeerInfo:
       type: object
+      additionalProperties: false
       description: Peer connection information for P2P voice
       required:
-        - peer_session_id
-        - sdp_offer
+        - peerSessionId
+        - sdpOffer
       properties:
-        peer_session_id:
+        peerSessionId:
           type: string
           description: WebSocket session ID for this peer (ephemeral identifier)
-        display_name:
+        displayName:
           type: string
           nullable: true
           description: Peer's display name
-        sdp_offer:
+        sdpOffer:
           type: string
           description: SDP offer for WebRTC negotiation
-        ice_candidates:
+        iceCandidates:
           type: array
           items:
             type: string
           nullable: true
           description: ICE candidates for NAT traversal
-        is_muted:
+        isMuted:
           type: boolean
           default: false
           description: Whether peer is currently muted
 
     SipCredentials:
       type: object
+      additionalProperties: false
       description: |
         SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
         These credentials are dynamically generated per-user per-room and should be used
@@ -303,7 +318,7 @@ components:
         domain:
           type: string
           description: SIP domain/realm for authentication (e.g., "voice.bannou.local")
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           nullable: true

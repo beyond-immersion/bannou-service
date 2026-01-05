@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -28,48 +29,68 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     }
 
     /// <inheritdoc/>
-    public Task<Guid> PublishAsync<TEvent>(
+    public async Task<bool> TryPublishAsync<TEvent>(
         string topic,
         TEvent eventData,
         PublishOptions? options = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(eventData);
+        await Task.CompletedTask;
+        try
+        {
+            ArgumentNullException.ThrowIfNull(topic);
+            ArgumentNullException.ThrowIfNull(eventData);
 
-        var messageId = Guid.NewGuid();
-        _logger.LogDebug(
-            "[InMemory] Published to topic '{Topic}': {EventType} (id: {MessageId})",
-            topic, typeof(TEvent).Name, messageId);
+            var effectiveMessageId = messageId ?? Guid.NewGuid();
+            _logger.LogDebug(
+                "[InMemory] Published to topic '{Topic}': {EventType} (id: {MessageId})",
+                topic, typeof(TEvent).Name, effectiveMessageId);
 
-        // Deliver to local subscribers
-        _ = DeliverToSubscribersAsync(topic, eventData, cancellationToken);
+            // Deliver to local subscribers
+            _ = DeliverToSubscribersAsync(topic, eventData, cancellationToken);
 
-        return Task.FromResult(messageId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[InMemory] Failed to publish to topic '{Topic}'", topic);
+            return false;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<Guid> PublishRawAsync(
+    public async Task<bool> TryPublishRawAsync(
         string topic,
         ReadOnlyMemory<byte> payload,
         string contentType,
         PublishOptions? options = null,
+        Guid? messageId = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(topic);
+        await Task.CompletedTask;
+        try
+        {
+            ArgumentNullException.ThrowIfNull(topic);
 
-        var messageId = Guid.NewGuid();
-        _logger.LogDebug(
-            "[InMemory] Published raw to topic '{Topic}': {ByteCount} bytes, {ContentType} (id: {MessageId})",
-            topic, payload.Length, contentType, messageId);
+            var effectiveMessageId = messageId ?? Guid.NewGuid();
+            _logger.LogDebug(
+                "[InMemory] Published raw to topic '{Topic}': {ByteCount} bytes, {ContentType} (id: {MessageId})",
+                topic, payload.Length, contentType, effectiveMessageId);
 
-        return Task.FromResult(messageId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[InMemory] Failed to publish raw to topic '{Topic}'", topic);
+            return false;
+        }
     }
 
     /// <inheritdoc/>
-    public Task<bool> TryPublishErrorAsync(
-        string serviceId,
+    public async Task<bool> TryPublishErrorAsync(
+        string serviceName,
         string operation,
         string errorType,
         string message,
@@ -82,16 +103,18 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         CancellationToken cancellationToken = default)
     {
         _logger.LogWarning(
-            "[InMemory] Error event from {ServiceId}/{Operation}: {ErrorType} - {Message}",
-            serviceId, operation, errorType, message);
+            "[InMemory] Error event from {ServiceName}/{Operation}: {ErrorType} - {Message}",
+            serviceName, operation, errorType, message);
 
-        return Task.FromResult(true);
+        await Task.CompletedTask;
+        return true;
     }
 
     /// <inheritdoc/>
-    public Task SubscribeAsync<TEvent>(
+    public async Task SubscribeAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
         SubscriptionOptions? options = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
@@ -111,14 +134,17 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             });
         }
 
-        _logger.LogDebug("Subscribed to topic '{Topic}' for {EventType} (in-memory mode)", topic, typeof(TEvent).Name);
-        return Task.CompletedTask;
+        _logger.LogDebug("Subscribed to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange})",
+            topic, typeof(TEvent).Name, exchange ?? "default");
+        await Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    public Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
+    public async Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -139,13 +165,51 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             handlers.Add(wrappedHandler);
         }
 
-        _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode)", topic, typeof(TEvent).Name);
+        _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
+            topic, typeof(TEvent).Name, exchange ?? "default", exchangeType);
 
-        return Task.FromResult<IAsyncDisposable>(new DynamicSubscription(this, topic, wrappedHandler));
+        await Task.CompletedTask;
+        return new DynamicSubscription(this, topic, wrappedHandler);
     }
 
     /// <inheritdoc/>
-    public Task UnsubscribeAsync(string topic)
+    public async Task<IAsyncDisposable> SubscribeDynamicRawAsync(
+        string topic,
+        Func<byte[], CancellationToken, Task> handler,
+        string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Topic,
+        string? queueName = null,
+        TimeSpan? queueTtl = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Note: queueName and queueTtl are ignored in-memory - used for RabbitMQ reconnection support
+        ArgumentNullException.ThrowIfNull(topic);
+        ArgumentNullException.ThrowIfNull(handler);
+
+        // For in-memory, we wrap the raw handler to receive serialized bytes
+        Func<object, CancellationToken, Task> wrappedHandler = async (obj, ct) =>
+        {
+            // Serialize the object to JSON bytes for raw handler
+            var json = BannouJson.Serialize(obj);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            await handler(bytes, ct);
+        };
+
+        lock (_subscriptionLock)
+        {
+            var handlers = _subscriptions.GetOrAdd(topic, _ => new List<Func<object, CancellationToken, Task>>());
+            handlers.Add(wrappedHandler);
+        }
+
+        _logger.LogDebug("Raw dynamic subscription to topic '{Topic}' (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
+            topic, exchange ?? "default", exchangeType);
+
+        await Task.CompletedTask;
+        return new DynamicSubscription(this, topic, wrappedHandler);
+    }
+
+    /// <inheritdoc/>
+    public async Task UnsubscribeAsync(string topic)
     {
         ArgumentNullException.ThrowIfNull(topic);
 
@@ -155,7 +219,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         }
 
         _logger.LogDebug("Unsubscribed from topic '{Topic}' (in-memory mode)", topic);
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     private async Task DeliverToSubscribersAsync<TEvent>(string topic, TEvent eventData, CancellationToken cancellationToken)

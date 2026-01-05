@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -74,8 +75,8 @@ public class BannouSessionManagerTests
 
         // Default message bus behavior
         _mockMessageBus
-            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _sessionManager = new BannouSessionManager(
             _mockStateStoreFactory.Object,
@@ -86,49 +87,10 @@ public class BannouSessionManagerTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var manager = new BannouSessionManager(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object);
-
-        // Assert
-        Assert.NotNull(manager);
-    }
-
-    [Fact]
-    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new BannouSessionManager(
-            null!,
-            _mockMessageBus.Object,
-            _mockLogger.Object));
-        Assert.Equal("stateStoreFactory", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new BannouSessionManager(
-            _mockStateStoreFactory.Object,
-            null!,
-            _mockLogger.Object));
-        Assert.Equal("messageBus", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new BannouSessionManager(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            null!));
-        Assert.Equal("logger", ex.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<BannouSessionManager>();
+        Assert.NotNull(_sessionManager);
     }
 
     #endregion
@@ -142,7 +104,7 @@ public class BannouSessionManagerTests
         var sessionId = "test-session-123";
         var mappings = new Dictionary<string, Guid>
         {
-            { "accounts", Guid.NewGuid() },
+            { "account", Guid.NewGuid() },
             { "auth", Guid.NewGuid() }
         };
 
@@ -206,7 +168,7 @@ public class BannouSessionManagerTests
         var sessionId = "test-session-123";
         var expectedMappings = new Dictionary<string, Guid>
         {
-            { "accounts", Guid.NewGuid() }
+            { "account", Guid.NewGuid() }
         };
 
         _mockMappingsStore
@@ -384,11 +346,9 @@ public class BannouSessionManagerTests
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionHeartbeat>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Store error"));
 
-        // Act - should not throw (heartbeat failures shouldn't break main functionality)
-        await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, instanceId);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw (heartbeat failures shouldn't break main functionality)
+        var exception = await Record.ExceptionAsync(() => _sessionManager.UpdateSessionHeartbeatAsync(sessionId, instanceId));
+        Assert.Null(exception);
     }
 
     #endregion
@@ -508,11 +468,9 @@ public class BannouSessionManagerTests
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Delete failed"));
 
-        // Act - should not throw
-        await _sessionManager.RemoveReconnectionTokenAsync(reconnectionToken);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw
+        var exception = await Record.ExceptionAsync(() => _sessionManager.RemoveReconnectionTokenAsync(reconnectionToken));
+        Assert.Null(exception);
     }
 
     #endregion
@@ -728,11 +686,9 @@ public class BannouSessionManagerTests
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Delete failed"));
 
-        // Act - should not throw
-        await _sessionManager.RemoveSessionAsync(sessionId);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw
+        var exception = await Record.ExceptionAsync(() => _sessionManager.RemoveSessionAsync(sessionId));
+        Assert.Null(exception);
     }
 
     #endregion
@@ -749,9 +705,9 @@ public class BannouSessionManagerTests
 
         SessionEvent? capturedEvent = null;
         _mockMessageBus
-            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, SessionEvent, PublishOptions?, CancellationToken>((t, e, o, ct) => capturedEvent = e)
-            .ReturnsAsync(Guid.NewGuid());
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SessionEvent, PublishOptions?, Guid?, CancellationToken>((t, e, o, g, ct) => capturedEvent = e)
+            .ReturnsAsync(true);
 
         // Act
         await _sessionManager.PublishSessionEventAsync(eventType, sessionId, eventData);
@@ -774,10 +730,11 @@ public class BannouSessionManagerTests
         await _sessionManager.PublishSessionEventAsync(eventType, sessionId);
 
         // Assert
-        _mockMessageBus.Verify(m => m.PublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
             It.IsAny<string>(),
             It.IsAny<SessionEvent>(),
             It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -789,14 +746,12 @@ public class BannouSessionManagerTests
         var sessionId = "test-session";
 
         _mockMessageBus
-            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Publish failed"));
 
-        // Act - should not throw
-        await _sessionManager.PublishSessionEventAsync(eventType, sessionId);
-
-        // Assert - no exception means test passed
-        Assert.True(true);
+        // Act & Assert - should not throw
+        var exception = await Record.ExceptionAsync(() => _sessionManager.PublishSessionEventAsync(eventType, sessionId));
+        Assert.Null(exception);
     }
 
     #endregion

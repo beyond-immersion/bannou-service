@@ -1,7 +1,13 @@
 openapi: 3.0.3
 info:
   title: Messaging Service Configuration
-  description: "Configuration schema for Messaging service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  description: |
+    Configuration schema for Messaging service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -96,6 +102,40 @@ x-service-configuration:
       description: Delay between retry attempts in milliseconds
       env: MESSAGING_RETRY_DELAY_MS
       default: 5000
+
+    # Retry Buffer Settings (for handling transient publish failures)
+    RetryBufferEnabled:
+      type: boolean
+      description: Enable retry buffer for failed event publishes
+      env: MESSAGING_RETRY_BUFFER_ENABLED
+      default: true
+    RetryBufferMaxSize:
+      type: integer
+      description: Maximum number of messages in retry buffer before node crash
+      env: MESSAGING_RETRY_BUFFER_MAX_SIZE
+      default: 10000
+    RetryBufferMaxAgeSeconds:
+      type: integer
+      description: Maximum age of buffered messages before node crash (prevents stale events)
+      env: MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS
+      default: 300
+    RetryBufferIntervalSeconds:
+      type: integer
+      description: Interval between retry attempts for buffered messages
+      env: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
+      default: 5
+
+    # HTTP Callback Settings (for dynamic subscriptions)
+    CallbackRetryMaxAttempts:
+      type: integer
+      description: Maximum retry attempts for HTTP callback delivery (network failures only)
+      env: MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS
+      default: 3
+    CallbackRetryDelayMs:
+      type: integer
+      description: Delay between HTTP callback retry attempts in milliseconds
+      env: MESSAGING_CALLBACK_RETRY_DELAY_MS
+      default: 1000
 
     # Feature Flags
     UseMassTransit:

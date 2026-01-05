@@ -182,7 +182,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
             var manifest = JsonNode.Parse(responseText)?.AsObject();
 
-            var messageType = manifest?["event_name"]?.GetValue<string>();
+            var messageType = manifest?["eventName"]?.GetValue<string>();
             if (messageType != "connect.capability_manifest")
             {
                 Console.WriteLine($"FAILED Expected connect.capability_manifest but received '{messageType}'");
@@ -249,7 +249,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                 Console.WriteLine($"Received event: {responseText[..Math.Min(500, responseText.Length)]}");
 
                 var eventObj = JsonNode.Parse(responseText)?.AsObject();
-                var eventName = eventObj?["event_name"]?.GetValue<string>();
+                var eventName = eventObj?["eventName"]?.GetValue<string>();
 
                 // Accept both schema value and NSwag enum serialization
                 if (IsSystemNotificationEvent(eventName))
@@ -272,7 +272,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                         Console.WriteLine($"Received second event: {responseText[..Math.Min(500, responseText.Length)]}");
 
                         eventObj = JsonNode.Parse(responseText)?.AsObject();
-                        eventName = eventObj?["event_name"]?.GetValue<string>();
+                        eventName = eventObj?["eventName"]?.GetValue<string>();
 
                         if (IsSystemNotificationEvent(eventName))
                         {
@@ -280,7 +280,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                             return true;
                         }
                     }
-                    // TENET 12: Test must fail if expected behavior doesn't occur
+                    // QUALITY TENETS: Test must fail if expected behavior doesn't occur
                     Console.WriteLine($"FAILED Did not receive system.notification event - client event delivery is broken");
                     return false;
                 }
@@ -421,7 +421,7 @@ public class ClientEventTestHandler : IServiceTestHandler
         }
         catch (Exception ex)
         {
-            // TENET 12: If we can't publish to the session, the test cannot verify queue behavior
+            // QUALITY TENETS: If we can't publish to the session, the test cannot verify queue behavior
             // This is a legitimate failure - the session expired before we could test queuing
             Console.WriteLine($"FAILED Could not publish to disconnected session: {ex.Message}");
             Console.WriteLine("   Session expired before event could be queued - test cannot verify queue behavior");
@@ -457,8 +457,8 @@ public class ClientEventTestHandler : IServiceTestHandler
                     Console.WriteLine($"Received on reconnect: {responseText[..Math.Min(300, responseText.Length)]}");
 
                     var eventObj = JsonNode.Parse(responseText)?.AsObject();
-                    var msgType = eventObj?["event_name"]?.GetValue<string>();
-                    Console.WriteLine($"OK Received message event_name: {msgType}");
+                    var msgType = eventObj?["eventName"]?.GetValue<string>();
+                    Console.WriteLine($"OK Received message eventName: {msgType}");
 
                     if (msgType == "connect.capability_manifest")
                     {
@@ -472,7 +472,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                             receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
                             responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                             eventObj = JsonNode.Parse(responseText)?.AsObject();
-                            var eventName = eventObj?["event_name"]?.GetValue<string>();
+                            var eventName = eventObj?["eventName"]?.GetValue<string>();
 
                             if (eventName == "system.notification")
                             {
@@ -495,11 +495,11 @@ public class ClientEventTestHandler : IServiceTestHandler
             }
             catch (OperationCanceledException)
             {
-                // TENET 11: Timeout is a failure, not "expected behavior"
+                // QUALITY TENETS: Timeout is a failure, not "expected behavior"
                 Console.WriteLine("FAILED Timeout waiting for messages on reconnection");
             }
 
-            // TENET 12: Test must verify the specific behavior it claims to test
+            // QUALITY TENETS: Test must verify the specific behavior it claims to test
             if (!receivedCapabilityManifest && !receivedQueuedEvent)
             {
                 Console.WriteLine("FAILED Did not receive capability manifest or queued event on reconnection");
@@ -530,7 +530,7 @@ public class ClientEventTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Check if event_name matches system notification event.
+    /// Check if eventName matches system notification event.
     /// Accepts both schema value ("system.notification") and NSwag enum serialization ("System_notification").
     /// </summary>
     private static bool IsSystemNotificationEvent(string? eventName)

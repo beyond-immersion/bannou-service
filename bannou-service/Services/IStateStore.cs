@@ -112,6 +112,119 @@ public interface IStateStore<TValue>
     Task<IReadOnlyDictionary<string, TValue>> GetBulkAsync(
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default);
+
+    // ==================== Set Operations ====================
+    // Sets are collections of unique items stored under a single key.
+    // Supported by Redis (native sets) and InMemory backends.
+    // MySQL throws NotSupportedException - use key-value with list serialization instead.
+
+    /// <summary>
+    /// Add an item to a set. Creates the set if it doesn't exist.
+    /// </summary>
+    /// <typeparam name="TItem">Type of item to add.</typeparam>
+    /// <param name="key">The set key.</param>
+    /// <param name="item">The item to add.</param>
+    /// <param name="options">Optional state options (TTL applies to entire set).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if item was added, false if already existed.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<bool> AddToSetAsync<TItem>(
+        string key,
+        TItem item,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add multiple items to a set. Creates the set if it doesn't exist.
+    /// </summary>
+    /// <typeparam name="TItem">Type of items to add.</typeparam>
+    /// <param name="key">The set key.</param>
+    /// <param name="items">The items to add.</param>
+    /// <param name="options">Optional state options (TTL applies to entire set).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of items actually added (excludes duplicates).</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<long> AddToSetAsync<TItem>(
+        string key,
+        IEnumerable<TItem> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Remove an item from a set.
+    /// </summary>
+    /// <typeparam name="TItem">Type of item to remove.</typeparam>
+    /// <param name="key">The set key.</param>
+    /// <param name="item">The item to remove.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if item was removed, false if not found.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<bool> RemoveFromSetAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get all items in a set.
+    /// </summary>
+    /// <typeparam name="TItem">Type of items in the set.</typeparam>
+    /// <param name="key">The set key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>All items in the set, or empty list if set doesn't exist.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Check if an item exists in a set.
+    /// </summary>
+    /// <typeparam name="TItem">Type of item to check.</typeparam>
+    /// <param name="key">The set key.</param>
+    /// <param name="item">The item to check for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if item exists in set.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<bool> SetContainsAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the number of items in a set.
+    /// </summary>
+    /// <param name="key">The set key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of items in the set, or 0 if set doesn't exist.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<long> SetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete an entire set.
+    /// </summary>
+    /// <param name="key">The set key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if set existed and was deleted.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<bool> DeleteSetAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Refresh/extend the TTL on a set without modifying its contents.
+    /// Useful for keeping a set alive while it's still in use.
+    /// </summary>
+    /// <param name="key">The set key.</param>
+    /// <param name="ttlSeconds">New TTL in seconds.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if set exists and TTL was updated.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
+    Task<bool> RefreshSetTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

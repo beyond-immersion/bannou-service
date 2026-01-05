@@ -1,14 +1,14 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.HttpTester.Tests;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
-using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
-using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,8 +16,7 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.HttpTester;
 
 /// <summary>
-/// Message type for MassTransit connectivity check.
-/// MassTransit requires named types, not anonymous types.
+/// Message type for RabbitMQ connectivity check.
 /// </summary>
 public record ConnectivityCheckMessage(string Test, DateTime Timestamp);
 
@@ -29,23 +28,27 @@ public class MockTestClient : ITestClient
     public bool IsAuthenticated => false;
     public string TransportType => "Mock";
 
-    public Task<TestResponse<T>> PostAsync<T>(string endpoint, object? requestBody = null) where T : class
+    public async Task<TestResponse<T>> PostAsync<T>(string endpoint, object? requestBody = null) where T : class
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual HTTP requests");
     }
 
-    public Task<TestResponse<T>> GetAsync<T>(string endpoint) where T : class
+    public async Task<TestResponse<T>> GetAsync<T>(string endpoint) where T : class
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual HTTP requests");
     }
 
-    public Task<bool> RegisterAsync(string username, string password)
+    public async Task<bool> RegisterAsync(string username, string password)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual authentication");
     }
 
-    public Task<bool> LoginAsync(string username, string password)
+    public async Task<bool> LoginAsync(string username, string password)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("MockTestClient should not be used for actual authentication");
     }
 
@@ -149,35 +152,40 @@ public class Program
             // Register AppConfiguration required by ServiceAppMappingResolver
             serviceCollection.AddSingleton<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
 
-            // Configure MassTransit with RabbitMQ for pub/sub communication
+            // Configure direct RabbitMQ for pub/sub communication (no MassTransit)
             var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq";
-            var rabbitPort = ushort.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
+            var rabbitPort = int.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
             var rabbitUser = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? "guest";
             var rabbitPass = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? "guest";
 
-            Console.WriteLine($"🔗 Configuring MassTransit to use RabbitMQ at {rabbitHost}:{rabbitPort}");
+            Console.WriteLine($"🔗 Configuring direct RabbitMQ at {rabbitHost}:{rabbitPort}");
 
-            serviceCollection.AddMassTransit(x =>
+            // Register MessagingServiceConfiguration with RabbitMQ settings
+            var messagingConfig = new MessagingServiceConfiguration
             {
-                x.SetKebabCaseEndpointNameFormatter();
+                RabbitMQHost = rabbitHost,
+                RabbitMQPort = rabbitPort,
+                RabbitMQUsername = rabbitUser,
+                RabbitMQPassword = rabbitPass,
+                RabbitMQVirtualHost = "/",
+                DefaultExchange = AppConstants.DEFAULT_APP_NAME
+            };
+            serviceCollection.AddSingleton(messagingConfig);
 
-                x.UsingRabbitMq((context, cfg) =>
-                {
-                    cfg.Host(rabbitHost, rabbitPort, "/", h =>
-                    {
-                        h.Username(rabbitUser);
-                        h.Password(rabbitPass);
-                    });
+            // Register shared connection manager
+            serviceCollection.AddSingleton<RabbitMQConnectionManager>();
 
-                    cfg.ConfigureEndpoints(context);
-                });
-            });
-
-            // Register MessagingServiceConfiguration required by MassTransitMessageBus
-            serviceCollection.AddSingleton(new MessagingServiceConfiguration());
+            // Register retry buffer for handling transient publish failures
+            serviceCollection.AddSingleton<MessageRetryBuffer>();
 
             // Register IMessageBus for event publishing
-            serviceCollection.AddSingleton<IMessageBus, MassTransitMessageBus>();
+            serviceCollection.AddSingleton<IMessageBus, RabbitMQMessageBus>();
+
+            // Register IMessageSubscriber for event subscriptions
+            serviceCollection.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
+
+            // Register IMessageTap for event forwarding/tapping
+            serviceCollection.AddSingleton<IMessageTap, RabbitMQMessageTap>();
 
             // =====================================================================
             // MESH INFRASTRUCTURE - Real Redis-based service discovery
@@ -193,7 +201,6 @@ public class Program
             var meshConfig = new MeshServiceConfiguration
             {
                 RedisConnectionString = meshRedisConnectionString,
-                DefaultAppId = "bannou",
                 UseLocalRouting = false,  // MUST use real Redis
                 RedisConnectionTimeoutSeconds = 60,
                 RedisConnectRetryCount = 10,
@@ -217,7 +224,7 @@ public class Program
 
             // Register generated service clients using simple scoped registration (NSwag parameterless constructor architecture)
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Auth.IAuthClient, BeyondImmersion.BannouService.Auth.AuthClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Accounts.IAccountsClient, BeyondImmersion.BannouService.Accounts.AccountsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Account.IAccountClient, BeyondImmersion.BannouService.Account.AccountClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Behavior.IBehaviorClient, BeyondImmersion.BannouService.Behavior.BehaviorClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Character.ICharacterClient, BeyondImmersion.BannouService.Character.CharacterClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Connect.IConnectClient, BeyondImmersion.BannouService.Connect.ConnectClient>();
@@ -225,18 +232,19 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.GameSession.IGameSessionClient, BeyondImmersion.BannouService.GameSession.GameSessionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Location.ILocationClient, BeyondImmersion.BannouService.Location.LocationClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient, BeyondImmersion.BannouService.Orchestrator.OrchestratorClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permissions.IPermissionsClient, BeyondImmersion.BannouService.Permissions.PermissionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permission.IPermissionClient, BeyondImmersion.BannouService.Permission.PermissionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Realm.IRealmClient, BeyondImmersion.BannouService.Realm.RealmClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Relationship.IRelationshipClient, BeyondImmersion.BannouService.Relationship.RelationshipClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient, BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Servicedata.IServicedataClient, BeyondImmersion.BannouService.Servicedata.ServicedataClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.GameService.IGameServiceClient, BeyondImmersion.BannouService.GameService.GameServiceClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Species.ISpeciesClient, BeyondImmersion.BannouService.Species.SpeciesClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient, BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscription.ISubscriptionClient, BeyondImmersion.BannouService.Subscription.SubscriptionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Messaging.IMessagingClient, BeyondImmersion.BannouService.Messaging.MessagingClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.State.IStateClient, BeyondImmersion.BannouService.State.StateClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Mesh.IMeshClient, BeyondImmersion.BannouService.Mesh.MeshClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Asset.IAssetClient, BeyondImmersion.BannouService.Asset.AssetClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Actor.IActorClient, BeyondImmersion.BannouService.Actor.ActorClient>();
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
 
             // Build the service provider
@@ -266,12 +274,12 @@ public class Program
             }
 
             Console.WriteLine("✅ Service provider setup completed successfully");
-            Console.WriteLine("✅ MassTransit connectivity verified");
+            Console.WriteLine("✅ RabbitMQ connectivity verified");
 
             // Wait for services to register their permissions (signals service readiness)
             // This is more reliable than fixed delays since services only register after startup complete
-            var permissionsClient = ServiceProvider.GetRequiredService<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
-            if (!await WaitForServiceReadiness(permissionsClient))
+            var permissionClient = ServiceProvider.GetRequiredService<BeyondImmersion.BannouService.Permission.IPermissionClient>();
+            if (!await WaitForServiceReadiness(permissionClient))
             {
                 Console.WriteLine("❌ Service readiness check timed out.");
                 return false;
@@ -296,7 +304,9 @@ public class Program
         var timeout = TimeSpan.FromSeconds(60);
         var checkInterval = TimeSpan.FromSeconds(1);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var serviceUrl = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://bannou:80";
+        // IMPLEMENTATION TENETS exception: http-tester doesn't have access to service configuration
+        var serviceUrl = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_HTTP_ENDPOINT)
+            ?? "http://localhost:5012";
         var healthUrl = $"{serviceUrl}/health";
 
         Console.WriteLine($"Waiting for bannou service to be healthy (timeout: {timeout.TotalSeconds}s)...");
@@ -363,7 +373,7 @@ public class Program
     }
 
     /// <summary>
-    /// Waits for MassTransit to be connected to RabbitMQ.
+    /// Waits for RabbitMQ to be connected.
     /// This ensures event-driven tests will work properly.
     /// </summary>
     /// <param name="messageBus">The message bus to use for connectivity checks.</param>
@@ -374,15 +384,15 @@ public class Program
         var checkInterval = TimeSpan.FromSeconds(2);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        Console.WriteLine($"Waiting for MassTransit/RabbitMQ to be ready (timeout: {timeout.TotalSeconds}s)...");
+        Console.WriteLine($"Waiting for RabbitMQ to be ready (timeout: {timeout.TotalSeconds}s)...");
 
         while (stopwatch.Elapsed < timeout)
         {
             try
             {
                 // Try to publish a test message to verify RabbitMQ connectivity
-                await messageBus.PublishAsync("test-connectivity", new ConnectivityCheckMessage("connectivity-check", DateTime.UtcNow));
-                Console.WriteLine($"✅ MassTransit is ready and connected to RabbitMQ");
+                await messageBus.TryPublishAsync("test-connectivity", new ConnectivityCheckMessage("connectivity-check", DateTime.UtcNow));
+                Console.WriteLine($"✅ RabbitMQ is ready and connected");
                 return true;
             }
             catch (Exception ex)
@@ -402,12 +412,12 @@ public class Program
     }
 
     /// <summary>
-    /// Waits for services to register their permissions with the Permissions service.
+    /// Waits for services to register their permissions with the Permission service.
     /// Services only register after fully initializing, so this is a reliable readiness signal.
     /// </summary>
-    /// <param name="permissionsClient">The permissions client to use for checking registered services.</param>
+    /// <param name="permissionClient">The Permission client to use for checking registered services.</param>
     /// <returns>True if expected services are ready, false if timeout occurs.</returns>
-    private static async Task<bool> WaitForServiceReadiness(BeyondImmersion.BannouService.Permissions.IPermissionsClient permissionsClient)
+    private static async Task<bool> WaitForServiceReadiness(BeyondImmersion.BannouService.Permission.IPermissionClient permissionClient)
     {
         var timeout = TimeSpan.FromSeconds(90);
         var checkInterval = TimeSpan.FromSeconds(2);
@@ -418,11 +428,11 @@ public class Program
         var expectedServices = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "auth",
-            "accounts",
+            "account",
             "documentation",
-            "permissions",
-            "subscriptions",  // Required for auth service login flow
-            "servicedata"     // Required by subscriptions service
+            "permission",
+            "subscription",  // Required for auth service login flow
+            "game-service"    // Required by subscription service
         };
 
         Console.WriteLine($"Waiting for service registration (timeout: {timeout.TotalSeconds}s)...");
@@ -432,7 +442,7 @@ public class Program
         {
             try
             {
-                var response = await permissionsClient.GetRegisteredServicesAsync(new ListServicesRequest());
+                var response = await permissionClient.GetRegisteredServicesAsync(new ListServicesRequest());
                 if (response != null && response.Services != null)
                 {
                     var registeredServiceIds = response.Services.Select(s => s.ServiceId).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -653,26 +663,28 @@ public class Program
         var testHandlers = new List<IServiceTestHandler>
         {
             new AccountTestHandler(),
+            new ActorTestHandler(),
             new AssetTestHandler(),
             new AuthTestHandler(),
             new CharacterTestHandler(),
             new ConnectTestHandler(),
+            new PeerRoutingTestHandler(),
             new DocumentationTestHandler(),
             new GameSessionTestHandler(),
             new LocationTestHandler(),
             new MeshTestHandler(),
             new MessagingTestHandler(),
             new OrchestratorTestHandler(),
-            new PermissionsTestHandler(),
+            new PermissionTestHandler(),
             new RealmTestHandler(),
             new RelationshipTestHandler(),
             new RepositoryBindingTestHandler(),
             new ArchiveTestHandler(),
             new RelationshipTypeTestHandler(),
-            new ServicedataTestHandler(),
+            new GameServiceTestHandler(),
             new SpeciesTestHandler(),
             new StateTestHandler(),
-            new SubscriptionsTestHandler(),
+            new SubscriptionTestHandler(),
             new TestingTestHandler()
         };
 

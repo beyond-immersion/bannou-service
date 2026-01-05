@@ -77,12 +77,11 @@ public class TestAssertionException : Exception
 public static class TestAssertionExtensions
 {
     /// <summary>
-    /// Asserts that the status code indicates success (OK, Created, NoContent).
+    /// Asserts that the status code indicates success (OK).
     /// </summary>
     public static void AssertSuccess(this StatusCodes statusCode)
     {
-        var successCodes = new[] { StatusCodes.OK, StatusCodes.Created, StatusCodes.NoContent };
-        if (!successCodes.Contains(statusCode))
+        if (statusCode != StatusCodes.OK)
         {
             throw new TestAssertionException($"Expected success status code but got {statusCode}");
         }
@@ -105,19 +104,6 @@ public static class TestAssertionExtensions
     public static T AssertOkWithResult<T>(this (StatusCodes status, T? result) tuple) where T : class
     {
         tuple.status.AssertStatusCode(StatusCodes.OK);
-        if (tuple.result == null)
-        {
-            throw new TestAssertionException("Expected non-null result but got null");
-        }
-        return tuple.result;
-    }
-
-    /// <summary>
-    /// Asserts that the tuple result has Created status and non-null response.
-    /// </summary>
-    public static T AssertCreatedWithResult<T>(this (StatusCodes status, T? result) tuple) where T : class
-    {
-        tuple.status.AssertStatusCode(StatusCodes.Created);
         if (tuple.result == null)
         {
             throw new TestAssertionException("Expected non-null result but got null");
@@ -162,9 +148,7 @@ public static class TestAssertionExtensions
     /// </summary>
     public static bool IsSuccess(this StatusCodes statusCode)
     {
-        return statusCode == StatusCodes.OK ||
-                statusCode == StatusCodes.Created ||
-                statusCode == StatusCodes.NoContent;
+        return statusCode == StatusCodes.OK;
     }
 }
 

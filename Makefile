@@ -161,7 +161,16 @@ external-login: ## Login with test admin account and display JWT
 	@echo ""
 	@echo "💡 Use the accessToken above for authenticated requests"
 
-clean: ## Clean generated files and caches (add PLUGIN=name for specific plugin)
+clean-build-artifacts: ## Remove bin/obj directories and build-output.txt (improves grep results)
+	@echo "🧹 Cleaning build artifacts (bin/obj directories)..."
+	@rm -f build-output.txt 2>/dev/null || true
+	@find . -type d \( -name "bin" -o -name "obj" \) \
+		-not -path "./.git/*" \
+		-not -path "./node_modules/*" \
+		-exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ Build artifacts cleaned"
+
+clean: ## Clean generated files, build artifacts, and caches (add PLUGIN=name for specific plugin)
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧹 Cleaning plugin: $(PLUGIN)..."; \
 		if [ -d "./lib-$(PLUGIN)/Generated" ]; then \
@@ -172,8 +181,10 @@ clean: ## Clean generated files and caches (add PLUGIN=name for specific plugin)
 		fi; \
 		echo "✅ Clean completed for plugin: $(PLUGIN)"; \
 	else \
+		$(MAKE) clean-build-artifacts; \
 		echo "🧹 Cleaning all generated files..."; \
 		find . -path "./lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		rm -rf bannou-service/Generated 2>/dev/null || true; \
 		rm -rf Bannou.Client.SDK 2>/dev/null || true; \
 		echo "🧹 Cleaning caches and resources..."; \
 		git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean; \
@@ -191,12 +202,12 @@ build-plugins: ## Build specific plugins only (requires SERVICES="name1 name2")
 		bash scripts/build-service-libs.sh $(SERVICES); \
 		echo "✅ Service plugins built: $(SERVICES)"; \
 	else \
-		echo "❌ Error: SERVICES parameter required. Example: make build-plugins SERVICES=\"auth accounts\""; \
+		echo "❌ Error: SERVICES parameter required. Example: make build-plugins SERVICES=\"auth account\""; \
 		exit 1; \
 	fi
 
 # Build Docker image with specific services only
-# Usage: make build-compose-services SERVICES="auth accounts connect"
+# Usage: make build-compose-services SERVICES="auth account connect"
 build-compose-services:
 	@if [ "$(SERVICES)" ]; then \
 		echo "🐳 Building Docker image with specific services: $(SERVICES)"; \
@@ -204,7 +215,7 @@ build-compose-services:
 		docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl build --build-arg BANNOU_SERVICES="$(SERVICES)"; \
 		echo "✅ Docker image built with services: $(SERVICES)"; \
 	else \
-		echo "❌ Error: SERVICES parameter required. Example: make build-compose-services SERVICES=\"auth accounts\""; \
+		echo "❌ Error: SERVICES parameter required. Example: make build-compose-services SERVICES=\"auth account\""; \
 		exit 1; \
 	fi
 
@@ -213,7 +224,7 @@ list-services:
 	@scripts/list-services.sh
 
 # Validate that specific services are included in the latest Docker image
-# Usage: make validate-compose-services SERVICES="auth accounts connect"
+# Usage: make validate-compose-services SERVICES="auth account connect"
 validate-compose-services:
 	@scripts/validate-compose-services.sh $(SERVICES)
 
@@ -548,10 +559,13 @@ test-edge-logs: test-logs-dir ## Collect Edge test logs to ./test-logs/edge-test
 	@docker logs bannou-test-edge-bannou-edge-tester-1 2>&1 | tee $(TEST_LOG_DIR)/edge-tester.log
 	@echo "📋 Collecting bannou service logs..."
 	@docker logs bannou-test-edge-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/edge-bannou.log
+	@echo "📋 Collecting OpenResty logs..."
+	@docker logs bannou-test-edge-openresty-1 2>&1 | tee $(TEST_LOG_DIR)/edge-openresty.log || echo "⚠️  OpenResty container not found"
 	@echo ""
 	@echo "✅ Logs saved to:"
 	@echo "   $(TEST_LOG_DIR)/edge-tester.log"
 	@echo "   $(TEST_LOG_DIR)/edge-bannou.log"
+	@echo "   $(TEST_LOG_DIR)/edge-openresty.log"
 
 # Follow Edge tester logs live
 test-edge-follow: ## Follow Edge test logs in real-time

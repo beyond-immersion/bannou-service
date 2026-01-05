@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: doc_error_var
+on_error: error_handler
+flows:
+  start:
+    actions:
+      - goto: nowhere
+  error_handler:
+    actions:
+      - log: { message: "Flow: ${_error.flow}, Action: ${_error.action}" }

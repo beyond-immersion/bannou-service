@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: nested_a
+
+imports:
+  - file: "import_nested_b.yml"
+    as: "b"
+
+flows:
+  start:
+    actions:
+      - log: { message: "In A" }
+      - call: { flow: "b.call_c" }
+      - log: { message: "Back in A" }

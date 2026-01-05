@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `x-permissions` extension defines role-based access control for API endpoints. When services start up, they use this information to register their API permissions with the Permissions service, enabling dynamic capability discovery for WebSocket clients.
+The `x-permissions` extension defines role-based access control for API endpoints. When services start up, they use this information to register their API permissions with the Permission service, enabling dynamic capability discovery for WebSocket clients.
 
 ## Schema Format
 
@@ -90,7 +90,7 @@ States are for contextual navigation, **not authentication status**. Authenticat
 ### Authenticated User Endpoint
 
 ```yaml
-/accounts/{id}:
+/account/{id}:
   get:
     x-permissions:
       - role: user
@@ -159,15 +159,15 @@ When services start, they call `RegisterServicePermissionsAsync()` which publish
 ## Integration Flow
 
 1. **Build Time**: `generate-permissions.sh` extracts x-permissions from schema
-2. **Generated Code**: Creates `{Service}PermissionRegistration.Generated.cs` with permission matrix
+2. **Generated Code**: Creates `{Service}PermissionRegistration.cs` in `Generated/` with permission matrix
 3. **Service Startup**: `RegisterServicePermissionsAsync()` publishes `ServiceRegistrationEvent`
-4. **Permissions Service**: Receives event, updates Redis permission matrices
+4. **Permission Service**: Receives event, updates Redis permission matrices
 5. **Session Recompilation**: All active sessions get updated capabilities
 6. **Connect Service**: Receives capability updates, notifies WebSocket clients
 
 ## State Key Storage Format
 
-The Permissions service stores permission matrices in Redis using the following key format:
+The Permission service stores permission matrices in Redis using the following key format:
 
 ```
 permissions:{serviceId}:{stateKey}:{role}
@@ -179,13 +179,13 @@ The `stateKey` is constructed differently depending on the permission configurat
 
 | x-permissions `states` value | State Key | Example Redis Key |
 |------------------------------|-----------|-------------------|
-| `{}` (empty object) | `"default"` | `permissions:accounts:default:user` |
+| `{}` (empty object) | `"default"` | `permissions:account:default:user` |
 | `{game-session: in_game}` (same service) | `"in_game"` | `permissions:game-session:in_game:user` |
 | `{game-session: in_game}` (different service) | `"game-session:in_game"` | `permissions:character:game-session:in_game:user` |
 
 ### Key Matching Rules
 
-When a session's state changes (e.g., user joins a game), the Permissions service recompiles capabilities by:
+When a session's state changes (e.g., user joins a game), the Permission service recompiles capabilities by:
 
 1. **Default permissions**: Always include endpoints stored at `permissions:{serviceId}:default:{role}`
 2. **State-based permissions**: For each session state `{stateServiceId: stateValue}`:
@@ -195,7 +195,7 @@ When a session's state changes (e.g., user joins a game), the Permissions servic
 ### Example Flow
 
 1. User joins a game session, setting `game-session=in_game` state
-2. Permissions service checks all registered services:
+2. Permission service checks all registered services:
    - For `game-session` service: looks up `permissions:game-session:in_game:user`
    - For `character` service: looks up `permissions:character:game-session:in_game:user`
    - For `chat` service: looks up `permissions:chat:game-session:in_game:user`

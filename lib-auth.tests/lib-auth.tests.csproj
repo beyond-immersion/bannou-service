@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="../lib-auth/lib-auth.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

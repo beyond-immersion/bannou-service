@@ -134,17 +134,17 @@ public static class ErrorResponses
         return httpStatusCode switch
         {
             200 => StatusCodes.OK,
-            201 => StatusCodes.Created,
-            202 => StatusCodes.Accepted,
-            204 => StatusCodes.NoContent,
+            201 => StatusCodes.OK, // Created maps to OK - all success codes are OK
+            202 => StatusCodes.OK, // Accepted maps to OK - payload indicates async status
+            204 => StatusCodes.OK, // NoContent maps to OK - null payload indicates no content
             400 => StatusCodes.BadRequest,
             401 => StatusCodes.Unauthorized,
             403 => StatusCodes.Forbidden,
             404 => StatusCodes.NotFound,
             409 => StatusCodes.Conflict,
-            413 => StatusCodes.MessageTooLarge,
-            422 => StatusCodes.BadRequest, // Map UnprocessableEntity to BadRequest
-            429 => StatusCodes.InternalServerError, // Map TooManyRequests to InternalServerError (rate limiting)
+            413 => StatusCodes.BadRequest, // MessageTooLarge maps to BadRequest - client error
+            422 => StatusCodes.BadRequest, // UnprocessableEntity maps to BadRequest
+            429 => StatusCodes.BadRequest, // TooManyRequests maps to BadRequest - client should slow down
             _ => StatusCodes.InternalServerError
         };
     }

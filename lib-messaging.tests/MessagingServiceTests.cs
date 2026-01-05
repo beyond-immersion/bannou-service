@@ -1,8 +1,11 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net;
@@ -15,108 +18,76 @@ public class MessagingServiceTests
 {
     private readonly Mock<ILogger<MessagingService>> _mockLogger;
     private readonly MessagingServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<ExternalSubscriptionData>> _mockSubscriptionStore;
     private readonly MessagingService _service;
 
     public MessagingServiceTests()
     {
         _mockLogger = new Mock<ILogger<MessagingService>>();
         _configuration = new MessagingServiceConfiguration();
+        _appConfiguration = new AppConfiguration { AppId = "test-app" };
         _mockMessageBus = new Mock<IMessageBus>();
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockSubscriptionStore = new Mock<IStateStore<ExternalSubscriptionData>>();
+
+        // Configure state store factory to return the mock subscription store
+        _mockStateStoreFactory
+            .Setup(x => x.GetStore<ExternalSubscriptionData>(MessagingService.ExternalSubscriptionStoreName))
+            .Returns(_mockSubscriptionStore.Object);
+
+        // Configure default mock behaviors for state store set operations
+        _mockSubscriptionStore
+            .Setup(x => x.AddToSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(),
+                It.IsAny<ExternalSubscriptionData>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockSubscriptionStore
+            .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ExternalSubscriptionData>());
+
+        _mockSubscriptionStore
+            .Setup(x => x.RemoveFromSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(),
+                It.IsAny<ExternalSubscriptionData>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _service = new MessagingService(
             _mockLogger.Object,
             _configuration,
+            _appConfiguration,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object);
+            _mockHttpClientFactory.Object,
+            _mockStateStoreFactory.Object);
     }
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
-        var service = new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object);
-
-        // Assert
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            null!,
-            _configuration,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("logger", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            null!,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("configuration", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("messageBus", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageSubscriber_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            _mockMessageBus.Object,
-            null!,
-            _mockHttpClientFactory.Object));
-        Assert.Equal("messageSubscriber", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullHttpClientFactory_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object,
-            null!));
-        Assert.Equal("httpClientFactory", ex.ParamName);
-    }
+    public void MessagingService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<MessagingService>();
 
     #endregion
 
@@ -126,7 +97,6 @@ public class MessagingServiceTests
     public async Task PublishEventAsync_WithValidRequest_ReturnsOkWithMessageId()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
             Topic = "test.topic",
@@ -134,12 +104,13 @@ public class MessagingServiceTests
         };
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedMessageId);
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
@@ -148,14 +119,13 @@ public class MessagingServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
-        Assert.Equal(expectedMessageId, response.MessageId);
+        Assert.NotEqual(Guid.Empty, response.MessageId);
     }
 
     [Fact]
     public async Task PublishEventAsync_WithOptions_PassesOptionsToMessageBus()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var correlationId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
@@ -172,13 +142,14 @@ public class MessagingServiceTests
 
         PublishOptions? capturedOptions = null;
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
-            .ReturnsAsync(expectedMessageId);
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, o, g, ct) => capturedOptions = o)
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
@@ -203,10 +174,11 @@ public class MessagingServiceTests
         };
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("RabbitMQ connection failed"));
 
@@ -238,7 +210,6 @@ public class MessagingServiceTests
     public async Task PublishEventAsync_WithNullOptions_PassesNullToMessageBus()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
             Topic = "test.topic",
@@ -248,13 +219,14 @@ public class MessagingServiceTests
 
         PublishOptions? capturedOptions = null;
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
-            .ReturnsAsync(expectedMessageId);
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, o, g, ct) => capturedOptions = o)
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
@@ -268,7 +240,6 @@ public class MessagingServiceTests
     public async Task PublishEventAsync_WithEmptyCorrelationId_DoesNotPassCorrelationId()
     {
         // Arrange
-        var expectedMessageId = Guid.NewGuid();
         var request = new PublishEventRequest
         {
             Topic = "test.topic",
@@ -281,13 +252,14 @@ public class MessagingServiceTests
 
         PublishOptions? capturedOptions = null;
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
+            .Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
-            .ReturnsAsync(expectedMessageId);
+            .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((t, p, o, g, ct) => capturedOptions = o)
+            .ReturnsAsync(true);
 
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
@@ -317,6 +289,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -344,6 +318,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Cannot create subscription"));
 
@@ -390,6 +366,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -422,6 +400,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -487,6 +467,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -550,6 +532,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -587,6 +571,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -629,6 +615,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -666,6 +654,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -700,6 +690,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => handleIndex++ == 0 ? mockHandle1.Object : mockHandle2.Object);
 
@@ -749,6 +741,8 @@ public class MessagingServiceTests
             .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
                 It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => handleIndex++ == 0 ? mockHandle1.Object : mockHandle2.Object);
 

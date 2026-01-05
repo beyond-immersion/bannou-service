@@ -214,8 +214,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     // Check if this is a capability manifest
                     var responseObj = JsonNode.Parse(responseText)?.AsObject();
 
-                    // Capability manifest should have event_name="connect.capability_manifest" and availableAPIs
-                    var messageType = responseObj?["event_name"]?.GetValue<string>();
+                    // Capability manifest should have eventName="connect.capability_manifest" and availableAPIs
+                    var messageType = responseObj?["eventName"]?.GetValue<string>();
                     if (messageType == "connect.capability_manifest")
                     {
                         var availableApis = responseObj?["availableAPIs"]?.AsArray();
@@ -508,7 +508,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     /// Test that setting game-session:in_game state triggers capability manifest update via WebSocket.
     /// This validates the real-time push mechanism where:
     /// - Session state changes published via Bannou pub/sub
-    /// - Permissions service recompiles capabilities
+    /// - Permission service recompiles capabilities
     /// - Connect service pushes updated capability manifest to WebSocket client
     /// </summary>
     private void TestStateBasedCapabilityUpdate(string[] args)
@@ -589,7 +589,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
             var initialManifest = JsonNode.Parse(responseText)?.AsObject();
 
-            var messageType = initialManifest?["event_name"]?.GetValue<string>();
+            var messageType = initialManifest?["eventName"]?.GetValue<string>();
             if (messageType != "connect.capability_manifest")
             {
                 Console.WriteLine($"❌ Expected connect.capability_manifest but received '{messageType}'");
@@ -609,7 +609,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             if (adminClient == null || !adminClient.IsConnected)
             {
                 Console.WriteLine("❌ Admin client not connected - cannot update session state");
-                Console.WriteLine("   Permissions APIs require admin role. Check AdminEmails/AdminEmailDomain configuration.");
+                Console.WriteLine("   Permission APIs require admin role. Check AdminEmails/AdminEmailDomain configuration.");
                 return false;
             }
 
@@ -624,7 +624,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             {
                 var response = (await adminClient.InvokeAsync<object, JsonElement>(
                     "POST",
-                    "/permissions/update-session-state",
+                    "/permission/update-session-state",
                     stateUpdate,
                     timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
@@ -632,7 +632,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             }
             catch (Exception ex)
             {
-                // TENET 12: If state update fails, we cannot test capability updates
+                // QUALITY TENETS: If state update fails, we cannot test capability updates
                 Console.WriteLine($"❌ State update failed: {ex.Message}");
                 Console.WriteLine("   Cannot test state-based capability updates without state update API access");
                 return false;
@@ -651,7 +651,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                 var updatedManifest = JsonNode.Parse(responseText)?.AsObject();
 
-                var updatedType = updatedManifest?["event_name"]?.GetValue<string>();
+                var updatedType = updatedManifest?["eventName"]?.GetValue<string>();
                 if (updatedType == "connect.capability_manifest")
                 {
                     var updatedApis = updatedManifest?["availableAPIs"]?.AsArray();
@@ -666,7 +666,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     }
                     else
                     {
-                        // TENET 12: API count should increase when game-session:in_game is set
+                        // QUALITY TENETS: API count should increase when game-session:in_game is set
                         Console.WriteLine($"❌ API count did not increase: {initialApiCount} → {updatedApiCount}");
                         Console.WriteLine("   State update should grant additional API access");
                         return false;
@@ -674,14 +674,14 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 }
                 else
                 {
-                    // TENET 12: We expected capability_manifest, not something else
+                    // QUALITY TENETS: We expected capability_manifest, not something else
                     Console.WriteLine($"❌ Expected capability_manifest but received: {updatedType}");
                     return false;
                 }
             }
             catch (OperationCanceledException)
             {
-                // TENET 11: Timeout is a failure - state change should trigger WebSocket push
+                // QUALITY TENETS: Timeout is a failure - state change should trigger WebSocket push
                 Console.WriteLine("❌ Timeout waiting for capability update - state change did not trigger WebSocket push");
                 return false;
             }

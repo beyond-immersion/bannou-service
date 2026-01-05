@@ -1,6 +1,5 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-28 02:41:54
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -8,19 +7,49 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration by Service
 
-### Accounts
+### Account
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ACCOUNTS_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
-| `ACCOUNTS_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
+| `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
+| `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
+
+### Actor
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `ACTOR_CONTROL_PLANE_APP_ID` | string | `bannou` | App-id of control plane for pool node registration. Pool nod... |
+| `ACTOR_DEFAULT_ACTORS_PER_NODE` | int | `100` | Default capacity per pool node |
+| `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | int | `60` | Default interval for periodic state saves (0 to disable) |
+| `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
+| `ACTOR_DEPLOYMENT_MODE` | string | `bannou` | Actor deployment mode: bannou (local dev), pool-per-type, sh... |
+| `ACTOR_GOAP_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search |
+| `ACTOR_GOAP_PLAN_TIMEOUT_MS` | int | `50` | Maximum time allowed for GOAP planning in milliseconds |
+| `ACTOR_GOAP_REPLAN_THRESHOLD` | double | `0.3` | Threshold for triggering GOAP replanning when goal relevance... |
+| `ACTOR_HEARTBEAT_INTERVAL_SECONDS` | int | `10` | Pool node heartbeat frequency |
+| `ACTOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `30` | Mark node unhealthy after this many seconds without heartbea... |
+| `ACTOR_MAX_POOL_NODES` | int | `10` | Maximum pool nodes allowed (auto-scale mode) |
+| `ACTOR_MESSAGE_QUEUE_SIZE` | int | `50` | Max messages queued per actor before dropping oldest |
+| `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
+| `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
+| `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
+| `ACTOR_POOL_NODE_CAPACITY` | int | `100` | Maximum actors this pool node can run. Overrides DefaultActo... |
+| `ACTOR_POOL_NODE_ID` | string | **REQUIRED** | If set, this instance runs as a pool node (not control plane... |
+| `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
+| `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
+| `ACTOR_STATE_UPDATE_TRANSPORT` | string | `messaging` | State update transport: messaging (default, works in bannou ... |
 
 ### Asset
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ASSET_AUDIO_BITRATE_KBPS` | int | `192` | Default audio bitrate in kbps |
+| `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format (mp3, opus, aac) |
+| `ASSET_AUDIO_PRESERVE_LOSSLESS` | bool | `true` | Keep original lossless file alongside transcoded version |
 | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | string | `lz4` | Default compression for bundles (lz4, lzma, none) |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
+| `ASSET_FFMPEG_PATH` | string | **REQUIRED** | Path to FFmpeg binary (empty = use system PATH) |
+| `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
 | `ASSET_MAX_UPLOAD_SIZE_MB` | int | `500` | Maximum upload size in megabytes |
 | `ASSET_MINIO_WEBHOOK_SECRET` | string | **REQUIRED** | Secret for validating MinIO webhook requests |
@@ -28,6 +57,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_MULTIPART_THRESHOLD_MB` | int | `50` | File size threshold for multipart uploads in megabytes |
 | `ASSET_PROCESSING_MODE` | string | `both` | Service mode (api, worker, both) |
 | `ASSET_PROCESSING_POOL_TYPE` | string | `asset-processor` | Processing pool identifier for orchestrator |
+| `ASSET_PROCESSOR_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Heartbeat emission interval in seconds |
+| `ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Mark node unhealthy after this many seconds without heartbea... |
+| `ASSET_PROCESSOR_IDLE_TIMEOUT_SECONDS` | int | `300` | Seconds of zero-load before auto-termination (0 to disable) |
+| `ASSET_PROCESSOR_MAX_CONCURRENT_JOBS` | int | `10` | Maximum concurrent jobs per processor node |
+| `ASSET_PROCESSOR_NODE_ID` | string | **REQUIRED** | Unique processor node ID (set by orchestrator when spawning ... |
 | `ASSET_STORAGE_ACCESS_KEY` | string | **REQUIRED** | Storage access key/username |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
 | `ASSET_STORAGE_ENDPOINT` | string | `http://minio:9000` | Storage endpoint URL (MinIO/S3 compatible) |
@@ -54,7 +88,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_JWT_AUDIENCE` | string | `bannou-api` | JWT token audience |
 | `AUTH_JWT_EXPIRATION_MINUTES` | int | `60` | JWT token expiration time in minutes |
 | `AUTH_JWT_ISSUER` | string | `bannou-auth` | JWT token issuer |
-| `AUTH_JWT_SECRET` | string | **REQUIRED** | Secret key for JWT token signing |
+| `AUTH_JWT_SECRET` | string | **REQUIRED** | Secret key for JWT token signing (REQUIRED - service fails f... |
 | `AUTH_MOCK_DISCORD_ID` | string | `mock-discord-123456` | Mock Discord user ID for testing |
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
@@ -85,19 +119,22 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `CONNECT_AUTHENTICATEDSERVICES` | string[] | `['accounts', 'behavior', 'permissions', 'gamesession']` | Additional services available to authenticated connections |
-| `CONNECT_BINARYPROTOCOLVERSION` | string | `2.0` | Binary protocol version identifier |
-| `CONNECT_BUFFERSIZE` | int | `65536` | Size of message buffers in bytes |
-| `CONNECT_CONNECTIONTIMEOUTSECONDS` | int | `300` | WebSocket connection timeout in seconds |
-| `CONNECT_DEFAULTSERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
-| `CONNECT_ENABLECLIENTTOCLIENTROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
-| `CONNECT_HEARTBEATINTERVALSECONDS` | int | `30` | Interval between heartbeat messages |
-| `CONNECT_JWTPUBLICKEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
-| `CONNECT_MAXCONCURRENTCONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
-| `CONNECT_MAXMESSAGESPERMINUTE` | int | `1000` | Rate limit for messages per minute per client |
-| `CONNECT_MESSAGEQUEUESIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (T... |
-| `CONNECT_RATELIMITWINDOWMINUTES` | int | `1` | Rate limit window in minutes |
+| `CONNECT_AUTHENTICATED_SERVICES` | string[] | `['account', 'behavior', 'permission', 'gamesession']` | Additional services available to authenticated connections |
+| `CONNECT_BINARY_PROTOCOL_VERSION` | string | `2.0` | Binary protocol version identifier |
+| `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
+| `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
+| `CONNECT_CONNECTION_TIMEOUT_SECONDS` | int | `300` | WebSocket connection timeout in seconds |
+| `CONNECT_DEFAULT_SERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
+| `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
+| `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
+| `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
+| `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
+| `CONNECT_JWT_PUBLIC_KEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
+| `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
+| `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
+| `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
+| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (R... |
+| `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL returned to clients for reconnection |
 
@@ -105,7 +142,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | `` | Model for generating embeddings (when AI enabled) |
+| `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | **REQUIRED** | Model for generating embeddings (when AI enabled) |
 | `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | bool | `false` | Enable AI-powered semantic search (future feature) |
 | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
 | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
@@ -124,14 +161,20 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
 | `DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH` | int | `200` | Maximum characters for voice summaries |
 
+### Game Service
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `GAME_SERVICE_STATE_STORE_NAME` | string | `game-service-statestore` | State store name for game service data |
+
 ### Game Session
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `GAME-SESSION_DEFAULTSESSIONTIMEOUTSECONDS` | int | `7200` | Default session timeout in seconds |
-| `GAME-SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
-| `GAME-SESSION_MAXPLAYERSPERSESSION` | int | `16` | Maximum players allowed per session |
-| `GAME-SESSION_SERVERSALT` | string | **REQUIRED** | Server salt for GUID generation. If not set, generates rando... |
+| `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
+| `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
+| `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
+| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. If not set, generates rando... |
 
 ### Location
 
@@ -146,11 +189,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_CIRCUIT_BREAKER_ENABLED` | bool | `true` | Whether to enable circuit breaker for failed endpoints |
 | `MESH_CIRCUIT_BREAKER_RESET_SECONDS` | int | `30` | Seconds before attempting to close circuit |
 | `MESH_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before opening circuit |
-| `MESH_DEFAULT_APP_ID` | string | `bannou` | Default app-id when no service mapping exists (omnipotent ro... |
 | `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm (RoundRobin, LeastConnectio... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
 | `MESH_ENABLE_DETAILED_LOGGING` | bool | `false` | Whether to log detailed routing decisions |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
+| `MESH_ENDPOINT_HOST` | string | **REQUIRED** | Hostname/IP for mesh endpoint registration. Defaults to app-... |
+| `MESH_ENDPOINT_PORT` | int | `80` | Port for mesh endpoint registration. |
 | `MESH_ENDPOINT_TTL_SECONDS` | int | `90` | TTL for endpoint registration (should be > 2x heartbeat inte... |
 | `MESH_HEALTH_CHECK_ENABLED` | bool | `false` | Whether to perform active health checks on endpoints |
 | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | int | `60` | Interval between active health checks |
@@ -171,6 +215,8 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `MESSAGING_CALLBACK_RETRY_DELAY_MS` | int | `1000` | Delay between HTTP callback retry attempts in milliseconds |
+| `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for HTTP callback delivery (network f... |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
 | `MESSAGING_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for establishing RabbitMQ connection |
@@ -187,6 +233,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RABBITMQ_USERNAME` | string | `guest` (insecure) | RabbitMQ username |
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
 | `MESSAGING_REQUEST_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for individual message operations |
+| `MESSAGING_RETRY_BUFFER_ENABLED` | bool | `true` | Enable retry buffer for failed event publishes |
+| `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | int | `5` | Interval between retry attempts for buffered messages |
+| `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `300` | Maximum age of buffered messages before node crash (prevents... |
+| `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `10000` | Maximum number of messages in retry buffer before node crash |
 | `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds |
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
@@ -198,24 +248,28 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ORCHESTRATOR_CACHE_TTL_MINUTES` | int | `5` | Cache TTL in minutes for orchestrator data |
 | `ORCHESTRATOR_CERTIFICATES_HOST_PATH` | string | `/app/provisioning/certificates` | Host path for TLS certificates |
+| `ORCHESTRATOR_DEFAULT_BACKEND` | string | `compose` | Default container orchestration backend when not specified i... |
 | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | int | `5` | Time in minutes before a service is marked as degraded |
 | `ORCHESTRATOR_DOCKER_HOST` | string | `unix:///var/run/docker.sock` | Docker host for direct Docker API access |
 | `ORCHESTRATOR_DOCKER_NETWORK` | string | `bannou_default` | Docker network name for deployed containers |
 | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Service heartbeat timeout in seconds |
+| `ORCHESTRATOR_KUBECONFIG_PATH` | string | **REQUIRED** | Path to kubeconfig file (null uses default ~/.kube/config) |
 | `ORCHESTRATOR_KUBERNETES_NAMESPACE` | string | `default` | Kubernetes namespace for deployments |
 | `ORCHESTRATOR_LOGS_VOLUME` | string | `logs-data` | Docker volume name for logs |
+| `ORCHESTRATOR_OPENRESTY_HOST` | string | `openresty` | OpenResty hostname for cache invalidation calls |
+| `ORCHESTRATOR_OPENRESTY_PORT` | int | `80` | OpenResty port for cache invalidation calls |
 | `ORCHESTRATOR_PORTAINER_API_KEY` | string | **REQUIRED** | Portainer API key |
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
-| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging (requi... |
-| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for orchestrator state (required, no... |
+| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging (REQUI... |
+| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for orchestrator state (REQUIRED - s... |
 
-### Permissions
+### Permission
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `PERMISSIONS_ENABLED` | bool | `true` | Enable/disable Permissions service |
+| `PERMISSION_ENABLED` | bool | `true` | Enable/disable Permission service |
 
 ### Realm
 
@@ -233,13 +287,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `RELATIONSHIP-TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
-
-### Servicedata
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `SERVICEDATA_STATE_STORE_NAME` | string | `servicedata-statestore` | State store name for service data |
+| `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
 
 ### Species
 
@@ -251,21 +299,21 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations (strong or ev... |
-| `ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
-| `ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
-| `MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
-| `REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
 | `STATE_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of connection retry attempts |
+| `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations (strong or ev... |
+| `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
+| `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
+| `STATE_MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
+| `STATE_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
-### Subscriptions
+### Subscription
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SUBSCRIPTIONS_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
-| `SUBSCRIPTIONS_STATE_STORE_NAME` | string | `subscriptions-statestore` | State store name for subscriptions |
+| `SUBSCRIPTION_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
+| `SUBSCRIPTION_STATE_STORE_NAME` | string | `subscription-statestore` | State store name for subscription |
 
 ### Voice
 
@@ -279,7 +327,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
 | `VOICE_SIP_DOMAIN` | string | `voice.bannou.local` | SIP domain for voice communication |
-| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation |
+| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation (REQUIRED when ScaledTierEn... |
 | `VOICE_STUN_SERVERS` | string | `stun:stun.l.google.com:19302` | Comma-separated list of STUN server URLs for WebRTC |
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
@@ -292,13 +340,13 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 172
-- **Required (no default)**: 33
-- **Optional (has default)**: 139
+- **Total properties**: 216
+- **Required (no default)**: 41
+- **Optional (has default)**: 175
 
 ## Environment Variable Naming Convention
 
-Per Tenet 2, all configuration environment variables follow `{SERVICE}_{PROPERTY}` pattern:
+Per FOUNDATION TENETS, all configuration environment variables follow `{SERVICE}_{PROPERTY}` pattern:
 
 ```bash
 # Service prefix in UPPER_CASE
@@ -316,7 +364,7 @@ BANNOU_AUTH_JWT_SECRET=your-secret
 
 ## Required Configuration (Fail-Fast)
 
-Per Tenet 21, configuration marked as **REQUIRED** will cause the service to
+Per IMPLEMENTATION TENETS, configuration marked as **REQUIRED** will cause the service to
 throw an exception at startup if not configured. This prevents running with
 insecure defaults or missing critical configuration.
 

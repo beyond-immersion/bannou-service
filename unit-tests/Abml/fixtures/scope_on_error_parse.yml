@@ -1,0 +1,9 @@
+version: "2.0"
+metadata:
+  id: on_error_parse
+flows:
+  start:
+    actions:
+      - log: "Try"
+    on_error:
+      - log: "Error handled"

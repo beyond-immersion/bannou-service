@@ -1,0 +1,10 @@
+version: "2.0"
+metadata:
+  id: action_error_parse
+flows:
+  start:
+    actions:
+      - failing_action:
+          param: value
+          on_error:
+            - log: "Action error handled"

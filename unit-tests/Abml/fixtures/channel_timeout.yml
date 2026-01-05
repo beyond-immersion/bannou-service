@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: timeout
+flows:
+  waiter:
+    actions:
+      - wait_for: { signal: "never_sent" }
+  sender:
+    actions:
+      - emit: { signal: "wrong_signal" }
+      - emit: { signal: "still_wrong" }
+      - emit: { signal: "nope" }

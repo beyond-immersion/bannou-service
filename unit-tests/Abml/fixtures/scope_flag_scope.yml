@@ -1,0 +1,16 @@
+version: "2.0"
+metadata:
+  id: flag_scope
+flows:
+  start:
+    actions:
+      - goto: nowhere
+      - log: "This runs (error_handled=true)"
+      - set:
+          variable: result
+          value: "completed"
+    on_error:
+      - log: "Error handled, continuing"
+      - set:
+          variable: _error_handled
+          value: "${true}"

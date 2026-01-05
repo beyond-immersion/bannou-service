@@ -2,7 +2,7 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23
 
 These tenets define the patterns you follow while implementing services. Reference them during active development.
 
@@ -14,7 +14,7 @@ These tenets define the patterns you follow while implementing services. Referen
 
 ### The Problem
 
-RabbitMQ queue binding allows only ONE consumer per queue to receive events. When multiple plugins need the same event (e.g., Auth, Permissions, and GameSession all need `session.connected`), only one randomly "wins."
+RabbitMQ queue binding allows only ONE consumer per queue to receive events. When multiple plugins need the same event (e.g., Auth, Permission, and GameSession all need `session.connected`), only one randomly "wins."
 
 ### The Solution: Application-Level Fan-Out
 
@@ -113,7 +113,12 @@ catch (Exception ex)
 
 ### Error Event Publishing
 
-Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures only. Returns `false` if publishing fails (prevents cascading failures). Replaces legacy `IErrorEventEmitter`.
+Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures only. **This method is ALWAYS safe to call** - both implementations (RabbitMQMessageBus and InMemoryMessageBus) have internal try/catch blocks that prevent exceptions from propagating. Returns `false` if publishing fails (prevents cascading failures). Replaces legacy `IErrorEventEmitter`.
+
+**CRITICAL**: When an operation fails due to an unexpected exception:
+1. Log the error
+2. Call `TryPublishErrorAsync` (safe - won't throw)
+3. Return failure for the ORIGINAL reason (not because error event failed)
 
 **Emit for**:
 - Unexpected exceptions that should never happen in normal operation
@@ -197,6 +202,37 @@ private readonly ConcurrentDictionary<string, CachedItem> _cache = new();
 // lib-state for authoritative state
 await _stateStore.SaveAsync(key, value);
 ```
+
+### Event-Backed Local Caches (ACCEPTABLE)
+
+Local instance caches are acceptable when **both** conditions are met:
+
+1. **Loaded via API on startup**: Cache is populated from authoritative source (another service or lib-state) during service initialization - no data loss risk
+2. **Kept current via events**: Cache subscribes to relevant pub/sub events to stay synchronized with changes
+
+**Example**: `_accountSubscriptions` in GameSessionService
+- Loaded from SubscriptionClient on session connect
+- Updated via `subscription.changed` events
+- Authoritative state lives in Subscription service
+- Local cache is purely for performance (avoid API call per operation)
+
+```csharp
+// ACCEPTABLE: Event-backed local cache
+private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
+
+// Loaded from API on session connect:
+var subscriptions = await _subscriptionsClient.GetAccountSubscriptionsAsync(accountId);
+_accountSubscriptions[accountId] = subscriptions;
+
+// Updated via event subscription:
+public Task HandleSubscriptionChangedAsync(SubscriptionChangedEvent evt)
+{
+    _accountSubscriptions[evt.AccountId] = evt.ActiveSubscriptions;
+    return Task.CompletedTask;
+}
+```
+
+**NOT acceptable**: Local state that is the *only* source of truth (e.g., tracking which WebSocket sessions are connected - this must use distributed state).
 
 ### Forbidden Patterns
 
@@ -399,21 +435,27 @@ All serialization via `BannouJson` uses these settings:
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
 5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
 
-### Allowed Exceptions (3 Categories)
+### Allowed Exceptions (4 Categories)
 
 Document with code comments explaining the exception:
 
 1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IBannouService.cs`
    - Required before DI container is available to determine which plugins to load
 
-2. **ConfigureServices Bootstrap**: Reading config before service provider is built
-   - Example: `ASSET_PROCESSING_MODE` in `AssetServicePlugin.cs` to conditionally register hosted services
-   - Cannot use injected configuration because the service provider doesn't exist yet
-   - Must use canonical env var names defined in the service's configuration schema
-
-3. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
+2. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
    - Test infrastructure, not production code
    - Tests specifically testing configuration-binding may use `SetEnvironmentVariable`
+
+3. **Orchestrator Environment Forwarding**: `Environment.GetEnvironmentVariables()` in `OrchestratorService.cs`
+   - Forwards UNKNOWN configuration to deployed containers (orchestrator's core responsibility)
+   - Not reading config for orchestrator itself - forwarding to child containers
+   - Uses strict whitelist (`IsAllowedEnvironmentVariable`) and excludes per-container values
+   - Required because container deployments need inherited infrastructure config
+
+4. **Integration Test Runners**: `BANNOU_HTTP_ENDPOINT`, `BANNOU_APP_ID` in `http-tester/` and `edge-tester/`
+   - Standalone test harnesses without access to bannou-service's DI or configuration system
+   - Use `AppConstants.ENV_*` for env var names, not hardcoded strings
+   - Must provide sensible defaults (e.g., `?? "http://localhost:5012"`)
 
 ### Pattern
 
@@ -426,6 +468,77 @@ _connectionString = config.ConnectionString
 Environment.GetEnvironmentVariable("...");  // NO - use config class
 ?? "amqp://guest:guest@localhost";          // NO - masks config issues
 ```
+
+---
+
+## Tenet 23: Async Method Pattern (MANDATORY)
+
+**Rule**: All methods returning `Task` or `Task<T>` MUST use the `async` keyword and contain at least one `await`.
+
+### Why This Matters
+
+Non-async Task-returning methods have several problems:
+1. **Exception handling differs** - Exceptions thrown before returning the Task won't be captured in the Task
+2. **Stack traces are incomplete** - Missing async state machine makes debugging harder
+3. **Disposal timing issues** - `using` statements don't work correctly without `await`
+4. **Inconsistent behavior** - Some code paths await, others don't
+
+### Correct Pattern
+
+```csharp
+// CORRECT: async method with await
+public async Task<AccountResponse> GetAccountAsync(Guid accountId, CancellationToken ct)
+{
+    var account = await _stateStore.GetAsync($"account:{accountId}", ct);
+    return MapToResponse(account);
+}
+
+// CORRECT: async even when just returning a value
+public async Task<int> GetCountAsync()
+{
+    return await Task.FromResult(_items.Count);
+}
+```
+
+### Incorrect Patterns
+
+```csharp
+// WRONG: Returns Task without async/await
+public Task<AccountResponse> GetAccountAsync(Guid accountId)
+{
+    var account = _stateStore.GetAsync($"account:{accountId}").Result; // BLOCKS!
+    return Task.FromResult(MapToResponse(account));
+}
+
+// WRONG: Non-async method returning Task
+public Task DoWorkAsync()
+{
+    _logger.LogInformation("Working");
+    return Task.CompletedTask; // Should be: async Task, no return needed
+}
+```
+
+### Synchronous Implementation of Async Interface
+
+When implementing an interface that requires async methods but your implementation is synchronous, use `await Task.CompletedTask;`:
+
+```csharp
+public async Task DoWorkAsync()
+{
+    _logger.LogInformation("Working");
+    // Synchronous work, but interface requires Task
+    await Task.CompletedTask;
+}
+
+public async Task<bool> IsEnabledAsync()
+{
+    var result = _isEnabled; // Synchronous check
+    await Task.CompletedTask;
+    return result;
+}
+```
+
+This maintains proper async semantics without pragma suppressions.
 
 ---
 
@@ -444,7 +557,10 @@ Environment.GetEnvironmentVariable("...");  // NO - use config class
 | Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
 | Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
 | Hardcoded credential fallback | T21 | Remove default, require configuration |
+| Non-async Task-returning method | T23 | Add async keyword and await |
+| `Task.FromResult` without async | T23 | Use async method with await |
+| `.Result` or `.Wait()` on Task | T23 | Use await instead |
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21. See [TENETS.md](../TENETS.md) for the complete index.*
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23. See [TENETS.md](../TENETS.md) for the complete index.*

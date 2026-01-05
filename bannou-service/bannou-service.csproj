@@ -51,6 +51,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <!-- ABML Expression Engine Dependencies -->
+    <PackageReference Include="Parlot" Version="1.5.6" />
+    <PackageReference Include="Fluid.Core" Version="2.31.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
   <ItemGroup>

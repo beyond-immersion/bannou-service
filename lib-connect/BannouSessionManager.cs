@@ -25,6 +25,7 @@ public class BannouSessionManager : ISessionManager
     private const string SESSION_MAPPINGS_KEY_PREFIX = "ws-mappings:";
     private const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
     private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
+    private const string ACCOUNT_SESSIONS_KEY_PREFIX = "account-sessions:";
 
     // Default TTL values
     private static readonly int SESSION_TTL_SECONDS = (int)TimeSpan.FromHours(24).TotalSeconds;
@@ -64,6 +65,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to store session service mappings for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "SetSessionServiceMappings",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -88,6 +96,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve session service mappings for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "GetSessionServiceMappings",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
@@ -115,6 +130,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to store connection state for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "SetConnectionState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -139,6 +161,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve connection state for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "GetConnectionState",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
@@ -169,7 +198,16 @@ public class BannouSessionManager : ISessionManager
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to update session heartbeat for {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to update session heartbeat for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "UpdateSessionHeartbeat",
+                "state_heartbeat_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - heartbeat failures shouldn't break main functionality
         }
     }
@@ -197,6 +235,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to store reconnection token for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "SetReconnectionToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -221,6 +266,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate reconnection token");
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "ValidateReconnectionToken",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
@@ -238,7 +290,16 @@ public class BannouSessionManager : ISessionManager
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove reconnection token");
+            _logger.LogError(ex, "Failed to remove reconnection token");
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "RemoveReconnectionToken",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: null,
+                stack: ex.StackTrace);
             // Don't throw - token cleanup failures shouldn't break main functionality
         }
     }
@@ -279,6 +340,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initiate reconnection window for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "InitiateReconnectionWindow",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw;
         }
     }
@@ -328,6 +396,13 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to restore session {SessionId} from reconnection", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "RestoreSessionFromReconnection",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
             throw; // Don't mask state store failures - reconnection depends on reliable state access
         }
     }
@@ -364,7 +439,16 @@ public class BannouSessionManager : ISessionManager
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to remove session data for {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to remove session data for {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "RemoveSessionData",
+                "state_cleanup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - cleanup failures shouldn't break main functionality
         }
     }
@@ -386,16 +470,136 @@ public class BannouSessionManager : ISessionManager
                 Data = eventData
             };
 
-            await _messageBus.PublishAsync(SESSION_EVENTS_TOPIC, sessionEvent);
+            await _messageBus.TryPublishAsync(SESSION_EVENTS_TOPIC, sessionEvent);
 
             _logger.LogDebug("Published session event {EventType} for session {SessionId}",
                 eventType, sessionId);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish session event {EventType} for {SessionId}",
+            _logger.LogError(ex, "Failed to publish session event {EventType} for {SessionId}",
                 eventType, sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "PublishSessionEvent",
+                "event_publishing_failed",
+                ex.Message,
+                dependency: "messaging",
+                endpoint: null,
+                details: $"eventType={eventType},sessionId={sessionId}",
+                stack: ex.StackTrace);
             // Don't throw - event publishing failures shouldn't break main functionality
+        }
+    }
+
+    #endregion
+
+    #region Account Session Index
+
+    /// <inheritdoc />
+    public async Task AddSessionToAccountAsync(Guid accountId, string sessionId)
+    {
+        try
+        {
+            var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
+            var store = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+
+            // Get existing sessions or create new set
+            var existingSessions = await store.GetAsync(key) ?? new HashSet<string>();
+            existingSessions.Add(sessionId);
+
+            // Save with TTL matching session TTL
+            await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = SESSION_TTL_SECONDS });
+
+            _logger.LogDebug("Added session {SessionId} to account {AccountId} index (total: {Count})",
+                sessionId, accountId, existingSessions.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add session {SessionId} to account {AccountId} index",
+                sessionId, accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "AddSessionToAccount",
+                "state_update_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"accountId={accountId},sessionId={sessionId}",
+                stack: ex.StackTrace);
+            // Don't throw - index update failures shouldn't break main functionality
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveSessionFromAccountAsync(Guid accountId, string sessionId)
+    {
+        try
+        {
+            var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
+            var store = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+
+            var existingSessions = await store.GetAsync(key);
+            if (existingSessions == null || existingSessions.Count == 0)
+            {
+                return;
+            }
+
+            existingSessions.Remove(sessionId);
+
+            if (existingSessions.Count == 0)
+            {
+                // Clean up empty sets
+                await store.DeleteAsync(key);
+                _logger.LogDebug("Removed last session from account {AccountId} index, deleted key", accountId);
+            }
+            else
+            {
+                await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = SESSION_TTL_SECONDS });
+                _logger.LogDebug("Removed session {SessionId} from account {AccountId} index (remaining: {Count})",
+                    sessionId, accountId, existingSessions.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to remove session {SessionId} from account {AccountId} index",
+                sessionId, accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "RemoveSessionFromAccount",
+                "state_update_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: null,
+                details: $"accountId={accountId},sessionId={sessionId}",
+                stack: ex.StackTrace);
+            // Don't throw - index update failures shouldn't break main functionality
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<HashSet<string>> GetSessionsForAccountAsync(Guid accountId)
+    {
+        try
+        {
+            var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
+            var store = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+
+            var sessions = await store.GetAsync(key);
+            return sessions ?? new HashSet<string>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get sessions for account {AccountId}", accountId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "GetSessionsForAccount",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "state",
+                stack: ex.StackTrace);
+            // Return empty set on error - callers can handle gracefully
+            return new HashSet<string>();
         }
     }
 

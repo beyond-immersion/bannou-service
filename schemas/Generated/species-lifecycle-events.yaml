@@ -8,9 +8,13 @@ paths: {}
 components:
   schemas:
     SpeciesCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to species.created when a species is created
       required:
+      - eventName
       - eventId
       - timestamp
       - speciesId
@@ -21,57 +25,76 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: &id001
+        eventName:
+          type: string
+          default: species.created
+          description: 'Event type identifier: species.created'
+        speciesId: &id001
           type: string
           format: uuid
-          description: Unique identifier for this event
-        timestamp: &id002
+          description: "Unique identifier for the species"
+        code: &id002
+          type: string
+          description: "Machine-readable code for the species"
+        name: &id003
+          type: string
+          description: "Human-readable display name for the species"
+        description: &id004
+          type: string
+          nullable: true
+          description: "Detailed description of the species characteristics and lore"
+        category: &id005
+          type: string
+          nullable: true
+          description: "Category grouping for the species"
+        isPlayable: &id006
+          type: boolean
+          description: "Whether players can create characters of this species"
+        isDeprecated: &id007
+          type: boolean
+          description: "Whether this species is deprecated and should not be used for new characters"
+        deprecatedAt: &id008
           type: string
           format: date-time
-          description: When this event occurred
-        speciesId: &id003
+          description: "Timestamp when the species was deprecated"
+        deprecationReason: &id009
           type: string
-          format: uuid
-        code: &id004
-          type: string
-        name: &id005
-          type: string
-        description: &id006
-          type: string
-        category: &id007
-          type: string
-        isPlayable: &id008
-          type: boolean
-        isDeprecated: &id009
-          type: boolean
-        deprecatedAt: &id010
-          type: string
-          format: date-time
-        deprecationReason: &id011
-          type: string
-        baseLifespan: &id012
+          nullable: true
+          description: "Explanation for why the species was deprecated"
+        baseLifespan: &id010
           type: integer
-        maturityAge: &id013
+          description: "Average lifespan in years for this species"
+        maturityAge: &id011
           type: integer
-        traitModifiers: &id014
+          description: "Age at which members of this species reach maturity"
+        traitModifiers: &id012
           type: object
           additionalProperties: true
-        realmIds: &id015
+          description: "Modifiers applied to character traits for this species"
+        realmIds: &id013
           type: array
           items: {type: string, format: uuid}
-        metadata: &id016
+          description: "IDs of realms where this species can exist"
+        metadata: &id014
           type: object
           additionalProperties: true
-        createdAt: &id017
+          description: "Additional custom metadata for the species"
+        createdAt: &id015
           type: string
           format: date-time
-        updatedAt: &id018
+          description: "Timestamp when the species was created"
+        updatedAt: &id016
           type: string
           format: date-time
+          description: "Timestamp when the species was last updated"
     SpeciesUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to species.updated when a species is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - speciesId
@@ -83,33 +106,39 @@ components:
       - updatedAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        speciesId: *id003
-        code: *id004
-        name: *id005
-        description: *id006
-        category: *id007
-        isPlayable: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        baseLifespan: *id012
-        maturityAge: *id013
-        traitModifiers: *id014
-        realmIds: *id015
-        metadata: *id016
-        createdAt: *id017
-        updatedAt: *id018
+        eventName:
+          type: string
+          default: species.updated
+          description: 'Event type identifier: species.updated'
+        speciesId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        category: *id005
+        isPlayable: *id006
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        baseLifespan: *id010
+        maturityAge: *id011
+        traitModifiers: *id012
+        realmIds: *id013
+        metadata: *id014
+        createdAt: *id015
+        updatedAt: *id016
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     SpeciesDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
+      additionalProperties: false
       description: Published to species.deleted when a species is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - speciesId
@@ -120,24 +149,26 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        speciesId: *id003
-        code: *id004
-        name: *id005
-        description: *id006
-        category: *id007
-        isPlayable: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        baseLifespan: *id012
-        maturityAge: *id013
-        traitModifiers: *id014
-        realmIds: *id015
-        metadata: *id016
-        createdAt: *id017
-        updatedAt: *id018
+        eventName:
+          type: string
+          default: species.deleted
+          description: 'Event type identifier: species.deleted'
+        speciesId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        category: *id005
+        isPlayable: *id006
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        baseLifespan: *id010
+        maturityAge: *id011
+        traitModifiers: *id012
+        realmIds: *id013
+        metadata: *id014
+        createdAt: *id015
+        updatedAt: *id016
         deletedReason:
           type: string
           nullable: true

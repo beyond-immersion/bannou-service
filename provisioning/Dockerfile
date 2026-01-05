@@ -4,7 +4,7 @@ COPY ./ /app/
 RUN apt-get update && apt-get install -y libxml2-utils && apt-get install -y rsync
 
 # Support build-time service selection
-# Usage: docker build --build-arg BANNOU_SERVICES="auth accounts connect" .
+# Usage: docker build --build-arg BANNOU_SERVICES="auth account connect" .
 # Default: builds all services if not specified
 ARG BANNOU_SERVICES=""
 
@@ -37,7 +37,7 @@ EXPOSE 443
 
 ENV ASPNETCORE_URLS=http://+:80;https://+:443
 
-RUN apt-get update && apt-get install -y curl git libgit2-1.5
+RUN apt-get update && apt-get install -y curl git libgit2-1.5 ffmpeg
 
 # Configure git to trust all directories (needed for LibGit2Sharp with mounted volumes)
 RUN git config --global --add safe.directory '*'

@@ -7,9 +7,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-location.tests")]
 
 namespace BeyondImmersion.BannouService.Location;
 
@@ -42,14 +39,13 @@ public partial class LocationService : ILocationService
         IRealmClient realmClient,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _realmClient = realmClient;
 
         // Register event handlers via partial class (LocationServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -138,14 +134,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Listing locations with filters - RealmId: {RealmId}, LocationType: {LocationType}, IncludeDeprecated: {IncludeDeprecated}",
                 body.RealmId, body.LocationType, body.IncludeDeprecated);
 
-            // RealmId is required - locations are partitioned by realm
-            if (!body.RealmId.HasValue)
-            {
-                _logger.LogWarning("ListLocationsAsync called without required RealmId");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var realmIndexKey = BuildRealmIndexKey(body.RealmId.Value.ToString());
+            var realmIndexKey = BuildRealmIndexKey(body.RealmId.ToString());
             var locationIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
             var allLocations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
 
@@ -667,7 +656,7 @@ public partial class LocationService : ILocationService
             await PublishLocationCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {
@@ -893,7 +882,7 @@ public partial class LocationService : ILocationService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, object?)> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -904,7 +893,7 @@ public partial class LocationService : ILocationService
 
             if (model == null)
             {
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check for children
@@ -914,7 +903,7 @@ public partial class LocationService : ILocationService
             if (childIds.Count > 0)
             {
                 _logger.LogWarning("Cannot delete location {LocationId} - has {ChildCount} children", body.LocationId, childIds.Count);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Delete the location
@@ -941,7 +930,7 @@ public partial class LocationService : ILocationService
             await PublishLocationDeletedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Deleted location {LocationId}", body.LocationId);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -950,7 +939,7 @@ public partial class LocationService : ILocationService
                 "location", "DeleteLocation", "unexpected_exception", ex.Message,
                 dependency: "state", endpoint: "post:/location/delete",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1135,7 +1124,7 @@ public partial class LocationService : ILocationService
 
                     var (status, response) = await CreateLocationAsync(createRequest, cancellationToken);
 
-                    if (status == StatusCodes.Created && response != null)
+                    if (status == StatusCodes.OK && response != null)
                     {
                         codeToLocationId[compositeKey] = response.LocationId.ToString();
                         created++;
@@ -1365,19 +1354,19 @@ public partial class LocationService : ILocationService
             RealmId = Guid.Parse(model.RealmId),
             Code = model.Code,
             Name = model.Name,
-            Description = model.Description ?? string.Empty,
+            Description = model.Description,
             LocationType = model.LocationType,
             ParentLocationId = string.IsNullOrEmpty(model.ParentLocationId) ? Guid.Empty : Guid.Parse(model.ParentLocationId),
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt ?? default,
-            DeprecationReason = model.DeprecationReason ?? string.Empty,
+            DeprecationReason = model.DeprecationReason,
             Metadata = model.Metadata ?? new object(),
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
 
-        await _messageBus.PublishAsync("location.created", eventData, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("location.created", eventData, cancellationToken: cancellationToken);
     }
 
     private async Task PublishLocationUpdatedEventAsync(LocationModel model, IList<string> changedFields, CancellationToken cancellationToken)
@@ -1390,20 +1379,20 @@ public partial class LocationService : ILocationService
             RealmId = Guid.Parse(model.RealmId),
             Code = model.Code,
             Name = model.Name,
-            Description = model.Description ?? string.Empty,
+            Description = model.Description,
             LocationType = model.LocationType,
             ParentLocationId = string.IsNullOrEmpty(model.ParentLocationId) ? Guid.Empty : Guid.Parse(model.ParentLocationId),
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt ?? default,
-            DeprecationReason = model.DeprecationReason ?? string.Empty,
+            DeprecationReason = model.DeprecationReason,
             Metadata = model.Metadata ?? new object(),
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.PublishAsync("location.updated", eventData, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("location.updated", eventData, cancellationToken: cancellationToken);
     }
 
     private async Task PublishLocationDeletedEventAsync(LocationModel model, CancellationToken cancellationToken)
@@ -1416,17 +1405,17 @@ public partial class LocationService : ILocationService
             RealmId = Guid.Parse(model.RealmId),
             Code = model.Code,
             Name = model.Name,
-            Description = model.Description ?? string.Empty,
+            Description = model.Description,
             LocationType = model.LocationType,
             ParentLocationId = string.IsNullOrEmpty(model.ParentLocationId) ? Guid.Empty : Guid.Parse(model.ParentLocationId),
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt ?? default,
-            DeprecationReason = model.DeprecationReason ?? string.Empty,
+            DeprecationReason = model.DeprecationReason,
             Metadata = model.Metadata ?? new object()
         };
 
-        await _messageBus.PublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
     }
 
     #endregion
@@ -1434,7 +1423,7 @@ public partial class LocationService : ILocationService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

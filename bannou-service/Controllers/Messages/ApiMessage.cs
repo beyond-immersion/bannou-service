@@ -72,14 +72,14 @@ public abstract class ApiMessage
             var headerStrings = headers.FirstOrDefault(t => string.Equals(headerName, t.Key, StringComparison.InvariantCultureIgnoreCase)).Value;
             if (headerStrings == null || !headerStrings.Any())
             {
-                Program.Logger.Log(LogLevel.Debug, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");
+                Program.Logger.Log(LogLevel.Debug, null, "No values were found for header {HeaderName} bound to property {PropertyName}", headerName, propertyInfo.Name);
                 continue;
             }
 
             var bindingResult = BuildPropertyValueFromHeaders(propertyInfo.PropertyType, headerStrings, headerAttr);
             if (bindingResult == null)
             {
-                Program.Logger.Log(LogLevel.Error, "A problem occurred generating property value from received headers.");
+                Program.Logger.Log(LogLevel.Error, null, "A problem occurred generating property value from received headers");
                 continue;
             }
 
@@ -217,7 +217,7 @@ public abstract class ApiMessage
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"Could not set property values for '{propertyInfo.Name}' of type '{propertyInfo.PropertyType.Name}' to header array.");
+            Program.Logger.Log(LogLevel.Error, exc, "Could not set property values for {PropertyName} of type {PropertyType} to header array", propertyInfo.Name, propertyInfo.PropertyType.Name);
         }
 
         return headersToSet.ToArray();
@@ -281,7 +281,7 @@ public abstract class ApiMessage
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind property model of type {propertyType.Name} to header array.");
+            Program.Logger.Log(LogLevel.Error, exc, "An exception has occurred trying to bind property model of type {PropertyType} to header array", propertyType.Name);
         }
 
         return null;
@@ -397,7 +397,7 @@ public abstract class ApiMessage
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind array property model of type {propertyType.Name} to header array.");
+            Program.Logger.Log(LogLevel.Error, exc, "An exception has occurred trying to bind array property model of type {PropertyType} to header array", propertyType.Name);
         }
 
         return null;
@@ -513,7 +513,7 @@ public abstract class ApiMessage
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind list property model of type {propertyType.Name} to header array.");
+            Program.Logger.Log(LogLevel.Error, exc, "An exception has occurred trying to bind list property model of type {PropertyType} to header array", propertyType.Name);
         }
 
         return null;
@@ -622,7 +622,7 @@ public abstract class ApiMessage
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind dictionary property model of type {propertyType.Name} to header array.");
+            Program.Logger.Log(LogLevel.Error, exc, "An exception has occurred trying to bind dictionary property model of type {PropertyType} to header array", propertyType.Name);
         }
 
         return null;

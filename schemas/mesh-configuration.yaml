@@ -11,6 +11,9 @@ info:
     **Heartbeat Configuration**: Controls endpoint TTL and health monitoring.
 
     **Load Balancing**: Algorithm selection and routing behavior.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -58,6 +61,21 @@ x-service-configuration:
       default: 5000
 
     # =========================================================================
+    # Endpoint Registration Configuration
+    # =========================================================================
+    EndpointHost:
+      type: string
+      description: Hostname/IP for mesh endpoint registration. Defaults to app-id for Docker Compose compatibility.
+      env: MESH_ENDPOINT_HOST
+      nullable: true
+
+    EndpointPort:
+      type: integer
+      description: Port for mesh endpoint registration.
+      env: MESH_ENDPOINT_PORT
+      default: 80
+
+    # =========================================================================
     # Heartbeat and TTL Configuration
     # =========================================================================
     HeartbeatIntervalSeconds:
@@ -96,12 +114,6 @@ x-service-configuration:
     # =========================================================================
     # Routing Configuration
     # =========================================================================
-    DefaultAppId:
-      type: string
-      description: Default app-id when no service mapping exists (omnipotent routing)
-      env: MESH_DEFAULT_APP_ID
-      default: "bannou"
-
     EnableServiceMappingSync:
       type: boolean
       description: Whether to subscribe to FullServiceMappingsEvent for routing updates

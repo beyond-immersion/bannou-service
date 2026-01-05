@@ -14,7 +14,6 @@ Usage:
 import sys
 import re
 from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
 
 # Use ruamel.yaml to parse YAML files
@@ -36,8 +35,8 @@ def to_kebab_case(name: str) -> str:
 def extract_service_from_filename(filename: str) -> str:
     """Extract service name from event schema filename."""
     # Handle patterns like:
-    # - accounts-events.yaml -> Accounts
-    # - accounts-lifecycle-events.yaml -> Accounts
+    # - account-events.yaml -> Account
+    # - account-lifecycle-events.yaml -> Account
     # - common-events.yaml -> Common
     # - common-client-events.yaml -> Common (Client)
 
@@ -180,7 +179,6 @@ def generate_markdown(events_by_service: dict) -> str:
     lines = [
         "# Generated Events Reference",
         "",
-        f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "> **Source**: `schemas/*-events.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",

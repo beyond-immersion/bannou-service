@@ -28,25 +28,26 @@ public class MinioHealthCheck : IHealthCheck
     /// <summary>
     /// Checks MinIO storage connectivity.
     /// </summary>
-    public Task<HealthCheckResult> CheckHealthAsync(
+    public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         try
         {
             // Check if the storage provider supports the health check capability
             if (!_storageProvider.SupportsCapability(StorageCapability.Versioning))
             {
                 // If we can query capabilities, the connection is working
-                return Task.FromResult(HealthCheckResult.Healthy("MinIO storage is accessible."));
+                return HealthCheckResult.Healthy("MinIO storage is accessible.");
             }
 
-            return Task.FromResult(HealthCheckResult.Healthy("MinIO storage is accessible with versioning support."));
+            return HealthCheckResult.Healthy("MinIO storage is accessible with versioning support.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "MinIO health check failed");
-            return Task.FromResult(HealthCheckResult.Unhealthy("MinIO storage is not accessible.", ex));
+            return HealthCheckResult.Unhealthy("MinIO storage is not accessible.", ex);
         }
     }
 }
@@ -136,21 +137,21 @@ public class ProcessingPoolHealthCheck : IHealthCheck
             var status = await _orchestratorClient.GetPoolStatusAsync(
                 new BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest
                 {
-                    Pool_type = "asset-processor"
+                    PoolType = "asset-processor"
                 },
                 cancellationToken);
 
             if (status != null)
             {
-                if (status.Available_instances > 0)
+                if (status.AvailableInstances > 0)
                 {
                     return HealthCheckResult.Healthy(
-                        $"Processing pool available: {status.Available_instances} of {status.Total_instances} processors ready.");
+                        $"Processing pool available: {status.AvailableInstances} of {status.TotalInstances} processors ready.");
                 }
-                else if (status.Total_instances > 0)
+                else if (status.TotalInstances > 0)
                 {
                     return HealthCheckResult.Degraded(
-                        $"Processing pool busy: 0 of {status.Total_instances} processors available.");
+                        $"Processing pool busy: 0 of {status.TotalInstances} processors available.");
                 }
                 else
                 {

@@ -7,13 +7,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BeyondImmersion.BannouService.Website</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="lib-website.tests" />
-    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
   <ItemGroup>
     <!-- NSwag.AspNetCore comes from bannou-service -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />

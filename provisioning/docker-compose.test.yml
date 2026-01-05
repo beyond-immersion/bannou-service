@@ -12,4 +12,4 @@ services:
       - ASPNETCORE_ENVIRONMENT=Testing
       - SERVICE_DOMAIN=${SERVICE_DOMAIN:-test}
       # Admin role auto-assignment for testing - emails ending with @admin.test.local get admin role
-      - BANNOU_AdminEmailDomain=@admin.test.local
+      - ACCOUNT_ADMIN_EMAIL_DOMAIN=@admin.test.local

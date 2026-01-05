@@ -202,9 +202,11 @@ public sealed class BundleUploadSession
     public BundleManifestPreview? ManifestPreview { get; init; }
 
     /// <summary>
-    /// Session ID of the uploader.
+    /// Owner of this bundle upload session. NOT a session ID.
+    /// For user-initiated uploads: the accountId (UUID format).
+    /// For service-initiated uploads: the service name (e.g., "orchestrator").
     /// </summary>
-    public required string SessionId { get; init; }
+    public required string Owner { get; init; }
 
     /// <summary>
     /// When the session was created.

@@ -7,13 +7,6 @@
     <RootNamespace>BeyondImmersion.BannouService.Asset</RootNamespace>
     <ServiceLib>asset</ServiceLib>
   </PropertyGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="lib-asset.tests" />
-    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
@@ -28,6 +21,8 @@
     <PackageReference Include="Minio" Version="7.0.0" />
     <!-- LZ4 compression for .bannou bundle format -->
     <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
+    <!-- FFmpeg wrapper for audio/video transcoding -->
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

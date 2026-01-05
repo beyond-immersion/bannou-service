@@ -34,7 +34,21 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     // This allows different typed stores to share the same underlying data
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, StoreEntry>> _allStores = new();
 
+    // Shared set store for set operations
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, SetEntry>> _allSetStores = new();
+
+    /// <summary>
+    /// Entry for a set in the in-memory store.
+    /// </summary>
+    private sealed class SetEntry
+    {
+        public HashSet<string> Items { get; } = new();
+        public DateTimeOffset? ExpiresAt { get; set; }
+        public readonly object Lock = new();
+    }
+
     private readonly ConcurrentDictionary<string, StoreEntry> _store;
+    private readonly ConcurrentDictionary<string, SetEntry> _setStore;
 
     /// <summary>
     /// Creates a new in-memory state store.
@@ -50,6 +64,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
 
         // Get or create the store for this name
         _store = _allStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, StoreEntry>());
+        _setStore = _allSetStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, SetEntry>());
 
         _logger.LogDebug("In-memory state store '{StoreName}' initialized", storeName);
     }
@@ -74,8 +89,9 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     }
 
     /// <inheritdoc/>
-    public Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
+    public async Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         ArgumentNullException.ThrowIfNull(key);
 
         if (_store.TryGetValue(key, out var entry))
@@ -84,22 +100,22 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
             {
                 _store.TryRemove(key, out _);
                 _logger.LogDebug("Key '{Key}' expired in store '{Store}'", key, _storeName);
-                return Task.FromResult<TValue?>(null);
+                return null;
             }
 
-            var value = BannouJson.Deserialize<TValue>(entry.Json);
-            return Task.FromResult(value);
+            return BannouJson.Deserialize<TValue>(entry.Json);
         }
 
         _logger.LogDebug("Key '{Key}' not found in store '{Store}'", key, _storeName);
-        return Task.FromResult<TValue?>(null);
+        return null;
     }
 
     /// <inheritdoc/>
-    public Task<(TValue? Value, string? ETag)> GetWithETagAsync(
+    public async Task<(TValue? Value, string? ETag)> GetWithETagAsync(
         string key,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         ArgumentNullException.ThrowIfNull(key);
 
         if (_store.TryGetValue(key, out var entry))
@@ -107,18 +123,18 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
             if (IsExpired(entry))
             {
                 _store.TryRemove(key, out _);
-                return Task.FromResult<(TValue?, string?)>((null, null));
+                return (null, null);
             }
 
             var value = BannouJson.Deserialize<TValue>(entry.Json);
-            return Task.FromResult<(TValue?, string?)>((value, entry.Version.ToString()));
+            return (value, entry.Version.ToString());
         }
 
-        return Task.FromResult<(TValue?, string?)>((null, null));
+        return (null, null);
     }
 
     /// <inheritdoc/>
-    public Task<string> SaveAsync(
+    public async Task<string> SaveAsync(
         string key,
         TValue value,
         StateOptions? options = null,
@@ -151,16 +167,18 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         _logger.LogDebug("Saved key '{Key}' in store '{Store}' (version: {Version})",
             key, _storeName, entry.Version);
 
-        return Task.FromResult(entry.Version.ToString());
+        await Task.CompletedTask;
+        return entry.Version.ToString();
     }
 
     /// <inheritdoc/>
-    public Task<bool> TrySaveAsync(
+    public async Task<bool> TrySaveAsync(
         string key,
         TValue value,
         string etag,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(etag);
@@ -168,7 +186,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         if (!long.TryParse(etag, out var expectedVersion))
         {
             _logger.LogDebug("Invalid ETag format for key '{Key}' in store '{Store}'", key, _storeName);
-            return Task.FromResult(false);
+            return false;
         }
 
         var json = BannouJson.Serialize(value);
@@ -180,7 +198,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
             {
                 _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
                     key, _storeName, etag, existing.Version);
-                return Task.FromResult(false);
+                return false;
             }
 
             var newEntry = new StoreEntry
@@ -194,16 +212,16 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
             if (_store.TryUpdate(key, newEntry, existing))
             {
                 _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _storeName);
-                return Task.FromResult(true);
+                return true;
             }
         }
 
         _logger.LogDebug("Optimistic save failed for key '{Key}' in store '{Store}'", key, _storeName);
-        return Task.FromResult(false);
+        return false;
     }
 
     /// <inheritdoc/>
-    public Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(key);
 
@@ -211,12 +229,14 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         _logger.LogDebug("Deleted key '{Key}' from store '{Store}' (existed: {Existed})",
             key, _storeName, deleted);
 
-        return Task.FromResult(deleted);
+        await Task.CompletedTask;
+        return deleted;
     }
 
     /// <inheritdoc/>
-    public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         ArgumentNullException.ThrowIfNull(key);
 
         if (_store.TryGetValue(key, out var entry))
@@ -224,16 +244,16 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
             if (IsExpired(entry))
             {
                 _store.TryRemove(key, out _);
-                return Task.FromResult(false);
+                return false;
             }
-            return Task.FromResult(true);
+            return true;
         }
 
-        return Task.FromResult(false);
+        return false;
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyDictionary<string, TValue>> GetBulkAsync(
+    public async Task<IReadOnlyDictionary<string, TValue>> GetBulkAsync(
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default)
     {
@@ -257,7 +277,8 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         _logger.LogDebug("Bulk get {RequestedCount} keys from store '{Store}', found {FoundCount}",
             keyList.Count, _storeName, result.Count);
 
-        return Task.FromResult<IReadOnlyDictionary<string, TValue>>(result);
+        await Task.CompletedTask;
+        return result;
     }
 
     /// <summary>
@@ -266,6 +287,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     public void Clear()
     {
         _store.Clear();
+        _setStore.Clear();
         _logger.LogDebug("Cleared all entries from store '{Store}'", _storeName);
     }
 
@@ -278,6 +300,277 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         {
             CleanupExpired();
             return _store.Count;
+        }
+    }
+
+    // ==================== Set Operations ====================
+
+    private bool IsSetExpired(SetEntry entry)
+    {
+        return entry.ExpiresAt.HasValue && entry.ExpiresAt.Value <= DateTimeOffset.UtcNow;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> AddToSetAsync<TItem>(
+        string key,
+        TItem item,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var json = BannouJson.Serialize(item);
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _setStore.GetOrAdd(key, _ => new SetEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                entry.Items.Clear();
+            }
+
+            var added = entry.Items.Add(json);
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Added item to set '{Key}' in store '{Store}' (new: {IsNew})",
+                key, _storeName, added);
+
+            return added;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> AddToSetAsync<TItem>(
+        string key,
+        IEnumerable<TItem> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(items);
+
+        var itemList = items.ToList();
+        if (itemList.Count == 0)
+        {
+            return 0;
+        }
+
+        DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
+            ? DateTimeOffset.UtcNow.AddSeconds(options.Ttl.Value)
+            : null;
+
+        var entry = _setStore.GetOrAdd(key, _ => new SetEntry());
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                entry.Items.Clear();
+            }
+
+            var added = 0L;
+            foreach (var item in itemList)
+            {
+                var json = BannouJson.Serialize(item);
+                if (entry.Items.Add(json))
+                {
+                    added++;
+                }
+            }
+
+            if (expiresAt.HasValue)
+            {
+                entry.ExpiresAt = expiresAt;
+            }
+
+            _logger.LogDebug("Added {Count} items to set '{Key}' in store '{Store}' (new: {Added})",
+                itemList.Count, key, _storeName, added);
+
+            return added;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveFromSetAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        var json = BannouJson.Serialize(item);
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return false;
+            }
+
+            var removed = entry.Items.Remove(json);
+
+            _logger.LogDebug("Removed item from set '{Key}' in store '{Store}' (existed: {Existed})",
+                key, _storeName, removed);
+
+            return removed;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            _logger.LogDebug("Set '{Key}' not found in store '{Store}'", key, _storeName);
+            return Array.Empty<TItem>();
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return Array.Empty<TItem>();
+            }
+
+            var result = new List<TItem>(entry.Items.Count);
+            foreach (var json in entry.Items)
+            {
+                var item = BannouJson.Deserialize<TItem>(json);
+                if (item != null)
+                {
+                    result.Add(item);
+                }
+            }
+
+            _logger.LogDebug("Retrieved {Count} items from set '{Key}' in store '{Store}'",
+                result.Count, key, _storeName);
+
+            return result;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> SetContainsAsync<TItem>(
+        string key,
+        TItem item,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        var json = BannouJson.Serialize(item);
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return false;
+            }
+
+            return entry.Items.Contains(json);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> SetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return 0;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return 0;
+            }
+
+            return entry.Items.Count;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        var deleted = _setStore.TryRemove(key, out _);
+
+        _logger.LogDebug("Deleted set '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _storeName, deleted);
+
+        return deleted;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RefreshSetTtlAsync(
+        string key,
+        int ttlSeconds,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (!_setStore.TryGetValue(key, out var entry))
+        {
+            return false;
+        }
+
+        lock (entry.Lock)
+        {
+            if (IsSetExpired(entry))
+            {
+                _setStore.TryRemove(key, out _);
+                return false;
+            }
+
+            entry.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(ttlSeconds);
+
+            _logger.LogDebug("Refreshed TTL on set '{Key}' in store '{Store}' to {Ttl}s",
+                key, _storeName, ttlSeconds);
+
+            return true;
         }
     }
 }

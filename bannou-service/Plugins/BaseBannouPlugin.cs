@@ -87,34 +87,36 @@ public abstract class BaseBannouPlugin : IBannouPlugin
     /// Override this method to perform plugin-specific initialization.
     /// </summary>
     /// <returns>True if initialization succeeded</returns>
-    protected virtual Task<bool> OnInitializeAsync()
+    protected virtual async Task<bool> OnInitializeAsync()
     {
-        return Task.FromResult(true);
+        await Task.CompletedTask;
+        return true;
     }
 
     /// <summary>
     /// Override this method to perform plugin-specific startup.
     /// </summary>
     /// <returns>True if startup succeeded</returns>
-    protected virtual Task<bool> OnStartAsync()
+    protected virtual async Task<bool> OnStartAsync()
     {
-        return Task.FromResult(true);
+        await Task.CompletedTask;
+        return true;
     }
 
     /// <summary>
     /// Override this method to perform plugin-specific running operations.
     /// </summary>
-    protected virtual Task OnRunningAsync()
+    protected virtual async Task OnRunningAsync()
     {
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <summary>
     /// Override this method to perform plugin-specific shutdown.
     /// </summary>
-    protected virtual Task OnShutdownAsync()
+    protected virtual async Task OnShutdownAsync()
     {
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     /// <summary>

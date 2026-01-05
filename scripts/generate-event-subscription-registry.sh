@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Event Subscription Registry Generator
-# Scans all *-events.yaml files and generates EventSubscriptionRegistration.Generated.cs
+# Scans all *-events.yaml files and generates EventSubscriptionRegistration.cs
 # This enables NativeEventConsumerBackend to deserialize events by topic name
 
 set -e
@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source common utilities
 source "$SCRIPT_DIR/common.sh"
 SCHEMAS_DIR="${SCRIPT_DIR}/../schemas"
-OUTPUT_FILE="${SCRIPT_DIR}/../bannou-service/Generated/EventSubscriptionRegistration.Generated.cs"
+OUTPUT_FILE="${SCRIPT_DIR}/../bannou-service/Generated/EventSubscriptionRegistration.cs"
 
 echo -e "${BLUE}📡 Generating EventSubscriptionRegistration from all *-events.yaml files...${NC}"
 

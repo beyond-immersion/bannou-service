@@ -40,16 +40,15 @@ public class AssetEventEmitter : IAssetEventEmitter
     {
         var eventData = new AssetUploadCompleteEvent
         {
-            Event_id = Guid.NewGuid(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Event_name = AssetUploadCompleteEventEvent_name.Asset_upload_complete,
-            Upload_id = uploadId,
+            UploadId = uploadId,
             Success = success,
-            Asset_id = assetId,
-            Content_hash = contentHash,
+            AssetId = assetId,
+            ContentHash = contentHash,
             Size = size,
-            Error_code = errorCode,
-            Error_message = errorMessage
+            ErrorCode = errorCode,
+            ErrorMessage = errorMessage
         };
 
         _logger.LogDebug(
@@ -72,15 +71,14 @@ public class AssetEventEmitter : IAssetEventEmitter
     {
         var eventData = new AssetProcessingCompleteEvent
         {
-            Event_id = Guid.NewGuid(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Event_name = AssetProcessingCompleteEventEvent_name.Asset_processing_complete,
-            Asset_id = assetId,
+            AssetId = assetId,
             Success = success,
-            Processing_type = processingType,
+            ProcessingType = processingType,
             Outputs = outputs,
-            Error_code = errorCode,
-            Error_message = errorMessage
+            ErrorCode = errorCode,
+            ErrorMessage = errorMessage
         };
 
         _logger.LogDebug(
@@ -102,14 +100,13 @@ public class AssetEventEmitter : IAssetEventEmitter
     {
         var eventData = new AssetProcessingFailedEvent
         {
-            Event_id = Guid.NewGuid(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Event_name = AssetProcessingFailedEventEvent_name.Asset_processing_failed,
-            Asset_id = assetId,
-            Error_code = errorCode,
-            Error_message = errorMessage,
-            Retry_available = retryAvailable,
-            Retry_after_ms = retryAfterMs
+            AssetId = assetId,
+            ErrorCode = errorCode,
+            ErrorMessage = errorMessage,
+            RetryAvailable = retryAvailable,
+            RetryAfterMs = retryAfterMs
         };
 
         _logger.LogDebug(
@@ -132,14 +129,13 @@ public class AssetEventEmitter : IAssetEventEmitter
     {
         var eventData = new BundleValidationCompleteEvent
         {
-            Event_id = Guid.NewGuid(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Event_name = BundleValidationCompleteEventEvent_name.Asset_bundle_validation_complete,
-            Upload_id = uploadId,
+            UploadId = uploadId,
             Success = success,
-            Bundle_id = bundleId,
-            Assets_registered = assetsRegistered,
-            Duplicates_skipped = duplicatesSkipped,
+            BundleId = bundleId,
+            AssetsRegistered = assetsRegistered,
+            DuplicatesSkipped = duplicatesSkipped,
             Warnings = warnings
         };
 
@@ -159,10 +155,9 @@ public class AssetEventEmitter : IAssetEventEmitter
     {
         var eventData = new BundleValidationFailedEvent
         {
-            Event_id = Guid.NewGuid(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Event_name = BundleValidationFailedEventEvent_name.Asset_bundle_validation_failed,
-            Upload_id = uploadId,
+            UploadId = uploadId,
             Errors = errors
         };
 
@@ -187,16 +182,15 @@ public class AssetEventEmitter : IAssetEventEmitter
     {
         var eventData = new BundleCreationCompleteEvent
         {
-            Event_id = Guid.NewGuid(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Event_name = BundleCreationCompleteEventEvent_name.Asset_bundle_creation_complete,
-            Bundle_id = bundleId,
+            BundleId = bundleId,
             Success = success,
-            Download_url = downloadUrl,
+            DownloadUrl = downloadUrl,
             Size = size,
-            Asset_count = assetCount,
-            Error_code = errorCode,
-            Error_message = errorMessage
+            AssetCount = assetCount,
+            ErrorCode = errorCode,
+            ErrorMessage = errorMessage
         };
 
         _logger.LogDebug(
@@ -219,14 +213,13 @@ public class AssetEventEmitter : IAssetEventEmitter
     {
         var eventData = new AssetReadyEvent
         {
-            Event_id = Guid.NewGuid(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Event_name = AssetReadyEventEvent_name.Asset_ready,
-            Asset_id = assetId,
-            Version_id = versionId,
-            Content_hash = contentHash,
+            AssetId = assetId,
+            VersionId = versionId,
+            ContentHash = contentHash,
             Size = size,
-            Content_type = contentType,
+            ContentType = contentType,
             Metadata = metadata
         };
 

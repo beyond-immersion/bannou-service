@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: clear
+flows:
+  start:
+    actions:
+      - set:
+          variable: temp
+          value: "data"
+      - clear: temp
+      - log: { message: "Temp: ${temp}" }

@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -43,61 +44,10 @@ public class NativeEventConsumerBackendTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Arrange & Act
-        var backend = CreateBackend();
-
-        // Assert
-        Assert.NotNull(backend);
-    }
-
-    [Fact]
-    public void Constructor_WithNullSubscriber_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            null!,
-            _mockEventConsumer.Object,
-            _mockServiceProvider.Object,
-            _mockLogger.Object));
-        Assert.Equal("subscriber", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            _mockSubscriber.Object,
-            null!,
-            _mockServiceProvider.Object,
-            _mockLogger.Object));
-        Assert.Equal("eventConsumer", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullServiceProvider_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            _mockSubscriber.Object,
-            _mockEventConsumer.Object,
-            null!,
-            _mockLogger.Object));
-        Assert.Equal("serviceProvider", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new NativeEventConsumerBackend(
-            _mockSubscriber.Object,
-            _mockEventConsumer.Object,
-            _mockServiceProvider.Object,
-            null!));
-        Assert.Equal("logger", ex.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<NativeEventConsumerBackend>();
+        Assert.NotNull(CreateBackend());
     }
 
     #endregion
@@ -121,6 +71,8 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<It.IsAnyType>(
                 It.IsAny<string>(),
                 It.IsAny<Func<It.IsAnyType, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -139,6 +91,8 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -152,6 +106,8 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -172,11 +128,15 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic1,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent2>(
                 topic2,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -190,12 +150,16 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent>(
                 topic1,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
         _mockSubscriber.Verify(
             x => x.SubscribeDynamicAsync<TestEvent2>(
                 topic2,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -216,6 +180,8 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 registeredTopic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -229,6 +195,8 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent>(
                 registeredTopic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -248,6 +216,8 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 failingTopic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Subscription failed"));
 
@@ -255,6 +225,8 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent2>(
                 successTopic,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -268,6 +240,8 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent2>(
                 successTopic,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -286,11 +260,9 @@ public class NativeEventConsumerBackendTests
         var backend = CreateBackend();
         await backend.StartAsync(CancellationToken.None);
 
-        // Act
-        await backend.StopAsync(CancellationToken.None);
-
-        // Assert - no exception means success
-        Assert.True(true);
+        // Act & Assert - should complete without exception
+        var exception = await Record.ExceptionAsync(() => backend.StopAsync(CancellationToken.None));
+        Assert.Null(exception);
     }
 
     [Fact]
@@ -307,6 +279,8 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -341,11 +315,15 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic1,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription1.Object);
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent2>(
                 topic2,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription2.Object);
 
@@ -380,9 +358,11 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, Func<TestEvent, CancellationToken, Task>, CancellationToken>(
-                (t, handler, ct) => capturedHandler = handler)
+            .Callback<string, Func<TestEvent, CancellationToken, Task>, string?, SubscriptionExchangeType, CancellationToken>(
+                (t, handler, exchange, exchangeType, ct) => capturedHandler = handler)
             .ReturnsAsync(mockSubscription.Object);
 
         // Setup service provider to return a scope
@@ -423,9 +403,11 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, Func<TestEvent, CancellationToken, Task>, CancellationToken>(
-                (t, handler, ct) => capturedHandler = handler)
+            .Callback<string, Func<TestEvent, CancellationToken, Task>, string?, SubscriptionExchangeType, CancellationToken>(
+                (t, handler, exchange, exchangeType, ct) => capturedHandler = handler)
             .ReturnsAsync(mockSubscription.Object);
 
         // Setup service provider to return a scope

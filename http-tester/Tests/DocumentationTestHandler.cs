@@ -48,8 +48,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCompleteDocumentLifecycle, "CompleteDocumentLifecycle", "Documentation", "Test complete document lifecycle with trashcan"),
     ];
 
-    private static Task<TestResult> TestCreateDocument(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCreateDocument(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -74,8 +74,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Created document: ID={response.DocumentId}, Slug={response.Slug}");
         }, "Create document");
 
-    private static Task<TestResult> TestGetDocument(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetDocument(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -106,8 +106,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved document: ID={response.Document.DocumentId}, Title={response.Document.Title}");
         }, "Get document");
 
-    private static Task<TestResult> TestGetDocumentBySlug(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetDocumentBySlug(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -136,8 +136,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Retrieved document by slug: ID={response.Document.DocumentId}");
         }, "Get document by slug");
 
-    private static Task<TestResult> TestUpdateDocument(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestUpdateDocument(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -177,8 +177,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Updated document: ID={updateResponse.DocumentId}");
         }, "Update document");
 
-    private static Task<TestResult> TestDeleteDocument(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDeleteDocument(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -220,8 +220,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Deleted document to trashcan: ID={created.DocumentId}");
         }, "Delete document");
 
-    private static Task<TestResult> TestListDocuments(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListDocuments(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"list-test-{DateTime.Now.Ticks}";
@@ -253,8 +253,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Documents.Count} documents (TotalCount: {response.TotalCount})");
         }, "List documents");
 
-    private static Task<TestResult> TestQueryDocumentation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestQueryDocumentation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"query-test-{DateTime.Now.Ticks}";
@@ -281,8 +281,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Query returned {response.TotalResults} results");
         }, "Query documentation");
 
-    private static Task<TestResult> TestSearchDocumentation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSearchDocumentation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"search-test-{DateTime.Now.Ticks}";
@@ -309,8 +309,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Search found {response.TotalResults} results");
         }, "Search documentation");
 
-    private static Task<TestResult> TestSuggestRelatedTopics(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestSuggestRelatedTopics(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"suggest-test-{DateTime.Now.Ticks}";
@@ -350,8 +350,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Got {response.Suggestions.Count} suggestions");
         }, "Suggest related topics");
 
-    private static Task<TestResult> TestRecoverDocument(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRecoverDocument(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
 
@@ -393,8 +393,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Recovered document: ID={response.DocumentId}");
         }, "Recover document");
 
-    private static Task<TestResult> TestListTrashcan(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListTrashcan(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"trashcan-list-{DateTime.Now.Ticks}";
@@ -432,8 +432,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Listed {response.Items.Count} trashcan items");
         }, "List trashcan");
 
-    private static Task<TestResult> TestPurgeTrashcan(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestPurgeTrashcan(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"purge-test-{DateTime.Now.Ticks}";
@@ -482,8 +482,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Purged {response.PurgedCount} documents permanently");
         }, "Purge trashcan");
 
-    private static Task<TestResult> TestBulkUpdateDocuments(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestBulkUpdateDocuments(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"bulk-update-{DateTime.Now.Ticks}";
@@ -518,8 +518,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Bulk updated {response.Succeeded.Count} documents");
         }, "Bulk update documents");
 
-    private static Task<TestResult> TestBulkDeleteDocuments(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestBulkDeleteDocuments(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"bulk-delete-{DateTime.Now.Ticks}";
@@ -551,8 +551,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Bulk deleted {response.Succeeded.Count} documents");
         }, "Bulk delete documents");
 
-    private static Task<TestResult> TestImportDocumentation(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestImportDocumentation(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"import-test-{DateTime.Now.Ticks}";
@@ -588,8 +588,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Imported {response.Created} created, {response.Updated} updated");
         }, "Import documentation");
 
-    private static Task<TestResult> TestGetNamespaceStats(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetNamespaceStats(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"stats-test-{DateTime.Now.Ticks}";
@@ -620,7 +620,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Stats: {response.DocumentCount} documents, {response.TrashcanCount} in trashcan");
         }, "Get namespace stats");
 
-    private static Task<TestResult> TestGetNonExistentDocument(ITestClient client, string[] args) =>
+    private static async Task<TestResult> TestGetNonExistentDocument(ITestClient client, string[] args) =>
+        await
         ExecuteExpectingStatusAsync(
             async () =>
             {
@@ -634,8 +635,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             404,
             "Get non-existent document");
 
-    private static Task<TestResult> TestDuplicateSlugConflict(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestDuplicateSlugConflict(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var slug = $"duplicate-test-{DateTime.Now.Ticks}";
@@ -667,8 +668,8 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             }
         }, "Duplicate slug conflict");
 
-    private static Task<TestResult> TestCompleteDocumentLifecycle(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestCompleteDocumentLifecycle(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var docClient = GetServiceClient<IDocumentationClient>();
             var testId = DateTime.Now.Ticks;

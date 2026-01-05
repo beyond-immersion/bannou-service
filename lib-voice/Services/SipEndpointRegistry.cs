@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 /// <summary>
 /// Implementation of SIP endpoint registry using lib-state for distributed state.
 /// Uses ConcurrentDictionary for local caching while persisting to Redis via lib-state.
-/// Thread-safe for multi-instance deployments (Tenet 4).
+/// Thread-safe for multi-instance deployments (FOUNDATION TENETS).
 /// Participants are keyed by sessionId to support multiple connections from the same account.
 /// </summary>
 public class SipEndpointRegistry : ISipEndpointRegistry
@@ -66,7 +66,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         };
 
         // Load existing participants from state store if not in local cache
-        // Required for multi-instance safety (Tenet 4) - another instance may have participants we don't have locally
+        // Required for multi-instance safety (FOUNDATION TENETS) - another instance may have participants we don't have locally
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             // Try to load from state store

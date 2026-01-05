@@ -66,13 +66,21 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
         "/templateDirectory:../templates/nswag" 2>&1
 
     if [ $? -eq 0 ]; then
+        # Post-process: Add [JsonRequired] after each [Required] attribute
+        sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$OUTPUT_FILE"
+        # Post-process: Fix EventName shadowing - add 'override' keyword
+        sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$OUTPUT_FILE"
+        # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
+        postprocess_enum_suppressions "$OUTPUT_FILE"
+        # Post-process: Add XML docs to AdditionalProperties
+        postprocess_additional_properties_docs "$OUTPUT_FILE"
         echo -e "${GREEN}  Generated: $OUTPUT_FILE${NC}"
         GENERATED_COUNT=$((GENERATED_COUNT + 1))
     else

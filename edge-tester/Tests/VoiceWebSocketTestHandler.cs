@@ -395,7 +395,7 @@ a=rtpmap:111 opus/48000/2";
                     {
                         var eventData = JsonDocument.Parse(json).RootElement;
                         if (eventData.TryGetProperty("peer", out var peerProp) &&
-                            peerProp.TryGetProperty("peer_session_id", out var peerIdProp))
+                            peerProp.TryGetProperty("peerSessionId", out var peerIdProp))
                         {
                             receivedPeerSessionId = peerIdProp.GetString();
                             Console.WriteLine($"   Received VoicePeerJoinedEvent for peer: {receivedPeerSessionId}");
@@ -557,7 +557,7 @@ a=rtpmap:111 opus/48000/2";
                     {
                         var eventData = JsonDocument.Parse(json).RootElement;
                         if (eventData.TryGetProperty("peer", out var peerProp) &&
-                            peerProp.TryGetProperty("sdp_offer", out var sdpProp))
+                            peerProp.TryGetProperty("sdpOffer", out var sdpProp))
                         {
                             receivedSdpAnswer = sdpProp.GetString();
                             Console.WriteLine($"   Received VoicePeerUpdatedEvent with SDP");
@@ -572,7 +572,7 @@ a=rtpmap:111 opus/48000/2";
 
                 // Client 2 sends SDP answer to Client 1
                 // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer_joined event
-                // due to race condition between Permissions service capability push and Voice service event publish.
+                // due to race condition between Permission service capability push and Voice service event publish.
                 // Retry up to 5 times (4 seconds total) for "Unknown endpoint" errors.
                 Console.WriteLine("   Client 2 sending SDP answer to Client 1...");
 
@@ -719,12 +719,12 @@ a=rtpmap:111 opus/48000/2";
                         try
                         {
                             var eventData = JsonDocument.Parse(json).RootElement;
-                            if (eventData.TryGetProperty("previous_tier", out var prevTier) &&
-                                eventData.TryGetProperty("new_tier", out var newTier))
+                            if (eventData.TryGetProperty("previousTier", out var prevTier) &&
+                                eventData.TryGetProperty("newTier", out var newTier))
                             {
                                 Console.WriteLine($"   {clientName} tier upgrade: {prevTier.GetString()} -> {newTier.GetString()}");
 
-                                if (eventData.TryGetProperty("rtp_server_uri", out var rtpUri))
+                                if (eventData.TryGetProperty("rtpServerUri", out var rtpUri))
                                 {
                                     rtpServerUri = rtpUri.GetString();
                                     Console.WriteLine($"   RTP server URI: {rtpServerUri}");

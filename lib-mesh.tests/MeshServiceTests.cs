@@ -3,28 +3,22 @@ using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.Mesh.Tests;
 
 /// <summary>
-/// Collection definition for tests that require sequential execution due to static state.
-/// </summary>
-[CollectionDefinition("MeshCacheTests", DisableParallelization = true)]
-public class MeshCacheTestsCollection { }
-
-/// <summary>
 /// Tests for MeshService.
 /// Uses interface-based mocking for all dependencies.
-/// Note: Tests that interact with static cache use the MeshCacheTests collection
-/// to avoid parallel execution interference.
+/// Service-to-app-id mappings are managed by IServiceAppMappingResolver.
 /// </summary>
-[Collection("MeshCacheTests")]
 public class MeshServiceTests
 {
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<MeshService>> _mockLogger;
     private readonly MeshServiceConfiguration _configuration;
     private readonly Mock<IMeshRedisManager> _mockRedisManager;
+    private readonly Mock<IServiceAppMappingResolver> _mockMappingResolver;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public MeshServiceTests()
@@ -33,7 +27,13 @@ public class MeshServiceTests
         _mockLogger = new Mock<ILogger<MeshService>>();
         _configuration = new MeshServiceConfiguration();
         _mockRedisManager = new Mock<IMeshRedisManager>();
+        _mockMappingResolver = new Mock<IServiceAppMappingResolver>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Default setup for mapping resolver
+        _mockMappingResolver.Setup(x => x.GetAllMappings())
+            .Returns(new Dictionary<string, string>());
+        _mockMappingResolver.Setup(x => x.CurrentVersion).Returns(0);
     }
 
     private MeshService CreateService()
@@ -43,88 +43,24 @@ public class MeshServiceTests
             _mockLogger.Object,
             _configuration,
             _mockRedisManager.Object,
+            _mockMappingResolver.Object,
             _mockEventConsumer.Object);
     }
 
     #region Constructor Tests
 
+    /// <summary>
+    /// Validates the service constructor follows proper DI patterns.
+    ///
+    /// This single test replaces N individual null-check tests and catches:
+    /// - Multiple constructors (DI might pick wrong one)
+    /// - Optional parameters (accidental defaults that hide missing registrations)
+    /// - Missing null checks (ArgumentNullException not thrown)
+    /// - Wrong parameter names in ArgumentNullException
+    /// </summary>
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Act & Assert
-        var service = CreateService();
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            null!,
-            _mockLogger.Object,
-            _configuration,
-            _mockRedisManager.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("messageBus", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            null!,
-            _configuration,
-            _mockRedisManager.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("logger", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            null!,
-            _mockRedisManager.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("configuration", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullRedisManager_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("redisManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            _mockRedisManager.Object,
-            null!));
-
-        Assert.Equal("eventConsumer", exception.ParamName);
-    }
+    public void MeshService_ConstructorIsValid() =>
+        ServiceConstructorValidator.ValidateServiceConstructor<MeshService>();
 
     #endregion
 
@@ -164,7 +100,7 @@ public class MeshServiceTests
         // Arrange
         var endpoints = new List<MeshEndpoint>
         {
-            new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "auth", "accounts" } },
+            new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "auth", "account" } },
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "connect" } }
         };
 
@@ -292,9 +228,9 @@ public class MeshServiceTests
             .ReturnsAsync(true);
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .Setup(x => x.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new RegisterEndpointRequest
@@ -302,14 +238,14 @@ public class MeshServiceTests
             AppId = "bannou",
             Host = "localhost",
             Port = 3500,
-            Services = new List<string> { "auth", "accounts" }
+            Services = new List<string> { "auth", "account" }
         };
 
         // Act
         var (statusCode, response) = await service.RegisterEndpointAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
         Assert.NotNull(response.Endpoint);
@@ -355,9 +291,9 @@ public class MeshServiceTests
             .ReturnsAsync(true);
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .Setup(x => x.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new RegisterEndpointRequest
@@ -401,9 +337,9 @@ public class MeshServiceTests
             .ReturnsAsync(true);
 
         _mockMessageBus
-            .Setup(x => x.PublishAsync(
-                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
+            .Setup(x => x.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new DeregisterEndpointRequest
@@ -412,10 +348,10 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var statusCode = await service.DeregisterEndpointAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.NoContent, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
     }
 
     [Fact]
@@ -435,7 +371,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var statusCode = await service.DeregisterEndpointAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -660,18 +596,16 @@ public class MeshServiceTests
     #region GetMappingsAsync Tests
 
     [Fact]
-    public async Task GetMappingsAsync_WhenCacheEmpty_ShouldReturnEmptyMappings()
+    public async Task GetMappingsAsync_WhenResolverEmpty_ShouldReturnEmptyMappings()
     {
-        // Arrange - Reset cache to ensure clean state for this test
-        MeshService.ResetCacheForTesting();
-
+        // Arrange - Default mock returns empty mappings
         var service = CreateService();
         var request = new GetMappingsRequest();
 
         // Act
         var (statusCode, response) = await service.GetMappingsAsync(request, CancellationToken.None);
 
-        // Assert - returns empty mappings from cache, no Redis fallback
+        // Assert - returns empty mappings from resolver
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal("bannou", response.DefaultAppId);
@@ -680,13 +614,12 @@ public class MeshServiceTests
     }
 
     [Fact]
-    public async Task GetMappingsAsync_WhenCachePopulated_ShouldReturnFromCache()
+    public async Task GetMappingsAsync_WhenResolverPopulated_ShouldReturnFromResolver()
     {
-        // Arrange - Reset and populate cache with known values
-        MeshService.ResetCacheForTesting();
-        MeshService.UpdateMappingsCache(
-            new Dictionary<string, string> { ["cached-service"] = "bannou-cached" },
-            version: 50);
+        // Arrange - Configure mock resolver with mappings
+        var testMappings = new Dictionary<string, string> { ["cached-service"] = "bannou-cached" };
+        _mockMappingResolver.Setup(x => x.GetAllMappings()).Returns(testMappings);
+        _mockMappingResolver.Setup(x => x.CurrentVersion).Returns(50);
 
         var service = CreateService();
         var request = new GetMappingsRequest();
@@ -706,16 +639,15 @@ public class MeshServiceTests
     [Fact]
     public async Task GetMappingsAsync_WithServiceNameFilter_ShouldFilterMappings()
     {
-        // Arrange - Reset cache and populate with test data
-        MeshService.ResetCacheForTesting();
-        MeshService.UpdateMappingsCache(
-            new Dictionary<string, string>
-            {
-                ["auth-login"] = "bannou-auth",
-                ["auth-logout"] = "bannou-auth",
-                ["connect-ws"] = "bannou"
-            },
-            version: 20);
+        // Arrange - Configure mock resolver with test data
+        var testMappings = new Dictionary<string, string>
+        {
+            ["auth-login"] = "bannou-auth",
+            ["auth-logout"] = "bannou-auth",
+            ["connect-ws"] = "bannou"
+        };
+        _mockMappingResolver.Setup(x => x.GetAllMappings()).Returns(testMappings);
+        _mockMappingResolver.Setup(x => x.CurrentVersion).Returns(20);
 
         var service = CreateService();
         var request = new GetMappingsRequest { ServiceNameFilter = "auth" };
@@ -833,88 +765,112 @@ public class MeshServiceTests
 
     #endregion
 
-    #region Cache Management Tests
+    #region HandleServiceMappingsAsync Tests
 
     [Fact]
-    public void UpdateMappingsCache_WithNewerVersion_ShouldUpdate()
+    public async Task HandleServiceMappingsAsync_WithValidMappings_ShouldCallReplaceAllMappings()
     {
-        // Arrange - Reset cache for clean test isolation
-        MeshService.ResetCacheForTesting();
+        // Arrange
+        _mockMappingResolver.Setup(x => x.ReplaceAllMappings(
+            It.IsAny<IReadOnlyDictionary<string, string>>(),
+            It.IsAny<string>(),
+            It.IsAny<long>()))
+            .Returns(true);
 
-        // Set initial state
-        MeshService.UpdateMappingsCache(new Dictionary<string, string>(), version: 10);
-
-        var mappings = new Dictionary<string, string> { ["auth"] = "bannou-auth" };
-
-        // Act - update with newer version
-        var result = MeshService.UpdateMappingsCache(mappings, version: 11);
-
-        // Assert
-        Assert.True(result);
-        Assert.Equal(11, MeshService.GetCacheVersion());
-    }
-
-    [Fact]
-    public void UpdateMappingsCache_WithOlderVersion_ShouldNotUpdate()
-    {
-        // Arrange - Reset cache for clean test isolation
-        MeshService.ResetCacheForTesting();
-
-        // Set initial state with version 20
-        MeshService.UpdateMappingsCache(
-            new Dictionary<string, string> { ["auth"] = "bannou" },
-            version: 20);
-
-        var oldMappings = new Dictionary<string, string> { ["auth"] = "bannou-old" };
-
-        // Act - try to update with older version (15 < 20)
-        var result = MeshService.UpdateMappingsCache(oldMappings, version: 15);
-
-        // Assert
-        Assert.False(result);
-        Assert.Equal(20, MeshService.GetCacheVersion()); // Version unchanged
-    }
-
-    [Fact]
-    public void UpdateMappingsCache_WithEqualVersion_ShouldNotUpdate()
-    {
-        // Arrange - Reset cache for clean test isolation
-        MeshService.ResetCacheForTesting();
-
-        // Set initial state with version 10
-        MeshService.UpdateMappingsCache(
-            new Dictionary<string, string> { ["auth"] = "bannou" },
-            version: 10);
-
-        var sameMappings = new Dictionary<string, string> { ["auth"] = "bannou-new" };
-
-        // Act - try to update with same version
-        var result = MeshService.UpdateMappingsCache(sameMappings, version: 10);
-
-        // Assert
-        Assert.False(result);
-        Assert.Equal(10, MeshService.GetCacheVersion()); // Version unchanged
-    }
-
-    [Fact]
-    public void ResetCacheForTesting_ShouldClearAllState()
-    {
-        // Arrange - Populate cache with data
-        MeshService.UpdateMappingsCache(
-            new Dictionary<string, string> { ["auth"] = "bannou", ["connect"] = "bannou-connect" },
-            version: 100);
+        var service = CreateService();
+        var evt = new FullServiceMappingsEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Version = 10,
+            DefaultAppId = "bannou",
+            Mappings = new Dictionary<string, string>
+            {
+                ["auth"] = "bannou-auth",
+                ["account"] = "bannou-account"
+            }
+        };
 
         // Act
-        MeshService.ResetCacheForTesting();
+        await service.HandleServiceMappingsAsync(evt);
 
-        // Assert - Version should be 0 after reset
-        Assert.Equal(0, MeshService.GetCacheVersion());
+        // Assert - Verify ReplaceAllMappings was called with correct parameters
+        _mockMappingResolver.Verify(x => x.ReplaceAllMappings(
+            It.Is<IReadOnlyDictionary<string, string>>(m =>
+                m.Count == 2 &&
+                m["auth"] == "bannou-auth" &&
+                m["account"] == "bannou-account"),
+            "bannou",
+            10L),
+            Times.Once);
+    }
 
-        // Cache should now accept version 1
-        var result = MeshService.UpdateMappingsCache(
-            new Dictionary<string, string> { ["new-service"] = "new-app" },
-            version: 1);
-        Assert.True(result);
+    /// <summary>
+    /// Empty mappings are valid and mean "reset to default routing".
+    /// When containers are torn down, an empty mappings event is published
+    /// to clear the old service-to-app-id mappings so all services route to "bannou".
+    /// </summary>
+    [Fact]
+    public async Task HandleServiceMappingsAsync_WithEmptyMappings_ShouldResetToDefaultRouting()
+    {
+        // Arrange
+        _mockMappingResolver.Setup(x => x.ReplaceAllMappings(
+            It.IsAny<IReadOnlyDictionary<string, string>>(),
+            It.IsAny<string>(),
+            It.IsAny<long>()))
+            .Returns(true);
+
+        var service = CreateService();
+        var evt = new FullServiceMappingsEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Version = 5,
+            DefaultAppId = "bannou",
+            Mappings = new Dictionary<string, string>() // Empty = reset to default
+        };
+
+        // Act
+        await service.HandleServiceMappingsAsync(evt);
+
+        // Assert - ReplaceAllMappings SHOULD be called with empty mappings to reset routing
+        _mockMappingResolver.Verify(x => x.ReplaceAllMappings(
+            It.Is<IReadOnlyDictionary<string, string>>(m => m.Count == 0),
+            "bannou",
+            5L),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleServiceMappingsAsync_WithStaleVersion_ShouldLogDebugWhenRejected()
+    {
+        // Arrange - Configure resolver to reject update (returns false)
+        _mockMappingResolver.Setup(x => x.ReplaceAllMappings(
+            It.IsAny<IReadOnlyDictionary<string, string>>(),
+            It.IsAny<string>(),
+            It.IsAny<long>()))
+            .Returns(false);
+        _mockMappingResolver.Setup(x => x.CurrentVersion).Returns(100);
+
+        var service = CreateService();
+        var evt = new FullServiceMappingsEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Version = 50, // Older than current version (100)
+            DefaultAppId = "bannou",
+            Mappings = new Dictionary<string, string> { ["auth"] = "bannou-auth" }
+        };
+
+        // Act
+        await service.HandleServiceMappingsAsync(evt);
+
+        // Assert - ReplaceAllMappings was called but returned false (logged as debug)
+        _mockMappingResolver.Verify(x => x.ReplaceAllMappings(
+            It.IsAny<IReadOnlyDictionary<string, string>>(),
+            It.IsAny<string>(),
+            50L),
+            Times.Once);
     }
 
     #endregion
@@ -1009,33 +965,10 @@ public class MeshInvocationClientTests : IDisposable
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
+    public void ConstructorIsValid()
     {
-        // Act & Assert
-        var client = CreateClient();
-        Assert.NotNull(client);
-    }
-
-    [Fact]
-    public void Constructor_WithNullRedisManager_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
-            null!,
-            _mockLogger.Object));
-
-        Assert.Equal("redisManager", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
-            _mockRedisManager.Object,
-            null!));
-
-        Assert.Equal("logger", exception.ParamName);
+        ServiceConstructorValidator.ValidateServiceConstructor<MeshInvocationClient>();
+        Assert.NotNull(CreateClient());
     }
 
     #endregion

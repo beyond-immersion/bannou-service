@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: signal_test
+flows:
+  sender:
+    actions:
+      - log: { message: "Sending" }
+      - emit: { signal: "data_ready" }
+      - log: { message: "Sent" }
+  receiver:
+    actions:
+      - log: { message: "Waiting" }
+      - wait_for: { signal: "data_ready" }
+      - log: { message: "Received" }

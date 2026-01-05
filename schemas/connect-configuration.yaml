@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Connect Service Configuration
-  description: "Configuration schema for Connect service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  description: |
+    Configuration schema for Connect service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -10,66 +15,98 @@ x-service-configuration:
       type: integer
       description: Maximum number of concurrent WebSocket connections
       default: 10000
+      env: CONNECT_MAX_CONCURRENT_CONNECTIONS
     ConnectionTimeoutSeconds:
       type: integer
       description: WebSocket connection timeout in seconds
       default: 300
+      env: CONNECT_CONNECTION_TIMEOUT_SECONDS
     HeartbeatIntervalSeconds:
       type: integer
       description: Interval between heartbeat messages
       default: 30
+      env: CONNECT_HEARTBEAT_INTERVAL_SECONDS
     MessageQueueSize:
       type: integer
       description: Maximum number of queued messages per connection
       default: 1000
+      env: CONNECT_MESSAGE_QUEUE_SIZE
     BinaryProtocolVersion:
       type: string
       description: Binary protocol version identifier
       default: "2.0"
+      env: CONNECT_BINARY_PROTOCOL_VERSION
     BufferSize:
       type: integer
       description: Size of message buffers in bytes
       default: 65536
+      env: CONNECT_BUFFER_SIZE
     DefaultServices:
       type: array
       items:
         type: string
       description: Services available to unauthenticated connections
       default: ["auth", "website"]
+      env: CONNECT_DEFAULT_SERVICES
     AuthenticatedServices:
       type: array
       items:
         type: string
       description: Additional services available to authenticated connections
-      default: ["accounts", "behavior", "permissions", "gamesession"]
+      default: ["account", "behavior", "permission", "gamesession"]
+      env: CONNECT_AUTHENTICATED_SERVICES
     EnableClientToClientRouting:
       type: boolean
       description: Enable routing messages between WebSocket clients
       default: true
+      env: CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING
     MaxMessagesPerMinute:
       type: integer
       description: Rate limit for messages per minute per client
       default: 1000
+      env: CONNECT_MAX_MESSAGES_PER_MINUTE
     RateLimitWindowMinutes:
       type: integer
       description: Rate limit window in minutes
       default: 1
+      env: CONNECT_RATE_LIMIT_WINDOW_MINUTES
     JwtPublicKey:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (uses shared secret if not set)
       description: RSA public key for JWT validation (PEM format)
+      env: CONNECT_JWT_PUBLIC_KEY
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for client event subscriptions (Tenet 21 - no default, required)
+      description: RabbitMQ connection string for client event subscriptions (REQUIRED - service fails fast if missing)
       env: CONNECT_RABBITMQ_CONNECTION_STRING
     ServerSalt:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable (generates random salt if not set)
       description: Server salt for client GUID generation. Must be shared across all Connect instances.
       env: CONNECT_SERVER_SALT
     ConnectUrl:
       type: string
+      nullable: true  # NRT: Optional config MUST be nullable
       description: WebSocket URL returned to clients for reconnection
       env: CONNECT_URL
 
-# Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
-# Topics subscribed: session.invalidated, permissions.capabilities-updated
+    ConnectionMode:
+      type: string
+      enum: ["external", "relayed", "internal"]
+      description: "Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)"
+      default: "external"
+      env: CONNECT_CONNECTION_MODE
+    InternalAuthMode:
+      type: string
+      enum: ["service-token", "network-trust"]
+      description: "Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)"
+      default: "service-token"
+      env: CONNECT_INTERNAL_AUTH_MODE
+    InternalServiceToken:
+      type: string
+      nullable: true
+      description: "Secret for X-Service-Token validation when InternalAuthMode is service-token"
+      env: CONNECT_INTERNAL_SERVICE_TOKEN
 
+# Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
+# Topics subscribed: session.invalidated, permission.capabilities-updated

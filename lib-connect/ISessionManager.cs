@@ -111,4 +111,32 @@ public interface ISessionManager
     Task PublishSessionEventAsync(string eventType, string sessionId, object? eventData = null);
 
     #endregion
+
+    #region Account Session Index
+
+    /// <summary>
+    /// Adds a session to the account's session index in distributed storage.
+    /// Called when a session is connected to track all active sessions for an account.
+    /// </summary>
+    /// <param name="accountId">The account owning the session.</param>
+    /// <param name="sessionId">The session ID to add.</param>
+    Task AddSessionToAccountAsync(Guid accountId, string sessionId);
+
+    /// <summary>
+    /// Removes a session from the account's session index in distributed storage.
+    /// Called when a session is disconnected.
+    /// </summary>
+    /// <param name="accountId">The account owning the session.</param>
+    /// <param name="sessionId">The session ID to remove.</param>
+    Task RemoveSessionFromAccountAsync(Guid accountId, string sessionId);
+
+    /// <summary>
+    /// Gets all active session IDs for an account from distributed storage.
+    /// Returns an empty set if no sessions are found.
+    /// </summary>
+    /// <param name="accountId">The account to query.</param>
+    /// <returns>Set of session IDs for the account.</returns>
+    Task<HashSet<string>> GetSessionsForAccountAsync(Guid accountId);
+
+    #endregion
 }

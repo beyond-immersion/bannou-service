@@ -46,7 +46,7 @@ public abstract class EventPublisherBase
     {
         try
         {
-            await MessageBus.PublishAsync(topic, eventData);
+            await MessageBus.TryPublishAsync(topic, eventData);
             Logger.LogDebug("Published event to {Topic}: {EventType}", topic, typeof(TEvent).Name);
             return true;
         }
@@ -60,7 +60,7 @@ public abstract class EventPublisherBase
     /// <summary>
     /// Creates a new event ID for an event.
     /// </summary>
-    /// <returns>New GUID for event identification.</returns>
+    /// <returns>New Guid for event identification.</returns>
     protected static Guid NewEventId() => Guid.NewGuid();
 
     /// <summary>

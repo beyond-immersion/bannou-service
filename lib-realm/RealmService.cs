@@ -7,9 +7,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-realm.tests")]
 
 namespace BeyondImmersion.BannouService.Realm;
 
@@ -38,13 +35,12 @@ public partial class RealmService : IRealmService
         RealmServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
 
         // Register event handlers via partial class (RealmServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -318,7 +314,7 @@ public partial class RealmService : IRealmService
             await PublishRealmCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created realm: {RealmId} with code {Code}", realmId, code);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {
@@ -406,7 +402,7 @@ public partial class RealmService : IRealmService
     /// <summary>
     /// Hard delete a realm. Only deprecated realms with zero references can be deleted.
     /// </summary>
-    public async Task<(StatusCodes, object?)> DeleteRealmAsync(
+    public async Task<StatusCodes> DeleteRealmAsync(
         DeleteRealmRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -420,14 +416,14 @@ public partial class RealmService : IRealmService
             if (model == null)
             {
                 _logger.LogWarning("Realm not found for deletion: {RealmId}", body.RealmId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Realm should be deprecated before deletion
             if (!model.IsDeprecated)
             {
                 _logger.LogWarning("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Delete the model
@@ -448,7 +444,7 @@ public partial class RealmService : IRealmService
             await PublishRealmDeletedEventAsync(model, null, cancellationToken);
 
             _logger.LogInformation("Deleted realm: {RealmId} ({Code})", body.RealmId, model.Code);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -457,7 +453,7 @@ public partial class RealmService : IRealmService
                 "realm", "DeleteRealm", "unexpected_exception", ex.Message,
                 dependency: "state", endpoint: "post:/realm/delete",
                 details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -637,7 +633,7 @@ public partial class RealmService : IRealmService
 
                         var (status, _) = await CreateRealmAsync(createRequest, cancellationToken);
 
-                        if (status == StatusCodes.Created)
+                        if (status == StatusCodes.OK)
                         {
                             created++;
                             _logger.LogDebug("Created new realm: {Code}", code);
@@ -740,11 +736,11 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
-                Category = model.Category ?? string.Empty,
+                Category = model.Category,
                 IsActive = model.IsActive
             };
 
-            await _messageBus.PublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.created event for {RealmId}", model.RealmId);
         }
         catch (Exception ex)
@@ -767,18 +763,18 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 IsActive = model.IsActive,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.PublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.updated event for {RealmId} with changed fields: {ChangedFields}",
                 model.RealmId, string.Join(", ", changedFields));
         }
@@ -802,18 +798,18 @@ public partial class RealmService : IRealmService
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 IsActive = model.IsActive,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
                 DeletedReason = deletedReason
             };
 
-            await _messageBus.PublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.deleted event for {RealmId}", model.RealmId);
         }
         catch (Exception ex)
@@ -827,7 +823,7 @@ public partial class RealmService : IRealmService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

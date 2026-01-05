@@ -9,10 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-species.tests")]
 
 namespace BeyondImmersion.BannouService.Species;
 
@@ -46,15 +43,14 @@ public partial class SpeciesService : ISpeciesService
         IRealmClient realmClient,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _characterClient = characterClient ?? throw new ArgumentNullException(nameof(characterClient));
-        _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+        _characterClient = characterClient;
+        _realmClient = realmClient;
 
         // Register event handlers via partial class (SpeciesServiceEvents.cs)
-        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -426,7 +422,7 @@ public partial class SpeciesService : ISpeciesService
             await PublishSpeciesCreatedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Created species: {SpeciesId} with code {Code}", speciesId, code);
-            return (StatusCodes.Created, MapToResponse(model));
+            return (StatusCodes.OK, MapToResponse(model));
         }
         catch (Exception ex)
         {
@@ -523,7 +519,7 @@ public partial class SpeciesService : ISpeciesService
         }
     }
 
-    public async Task<(StatusCodes, object?)> DeleteSpeciesAsync(
+    public async Task<StatusCodes> DeleteSpeciesAsync(
         DeleteSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -537,7 +533,7 @@ public partial class SpeciesService : ISpeciesService
             if (model == null)
             {
                 _logger.LogWarning("Species not found for deletion: {SpeciesId}", body.SpeciesId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check if species is in use by characters
@@ -551,7 +547,7 @@ public partial class SpeciesService : ISpeciesService
                 {
                     _logger.LogWarning("Cannot delete species {Code}: {Count} characters use this species",
                         model.Code, charactersResponse.TotalCount);
-                    return (StatusCodes.Conflict, null);
+                    return StatusCodes.Conflict;
                 }
             }
             catch (Exception ex)
@@ -585,7 +581,7 @@ public partial class SpeciesService : ISpeciesService
             await PublishSpeciesDeletedEventAsync(model, null, cancellationToken);
 
             _logger.LogInformation("Deleted species: {SpeciesId} ({Code})", body.SpeciesId, model.Code);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -594,7 +590,7 @@ public partial class SpeciesService : ISpeciesService
                 "species", "DeleteSpecies", "unexpected_exception", ex.Message,
                 dependency: "state", endpoint: "post:/species/delete",
                 details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -812,7 +808,7 @@ public partial class SpeciesService : ISpeciesService
 
                         var (status, _) = await CreateSpeciesAsync(createRequest, cancellationToken);
 
-                        if (status == StatusCodes.Created)
+                        if (status == StatusCodes.OK)
                         {
                             created++;
                             _logger.LogDebug("Created new species: {Code}", code);
@@ -1154,11 +1150,11 @@ public partial class SpeciesService : ISpeciesService
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,
                 Name = model.Name,
-                Category = model.Category ?? string.Empty,
+                Category = model.Category,
                 IsPlayable = model.IsPlayable
             };
 
-            await _messageBus.PublishAsync("species.created", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("species.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.created event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)
@@ -1182,12 +1178,12 @@ public partial class SpeciesService : ISpeciesService
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 IsPlayable = model.IsPlayable,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 BaseLifespan = model.BaseLifespan ?? 0,
                 MaturityAge = model.MaturityAge ?? 0,
                 TraitModifiers = model.TraitModifiers ?? new Dictionary<string, object>(),
@@ -1197,7 +1193,7 @@ public partial class SpeciesService : ISpeciesService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _messageBus.PublishAsync("species.updated", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("species.updated", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.updated event for {SpeciesId} with changed fields: {ChangedFields}",
                 model.SpeciesId, string.Join(", ", changedFields));
         }
@@ -1221,12 +1217,12 @@ public partial class SpeciesService : ISpeciesService
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,
                 Name = model.Name,
-                Description = model.Description ?? string.Empty,
-                Category = model.Category ?? string.Empty,
+                Description = model.Description,
+                Category = model.Category,
                 IsPlayable = model.IsPlayable,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt ?? default,
-                DeprecationReason = model.DeprecationReason ?? string.Empty,
+                DeprecationReason = model.DeprecationReason,
                 BaseLifespan = model.BaseLifespan ?? 0,
                 MaturityAge = model.MaturityAge ?? 0,
                 TraitModifiers = model.TraitModifiers ?? new Dictionary<string, object>(),
@@ -1236,7 +1232,7 @@ public partial class SpeciesService : ISpeciesService
                 DeletedReason = deletedReason
             };
 
-            await _messageBus.PublishAsync("species.deleted", eventModel, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("species.deleted", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.deleted event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)
@@ -1250,7 +1246,7 @@ public partial class SpeciesService : ISpeciesService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Registers this service's API permissions with the Permission service on startup.
     /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()

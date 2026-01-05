@@ -16,7 +16,7 @@ public sealed class TestConfiguration
     public string? WebSocketEndpoint { get; set; }
 
     /// <summary>
-    /// Account registration endpoint (e.g., "localhost:80/api/accounts/create")
+    /// Account registration endpoint (e.g., "localhost:80/api/account/create")
     /// </summary>
     public string? RegisterEndpoint { get; set; }
 

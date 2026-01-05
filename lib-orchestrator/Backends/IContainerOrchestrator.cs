@@ -64,7 +64,7 @@ public interface IContainerOrchestrator : IDisposable
     /// <summary>
     /// Deploys a service using the specified configuration.
     /// </summary>
-    /// <param name="serviceName">The logical service name (e.g., "auth", "accounts")</param>
+    /// <param name="serviceName">The logical service name (e.g., "auth", "account")</param>
     /// <param name="appId">The app-id for this service instance</param>
     /// <param name="environment">Environment variables for the service</param>
     /// <param name="cancellationToken">Cancellation token</param>

@@ -56,7 +56,7 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 - Each service reachable by name
 
 **Communication:**
-- HTTP Tester → Bannou: `http://bannou:80/accounts/...` (via service name)
+- HTTP Tester → Bannou: `http://bannou:80/account/...` (via service name)
 - Bannou → RabbitMQ: `rabbitmq:5672` (service name)
 - Bannou → MySQL: `account-db:3306` (service name)
 - Bannou → Redis: `bannou-redis:6379` (service name)

@@ -40,8 +40,8 @@ public class MeshTestHandler : BaseHttpTestHandler
         new ServiceTest(TestInvocationServiceAvailability, "InvocationServiceCheck", "Mesh", "Test IsServiceAvailableAsync for registered endpoints"),
     ];
 
-    private static Task<TestResult> TestGetHealth(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetHealth(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -55,8 +55,8 @@ public class MeshTestHandler : BaseHttpTestHandler
                 $"Endpoints: {response.Summary?.TotalEndpoints ?? 0} total, {response.Summary?.HealthyCount ?? 0} healthy");
         }, "Get mesh health");
 
-    private static Task<TestResult> TestGetHealthWithEndpoints(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetHealthWithEndpoints(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -70,30 +70,25 @@ public class MeshTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"GetHealth with endpoints: {endpointCount} endpoints in response, uptime: {response.Uptime}");
         }, "Get mesh health with endpoints");
 
-    private static Task<TestResult> TestGetEndpointsForBannou(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetEndpointsForBannou(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
             var request = new GetEndpointsRequest { AppId = "bannou" };
+            var response = await meshClient.GetEndpointsAsync(request);
 
-            try
-            {
-                var response = await meshClient.GetEndpointsAsync(request);
+            if (response == null)
+                return TestResult.Failed("GetEndpoints returned null");
 
-                if (response == null)
-                    return TestResult.Failed("GetEndpoints returned null");
+            if (response.TotalCount == 0)
+                return TestResult.Failed("GetEndpoints returned 0 endpoints for bannou - mesh not registering endpoints");
 
-                return TestResult.Successful($"GetEndpoints for bannou: {response.HealthyCount}/{response.TotalCount} healthy endpoints");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("GetEndpoints returned 404 (no bannou endpoints registered yet - expected during test startup)");
-            }
+            return TestResult.Successful($"GetEndpoints for bannou: {response.HealthyCount}/{response.TotalCount} healthy endpoints");
         }, "Get endpoints for bannou");
 
-    private static Task<TestResult> TestGetEndpointsNonExistent(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetEndpointsNonExistent(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -115,8 +110,8 @@ public class MeshTestHandler : BaseHttpTestHandler
             }
         }, "Get endpoints for non-existent app-id");
 
-    private static Task<TestResult> TestListEndpoints(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListEndpoints(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -131,8 +126,8 @@ public class MeshTestHandler : BaseHttpTestHandler
                 $"{summary?.HealthyCount ?? 0} healthy, {summary?.UniqueAppIds ?? 0} unique app-ids");
         }, "List all endpoints");
 
-    private static Task<TestResult> TestListEndpointsWithFilter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestListEndpointsWithFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -145,8 +140,8 @@ public class MeshTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"ListEndpoints (healthy filter): {response.Endpoints?.Count ?? 0} endpoints");
         }, "List endpoints with status filter");
 
-    private static Task<TestResult> TestGetMappings(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetMappings(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -160,8 +155,8 @@ public class MeshTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"GetMappings: {mappingCount} mappings, default app-id: {response.DefaultAppId}, version: {response.Version}");
         }, "Get service-to-app-id mappings");
 
-    private static Task<TestResult> TestGetMappingsWithFilter(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetMappingsWithFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -174,32 +169,27 @@ public class MeshTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"GetMappings (auth filter): {response.Mappings?.Count ?? 0} mappings found");
         }, "Get mappings with filter");
 
-    private static Task<TestResult> TestGetRoute(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetRoute(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
             var request = new GetRouteRequest { AppId = "bannou" };
+            var response = await meshClient.GetRouteAsync(request);
 
-            try
-            {
-                var response = await meshClient.GetRouteAsync(request);
+            if (response == null)
+                return TestResult.Failed("GetRoute returned null");
 
-                if (response == null)
-                    return TestResult.Failed("GetRoute returned null");
+            var endpoint = response.Endpoint;
+            if (endpoint == null)
+                return TestResult.Failed("GetRoute returned no endpoint for bannou - mesh not functioning");
 
-                var endpoint = response.Endpoint;
-                return TestResult.Successful($"GetRoute: selected {endpoint?.Host}:{endpoint?.Port} " +
-                    $"(status: {endpoint?.Status}, load: {endpoint?.LoadPercent}%)");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("GetRoute returned 404 (no healthy endpoints available - expected during test startup)");
-            }
+            return TestResult.Successful($"GetRoute: selected {endpoint.Host}:{endpoint.Port} " +
+                $"(status: {endpoint.Status}, load: {endpoint.LoadPercent}%)");
         }, "Get optimal route");
 
-    private static Task<TestResult> TestGetRouteNoEndpoints(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestGetRouteNoEndpoints(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -216,8 +206,8 @@ public class MeshTestHandler : BaseHttpTestHandler
             }
         }, "Get route for non-existent app-id");
 
-    private static Task<TestResult> TestRegisterAndDeregister(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestRegisterAndDeregister(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -246,8 +236,8 @@ public class MeshTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Registration lifecycle complete: registered and deregistered instance {instanceId}");
         }, "Register and deregister endpoint");
 
-    private static Task<TestResult> TestHeartbeat(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestHeartbeat(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var meshClient = GetServiceClient<IMeshClient>();
 
@@ -291,16 +281,16 @@ public class MeshTestHandler : BaseHttpTestHandler
                 $"TTL: {heartbeatResponse.TtlSeconds}s");
         }, "Heartbeat test");
 
-    private static Task<TestResult> TestInvocationClientAvailable(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInvocationClientAvailable(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             await Task.CompletedTask;
             var invocationClient = GetServiceClient<IMeshInvocationClient>();
             return TestResult.Successful("IMeshInvocationClient is available via DI (mesh replacement ready)");
         }, "Check IMeshInvocationClient DI");
 
-    private static Task<TestResult> TestInvocationCreateRequest(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInvocationCreateRequest(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             await Task.CompletedTask;
             var invocationClient = GetServiceClient<IMeshInvocationClient>();
@@ -328,8 +318,8 @@ public class MeshTestHandler : BaseHttpTestHandler
             return TestResult.Successful("CreateInvokeMethodRequest creates properly configured requests (GET, POST with JSON body)");
         }, "Test CreateInvokeMethodRequest");
 
-    private static Task<TestResult> TestInvocationServiceAvailability(ITestClient client, string[] args) =>
-        ExecuteTestAsync(async () =>
+    private static async Task<TestResult> TestInvocationServiceAvailability(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
         {
             var invocationClient = GetServiceClient<IMeshInvocationClient>();
             var meshClient = GetServiceClient<IMeshClient>();
