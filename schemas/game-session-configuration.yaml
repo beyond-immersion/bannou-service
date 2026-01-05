@@ -18,8 +18,7 @@ x-service-configuration:
       env: GAME_SESSION_ENABLED
     ServerSalt:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (generates random salt if not set)
-      description: Server salt for GUID generation. If not set, generates random salt (OK for development, must be shared in production)
+      description: Server salt for GUID generation. REQUIRED - must be shared across all instances for session GUIDs to work correctly.
       env: GAME_SESSION_SERVER_SALT
       example: "your-server-salt-for-session-guids"
     MaxPlayersPerSession:

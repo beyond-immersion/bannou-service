@@ -32,10 +32,9 @@ x-service-configuration:
     # =========================================================================
     RedisConnectionString:
       type: string
-      description: Redis connection string for service registry storage. REQUIRED - no default value.
+      description: Redis connection string for service registry storage.
       env: MESH_REDIS_CONNECTION_STRING
-      required: true
-      example: "redis:6379"
+      default: "redis:6379"
 
     RedisKeyPrefix:
       type: string

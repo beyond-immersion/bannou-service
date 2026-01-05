@@ -120,17 +120,18 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public string? JwtPublicKey { get; set; }
 
     /// <summary>
-    /// RabbitMQ connection string for client event subscriptions (REQUIRED - service fails fast if missing)
+    /// RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.
     /// Environment variable: CONNECT_RABBITMQ_CONNECTION_STRING
     /// </summary>
     [Required(AllowEmptyStrings = false)]
     public string RabbitMqConnectionString { get; set; } = string.Empty;
 
     /// <summary>
-    /// Server salt for client GUID generation. Must be shared across all Connect instances.
+    /// Server salt for client GUID generation. REQUIRED - must be shared across all Connect instances for session shortcuts to work correctly.
     /// Environment variable: CONNECT_SERVER_SALT
     /// </summary>
-    public string? ServerSalt { get; set; }
+    [Required(AllowEmptyStrings = false)]
+    public string ServerSalt { get; set; } = string.Empty;
 
     /// <summary>
     /// WebSocket URL returned to clients for reconnection

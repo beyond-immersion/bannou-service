@@ -54,10 +54,11 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Server salt for GUID generation. If not set, generates random salt (OK for development, must be shared in production)
+    /// Server salt for GUID generation. REQUIRED - must be shared across all instances for session GUIDs to work correctly.
     /// Environment variable: GAME_SESSION_SERVER_SALT
     /// </summary>
-    public string? ServerSalt { get; set; }
+    [Required(AllowEmptyStrings = false)]
+    public string ServerSalt { get; set; } = string.Empty;
 
     /// <summary>
     /// Maximum players allowed per session

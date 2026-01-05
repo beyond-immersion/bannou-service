@@ -109,7 +109,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `AUTH_CONNECT_URL` | string | **REQUIRED** | URL to the Connect service for WebSocket connections. REQUIR... |
+| `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to the Connect service for WebSocket connections returne... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
 | `AUTH_DISCORD_REDIRECT_URI` | string | **REQUIRED** | Discord OAuth redirect URI |
@@ -202,10 +202,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (R... |
+| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions. N... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_SECONDS` | int | `300` | Window for client reconnection after disconnect in seconds (... |
-| `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. Must be shared acros... |
+| `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. REQUIRED - must be s... |
 | `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL returned to clients for reconnection |
 
@@ -245,7 +245,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
 | `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
-| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. If not set, generates rando... |
+| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
 
 ### Location
 
@@ -274,7 +274,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
-| `MESH_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for service registry storage. REQUIR... |
+| `MESH_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for service registry storage. |
 | `MESH_REDIS_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for Redis connection establishment ... |
 | `MESH_REDIS_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of Redis connection retry attempts |
 | `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
@@ -333,8 +333,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
-| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging (REQUI... |
-| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for orchestrator state (REQUIRED - s... |
+| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging. No de... |
+| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for orchestrator state. |
 
 ### Permission
 
@@ -379,7 +379,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
 | `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
 | `STATE_MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
-| `STATE_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
 ### Subscription
@@ -401,7 +401,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
 | `VOICE_SIP_DOMAIN` | string | `voice.bannou.local` | SIP domain for voice communication |
-| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation (REQUIRED when ScaledTierEn... |
+| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation. Required only when ScaledT... |
 | `VOICE_STUN_SERVERS` | string | `stun:stun.l.google.com:19302` | Comma-separated list of STUN server URLs for WebRTC |
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
@@ -415,8 +415,8 @@ This document lists all configuration options defined in Bannou's configuration 
 ## Configuration Summary
 
 - **Total properties**: 290
-- **Required (no default)**: 44
-- **Optional (has default)**: 246
+- **Required (no default)**: 40
+- **Optional (has default)**: 250
 
 ## Environment Variable Naming Convention
 

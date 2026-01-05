@@ -27,7 +27,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
       description: Redis connection string (host:port format) for Redis-backed state stores
       env: STATE_REDIS_CONNECTION_STRING
-      example: "redis:6379"
+      default: "redis:6379"
     MySqlConnectionString:
       type: string
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup

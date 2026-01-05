@@ -108,14 +108,14 @@ x-service-configuration:
       env: ORCHESTRATOR_KUBECONFIG_PATH
       example: "/path/to/.kube/config"
 
-    # Infrastructure Connection Strings (IMPLEMENTATION TENETS - no insecure defaults)
+    # Infrastructure Connection Strings
     RedisConnectionString:
       type: string
-      description: Redis connection string for orchestrator state (REQUIRED - service fails fast if missing)
+      description: Redis connection string for orchestrator state.
       env: ORCHESTRATOR_REDIS_CONNECTION_STRING
-      example: "redis:6379"
+      default: "redis:6379"
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for orchestrator messaging (REQUIRED - service fails fast if missing)
+      description: RabbitMQ connection string for orchestrator messaging. No default - credentials vary by environment.
       env: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
       example: "amqp://guest:guest@rabbitmq:5672"

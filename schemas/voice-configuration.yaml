@@ -50,7 +50,8 @@ x-service-configuration:
     # SIP Configuration
     SipPasswordSalt:
       type: string
-      description: Salt for SIP password generation (REQUIRED when ScaledTierEnabled=true - service fails fast if missing)
+      nullable: true  # NRT: Optional config MUST be nullable (only required when ScaledTierEnabled=true)
+      description: Salt for SIP password generation. Required only when ScaledTierEnabled=true - service fails fast if missing when scaled tier is enabled.
       env: VOICE_SIP_PASSWORD_SALT
       example: "your-sip-password-salt-for-voice"
     SipDomain:

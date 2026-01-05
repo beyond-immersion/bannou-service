@@ -77,13 +77,12 @@ x-service-configuration:
       env: CONNECT_JWT_PUBLIC_KEY
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for client event subscriptions (REQUIRED - service fails fast if missing)
+      description: RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.
       env: CONNECT_RABBITMQ_CONNECTION_STRING
       example: "amqp://guest:guest@rabbitmq:5672"
     ServerSalt:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (generates random salt if not set)
-      description: Server salt for client GUID generation. Must be shared across all Connect instances.
+      description: Server salt for client GUID generation. REQUIRED - must be shared across all Connect instances for session shortcuts to work correctly.
       env: CONNECT_SERVER_SALT
       example: "your-server-salt-for-guid-generation"
     ConnectUrl:

@@ -36,9 +36,9 @@ x-service-configuration:
     # Connect Service URL
     ConnectUrl:
       type: string
-      description: URL to the Connect service for WebSocket connections. REQUIRED - no default value.
+      description: URL to the Connect service for WebSocket connections returned to clients after authentication.
       env: AUTH_CONNECT_URL
-      required: true
+      default: "ws://localhost:5014/connect"
 
     # Mock Providers for Testing
     MockProviders:
