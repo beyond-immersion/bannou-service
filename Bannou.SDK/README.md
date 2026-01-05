@@ -204,6 +204,41 @@ client.OnEvent += (sender, eventData) =>
             break;
     }
 };
+
+## Game Transport (UDP) Quick Start (LiteNetLib)
+
+```csharp
+using BeyondImmersion.Bannou.GameProtocol;
+using BeyondImmersion.Bannou.GameProtocol.Messages;
+using BeyondImmersion.Bannou.GameTransport;
+using MessagePack;
+
+// Server
+var server = new LiteNetLibServerTransport();
+await server.StartAsync(new GameTransportConfig { Port = 9000 });
+server.OnClientMessage += (clientId, version, type, payload) =>
+{
+    var input = MessagePackSerializer.Deserialize<PlayerInputMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+    Console.WriteLine($"Tick {input.Tick} from {clientId}");
+};
+
+// Client
+var client = new LiteNetLibClientTransport();
+await client.ConnectAsync("127.0.0.1", 9000, GameProtocolEnvelope.CurrentVersion);
+client.OnServerMessage += (version, type, payload) =>
+{
+    if (type == GameMessageType.ArenaStateSnapshot)
+    {
+        var snapshot = MessagePackSerializer.Deserialize<ArenaStateSnapshot>(payload, GameProtocolEnvelope.DefaultOptions);
+        Console.WriteLine($"Snapshot tick {snapshot.Tick}");
+    }
+};
+
+// Send player input
+var msg = new PlayerInputMessage { Tick = 1, MoveX = 1, MoveY = 0 };
+var bytes = MessagePackSerializer.Serialize(msg, GameProtocolEnvelope.DefaultOptions);
+await client.SendAsync(GameMessageType.PlayerInput, bytes, reliable: true);
+```
 ```
 
 ## Real-World Example: HTTP Tester
