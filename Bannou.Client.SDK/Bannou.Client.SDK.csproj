@@ -38,6 +38,7 @@
   <!-- Minimal dependencies - this is for game clients only -->
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
+    <PackageReference Include="MessagePack" Version="2.6.101" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->
@@ -73,6 +74,11 @@
     <Compile Include="../lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../lib-connect/Protocol/NetworkByteOrder.cs')" />
     <Compile Include="../lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../lib-connect/Protocol/GuidGenerator.cs')" />
     <Compile Include="../lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../lib-connect/Protocol/ConnectionState.cs')" />
+  </ItemGroup>
+
+  <!-- Game transport protocol primitives -->
+  <ItemGroup>
+    <Compile Include="../GameProtocol/*.cs" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, meta types, response codes) -->

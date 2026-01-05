@@ -27387,6 +27387,81 @@
             Additional error details or context
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.GameProtocol.GameMessageType">
+            <summary>
+            Message type prefix for game transport messages (server/client).
+            The byte sits after the protocol version in the envelope.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.Unknown">
+            <summary>Unknown or uninitialized message.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.ArenaStateSnapshot">
+            <summary>Full state snapshot.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.ArenaStateDelta">
+            <summary>State delta update.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.CombatEvent">
+            <summary>Combat event batch.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.MatchState">
+            <summary>Match-level state update.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.OpportunityData">
+            <summary>Opportunity/QTE data for clients.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.CinematicExtension">
+            <summary>Cinematic extension payload reference.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.ConnectRequest">
+            <summary>Client requests to join/connect.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.PlayerInput">
+            <summary>Player input from client.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.OpportunityResponse">
+            <summary>Response to an opportunity/QTE.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameMessageType.Ping">
+            <summary>Latency/keepalive ping.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameProtocol.GameProtocolEnvelope">
+            <summary>
+            Helper for serializing/deserializing game transport messages with a 2-byte envelope:
+            [0] = protocol version, [1] = GameMessageType, [2..] = MessagePack-serialized payload (LZ4).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameProtocolEnvelope.CurrentVersion">
+            <summary>
+            Current protocol version for envelopes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.GameProtocol.GameProtocolEnvelope.DefaultOptions">
+            <summary>
+            Default MessagePack options (LZ4 compression).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameProtocol.GameProtocolEnvelope.Serialize``1(BeyondImmersion.Bannou.GameProtocol.GameMessageType,``0,System.Byte,MessagePack.MessagePackSerializerOptions)">
+            <summary>
+            Serialize a message with an envelope (version + message type).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameProtocol.GameProtocolEnvelope.Parse(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Parse an envelope and return version, type, and payload slice.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameProtocol.GameProtocolEnvelope.DeserializePayload``1(System.ReadOnlyMemory{System.Byte},MessagePack.MessagePackSerializerOptions)">
+            <summary>
+            Deserialize a payload after parsing the envelope.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameProtocol.GameProtocolEnvelope.ParseAndDeserialize``1(System.ReadOnlySpan{System.Byte},MessagePack.MessagePackSerializerOptions)">
+            <summary>
+            Convenience: parse envelope and deserialize payload to a type.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.BannouClient">
             <summary>
             High-level client for connecting to Bannou services via WebSocket.
@@ -27457,6 +27532,15 @@
             <param name="serverUrl">Base URL (e.g., "http://localhost:8080")</param>
             <param name="accessToken">Valid JWT access token</param>
             <param name="refreshToken">Optional refresh token for re-authentication</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if connection successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.ConnectInternalAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Connects in internal mode using a service token (or network-trust if token is null) without JWT login.
+            </summary>
+            <param name="connectUrl">Full WebSocket URL to the Connect service (internal node).</param>
+            <param name="serviceToken">Optional X-Service-Token for internal auth mode.</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>True if connection successful</returns>
         </member>
