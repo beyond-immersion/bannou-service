@@ -36,6 +36,9 @@ public class BannouClient : IAsyncDisposable
     private string? _sessionId;
     private string? _lastError;
     private string? _connectUrl;
+    private string? _serviceToken;
+
+    private const string InternalAuthorizationHeader = "Internal";
 
     /// <summary>
     /// Creates a new BannouClient with a default HttpClient.
@@ -108,6 +111,7 @@ public class BannouClient : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         _serverBaseUrl = serverUrl.TrimEnd('/');
+        _serviceToken = null;
 
         // Step 1: Authenticate via HTTP to get JWT
         var loginResult = await LoginAsync(email, password, cancellationToken);
@@ -137,8 +141,30 @@ public class BannouClient : IAsyncDisposable
         _serverBaseUrl = serverUrl.TrimEnd('/');
         _accessToken = accessToken;
         _refreshToken = refreshToken;
+        _serviceToken = null;
 
         return await EstablishWebSocketAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Connects in internal mode using a service token (or network-trust if token is null) without JWT login.
+    /// </summary>
+    /// <param name="connectUrl">Full WebSocket URL to the Connect service (internal node).</param>
+    /// <param name="serviceToken">Optional X-Service-Token for internal auth mode.</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if connection successful</returns>
+    public async Task<bool> ConnectInternalAsync(
+        string connectUrl,
+        string? serviceToken = null,
+        CancellationToken cancellationToken = default)
+    {
+        _serverBaseUrl = null;
+        _connectUrl = connectUrl.TrimEnd('/');
+        _accessToken = null;
+        _refreshToken = null;
+        _serviceToken = serviceToken;
+
+        return await EstablishWebSocketAsync(cancellationToken, allowAnonymousInternal: true);
     }
 
     /// <summary>
@@ -158,6 +184,7 @@ public class BannouClient : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         _serverBaseUrl = serverUrl.TrimEnd('/');
+        _serviceToken = null;
 
         // Step 1: Register account
         var registerResult = await RegisterAsync(username, email, password, cancellationToken);
@@ -574,6 +601,7 @@ public class BannouClient : IAsyncDisposable
         _connectionState = null;
         _accessToken = null;
         _refreshToken = null;
+        _serviceToken = null;
         _apiMappings.Clear();
     }
 
@@ -593,6 +621,21 @@ public class BannouClient : IAsyncDisposable
     }
 
     #region Private Methods
+
+    private string BuildAuthorizationHeader(bool allowAnonymousInternal)
+    {
+        if (!string.IsNullOrEmpty(_accessToken))
+        {
+            return $"Bearer {_accessToken}";
+        }
+
+        if (!string.IsNullOrEmpty(_serviceToken) || allowAnonymousInternal)
+        {
+            return InternalAuthorizationHeader;
+        }
+
+        return string.Empty;
+    }
 
     private async Task<bool> LoginAsync(string email, string password, CancellationToken cancellationToken)
     {
@@ -667,9 +710,9 @@ public class BannouClient : IAsyncDisposable
         }
     }
 
-    private async Task<bool> EstablishWebSocketAsync(CancellationToken cancellationToken)
+    private async Task<bool> EstablishWebSocketAsync(CancellationToken cancellationToken, bool allowAnonymousInternal = false)
     {
-        if (string.IsNullOrEmpty(_accessToken))
+        if (string.IsNullOrEmpty(_accessToken) && string.IsNullOrEmpty(_serviceToken) && !allowAnonymousInternal)
         {
             _lastError = "No access token available for WebSocket connection";
             return false;
@@ -695,7 +738,16 @@ public class BannouClient : IAsyncDisposable
         }
 
         _webSocket = new ClientWebSocket();
-        _webSocket.Options.SetRequestHeader("Authorization", $"Bearer {_accessToken}");
+        var authorizationHeader = BuildAuthorizationHeader(allowAnonymousInternal);
+        if (!string.IsNullOrEmpty(authorizationHeader))
+        {
+            _webSocket.Options.SetRequestHeader("Authorization", authorizationHeader);
+        }
+
+        if (!string.IsNullOrEmpty(_serviceToken))
+        {
+            _webSocket.Options.SetRequestHeader("X-Service-Token", _serviceToken);
+        }
 
         try
         {

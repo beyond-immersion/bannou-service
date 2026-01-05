@@ -42,6 +42,15 @@ client.OnEvent += (sender, eventData) =>
 await client.DisposeAsync();
 ```
 
+### Internal Mode (service token or network trust)
+
+```csharp
+var client = new BannouClient();
+// Connect directly to an internal Connect node without JWT login
+// Provide serviceToken when CONNECT_INTERNAL_AUTH_MODE=service-token; omit for network-trust.
+await client.ConnectInternalAsync("ws://bannou-internal/connect", serviceToken: "shared-secret");
+```
+
 ## Architecture
 
 ```

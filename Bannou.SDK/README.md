@@ -185,6 +185,8 @@ For real-time events, use the WebSocket client:
 using BeyondImmersion.Bannou.Client.SDK;
 
 var client = new BannouClient();
+// For internal nodes, skip JWT and use service token or network trust:
+// await client.ConnectInternalAsync("ws://bannou-internal/connect", serviceToken: "shared-secret");
 await client.ConnectWithTokenAsync(connectUrl, serverAccessToken);
 
 client.OnEvent += (sender, eventData) =>
