@@ -22656,7 +22656,7 @@
             <summary>
             Services enabled on this node.
             <br/>Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-            <br/>Example: ["account", "auth", "permissions"]
+            <br/>Example: ["account", "auth", "permission"]
             <br/>
             </summary>
         </member>
