@@ -27,6 +27,7 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `ActorCompletedEvent` | Custom | `actor-completed` | Published when an actor completes execution (self-... |
 | `ActorStatusChangedEvent` | Custom | `actor-status-changed` | Published when an actor's status changes. |
+| `CharacterPerceptionEvent` | Custom | `character-perception` | Perception event published by game servers for cha... |
 | `PoolNodeDrainingEvent` | Custom | `pool-node-draining` | Published when a pool node begins graceful shutdow... |
 | `PoolNodeHeartbeatEvent` | Health | `pool-node.heartbeat` | Periodic heartbeat from pool nodes to control plan... |
 | `PoolNodeRegisteredEvent` | Registration | `pool-node.registered` | Published when a pool node starts and registers wi... |

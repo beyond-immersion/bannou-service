@@ -410,3 +410,34 @@ components:
         newBehaviorRef:
           type: string
           description: New asset reference to fetch
+
+    # === Character Perception Events (game servers to actors) ===
+    CharacterPerceptionEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Perception event published by game servers for characters they manage.
+        Actors subscribe to character.{characterId}.perceptions to receive these.
+        sourceAppId used to route state updates back to originating game server.
+      required:
+        - characterId
+        - sourceAppId
+        - perception
+      properties:
+        eventName:
+          type: string
+          default: "character.perception"
+          description: Event type identifier for character perception events
+        characterId:
+          type: string
+          format: uuid
+          description: Character this perception applies to
+        sourceAppId:
+          type: string
+          description: App-id of game server (for routing state updates back)
+        perception:
+          allOf:
+            - $ref: 'actor-api.yaml#/components/schemas/PerceptionData'
+          description: The perception data to deliver to the actor

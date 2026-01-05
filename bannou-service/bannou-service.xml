@@ -6423,6 +6423,64 @@
             New asset reference to fetch
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent">
+            <summary>
+            Perception event published by game servers for characters they manage.
+            <br/>Actors subscribe to character.{characterId}.perceptions to receive these.
+            <br/>sourceAppId used to route state updates back to originating game server.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.EventName">
+            <summary>
+            Event type identifier for character perception events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.CharacterId">
+            <summary>
+            Character this perception applies to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.SourceAppId">
+            <summary>
+            App-id of game server (for routing state updates back)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.Perception">
+            <summary>
+            The perception data to deliver to the actor
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PerceptionData">
+            <summary>
+            Data representing a perception event for an actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.PerceptionType">
+            <summary>
+            Perception type (visual, auditory, tactile, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SourceId">
+            <summary>
+            ID of the entity causing this perception
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SourceType">
+            <summary>
+            Type of source (character, npc, object, environment)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Data">
+            <summary>
+            Perception-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Urgency">
+            <summary>
+            How urgent this perception is (0-1)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateCreatedEvent">
             <summary>
             Published to actor-template.created when a actortemplate is created
