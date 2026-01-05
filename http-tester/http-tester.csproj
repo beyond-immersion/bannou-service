@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
-    <ProjectReference Include="..\lib-accounts\lib-accounts.csproj" />
+    <ProjectReference Include="..\lib-account\lib-account.csproj" />
     <ProjectReference Include="..\lib-auth\lib-auth.csproj" />
     <ProjectReference Include="..\lib-behavior\lib-behavior.csproj" />
     <ProjectReference Include="..\lib-connect\lib-connect.csproj" />
@@ -32,9 +32,9 @@
     <ProjectReference Include="..\lib-character\lib-character.csproj" />
     <ProjectReference Include="..\lib-relationship-type\lib-relationship-type.csproj" />
     <ProjectReference Include="..\lib-species\lib-species.csproj" />
-    <ProjectReference Include="..\lib-permissions\lib-permissions.csproj" />
-    <ProjectReference Include="..\lib-servicedata\lib-servicedata.csproj" />
-    <ProjectReference Include="..\lib-subscriptions\lib-subscriptions.csproj" />
+    <ProjectReference Include="..\lib-permission\lib-permission.csproj" />
+    <ProjectReference Include="..\lib-service\lib-service.csproj" />
+    <ProjectReference Include="..\lib-subscription\lib-subscription.csproj" />
     <ProjectReference Include="..\lib-testing\lib-testing.csproj" />
     <ProjectReference Include="..\lib-website\lib-website.csproj" />
     <ProjectReference Include="..\lib-orchestrator\lib-orchestrator.csproj" />

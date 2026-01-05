@@ -40,7 +40,7 @@ public static class ClientEventWhitelist
         "game_session.player_left",
         "game_session.state_changed",
         "game_session.state_updated",
-        "permissions.session_capabilities",
+        "permission.session_capabilities",
         "session.shortcut_published",
         "session.shortcut_revoked",
         "system.error",

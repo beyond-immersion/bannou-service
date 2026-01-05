@@ -48,7 +48,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Register the mesh invocation client for service-to-service calls
         // Uses IMeshRedisManager directly (NOT IMeshClient) to avoid circular dependency:
-        // - All generated clients (AccountsClient, etc.) need IMeshInvocationClient
+        // - All generated clients (AccountClient, etc.) need IMeshInvocationClient
         // - If MeshInvocationClient needed IMeshClient, and MeshClient needs IMeshInvocationClient = deadlock
         services.AddSingleton<IMeshInvocationClient>(sp =>
         {

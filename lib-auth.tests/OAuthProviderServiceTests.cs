@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -22,7 +22,7 @@ public class OAuthProviderServiceTests
 
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<string>> _mockStringStore;
-    private readonly Mock<IAccountsClient> _mockAccountsClient;
+    private readonly Mock<IAccountClient> _mockAccountClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OAuthProviderService>> _mockLogger;
@@ -33,7 +33,7 @@ public class OAuthProviderServiceTests
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
-        _mockAccountsClient = new Mock<IAccountsClient>();
+        _mockAccountClient = new Mock<IAccountClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OAuthProviderService>>();
@@ -72,7 +72,7 @@ public class OAuthProviderServiceTests
 
         _service = new OAuthProviderService(
             _mockStateStoreFactory.Object,
-            _mockAccountsClient.Object,
+            _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
             _configuration,
             _mockMessageBus.Object,
@@ -99,7 +99,7 @@ public class OAuthProviderServiceTests
         var configWithMock = new AuthServiceConfiguration { MockProviders = true };
         var service = new OAuthProviderService(
             _mockStateStoreFactory.Object,
-            _mockAccountsClient.Object,
+            _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
             configWithMock,
             _mockMessageBus.Object,
@@ -302,7 +302,7 @@ public class OAuthProviderServiceTests
             .ReturnsAsync(existingAccountId.ToString());
 
         // Account exists
-        _mockAccountsClient.Setup(c => c.GetAccountAsync(
+        _mockAccountClient.Setup(c => c.GetAccountAsync(
             It.Is<GetAccountRequest>(r => r.AccountId == existingAccountId),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingAccount);
@@ -339,7 +339,7 @@ public class OAuthProviderServiceTests
             .ReturnsAsync((string?)null);
 
         // Create account succeeds
-        _mockAccountsClient.Setup(c => c.CreateAccountAsync(
+        _mockAccountClient.Setup(c => c.CreateAccountAsync(
             It.IsAny<CreateAccountRequest>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(newAccount);
@@ -357,7 +357,7 @@ public class OAuthProviderServiceTests
 
         // Assert
         Assert.NotNull(result);
-        _mockAccountsClient.Verify(c => c.CreateAccountAsync(
+        _mockAccountClient.Verify(c => c.CreateAccountAsync(
             It.Is<CreateAccountRequest>(r => r.Email == "new@example.com"),
             It.IsAny<CancellationToken>()), Times.Once);
     }

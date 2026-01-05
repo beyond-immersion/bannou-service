@@ -4,7 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
-using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
@@ -31,7 +31,7 @@ public partial class VoiceService : IVoiceService
     private readonly IP2PCoordinator _p2pCoordinator;
     private readonly IScaledTierCoordinator _scaledTierCoordinator;
     private readonly IClientEventPublisher _clientEventPublisher;
-    private readonly IPermissionsClient _permissionsClient;
+    private readonly IPermissionClient _permissionClient;
 
     private const string STATE_STORE = "voice-statestore";
     private const string ROOM_KEY_PREFIX = "voice:room:";
@@ -49,7 +49,7 @@ public partial class VoiceService : IVoiceService
     /// <param name="scaledTierCoordinator">Scaled tier coordinator for SFU-based conferencing.</param>
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     /// <param name="clientEventPublisher">Client event publisher for WebSocket push events.</param>
-    /// <param name="permissionsClient">Permissions client for setting voice:ringing state.</param>
+    /// <param name="permissionClient">Permissions client for setting voice:ringing state.</param>
     public VoiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -60,7 +60,7 @@ public partial class VoiceService : IVoiceService
         IScaledTierCoordinator scaledTierCoordinator,
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
-        IPermissionsClient permissionsClient)
+        IPermissionClient permissionClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -70,7 +70,7 @@ public partial class VoiceService : IVoiceService
         _p2pCoordinator = p2pCoordinator;
         _scaledTierCoordinator = scaledTierCoordinator;
         _clientEventPublisher = clientEventPublisher;
-        _permissionsClient = permissionsClient;
+        _permissionClient = permissionClient;
 
         // Register event handlers via partial class (VoiceServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -332,7 +332,7 @@ public partial class VoiceService : IVoiceService
             {
                 try
                 {
-                    await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                     {
                         SessionId = Guid.Parse(body.SessionId),
                         ServiceId = "voice",
@@ -634,7 +634,7 @@ public partial class VoiceService : IVoiceService
         {
             try
             {
-                await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
                 {
                     SessionId = Guid.Parse(sessionId),
                     ServiceId = "voice",

@@ -5,11 +5,11 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
-using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Protocol;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Voice;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,8 +35,8 @@ public partial class GameSessionService : IGameSessionService
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly IVoiceClient _voiceClient;
-    private readonly IPermissionsClient _permissionsClient;
-    private readonly ISubscriptionsClient _subscriptionsClient;
+    private readonly IPermissionClient _permissionClient;
+    private readonly ISubscriptionClient _subscriptionClient;
     private readonly IClientEventPublisher _clientEventPublisher;
 
     private const string STATE_STORE = "game-session-statestore";
@@ -117,8 +117,8 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
     /// <param name="clientEventPublisher">Client event publisher for pushing events to WebSocket clients.</param>
     /// <param name="voiceClient">Voice client for voice room coordination.</param>
-    /// <param name="permissionsClient">Permissions client for setting game-session:in_game state.</param>
-    /// <param name="subscriptionsClient">Subscriptions client for fetching account subscriptions.</param>
+    /// <param name="permissionClient">Permissions client for setting game-session:in_game state.</param>
+    /// <param name="subscriptionClient">Subscriptions client for fetching account subscriptions.</param>
     public GameSessionService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -127,8 +127,8 @@ public partial class GameSessionService : IGameSessionService
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
         IVoiceClient voiceClient,
-        IPermissionsClient permissionsClient,
-        ISubscriptionsClient subscriptionsClient)
+        IPermissionClient permissionClient,
+        ISubscriptionClient subscriptionClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -136,8 +136,8 @@ public partial class GameSessionService : IGameSessionService
         _configuration = configuration;
         _clientEventPublisher = clientEventPublisher;
         _voiceClient = voiceClient;
-        _permissionsClient = permissionsClient;
-        _subscriptionsClient = subscriptionsClient;
+        _permissionClient = permissionClient;
+        _subscriptionClient = subscriptionClient;
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -472,7 +472,7 @@ public partial class GameSessionService : IGameSessionService
             // Set game-session:in_game state via permissions service (required for API access)
             try
             {
-                await _permissionsClient.UpdateSessionStateAsync(new Permissions.SessionStateUpdate
+                await _permissionClient.UpdateSessionStateAsync(new Permission.SessionStateUpdate
                 {
                     SessionId = body.SessionId,
                     ServiceId = "game-session",
@@ -687,7 +687,7 @@ public partial class GameSessionService : IGameSessionService
             // Clear game-session:in_game state via permissions service
             try
             {
-                await _permissionsClient.ClearSessionStateAsync(new Permissions.ClearSessionStateRequest
+                await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
                 {
                     SessionId = body.SessionId,
                     ServiceId = "game-session"
@@ -1173,7 +1173,7 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var response = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+            var response = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
                 new QueryCurrentSubscriptionsRequest { AccountId = accountId });
 
             if (response?.Subscriptions != null && response.Subscriptions.Count > 0)

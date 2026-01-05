@@ -1,0 +1,1290 @@
+openapi: 3.0.0
+info:
+  title: Bannou Account Service API
+  description: |
+    Internal account management service (CRUD operations only, never exposed to internet).
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+  version: 2.0.0
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+# NOTE: x-lifecycle moved to accounts-events.yaml
+
+paths:
+  /account/list:
+    post:
+      summary: List accounts with filtering
+      operationId: listAccounts
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListAccountsRequest'
+      responses:
+        '200':
+          description: Accounts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountListResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListAccountsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListAccountsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to list accounts with optional filtering\",\n            \"additionalProperties\": false,\n          \
+        \  \"properties\": {\n                \"email\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\": \"Filter
+        accounts by email address\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Filter accounts by
+        display name\"\n                },\n                \"provider\": {\n                    \"allOf\": [\n          \
+        \              {\n                            \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Filter accounts
+        by authentication provider\"\n                },\n                \"verified\": {\n                    \"type\": \"\
+        boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Filter accounts by email
+        verification status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\":
+        \"Page number for pagination\"\n                },\n                \"pageSize\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"\
+        default\": 20,\n                    \"description\": \"Number of accounts per page\"\n                }\n        \
+        \    }\n        },\n        \"AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        All authentication provider types including email\",\n            \"enum\": [\n                \"email\",\n      \
+        \          \"google\",\n                \"discord\",\n                \"twitch\",\n                \"steam\"\n   \
+        \         ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountListResponse\"\
+        ,\n    \"$defs\": {\n        \"AccountListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Paginated list of accounts\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"accounts\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"accounts\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AccountResponse\"\n      \
+        \              },\n                    \"description\": \"List of accounts for the current page\"\n              \
+        \  },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total number of accounts matching the filter\"\n                },\n                \"page\": {\n            \
+        \        \"type\": \"integer\",\n                    \"description\": \"Current page number\"\n                },\n\
+        \                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of accounts per page\"\n                },\n                \"hasNextPage\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether there are more pages after this one\"\n     \
+        \           },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether there are pages before this one\"\n                }\n            }\n        },\n\
+        \        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Account information
+        response\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
+        ,\n                \"email\",\n                \"createdAt\",\n                \"emailVerified\",\n              \
+        \  \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"email\",\n                    \"description\": \"Email address associated with
+        the account\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List accounts with filtering\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAccounts\"\n}"
+  /account/create:
+    post:
+      summary: Create new account
+      operationId: createAccount
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '200':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          description: Invalid account data
+        '409':
+          description: Account already exists
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateAccountRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateAccountRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to create a new account\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"email\"\n            ],\n            \"properties\": {\n                \"email\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\"\
+        : \"Email address for the new account\"\n                },\n                \"passwordHash\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-hashed
+        password from Auth service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                \
+        \    \"description\": \"Display name for the account\"\n                },\n                \"emailVerified\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether the email address has been verified\"\n                },\n                \"roles\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n  \
+        \                  },\n                    \"nullable\": true,\n                    \"description\": \"List of roles
+        assigned to the account (null defaults to empty)\"\n                },\n                \"metadata\": {\n        \
+        \            \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Custom metadata associated with the account\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
+        ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"accountId\",\n                \"email\",\n                \"createdAt\",\n                \"emailVerified\"\
+        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address
+        associated with the account\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name for the
+        account\"\n                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create new account\",\n    \"description\": \"\",\n    \"tags\": [\n  \
+        \      \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createAccount\"\n}"
+  /account/get:
+    post:
+      summary: Get account by ID
+      operationId: getAccount
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountRequest'
+      responses:
+        '200':
+          description: Account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetAccountRequest\"\
+        ,\n    \"$defs\": {\n        \"GetAccountRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get a specific account by ID\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\"\n            ],\n            \"properties\": {\n                \"accountId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the account to retrieve\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
+        ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"accountId\",\n                \"email\",\n                \"createdAt\",\n                \"emailVerified\"\
+        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address
+        associated with the account\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name for the
+        account\"\n                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get account by ID\",\n    \"description\": \"\",\n    \"tags\": [\n   \
+        \     \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccount\"\n}"
+  /account/update:
+    post:
+      summary: Update account
+      operationId: updateAccount
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountRequest'
+      responses:
+        '200':
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+        '400':
+          description: Invalid update data
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateAccountRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateAccountRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update an existing account\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\"\n            ],\n            \"properties\": {\n                \"accountId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the account to update\"\n                },\n                \"displayName\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
+        \          \"description\": \"New display name for the account\"\n                },\n                \"roles\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
+        Updated list of roles for the account (null to keep unchanged)\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Updated custom metadata for the account\"\n \
+        \               }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
+        ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"accountId\",\n                \"email\",\n                \"createdAt\",\n                \"emailVerified\"\
+        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address
+        associated with the account\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name for the
+        account\"\n                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update account\",\n    \"description\": \"\",\n    \"tags\": [\n      \
+        \  \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateAccount\"\n}"
+  /account/delete:
+    post:
+      summary: Delete account
+      operationId: deleteAccount
+      tags:
+      - Account Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAccountRequest'
+      responses:
+        '200':
+          description: Account deleted successfully
+        '404':
+          description: Account not found
+        '409':
+          description: Account cannot be deleted (active sessions exist)
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAccountRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteAccountRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to delete a specific account\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\"\n            ],\n            \"properties\": {\n                \"accountId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the account to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete account\",\n    \"description\": \"\",\n    \"tags\": [\n      \
+        \  \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteAccount\"\n}"
+  /account/by-email:
+    post:
+      summary: Get account by email
+      operationId: getAccountByEmail
+      tags:
+      - Account Lookup
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountByEmailRequest'
+      responses:
+        '200':
+          description: Account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetAccountByEmailRequest\"\
+        ,\n    \"$defs\": {\n        \"GetAccountByEmailRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get account by email address\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"email\"\n            ],\n            \"properties\": {\n                \"email\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\"\
+        : \"Email address to look up\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
+        ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"accountId\",\n                \"email\",\n                \"createdAt\",\n                \"emailVerified\"\
+        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address
+        associated with the account\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name for the
+        account\"\n                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get account by email\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByEmail\"\n}"
+  /account/auth-methods/list:
+    post:
+      summary: Get authentication methods for account
+      operationId: getAuthMethods
+      tags:
+      - Authentication Methods
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAuthMethodsRequest'
+      responses:
+        '200':
+          description: Authentication methods retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMethodsResponse'
+        '404':
+          description: Account not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetAuthMethodsRequest\"\
+        ,\n    \"$defs\": {\n        \"GetAuthMethodsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get authentication methods for an account\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"accountId\"\n            ],\n            \"properties\": {\n           \
+        \     \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"ID of the account\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthMethodsResponse\"\
+        ,\n    \"$defs\": {\n        \"AuthMethodsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing list of authentication methods\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"authMethods\"\n            ],\n            \"properties\": {\n           \
+        \     \"authMethods\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"$ref\": \"#/$defs/AuthMethodInfo\"\n                    },\n                    \"description\": \"\
+        List of authentication methods linked to the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get authentication methods for account\",\n    \"description\": \"\",\n\
+        \    \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        getAuthMethods\"\n}"
+  /account/auth-methods/add:
+    post:
+      summary: Add authentication method to account
+      operationId: addAuthMethod
+      tags:
+      - Authentication Methods
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAuthMethodRequest'
+      responses:
+        '200':
+          description: Authentication method added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMethodResponse'
+        '404':
+          description: Account not found
+        '409':
+          description: Authentication method already exists
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddAuthMethodRequest\"\
+        ,\n    \"$defs\": {\n        \"AddAuthMethodRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to add an authentication method to an account\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"accountId\",\n                \"provider\"\n            ],\n          \
+        \  \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"ID of the account to add auth method to\"\n \
+        \               },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/OAuthProvider\",\n  \
+        \                  \"description\": \"OAuth provider type to add\"\n                },\n                \"externalId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the OAuth provider\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Display name from the OAuth provider\"\n                }\n            }\n        },\n        \"OAuthProvider\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"OAuth provider types (excludes email)\",\n    \
+        \        \"enum\": [\n                \"google\",\n                \"discord\",\n                \"twitch\",\n   \
+        \             \"steam\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthMethodResponse\"\
+        ,\n    \"$defs\": {\n        \"AuthMethodResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after adding an authentication method\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"methodId\",\n                \"provider\",\n                \"linkedAt\"\n      \
+        \      ],\n            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authentication
+        method\"\n                },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/OAuthProvider\"\
+        ,\n                    \"description\": \"OAuth provider type\"\n                },\n                \"externalId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the OAuth provider\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Display name from the OAuth provider\"\n                },\n                \"linkedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp
+        when the authentication method was linked\"\n                }\n            }\n        },\n        \"OAuthProvider\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"OAuth provider types (excludes email)\",\n\
+        \            \"enum\": [\n                \"google\",\n                \"discord\",\n                \"twitch\",\n\
+        \                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Add authentication method to account\",\n    \"description\": \"\",\n \
+        \   \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"addAuthMethod\"\
+        \n}"
+  /account/auth-methods/remove:
+    post:
+      summary: Remove authentication method from account
+      operationId: removeAuthMethod
+      tags:
+      - Authentication Methods
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveAuthMethodRequest'
+      responses:
+        '200':
+          description: Authentication method removed successfully
+        '404':
+          description: Account or method not found
+        '400':
+          description: Cannot remove last authentication method
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveAuthMethodRequest\"\
+        ,\n    \"$defs\": {\n        \"RemoveAuthMethodRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to remove an authentication method from an account\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\",\n                \"methodId\"\n            ],\n     \
+        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"ID of the account\"\n                },\n\
+        \                \"methodId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the authentication method to remove\"\n                }\n       \
+        \     }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Remove authentication method from account\",\n    \"description\": \"\"\
+        ,\n    \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        removeAuthMethod\"\n}"
+  /account/by-provider:
+    post:
+      summary: Get account by external provider ID
+      operationId: getAccountByProvider
+      tags:
+      - Account Lookup
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountByProviderRequest'
+      responses:
+        '200':
+          description: Account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetAccountByProviderRequest\"\
+        ,\n    \"$defs\": {\n        \"GetAccountByProviderRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to get account by external provider ID\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"provider\",\n                \"externalId\"\n            ],\n    \
+        \        \"properties\": {\n                \"provider\": {\n                    \"$ref\": \"#/$defs/OAuthProvider\"\
+        ,\n                    \"description\": \"OAuth provider type\"\n                },\n                \"externalId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"External ID from the provider\"\
+        \n                }\n            }\n        },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"OAuth provider types (excludes email)\",\n            \"enum\": [\n              \
+        \  \"google\",\n                \"discord\",\n                \"twitch\",\n                \"steam\"\n           \
+        \ ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
+        ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"accountId\",\n                \"email\",\n                \"createdAt\",\n                \"emailVerified\"\
+        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address
+        associated with the account\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name for the
+        account\"\n                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get account by external provider ID\",\n    \"description\": \"\",\n  \
+        \  \"tags\": [\n        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByProvider\"\
+        \n}"
+  /account/profile/update:
+    post:
+      summary: Update account profile
+      operationId: updateProfile
+      tags:
+      - Profile Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateProfileRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateProfileRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update an account profile\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\"\n            ],\n            \"properties\": {\n                \"accountId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the account to update\"\n                },\n                \"displayName\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
+        \          \"description\": \"New display name for the account\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Updated custom metadata for the account\"\n \
+        \               }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
+        ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"accountId\",\n                \"email\",\n                \"createdAt\",\n                \"emailVerified\"\
+        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address
+        associated with the account\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name for the
+        account\"\n                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Custom metadata associated with the account\"\n                }\n            }\n        },\n        \"AuthMethodInfo\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
+        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
+        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
+        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
+        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update account profile\",\n    \"description\": \"\",\n    \"tags\": [\n\
+        \        \"Profile Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateProfile\"\n}"
+  /account/password/update:
+    post:
+      summary: Update account password hash
+      operationId: updatePasswordHash
+      tags:
+      - Account Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '200':
+          description: Password hash updated successfully
+        '404':
+          description: Account not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdatePasswordRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdatePasswordRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update an account password\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\",\n                \"passwordHash\"\n            ],\n            \"properties\"\
+        : {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"ID of the account to update\"\n                },\n            \
+        \    \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"description\": \"New pre-hashed
+        password from Auth service\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Update account password hash\",\n    \"description\": \"\",\n    \"tags\"\
+        : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updatePasswordHash\"\
+        \n}"
+  /account/verification/update:
+    post:
+      summary: Update email verification status
+      operationId: updateVerificationStatus
+      tags:
+      - Account Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVerificationRequest'
+      responses:
+        '200':
+          description: Verification status updated successfully
+        '404':
+          description: Account not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateVerificationRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateVerificationRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update email verification status\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\",\n                \"emailVerified\"\n            ],\n            \"properties\"\
+        : {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"ID of the account to update\"\n                },\n            \
+        \    \"emailVerified\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"New
+        email verification status\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Update email verification status\",\n    \"description\": \"\",\n    \"\
+        tags\": [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateVerificationStatus\"\
+        \n}"
+components:
+  schemas:
+    # Shared Enum Definitions (consolidated to avoid duplication)
+    AuthProvider:
+      type: string
+      description: All authentication provider types including email
+      enum: [email, google, discord, twitch, steam]
+
+    OAuthProvider:
+      type: string
+      description: OAuth provider types (excludes email)
+      enum: [google, discord, twitch, steam]
+
+    # Request Models for POST-only pattern
+    ListAccountsRequest:
+      type: object
+      description: Request to list accounts with optional filtering
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Filter accounts by email address
+        displayName:
+          type: string
+          nullable: true
+          description: Filter accounts by display name
+        provider:
+          allOf:
+          - $ref: '#/components/schemas/AuthProvider'
+          nullable: true
+          description: Filter accounts by authentication provider
+        verified:
+          type: boolean
+          nullable: true
+          description: Filter accounts by email verification status
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of accounts per page
+
+    GetAccountRequest:
+      type: object
+      description: Request to get a specific account by ID
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to retrieve
+
+    DeleteAccountRequest:
+      type: object
+      description: Request to delete a specific account
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to delete
+
+    GetAccountByEmailRequest:
+      type: object
+      description: Request to get account by email address
+      additionalProperties: false
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address to look up
+
+    GetAuthMethodsRequest:
+      type: object
+      description: Request to get authentication methods for an account
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account
+
+    RemoveAuthMethodRequest:
+      type: object
+      description: Request to remove an authentication method from an account
+      additionalProperties: false
+      required:
+      - accountId
+      - methodId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account
+        methodId:
+          type: string
+          format: uuid
+          description: ID of the authentication method to remove
+
+    GetAccountByProviderRequest:
+      type: object
+      description: Request to get account by external provider ID
+      additionalProperties: false
+      required:
+      - provider
+      - externalId
+      properties:
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+          description: OAuth provider type
+        externalId:
+          type: string
+          description: External ID from the provider
+
+    CreateAccountRequest:
+      type: object
+      description: Request to create a new account
+      additionalProperties: false
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address for the new account
+        passwordHash:
+          type: string
+          nullable: true
+          description: Pre-hashed password from Auth service
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Display name for the account
+        emailVerified:
+          type: boolean
+          default: false
+          description: Whether the email address has been verified
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of roles assigned to the account (null defaults to empty)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Custom metadata associated with the account
+
+    UpdateAccountRequest:
+      type: object
+      description: Request to update an existing account
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: New display name for the account
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Updated list of roles for the account (null to keep unchanged)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Updated custom metadata for the account
+
+    UpdateProfileRequest:
+      type: object
+      description: Request to update an account profile
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: New display name for the account
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Updated custom metadata for the account
+
+    UpdatePasswordRequest:
+      type: object
+      description: Request to update an account password
+      additionalProperties: false
+      required:
+      - accountId
+      - passwordHash
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
+        passwordHash:
+          type: string
+          description: New pre-hashed password from Auth service
+
+    UpdateVerificationRequest:
+      type: object
+      description: Request to update email verification status
+      additionalProperties: false
+      required:
+      - accountId
+      - emailVerified
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
+        emailVerified:
+          type: boolean
+          description: New email verification status
+
+    AddAuthMethodRequest:
+      type: object
+      description: Request to add an authentication method to an account
+      additionalProperties: false
+      required:
+      - accountId
+      - provider
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to add auth method to
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+          description: OAuth provider type to add
+        externalId:
+          type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
+          description: External user ID from the OAuth provider
+        displayName:
+          type: string
+          nullable: true
+          description: Display name from the OAuth provider
+
+    # Response Models
+    AccountResponse:
+      type: object
+      description: Account information response
+      additionalProperties: false
+      required:
+      - accountId
+      - email
+      - createdAt
+      - emailVerified
+      - roles
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Unique identifier for the account
+        email:
+          type: string
+          format: email
+          description: Email address associated with the account
+        displayName:
+          type: string
+          nullable: true
+          description: Display name for the account
+        passwordHash:
+          type: string
+          nullable: true
+          description: BCrypt hashed password for authentication
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the account was last updated
+        emailVerified:
+          type: boolean
+          description: Whether the email address has been verified
+        roles:
+          type: array
+          items:
+            type: string
+          description: List of roles assigned to the account
+        authMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthMethodInfo'
+          description: List of authentication methods linked to the account
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Custom metadata associated with the account
+
+    AuthMethodInfo:
+      type: object
+      description: Information about a linked authentication method
+      additionalProperties: false
+      required:
+      - provider
+      - linkedAt
+      properties:
+        methodId:
+          type: string
+          format: uuid
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
+          description: Unique identifier for the authentication method
+        provider:
+          $ref: '#/components/schemas/AuthProvider'
+          description: Authentication provider type
+        externalId:
+          type: string
+          nullable: true
+          description: External user ID from the authentication provider
+        displayName:
+          type: string
+          nullable: true
+          description: Display name from the authentication provider
+        linkedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the authentication method was linked
+
+    AuthMethodResponse:
+      type: object
+      description: Response after adding an authentication method
+      additionalProperties: false
+      required:
+      - methodId
+      - provider
+      - linkedAt
+      properties:
+        methodId:
+          type: string
+          format: uuid
+          description: Unique identifier for the authentication method
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+          description: OAuth provider type
+        externalId:
+          type: string
+          # NRT: Optional string MUST be nullable (Rule 2)
+          nullable: true
+          description: External user ID from the OAuth provider
+        displayName:
+          type: string
+          nullable: true
+          description: Display name from the OAuth provider
+        linkedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the authentication method was linked
+
+    AuthMethodsResponse:
+      type: object
+      description: Response containing list of authentication methods
+      additionalProperties: false
+      required:
+      - authMethods
+      properties:
+        authMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthMethodInfo'
+          description: List of authentication methods linked to the account
+
+    AccountListResponse:
+      type: object
+      description: Paginated list of accounts
+      additionalProperties: false
+      required:
+      - accounts
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountResponse'
+          description: List of accounts for the current page
+        totalCount:
+          type: integer
+          description: Total number of accounts matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of accounts per page
+        hasNextPage:
+          type: boolean
+          description: Whether there are more pages after this one
+        hasPreviousPage:
+          type: boolean
+          description: Whether there are pages before this one

@@ -93,7 +93,7 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Additional services available to authenticated connections
     /// Environment variable: CONNECT_AUTHENTICATED_SERVICES
     /// </summary>
-    public string[] AuthenticatedServices { get; set; } = ["accounts", "behavior", "permissions", "gamesession"];
+    public string[] AuthenticatedServices { get; set; } = ["account", "behavior", "permission", "gamesession"];
 
     /// <summary>
     /// Enable routing messages between WebSocket clients

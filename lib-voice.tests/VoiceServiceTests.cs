@@ -3,7 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
-using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -29,7 +29,7 @@ public class VoiceServiceTests
     private readonly Mock<IP2PCoordinator> _mockP2PCoordinator;
     private readonly Mock<IScaledTierCoordinator> _mockScaledTierCoordinator;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
-    private readonly Mock<IPermissionsClient> _mockPermissionsClient;
+    private readonly Mock<IPermissionClient> _mockPermissionClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public VoiceServiceTests()
@@ -44,7 +44,7 @@ public class VoiceServiceTests
         _mockP2PCoordinator = new Mock<IP2PCoordinator>();
         _mockScaledTierCoordinator = new Mock<IScaledTierCoordinator>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
-        _mockPermissionsClient = new Mock<IPermissionsClient>();
+        _mockPermissionClient = new Mock<IPermissionClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup state store factory to return typed stores
@@ -70,7 +70,7 @@ public class VoiceServiceTests
             _mockScaledTierCoordinator.Object,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockPermissionsClient.Object);
+            _mockPermissionClient.Object);
     }
 
     #region Constructor Tests
@@ -501,7 +501,7 @@ public class VoiceServiceTests
     public async Task JoinVoiceRoom_WhenExistingPeers_SetsVoiceRingingStateForJoiningSession()
     {
         // Arrange - joining session should get voice:ringing state when there are existing peers (QUALITY TENETS)
-        var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
+        var mockPermissionClient = new Mock<BeyondImmersion.BannouService.Permission.IPermissionClient>();
         var service = new VoiceService(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
@@ -512,7 +512,7 @@ public class VoiceServiceTests
             _mockScaledTierCoordinator.Object,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            mockPermissionsClient.Object);
+            mockPermissionClient.Object);
 
         var roomId = Guid.NewGuid();
         var joiningSessionGuid = Guid.NewGuid();
@@ -583,8 +583,8 @@ public class VoiceServiceTests
         Assert.Single(result.Peers);
 
         // Verify voice:ringing state was set for the JOINING session (so they can call /voice/peer/answer)
-        mockPermissionsClient.Verify(p => p.UpdateSessionStateAsync(
-            It.Is<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(u =>
+        mockPermissionClient.Verify(p => p.UpdateSessionStateAsync(
+            It.Is<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(u =>
                 u.SessionId == joiningSessionGuid &&
                 u.ServiceId == "voice" &&
                 u.NewState == "ringing"),

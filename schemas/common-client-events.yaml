@@ -212,7 +212,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "permissions.session_capabilities"
+          default: "permission.session_capabilities"
           description: Fixed event type identifier (internal, not forwarded to client)
         sessionId:
           type: string

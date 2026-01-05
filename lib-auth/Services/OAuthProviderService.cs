@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 public class OAuthProviderService : IOAuthProviderService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly IAccountsClient _accountsClient;
+    private readonly IAccountClient _accountClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
@@ -39,14 +39,14 @@ public class OAuthProviderService : IOAuthProviderService
     /// </summary>
     public OAuthProviderService(
         IStateStoreFactory stateStoreFactory,
-        IAccountsClient accountsClient,
+        IAccountClient accountClient,
         IHttpClientFactory httpClientFactory,
         AuthServiceConfiguration configuration,
         IMessageBus messageBus,
         ILogger<OAuthProviderService> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
+        _accountClient = accountClient ?? throw new ArgumentNullException(nameof(accountClient));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -405,7 +405,7 @@ public class OAuthProviderService : IOAuthProviderService
             {
                 try
                 {
-                    var account = await _accountsClient.GetAccountAsync(
+                    var account = await _accountClient.GetAccountAsync(
                         new GetAccountRequest { AccountId = existingAccountId },
                         cancellationToken);
                     _logger.LogInformation("Found existing account {AccountId} for {Provider} user {ProviderId}",
@@ -431,7 +431,7 @@ public class OAuthProviderService : IOAuthProviderService
             AccountResponse? newAccount;
             try
             {
-                newAccount = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+                newAccount = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
@@ -439,7 +439,7 @@ public class OAuthProviderService : IOAuthProviderService
                 {
                     try
                     {
-                        newAccount = await _accountsClient.GetAccountByEmailAsync(
+                        newAccount = await _accountClient.GetAccountByEmailAsync(
                             new GetAccountByEmailRequest { Email = userInfo.Email },
                             cancellationToken);
                         _logger.LogInformation("Found existing account by email {Email} for {Provider} user",

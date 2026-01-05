@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Permission Service Events
+  description: |
+    Event models for permissions service RabbitMQ pub/sub via MassTransit.
+    Handles session state management and capability compilation.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Service registration - services publish their API permissions on startup
+    - topic: permission.service-registered
+      event: ServiceRegistrationEvent
+      handler: HandleServiceRegistration
+    # Session state changes from services (e.g., game-session state transitions)
+    - topic: permission.session-state-changed
+      event: SessionStateChangeEvent
+      handler: HandleSessionStateChange
+    # Session updates from Auth service (role/authorization changes)
+    - topic: session.updated
+      event: SessionUpdatedEvent
+      handler: HandleSessionUpdated
+    # Session connected - triggers initial capability delivery
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+    # Session disconnected - removes from activeConnections
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+  x-event-publications:
+    # Permission capability updates sent to Connect service
+    - topic: permission.capability-update
+      event: PermissionCapabilityUpdate
+      description: Published when session capabilities are compiled or updated
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
+    # NOTE: Events Permissions subscribes to (ServiceRegistrationEvent, SessionConnectedEvent, etc.)
+    # are defined in their canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
+
+    PermissionCapabilityUpdate:
+      type: object
+      additionalProperties: false
+      description: |
+        Event published to specific Connect service instances (CONNECT_{session_id} channel).
+        Contains compiled permission capabilities for a session with optional delta updates.
+      required:
+        - sessionId
+        - version
+        - updateType
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Session ID that had capability changes
+        version:
+          type: integer
+          description: New capability version number (increments on each update)
+        updateType:
+          type: string
+          enum: [full, delta]
+          description: Type of update - full capabilities or delta changes
+        fullCapabilities:
+          type: object
+          nullable: true  # NRT: Optional property MUST be nullable
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: |
+            Complete capability map (for full updates or initial connection).
+            Key: service_id, Value: array of allowed endpoints.
+            Example: {"accounts": ["GET:/accounts", "PUT:/accounts/{id}"]}
+        addedCapabilities:
+          type: object
+          nullable: true  # NRT: Optional property MUST be nullable
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: |
+            New capabilities added to the session (for delta updates).
+            Same format as fullCapabilities.
+        removedCapabilities:
+          type: object
+          nullable: true  # NRT: Optional property MUST be nullable
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: |
+            Capabilities removed from the session (for delta updates).
+            Same format as fullCapabilities.
+        generatedAt:
+          type: string
+          format: date-time
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: When these capabilities were compiled
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: When these capabilities expire and need refresh
+        reason:
+          type: string
+          nullable: true  # NRT: Optional property MUST be nullable
+          enum:
+            - session_created
+            - session_state_changed
+            - role_changed
+            - service_registered
+            - manual_refresh
+          description: Reason for the capability update
+
+    SessionStateChangeEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published by services when a session's state changes within that service.
+        Triggers permission recompilation in the Permissions service.
+      required:
+        - sessionId
+        - serviceId
+        - newState
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Session ID that had state change
+        serviceId:
+          type: string
+          description: Service where the state changed (e.g., "auth", "game-session")
+        previousState:
+          type: string
+          description: Previous state (null for initial state)
+          nullable: true
+        newState:
+          type: string
+          description: New state (e.g., "authenticated", "in_game", "character_selected")
+        metadata:
+          type: object
+          nullable: true  # NRT: Optional property MUST be nullable
+          additionalProperties: true
+          description: Additional context about the state change

@@ -36,7 +36,7 @@ Assert.Equal(expectedAccountId, typedEvent.AccountId);
 **Why it's bad**: Implementation could publish wrong event type, wrong data, or wrong topic - test still passes.
 
 **Files affected**:
-- `lib-accounts.tests/AccountsEventPublisherTests.cs`
+- `lib-account.tests/AccountEventPublisherTests.cs`
 - `lib-actor.tests/ActorServiceTests.cs`
 - `lib-species.tests/SpeciesServiceTests.cs`
 - `lib-relationship.tests/RelationshipServiceTests.cs`
@@ -73,7 +73,7 @@ public async Task CompleteUploadAsync_WithValidSingleUpload_ShouldReturnCreated(
 
 **Files affected**:
 - `lib-asset.tests/AssetServiceTests.cs`
-- `lib-permissions.tests/PermissionsServiceTests.cs`
+- `lib-permission.tests/PermissionServiceTests.cs`
 - `lib-relationship-type.tests/RelationshipTypeServiceTests.cs`
 
 ---
@@ -264,7 +264,7 @@ _mockStore.Setup(x => x.SaveAsync(
 
 ---
 
-### lib-accounts.tests (40 tests)
+### lib-account.tests (40 tests)
 **Summary**: G=15, T=8, P=5, W=12
 
 | Test | Cat | Notes |
@@ -274,11 +274,11 @@ _mockStore.Setup(x => x.SaveAsync(
 | ListAccountsAsync_With*Parameter_* (x4) | G | Tests normalization logic |
 | CreateAccountAsync_ShouldGenerate*_* (x5) | G | Tests ID uniqueness, timestamps |
 | Constructor_WithNull*_ShouldThrow (x6) | W | DI null-checks |
-| AccountsPermissionRegistration_* (x4) | T | Brittle counts |
+| AccountPermissionRegistration_* (x4) | T | Brittle counts |
 
 ---
 
-### lib-accounts.tests/AccountsEventPublisherTests.cs (15 tests)
+### lib-account.tests/AccountEventPublisherTests.cs (15 tests)
 **Summary**: G=10, T=3, W=2
 
 | Test | Cat | Notes |
@@ -291,7 +291,7 @@ _mockStore.Setup(x => x.SaveAsync(
 
 ---
 
-### lib-permissions.tests (45 tests)
+### lib-permission.tests (45 tests)
 **Summary**: G=35, T=2, W=8
 
 | Test | Cat | Notes |
@@ -440,17 +440,17 @@ _mockStore.Setup(x => x.SaveAsync(
 
 ---
 
-### lib-subscriptions.tests
+### lib-subscription.tests
 | Test File | Category | Notes |
 |-----------|----------|-------|
-| SubscriptionsServiceTests.cs | G | Good balance |
+| SubscriptionServiceTests.cs | G | Good balance |
 
 ---
 
-### lib-servicedata.tests
+### lib-service.tests
 | Test File | Category | Notes |
 |-----------|----------|-------|
-| ServicedataServiceTests.cs | G | Good state capture |
+| ServiceServiceTests.cs | G | Good state capture |
 
 ---
 

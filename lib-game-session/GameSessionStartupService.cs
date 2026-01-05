@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// </summary>
 public class GameSessionStartupService : BackgroundService
 {
-    private readonly ISubscriptionsClient _subscriptionsClient;
+    private readonly ISubscriptionClient _subscriptionClient;
     private readonly ILogger<GameSessionStartupService> _logger;
 
     /// <summary>
@@ -26,13 +26,13 @@ public class GameSessionStartupService : BackgroundService
     /// <summary>
     /// Creates a new GameSessionStartupService instance.
     /// </summary>
-    /// <param name="subscriptionsClient">Subscriptions client for fetching account subscriptions.</param>
+    /// <param name="subscriptionClient">Subscriptions client for fetching account subscriptions.</param>
     /// <param name="logger">Logger for this service.</param>
     public GameSessionStartupService(
-        ISubscriptionsClient subscriptionsClient,
+        ISubscriptionClient subscriptionClient,
         ILogger<GameSessionStartupService> logger)
     {
-        _subscriptionsClient = subscriptionsClient;
+        _subscriptionClient = subscriptionClient;
         _logger = logger;
     }
 
@@ -72,7 +72,7 @@ public class GameSessionStartupService : BackgroundService
             {
                 _logger.LogDebug("Fetching accounts subscribed to {StubName}...", stubName);
 
-                var response = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+                var response = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
                     new QueryCurrentSubscriptionsRequest { StubName = stubName },
                     cancellationToken);
 

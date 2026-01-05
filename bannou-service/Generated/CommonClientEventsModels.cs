@@ -236,7 +236,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// Fixed event type identifier (internal, not forwarded to client)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "permissions.session_capabilities";
+    public override string EventName { get; set; } = "permission.session_capabilities";
 
     /// <summary>
     /// Session ID these capabilities apply to

@@ -197,7 +197,7 @@ public class Program
         }
 
         // Phase 2: Wait for mesh to be ready by making a warmup login attempt
-        // The login endpoint calls AccountsClient through mesh to look up the account, so this
+        // The login endpoint calls AccountClient through mesh to look up the account, so this
         // exercises the full mesh dependency chain. We use a non-existent account to get 401,
         // which avoids publishing any events (unlike registration which publishes account.created).
         // We expect 401 (not found) when working, but 500/502/503 when mesh isn't ready yet.
@@ -572,8 +572,8 @@ public class Program
         // Include at least one endpoint from each service that has edge tests.
         var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "/accounts/delete",   // Accounts service - admin role, needed for account deletion tests
-            "/accounts",          // Accounts service - admin role, list/get operations
+            "/account/delete",    // Account service - admin role, needed for account deletion tests
+            "/account",           // Account service - admin role, list/get operations
             "/realm/create",      // Realm service - admin role
             "/location/create",   // Location service - admin role
             "/species/create",    // Species service - admin role
@@ -847,7 +847,7 @@ public class Program
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         // load subscription websocket tests
-        var subscriptionTestHandler = new SubscriptionsWebSocketTestHandler();
+        var subscriptionTestHandler = new SubscriptionWebSocketTestHandler();
         foreach (ServiceTest serviceTest in subscriptionTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 

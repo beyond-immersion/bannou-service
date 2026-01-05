@@ -1,10 +1,10 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 public class TokenService : ITokenService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly ISubscriptionsClient _subscriptionsClient;
+    private readonly ISubscriptionClient _subscriptionClient;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
@@ -32,14 +32,14 @@ public class TokenService : ITokenService
     /// </summary>
     public TokenService(
         IStateStoreFactory stateStoreFactory,
-        ISubscriptionsClient subscriptionsClient,
+        ISubscriptionClient subscriptionClient,
         ISessionService sessionService,
         AuthServiceConfiguration configuration,
         IMessageBus messageBus,
         ILogger<TokenService> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
+        _subscriptionClient = subscriptionClient ?? throw new ArgumentNullException(nameof(subscriptionClient));
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -71,7 +71,7 @@ public class TokenService : ITokenService
         var authorizations = new List<string>();
         try
         {
-            var subscriptionsResponse = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
                 new QueryCurrentSubscriptionsRequest { AccountId = account.AccountId },
                 cancellationToken);
 

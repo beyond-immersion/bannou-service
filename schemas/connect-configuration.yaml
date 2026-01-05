@@ -53,7 +53,7 @@ x-service-configuration:
       items:
         type: string
       description: Additional services available to authenticated connections
-      default: ["accounts", "behavior", "permissions", "gamesession"]
+      default: ["account", "behavior", "permission", "gamesession"]
       env: CONNECT_AUTHENTICATED_SERVICES
     EnableClientToClientRouting:
       type: boolean
@@ -109,4 +109,4 @@ x-service-configuration:
       env: CONNECT_INTERNAL_SERVICE_TOKEN
 
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
-# Topics subscribed: session.invalidated, permissions.capabilities-updated
+# Topics subscribed: session.invalidated, permission.capabilities-updated

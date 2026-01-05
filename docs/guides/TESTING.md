@@ -69,8 +69,8 @@ Before understanding the specific test types, you must understand the strict iso
 **Rule**: Each service plugin is completely isolated and cannot reference other service plugins.
 
 **What this means**:
-- `lib-auth.tests` CANNOT reference `lib-accounts` or any other `lib-*` plugin
-- `lib-testing` CANNOT reference `lib-auth`, `lib-accounts`, or any other `lib-*` plugin
+- `lib-auth.tests` CANNOT reference `lib-account` or any other `lib-*` plugin
+- `lib-testing` CANNOT reference `lib-auth`, `lib-account`, or any other `lib-*` plugin
 - `unit-tests` CANNOT reference ANY `lib-*` plugin (they are not loaded in unit test context)
 
 **Why**: Plugins are dynamically loaded at runtime. In test contexts, only specific plugins are loaded, so cross-plugin references will fail.
@@ -133,12 +133,12 @@ Before understanding the specific test types, you must understand the strict iso
 **Service Test Structure**: Each service has comprehensive unit tests in `lib-{service}.tests/`:
 
 ```
-lib-accounts.tests/           # Accounts service tests
+lib-account.tests/           # Account service tests
 lib-auth.tests/              # Authentication service tests
 lib-behavior.tests/          # Behavior service tests
 lib-connect.tests/           # Connect service tests
 lib-game-session.tests/      # Game session tests
-lib-permissions.tests/       # Permissions service tests
+lib-permission.tests/        # Permission service tests
 lib-website.tests/           # Website service tests
 unit-tests/                  # Core framework tests (155 tests)
 ```

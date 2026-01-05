@@ -15,11 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website", "lib-website\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session", "lib-game-session\lib-game-session.csproj", "{DCD62DD4-D16A-484B-ACF8-77FB2A107F41}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permissions", "lib-permissions\lib-permissions.csproj", "{32F4896D-B2FF-428F-8A1E-8DAC8BFB6A5E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission", "lib-permission\lib-permission.csproj", "{32F4896D-B2FF-428F-8A1E-8DAC8BFB6A5E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect.tests", "lib-connect.tests\lib-connect.tests.csproj", "{1F56F922-2110-41AD-8BF3-3D939D3F2208}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-accounts.tests", "lib-accounts.tests\lib-accounts.tests.csproj", "{1673C5ED-F3D5-4CAF-AC85-30F4B08B327A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account.tests", "lib-account.tests\lib-account.tests.csproj", "{1673C5ED-F3D5-4CAF-AC85-30F4B08B327A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth.tests", "lib-auth.tests\lib-auth.tests.csproj", "{EC3E7182-F8E6-4EC5-8CA8-A66450C6F8A0}"
 EndProject
@@ -27,11 +27,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior.tests", "lib-b
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session.tests", "lib-game-session.tests\lib-game-session.tests.csproj", "{50202130-A677-4C70-8B69-F41CD4AED472}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permissions.tests", "lib-permissions.tests\lib-permissions.tests.csproj", "{4E46D6F6-F9BC-4F0F-8738-4B9981E1B2E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission.tests", "lib-permission.tests\lib-permission.tests.csproj", "{4E46D6F6-F9BC-4F0F-8738-4B9981E1B2E8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website.tests", "lib-website.tests\lib-website.tests.csproj", "{A84EE6E4-8AE3-49BF-B2E3-84C3E6887FCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-accounts", "lib-accounts\lib-accounts.csproj", "{82C90F41-327D-6127-E805-1C7F1457A851}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account", "lib-account\lib-account.csproj", "{82C90F41-327D-6127-E805-1C7F1457A851}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth", "lib-auth\lib-auth.csproj", "{27572A97-101F-0A9C-1C17-F1EA1541A562}"
 EndProject
@@ -41,13 +41,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator", "lib-orc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator.tests", "lib-orchestrator.tests\lib-orchestrator.tests.csproj", "{0ED390BD-B6C1-460D-A084-A5250F644EB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscriptions", "lib-subscriptions\lib-subscriptions.csproj", "{A11EF205-6F26-437A-83AB-DC7D9F63E30A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription", "lib-subscription\lib-subscription.csproj", "{A11EF205-6F26-437A-83AB-DC7D9F63E30A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscriptions.tests", "lib-subscriptions.tests\lib-subscriptions.tests.csproj", "{286A644A-F156-4AC1-A39D-D22274CEC723}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription.tests", "lib-subscription.tests\lib-subscription.tests.csproj", "{286A644A-F156-4AC1-A39D-D22274CEC723}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-servicedata", "lib-servicedata\lib-servicedata.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-service", "lib-service\lib-service.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-servicedata.tests", "lib-servicedata.tests\lib-servicedata.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-service.tests", "lib-service.tests\lib-service.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-character", "lib-character\lib-character.csproj", "{14AE0BB9-08E9-4E97-8D76-47178A8D0D10}"
 EndProject

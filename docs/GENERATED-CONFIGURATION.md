@@ -7,7 +7,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration by Service
 
-### Accounts
+### Account
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
@@ -259,7 +259,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging (REQUI... |
 | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for orchestrator state (REQUIRED - s... |
 
-### Permissions
+### Permission
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
@@ -283,7 +283,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
 
-### Servicedata
+### Service
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
@@ -308,7 +308,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STATE_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
-### Subscriptions
+### Subscription
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|

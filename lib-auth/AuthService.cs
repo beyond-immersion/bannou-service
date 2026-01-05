@@ -1,6 +1,6 @@
 using BCrypt.Net;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Configuration;
@@ -10,7 +10,7 @@ using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,8 +33,8 @@ namespace BeyondImmersion.BannouService.Auth;
 [BannouService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
 public partial class AuthService : IAuthService
 {
-    private readonly IAccountsClient _accountsClient;
-    private readonly ISubscriptionsClient _subscriptionsClient;
+    private readonly IAccountClient _accountClient;
+    private readonly ISubscriptionClient _subscriptionClient;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
@@ -60,8 +60,8 @@ public partial class AuthService : IAuthService
     private const string STEAM_AUTH_URL = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/";
 
     public AuthService(
-        IAccountsClient accountsClient,
-        ISubscriptionsClient subscriptionsClient,
+        IAccountClient accountClient,
+        ISubscriptionClient subscriptionClient,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
@@ -72,8 +72,8 @@ public partial class AuthService : IAuthService
         IOAuthProviderService oauthService,
         IEventConsumer eventConsumer)
     {
-        _accountsClient = accountsClient;
-        _subscriptionsClient = subscriptionsClient;
+        _accountClient = accountClient;
+        _subscriptionClient = subscriptionClient;
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
@@ -104,13 +104,13 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Lookup account by email via AccountsClient
-            _logger.LogInformation("Looking up account by email via AccountsClient: {Email}", body.Email);
+            // Lookup account by email via AccountClient
+            _logger.LogInformation("Looking up account by email via AccountClient: {Email}", body.Email);
 
             AccountResponse account;
             try
             {
-                account = await _accountsClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = body.Email }, cancellationToken);
+                account = await _accountClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = body.Email }, cancellationToken);
                 _logger.LogInformation("Account found via service call: {AccountId}", account?.AccountId);
 
                 if (account == null)
@@ -127,7 +127,7 @@ public partial class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to lookup account by email via AccountsClient");
+                _logger.LogError(ex, "Failed to lookup account by email via AccountClient");
                 await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message, dependency: "accounts");
                 return (StatusCodes.InternalServerError, null);
             }
@@ -195,8 +195,8 @@ public partial class AuthService : IAuthService
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: 12);
             _logger.LogInformation("Password hashed successfully for registration");
 
-            // Create account via AccountsClient service call
-            _logger.LogInformation("Creating account via AccountsClient for registration: {Email}", body.Email);
+            // Create account via AccountClient service call
+            _logger.LogInformation("Creating account via AccountClient for registration: {Email}", body.Email);
 
             var createRequest = new CreateAccountRequest
             {
@@ -209,12 +209,12 @@ public partial class AuthService : IAuthService
             AccountResponse? accountResult;
             try
             {
-                accountResult = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+                accountResult = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
                 _logger.LogInformation("Account created successfully via service call: {AccountId}", accountResult?.AccountId);
 
                 if (accountResult == null)
                 {
-                    _logger.LogWarning("AccountsClient returned null response");
+                    _logger.LogWarning("AccountClient returned null response");
                     return (StatusCodes.InternalServerError, null);
                 }
             }
@@ -230,7 +230,7 @@ public partial class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to create account via AccountsClient");
+                _logger.LogError(ex, "Failed to create account via AccountClient");
                 await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message, dependency: "accounts");
                 return (StatusCodes.InternalServerError, null);
             }
@@ -436,13 +436,13 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.Forbidden, null);
             }
 
-            // Lookup account by ID via AccountsClient
-            _logger.LogInformation("Looking up account by ID via AccountsClient: {AccountId}", accountId);
+            // Lookup account by ID via AccountClient
+            _logger.LogInformation("Looking up account by ID via AccountClient: {AccountId}", accountId);
 
             AccountResponse account;
             try
             {
-                account = await _accountsClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
+                account = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
                 _logger.LogInformation("Account found for refresh: {AccountId}", account?.AccountId);
 
                 if (account == null)
@@ -453,7 +453,7 @@ public partial class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to lookup account by ID via AccountsClient");
+                _logger.LogError(ex, "Failed to lookup account by ID via AccountClient");
                 await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message, dependency: "accounts");
                 return (StatusCodes.InternalServerError, null);
             }
@@ -719,7 +719,7 @@ public partial class AuthService : IAuthService
             AccountResponse? account = null;
             try
             {
-                account = await _accountsClient.GetAccountByEmailAsync(
+                account = await _accountClient.GetAccountByEmailAsync(
                     new GetAccountByEmailRequest { Email = body.Email },
                     cancellationToken);
             }
@@ -848,8 +848,8 @@ public partial class AuthService : IAuthService
             // Hash the new password
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: 12);
 
-            // Update password via AccountsClient
-            await _accountsClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
+            // Update password via AccountClient
+            await _accountClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
             {
                 AccountId = resetData.AccountId,
                 PasswordHash = passwordHash
@@ -1125,7 +1125,7 @@ public partial class AuthService : IAuthService
         var authorizations = new List<string>();
         try
         {
-            var subscriptionsResponse = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
                 new QueryCurrentSubscriptionsRequest { AccountId = account.AccountId },
                 cancellationToken);
 
@@ -2120,7 +2120,7 @@ public partial class AuthService : IAuthService
                 // Found existing account link, retrieve the account
                 try
                 {
-                    var account = await _accountsClient.GetAccountAsync(
+                    var account = await _accountClient.GetAccountAsync(
                         new GetAccountRequest { AccountId = existingAccountId.Value },
                         cancellationToken);
                     _logger.LogInformation("Found existing account {AccountId} for {Provider} user {ProviderId}",
@@ -2147,7 +2147,7 @@ public partial class AuthService : IAuthService
             AccountResponse? newAccount;
             try
             {
-                newAccount = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+                newAccount = await _accountClient.CreateAccountAsync(createRequest, cancellationToken);
             }
             catch (ApiException ex) when (ex.StatusCode == 409)
             {
@@ -2156,7 +2156,7 @@ public partial class AuthService : IAuthService
                 {
                     try
                     {
-                        newAccount = await _accountsClient.GetAccountByEmailAsync(
+                        newAccount = await _accountClient.GetAccountByEmailAsync(
                             new GetAccountByEmailRequest { Email = userInfo.Email },
                             cancellationToken);
                         _logger.LogInformation("Found existing account by email {Email} for {Provider} user",
@@ -2500,7 +2500,7 @@ public partial class AuthService : IAuthService
 
             // Fetch fresh authorizations from Subscriptions service
             var authorizations = new List<string>();
-            var subscriptionsResponse = await _subscriptionsClient.QueryCurrentSubscriptionsAsync(
+            var subscriptionsResponse = await _subscriptionClient.QueryCurrentSubscriptionsAsync(
                 new QueryCurrentSubscriptionsRequest { AccountId = accountId },
                 cancellationToken);
 

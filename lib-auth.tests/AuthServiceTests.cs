@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Events;
@@ -7,7 +7,7 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
-using BeyondImmersion.BannouService.Subscriptions;
+using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -22,8 +22,8 @@ public class AuthServiceTests
 {
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
-    private readonly Mock<IAccountsClient> _mockAccountsClient;
-    private readonly Mock<ISubscriptionsClient> _mockSubscriptionsClient;
+    private readonly Mock<IAccountClient> _mockAccountClient;
+    private readonly Mock<ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<AuthService.PasswordResetData>> _mockPasswordResetStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
@@ -60,8 +60,8 @@ public class AuthServiceTests
             SteamApiKey = "test-steam-api-key",
             SteamAppId = "123456"
         };
-        _mockAccountsClient = new Mock<IAccountsClient>();
-        _mockSubscriptionsClient = new Mock<ISubscriptionsClient>();
+        _mockAccountClient = new Mock<IAccountClient>();
+        _mockSubscriptionClient = new Mock<ISubscriptionClient>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockPasswordResetStore = new Mock<IStateStore<AuthService.PasswordResetData>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
@@ -109,8 +109,8 @@ public class AuthServiceTests
     private AuthService CreateAuthService()
     {
         return new AuthService(
-            _mockAccountsClient.Object,
-            _mockSubscriptionsClient.Object,
+            _mockAccountClient.Object,
+            _mockSubscriptionClient.Object,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
@@ -803,7 +803,7 @@ public class AuthServiceTests
     public async Task RequestPasswordResetAsync_WithNonExistentEmail_ShouldReturnOkToPreventEnumeration()
     {
         // Arrange - accounts client throws 404 for non-existent email
-        _mockAccountsClient.Setup(c => c.GetAccountByEmailAsync(
+        _mockAccountClient.Setup(c => c.GetAccountByEmailAsync(
             It.IsAny<GetAccountByEmailRequest>(),
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));

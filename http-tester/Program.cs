@@ -5,7 +5,7 @@ using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
-using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
@@ -224,7 +224,7 @@ public class Program
 
             // Register generated service clients using simple scoped registration (NSwag parameterless constructor architecture)
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Auth.IAuthClient, BeyondImmersion.BannouService.Auth.AuthClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Accounts.IAccountsClient, BeyondImmersion.BannouService.Accounts.AccountsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Account.IAccountClient, BeyondImmersion.BannouService.Account.AccountClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Behavior.IBehaviorClient, BeyondImmersion.BannouService.Behavior.BehaviorClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Character.ICharacterClient, BeyondImmersion.BannouService.Character.CharacterClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Connect.IConnectClient, BeyondImmersion.BannouService.Connect.ConnectClient>();
@@ -232,13 +232,13 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.GameSession.IGameSessionClient, BeyondImmersion.BannouService.GameSession.GameSessionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Location.ILocationClient, BeyondImmersion.BannouService.Location.LocationClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient, BeyondImmersion.BannouService.Orchestrator.OrchestratorClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permissions.IPermissionsClient, BeyondImmersion.BannouService.Permissions.PermissionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permission.IPermissionClient, BeyondImmersion.BannouService.Permission.PermissionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Realm.IRealmClient, BeyondImmersion.BannouService.Realm.RealmClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Relationship.IRelationshipClient, BeyondImmersion.BannouService.Relationship.RelationshipClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient, BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Servicedata.IServicedataClient, BeyondImmersion.BannouService.Servicedata.ServicedataClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Service.IServiceClient, BeyondImmersion.BannouService.Service.ServiceClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Species.ISpeciesClient, BeyondImmersion.BannouService.Species.SpeciesClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient, BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscription.ISubscriptionClient, BeyondImmersion.BannouService.Subscription.SubscriptionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Messaging.IMessagingClient, BeyondImmersion.BannouService.Messaging.MessagingClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.State.IStateClient, BeyondImmersion.BannouService.State.StateClient>();
@@ -278,8 +278,8 @@ public class Program
 
             // Wait for services to register their permissions (signals service readiness)
             // This is more reliable than fixed delays since services only register after startup complete
-            var permissionsClient = ServiceProvider.GetRequiredService<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
-            if (!await WaitForServiceReadiness(permissionsClient))
+            var permissionClient = ServiceProvider.GetRequiredService<BeyondImmersion.BannouService.Permission.IPermissionClient>();
+            if (!await WaitForServiceReadiness(permissionClient))
             {
                 Console.WriteLine("❌ Service readiness check timed out.");
                 return false;
@@ -415,9 +415,9 @@ public class Program
     /// Waits for services to register their permissions with the Permissions service.
     /// Services only register after fully initializing, so this is a reliable readiness signal.
     /// </summary>
-    /// <param name="permissionsClient">The permissions client to use for checking registered services.</param>
+    /// <param name="permissionClient">The permissions client to use for checking registered services.</param>
     /// <returns>True if expected services are ready, false if timeout occurs.</returns>
-    private static async Task<bool> WaitForServiceReadiness(BeyondImmersion.BannouService.Permissions.IPermissionsClient permissionsClient)
+    private static async Task<bool> WaitForServiceReadiness(BeyondImmersion.BannouService.Permission.IPermissionClient permissionClient)
     {
         var timeout = TimeSpan.FromSeconds(90);
         var checkInterval = TimeSpan.FromSeconds(2);
@@ -442,7 +442,7 @@ public class Program
         {
             try
             {
-                var response = await permissionsClient.GetRegisteredServicesAsync(new ListServicesRequest());
+                var response = await permissionClient.GetRegisteredServicesAsync(new ListServicesRequest());
                 if (response != null && response.Services != null)
                 {
                     var registeredServiceIds = response.Services.Select(s => s.ServiceId).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -675,16 +675,16 @@ public class Program
             new MeshTestHandler(),
             new MessagingTestHandler(),
             new OrchestratorTestHandler(),
-            new PermissionsTestHandler(),
+            new PermissionTestHandler(),
             new RealmTestHandler(),
             new RelationshipTestHandler(),
             new RepositoryBindingTestHandler(),
             new ArchiveTestHandler(),
             new RelationshipTypeTestHandler(),
-            new ServicedataTestHandler(),
+            new ServiceTestHandler(),
             new SpeciesTestHandler(),
             new StateTestHandler(),
-            new SubscriptionsTestHandler(),
+            new SubscriptionTestHandler(),
             new TestingTestHandler()
         };
 

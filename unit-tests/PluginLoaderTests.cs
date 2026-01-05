@@ -378,18 +378,18 @@ public class PluginLoaderTests
         var authClientLifetimeResult = getClientLifetimeMethod?.Invoke(pluginLoader, new object[] { authClientInterface });
         var authClientLifetime = authClientLifetimeResult != null ? (ServiceLifetime)authClientLifetimeResult : ServiceLifetime.Scoped;
 
-        // Create a mock interface for IPermissionsClient
-        var permissionsClientInterface = typeof(IPermissionsClient);
-        var permissionsClientLifetimeResult = getClientLifetimeMethod?.Invoke(pluginLoader, new object[] { permissionsClientInterface });
-        var permissionsClientLifetime = permissionsClientLifetimeResult != null ? (ServiceLifetime)permissionsClientLifetimeResult : ServiceLifetime.Scoped;
+        // Create a mock interface for IPermissionClient
+        var permissionClientInterface = typeof(IPermissionClient);
+        var permissionClientLifetimeResult = getClientLifetimeMethod?.Invoke(pluginLoader, new object[] { permissionClientInterface });
+        var permissionClientLifetime = permissionClientLifetimeResult != null ? (ServiceLifetime)permissionClientLifetimeResult : ServiceLifetime.Scoped;
 
         // Assert - Clients should default to Singleton to avoid DI conflicts
         Assert.Equal(ServiceLifetime.Singleton, authClientLifetime);
-        Assert.Equal(ServiceLifetime.Singleton, permissionsClientLifetime);
+        Assert.Equal(ServiceLifetime.Singleton, permissionClientLifetime);
 
         // Test that this prevents DI validation errors
         newServices.AddSingleton(authClientInterface, Mock.Of<IAuthClient>());
-        newServices.AddSingleton(permissionsClientInterface, Mock.Of<IPermissionsClient>());
+        newServices.AddSingleton(permissionClientInterface, Mock.Of<IPermissionClient>());
 
         var finalServiceProvider = newServices.BuildServiceProvider();
         var connectService = finalServiceProvider.GetService<ConnectService>();
@@ -514,9 +514,9 @@ public class PluginLoaderTests
         productionServices.AddScoped<TestServiceConfiguration>();
 
         // Register clients with lifetimes that match or are compatible with their consumers
-        // IAuthClient and IPermissionsClient: Singleton (compatible with ConnectService Singleton)
+        // IAuthClient and IPermissionClient: Singleton (compatible with ConnectService Singleton)
         productionServices.AddSingleton<IAuthClient>(Mock.Of<IAuthClient>());
-        productionServices.AddSingleton<IPermissionsClient>(Mock.Of<IPermissionsClient>());
+        productionServices.AddSingleton<IPermissionClient>(Mock.Of<IPermissionClient>());
 
         // Act - Build service provider (this is where DI validation would fail)
         ServiceProvider? finalServiceProvider = null;
@@ -706,7 +706,7 @@ public class PluginLoaderTests
 
         // Step 4: Register clients with compatible lifetimes
         services.AddSingleton<IAuthClient>(Mock.Of<IAuthClient>());
-        services.AddSingleton<IPermissionsClient>(Mock.Of<IPermissionsClient>());
+        services.AddSingleton<IPermissionClient>(Mock.Of<IPermissionClient>());
 
         // Act - Build service provider with DI validation
         ServiceProvider? serviceProvider = null;
@@ -779,7 +779,7 @@ public class PluginLoaderTests
 
         // Register required dependencies first
         services.AddSingleton<IAuthClient>(Mock.Of<IAuthClient>());
-        services.AddSingleton<IPermissionsClient>(Mock.Of<IPermissionsClient>());
+        services.AddSingleton<IPermissionClient>(Mock.Of<IPermissionClient>());
 
         // Scenario 1: Singleton service with Singleton configuration (CORRECT)
         services.AddSingleton<TestConnectService>();
@@ -1735,12 +1735,12 @@ public class TestServiceConfiguration
 public class ConnectService
 {
     private readonly IAuthClient _authClient;
-    private readonly IPermissionsClient _permissionsClient;
+    private readonly IPermissionClient _permissionClient;
 
-    public ConnectService(IAuthClient authClient, IPermissionsClient permissionsClient)
+    public ConnectService(IAuthClient authClient, IPermissionClient permissionClient)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
+        _permissionClient = permissionClient ?? throw new ArgumentNullException(nameof(permissionClient));
     }
 }
 
@@ -1762,9 +1762,9 @@ public interface IAuthClient
 }
 
 /// <summary>
-/// Mock IPermissionsClient interface for unit testing.
+/// Mock IPermissionClient interface for unit testing.
 /// </summary>
-public interface IPermissionsClient
+public interface IPermissionClient
 {
     // Empty interface for testing purposes
 }
@@ -1821,16 +1821,16 @@ public class TestConnectService : ITestConnectService
 {
     private readonly TestConnectServiceConfiguration _configuration;
     private readonly IAuthClient _authClient;
-    private readonly IPermissionsClient _permissionsClient;
+    private readonly IPermissionClient _permissionClient;
 
     public TestConnectService(
         TestConnectServiceConfiguration configuration,
         IAuthClient authClient,
-        IPermissionsClient permissionsClient)
+        IPermissionClient permissionClient)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
+        _permissionClient = permissionClient ?? throw new ArgumentNullException(nameof(permissionClient));
     }
 
     public string GetInstanceId() => _configuration.InstanceId;
@@ -1926,7 +1926,7 @@ public class ConfigurationDiscoveryTests
 
         // Register mock dependencies
         services.AddSingleton<IAuthClient>(_ => new Mock<IAuthClient>().Object);
-        services.AddSingleton<IPermissionsClient>(_ => new Mock<IPermissionsClient>().Object);
+        services.AddSingleton<IPermissionClient>(_ => new Mock<IPermissionClient>().Object);
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -2030,7 +2030,7 @@ public class ConfigurationDiscoveryTests
 
         // Register mock dependencies for TestConnectService
         services.AddSingleton<IAuthClient>(_ => new Mock<IAuthClient>().Object);
-        services.AddSingleton<IPermissionsClient>(_ => new Mock<IPermissionsClient>().Object);
+        services.AddSingleton<IPermissionClient>(_ => new Mock<IPermissionClient>().Object);
 
         // Scenario 2: Configuration without matching service (should be skipped gracefully)
         services.AddSingleton<UnmatchedConfiguration>();

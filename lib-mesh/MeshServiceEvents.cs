@@ -95,7 +95,7 @@ public partial class MeshService
     /// <summary>
     /// Handle full service mappings events.
     /// Updates the shared IServiceAppMappingResolver atomically so all generated clients
-    /// (AuthClient, AccountsClient, etc.) route to the correct app-ids.
+    /// (AuthClient, AccountClient, etc.) route to the correct app-ids.
     /// IMPORTANT: Empty mappings events are valid and mean "reset to default routing" -
     /// all services should route to the default app-id ("bannou").
     /// </summary>

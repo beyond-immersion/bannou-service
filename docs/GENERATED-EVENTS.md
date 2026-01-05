@@ -132,7 +132,7 @@ This document lists all events defined in Bannou's event schemas.
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
 
-### Permissions
+### Permission
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
@@ -145,7 +145,7 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` |  |
 
-### Subscriptions
+### Subscription
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|

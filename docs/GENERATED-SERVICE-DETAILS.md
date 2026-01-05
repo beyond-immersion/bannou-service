@@ -9,7 +9,7 @@ This document provides a compact reference of all Bannou services and their API 
 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
-| [Accounts](#accounts) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
+| [Account](#account) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
 | [Actor](#actor) | 1.0.0 | 10 | Distributed actor management and execution for NPC brains, e... |
 | [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
@@ -23,23 +23,23 @@ Des... |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
-| [Permissions](#permissions) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
+| [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
-| [Servicedata](#servicedata) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
+| [Service](#service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
 | [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
-| [Subscriptions](#subscriptions) | 1.0.0 | 7 | Manages user subscriptions to game services.
+| [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
 Tracks which ac... |
 | [Voice](#voice) | 1.1.0 | 7 | Voice communication coordination service for P2P and room-ba... |
 | [Website](#website) | 1.0.0 | 17 | Public-facing website service for registration, information,... |
 
 ---
 
-## Accounts {#accounts}
+## Account {#account}
 
-**Version**: 2.0.0 | **Schema**: `schemas/accounts-api.yaml`
+**Version**: 2.0.0 | **Schema**: `schemas/account-api.yaml`
 
 Internal account management service (CRUD operations only, never exposed to internet).
 
@@ -505,9 +505,9 @@ Central intelligence for Bannou environment management and service orchestration
 
 ---
 
-## Permissions {#permissions}
+## Permission {#permission}
 
-**Version**: 3.0.0 | **Schema**: `schemas/permissions-api.yaml`
+**Version**: 3.0.0 | **Schema**: `schemas/permission-api.yaml`
 
 Redis-backed high-performance permission system for WebSocket services.
 
@@ -620,9 +620,9 @@ Relationship type management service for Arcadia game world.
 
 ---
 
-## Servicedata {#servicedata}
+## Service {#service}
 
-**Version**: 1.0.0 | **Schema**: `schemas/servicedata-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/service-api.yaml`
 
 Registry service for game services that users can subscribe to.
 Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
@@ -689,9 +689,9 @@ Repository pattern state management with Redis and MySQL backends.
 
 ---
 
-## Subscriptions {#subscriptions}
+## Subscription {#subscription}
 
-**Version**: 1.0.0 | **Schema**: `schemas/subscriptions-api.yaml`
+**Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml`
 
 Manages user subscriptions to game services.
 Tracks which accounts have access to which services (games/applications) with time-limited subscriptions.

@@ -1,6 +1,6 @@
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
-using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
