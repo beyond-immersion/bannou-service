@@ -17,6 +17,12 @@ public sealed class LiteNetLibServerTransport : IGameServerTransport, INetEventL
     private NetManager? _netManager;
     private readonly NetPacketProcessor _packetProcessor = new();
     private GameTransportConfig? _config;
+    private readonly Random _random = new();
+
+    /// <summary>
+    /// Optional fuzz settings for testing packet loss/reorder/delay.
+    /// </summary>
+    public TransportFuzzOptions FuzzOptions { get; } = new();
 
     public event Action<long>? OnClientConnected;
     public event Action<long>? OnClientDisconnected;
@@ -104,6 +110,21 @@ public sealed class LiteNetLibServerTransport : IGameServerTransport, INetEventL
         var version = reader.GetByte();
         var messageType = (GameMessageType)reader.GetByte();
         var payload = reader.GetRemainingBytes();
+
+        if (FuzzOptions.ShouldDrop(_random))
+        {
+            return;
+        }
+
+        if (FuzzOptions.ShouldDelay(out var delayMs, _random))
+        {
+            Task.Delay(delayMs).ContinueWith(_ =>
+            {
+                OnClientMessage?.Invoke(peer.Id, version, messageType, payload);
+            });
+            return;
+        }
+
         OnClientMessage?.Invoke(peer.Id, version, messageType, payload);
     }
 
