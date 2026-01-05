@@ -1,7 +1,7 @@
+using BeyondImmersion.Bannou.GameProtocol;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BeyondImmersion.Bannou.GameProtocol;
 
 namespace BeyondImmersion.Bannou.GameTransport;
 

@@ -393,6 +393,15 @@ components:
           additionalProperties: true
           nullable: true
           description: Message payload data
+        urgency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: |
+            Optional urgency level (0-1) for the message perception.
+            If not provided, defaults to 0.5.
 
     ReloadBehaviorCommand:
       type: object

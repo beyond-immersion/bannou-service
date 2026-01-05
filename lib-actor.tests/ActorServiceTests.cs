@@ -573,6 +573,217 @@ public class ActorServiceTests
 
     #endregion
 
+    #region GetActorAsync Auto-Spawn CharacterId Extraction Tests
+
+    [Fact]
+    public async Task GetActorAsync_AutoSpawnWithCaptureGroup_ExtractsCharacterId()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var actorId = $"npc-brain-{characterId}";
+        var templateId = Guid.NewGuid();
+        var request = new GetActorRequest { ActorId = actorId };
+
+        // Actor doesn't exist initially
+        IActorRunner? nullRunner = null;
+        _mockActorRegistry.Setup(r => r.TryGet(actorId, out nullRunner)).Returns(false);
+
+        // Template with auto-spawn and capture group
+        var template = new ActorTemplateData
+        {
+            TemplateId = templateId,
+            Category = "npc-brain",
+            BehaviorRef = "behaviors/npc-brain.abml",
+            TickIntervalMs = 100,
+            AutoSaveIntervalSeconds = 60,
+            MaxInstancesPerNode = 10,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            AutoSpawn = new AutoSpawnConfigData
+            {
+                Enabled = true,
+                IdPattern = @"npc-brain-([a-f0-9-]+)",
+                CharacterIdCaptureGroup = 1
+            }
+        };
+
+        _mockIndexStore.Setup(s => s.GetAsync("_all_template_ids", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { templateId.ToString() });
+
+        _mockTemplateStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ActorTemplateData> { { templateId.ToString(), template } });
+
+        // Also mock GetAsync for SpawnActorAsync's template lookup
+        _mockTemplateStore.Setup(s => s.GetAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Mock the runner creation after spawn
+        var spawnedRunner = new Mock<IActorRunner>();
+        spawnedRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = actorId,
+            TemplateId = templateId,
+            CharacterId = characterId,
+            Category = "npc-brain",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow
+        });
+        spawnedRunner.SetupGet(r => r.StartedAt).Returns(DateTimeOffset.UtcNow);
+
+        // Setup spawn registration
+        _mockActorRegistry.Setup(r => r.TryRegister(actorId, It.IsAny<IActorRunner>())).Returns(true);
+        _mockActorRunnerFactory.Setup(f => f.Create(actorId, It.IsAny<ActorTemplateData>(), characterId, It.IsAny<object?>(), It.IsAny<object?>()))
+            .Returns(spawnedRunner.Object);
+
+        // Act
+        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+
+        // Assert
+        // Verify that Create was called with the extracted characterId
+        _mockActorRunnerFactory.Verify(
+            f => f.Create(actorId, It.IsAny<ActorTemplateData>(), characterId, It.IsAny<object?>(), It.IsAny<object?>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetActorAsync_AutoSpawnWithoutCaptureGroup_CharacterIdIsNull()
+    {
+        // Arrange
+        var service = CreateService();
+        var actorId = "npc-merchant-123";
+        var templateId = Guid.NewGuid();
+        var request = new GetActorRequest { ActorId = actorId };
+
+        // Actor doesn't exist initially
+        IActorRunner? nullRunner = null;
+        _mockActorRegistry.Setup(r => r.TryGet(actorId, out nullRunner)).Returns(false);
+
+        // Template with auto-spawn but no capture group
+        var template = new ActorTemplateData
+        {
+            TemplateId = templateId,
+            Category = "npc-merchant",
+            BehaviorRef = "behaviors/merchant.abml",
+            TickIntervalMs = 100,
+            AutoSaveIntervalSeconds = 60,
+            MaxInstancesPerNode = 10,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            AutoSpawn = new AutoSpawnConfigData
+            {
+                Enabled = true,
+                IdPattern = @"npc-merchant-.*"
+                // No CharacterIdCaptureGroup
+            }
+        };
+
+        _mockIndexStore.Setup(s => s.GetAsync("_all_template_ids", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { templateId.ToString() });
+
+        _mockTemplateStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ActorTemplateData> { { templateId.ToString(), template } });
+
+        // Also mock GetAsync for SpawnActorAsync's template lookup
+        _mockTemplateStore.Setup(s => s.GetAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Mock spawn flow
+        var spawnedRunner = new Mock<IActorRunner>();
+        spawnedRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = actorId,
+            TemplateId = templateId,
+            Category = "npc-merchant",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow
+        });
+        spawnedRunner.SetupGet(r => r.StartedAt).Returns(DateTimeOffset.UtcNow);
+
+        _mockActorRegistry.Setup(r => r.TryRegister(actorId, It.IsAny<IActorRunner>())).Returns(true);
+        _mockActorRunnerFactory.Setup(f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()))
+            .Returns(spawnedRunner.Object);
+
+        // Act
+        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+
+        // Assert
+        // Verify that Create was called with null characterId
+        _mockActorRunnerFactory.Verify(
+            f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetActorAsync_AutoSpawnInvalidGuidInCaptureGroup_CharacterIdIsNull()
+    {
+        // Arrange
+        var service = CreateService();
+        var actorId = "npc-brain-not-a-guid";
+        var templateId = Guid.NewGuid();
+        var request = new GetActorRequest { ActorId = actorId };
+
+        // Actor doesn't exist initially
+        IActorRunner? nullRunner = null;
+        _mockActorRegistry.Setup(r => r.TryGet(actorId, out nullRunner)).Returns(false);
+
+        // Template with auto-spawn and capture group, but captured value isn't a GUID
+        var template = new ActorTemplateData
+        {
+            TemplateId = templateId,
+            Category = "npc-brain",
+            BehaviorRef = "behaviors/npc-brain.abml",
+            TickIntervalMs = 100,
+            AutoSaveIntervalSeconds = 60,
+            MaxInstancesPerNode = 10,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            AutoSpawn = new AutoSpawnConfigData
+            {
+                Enabled = true,
+                IdPattern = @"npc-brain-(.+)",
+                CharacterIdCaptureGroup = 1
+            }
+        };
+
+        _mockIndexStore.Setup(s => s.GetAsync("_all_template_ids", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { templateId.ToString() });
+
+        _mockTemplateStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ActorTemplateData> { { templateId.ToString(), template } });
+
+        // Also mock GetAsync for SpawnActorAsync's template lookup
+        _mockTemplateStore.Setup(s => s.GetAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Mock spawn flow
+        var spawnedRunner = new Mock<IActorRunner>();
+        spawnedRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = actorId,
+            TemplateId = templateId,
+            Category = "npc-brain",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow
+        });
+        spawnedRunner.SetupGet(r => r.StartedAt).Returns(DateTimeOffset.UtcNow);
+
+        _mockActorRegistry.Setup(r => r.TryRegister(actorId, It.IsAny<IActorRunner>())).Returns(true);
+        _mockActorRunnerFactory.Setup(f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()))
+            .Returns(spawnedRunner.Object);
+
+        // Act
+        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+
+        // Assert
+        // Verify that Create was called with null characterId (invalid GUID gracefully handled)
+        _mockActorRunnerFactory.Verify(
+            f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()),
+            Times.Once);
+    }
+
+    #endregion
+
     #region ListActorsAsync Tests
 
     [Fact]

@@ -930,6 +930,13 @@
             Message payload data
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SendMessageCommand.Urgency">
+            <summary>
+            Optional urgency level (0-1) for the message perception.
+            <br/>If not provided, defaults to 0.5.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ReloadBehaviorCommand">
             <summary>
             Command to reload behavior for an actor (hot-reload support).
@@ -27761,6 +27768,23 @@
             <summary>
             Protocol version expected by this server/client.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameTransport.GameTransportHelper">
+            <summary>
+            Helper methods for serializing and sending game transport messages.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameTransport.GameTransportHelper.Serialize``1(BeyondImmersion.Bannou.GameProtocol.GameMessageType,``0)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameTransport.GameTransportHelper.SerializePayloadOnly``1(``0)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameTransport.GameTransportHelper.BroadcastAsync``1(BeyondImmersion.Bannou.GameTransport.IGameServerTransport,BeyondImmersion.Bannou.GameProtocol.GameMessageType,``0,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.GameTransport.GameTransportHelper.SendAsync``1(BeyondImmersion.Bannou.GameTransport.IGameServerTransport,System.Int64,BeyondImmersion.Bannou.GameProtocol.GameMessageType,``0,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.Bannou.GameTransport.ClientMessageReceived">
             <summary>

@@ -682,20 +682,20 @@ public partial class ActorService : IActorService
             }
 
             // Actor not found - check for auto-spawn templates
-            var matchingTemplate = await FindAutoSpawnTemplateAsync(body.ActorId, cancellationToken);
+            var (matchingTemplate, extractedCharacterId) = await FindAutoSpawnTemplateAsync(body.ActorId, cancellationToken);
             if (matchingTemplate != null)
             {
                 _logger.LogInformation(
-                    "Auto-spawning actor {ActorId} from template {TemplateId} (category: {Category})",
-                    body.ActorId, matchingTemplate.TemplateId, matchingTemplate.Category);
+                    "Auto-spawning actor {ActorId} from template {TemplateId} (category: {Category}, characterId: {CharacterId})",
+                    body.ActorId, matchingTemplate.TemplateId, matchingTemplate.Category, extractedCharacterId);
 
                 // Spawn the actor using the matched template
-                // Note: CharacterId can be inferred from actorId pattern (e.g., "npc-brain-{characterId}")
-                // but for now we leave it null - caller should use SpawnActor directly if they need characterId binding
+                // CharacterId is extracted from actor ID pattern via characterIdCaptureGroup if configured
                 var spawnRequest = new SpawnActorRequest
                 {
                     TemplateId = matchingTemplate.TemplateId,
-                    ActorId = body.ActorId
+                    ActorId = body.ActorId,
+                    CharacterId = extractedCharacterId
                 };
 
                 var (spawnStatus, spawnResponse) = await SpawnActorAsync(spawnRequest, cancellationToken);
@@ -732,8 +732,8 @@ public partial class ActorService : IActorService
     /// </summary>
     /// <param name="actorId">The actor ID to match against template patterns.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The matching template, or null if no auto-spawn template matches.</returns>
-    private async Task<ActorTemplateData?> FindAutoSpawnTemplateAsync(
+    /// <returns>A tuple containing the matching template (or null) and extracted CharacterId (or null).</returns>
+    private async Task<(ActorTemplateData? Template, Guid? CharacterId)> FindAutoSpawnTemplateAsync(
         string actorId,
         CancellationToken cancellationToken)
     {
@@ -744,7 +744,7 @@ public partial class ActorService : IActorService
         var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken);
         if (allIds == null || allIds.Count == 0)
         {
-            return null;
+            return (null, null);
         }
 
         // Load all templates
@@ -765,9 +765,11 @@ public partial class ActorService : IActorService
             }
 
             // Check if actorId matches the pattern
+            Match match;
             try
             {
-                if (!Regex.IsMatch(actorId, template.AutoSpawn.IdPattern))
+                match = Regex.Match(actorId, template.AutoSpawn.IdPattern);
+                if (!match.Success)
                 {
                     continue;
                 }
@@ -779,6 +781,29 @@ public partial class ActorService : IActorService
                     "Invalid regex pattern in template {TemplateId}: {Pattern}",
                     template.TemplateId, template.AutoSpawn.IdPattern);
                 continue;
+            }
+
+            // Extract CharacterId from capture group if configured
+            Guid? extractedCharacterId = null;
+            if (template.AutoSpawn.CharacterIdCaptureGroup is int groupIndex && groupIndex > 0)
+            {
+                if (match.Groups.Count > groupIndex)
+                {
+                    var groupValue = match.Groups[groupIndex].Value;
+                    if (Guid.TryParse(groupValue, out var parsedId))
+                    {
+                        extractedCharacterId = parsedId;
+                        _logger.LogDebug(
+                            "Extracted CharacterId {CharacterId} from actor ID {ActorId} using capture group {Group}",
+                            extractedCharacterId, actorId, groupIndex);
+                    }
+                    else
+                    {
+                        _logger.LogDebug(
+                            "Capture group {Group} value '{Value}' is not a valid GUID for actor ID {ActorId}",
+                            groupIndex, groupValue, actorId);
+                    }
+                }
             }
 
             // Check max instances limit if configured
@@ -804,10 +829,10 @@ public partial class ActorService : IActorService
             }
 
             // Found a matching template
-            return template;
+            return (template, extractedCharacterId);
         }
 
-        return null;
+        return (null, null);
     }
 
     /// <summary>

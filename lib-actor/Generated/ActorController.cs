@@ -388,6 +388,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Maximum auto-spawned instances (0 = unlimited)"
+                },
+                "characterIdCaptureGroup": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
                 }
             }
         }
@@ -482,6 +488,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Maximum auto-spawned instances (0 = unlimited)"
+                },
+                "characterIdCaptureGroup": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
                 }
             }
         }
@@ -657,6 +669,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Maximum auto-spawned instances (0 = unlimited)"
+                },
+                "characterIdCaptureGroup": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
                 }
             }
         }
@@ -853,6 +871,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Maximum auto-spawned instances (0 = unlimited)"
+                },
+                "characterIdCaptureGroup": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
                 }
             }
         }
@@ -979,6 +1003,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Maximum auto-spawned instances (0 = unlimited)"
+                },
+                "characterIdCaptureGroup": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
                 }
             }
         }
@@ -1073,6 +1103,12 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Maximum auto-spawned instances (0 = unlimited)"
+                },
+                "characterIdCaptureGroup": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
                 }
             }
         }

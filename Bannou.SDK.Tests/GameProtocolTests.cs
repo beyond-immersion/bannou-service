@@ -1,6 +1,6 @@
-using System;
 using BeyondImmersion.Bannou.GameProtocol;
 using MessagePack;
+using System;
 using Xunit;
 
 namespace BeyondImmersion.Bannou.SDK.Tests;

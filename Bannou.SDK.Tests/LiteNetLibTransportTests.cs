@@ -1,10 +1,10 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using BeyondImmersion.Bannou.GameProtocol;
 using BeyondImmersion.Bannou.GameProtocol.Messages;
 using BeyondImmersion.Bannou.GameTransport;
 using MessagePack;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace BeyondImmersion.Bannou.SDK.Tests;

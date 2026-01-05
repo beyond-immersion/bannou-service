@@ -1,11 +1,11 @@
+using BeyondImmersion.Bannou.GameProtocol;
+using LiteNetLib;
+using LiteNetLib.Utils;
 using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using BeyondImmersion.Bannou.GameProtocol;
-using LiteNetLib;
-using LiteNetLib.Utils;
 
 namespace BeyondImmersion.Bannou.GameTransport;
 

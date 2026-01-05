@@ -2664,13 +2664,13 @@ These can be tackled immediately to improve the foundation:
   - Added `TestInjectPerceptionActorNotFound` - verifies 404 for non-existent actor
   - Total actor HTTP tests: 21 (template CRUD, lifecycle, validation, auto-spawn, perception)
 
-##### Quick Win Follow-ups (Minor Improvements for Later)
+##### Quick Win Follow-ups (Completed)
 
-Two minor items to revisit when extending the system:
+Both minor improvements have been implemented:
 
-1. **Hardcoded urgency in HandleMessageCommandAsync**: `ActorPoolNodeWorker.HandleMessageCommandAsync` uses a fixed `Urgency = 0.5f` when converting `SendMessageCommand` to `PerceptionData`. Consider extending the `SendMessageCommand` schema to include an optional urgency field so callers can specify priority.
+1. **✅ Urgency field in SendMessageCommand**: Added optional `urgency` field (0-1 float) to `SendMessageCommand` schema. `ActorPoolNodeWorker.HandleMessageCommandAsync` now uses `command.Urgency ?? 0.5f` when converting to `PerceptionData`. Callers can specify message priority. Tests added in `ActorPoolNodeWorkerTests.cs`.
 
-2. **CharacterId not inferred in auto-spawn**: `ActorService.FindAutoSpawnTemplateAsync` doesn't extract CharacterId from the actorId pattern (e.g., `npc-brain-{characterId}`). For now, callers needing characterId binding should use `SpawnActor` directly. Future enhancement: add optional `characterIdPattern` capture group to `AutoSpawnConfig`.
+2. **✅ CharacterId extraction in auto-spawn**: Added `characterIdCaptureGroup` field to `AutoSpawnConfig` schema. `ActorService.FindAutoSpawnTemplateAsync` now returns a tuple `(ActorTemplateData? Template, Guid? CharacterId)` and extracts CharacterId from regex capture groups when configured. `GetActorAsync` passes the extracted CharacterId to `SpawnActorAsync`. Tests added in `ActorServiceTests.cs`.
 
 #### 5.4 Stride Demo Integration Reference
 
@@ -2691,4 +2691,4 @@ These files need the perception/state update flows wired in Phase 5.
 
 ---
 
-*Last Updated: 2026-01-04*
+*Last Updated: 2026-01-05*

@@ -1,7 +1,7 @@
-using System.Threading;
-using System.Threading.Tasks;
 using BeyondImmersion.Bannou.GameProtocol;
 using MessagePack;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BeyondImmersion.Bannou.GameTransport;
 
@@ -10,16 +10,19 @@ namespace BeyondImmersion.Bannou.GameTransport;
 /// </summary>
 public static class GameTransportHelper
 {
+    /// <inheritdoc/>
     public static byte[] Serialize<T>(GameMessageType messageType, T message)
     {
         return GameProtocolEnvelope.Serialize(messageType, message, options: GameProtocolEnvelope.DefaultOptions);
     }
 
+    /// <inheritdoc/>
     public static byte[] SerializePayloadOnly<T>(T message)
     {
         return MessagePackSerializer.Serialize(message, GameProtocolEnvelope.DefaultOptions);
     }
 
+    /// <inheritdoc/>
     public static Task BroadcastAsync<T>(
         IGameServerTransport transport,
         GameMessageType messageType,
@@ -31,6 +34,7 @@ public static class GameTransportHelper
         return transport.BroadcastAsync(messageType, payload, reliable, cancellationToken);
     }
 
+    /// <inheritdoc/>
     public static Task SendAsync<T>(
         IGameServerTransport transport,
         long clientId,

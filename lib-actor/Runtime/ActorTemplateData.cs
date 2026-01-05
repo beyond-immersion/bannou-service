@@ -97,6 +97,11 @@ public class AutoSpawnConfigData
     public int? MaxInstances { get; set; }
 
     /// <summary>
+    /// Gets or sets the 1-based regex capture group index for extracting CharacterId from actor ID.
+    /// </summary>
+    public int? CharacterIdCaptureGroup { get; set; }
+
+    /// <summary>
     /// Converts to API model.
     /// </summary>
     public AutoSpawnConfig ToConfig()
@@ -105,7 +110,8 @@ public class AutoSpawnConfigData
         {
             Enabled = Enabled,
             IdPattern = IdPattern,
-            MaxInstances = MaxInstances
+            MaxInstances = MaxInstances,
+            CharacterIdCaptureGroup = CharacterIdCaptureGroup
         };
     }
 
@@ -121,7 +127,8 @@ public class AutoSpawnConfigData
         {
             Enabled = config.Enabled,
             IdPattern = config.IdPattern,
-            MaxInstances = config.MaxInstances
+            MaxInstances = config.MaxInstances,
+            CharacterIdCaptureGroup = config.CharacterIdCaptureGroup
         };
     }
 }

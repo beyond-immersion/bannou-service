@@ -444,6 +444,15 @@ public partial class SendMessageCommand
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     public object? Payload { get; set; } = default!;
 
+    /// <summary>
+    /// Optional urgency level (0-1) for the message perception.
+    /// <br/>If not provided, defaults to 0.5.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("urgency")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Urgency { get; set; } = default!;
+
 }
 
 /// <summary>
