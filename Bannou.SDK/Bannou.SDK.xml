@@ -28443,81 +28443,6 @@
         <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.ChannelResolution.AllContributions">
             <summary>All contributions to this channel.</summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace">
-            <summary>
-            Debug trace showing which model contributed to each channel.
-            Only available in DEBUG builds to avoid allocation in release.
-            </summary>
-            <remarks>
-            <para>
-            This trace helps understand why a particular action was chosen.
-            For example, if Combat model's "attack" was chosen over Interaction
-            model's "talk", the trace shows both contributions and their urgencies.
-            </para>
-            <para>
-            Usage in game debugger:
-            <code>
-            var merged = evaluator.EvaluateCharacter(characterId, inputs);
-            if (merged.Trace != null)
-            {
-                foreach (var resolution in merged.Trace.Channels)
-                {
-                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
-                    foreach (var contrib in resolution.AllContributions)
-                    {
-                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
-                    }
-                }
-            }
-            </code>
-            </para>
-            </remarks>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.Timestamp">
-            <summary>
-            Timestamp when this trace was created.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.Channels">
-            <summary>
-            All channel resolutions in this trace.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.SDK.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.SDK.Behavior.Intent.ChannelContribution[])">
-            <summary>
-            Adds a channel resolution to the trace.
-            </summary>
-            <param name="channel">The intent channel.</param>
-            <param name="winner">The winning model type (null for blended).</param>
-            <param name="winningUrgency">The winning/combined urgency.</param>
-            <param name="contributions">All contributions to this channel.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.SDK.Behavior.Runtime.IntentChannel)">
-            <summary>
-            Gets the resolution for a specific channel.
-            </summary>
-            <param name="channel">The intent channel to look up.</param>
-            <returns>The resolution for that channel, or null if not found.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType)">
-            <summary>
-            Gets whether a specific model contributed to any channel.
-            </summary>
-            <param name="modelType">The behavior model type to check.</param>
-            <returns>True if the model contributed to at least one channel.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType)">
-            <summary>
-            Gets all channels where the specified model won.
-            </summary>
-            <param name="modelType">The behavior model type to check.</param>
-            <returns>Channels won by this model.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.ToString">
-            <summary>
-            Formats the trace as a human-readable string.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType">
             <summary>
             The fixed set of behavior model types for multi-model coordination.
@@ -28698,21 +28623,6 @@
             Selects the vocalization with highest urgency.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
-            <summary>
-            Collects contributions for debugging from all outputs.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType}[])">
-            <summary>
-            Collects locomotion contributions for debugging.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType}[])">
-            <summary>
-            Collects attention contributions for debugging.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.SDK.Behavior.Intent.LocomotionIntent">
             <summary>
             Locomotion intent with blendable target position.
@@ -28853,12 +28763,6 @@
         <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.MergedIntent.VocalizationUrgency">
             <summary>
             Urgency of the winning vocalization [0.0 - 1.0].
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.MergedIntent.Trace">
-            <summary>
-            Debug trace showing which model contributed to each channel.
-            Only available in DEBUG builds.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.MergedIntent.Empty">
