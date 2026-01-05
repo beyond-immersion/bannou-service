@@ -12,6 +12,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
@@ -25,6 +26,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
@@ -34,6 +36,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
@@ -43,6 +46,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
@@ -75,6 +79,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
@@ -85,6 +90,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
@@ -95,6 +101,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
@@ -119,6 +126,7 @@ runs:
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.storage.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
