@@ -242,7 +242,7 @@ def main():
     )
     parser.add_argument(
         '--service',
-        help='Process only this service (e.g., "accounts")'
+        help='Process only this service (e.g., "account")'
     )
     args = parser.parse_args()
 

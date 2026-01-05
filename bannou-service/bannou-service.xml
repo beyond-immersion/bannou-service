@@ -4104,7 +4104,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent">
             <summary>
-            Internal event carrying compiled capabilities from Permissions to Connect.
+            Internal event carrying compiled capabilities from Permission to Connect.
             <br/>NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
             <br/>and sends CapabilityManifestEvent to the client.
             <br/>
@@ -5672,7 +5672,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.Roles">
             <summary>
-            User roles from JWT (e.g., ["user", "admin"]). Used by Permissions to compile capabilities.
+            User roles from JWT (e.g., ["user", "admin"]). Used by Permission to compile capabilities.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.Authorizations">
@@ -21182,7 +21182,7 @@
             <br/>- `local-testing`: Test environment with infrastructure services
             <br/>- `integration-http`: HTTP integration testing preset
             <br/>- `integration-edge`: WebSocket/edge testing preset
-            <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+            <br/>- `split-auth-account`: Auth and Account in separate containers
             <br/>- `distributed-npc`: NPC processing distributed across nodes
             </remarks>
             <returns>Available deployment presets</returns>
@@ -21209,7 +21209,7 @@
             <br/>
             <br/>**Live Topology Changes**:
             <br/>Supports changing service distribution without full restart:
-            <br/>- Move auth/accounts to separate container while keeping other services together
+            <br/>- Move auth/account to separate container while keeping other services together
             <br/>- Scale specific services to additional nodes
             <br/>- Update environment variables without restart (where supported)
             </remarks>
@@ -21638,7 +21638,7 @@
             <br/>- `local-testing`: Test environment with infrastructure services
             <br/>- `integration-http`: HTTP integration testing preset
             <br/>- `integration-edge`: WebSocket/edge testing preset
-            <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+            <br/>- `split-auth-account`: Auth and Account in separate containers
             <br/>- `distributed-npc`: NPC processing distributed across nodes
             </remarks>
             <returns>Available deployment presets</returns>
@@ -21665,7 +21665,7 @@
             <br/>
             <br/>**Live Topology Changes**:
             <br/>Supports changing service distribution without full restart:
-            <br/>- Move auth/accounts to separate container while keeping other services together
+            <br/>- Move auth/account to separate container while keeping other services together
             <br/>- Scale specific services to additional nodes
             <br/>- Update environment variables without restart (where supported)
             </remarks>
@@ -22656,7 +22656,7 @@
             <summary>
             Services enabled on this node.
             <br/>Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-            <br/>Example: ["accounts", "auth", "permissions"]
+            <br/>Example: ["account", "auth", "permissions"]
             <br/>
             </summary>
         </member>
@@ -31367,7 +31367,7 @@
             <summary>
             Builds an endpoint-info meta response.
             </summary>
-            <param name="serviceName">Service name (e.g., "Accounts")</param>
+            <param name="serviceName">Service name (e.g., "Account")</param>
             <param name="method">HTTP method (e.g., "POST")</param>
             <param name="path">Endpoint path (e.g., "/account/get")</param>
             <param name="infoJson">Pre-embedded endpoint info JSON string</param>
@@ -31377,7 +31377,7 @@
             <summary>
             Builds a schema meta response (request-schema or response-schema).
             </summary>
-            <param name="serviceName">Service name (e.g., "Accounts")</param>
+            <param name="serviceName">Service name (e.g., "Account")</param>
             <param name="method">HTTP method (e.g., "POST")</param>
             <param name="path">Endpoint path (e.g., "/account/get")</param>
             <param name="metaType">Schema type: "request-schema" or "response-schema"</param>
@@ -31388,7 +31388,7 @@
             <summary>
             Builds a full-schema meta response combining info, request, and response schemas.
             </summary>
-            <param name="serviceName">Service name (e.g., "Accounts")</param>
+            <param name="serviceName">Service name (e.g., "Account")</param>
             <param name="method">HTTP method (e.g., "POST")</param>
             <param name="path">Endpoint path (e.g., "/account/get")</param>
             <param name="infoJson">Pre-embedded endpoint info JSON string</param>

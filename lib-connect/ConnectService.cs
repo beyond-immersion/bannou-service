@@ -810,7 +810,7 @@ public partial class ConnectService : IConnectService
 
             // Capability manifest is delivered via event-driven flow:
             // 1. session.connected event published above
-            // 2. Permissions compiles capabilities and publishes SessionCapabilitiesEvent
+            // 2. Permission compiles capabilities and publishes SessionCapabilitiesEvent
             // 3. RabbitMQ subscriber receives event and calls ProcessCapabilitiesAsync
             // 4. ProcessCapabilitiesAsync sends the manifest with real APIs
             // DO NOT send an empty placeholder manifest here - it causes race conditions
@@ -869,7 +869,7 @@ public partial class ConnectService : IConnectService
             var isForcedDisconnect = connection?.Metadata?.ContainsKey("forced_disconnect") == true;
 
             // CRITICAL: Publish session.disconnected event BEFORE unsubscribing from RabbitMQ
-            // This ensures Permissions removes session from activeConnections before the exchange is torn down
+            // This ensures Permission removes session from activeConnections before the exchange is torn down
             // Without this, services could still try to publish to the session during the brief cleanup window
             try
             {
@@ -2288,7 +2288,7 @@ public partial class ConnectService : IConnectService
         await Task.CompletedTask; // Satisfy async requirement for sync method
         // Capabilities are delivered via event-driven flow:
         // 1. Connect publishes session.connected with roles/authorizations
-        // 2. Permissions receives event, compiles capabilities, publishes SessionCapabilitiesEvent
+        // 2. Permission receives event, compiles capabilities, publishes SessionCapabilitiesEvent
         // 3. Connect receives SessionCapabilitiesEvent and calls ProcessCapabilitiesAsync
         //
         // For reconnection scenarios, existing mappings are loaded from session manager.

@@ -117,7 +117,7 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
     /// <param name="clientEventPublisher">Client event publisher for pushing events to WebSocket clients.</param>
     /// <param name="voiceClient">Voice client for voice room coordination.</param>
-    /// <param name="permissionClient">Permissions client for setting game-session:in_game state.</param>
+    /// <param name="permissionClient">Permission client for setting game-session:in_game state.</param>
     /// <param name="subscriptionClient">Subscriptions client for fetching account subscriptions.</param>
     public GameSessionService(
         IStateStoreFactory stateStoreFactory,

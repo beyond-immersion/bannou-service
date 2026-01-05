@@ -38,7 +38,7 @@ public class AccountTestHandler : BaseHttpTestHandler
         new ServiceTest(TestListAccountsPagination, "ListAccountsPagination", "Account", "Test account listing with pagination"),
         new ServiceTest(TestListAccountsFiltering, "ListAccountsFiltering", "Account", "Test account listing with filters"),
 
-        // Event-driven tests (requires Accounts event system)
+        // Event-driven tests (requires Account event system)
         new ServiceTest(TestAccountDeletionSessionInvalidation, "AccountDeletionSessionInvalidation", "Account", "Test account deletion → session invalidation flow"),
     ];
 

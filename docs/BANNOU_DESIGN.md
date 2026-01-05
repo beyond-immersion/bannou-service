@@ -36,7 +36,7 @@ SERVICES_ENABLED=true
 
 # Production: Only specific services on this node
 SERVICES_ENABLED=false
-ACCOUNTS_SERVICE_ENABLED=true
+ACCOUNT_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 ```
 
@@ -268,7 +268,7 @@ Services distributed by function:
 ```bash
 # Auth nodes
 AUTH_SERVICE_ENABLED=true
-ACCOUNTS_SERVICE_ENABLED=true
+ACCOUNT_SERVICE_ENABLED=true
 
 # NPC processing nodes
 BEHAVIOR_SERVICE_ENABLED=true

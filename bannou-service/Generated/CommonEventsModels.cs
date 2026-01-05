@@ -528,7 +528,7 @@ public partial class SessionConnectedEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// User roles from JWT (e.g., ["user", "admin"]). Used by Permissions to compile capabilities.
+    /// User roles from JWT (e.g., ["user", "admin"]). Used by Permission to compile capabilities.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;

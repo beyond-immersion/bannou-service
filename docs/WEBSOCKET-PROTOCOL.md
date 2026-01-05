@@ -133,7 +133,7 @@ Channels provide fair round-robin message scheduling:
 |---------|---------|
 | 0 | Default channel (general API calls) |
 | 1 | Authentication channel |
-| 2 | Accounts channel |
+| 2 | Account channel |
 | 3+ | Custom per-service channels |
 
 Messages on the same channel are processed sequentially (per sequence number).
@@ -307,7 +307,7 @@ Header (31 bytes):
   Byte 0:     0x80 (Flags: Meta)
   Bytes 1-2:  0x0002 (Channel: 2 = ResponseSchema)
   Bytes 3-6:  0x00000001 (Sequence: 1)
-  Bytes 7-22: <accounts/get service GUID>
+  Bytes 7-22: <account/get service GUID>
   Bytes 23-30: 0x0123456789ABCDEF (MessageId)
 
 Payload: (empty - meta requests have no body)

@@ -134,7 +134,7 @@ public partial interface IOrchestratorClient
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
-    /// <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+    /// <br/>- `split-auth-account`: Auth and Account in separate containers
     /// <br/>- `distributed-npc`: NPC processing distributed across nodes
     /// </remarks>
     /// <returns>Available deployment presets</returns>
@@ -161,7 +161,7 @@ public partial interface IOrchestratorClient
     /// <br/>
     /// <br/>**Live Topology Changes**:
     /// <br/>Supports changing service distribution without full restart:
-    /// <br/>- Move auth/accounts to separate container while keeping other services together
+    /// <br/>- Move auth/account to separate container while keeping other services together
     /// <br/>- Scale specific services to additional nodes
     /// <br/>- Update environment variables without restart (where supported)
     /// </remarks>
@@ -1023,7 +1023,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
-    /// <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+    /// <br/>- `split-auth-account`: Auth and Account in separate containers
     /// <br/>- `distributed-npc`: NPC processing distributed across nodes
     /// </remarks>
     /// <returns>Available deployment presets</returns>
@@ -1121,7 +1121,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// <br/>
     /// <br/>**Live Topology Changes**:
     /// <br/>Supports changing service distribution without full restart:
-    /// <br/>- Move auth/accounts to separate container while keeping other services together
+    /// <br/>- Move auth/account to separate container while keeping other services together
     /// <br/>- Scale specific services to additional nodes
     /// <br/>- Update environment variables without restart (where supported)
     /// </remarks>
@@ -2774,7 +2774,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -2786,7 +2786,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

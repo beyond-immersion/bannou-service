@@ -161,8 +161,8 @@ validate_schema_file() {
 validate_service_args() {
     if [ $# -lt 1 ]; then
         log_error "Usage: $0 <service-name> [schema-file]"
-        echo "Example: $0 accounts"
-        echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+        echo "Example: $0 account"
+        echo "Example: $0 account ../schemas/account-api.yaml"
         exit 1
     fi
 }

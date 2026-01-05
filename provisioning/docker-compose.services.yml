@@ -19,7 +19,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # MySQL for accounts service
+  # MySQL for account service
   account-db:
     image: mysql:8.1.0
     environment:

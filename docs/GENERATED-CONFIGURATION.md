@@ -11,8 +11,8 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ACCOUNTS_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
-| `ACCOUNTS_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
+| `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
+| `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
 
 ### Actor
 
@@ -119,7 +119,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `CONNECT_AUTHENTICATED_SERVICES` | string[] | `['accounts', 'behavior', 'permissions', 'gamesession']` | Additional services available to authenticated connections |
+| `CONNECT_AUTHENTICATED_SERVICES` | string[] | `['account', 'behavior', 'permission', 'gamesession']` | Additional services available to authenticated connections |
 | `CONNECT_BINARY_PROTOCOL_VERSION` | string | `2.0` | Binary protocol version identifier |
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
 | `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
@@ -263,7 +263,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `PERMISSIONS_ENABLED` | bool | `true` | Enable/disable Permissions service |
+| `PERMISSION_ENABLED` | bool | `true` | Enable/disable Permission service |
 
 ### Realm
 
@@ -287,7 +287,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SERVICEDATA_STATE_STORE_NAME` | string | `servicedata-statestore` | State store name for service data |
+| `SERVICE_STATE_STORE_NAME` | string | `service-statestore` | State store name for service data |
 
 ### Species
 
@@ -312,8 +312,8 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SUBSCRIPTIONS_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
-| `SUBSCRIPTIONS_STATE_STORE_NAME` | string | `subscriptions-statestore` | State store name for subscriptions |
+| `SUBSCRIPTION_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
+| `SUBSCRIPTION_STATE_STORE_NAME` | string | `subscription-statestore` | State store name for subscription |
 
 ### Voice
 

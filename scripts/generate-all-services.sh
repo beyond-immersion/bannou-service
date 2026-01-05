@@ -118,7 +118,7 @@ SUCCESSFUL_SERVICES=0
 
 # Process each schema file
 for schema_file in "${SCHEMA_FILES[@]}"; do
-    # Extract service name from schema filename (e.g. "accounts-api.yaml" -> "accounts")
+    # Extract service name from schema filename (e.g. "account-api.yaml" -> "account")
     service_name=$(basename "$schema_file" | sed 's/-api\.yaml$//')
 
     # Skip if specific service requested and this isn't it

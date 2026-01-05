@@ -13,7 +13,7 @@ Server SDK for the Bannou service platform. Use this for **game servers** and **
 
 ## Features
 
-- ✅ Type-safe service clients (`AccountsClient`, `AuthClient`, etc.)
+- ✅ Type-safe service clients (`AccountClient`, `AuthClient`, etc.)
 - ✅ Request/Response models for all APIs
 - ✅ Event models for pub/sub messaging
 - ✅ WebSocket binary protocol (31-byte header)

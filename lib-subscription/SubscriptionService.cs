@@ -258,7 +258,7 @@ public partial class SubscriptionService : ISubscriptionService
 
         try
         {
-            // Fetch service info from ServiceData service
+            // Fetch service info from Service service
             ServiceInfo? serviceInfo;
             try
             {

@@ -33,7 +33,7 @@ def to_title_case(name: str) -> str:
 
 def extract_service_name(filename: str) -> str:
     """Extract service name from configuration schema filename."""
-    # accounts-configuration.yaml -> accounts
+    # account-configuration.yaml -> account
     name = filename.replace('-configuration.yaml', '')
     return name
 

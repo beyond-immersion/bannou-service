@@ -1050,7 +1050,7 @@ public partial class TopologyNode
     /// <summary>
     /// Services enabled on this node.
     /// <br/>Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-    /// <br/>Example: ["accounts", "auth", "permissions"]
+    /// <br/>Example: ["account", "auth", "permissions"]
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]

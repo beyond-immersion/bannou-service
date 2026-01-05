@@ -223,7 +223,7 @@ public partial class SystemErrorEvent : BaseClientEvent
 }
 
 /// <summary>
-/// Internal event carrying compiled capabilities from Permissions to Connect.
+/// Internal event carrying compiled capabilities from Permission to Connect.
 /// <br/>NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
 /// <br/>and sends CapabilityManifestEvent to the client.
 /// <br/>

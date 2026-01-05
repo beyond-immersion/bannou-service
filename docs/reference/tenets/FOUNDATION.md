@@ -68,7 +68,7 @@ lib-{service}/
 
 ### Why POST-Only?
 
-Path parameters (e.g., `/accounts/{id}`) cannot map to static GUIDs for zero-copy binary WebSocket routing. All parameters move to request bodies for static endpoint signatures.
+Path parameters (e.g., `/account/{id}`) cannot map to static GUIDs for zero-copy binary WebSocket routing. All parameters move to request bodies for static endpoint signatures.
 
 **Related**: See Tenet 15 for browser-facing endpoint exceptions (OAuth, Website, WebSocket upgrade).
 
@@ -243,8 +243,8 @@ var subscription = await _messageSubscriber.SubscribeDynamicAsync<MyEvent>(
 await subscription.DisposeAsync();  // Clean up when session ends
 
 // lib-mesh: Use IMeshInvocationClient or generated clients for service calls
-await _meshClient.InvokeMethodAsync<Request, Response>("accounts", "get-account", request, ct);
-await _accountsClient.GetAccountAsync(request, ct);  // Generated client (preferred)
+await _meshClient.InvokeMethodAsync<Request, Response>("account", "get-account", request, ct);
+await _accountClient.GetAccountAsync(request, ct);  // Generated client (preferred)
 ```
 
 **FORBIDDEN**:
@@ -252,7 +252,7 @@ await _accountsClient.GetAccountAsync(request, ct);  // Generated client (prefer
 new MySqlConnection(connectionString);  // Use lib-state
 ConnectionMultiplexer.Connect(...);     // Use lib-state
 channel.BasicPublish(...);              // Use lib-messaging
-httpClient.PostAsync("http://accounts/api/...");  // Use lib-mesh
+httpClient.PostAsync("http://account/api/...");  // Use lib-mesh
 ```
 
 Generated clients are auto-registered as Singletons and use mesh service resolution internally.
@@ -477,7 +477,7 @@ components:
 components:
   schemas:
     AccountDeletedEvent:
-      $ref: './accounts-events.yaml#/components/schemas/AccountDeletedEvent'  # NO!
+      $ref: './account-events.yaml#/components/schemas/AccountDeletedEvent'  # NO!
 ```
 
 ---

@@ -23,7 +23,7 @@ local SERVICE_MAPPING = {
     auth = "auth",
     connect = "connect",
     website = "website",
-    accounts = "accounts"
+    account = "account"
 }
 
 -- Redis connection helper with connection pooling
@@ -126,8 +126,8 @@ local function get_service_from_uri(uri)
         return "auth"
     elseif string.match(uri, "^/connect") then
         return "connect"
-    elseif string.match(uri, "^/accounts/") then
-        return "accounts"
+    elseif string.match(uri, "^/account/") then
+        return "account"
     elseif string.match(uri, "^/website/") or string.match(uri, "^/$") then
         return "website"
     end

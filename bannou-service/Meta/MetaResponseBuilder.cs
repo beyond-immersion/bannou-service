@@ -16,7 +16,7 @@ public static class MetaResponseBuilder
     /// <summary>
     /// Builds an endpoint-info meta response.
     /// </summary>
-    /// <param name="serviceName">Service name (e.g., "Accounts")</param>
+    /// <param name="serviceName">Service name (e.g., "Account")</param>
     /// <param name="method">HTTP method (e.g., "POST")</param>
     /// <param name="path">Endpoint path (e.g., "/account/get")</param>
     /// <param name="infoJson">Pre-embedded endpoint info JSON string</param>
@@ -43,7 +43,7 @@ public static class MetaResponseBuilder
     /// <summary>
     /// Builds a schema meta response (request-schema or response-schema).
     /// </summary>
-    /// <param name="serviceName">Service name (e.g., "Accounts")</param>
+    /// <param name="serviceName">Service name (e.g., "Account")</param>
     /// <param name="method">HTTP method (e.g., "POST")</param>
     /// <param name="path">Endpoint path (e.g., "/account/get")</param>
     /// <param name="metaType">Schema type: "request-schema" or "response-schema"</param>
@@ -72,7 +72,7 @@ public static class MetaResponseBuilder
     /// <summary>
     /// Builds a full-schema meta response combining info, request, and response schemas.
     /// </summary>
-    /// <param name="serviceName">Service name (e.g., "Accounts")</param>
+    /// <param name="serviceName">Service name (e.g., "Account")</param>
     /// <param name="method">HTTP method (e.g., "POST")</param>
     /// <param name="path">Endpoint path (e.g., "/account/get")</param>
     /// <param name="infoJson">Pre-embedded endpoint info JSON string</param>

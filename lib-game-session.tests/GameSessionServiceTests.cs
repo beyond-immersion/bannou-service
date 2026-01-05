@@ -645,7 +645,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
         Assert.True(response?.Success);
 
-        // Verify game-session:in_game state was set via Permissions client with the WebSocket session ID
+        // Verify game-session:in_game state was set via Permission client with the WebSocket session ID
         _mockPermissionClient.Verify(p => p.UpdateSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(u =>
                 u.SessionId == clientSessionId &&
@@ -700,7 +700,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
-        // Verify game-session:in_game state was cleared via Permissions client with the WebSocket session ID
+        // Verify game-session:in_game state was cleared via Permission client with the WebSocket session ID
         _mockPermissionClient.Verify(p => p.ClearSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(u =>
                 u.SessionId == clientSessionId &&

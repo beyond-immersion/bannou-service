@@ -609,7 +609,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             if (adminClient == null || !adminClient.IsConnected)
             {
                 Console.WriteLine("❌ Admin client not connected - cannot update session state");
-                Console.WriteLine("   Permissions APIs require admin role. Check AdminEmails/AdminEmailDomain configuration.");
+                Console.WriteLine("   Permission APIs require admin role. Check AdminEmails/AdminEmailDomain configuration.");
                 return false;
             }
 

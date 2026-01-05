@@ -58,7 +58,7 @@ public partial class ServiceService : IServiceService
             var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
 
             var services = new List<ServiceInfo>();
-            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
 
             if (serviceIds != null)
             {
@@ -104,8 +104,8 @@ public partial class ServiceService : IServiceService
 
         try
         {
-            ServiceDataModel? serviceModel = null;
-            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+            ServiceRegistryModel? serviceModel = null;
+            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
             // Try by service ID first
@@ -167,7 +167,7 @@ public partial class ServiceService : IServiceService
 
             var normalizedStubName = body.StubName.ToLowerInvariant();
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
-            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
 
             // Check if stub name already exists
             var existingServiceId = await stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", cancellationToken);
@@ -182,7 +182,7 @@ public partial class ServiceService : IServiceService
             var serviceId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
-            var serviceModel = new ServiceDataModel
+            var serviceModel = new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = normalizedStubName,
@@ -230,7 +230,7 @@ public partial class ServiceService : IServiceService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
 
             // Get existing service
             var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
@@ -288,7 +288,7 @@ public partial class ServiceService : IServiceService
                 return StatusCodes.BadRequest;
             }
 
-            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<ServiceRegistryModel>(StateStoreName);
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
             // Get existing service to get stub name for index cleanup
@@ -357,7 +357,7 @@ public partial class ServiceService : IServiceService
     /// <summary>
     /// Map internal storage model to API response model.
     /// </summary>
-    private static ServiceInfo MapToServiceInfo(ServiceDataModel model)
+    private static ServiceInfo MapToServiceInfo(ServiceRegistryModel model)
     {
         return new ServiceInfo
         {
@@ -418,7 +418,7 @@ public partial class ServiceService : IServiceService
 /// Internal storage model using Unix timestamps to avoid serialization issues.
 /// Accessible to test project via InternalsVisibleTo attribute.
 /// </summary>
-internal class ServiceDataModel
+internal class ServiceRegistryModel
 {
     public string ServiceId { get; set; } = string.Empty;
     public string StubName { get; set; } = string.Empty;

@@ -297,7 +297,7 @@ All service APIs must use POST requests with body parameters:
 **Correct** (Bannou services):
 ```yaml
 paths:
-  /accounts/get:
+  /account/get:
     post:
       requestBody:
         content:
@@ -319,7 +319,7 @@ components:
 **Incorrect** (breaks zero-copy routing):
 ```yaml
 paths:
-  /accounts/{accountId}:
+  /account/{accountId}:
     get:
       parameters:
         - name: accountId

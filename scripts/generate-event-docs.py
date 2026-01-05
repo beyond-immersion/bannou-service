@@ -35,8 +35,8 @@ def to_kebab_case(name: str) -> str:
 def extract_service_from_filename(filename: str) -> str:
     """Extract service name from event schema filename."""
     # Handle patterns like:
-    # - accounts-events.yaml -> Accounts
-    # - accounts-lifecycle-events.yaml -> Accounts
+    # - account-events.yaml -> Account
+    # - account-lifecycle-events.yaml -> Account
     # - common-events.yaml -> Common
     # - common-client-events.yaml -> Common (Client)
 

@@ -47,34 +47,34 @@ Internal account management service (CRUD operations only, never exposed to inte
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/by-email` | Get account by email | admin |
-| `POST` | `/accounts/by-provider` | Get account by external provider ID | admin |
+| `POST` | `/account/by-email` | Get account by email | admin |
+| `POST` | `/account/by-provider` | Get account by external provider ID | admin |
 
 ### Account Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/create` | Create new account | admin |
-| `POST` | `/accounts/delete` | Delete account | admin |
-| `POST` | `/accounts/get` | Get account by ID | admin |
-| `POST` | `/accounts/list` | List accounts with filtering | admin |
-| `POST` | `/accounts/password/update` | Update account password hash | user |
-| `POST` | `/accounts/update` | Update account | admin |
-| `POST` | `/accounts/verification/update` | Update email verification status | user |
+| `POST` | `/account/create` | Create new account | admin |
+| `POST` | `/account/delete` | Delete account | admin |
+| `POST` | `/account/get` | Get account by ID | admin |
+| `POST` | `/account/list` | List accounts with filtering | admin |
+| `POST` | `/account/password/update` | Update account password hash | user |
+| `POST` | `/account/update` | Update account | admin |
+| `POST` | `/account/verification/update` | Update email verification status | user |
 
 ### Authentication Methods
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/auth-methods/add` | Add authentication method to account | admin |
-| `POST` | `/accounts/auth-methods/list` | Get authentication methods for account | admin |
-| `POST` | `/accounts/auth-methods/remove` | Remove authentication method from account | admin |
+| `POST` | `/account/auth-methods/add` | Add authentication method to account | admin |
+| `POST` | `/account/auth-methods/list` | Get authentication methods for account | admin |
+| `POST` | `/account/auth-methods/remove` | Remove authentication method from account | admin |
 
 ### Profile Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/accounts/profile/update` | Update account profile | user |
+| `POST` | `/account/profile/update` | Update account profile | user |
 
 ---
 
@@ -515,29 +515,29 @@ Redis-backed high-performance permission system for WebSocket services.
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/capabilities` | Get available API methods for session | authenticated |
+| `POST` | `/permission/capabilities` | Get available API methods for session | authenticated |
 
 ### Permission Validation
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/validate` | Validate specific API access for session | authenticated |
+| `POST` | `/permission/validate` | Validate specific API access for session | authenticated |
 
 ### Service Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/register-service` | Register or update service permission matrix | authenticated |
-| `POST` | `/permissions/services/list` | List all registered services | admin |
+| `POST` | `/permission/register-service` | Register or update service permission matrix | authenticated |
+| `POST` | `/permission/services/list` | List all registered services | admin |
 
 ### Session Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/permissions/clear-session-state` | Clear session state for specific service | authenticated |
-| `POST` | `/permissions/get-session-info` | Get complete session information | authenticated |
-| `POST` | `/permissions/update-session-role` | Update session role (affects all services) | authenticated |
-| `POST` | `/permissions/update-session-state` | Update session state for specific service | admin |
+| `POST` | `/permission/clear-session-state` | Clear session state for specific service | authenticated |
+| `POST` | `/permission/get-session-info` | Get complete session information | authenticated |
+| `POST` | `/permission/update-session-role` | Update session role (affects all services) | authenticated |
+| `POST` | `/permission/update-session-state` | Update session state for specific service | admin |
 
 ---
 
@@ -631,11 +631,11 @@ Provides a minimal registry of available services (games/applications) like Arca
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/servicedata/services/create` | Create a new game service entry | admin |
-| `POST` | `/servicedata/services/delete` | Delete a game service entry | admin |
-| `POST` | `/servicedata/services/get` | Get service by ID or stub name | user |
-| `POST` | `/servicedata/services/list` | List all registered game services | user |
-| `POST` | `/servicedata/services/update` | Update a game service entry | admin |
+| `POST` | `/service/services/create` | Create a new game service entry | admin |
+| `POST` | `/service/services/delete` | Delete a game service entry | admin |
+| `POST` | `/service/services/get` | Get service by ID or stub name | user |
+| `POST` | `/service/services/list` | List all registered game services | user |
+| `POST` | `/service/services/update` | Update a game service entry | admin |
 
 ---
 
@@ -700,13 +700,13 @@ Tracks which accounts have access to which services (games/applications) with ti
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/subscriptions/account/list` | Get subscriptions for an account | user |
-| `POST` | `/subscriptions/cancel` | Cancel a subscription | user |
-| `POST` | `/subscriptions/create` | Create a new subscription | admin |
-| `POST` | `/subscriptions/get` | Get a specific subscription by ID | user |
-| `POST` | `/subscriptions/query` | Query current (active, non-expired) subscriptions | service |
-| `POST` | `/subscriptions/renew` | Renew or extend a subscription | admin |
-| `POST` | `/subscriptions/update` | Update a subscription | admin |
+| `POST` | `/subscription/account/list` | Get subscriptions for an account | user |
+| `POST` | `/subscription/cancel` | Cancel a subscription | user |
+| `POST` | `/subscription/create` | Create a new subscription | admin |
+| `POST` | `/subscription/get` | Get a specific subscription by ID | user |
+| `POST` | `/subscription/query` | Query current (active, non-expired) subscriptions | service |
+| `POST` | `/subscription/renew` | Renew or extend a subscription | admin |
+| `POST` | `/subscription/update` | Update a subscription | admin |
 
 ---
 

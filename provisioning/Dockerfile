@@ -4,7 +4,7 @@ COPY ./ /app/
 RUN apt-get update && apt-get install -y libxml2-utils && apt-get install -y rsync
 
 # Support build-time service selection
-# Usage: docker build --build-arg BANNOU_SERVICES="auth accounts connect" .
+# Usage: docker build --build-arg BANNOU_SERVICES="auth account connect" .
 # Default: builds all services if not specified
 ARG BANNOU_SERVICES=""
 

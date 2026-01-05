@@ -14,7 +14,7 @@ These tenets define the patterns you follow while implementing services. Referen
 
 ### The Problem
 
-RabbitMQ queue binding allows only ONE consumer per queue to receive events. When multiple plugins need the same event (e.g., Auth, Permissions, and GameSession all need `session.connected`), only one randomly "wins."
+RabbitMQ queue binding allows only ONE consumer per queue to receive events. When multiple plugins need the same event (e.g., Auth, Permission, and GameSession all need `session.connected`), only one randomly "wins."
 
 ### The Solution: Application-Level Fan-Out
 

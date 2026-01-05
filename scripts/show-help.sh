@@ -18,8 +18,8 @@ cat << 'EOF'
 
 🐳 DOCKER & COMPOSE
   build-compose             Build Docker containers (all services)
-  build-compose-services SERVICES="auth accounts"  Build with specific services only
-  build-plugins SERVICES="auth accounts"           Build specific plugins only
+  build-compose-services SERVICES="auth account"  Build with specific services only
+  build-plugins SERVICES="auth account"           Build specific plugins only
   build-service-libs        Build all service plugins for Docker
   up-compose                Start services locally
   up-openresty              Start with OpenResty edge proxy
@@ -32,7 +32,7 @@ cat << 'EOF'
 🔍 SERVICE MANAGEMENT
   list-services             Show all available services for building
   validate-compose-services Show plugins in latest Docker image
-  validate-compose-services SERVICES="auth accounts"  Validate specific services
+  validate-compose-services SERVICES="auth account"  Validate specific services
 
 🧪 TESTING
   test                      Run all unit tests
@@ -72,8 +72,8 @@ cat << 'EOF'
   make test PLUGIN=auth
 
   # Selective service building
-  make build-compose-services SERVICES="auth accounts connect"
-  make validate-compose-services SERVICES="auth accounts connect"
+  make build-compose-services SERVICES="auth account connect"
+  make validate-compose-services SERVICES="auth account connect"
 
   # Complete development cycle
   make clean && make generate && make build && make test

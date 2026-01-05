@@ -318,14 +318,14 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
 
 {%-         comment -%}
             Extract event type information from schema $ref
-            Format: 'accounts-events.yaml#/components/schemas/AccountDeletedEvent'
+            Format: 'account-events.yaml#/components/schemas/AccountDeletedEvent'
 {%-         endcomment -%}
 {%-         assign schemaRef = subscription.schema["$ref"] -%}
 {%-         assign refParts = schemaRef | split: "#/components/schemas/" -%}
 {%-         assign sourceFile = refParts[0] | remove: ".yaml" | remove: "'" -%}
 {%-         assign eventTypeName = refParts[1] -%}
 {%-         comment -%}
-            Map source file to namespace - accounts-events -> Accounts
+            Map source file to namespace - account-events -> Account
 {%-         endcomment -%}
 {%-         assign serviceName = sourceFile | split: "-" | first | capitalize -%}
 {%-         assign fullTypeName = "BeyondImmersion.BannouService." | append: serviceName | append: "." | append: eventTypeName -%}

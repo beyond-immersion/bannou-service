@@ -632,7 +632,7 @@ public class BannouClient : IAsyncDisposable
 
     private async Task<bool> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken)
     {
-        // Registration goes through the Auth service, not Accounts
+        // Registration goes through the Auth service, not Account
         var registerUrl = $"{_serverBaseUrl}/auth/register";
 
         var registerRequest = new { username, email, password };

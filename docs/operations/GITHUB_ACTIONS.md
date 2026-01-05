@@ -112,7 +112,7 @@ BANNOU_JWT_AUDIENCE=bannou-ci-tests
 AUTH_MOCK_PROVIDERS=true
 
 # Admin role for test accounts
-ACCOUNTS_ADMIN_EMAIL_DOMAIN=@admin.test.local
+ACCOUNT_ADMIN_EMAIL_DOMAIN=@admin.test.local
 ```
 
 ## SDK Release Process

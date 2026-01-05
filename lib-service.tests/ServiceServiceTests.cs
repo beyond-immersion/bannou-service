@@ -17,7 +17,7 @@ namespace BeyondImmersion.BannouService.Service.Tests;
 public class ServiceServiceTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
-    private readonly Mock<IStateStore<ServiceDataModel>> _mockModelStore;
+    private readonly Mock<IStateStore<ServiceRegistryModel>> _mockModelStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
@@ -29,7 +29,7 @@ public class ServiceServiceTests
     public ServiceServiceTests()
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
-        _mockModelStore = new Mock<IStateStore<ServiceDataModel>>();
+        _mockModelStore = new Mock<IStateStore<ServiceRegistryModel>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockMessageBus = new Mock<IMessageBus>();
@@ -38,7 +38,7 @@ public class ServiceServiceTests
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
-        _mockStateStoreFactory.Setup(f => f.GetStore<ServiceDataModel>(STATE_STORE))
+        _mockStateStoreFactory.Setup(f => f.GetStore<ServiceRegistryModel>(STATE_STORE))
             .Returns(_mockModelStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
             .Returns(_mockListStore.Object);
@@ -141,7 +141,7 @@ public class ServiceServiceTests
         // Verify service data saved with service: prefix
         _mockModelStore.Verify(s => s.SaveAsync(
             It.Is<string>(k => k.StartsWith("service:") && k != "service-list"),
-            It.IsAny<ServiceDataModel>(),
+            It.IsAny<ServiceRegistryModel>(),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
@@ -303,7 +303,7 @@ public class ServiceServiceTests
         // Mock: Service exists
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -335,7 +335,7 @@ public class ServiceServiceTests
         // Mock: Service doesn't exist
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ServiceDataModel?)null);
+            .ReturnsAsync((ServiceRegistryModel?)null);
 
         // Act
         var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
@@ -360,7 +360,7 @@ public class ServiceServiceTests
         // Mock: Service exists
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -418,7 +418,7 @@ public class ServiceServiceTests
         // Mock: Service 1
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId1}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId1.ToString(),
                 StubName = "service1",
@@ -430,7 +430,7 @@ public class ServiceServiceTests
         // Mock: Service 2
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId2}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId2.ToString(),
                 StubName = "service2",
@@ -466,7 +466,7 @@ public class ServiceServiceTests
         // Mock: Service 1 (active)
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId1}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId1.ToString(),
                 StubName = "active-service",
@@ -478,7 +478,7 @@ public class ServiceServiceTests
         // Mock: Service 2 (inactive)
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId2}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId2.ToString(),
                 StubName = "inactive-service",
@@ -539,7 +539,7 @@ public class ServiceServiceTests
         // Mock: Service exists
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -549,14 +549,14 @@ public class ServiceServiceTests
             });
 
         // Capture saved data
-        ServiceDataModel? savedModel = null;
+        ServiceRegistryModel? savedModel = null;
         _mockModelStore
             .Setup(s => s.SaveAsync(
                 $"service:{serviceId}",
-                It.IsAny<ServiceDataModel>(),
+                It.IsAny<ServiceRegistryModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+            .Callback<string, ServiceRegistryModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedModel = data);
 
         // Act
@@ -586,7 +586,7 @@ public class ServiceServiceTests
         // Mock: Service exists
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -597,14 +597,14 @@ public class ServiceServiceTests
             });
 
         // Capture saved data
-        ServiceDataModel? savedModel = null;
+        ServiceRegistryModel? savedModel = null;
         _mockModelStore
             .Setup(s => s.SaveAsync(
                 $"service:{serviceId}",
-                It.IsAny<ServiceDataModel>(),
+                It.IsAny<ServiceRegistryModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+            .Callback<string, ServiceRegistryModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedModel = data);
 
         // Act
@@ -632,7 +632,7 @@ public class ServiceServiceTests
         // Mock: Service doesn't exist
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ServiceDataModel?)null);
+            .ReturnsAsync((ServiceRegistryModel?)null);
 
         // Act
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
@@ -674,7 +674,7 @@ public class ServiceServiceTests
         // Mock: Service exists (active)
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -684,14 +684,14 @@ public class ServiceServiceTests
             });
 
         // Capture saved data
-        ServiceDataModel? savedModel = null;
+        ServiceRegistryModel? savedModel = null;
         _mockModelStore
             .Setup(s => s.SaveAsync(
                 $"service:{serviceId}",
-                It.IsAny<ServiceDataModel>(),
+                It.IsAny<ServiceRegistryModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+            .Callback<string, ServiceRegistryModel, StateOptions?, CancellationToken>(
                 (key, data, options, ct) => savedModel = data);
 
         // Act
@@ -720,7 +720,7 @@ public class ServiceServiceTests
         // Mock: Service exists
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -757,7 +757,7 @@ public class ServiceServiceTests
         // Mock: Service exists with stub name
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -795,7 +795,7 @@ public class ServiceServiceTests
         // Mock: Service exists
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceDataModel
+            .ReturnsAsync(new ServiceRegistryModel
             {
                 ServiceId = serviceId.ToString(),
                 StubName = "testservice",
@@ -841,7 +841,7 @@ public class ServiceServiceTests
         // Mock: Service doesn't exist
         _mockModelStore
             .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ServiceDataModel?)null);
+            .ReturnsAsync((ServiceRegistryModel?)null);
 
         // Act
         var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);

@@ -106,7 +106,7 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
         "behavior", "character", "species", "realm", "location",
         "relationship", "relationship-type", "subscriptions",
         "game-session", "orchestrator", "documentation",
-        "servicedata", "voice", "asset", "actor"
+        "service", "voice", "asset", "actor"
     };
 
     /// <summary>

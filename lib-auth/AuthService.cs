@@ -1218,7 +1218,7 @@ public partial class AuthService : IAuthService
             // configuration (e.g., AdminEmailDomain). Clients have no choice in their authorization level.
             //
             // HOW ROLES WORK:
-            // 1. Roles stored in AccountModel (MySQL via lib-state) - assigned by Accounts service
+            // 1. Roles stored in AccountModel (MySQL via lib-state) - assigned by Account service
             // 2. Roles copied to SessionDataModel (Redis) during session creation - stored with session data
             // 3. JWT contains only opaque "session_key" claim - points to Redis session data
             // 4. ValidateTokenAsync reads roles from Redis session data (NOT from JWT claims)

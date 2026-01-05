@@ -2264,7 +2264,7 @@ public partial class OrchestratorService : IOrchestratorService
                     keyPrefixes.Add("services");
                 if (currentConfig.EnvironmentVariables.Any())
                 {
-                    // Extract unique prefixes from env vars (e.g., "AUTH", "ACCOUNTS")
+                    // Extract unique prefixes from env vars (e.g., "AUTH", "ACCOUNT")
                     var envPrefixes = currentConfig.EnvironmentVariables.Keys
                         .Select(k => k.Split('_').FirstOrDefault() ?? k)
                         .Distinct()

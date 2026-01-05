@@ -273,7 +273,7 @@ public class AuthServiceTests
 
     // NOTE: Complex role handling tests requiring mesh client mocking with internal SessionDataModel
     // are better suited for integration testing where real Redis can be used.
-    // The permission flow is fully tested in PermissionsServiceTests.
+    // The permission flow is fully tested in PermissionServiceTests.
     // Role storage in Redis is verified through HTTP integration tests (http-tester).
 
     #endregion

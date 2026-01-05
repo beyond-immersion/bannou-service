@@ -237,7 +237,7 @@ Server SDK for the Bannou service platform. Use this for **game servers** and **
 
 ## Features
 
-- ✅ Type-safe service clients (`AccountsClient`, `AuthClient`, etc.)
+- ✅ Type-safe service clients (`AccountClient`, `AuthClient`, etc.)
 - ✅ Request/Response models for all APIs
 - ✅ Event models for pub/sub messaging
 - ✅ WebSocket binary protocol (31-byte header)
@@ -249,14 +249,14 @@ Server SDK for the Bannou service platform. Use this for **game servers** and **
 ### Using Service Clients
 
 ```csharp
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 
 // Service clients use mesh routing
-var accountsClient = new AccountsClient();
+var accountClient = new AccountClient();
 var authClient = new AuthClient();
 
-var response = await accountsClient.CreateAccountAsync(new CreateAccountRequest
+var response = await accountClient.CreateAccountAsync(new CreateAccountRequest
 {
     Username = "user",
     Password = "password"
@@ -445,7 +445,7 @@ Lightweight client SDK for the Bannou service platform. Use this for **game clie
 ## What's NOT Included
 
 This SDK **does not include**:
-- ❌ ServiceClients (`AccountsClient`, `AuthClient`, etc.) - use `Bannou.SDK` if you need these
+- ❌ ServiceClients (`AccountClient`, `AuthClient`, etc.) - use `Bannou.SDK` if you need these
 - ❌ Server-side infrastructure dependencies
 
 ## Features
@@ -461,7 +461,7 @@ This SDK **does not include**:
 ```csharp
 using BeyondImmersion.Bannou.Client.SDK;
 using BeyondImmersion.BannouService.Auth;
-using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Account;
 
 // Connect via WebSocket
 var client = new BannouClient("wss://connect.bannou.example.com/ws");

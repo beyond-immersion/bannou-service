@@ -97,7 +97,7 @@ AUTH_CONNECT_URL=ws://your-domain.com/connect
 AUTH_MOCK_PROVIDERS=true
 
 # Admin auto-assignment (emails matching this domain get admin role)
-ACCOUNTS_ADMIN_EMAIL_DOMAIN=@admin.test.local
+ACCOUNT_ADMIN_EMAIL_DOMAIN=@admin.test.local
 ```
 
 ### Running External Stack
@@ -180,7 +180,7 @@ Group related services on dedicated nodes:
 # Auth Node
 SERVICES_ENABLED=false
 AUTH_SERVICE_ENABLED=true
-ACCOUNTS_SERVICE_ENABLED=true
+ACCOUNT_SERVICE_ENABLED=true
 
 # Game Session Node
 SERVICES_ENABLED=false

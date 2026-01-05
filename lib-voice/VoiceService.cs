@@ -49,7 +49,7 @@ public partial class VoiceService : IVoiceService
     /// <param name="scaledTierCoordinator">Scaled tier coordinator for SFU-based conferencing.</param>
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     /// <param name="clientEventPublisher">Client event publisher for WebSocket push events.</param>
-    /// <param name="permissionClient">Permissions client for setting voice:ringing state.</param>
+    /// <param name="permissionClient">Permission client for setting voice:ringing state.</param>
     public VoiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

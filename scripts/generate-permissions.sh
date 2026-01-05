@@ -251,7 +251,7 @@ cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
     /// <summary>
     /// Builds the permission matrix for RegisterServicePermissionsAsync.
     /// Key structure: state -> role -> list of methods
-    /// State key construction must match PermissionsService.RecompileSessionPermissionsAsync:
+    /// State key construction must match PermissionService.RecompileSessionPermissionsAsync:
     /// - Same service (s.Key == ServiceId): use just s.Value (e.g., "ringing")
     /// - Cross-service: use "{s.Key}:{s.Value}" (e.g., "game-session:in_game")
     /// </summary>

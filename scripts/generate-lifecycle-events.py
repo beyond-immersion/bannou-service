@@ -51,7 +51,7 @@ def to_kebab_case(name: str) -> str:
 
 
 def extract_service_name(events_file: Path) -> str:
-    """Extract service name from events file path (e.g., 'accounts' from 'accounts-events.yaml')."""
+    """Extract service name from events file path (e.g., 'account' from 'account-events.yaml')."""
     return events_file.stem.replace('-events', '')
 
 
@@ -214,7 +214,7 @@ def generate_lifecycle_events_file(
     Generate a complete lifecycle events schema file.
 
     Args:
-        service_name: Service name (e.g., "accounts")
+        service_name: Service name (e.g., "account")
         service_title: Human-readable service title
         lifecycle_defs: x-lifecycle definitions from API schema
         output_path: Path to write the generated file

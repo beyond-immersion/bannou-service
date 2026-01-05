@@ -25,7 +25,7 @@ services:
       - BANNOU_APP_ID=orchestrator
       - ORCHESTRATOR_SERVICE_ENABLED=true
       - TESTING_SERVICE_ENABLED=false
-      - ACCOUNTS_SERVICE_ENABLED=false
+      - ACCOUNT_SERVICE_ENABLED=false
       - AUTH_SERVICE_ENABLED=false
       - BEHAVIOR_SERVICE_ENABLED=false
       - CONNECT_SERVICE_ENABLED=false

@@ -74,7 +74,7 @@ show_all_services() {
 
     echo "$manifest_content" | sed 's/^/  /'
     echo ""
-    echo "📖 Usage: validate-compose-services.sh auth accounts connect"
+    echo "📖 Usage: validate-compose-services.sh auth account connect"
     return 0
 }
 

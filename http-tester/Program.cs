@@ -415,7 +415,7 @@ public class Program
     /// Waits for services to register their permissions with the Permission service.
     /// Services only register after fully initializing, so this is a reliable readiness signal.
     /// </summary>
-    /// <param name="permissionClient">The permissions client to use for checking registered services.</param>
+    /// <param name="permissionClient">The Permission client to use for checking registered services.</param>
     /// <returns>True if expected services are ready, false if timeout occurs.</returns>
     private static async Task<bool> WaitForServiceReadiness(BeyondImmersion.BannouService.Permission.IPermissionClient permissionClient)
     {
@@ -432,7 +432,7 @@ public class Program
             "documentation",
             "permissions",
             "subscriptions",  // Required for auth service login flow
-            "servicedata"     // Required by subscriptions service
+            "service"         // Required by subscriptions service
         };
 
         Console.WriteLine($"Waiting for service registration (timeout: {timeout.TotalSeconds}s)...");

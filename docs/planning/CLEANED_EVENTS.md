@@ -136,19 +136,19 @@ For reference, these events have both publishers and subscribers:
 | Event | Published By | Subscribed By |
 |-------|-------------|---------------|
 | SessionInvalidatedEvent | Auth | Connect |
-| SessionUpdatedEvent | Auth | Permissions |
-| AccountCreatedEvent | Accounts | (lifecycle, future use) |
-| AccountUpdatedEvent | Accounts | Auth |
-| AccountDeletedEvent | Accounts | Auth |
-| SessionConnectedEvent | Connect | GameSession, Permissions |
-| SessionDisconnectedEvent | Connect | GameSession, Permissions |
+| SessionUpdatedEvent | Auth | Permission |
+| AccountCreatedEvent | Account | (lifecycle, future use) |
+| AccountUpdatedEvent | Account | Auth |
+| AccountDeletedEvent | Account | Auth |
+| SessionConnectedEvent | Connect | GameSession, Permission |
+| SessionDisconnectedEvent | Connect | GameSession, Permission |
 | SessionReconnectedEvent | Connect | GameSession |
-| ServiceRegistrationEvent | All services | Permissions |
+| ServiceRegistrationEvent | All services | Permission |
 | ServiceHeartbeatEvent | All services | Orchestrator, Mesh |
 | FullServiceMappingsEvent | Orchestrator | Mesh |
 | ServiceErrorEvent | All services | Connect (admin forwarding) |
 | SubscriptionUpdatedEvent | Subscriptions | Auth, GameSession |
-| SessionStateChangeEvent | GameSession | Permissions |
+| SessionStateChangeEvent | GameSession | Permission |
 
 ---
 

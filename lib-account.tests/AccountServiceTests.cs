@@ -26,7 +26,7 @@ public class AccountServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
-    private const string ACCOUNTS_STATE_STORE = "account-statestore";
+    private const string ACCOUNT_STATE_STORE = "account-statestore";
 
     public AccountServiceTests()
     {
@@ -42,16 +42,16 @@ public class AccountServiceTests
 
         // Setup default factory returns
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<AccountModel>(ACCOUNTS_STATE_STORE))
+            .Setup(f => f.GetStore<AccountModel>(ACCOUNT_STATE_STORE))
             .Returns(_mockAccountStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<List<string>>(ACCOUNTS_STATE_STORE))
+            .Setup(f => f.GetStore<List<string>>(ACCOUNT_STATE_STORE))
             .Returns(_mockListStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<string>(ACCOUNTS_STATE_STORE))
+            .Setup(f => f.GetStore<string>(ACCOUNT_STATE_STORE))
             .Returns(_mockStringStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE))
+            .Setup(f => f.GetStore<List<AuthMethodInfo>>(ACCOUNT_STATE_STORE))
             .Returns(_mockAuthMethodsStore.Object);
     }
 

@@ -354,7 +354,7 @@ await _messageBus.PublishAsync("event.topic", eventModel);
 **Focus**: NPC Behavior Systems with ABML YAML DSL for autonomous character behaviors
 
 ### Active Services
-**✅ Production Ready**: Accounts, Auth, Connect (WebSocket gateway), Website, Behavior foundation  
+**✅ Production Ready**: Account, Auth, Connect (WebSocket gateway), Website, Behavior foundation  
 **🔧 In Development**: ABML YAML Parser, Character Agent Services, Cross-service event integration
 
 ## Troubleshooting Reference

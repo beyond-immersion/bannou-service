@@ -362,7 +362,7 @@ paths:
 public class GitProtocolController : ControllerBase
 {
     private readonly IGitProcessExecutor _gitExecutor;
-    private readonly IPermissionsClient _permissions;
+    private readonly IPermissionClient _permissions;
 
     [HttpGet("info/refs")]
     public async Task<IActionResult> InfoRefs(

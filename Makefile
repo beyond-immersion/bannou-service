@@ -191,12 +191,12 @@ build-plugins: ## Build specific plugins only (requires SERVICES="name1 name2")
 		bash scripts/build-service-libs.sh $(SERVICES); \
 		echo "✅ Service plugins built: $(SERVICES)"; \
 	else \
-		echo "❌ Error: SERVICES parameter required. Example: make build-plugins SERVICES=\"auth accounts\""; \
+		echo "❌ Error: SERVICES parameter required. Example: make build-plugins SERVICES=\"auth account\""; \
 		exit 1; \
 	fi
 
 # Build Docker image with specific services only
-# Usage: make build-compose-services SERVICES="auth accounts connect"
+# Usage: make build-compose-services SERVICES="auth account connect"
 build-compose-services:
 	@if [ "$(SERVICES)" ]; then \
 		echo "🐳 Building Docker image with specific services: $(SERVICES)"; \
@@ -204,7 +204,7 @@ build-compose-services:
 		docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl build --build-arg BANNOU_SERVICES="$(SERVICES)"; \
 		echo "✅ Docker image built with services: $(SERVICES)"; \
 	else \
-		echo "❌ Error: SERVICES parameter required. Example: make build-compose-services SERVICES=\"auth accounts\""; \
+		echo "❌ Error: SERVICES parameter required. Example: make build-compose-services SERVICES=\"auth account\""; \
 		exit 1; \
 	fi
 
@@ -213,7 +213,7 @@ list-services:
 	@scripts/list-services.sh
 
 # Validate that specific services are included in the latest Docker image
-# Usage: make validate-compose-services SERVICES="auth accounts connect"
+# Usage: make validate-compose-services SERVICES="auth account connect"
 validate-compose-services:
 	@scripts/validate-compose-services.sh $(SERVICES)
 

@@ -525,9 +525,9 @@ paths:
         available deployment presets from the orchestrator's preset directory.\\nPresets define service combinations and configuration
         for specific use cases.\\n\\nBuilt-in presets:\\n- `local-development`: All services in single container with mesh
         infrastructure\\n- `local-testing`: Test environment with infrastructure services\\n- `integration-http`: HTTP integration
-        testing preset\\n- `integration-edge`: WebSocket/edge testing preset\\n- `split-auth-account`: Auth and Account
-        in separate containers\\n- `distributed-npc`: NPC processing distributed across nodes\\n\",\n    \"tags\": [],\n \
-        \   \"deprecated\": false,\n    \"operationId\": \"GetPresets\"\n}"
+        testing preset\\n- `integration-edge`: WebSocket/edge testing preset\\n- `split-auth-account`: Auth and Account in
+        separate containers\\n- `distributed-npc`: NPC processing distributed across nodes\\n\",\n    \"tags\": [],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"GetPresets\"\n}"
   /orchestrator/deploy:
     post:
       summary: Deploy or update an environment
@@ -1423,9 +1423,9 @@ paths:
         (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"services\": {\n        \
         \            \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n\
         \                    },\n                    \"description\": \"Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true
-        pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permissions\\\"]\\n\"\n                },\n             \
-        \   \"replicas\": {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n           \
-        \         \"description\": \"Number of replicas for this node\"\n                },\n                \"resources\"\
+        pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permissions\\\"]\\n\"\n                },\n              \
+        \  \"replicas\": {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n            \
+        \        \"description\": \"Number of replicas for this node\"\n                },\n                \"resources\"\
         : {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits
         and requests for this node\"\n                },\n                \"environment\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n   \

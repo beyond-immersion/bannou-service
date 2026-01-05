@@ -39,7 +39,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
     #region Helper Methods
 
     /// <summary>
-    /// Creates a test service in ServiceData for subscription tests.
+    /// Creates a test service in Service for subscription tests.
     /// </summary>
     private async Task<(string serviceId, string stubName)?> CreateTestServiceAsync(BannouClient adminClient, string uniqueCode)
     {
@@ -48,7 +48,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             var stubName = $"test-svc-{uniqueCode}".ToLowerInvariant();
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/servicedata/services/create",
+                "/service/services/create",
                 new
                 {
                     stubName = stubName,
