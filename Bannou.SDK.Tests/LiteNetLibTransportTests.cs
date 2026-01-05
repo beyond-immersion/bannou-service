@@ -247,4 +247,87 @@ public class LiteNetLibTransportTests
         await Task.Delay(100, cts.Token);
         Assert.True(clientGot);
     }
+
+    [Fact]
+    public async Task ServerToClient_Delta_RoundTrip()
+    {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await using var server = new LiteNetLibServerTransport();
+        await using var client = new LiteNetLibClientTransport();
+
+        var cfg = new GameTransportConfig { Port = 25000 + Random.Shared.Next(0, 1000) };
+        bool clientGot = false;
+
+        client.OnServerMessage += (ver, type, payload) =>
+        {
+            if (type != GameMessageType.ArenaStateDelta) return;
+            var delta = MessagePackSerializer.Deserialize<ArenaStateDelta>(payload, GameProtocolEnvelope.DefaultOptions);
+            Assert.Equal(2u, delta.Tick);
+            Assert.Single(delta.Entities);
+            Assert.Equal(EntityDeltaFlags.Health | EntityDeltaFlags.Position, delta.Entities[0].Flags);
+            clientGot = true;
+        };
+
+        await server.StartAsync(cfg, cts.Token);
+        await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
+        await Task.Delay(50, cts.Token);
+
+        var deltaMsg = new ArenaStateDelta
+        {
+            Tick = 2,
+            Entities =
+            {
+                new EntityDelta
+                {
+                    EntityId = 1,
+                    Flags = EntityDeltaFlags.Health | EntityDeltaFlags.Position,
+                    X = 5, Y = 0, Z = 0,
+                    Health = 50
+                }
+            }
+        };
+        var payload = MessagePackSerializer.Serialize(deltaMsg, GameProtocolEnvelope.DefaultOptions);
+        await server.BroadcastAsync(GameMessageType.ArenaStateDelta, payload, reliable: false, cts.Token);
+
+        await Task.Delay(100, cts.Token);
+        Assert.True(clientGot);
+    }
+
+    [Fact]
+    public async Task ServerToClient_CinematicExtension_RoundTrip()
+    {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await using var server = new LiteNetLibServerTransport();
+        await using var client = new LiteNetLibClientTransport();
+
+        var cfg = new GameTransportConfig { Port = 26000 + Random.Shared.Next(0, 1000) };
+        bool got = false;
+
+        client.OnServerMessage += (ver, type, payload) =>
+        {
+            if (type != GameMessageType.CinematicExtension) return;
+            var ext = MessagePackSerializer.Deserialize<CinematicExtensionMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+            Assert.Equal("ex1", ext.ExchangeId);
+            Assert.Equal("attach", ext.AttachPoint);
+            Assert.Equal("https://example.com/ext.bin", ext.PayloadUrl);
+            got = true;
+        };
+
+        await server.StartAsync(cfg, cts.Token);
+        await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
+        await Task.Delay(50, cts.Token);
+
+        var extMsg = new CinematicExtensionMessage
+        {
+            ExchangeId = "ex1",
+            AttachPoint = "attach",
+            PayloadUrl = "https://example.com/ext.bin",
+            ValidUntilEpochMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 1000
+        };
+        var payload = MessagePackSerializer.Serialize(extMsg, GameProtocolEnvelope.DefaultOptions);
+        await server.BroadcastAsync(GameMessageType.CinematicExtension, payload, reliable: true, cts.Token);
+
+        await Task.Delay(100, cts.Token);
+        Assert.True(got);
+    }
 }

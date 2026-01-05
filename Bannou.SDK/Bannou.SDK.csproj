@@ -84,6 +84,7 @@
   <!-- Game transport protocol primitives -->
   <ItemGroup>
     <Compile Include="../GameProtocol/*.cs" />
+    <Compile Include="../GameProtocol/Messages/*.cs" />
     <Compile Include="../GameTransport/*.cs" />
   </ItemGroup>
 

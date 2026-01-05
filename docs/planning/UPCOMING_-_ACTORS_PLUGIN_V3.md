@@ -1,8 +1,8 @@
 # Actor Plugin V3 - Distributed Behavior Execution
 
-> **Status**: IN PROGRESS (Phase 0-4 COMPLETE, Phase 5 NPC Brain Integration NEXT)
+> **Status**: IN PROGRESS (Phase 0-4 COMPLETE, Phase 5 NPC Brain Integration IN PROGRESS)
 > **Created**: 2026-01-01
-> **Updated**: 2026-01-04 (Phase 0 verified complete, Phase 5 detailed, stride-demo integration documented)
+> **Updated**: 2026-01-05 (Phase 5.2 Bannou-side perception/state wiring COMPLETE)
 > **Related Documents**:
 > - [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior compilation and GOAP planning
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Bytecode compilation and client execution
@@ -2526,9 +2526,9 @@ public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharact
 - Workers self-register via `actor.pool-node.registered` event after container starts
 - Environment variables properly set: APP_ID, ACTOR_POOL_NODE_ID, ACTOR_POOL_NODE_APP_ID
 
-### Phase 5: NPC Brain Integration ⏳ NEXT SESSION
+### Phase 5: NPC Brain Integration 🔄 IN PROGRESS
 
-**Status**: Cognition handlers implemented, perception/state routing needs wiring
+**Status**: Bannou-side perception/state wiring COMPLETE, Stride-side integration NEXT
 
 #### 5.1 What's Already Done
 - [x] All 6 cognition handlers implemented in lib-behavior/Handlers/ (53KB total):
@@ -2613,16 +2613,24 @@ The architecture uses lib-messaging (RabbitMQ) as the primary transport, with In
 
 ##### 5.2.3 Implementation Tasks
 
-**Bannou-side (lib-actor):**
-- [ ] Subscribe to `character.{characterId}.perceptions` when actor spawns with characterId
-- [ ] Unsubscribe when actor stops
-- [ ] Publish `CharacterStateUpdateEvent` to `character.{characterId}.state-updates`
-- [ ] Define `CharacterStateUpdateEvent` schema in actor-events.yaml
-- [ ] Add state update publishing to ActorRunner after cognition completes
+**Bannou-side (lib-actor):** ✅ COMPLETE (2026-01-05)
+- [x] Subscribe to `character.{characterId}.perceptions` when actor spawns with characterId
+  - Added `SetupPerceptionSubscriptionAsync` in `ActorRunner.cs`
+  - Uses `IMessageSubscriber.SubscribeDynamicAsync<CharacterPerceptionEvent>` with topic exchange
+- [x] Unsubscribe when actor stops
+  - Cleanup in both `StopAsync` and `DisposeAsync` (belt-and-suspenders)
+- [x] Publish `CharacterStateUpdateEvent` via lib-mesh to game server
+  - Modified `PublishStateUpdateIfNeededAsync` to route via `IMeshInvocationClient`
+  - Uses `_lastSourceAppId` from perception events for routing
+  - Falls back to pub/sub if mesh routing fails
+- [x] Define `CharacterPerceptionEvent` schema in `actor-events.yaml`
+  - Includes `characterId`, `sourceAppId`, and `perception` (refs `PerceptionData`)
+- [x] Add dependencies to `ActorRunnerFactory` (`IMessageSubscriber`, `IMeshInvocationClient`)
+- [x] Track `_lastSourceAppId` from perception events for state update routing
 
-**Stride-side (game server):**
+**Stride-side (game server):** 🔜 NEXT
 - [ ] Publish `CharacterPerceptionEvent` to `character.{characterId}.perceptions` fanout
-- [ ] Subscribe to `character.{characterId}.state-updates` for managed characters
+- [ ] Handle `character/state-update` endpoint for lib-mesh invocations
 - [ ] Apply state updates to character behavior input slots
 - [ ] Implement "lizard brain" fallback when no state updates received
 

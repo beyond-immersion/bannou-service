@@ -6,10 +6,17 @@ using BeyondImmersion.Bannou.GameProtocol;
 namespace BeyondImmersion.Bannou.GameTransport;
 
 /// <summary>
-/// Abstraction for a game server transport host (e.g., LiteNetLib).
+/// Delegate for handling messages received from clients.
 /// </summary>
+/// <param name="clientId">The client that sent the message.</param>
+/// <param name="version">Protocol version from the envelope.</param>
+/// <param name="messageType">Type of message received.</param>
+/// <param name="payload">Raw MessagePack payload (without envelope).</param>
 public delegate void ServerMessageReceived(long clientId, byte version, GameMessageType messageType, ReadOnlyMemory<byte> payload);
 
+/// <summary>
+/// Abstraction for a game server transport host (e.g., LiteNetLib).
+/// </summary>
 public interface IGameServerTransport : IAsyncDisposable
 {
     /// <summary>

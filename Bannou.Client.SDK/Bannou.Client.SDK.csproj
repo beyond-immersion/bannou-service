@@ -39,6 +39,7 @@
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Include="MessagePack" Version="3.1.4" />
+    <PackageReference Include="LiteNetLib" Version="1.2.0" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->
@@ -79,6 +80,7 @@
   <!-- Game transport protocol primitives -->
   <ItemGroup>
     <Compile Include="../GameProtocol/*.cs" />
+    <Compile Include="../GameTransport/*.cs" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, meta types, response codes) -->
