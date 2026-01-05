@@ -37,7 +37,7 @@ public partial class PermissionService : IPermissionService
     private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
     // State store name
-    private const string STATE_STORE = "permissions-statestore";
+    private const string STATE_STORE = "permission-statestore";
 
     // State key patterns
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
@@ -369,7 +369,7 @@ public partial class PermissionService : IPermissionService
             // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
             // NO FALLBACK - if lock fails after retries, registration fails. We don't mask failures with alternative paths.
             // RETRY IS NOT A FALLBACK - retrying lock acquisition is the correct approach for handling lock contention.
-            const string LOCK_STORE = "permissions-statestore"; // Use Redis state store for distributed locking
+            const string LOCK_STORE = "permission-statestore"; // Use Redis state store for distributed locking
             const string LOCK_RESOURCE = "registered_services_lock";
             var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 

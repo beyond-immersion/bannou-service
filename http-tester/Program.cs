@@ -681,7 +681,7 @@ public class Program
             new RepositoryBindingTestHandler(),
             new ArchiveTestHandler(),
             new RelationshipTypeTestHandler(),
-            new ServiceTestHandler(),
+            new GameServiceTestHandler(),
             new SpeciesTestHandler(),
             new StateTestHandler(),
             new SubscriptionTestHandler(),

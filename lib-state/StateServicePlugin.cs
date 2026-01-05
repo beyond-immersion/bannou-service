@@ -124,7 +124,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["realm-statestore"] = (StateBackend.MySql, null, false),
             ["relationship-statestore"] = (StateBackend.MySql, null, false),
             ["relationship-type-statestore"] = (StateBackend.MySql, null, false),
-            ["service-statestore"] = (StateBackend.MySql, null, false),
+            ["game-service-statestore"] = (StateBackend.MySql, null, false),
             ["species-statestore"] = (StateBackend.MySql, null, false),
             ["subscription-statestore"] = (StateBackend.MySql, null, false),
         };

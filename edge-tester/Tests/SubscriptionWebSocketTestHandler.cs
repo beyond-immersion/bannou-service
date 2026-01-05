@@ -48,7 +48,7 @@ public class SubscriptionWebSocketTestHandler : IServiceTestHandler
             var stubName = $"test-svc-{uniqueCode}".ToLowerInvariant();
             var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/service/services/create",
+                "/game-service/services/create",
                 new
                 {
                     stubName = stubName,

@@ -154,7 +154,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 1: Creating test service 'arcadia'...");
                     var serviceResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/service/services/create",
+                        "/game-service/services/create",
                         new
                         {
                             stubName = "arcadia",
@@ -177,7 +177,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         Console.WriteLine("   Service 'arcadia' already exists, fetching...");
                         var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
-                            "/service/services/list",
+                            "/game-service/services/list",
                             new { },
                             timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
                         var listJson = System.Text.Json.Nodes.JsonNode.Parse(listResponse.GetRawText())?.AsObject();
