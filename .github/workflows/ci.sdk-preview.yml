@@ -50,6 +50,21 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Install Python Dependencies
+        run: |
+          echo "🐍 Installing Python dependencies for code generation..."
+          pip install ruamel.yaml
+
+      - name: Generate Services
+        run: |
+          echo "🔧 Generating all service controllers, models, and clients..."
+          scripts/generate-all-services.sh
+
+      - name: Generate SDK Behavior Files
+        run: |
+          echo "📦 Generating SDK behavior files..."
+          scripts/generate-client-sdk.sh
+
       - name: Run Quick Validation
         run: |
           echo "🔍 Running quick validation (build only, no tests)..."

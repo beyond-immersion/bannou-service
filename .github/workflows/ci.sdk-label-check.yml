@@ -35,9 +35,10 @@ jobs:
             "SDK_VERSION"
             "Bannou.SDK/"
             "Bannou.Client.SDK/"
-            "sdk-sources/"
             "scripts/generate-client-sdk.sh"
             "lib-connect/Protocol/"
+            "lib-behavior/Runtime/"
+            "lib-behavior/Intent/"
           )
 
           for pattern in "${SDK_PATTERNS[@]}"; do

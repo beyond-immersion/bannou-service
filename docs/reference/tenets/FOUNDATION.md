@@ -82,7 +82,7 @@ The ABML Local Runtime uses a binary bytecode format for client-side behavior mo
 - The specification document serves as the "schema" defining format, opcodes, and semantics
 
 ```
-sdk-sources/Behavior/Runtime/    # ABML bytecode interpreter
+lib-behavior/Runtime/            # ABML bytecode interpreter (canonical location)
 ├── BehaviorModel.cs             # Binary format (not OpenAPI)
 ├── BehaviorModelInterpreter.cs  # Stack-based VM (not generated)
 ├── BehaviorOpcode.cs            # Opcode definitions (not generated)
@@ -193,7 +193,7 @@ var authEvent = new SessionInvalidatedEvent { ... };
 
 The ABML behavior model interpreter is handwritten code that **consumes** generated artifacts (compiled bytecode), not **produces** them. The compiler-to-interpreter boundary is:
 - **Compiler (lib-behavior)**: Generated from ABML YAML via `BehaviorCompiler` - follows schema-first
-- **Interpreter (sdk-sources)**: Handwritten VM that executes bytecode - NOT generated
+- **Interpreter (lib-behavior/Runtime)**: Handwritten VM that executes bytecode - NOT generated
 
 ```
 lib-behavior/Compiler/       # Compilation (schema-first via YAML)
@@ -201,7 +201,7 @@ lib-behavior/Compiler/       # Compilation (schema-first via YAML)
 ├── Actions/                 # Action-specific compilers (generated patterns)
 └── Codegen/                 # Bytecode emission
 
-sdk-sources/Behavior/Runtime/  # Execution (handwritten interpreter)
+lib-behavior/Runtime/          # Execution (handwritten interpreter)
 ├── BehaviorModelInterpreter.cs  # Stack-based VM (NOT generated)
 └── CinematicInterpreter.cs      # Streaming composition (NOT generated)
 ```
@@ -317,14 +317,14 @@ await client.Containers.StartContainerAsync(containerId, new());
 
 #### 4. SDK Behavior Runtime (Client-Side Bytecode Execution)
 
-The ABML Local Runtime interpreter in `sdk-sources/Behavior/Runtime/` is client-side code designed for embedded execution in game clients. It does NOT use lib-state, lib-messaging, or lib-mesh because:
+The ABML Local Runtime interpreter in `lib-behavior/Runtime/` is client-side code designed for embedded execution in game clients (copied to SDKs with namespace transformation). It does NOT use lib-state, lib-messaging, or lib-mesh because:
 - Runs on game clients, not Bannou servers
 - Designed for offline/embedded execution without network dependencies
 - State is provided by game engine, not Bannou state stores
 - No pub/sub needed - intents are returned synchronously
 
 ```csharp
-// In sdk-sources/Behavior/Runtime/ (allowed):
+// In lib-behavior/Runtime/ (allowed - copied to SDKs):
 public void Evaluate(ReadOnlySpan<double> inputState, Span<double> outputState)
 {
     // Pure computation - no infrastructure dependencies
