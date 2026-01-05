@@ -106,6 +106,22 @@ ws.onmessage = (event) => {
 };
 ```
 
+### Internal Mode (Servers / Agents)
+- Game servers that need direct access to Event/Character agents via internal Connect nodes can use the server SDK’s `BannouClient`:
+  ```csharp
+  var client = new BannouClient();
+  await client.ConnectInternalAsync("ws://bannou-internal/connect", serviceToken: "shared-secret");
+  // subscribe to events (opportunities, extensions) and forward into the game transport
+  ```
+- This bypasses JWT login and uses either service-token or network-trust, as configured on Connect.
+
+### Game Transport (UDP) Summary
+- For gameplay state, use the UDP transport helpers (LiteNetLib) in the SDKs:
+  - Envelope: `GameProtocolEnvelope` (version + `GameMessageType`)
+  - DTOs: snapshots/deltas, combat events, opportunities, input, cinematic extensions
+  - Transports: `LiteNetLibServerTransport` / `LiteNetLibClientTransport`
+- Typical flow: WebSocket to Connect for capabilities/events; UDP for 60 Hz state and opportunity prompts to clients.
+
 ### Binary Protocol
 
 Messages use a 31-byte binary header + JSON payload:

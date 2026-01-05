@@ -29,6 +29,7 @@ make test-edge             # WebSocket protocol tests
 | Run and write tests | [Testing Guide](docs/guides/TESTING.md) |
 | Understand CI/CD pipelines | [GitHub Actions](docs/operations/GITHUB_ACTIONS.md) |
 | Set up NuGet publishing | [NuGet Setup](docs/operations/NUGET_SETUP.md) |
+| Use the SDKs | [SDKs Overview](docs/guides/SDKs.md) |
 | Contribute code | [Development Rules](docs/reference/TENETS.md) |
 
 ## Key Features

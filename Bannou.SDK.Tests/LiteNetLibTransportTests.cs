@@ -131,4 +131,120 @@ public class LiteNetLibTransportTests
         await Task.Delay(200, cts.Token);
         Assert.True(received >= 0); // ensure no exceptions; may drop due to fuzz
     }
+
+    [Fact]
+    public async Task ServerToClient_OpportunityData_RoundTrip()
+    {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await using var server = new LiteNetLibServerTransport();
+        await using var client = new LiteNetLibClientTransport();
+
+        var cfg = new GameTransportConfig { Port = 22000 + Random.Shared.Next(0, 1000) };
+
+        bool clientGotMsg = false;
+
+        client.OnServerMessage += (version, type, payload) =>
+        {
+            if (type != GameMessageType.OpportunityData) return;
+            var parsed = MessagePackSerializer.Deserialize<OpportunityDataMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+            Assert.Equal("opp-1", parsed.OpportunityId);
+            Assert.Equal("Jump?", parsed.Prompt);
+            Assert.True(parsed.Forced);
+            clientGotMsg = true;
+        };
+
+        await server.StartAsync(cfg, cts.Token);
+        await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
+        await Task.Delay(50, cts.Token);
+
+        var opp = new OpportunityDataMessage
+        {
+            OpportunityId = "opp-1",
+            Prompt = "Jump?",
+            Forced = true,
+            DeadlineMs = 1500
+        };
+        opp.Options.Add(new OpportunityOption { Id = "yes", Label = "Yes" });
+        var payload = MessagePackSerializer.Serialize(opp, GameProtocolEnvelope.DefaultOptions);
+        await server.BroadcastAsync(GameMessageType.OpportunityData, payload, reliable: true, cts.Token);
+
+        await Task.Delay(100, cts.Token);
+        Assert.True(clientGotMsg);
+    }
+
+    [Fact]
+    public async Task ClientToServer_OpportunityResponse_RoundTrip()
+    {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await using var server = new LiteNetLibServerTransport();
+        await using var client = new LiteNetLibClientTransport();
+
+        var cfg = new GameTransportConfig { Port = 23000 + Random.Shared.Next(0, 1000) };
+
+        bool serverGot = false;
+
+        server.OnClientMessage += (id, version, type, payload) =>
+        {
+            if (type != GameMessageType.OpportunityResponse) return;
+            var parsed = MessagePackSerializer.Deserialize<OpportunityResponseMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+            Assert.Equal("opp-2", parsed.OpportunityId);
+            Assert.Equal("yes", parsed.SelectedOptionId);
+            serverGot = true;
+        };
+
+        await server.StartAsync(cfg, cts.Token);
+        await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
+        await Task.Delay(50, cts.Token);
+
+        var resp = new OpportunityResponseMessage
+        {
+            OpportunityId = "opp-2",
+            SelectedOptionId = "yes",
+            ClientLatencyMs = 12
+        };
+        var payload = MessagePackSerializer.Serialize(resp, GameProtocolEnvelope.DefaultOptions);
+        await client.SendAsync(GameMessageType.OpportunityResponse, payload, reliable: true, cts.Token);
+
+        await Task.Delay(100, cts.Token);
+        Assert.True(serverGot);
+    }
+
+    [Fact]
+    public async Task ServerToClient_CombatEvent_RoundTrip()
+    {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await using var server = new LiteNetLibServerTransport();
+        await using var client = new LiteNetLibClientTransport();
+
+        var cfg = new GameTransportConfig { Port = 24000 + Random.Shared.Next(0, 1000) };
+        bool clientGot = false;
+
+        client.OnServerMessage += (version, type, payload) =>
+        {
+            if (type != GameMessageType.CombatEvent) return;
+            var msg = MessagePackSerializer.Deserialize<CombatEventMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+            Assert.Single(msg.Events);
+            Assert.Equal(10, msg.Events[0].Amount);
+            clientGot = true;
+        };
+
+        await server.StartAsync(cfg, cts.Token);
+        await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
+        await Task.Delay(50, cts.Token);
+
+        var ce = new CombatEventMessage
+        {
+            Tick = 1,
+            Events =
+            {
+                new CombatEvent { Type = CombatEventType.Hit, SourceEntityId = 1, TargetEntityId = 2, Amount = 10, RemainingHp = 90 }
+            }
+        };
+
+        var payload = MessagePackSerializer.Serialize(ce, GameProtocolEnvelope.DefaultOptions);
+        await server.BroadcastAsync(GameMessageType.CombatEvent, payload, reliable: true, cts.Token);
+
+        await Task.Delay(100, cts.Token);
+        Assert.True(clientGot);
+    }
 }
