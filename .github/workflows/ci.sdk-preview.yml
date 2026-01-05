@@ -100,11 +100,13 @@ jobs:
 
           # Build and pack Server SDK (Bannou.SDK)
           echo "📦 Building Server SDK (Bannou.SDK)..."
+          dotnet restore Bannou.SDK
           dotnet build Bannou.SDK --configuration Release --no-restore
           dotnet pack Bannou.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
           # Build and pack Client SDK (Bannou.Client.SDK)
           echo "📦 Building Client SDK (Bannou.Client.SDK)..."
+          dotnet restore Bannou.Client.SDK
           dotnet build Bannou.Client.SDK --configuration Release --no-restore
           dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
