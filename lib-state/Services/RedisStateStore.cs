@@ -429,4 +429,198 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
 
         return updated;
     }
+
+    // ==================== Sorted Set Operations ====================
+
+    private string GetSortedSetKey(string key) => $"{_keyPrefix}:zset:{key}";
+
+    /// <inheritdoc/>
+    public async Task<bool> SortedSetAddAsync(
+        string key,
+        string member,
+        double score,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(member);
+
+        var sortedSetKey = GetSortedSetKey(key);
+        var added = await _database.SortedSetAddAsync(sortedSetKey, member, score);
+
+        // Apply TTL if specified
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(sortedSetKey, ttl);
+        }
+
+        _logger.LogDebug("Added member '{Member}' to sorted set '{Key}' with score {Score} (new: {IsNew})",
+            member, key, score, added);
+
+        return added;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> SortedSetAddBatchAsync(
+        string key,
+        IEnumerable<(string member, double score)> entries,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(entries);
+
+        var entryList = entries.ToList();
+        if (entryList.Count == 0)
+        {
+            return 0;
+        }
+
+        var sortedSetKey = GetSortedSetKey(key);
+        var sortedSetEntries = entryList
+            .Select(e => new SortedSetEntry(e.member, e.score))
+            .ToArray();
+
+        var added = await _database.SortedSetAddAsync(sortedSetKey, sortedSetEntries);
+
+        // Apply TTL if specified
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
+        if (ttl.HasValue)
+        {
+            await _database.KeyExpireAsync(sortedSetKey, ttl);
+        }
+
+        _logger.LogDebug("Added {Count} members to sorted set '{Key}' (new: {Added})",
+            entryList.Count, key, added);
+
+        return added;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> SortedSetRemoveAsync(
+        string key,
+        string member,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(member);
+
+        var sortedSetKey = GetSortedSetKey(key);
+        var removed = await _database.SortedSetRemoveAsync(sortedSetKey, member);
+
+        _logger.LogDebug("Removed member '{Member}' from sorted set '{Key}' (existed: {Existed})",
+            member, key, removed);
+
+        return removed;
+    }
+
+    /// <inheritdoc/>
+    public async Task<double?> SortedSetScoreAsync(
+        string key,
+        string member,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(member);
+
+        var sortedSetKey = GetSortedSetKey(key);
+        var score = await _database.SortedSetScoreAsync(sortedSetKey, member);
+
+        return score;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long?> SortedSetRankAsync(
+        string key,
+        string member,
+        bool descending = true,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(member);
+
+        var sortedSetKey = GetSortedSetKey(key);
+
+        // ZRANK returns rank in ascending order (lowest score = rank 0)
+        // ZREVRANK returns rank in descending order (highest score = rank 0)
+        var rank = descending
+            ? await _database.SortedSetRankAsync(sortedSetKey, member, Order.Descending)
+            : await _database.SortedSetRankAsync(sortedSetKey, member, Order.Ascending);
+
+        return rank;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
+        string key,
+        long start,
+        long stop,
+        bool descending = true,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var sortedSetKey = GetSortedSetKey(key);
+
+        // ZRANGE with WITHSCORES - use REV for descending
+        var entries = descending
+            ? await _database.SortedSetRangeByRankWithScoresAsync(sortedSetKey, start, stop, Order.Descending)
+            : await _database.SortedSetRangeByRankWithScoresAsync(sortedSetKey, start, stop, Order.Ascending);
+
+        var result = entries
+            .Select(e => (member: e.Element.ToString(), score: e.Score))
+            .ToList();
+
+        _logger.LogDebug("Retrieved {Count} entries from sorted set '{Key}' (range: {Start}-{Stop}, descending: {Descending})",
+            result.Count, key, start, stop, descending);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> SortedSetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var sortedSetKey = GetSortedSetKey(key);
+        return await _database.SortedSetLengthAsync(sortedSetKey);
+    }
+
+    /// <inheritdoc/>
+    public async Task<double> SortedSetIncrementAsync(
+        string key,
+        string member,
+        double increment,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(member);
+
+        var sortedSetKey = GetSortedSetKey(key);
+        var newScore = await _database.SortedSetIncrementAsync(sortedSetKey, member, increment);
+
+        _logger.LogDebug("Incremented member '{Member}' in sorted set '{Key}' by {Increment} (new score: {NewScore})",
+            member, key, increment, newScore);
+
+        return newScore;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> SortedSetDeleteAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var sortedSetKey = GetSortedSetKey(key);
+        var deleted = await _database.KeyDeleteAsync(sortedSetKey);
+
+        _logger.LogDebug("Deleted sorted set '{Key}' from store '{Store}' (existed: {Existed})",
+            key, _keyPrefix, deleted);
+
+        return deleted;
+    }
 }

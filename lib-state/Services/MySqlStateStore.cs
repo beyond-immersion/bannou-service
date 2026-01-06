@@ -829,4 +829,93 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     {
         throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
     }
+
+    // ==================== Sorted Set Operations (Not Supported) ====================
+    // MySQL backend does not support sorted set operations. Use Redis for leaderboards.
+
+    /// <inheritdoc/>
+    public Task<bool> SortedSetAddAsync(
+        string key,
+        string member,
+        double score,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<long> SortedSetAddBatchAsync(
+        string key,
+        IEnumerable<(string member, double score)> entries,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> SortedSetRemoveAsync(
+        string key,
+        string member,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<double?> SortedSetScoreAsync(
+        string key,
+        string member,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<long?> SortedSetRankAsync(
+        string key,
+        string member,
+        bool descending = true,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
+        string key,
+        long start,
+        long stop,
+        bool descending = true,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<long> SortedSetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<double> SortedSetIncrementAsync(
+        string key,
+        string member,
+        double increment,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> SortedSetDeleteAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+    }
 }

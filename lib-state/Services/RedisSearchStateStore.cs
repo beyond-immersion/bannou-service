@@ -784,4 +784,103 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
         return updated;
     }
+
+    // ==================== Sorted Set Operations ====================
+    // RedisSearchStateStore is focused on full-text search capabilities.
+    // Use RedisStateStore directly for sorted set operations.
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<bool> SortedSetAddAsync(
+        string key,
+        string member,
+        double score,
+        StateOptions? options = null,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<long> SortedSetAddBatchAsync(
+        string key,
+        IEnumerable<(string member, double score)> entries,
+        StateOptions? options = null,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<bool> SortedSetRemoveAsync(
+        string key,
+        string member,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<double?> SortedSetScoreAsync(
+        string key,
+        string member,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<long?> SortedSetRankAsync(
+        string key,
+        string member,
+        bool descending = true,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
+        string key,
+        long start,
+        long stop,
+        bool descending = true,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<long> SortedSetCountAsync(
+        string key,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<double> SortedSetIncrementAsync(
+        string key,
+        string member,
+        double increment,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="NotSupportedException">RedisSearchStateStore does not support sorted sets.</exception>
+    public Task<bool> SortedSetDeleteAsync(
+        string key,
+        CancellationToken ct = default)
+    {
+        throw new NotSupportedException("RedisSearchStateStore does not support sorted set operations. Use RedisStateStore.");
+    }
 }

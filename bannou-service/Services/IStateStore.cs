@@ -225,6 +225,144 @@ public interface IStateStore<TValue>
         string key,
         int ttlSeconds,
         CancellationToken cancellationToken = default);
+
+    // ==================== Sorted Set Operations ====================
+    // Sorted sets store members with scores, enabling ranked queries (leaderboards).
+    // Supported by Redis only (native sorted sets with O(log N) operations).
+    // MySQL and InMemory backends throw NotSupportedException.
+
+    /// <summary>
+    /// Add a member to a sorted set with the given score.
+    /// Creates the sorted set if it doesn't exist.
+    /// If member already exists, its score is updated.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="member">The member to add (typically entity_type:entity_id).</param>
+    /// <param name="score">The score for ranking.</param>
+    /// <param name="options">Optional state options (TTL applies to entire sorted set).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if member was newly added, false if score was updated.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<bool> SortedSetAddAsync(
+        string key,
+        string member,
+        double score,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add multiple members to a sorted set with their scores.
+    /// Creates the sorted set if it doesn't exist.
+    /// Existing members have their scores updated.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="entries">Members and their scores.</param>
+    /// <param name="options">Optional state options (TTL applies to entire sorted set).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of members newly added (not including score updates).</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<long> SortedSetAddBatchAsync(
+        string key,
+        IEnumerable<(string member, double score)> entries,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Remove a member from a sorted set.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="member">The member to remove.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if member was removed, false if not found.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<bool> SortedSetRemoveAsync(
+        string key,
+        string member,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the score of a member in a sorted set.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="member">The member to get score for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The member's score, or null if member not found.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<double?> SortedSetScoreAsync(
+        string key,
+        string member,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the rank (position) of a member in a sorted set.
+    /// Rank is 0-based (first place = 0).
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="member">The member to get rank for.</param>
+    /// <param name="descending">If true, rank by highest score first (default for leaderboards).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The member's 0-based rank, or null if member not found.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<long?> SortedSetRankAsync(
+        string key,
+        string member,
+        bool descending = true,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get members by rank range (e.g., top 10, ranks 50-60).
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="start">Start rank (0-based, inclusive).</param>
+    /// <param name="stop">Stop rank (0-based, inclusive). Use -1 for end.</param>
+    /// <param name="descending">If true, rank by highest score first (default for leaderboards).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of members with their scores, ordered by rank.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
+        string key,
+        long start,
+        long stop,
+        bool descending = true,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the number of members in a sorted set.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of members, or 0 if sorted set doesn't exist.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<long> SortedSetCountAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Increment a member's score in a sorted set.
+    /// Creates the member with the increment as score if it doesn't exist.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="member">The member whose score to increment.</param>
+    /// <param name="increment">Amount to add to score (can be negative).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The new score after incrementing.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<double> SortedSetIncrementAsync(
+        string key,
+        string member,
+        double increment,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete an entire sorted set.
+    /// </summary>
+    /// <param name="key">The sorted set key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if sorted set existed and was deleted.</returns>
+    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
+    Task<bool> SortedSetDeleteAsync(
+        string key,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
