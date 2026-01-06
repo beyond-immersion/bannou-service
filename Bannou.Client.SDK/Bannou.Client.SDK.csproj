@@ -40,6 +40,7 @@
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Include="MessagePack" Version="3.1.4" />
     <PackageReference Include="LiteNetLib" Version="1.2.0" />
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->
@@ -80,7 +81,16 @@
   <!-- Game transport protocol primitives -->
   <ItemGroup>
     <Compile Include="../GameProtocol/*.cs" />
+    <Compile Include="../GameProtocol/Messages/*.cs" />
     <Compile Include="../GameTransport/*.cs" />
+  </ItemGroup>
+
+  <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
+  <ItemGroup>
+    <Compile Include="../lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../lib-asset/Bundles/BannouBundleReader.cs')" />
+    <Compile Include="../lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../lib-asset/Bundles/BundleManifest.cs')" />
+    <Compile Include="../lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../lib-asset/Bundles/BundleIndex.cs')" />
+    <Compile Include="../lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../lib-asset/Bundles/BundleValidator.cs')" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, meta types, response codes) -->
