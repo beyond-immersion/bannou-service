@@ -588,10 +588,12 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Allowed entity types"
                 },
                 "sortOrder": {
-                    "$ref": "#/$defs/SortOrder"
+                    "$ref": "#/$defs/SortOrder",
+                    "description": "Ordering used when ranking scores (descending for high scores, ascending for low)"
                 },
                 "updateMode": {
-                    "$ref": "#/$defs/UpdateMode"
+                    "$ref": "#/$defs/UpdateMode",
+                    "description": "Rule applied when new scores are submitted (replace/increment/max/min)"
                 },
                 "isSeasonal": {
                     "type": "boolean",
@@ -788,10 +790,12 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Allowed entity types"
                 },
                 "sortOrder": {
-                    "$ref": "#/$defs/SortOrder"
+                    "$ref": "#/$defs/SortOrder",
+                    "description": "Ordering used when ranking scores (descending for high scores, ascending for low)"
                 },
                 "updateMode": {
-                    "$ref": "#/$defs/UpdateMode"
+                    "$ref": "#/$defs/UpdateMode",
+                    "description": "Rule applied when new scores are submitted (replace/increment/max/min)"
                 },
                 "isSeasonal": {
                     "type": "boolean",
@@ -1005,10 +1009,12 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Allowed entity types"
                 },
                 "sortOrder": {
-                    "$ref": "#/$defs/SortOrder"
+                    "$ref": "#/$defs/SortOrder",
+                    "description": "Ordering used when ranking scores (descending for high scores, ascending for low)"
                 },
                 "updateMode": {
-                    "$ref": "#/$defs/UpdateMode"
+                    "$ref": "#/$defs/UpdateMode",
+                    "description": "Rule applied when new scores are submitted (replace/increment/max/min)"
                 },
                 "isSeasonal": {
                     "type": "boolean",
@@ -1222,10 +1228,12 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Allowed entity types"
                 },
                 "sortOrder": {
-                    "$ref": "#/$defs/SortOrder"
+                    "$ref": "#/$defs/SortOrder",
+                    "description": "Ordering used when ranking scores (descending for high scores, ascending for low)"
                 },
                 "updateMode": {
-                    "$ref": "#/$defs/UpdateMode"
+                    "$ref": "#/$defs/UpdateMode",
+                    "description": "Rule applied when new scores are submitted (replace/increment/max/min)"
                 },
                 "isSeasonal": {
                     "type": "boolean",
@@ -1468,7 +1476,8 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type submitting the score"
                 },
                 "score": {
                     "type": "number",
@@ -1656,7 +1665,8 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this score entry"
                 },
                 "score": {
                     "type": "number",
@@ -1795,7 +1805,8 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type whose rank is requested"
                 }
             }
         },
@@ -1837,7 +1848,8 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for the ranked entity"
                 },
                 "score": {
                     "type": "number",
@@ -2022,7 +2034,8 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this leaderboard entry"
                 },
                 "score": {
                     "type": "number",
@@ -2149,7 +2162,8 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity to center on"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type of the anchor entry"
                 },
                 "countBefore": {
                     "type": "integer",
@@ -2230,7 +2244,8 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this leaderboard entry"
                 },
                 "score": {
                     "type": "number",

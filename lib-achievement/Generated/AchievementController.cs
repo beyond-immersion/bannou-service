@@ -445,7 +445,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 "achievementType": {
                     "$ref": "#/$defs/AchievementType",
                     "default": "standard",
-                    "description": "Type of achievement"
+                    "description": "Classification of the achievement (affects visibility and progress behavior)"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -584,7 +584,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Description for hidden achievements"
                 },
                 "achievementType": {
-                    "$ref": "#/$defs/AchievementType"
+                    "$ref": "#/$defs/AchievementType",
+                    "description": "Classification of the achievement"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -816,7 +817,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Description for hidden achievements"
                 },
                 "achievementType": {
-                    "$ref": "#/$defs/AchievementType"
+                    "$ref": "#/$defs/AchievementType",
+                    "description": "Classification of the achievement"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -1002,7 +1004,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 "achievementType": {
                     "$ref": "#/$defs/AchievementType",
                     "nullable": true,
-                    "description": "Filter by achievement type"
+                    "description": "Filter by achievement classification"
                 },
                 "isActive": {
                     "type": "boolean",
@@ -1100,7 +1102,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Description for hidden achievements"
                 },
                 "achievementType": {
-                    "$ref": "#/$defs/AchievementType"
+                    "$ref": "#/$defs/AchievementType",
+                    "description": "Classification of the achievement"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -1357,7 +1360,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "Description for hidden achievements"
                 },
                 "achievementType": {
-                    "$ref": "#/$defs/AchievementType"
+                    "$ref": "#/$defs/AchievementType",
+                    "description": "Classification of the achievement"
                 },
                 "entityTypes": {
                     "type": "array",
@@ -1632,7 +1636,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type whose progress is requested"
                 },
                 "achievementId": {
                     "type": "string",
@@ -1677,7 +1682,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type that owns this progress summary"
                 },
                 "progress": {
                     "type": "array",
@@ -1844,7 +1850,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type receiving the progress increment"
                 },
                 "increment": {
                     "type": "integer",
@@ -2004,7 +2011,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type to unlock the achievement for"
                 },
                 "skipPlatformSync": {
                     "type": "boolean",
@@ -2162,7 +2170,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type whose unlocked achievements are listed"
                 },
                 "platform": {
                     "$ref": "#/$defs/Platform",
@@ -2218,7 +2227,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for the returned unlocked achievements"
                 },
                 "achievements": {
                     "type": "array",
@@ -2371,10 +2381,12 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity (must be account for platform sync)"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type to sync (must be account for platform links)"
                 },
                 "platform": {
-                    "$ref": "#/$defs/Platform"
+                    "$ref": "#/$defs/Platform",
+                    "description": "External platform to sync achievements to"
                 },
                 "forceResync": {
                     "type": "boolean",
@@ -2424,7 +2436,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
             ],
             "properties": {
                 "platform": {
-                    "$ref": "#/$defs/Platform"
+                    "$ref": "#/$defs/Platform",
+                    "description": "Platform targeted by the sync attempt"
                 },
                 "synced": {
                     "type": "integer",
@@ -2544,7 +2557,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type whose platform sync status is requested"
                 },
                 "platform": {
                     "$ref": "#/$defs/Platform",
@@ -2599,7 +2613,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for the reported platform status"
                 },
                 "platforms": {
                     "type": "array",
@@ -2633,7 +2648,8 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
             ],
             "properties": {
                 "platform": {
-                    "$ref": "#/$defs/Platform"
+                    "$ref": "#/$defs/Platform",
+                    "description": "Platform this status entry describes"
                 },
                 "isLinked": {
                     "type": "boolean",

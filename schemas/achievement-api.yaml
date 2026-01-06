@@ -67,37 +67,38 @@ paths:
         ,\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Description shown before achievement is earned (for hidden types)\"\n                },\n                \"achievementType\"\
         : {\n                    \"$ref\": \"#/$defs/AchievementType\",\n                    \"default\": \"standard\",\n\
-        \                    \"description\": \"Type of achievement\"\n                },\n                \"entityTypes\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/EntityType\"\n                    },\n                    \"description\": \"Which entity types can earn
-        this achievement\"\n                },\n                \"progressTarget\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Target value for progressive achievements\"\
-        \n                },\n                \"points\": {\n                    \"type\": \"integer\",\n                \
-        \    \"default\": 10,\n                    \"description\": \"Point value of this achievement\"\n                },\n\
-        \                \"iconUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"URL to achievement icon\"\n   \
-        \             },\n                \"platforms\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\n                    },\n                 \
-        \   \"description\": \"Platforms where this achievement exists\"\n                },\n                \"platformIds\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Platform-specific achievement IDs (e.g., {\\\"steam\\\": \\\"ACH_001\\\"})\"\n            \
-        \    },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Achievement IDs that must be unlocked first\"\n                },\n      \
-        \          \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n \
-        \                   \"description\": \"Whether this achievement can be earned\"\n                },\n            \
-        \    \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Additional achievement-specific metadata\"\
-        \n                }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n \
-        \               \"progressive\",\n                \"hidden\",\n                \"secret\"\n            ]\n       \
-        \ },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can earn achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
-        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n\
-        \        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform for
-        achievement sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n            \
-        \    \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \                    \"description\": \"Classification of the achievement (affects visibility and progress behavior)\"\
+        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n                    },\n         \
+        \           \"description\": \"Which entity types can earn this achievement\"\n                },\n              \
+        \  \"progressTarget\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Target value for progressive achievements\"\n                },\n          \
+        \      \"points\": {\n                    \"type\": \"integer\",\n                    \"default\": 10,\n         \
+        \           \"description\": \"Point value of this achievement\"\n                },\n                \"iconUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"URL to achievement icon\"\n                },\n                \"\
+        platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                     \
+        \   \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"description\": \"Platforms where
+        this achievement exists\"\n                },\n                \"platformIds\": {\n                    \"type\": \"\
+        object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n       \
+        \             },\n                    \"nullable\": true,\n                    \"description\": \"Platform-specific
+        achievement IDs (e.g., {\\\"steam\\\": \\\"ACH_001\\\"})\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Achievement IDs that must be unlocked first\"\n                },\n                \"isActive\": {\n         \
+        \           \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"\
+        Whether this achievement can be earned\"\n                },\n                \"metadata\": {\n                  \
+        \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Additional achievement-specific metadata\"\n                }\n          \
+        \  }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n                \"progressive\"\
+        ,\n                \"hidden\",\n                \"secret\"\n            ]\n        },\n        \"EntityType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\",\n\
+        \            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"Platform\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"External platform for achievement sync\",\n     \
+        \       \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\",\n   \
+        \             \"internal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"AchievementDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Achievement definition details\",\n            \"additionalProperties\": false,\n           \
@@ -112,39 +113,40 @@ paths:
         \        \"type\": \"string\",\n                    \"description\": \"How to earn this achievement\"\n          \
         \      },\n                \"hiddenDescription\": {\n                    \"type\": \"string\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Description for hidden achievements\"\n          \
-        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\"\n   \
-        \             },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n                    },\n             \
-        \       \"description\": \"Allowed entity types\"\n                },\n                \"progressTarget\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Target for progressive achievements\"\n                },\n                \"points\": {\n                   \
-        \ \"type\": \"integer\",\n                    \"description\": \"Point value\"\n                },\n             \
-        \   \"iconUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n\
-        \                \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"description\"\
-        : \"Available platforms\"\n                },\n                \"platformIds\": {\n                    \"type\": \"\
-        object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n       \
-        \             },\n                    \"nullable\": true,\n                    \"description\": \"Platform-specific
-        IDs\"\n                },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Required achievements\"\n                },\n \
-        \               \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether achievement is earnable\"\n                },\n                \"earnedCount\": {\n                    \"\
-        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"How many
-        entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the achievement
-        was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
-        \                  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"\
-        description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"AchievementType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\",\n            \"enum\"\
-        : [\n                \"standard\",\n                \"progressive\",\n                \"hidden\",\n              \
-        \  \"secret\"\n            ]\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n         \
-        \   \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n                \"account\"\
-        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
-        \n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"External platform for achievement sync\",\n            \"enum\": [\n                \"steam\",\n             \
-        \   \"xbox\",\n                \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\",\n  \
+        \                  \"description\": \"Classification of the achievement\"\n                },\n                \"\
+        entityTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
+        \     \"$ref\": \"#/$defs/EntityType\"\n                    },\n                    \"description\": \"Allowed entity
+        types\"\n                },\n                \"progressTarget\": {\n                    \"type\": \"integer\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Target for progressive achievements\"\
+        \n                },\n                \"points\": {\n                    \"type\": \"integer\",\n                \
+        \    \"description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Achievement icon URL\"\n                },\n                \"platforms\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\
+        \n                    },\n                    \"description\": \"Available platforms\"\n                },\n     \
+        \           \"platformIds\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Platform-specific IDs\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Required achievements\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether achievement is earnable\"\n                },\n       \
+        \         \"earnedCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"description\": \"How many entities have earned this\"\n                },\n             \
+        \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the achievement was created\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
+        \     }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n           \
+        \     \"progressive\",\n                \"hidden\",\n                \"secret\"\n            ]\n        },\n     \
+        \   \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn
+        achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n         \
+        \       \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"\
+        Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform for achievement
+        sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\"\
+        ,\n                \"internal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new achievement definition\",\n    \"description\": \"Create a
         new achievement with specified criteria and platform mappings.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n\
         \        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createAchievementDefinition\"\
@@ -197,39 +199,40 @@ paths:
         \        \"type\": \"string\",\n                    \"description\": \"How to earn this achievement\"\n          \
         \      },\n                \"hiddenDescription\": {\n                    \"type\": \"string\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Description for hidden achievements\"\n          \
-        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\"\n   \
-        \             },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n                    },\n             \
-        \       \"description\": \"Allowed entity types\"\n                },\n                \"progressTarget\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Target for progressive achievements\"\n                },\n                \"points\": {\n                   \
-        \ \"type\": \"integer\",\n                    \"description\": \"Point value\"\n                },\n             \
-        \   \"iconUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n\
-        \                \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"description\"\
-        : \"Available platforms\"\n                },\n                \"platformIds\": {\n                    \"type\": \"\
-        object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n       \
-        \             },\n                    \"nullable\": true,\n                    \"description\": \"Platform-specific
-        IDs\"\n                },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Required achievements\"\n                },\n \
-        \               \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether achievement is earnable\"\n                },\n                \"earnedCount\": {\n                    \"\
-        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"How many
-        entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the achievement
-        was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
-        \                  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"\
-        description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"AchievementType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\",\n            \"enum\"\
-        : [\n                \"standard\",\n                \"progressive\",\n                \"hidden\",\n              \
-        \  \"secret\"\n            ]\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n         \
-        \   \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n                \"account\"\
-        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
-        \n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"External platform for achievement sync\",\n            \"enum\": [\n                \"steam\",\n             \
-        \   \"xbox\",\n                \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\",\n  \
+        \                  \"description\": \"Classification of the achievement\"\n                },\n                \"\
+        entityTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
+        \     \"$ref\": \"#/$defs/EntityType\"\n                    },\n                    \"description\": \"Allowed entity
+        types\"\n                },\n                \"progressTarget\": {\n                    \"type\": \"integer\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Target for progressive achievements\"\
+        \n                },\n                \"points\": {\n                    \"type\": \"integer\",\n                \
+        \    \"description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Achievement icon URL\"\n                },\n                \"platforms\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\
+        \n                    },\n                    \"description\": \"Available platforms\"\n                },\n     \
+        \           \"platformIds\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Platform-specific IDs\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Required achievements\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether achievement is earnable\"\n                },\n       \
+        \         \"earnedCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"description\": \"How many entities have earned this\"\n                },\n             \
+        \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the achievement was created\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
+        \     }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n           \
+        \     \"progressive\",\n                \"hidden\",\n                \"secret\"\n            ]\n        },\n     \
+        \   \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn
+        achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n         \
+        \       \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"\
+        Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform for achievement
+        sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\"\
+        ,\n                \"internal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get achievement definition\",\n    \"description\": \"Retrieve details
         about a specific achievement.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n \
         \   \"operationId\": \"getAchievementDefinition\"\n}"
@@ -266,8 +269,8 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Filter by platform\"\n                },\n                \"achievementType\": {\n     \
         \               \"$ref\": \"#/$defs/AchievementType\",\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Filter by achievement type\"\n                },\n                \"isActive\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        \    \"description\": \"Filter by achievement classification\"\n                },\n                \"isActive\":
+        {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by active status\"\n                },\n                \"includeHidden\": {\n                    \"type\"\
         : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Include hidden achievements
         in response\"\n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\"\
@@ -296,39 +299,39 @@ paths:
         \              \"description\": \"How to earn this achievement\"\n                },\n                \"hiddenDescription\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Description for hidden achievements\"\n                },\n                \"achievementType\": {\n          \
-        \          \"$ref\": \"#/$defs/AchievementType\"\n                },\n                \"entityTypes\": {\n       \
-        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\
-        \n                    },\n                    \"description\": \"Allowed entity types\"\n                },\n    \
-        \            \"progressTarget\": {\n                    \"type\": \"integer\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Target for progressive achievements\"\n                },\n        \
-        \        \"points\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Point value\"\
-        \n                },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\": \"Achievement
-        icon URL\"\n                },\n                \"platforms\": {\n                    \"type\": \"array\",\n     \
-        \               \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\n                    },\n   \
-        \                 \"description\": \"Available platforms\"\n                },\n                \"platformIds\": {\n\
-        \                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                    \
-        \    \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"Platform-specific IDs\"\n                },\n                \"prerequisites\": {\n             \
-        \       \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n   \
-        \                 },\n                    \"nullable\": true,\n                    \"description\": \"Required achievements\"\
-        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"Whether achievement is earnable\"\n                },\n                \"earnedCount\":
-        {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"How many entities have earned this\"\n                },\n                \"createdAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the achievement was created\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional metadata\"\n                }\n            }\n        },\n    \
-        \    \"AchievementType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\"\
-        ,\n            \"enum\": [\n                \"standard\",\n                \"progressive\",\n                \"hidden\"\
-        ,\n                \"secret\"\n            ]\n        },\n        \"EntityType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n        \
-        \        \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n  \
-        \              \"custom\"\n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n             \
-        \   \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\n      \
-        \      ]\n        }\n    }\n}"
+        \          \"$ref\": \"#/$defs/AchievementType\",\n                    \"description\": \"Classification of the achievement\"\
+        \n                },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n                    },\n         \
+        \           \"description\": \"Allowed entity types\"\n                },\n                \"progressTarget\": {\n\
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Target for progressive achievements\"\n                },\n                \"points\": {\n                   \
+        \ \"type\": \"integer\",\n                    \"description\": \"Point value\"\n                },\n             \
+        \   \"iconUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n\
+        \                \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
+        \                      \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"description\"\
+        : \"Available platforms\"\n                },\n                \"platformIds\": {\n                    \"type\": \"\
+        object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n       \
+        \             },\n                    \"nullable\": true,\n                    \"description\": \"Platform-specific
+        IDs\"\n                },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Required achievements\"\n                },\n \
+        \               \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\":
+        \"Whether achievement is earnable\"\n                },\n                \"earnedCount\": {\n                    \"\
+        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"How many
+        entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the achievement
+        was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
+        \                  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"AchievementType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\",\n            \"enum\"\
+        : [\n                \"standard\",\n                \"progressive\",\n                \"hidden\",\n              \
+        \  \"secret\"\n            ]\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n         \
+        \   \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n                \"account\"\
+        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
+        \n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"External platform for achievement sync\",\n            \"enum\": [\n                \"steam\",\n             \
+        \   \"xbox\",\n                \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List achievement definitions\",\n    \"description\": \"List achievements
         for a game service with optional platform filtering.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"listAchievementDefinitions\"\n}"
@@ -391,39 +394,40 @@ paths:
         \        \"type\": \"string\",\n                    \"description\": \"How to earn this achievement\"\n          \
         \      },\n                \"hiddenDescription\": {\n                    \"type\": \"string\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Description for hidden achievements\"\n          \
-        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\"\n   \
-        \             },\n                \"entityTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n                    },\n             \
-        \       \"description\": \"Allowed entity types\"\n                },\n                \"progressTarget\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Target for progressive achievements\"\n                },\n                \"points\": {\n                   \
-        \ \"type\": \"integer\",\n                    \"description\": \"Point value\"\n                },\n             \
-        \   \"iconUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Achievement icon URL\"\n                },\n\
-        \                \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/Platform\"\n                    },\n                    \"description\"\
-        : \"Available platforms\"\n                },\n                \"platformIds\": {\n                    \"type\": \"\
-        object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n       \
-        \             },\n                    \"nullable\": true,\n                    \"description\": \"Platform-specific
-        IDs\"\n                },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Required achievements\"\n                },\n \
-        \               \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether achievement is earnable\"\n                },\n                \"earnedCount\": {\n                    \"\
-        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"How many
-        entities have earned this\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the achievement
-        was created\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
-        \                  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"\
-        description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"AchievementType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of achievement\",\n            \"enum\"\
-        : [\n                \"standard\",\n                \"progressive\",\n                \"hidden\",\n              \
-        \  \"secret\"\n            ]\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n         \
-        \   \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n                \"account\"\
-        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
-        \n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"External platform for achievement sync\",\n            \"enum\": [\n                \"steam\",\n             \
-        \   \"xbox\",\n                \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \      },\n                \"achievementType\": {\n                    \"$ref\": \"#/$defs/AchievementType\",\n  \
+        \                  \"description\": \"Classification of the achievement\"\n                },\n                \"\
+        entityTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
+        \     \"$ref\": \"#/$defs/EntityType\"\n                    },\n                    \"description\": \"Allowed entity
+        types\"\n                },\n                \"progressTarget\": {\n                    \"type\": \"integer\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Target for progressive achievements\"\
+        \n                },\n                \"points\": {\n                    \"type\": \"integer\",\n                \
+        \    \"description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Achievement icon URL\"\n                },\n                \"platforms\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Platform\"\
+        \n                    },\n                    \"description\": \"Available platforms\"\n                },\n     \
+        \           \"platformIds\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Platform-specific IDs\"\n                },\n                \"prerequisites\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Required achievements\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether achievement is earnable\"\n                },\n       \
+        \         \"earnedCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"description\": \"How many entities have earned this\"\n                },\n             \
+        \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the achievement was created\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
+        \     }\n            }\n        },\n        \"AchievementType\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Type of achievement\",\n            \"enum\": [\n                \"standard\",\n           \
+        \     \"progressive\",\n                \"hidden\",\n                \"secret\"\n            ]\n        },\n     \
+        \   \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn
+        achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n         \
+        \       \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"\
+        Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform for achievement
+        sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\"\
+        ,\n                \"internal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update achievement definition\",\n    \"description\": \"Update properties
         of an existing achievement.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"updateAchievementDefinition\"\n}"
@@ -495,36 +499,37 @@ paths:
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\
         \n                },\n                \"entityId\": {\n                    \"type\": \"string\",\n               \
         \     \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n     \
-        \           \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\n                },\n        \
-        \        \"achievementId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Specific achievement ID (null for all)\"\n                }\n            }\n\
-        \        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
-        entity that can earn achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
-        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n\
-        \    }\n}"
+        \           \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\"\
+        : \"Entity type whose progress is requested\"\n                },\n                \"achievementId\": {\n        \
+        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Specific achievement ID (null for all)\"\n                }\n            }\n        },\n        \"EntityType\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\",\n\
+        \            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementProgressResponse\"\
         ,\n    \"$defs\": {\n        \"AchievementProgressResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Achievement progress for an entity\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"entityId\",\n                \"entityType\",\n                \"progress\"\n\
         \            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
-        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\n   \
-        \             },\n                \"progress\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/AchievementProgress\"\n                    },\n          \
-        \          \"description\": \"Progress for each achievement\"\n                },\n                \"totalPoints\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total points from unlocked
-        achievements\"\n                },\n                \"unlockedCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of unlocked achievements\"\n                }\n            }\n  \
-        \      },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can earn achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
-        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n\
-        \        \"AchievementProgress\": {\n            \"type\": \"object\",\n            \"description\": \"Progress toward
-        a single achievement\",\n            \"additionalProperties\": false,\n            \"required\": [\n             \
-        \   \"achievementId\",\n                \"isUnlocked\"\n            ],\n            \"properties\": {\n          \
-        \      \"achievementId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Achievement
-        identifier\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Achievement display name\"\n                },\n                \"currentProgress\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n  \
+        \                  \"description\": \"Entity type that owns this progress summary\"\n                },\n        \
+        \        \"progress\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"$ref\": \"#/$defs/AchievementProgress\"\n                    },\n                    \"description\"\
+        : \"Progress for each achievement\"\n                },\n                \"totalPoints\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Total points from unlocked achievements\"\n         \
+        \       },\n                \"unlockedCount\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"description\": \"Number of unlocked achievements\"\n                }\n            }\n        },\n        \"EntityType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\"\
+        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"AchievementProgress\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Progress toward a single achievement\",\n \
+        \           \"additionalProperties\": false,\n            \"required\": [\n                \"achievementId\",\n  \
+        \              \"isUnlocked\"\n            ],\n            \"properties\": {\n                \"achievementId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Achievement identifier\"\n    \
+        \            },\n                \"displayName\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Achievement display name\"\n                },\n                \"currentProgress\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Current progress (for progressive)\"\n                },\n                \"targetProgress\": {\n            \
         \        \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
         Target progress (for progressive)\"\n                },\n                \"percentComplete\": {\n                \
@@ -573,13 +578,14 @@ paths:
         \                \"achievementId\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"ID of the achievement\"\n                },\n                \"entityId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
-        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\n   \
-        \             },\n                \"increment\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"minimum\": 1,\n                    \"description\": \"Amount to increment progress\"\n                }\n  \
-        \          }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that can earn achievements\",\n            \"enum\": [\n                \"account\",\n        \
-        \        \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n    \
-        \        ]\n        }\n    }\n}"
+        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n  \
+        \                  \"description\": \"Entity type receiving the progress increment\"\n                },\n       \
+        \         \"increment\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n    \
+        \                \"description\": \"Amount to increment progress\"\n                }\n            }\n        },\n\
+        \        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that
+        can earn achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n\
+        \                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n  \
+        \  }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateAchievementProgressResponse\"\
         ,\n    \"$defs\": {\n        \"UpdateAchievementProgressResponse\": {\n            \"type\": \"object\",\n       \
         \     \"description\": \"Response after updating progress\",\n            \"additionalProperties\": false,\n     \
@@ -638,12 +644,13 @@ paths:
         : \"string\",\n                    \"description\": \"ID of the achievement to unlock\"\n                },\n    \
         \            \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"ID of the entity\"\n                },\n                \"entityType\":
-        {\n                    \"$ref\": \"#/$defs/EntityType\"\n                },\n                \"skipPlatformSync\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Skip syncing to external platforms\"\n                }\n            }\n        },\n        \"EntityType\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\",\n\
-        \            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
-        ,\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+        {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type to unlock
+        the achievement for\"\n                },\n                \"skipPlatformSync\": {\n                    \"type\":
+        \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Skip syncing to external
+        platforms\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n        \
+        \        \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n  \
+        \              \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnlockAchievementResponse\"\
         ,\n    \"$defs\": {\n        \"UnlockAchievementResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after unlocking an achievement\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -695,15 +702,16 @@ paths:
         \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID
         of the game service\"\n                },\n                \"entityId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n        \
-        \        },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\n           \
-        \     },\n                \"platform\": {\n                    \"$ref\": \"#/$defs/Platform\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Filter by platform\"\n                }\n        \
-        \    }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Type of entity that can earn achievements\",\n            \"enum\": [\n                \"account\",\n            \
-        \    \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n        \
-        \    ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External
-        platform for achievement sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n\
-        \                \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \        },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n          \
+        \          \"description\": \"Entity type whose unlocked achievements are listed\"\n                },\n         \
+        \       \"platform\": {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Filter by platform\"\n                }\n            }\n        },\n     \
+        \   \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn
+        achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n         \
+        \       \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"\
+        Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform for achievement
+        sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\"\
+        ,\n                \"internal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListUnlockedAchievementsResponse\"\
         ,\n    \"$defs\": {\n        \"ListUnlockedAchievementsResponse\": {\n            \"type\": \"object\",\n        \
         \    \"description\": \"Response containing unlocked achievements\",\n            \"additionalProperties\": false,\n\
@@ -711,27 +719,28 @@ paths:
         ,\n                \"totalPoints\"\n            ],\n            \"properties\": {\n                \"entityId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\
-        \n                },\n                \"achievements\": {\n                    \"type\": \"array\",\n            \
-        \        \"items\": {\n                        \"$ref\": \"#/$defs/UnlockedAchievement\"\n                    },\n\
-        \                    \"description\": \"List of unlocked achievements\"\n                },\n                \"totalPoints\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total points earned\"\n  \
-        \              }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n      \
-        \      \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n                \"\
-        account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n             \
-        \   \"custom\"\n            ]\n        },\n        \"UnlockedAchievement\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"An unlocked achievement instance\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"achievementId\",\n                \"displayName\",\n             \
-        \   \"points\",\n                \"unlockedAt\"\n            ],\n            \"properties\": {\n                \"\
-        achievementId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Achievement
-        identifier\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Achievement name\"\n                },\n                \"description\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Achievement description\"\n   \
-        \             },\n                \"points\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Point value\"\n                },\n                \"iconUrl\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Achievement icon\"\n                },\n                \"unlockedAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"When it was unlocked\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"description\": \"Entity type for the returned unlocked achievements\"\n                },\n\
+        \                \"achievements\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/UnlockedAchievement\"\n                    },\n                    \"\
+        description\": \"List of unlocked achievements\"\n                },\n                \"totalPoints\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Total points earned\"\n             \
+        \   }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of entity that can earn achievements\",\n            \"enum\": [\n                \"account\",\n        \
+        \        \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n    \
+        \        ]\n        },\n        \"UnlockedAchievement\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"An unlocked achievement instance\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"achievementId\",\n                \"displayName\",\n                \"points\",\n             \
+        \   \"unlockedAt\"\n            ],\n            \"properties\": {\n                \"achievementId\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Achievement identifier\"\n            \
+        \    },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Achievement name\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Achievement description\"\n                },\n                \"points\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Point value\"\n          \
+        \      },\n                \"iconUrl\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uri\",\n                    \"nullable\": true,\n                    \"description\": \"Achievement icon\"\n \
+        \               },\n                \"unlockedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When it was unlocked\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List unlocked achievements\",\n    \"description\": \"Get all achievements
         unlocked by an entity.\",\n    \"tags\": [\n        \"Progress\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listUnlockedAchievements\"\n}"
@@ -770,32 +779,35 @@ paths:
         ,\n                    \"description\": \"ID of the game service\"\n                },\n                \"entityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the entity (must be account for platform sync)\"\n                },\n                \"entityType\"\
-        : {\n                    \"$ref\": \"#/$defs/EntityType\"\n                },\n                \"platform\": {\n \
-        \                   \"$ref\": \"#/$defs/Platform\"\n                },\n                \"forceResync\": {\n     \
-        \               \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Force resync even if already synced\"\n                }\n            }\n        },\n        \"EntityType\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\",\n\
-        \            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
-        ,\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"Platform\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"External platform for achievement sync\",\n     \
-        \       \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\",\n   \
-        \             \"internal\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type to
+        sync (must be account for platform links)\"\n                },\n                \"platform\": {\n               \
+        \     \"$ref\": \"#/$defs/Platform\",\n                    \"description\": \"External platform to sync achievements
+        to\"\n                },\n                \"forceResync\": {\n                    \"type\": \"boolean\",\n       \
+        \             \"default\": false,\n                    \"description\": \"Force resync even if already synced\"\n\
+        \                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Type of entity that can earn achievements\",\n            \"enum\": [\n              \
+        \  \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n        \
+        \        \"custom\"\n            ]\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n     \
+        \       \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n                \"\
+        steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\n            ]\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SyncPlatformAchievementsResponse\"\
         ,\n    \"$defs\": {\n        \"SyncPlatformAchievementsResponse\": {\n            \"type\": \"object\",\n        \
         \    \"description\": \"Response after platform sync attempt\",\n            \"additionalProperties\": false,\n  \
         \          \"required\": [\n                \"platform\",\n                \"synced\",\n                \"failed\"\
         \n            ],\n            \"properties\": {\n                \"platform\": {\n                    \"$ref\": \"\
-        #/$defs/Platform\"\n                },\n                \"synced\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Number of achievements successfully synced\"\n                },\n       \
-        \         \"failed\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
-        of sync failures\"\n                },\n                \"notLinked\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether account is not linked to platform\"\n                },\n      \
-        \          \"errors\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
-        \             \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n            \
-        \        \"description\": \"Error messages for failed syncs\"\n                }\n            }\n        },\n    \
-        \    \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform for achievement
-        sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\"\
-        ,\n                \"internal\"\n            ]\n        }\n    }\n}"
+        #/$defs/Platform\",\n                    \"description\": \"Platform targeted by the sync attempt\"\n            \
+        \    },\n                \"synced\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of achievements successfully synced\"\n                },\n                \"failed\": {\n            \
+        \        \"type\": \"integer\",\n                    \"description\": \"Number of sync failures\"\n              \
+        \  },\n                \"notLinked\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether account is not linked to platform\"\n                },\n                \"errors\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n   \
+        \                 },\n                    \"nullable\": true,\n                    \"description\": \"Error messages
+        for failed syncs\"\n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n   \
+        \             \"steam\",\n                \"xbox\",\n                \"playstation\",\n                \"internal\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually trigger platform sync\",\n    \"description\": \"Force synchronization
         of achievements with external platforms.\\nAdmin-only endpoint.\\n\",\n    \"tags\": [\n        \"Platform Sync\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"syncPlatformAchievements\"\n}"
@@ -831,47 +843,50 @@ paths:
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\
         \n                },\n                \"entityId\": {\n                    \"type\": \"string\",\n               \
         \     \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n     \
-        \           \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\n                },\n        \
-        \        \"platform\": {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Specific platform (null for all)\"\n                }\n            }\n   \
-        \     },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that can earn achievements\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
-        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n\
-        \        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform for
-        achievement sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n            \
-        \    \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \           \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\"\
+        : \"Entity type whose platform sync status is requested\"\n                },\n                \"platform\": {\n \
+        \                   \"$ref\": \"#/$defs/Platform\",\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Specific platform (null for all)\"\n                }\n            }\n        },\n        \"\
+        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\"\
+        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"Platform\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"External platform for achievement sync\",\n     \
+        \       \"enum\": [\n                \"steam\",\n                \"xbox\",\n                \"playstation\",\n   \
+        \             \"internal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PlatformSyncStatusResponse\"\
         ,\n    \"$defs\": {\n        \"PlatformSyncStatusResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Platform sync status for an entity\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"entityId\",\n                \"entityType\",\n                \"platforms\"\n\
         \            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
-        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\n   \
-        \             },\n                \"platforms\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/PlatformStatus\"\n                    },\n           \
-        \         \"description\": \"Sync status per platform\"\n                }\n            }\n        },\n        \"\
-        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\"\
-        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
-        ,\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"PlatformStatus\":
-        {\n            \"type\": \"object\",\n            \"description\": \"Sync status for a single platform\",\n      \
-        \      \"additionalProperties\": false,\n            \"required\": [\n                \"platform\",\n            \
-        \    \"isLinked\",\n                \"syncedCount\",\n                \"pendingCount\"\n            ],\n         \
-        \   \"properties\": {\n                \"platform\": {\n                    \"$ref\": \"#/$defs/Platform\"\n     \
-        \           },\n                \"isLinked\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether entity is linked to this platform\"\n                },\n                \"externalId\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External platform user ID\"\n                },\n                \"syncedCount\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Achievements successfully synced\"\n                },\n  \
-        \              \"pendingCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Achievements pending sync\"\n                },\n                \"failedCount\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Achievements that failed to sync\"\n                },\n  \
-        \              \"lastSyncAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Last successful sync timestamp\"\
-        \n                },\n                \"lastError\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Most recent sync error\"\n                }\n \
-        \           }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"External platform for achievement sync\",\n            \"enum\": [\n                \"steam\",\n             \
-        \   \"xbox\",\n                \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
+        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n  \
+        \                  \"description\": \"Entity type for the reported platform status\"\n                },\n       \
+        \         \"platforms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
+        \               \"$ref\": \"#/$defs/PlatformStatus\"\n                    },\n                    \"description\"\
+        : \"Sync status per platform\"\n                }\n            }\n        },\n        \"EntityType\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Type of entity that can earn achievements\",\n        \
+        \    \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n     \
+        \           \"actor\",\n                \"custom\"\n            ]\n        },\n        \"PlatformStatus\": {\n   \
+        \         \"type\": \"object\",\n            \"description\": \"Sync status for a single platform\",\n           \
+        \ \"additionalProperties\": false,\n            \"required\": [\n                \"platform\",\n                \"\
+        isLinked\",\n                \"syncedCount\",\n                \"pendingCount\"\n            ],\n            \"properties\"\
+        : {\n                \"platform\": {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"\
+        description\": \"Platform this status entry describes\"\n                },\n                \"isLinked\": {\n   \
+        \                 \"type\": \"boolean\",\n                    \"description\": \"Whether entity is linked to this
+        platform\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"External platform user ID\"\n      \
+        \          },\n                \"syncedCount\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"description\": \"Achievements successfully synced\"\n                },\n                \"pendingCount\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Achievements pending sync\"\n\
+        \                },\n                \"failedCount\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"Achievements that failed to sync\"\n                },\n                \"lastSyncAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last successful sync timestamp\"\n               \
+        \ },\n                \"lastError\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Most recent sync error\"\n                }\n            }\n     \
+        \   },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External platform
+        for achievement sync\",\n            \"enum\": [\n                \"steam\",\n                \"xbox\",\n        \
+        \        \"playstation\",\n                \"internal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get platform sync status\",\n    \"description\": \"Get the sync status
         for an entity on a specific platform.\",\n    \"tags\": [\n        \"Platform Sync\"\n    ],\n    \"deprecated\":
         false,\n    \"operationId\": \"getPlatformSyncStatus\"\n}"
@@ -955,7 +970,7 @@ components:
         achievementType:
           $ref: '#/components/schemas/AchievementType'
           default: standard
-          description: Type of achievement
+          description: Classification of the achievement (affects visibility and progress behavior)
         entityTypes:
           type: array
           items:
@@ -1035,7 +1050,7 @@ components:
         achievementType:
           $ref: '#/components/schemas/AchievementType'
           nullable: true
-          description: Filter by achievement type
+          description: Filter by achievement classification
         isActive:
           type: boolean
           nullable: true
@@ -1143,6 +1158,7 @@ components:
           description: Description for hidden achievements
         achievementType:
           $ref: '#/components/schemas/AchievementType'
+          description: Classification of the achievement
         entityTypes:
           type: array
           items:
@@ -1216,6 +1232,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type whose progress is requested
         achievementId:
           type: string
           nullable: true
@@ -1236,6 +1253,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type that owns this progress summary
         progress:
           type: array
           items:
@@ -1308,6 +1326,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type receiving the progress increment
         increment:
           type: integer
           minimum: 1
@@ -1368,6 +1387,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type to unlock the achievement for
         skipPlatformSync:
           type: boolean
           default: false
@@ -1418,6 +1438,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type whose unlocked achievements are listed
         platform:
           $ref: '#/components/schemas/Platform'
           nullable: true
@@ -1439,6 +1460,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type for the returned unlocked achievements
         achievements:
           type: array
           items:
@@ -1503,8 +1525,10 @@ components:
           description: ID of the entity (must be account for platform sync)
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type to sync (must be account for platform links)
         platform:
           $ref: '#/components/schemas/Platform'
+          description: External platform to sync achievements to
         forceResync:
           type: boolean
           default: false
@@ -1521,6 +1545,7 @@ components:
       properties:
         platform:
           $ref: '#/components/schemas/Platform'
+          description: Platform targeted by the sync attempt
         synced:
           type: integer
           description: Number of achievements successfully synced
@@ -1556,6 +1581,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type whose platform sync status is requested
         platform:
           $ref: '#/components/schemas/Platform'
           nullable: true
@@ -1576,6 +1602,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type for the reported platform status
         platforms:
           type: array
           items:
@@ -1594,6 +1621,7 @@ components:
       properties:
         platform:
           $ref: '#/components/schemas/Platform'
+          description: Platform this status entry describes
         isLinked:
           type: boolean
           description: Whether entity is linked to this platform

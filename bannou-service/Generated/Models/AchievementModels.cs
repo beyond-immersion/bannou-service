@@ -171,7 +171,7 @@ public partial class CreateAchievementDefinitionRequest
     public string? HiddenDescription { get; set; } = default!;
 
     /// <summary>
-    /// Type of achievement
+    /// Classification of the achievement (affects visibility and progress behavior)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -283,7 +283,7 @@ public partial class ListAchievementDefinitionsRequest
     public Platform? Platform { get; set; } = default!;
 
     /// <summary>
-    /// Filter by achievement type
+    /// Filter by achievement classification
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -441,6 +441,9 @@ public partial class AchievementDefinitionResponse
     [System.Text.Json.Serialization.JsonPropertyName("hiddenDescription")]
     public string? HiddenDescription { get; set; } = default!;
 
+    /// <summary>
+    /// Classification of the achievement
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("achievementType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -542,6 +545,9 @@ public partial class GetAchievementProgressRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type whose progress is requested
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -571,6 +577,9 @@ public partial class AchievementProgressResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type that owns this progress summary
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -683,6 +692,9 @@ public partial class UpdateAchievementProgressRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type receiving the progress increment
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -776,6 +788,9 @@ public partial class UnlockAchievementRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type to unlock the achievement for
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -850,6 +865,9 @@ public partial class ListUnlockedAchievementsRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type whose unlocked achievements are listed
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -880,6 +898,9 @@ public partial class ListUnlockedAchievementsResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for the returned unlocked achievements
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -976,12 +997,18 @@ public partial class SyncPlatformAchievementsRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type to sync (must be account for platform links)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType EntityType { get; set; } = default!;
 
+    /// <summary>
+    /// External platform to sync achievements to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platform")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1003,6 +1030,9 @@ public partial class SyncPlatformAchievementsRequest
 public partial class SyncPlatformAchievementsResponse
 {
 
+    /// <summary>
+    /// Platform targeted by the sync attempt
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platform")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1058,6 +1088,9 @@ public partial class GetPlatformSyncStatusRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type whose platform sync status is requested
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1088,6 +1121,9 @@ public partial class PlatformSyncStatusResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for the reported platform status
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1111,6 +1147,9 @@ public partial class PlatformSyncStatusResponse
 public partial class PlatformStatus
 {
 
+    /// <summary>
+    /// Platform this status entry describes
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platform")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

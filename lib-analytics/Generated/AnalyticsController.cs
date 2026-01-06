@@ -357,7 +357,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity this event relates to"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type the event is attributed to"
                 },
                 "timestamp": {
                     "type": "string",
@@ -527,7 +528,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity this event relates to"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type the event is attributed to"
                 },
                 "timestamp": {
                     "type": "string",
@@ -680,7 +682,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type to summarize"
                 }
             }
         },
@@ -722,7 +725,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this summary"
                 },
                 "totalEvents": {
                     "type": "integer",
@@ -849,7 +853,7 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                 "entityType": {
                     "$ref": "#/$defs/EntityType",
                     "nullable": true,
-                    "description": "Filter by entity type"
+                    "description": "Optional filter by entity type"
                 },
                 "eventType": {
                     "type": "string",
@@ -944,7 +948,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this summary"
                 },
                 "totalEvents": {
                     "type": "integer",
@@ -1077,7 +1082,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type whose rating is requested"
                 },
                 "ratingType": {
                     "type": "string",
@@ -1125,7 +1131,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this rating record"
                 },
                 "ratingType": {
                     "type": "string",
@@ -1285,7 +1292,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the participating entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this match participant"
                 },
                 "outcome": {
                     "type": "number",
@@ -1363,7 +1371,8 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity"
                 },
                 "entityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type for this rating change"
                 },
                 "previousRating": {
                     "type": "number",
@@ -1487,10 +1496,12 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the entity being controlled"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type being controlled"
                 },
                 "action": {
-                    "$ref": "#/$defs/ControllerAction"
+                    "$ref": "#/$defs/ControllerAction",
+                    "description": "Whether control was possessed or released"
                 },
                 "timestamp": {
                     "type": "string",
@@ -1709,10 +1720,12 @@ public partial class AnalyticsController : Microsoft.AspNetCore.Mvc.ControllerBa
                     "description": "ID of the controlled entity"
                 },
                 "targetEntityType": {
-                    "$ref": "#/$defs/EntityType"
+                    "$ref": "#/$defs/EntityType",
+                    "description": "Entity type that was controlled"
                 },
                 "action": {
-                    "$ref": "#/$defs/ControllerAction"
+                    "$ref": "#/$defs/ControllerAction",
+                    "description": "Control action that occurred (possess/release)"
                 },
                 "timestamp": {
                     "type": "string",

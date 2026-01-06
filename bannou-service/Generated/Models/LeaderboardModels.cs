@@ -352,12 +352,18 @@ public partial class LeaderboardDefinitionResponse
     // TODO(system.text.json): Add string enum item converter
     public System.Collections.Generic.ICollection<EntityType> EntityTypes { get; set; } = default!;
 
+    /// <summary>
+    /// Ordering used when ranking scores (descending for high scores, ascending for low)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SortOrder SortOrder { get; set; } = default!;
 
+    /// <summary>
+    /// Rule applied when new scores are submitted (replace/increment/max/min)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updateMode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -435,6 +441,9 @@ public partial class SubmitScoreRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type submitting the score
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -549,6 +558,9 @@ public partial class BatchScoreEntry
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for this score entry
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -615,6 +627,9 @@ public partial class GetEntityRankRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type whose rank is requested
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -638,6 +653,9 @@ public partial class EntityRankResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for the ranked entity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -739,6 +757,9 @@ public partial class GetRanksAroundRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type of the anchor entry
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -807,6 +828,9 @@ public partial class LeaderboardEntry
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for this leaderboard entry
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

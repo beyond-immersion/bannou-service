@@ -10,7 +10,9 @@ This document provides a compact reference of all Bannou services and their API 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
 | [Account](#account) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
+| [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor](#actor) | 1.0.0 | 10 | Distributed actor management and execution for NPC brains, e... |
+| [Analytics](#analytics) | 1.0.0 | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
@@ -20,6 +22,7 @@ This document provides a compact reference of all Bannou services and their API 
 Des... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
+| [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
@@ -78,6 +81,40 @@ Internal account management service (CRUD operations only, never exposed to inte
 
 ---
 
+## Achievement {#achievement}
+
+**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml`
+
+Achievement and trophy system with progress tracking and platform synchronization.
+
+### Definitions
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/achievement/definition/create` | Create a new achievement definition | developer |
+| `POST` | `/achievement/definition/delete` | Delete achievement definition | developer |
+| `POST` | `/achievement/definition/get` | Get achievement definition | service |
+| `POST` | `/achievement/definition/list` | List achievement definitions | user |
+| `POST` | `/achievement/definition/update` | Update achievement definition | developer |
+
+### Platform Sync
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/achievement/platform/status` | Get platform sync status | service |
+| `POST` | `/achievement/platform/sync` | Manually trigger platform sync | admin |
+
+### Progress
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/achievement/list-unlocked` | List unlocked achievements | user |
+| `POST` | `/achievement/progress/get` | Get entity's achievement progress | user |
+| `POST` | `/achievement/progress/update` | Update achievement progress | authenticated |
+| `POST` | `/achievement/unlock` | Directly unlock an achievement | authenticated |
+
+---
+
 ## Actor {#actor}
 
 **Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml`
@@ -100,6 +137,42 @@ goals, memories) to characters - NOT ...
 | `POST` | `/actor/template/get` | Get an actor template by ID or category | user |
 | `POST` | `/actor/template/list` | List all actor templates | user |
 | `POST` | `/actor/template/update` | Update an actor template | developer |
+
+---
+
+## Analytics {#analytics}
+
+**Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml`
+
+Event ingestion, entity statistics, skill ratings (Glicko-2), and controller history tracking.
+
+### Controller History
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/controller-history/query` | Query controller history | service |
+| `POST` | `/analytics/controller-history/record` | Record controller possession event | authenticated |
+
+### Event Ingestion
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/event/ingest` | Ingest a single analytics event | authenticated |
+| `POST` | `/analytics/event/ingest-batch` | Ingest multiple analytics events | authenticated |
+
+### Skill Ratings
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/rating/get` | Get entity Glicko-2 skill rating | service |
+| `POST` | `/analytics/rating/update` | Update entity skill rating after match | authenticated |
+
+### Statistics
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/summary/get` | Get entity statistics summary | service |
+| `POST` | `/analytics/summary/query` | Query entity summaries with filters | service |
 
 ---
 
@@ -396,6 +469,46 @@ Minimal game session management for Arcadia and other games.
 | `POST` | `/sessions/kick` | Kick player from game session (admin only) | admin |
 | `POST` | `/sessions/leave` | Leave a game session | user |
 | `POST` | `/sessions/list` | List available game sessions | authenticated |
+
+---
+
+## Leaderboard {#leaderboard}
+
+**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml`
+
+Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
+
+### Definitions
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/definition/create` | Create a new leaderboard definition | developer |
+| `POST` | `/leaderboard/definition/delete` | Delete leaderboard definition | developer |
+| `POST` | `/leaderboard/definition/get` | Get leaderboard definition | service |
+| `POST` | `/leaderboard/definition/list` | List leaderboard definitions | service |
+| `POST` | `/leaderboard/definition/update` | Update leaderboard definition | developer |
+
+### Rankings
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/rank/around` | Get entries around entity | user |
+| `POST` | `/leaderboard/rank/get` | Get entity's rank | user |
+| `POST` | `/leaderboard/rank/top` | Get top entries | user |
+
+### Scores
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/score/submit` | Submit or update a score | authenticated |
+| `POST` | `/leaderboard/score/submit-batch` | Submit multiple scores | authenticated |
+
+### Seasons
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/season/create` | Start a new season | admin |
+| `POST` | `/leaderboard/season/get` | Get current season info | user |
 
 ---
 
@@ -792,8 +905,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 23
-- **Total endpoints**: 241
+- **Total services**: 26
+- **Total endpoints**: 272
 
 ---
 

@@ -99,20 +99,22 @@ paths:
         : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
         \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\
         \n                    },\n                    \"description\": \"Allowed entity types\"\n                },\n    \
-        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\"\n                },\n         \
-        \       \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\"\n                },\n            \
-        \    \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        the leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\":
-        \"boolean\",\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n             \
-        \   },\n                \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Current season number (if seasonal)\"\n                },\n      \
-        \          \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"Number of entries on the leaderboard\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the leaderboard was created\"\n                },\n                \"\
-        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
-        \     }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\"\
+        : \"Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n    \
+        \            \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
+        : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
+        \ \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n    \
+        \            \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Current season number (if seasonal)\"\n                },\n              \
+        \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
+        \          }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
         character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
         \        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores
@@ -173,20 +175,22 @@ paths:
         : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
         \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\
         \n                    },\n                    \"description\": \"Allowed entity types\"\n                },\n    \
-        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\"\n                },\n         \
-        \       \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\"\n                },\n            \
-        \    \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        the leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\":
-        \"boolean\",\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n             \
-        \   },\n                \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Current season number (if seasonal)\"\n                },\n      \
-        \          \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"Number of entries on the leaderboard\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the leaderboard was created\"\n                },\n                \"\
-        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
-        \     }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\"\
+        : \"Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n    \
+        \            \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
+        : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
+        \ \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n    \
+        \            \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Current season number (if seasonal)\"\n                },\n              \
+        \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
+        \          }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
         character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
         \        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores
@@ -250,9 +254,11 @@ paths:
         of the leaderboard\"\n                },\n                \"entityTypes\": {\n                    \"type\": \"array\"\
         ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n                  \
         \  },\n                    \"description\": \"Allowed entity types\"\n                },\n                \"sortOrder\"\
-        : {\n                    \"$ref\": \"#/$defs/SortOrder\"\n                },\n                \"updateMode\": {\n\
-        \                    \"$ref\": \"#/$defs/UpdateMode\"\n                },\n                \"isSeasonal\": {\n   \
-        \                 \"type\": \"boolean\",\n                    \"description\": \"Whether the leaderboard is seasonal\"\
+        : {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"Ordering used when
+        ranking scores (descending for high scores, ascending for low)\"\n                },\n                \"updateMode\"\
+        : {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\": \"Rule applied when
+        new scores are submitted (replace/increment/max/min)\"\n                },\n                \"isSeasonal\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the leaderboard is seasonal\"\
         \n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\",\n              \
         \      \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n                \"currentSeason\"\
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
@@ -331,20 +337,22 @@ paths:
         : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
         \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\
         \n                    },\n                    \"description\": \"Allowed entity types\"\n                },\n    \
-        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\"\n                },\n         \
-        \       \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\"\n                },\n            \
-        \    \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        the leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\":
-        \"boolean\",\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n             \
-        \   },\n                \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Current season number (if seasonal)\"\n                },\n      \
-        \          \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"Number of entries on the leaderboard\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the leaderboard was created\"\n                },\n                \"\
-        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
-        \     }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\"\
+        : \"Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n    \
+        \            \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
+        : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
+        \ \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n    \
+        \            \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Current season number (if seasonal)\"\n                },\n              \
+        \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
+        \          }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
         character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
         \        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores
@@ -431,15 +439,15 @@ paths:
         {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the leaderboard\"\n   \
         \             },\n                \"entityId\": {\n                    \"type\": \"string\",\n                   \
         \ \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n         \
-        \       \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\n                },\n            \
-        \    \"score\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n      \
-        \              \"description\": \"Score value to submit\"\n                },\n                \"metadata\": {\n \
-        \                   \"type\": \"object\",\n                    \"additionalProperties\": true,\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Optional metadata about this score (e.g., how it was
-        achieved)\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"\
-        account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n             \
-        \   \"custom\"\n            ]\n        }\n    }\n}"
+        \       \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\"\
+        : \"Entity type submitting the score\"\n                },\n                \"score\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Score value to
+        submit\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n       \
+        \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional metadata about this score (e.g., how it was achieved)\"\n                }\n            }\n        },\n\
+        \        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the
+        leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n          \
+        \      \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreResponse\"\
         ,\n    \"$defs\": {\n        \"SubmitScoreResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after score submission\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -501,12 +509,12 @@ paths:
         \ \"entityType\",\n                \"score\"\n            ],\n            \"properties\": {\n                \"entityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"\
-        $ref\": \"#/$defs/EntityType\"\n                },\n                \"score\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"description\": \"Score value\"\n   \
-        \             }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n       \
-        \     \"description\": \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\"\
-        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
-        \n            ]\n        }\n    }\n}"
+        $ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this score entry\"\n     \
+        \           },\n                \"score\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Score value\"\n                }\n            }\n        },\n\
+        \        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the
+        leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n          \
+        \      \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreBatchResponse\"\
         ,\n    \"$defs\": {\n        \"SubmitScoreBatchResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after batch score submission\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -554,10 +562,11 @@ paths:
         : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
         \  \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
         \             \"description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n     \
-        \               \"$ref\": \"#/$defs/EntityType\"\n                }\n            }\n        },\n        \"EntityType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\",\n    \
-        \        \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n \
-        \               \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+        \               \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type whose rank is
+        requested\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"\
+        account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n             \
+        \   \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntityRankResponse\"\
         ,\n    \"$defs\": {\n        \"EntityRankResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Entity's rank on a leaderboard\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -565,17 +574,18 @@ paths:
         ,\n                \"totalEntries\"\n            ],\n            \"properties\": {\n                \"entityId\":
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\
-        \n                },\n                \"score\": {\n                    \"type\": \"number\",\n                  \
-        \  \"format\": \"double\",\n                    \"description\": \"Entity's current score\"\n                },\n\
-        \                \"rank\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"Entity's current rank (1-based)\"\n                },\n                \"\
-        totalEntries\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n      \
-        \              \"description\": \"Total entries on the leaderboard\"\n                },\n                \"percentile\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"Percentile ranking (0-100)\"\n                }\n            }\n        },\n        \"EntityType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\",\n    \
-        \        \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n \
-        \               \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+        ,\n                    \"description\": \"Entity type for the ranked entity\"\n                },\n              \
+        \  \"score\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n        \
+        \            \"description\": \"Entity's current score\"\n                },\n                \"rank\": {\n      \
+        \              \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Entity's current rank (1-based)\"\n                },\n                \"totalEntries\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Total
+        entries on the leaderboard\"\n                },\n                \"percentile\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Percentile ranking
+        (0-100)\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"\
+        account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n             \
+        \   \"custom\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get entity's rank\",\n    \"description\": \"Get the current rank and score
         for a specific entity.\",\n    \"tags\": [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getEntityRank\"\n}"
@@ -631,18 +641,18 @@ paths:
         \      \"score\",\n                \"rank\"\n            ],\n            \"properties\": {\n                \"entityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"\
-        $ref\": \"#/$defs/EntityType\"\n                },\n                \"score\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"description\": \"Entity's score\"\n\
-        \                },\n                \"rank\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"format\": \"int64\",\n                    \"description\": \"Entity's rank (1-based)\"\n                },\n \
-        \               \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Cached display name for the entity\"\n                },\n               \
-        \ \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Entry metadata\"\n              \
-        \  }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
-        character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
-        \        }\n    }\n}"
+        $ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this leaderboard entry\"\n\
+        \                },\n                \"score\": {\n                    \"type\": \"number\",\n                   \
+        \ \"format\": \"double\",\n                    \"description\": \"Entity's score\"\n                },\n         \
+        \       \"rank\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n    \
+        \                \"description\": \"Entity's rank (1-based)\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cached display name for the entity\"\n                },\n                \"metadata\": {\n                  \
+        \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Entry metadata\"\n                }\n            }\n        },\n        \"\
+        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\"\
+        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get top entries\",\n    \"description\": \"Get the top N entries on a leaderboard.\"\
         ,\n    \"tags\": [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getTopRanks\"\
         \n}"
@@ -684,15 +694,15 @@ paths:
         : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
         \  \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
         \             \"description\": \"ID of the entity to center on\"\n                },\n                \"entityType\"\
-        : {\n                    \"$ref\": \"#/$defs/EntityType\"\n                },\n                \"countBefore\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 5,\n                    \"maximum\"\
-        : 50,\n                    \"description\": \"Entries to show before the entity\"\n                },\n          \
-        \      \"countAfter\": {\n                    \"type\": \"integer\",\n                    \"default\": 5,\n      \
-        \              \"maximum\": 50,\n                    \"description\": \"Entries to show after the entity\"\n     \
-        \           }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n         \
-        \   \"description\": \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\"\
-        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
-        \n            ]\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type of
+        the anchor entry\"\n                },\n                \"countBefore\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 5,\n                    \"maximum\": 50,\n                    \"description\"\
+        : \"Entries to show before the entity\"\n                },\n                \"countAfter\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"default\": 5,\n                    \"maximum\": 50,\n          \
+        \          \"description\": \"Entries to show after the entity\"\n                }\n            }\n        },\n \
+        \       \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the
+        leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n          \
+        \      \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardEntriesResponse\"\
         ,\n    \"$defs\": {\n        \"LeaderboardEntriesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response containing leaderboard entries\",\n            \"additionalProperties\": false,\n      \
@@ -709,18 +719,18 @@ paths:
         \      \"score\",\n                \"rank\"\n            ],\n            \"properties\": {\n                \"entityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"\
-        $ref\": \"#/$defs/EntityType\"\n                },\n                \"score\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"description\": \"Entity's score\"\n\
-        \                },\n                \"rank\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"format\": \"int64\",\n                    \"description\": \"Entity's rank (1-based)\"\n                },\n \
-        \               \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Cached display name for the entity\"\n                },\n               \
-        \ \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Entry metadata\"\n              \
-        \  }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
-        character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
-        \        }\n    }\n}"
+        $ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this leaderboard entry\"\n\
+        \                },\n                \"score\": {\n                    \"type\": \"number\",\n                   \
+        \ \"format\": \"double\",\n                    \"description\": \"Entity's score\"\n                },\n         \
+        \       \"rank\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n    \
+        \                \"description\": \"Entity's rank (1-based)\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cached display name for the entity\"\n                },\n                \"metadata\": {\n                  \
+        \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Entry metadata\"\n                }\n            }\n        },\n        \"\
+        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\"\
+        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get entries around entity\",\n    \"description\": \"Get leaderboard entries
         surrounding a specific entity.\\nUseful for showing a player's position with nearby competitors.\\n\",\n    \"tags\"\
         : [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRanksAround\"\n}"
@@ -1056,8 +1066,10 @@ components:
           description: Allowed entity types
         sortOrder:
           $ref: '#/components/schemas/SortOrder'
+          description: Ordering used when ranking scores (descending for high scores, ascending for low)
         updateMode:
           $ref: '#/components/schemas/UpdateMode'
+          description: Rule applied when new scores are submitted (replace/increment/max/min)
         isSeasonal:
           type: boolean
           description: Whether the leaderboard is seasonal
@@ -1109,6 +1121,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type submitting the score
         score:
           type: number
           format: double
@@ -1192,6 +1205,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type for this score entry
         score:
           type: number
           format: double
@@ -1238,6 +1252,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type whose rank is requested
 
     EntityRankResponse:
       type: object
@@ -1256,6 +1271,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type for the ranked entity
         score:
           type: number
           format: double
@@ -1321,6 +1337,7 @@ components:
           description: ID of the entity to center on
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type of the anchor entry
         countBefore:
           type: integer
           default: 5
@@ -1370,6 +1387,7 @@ components:
           description: ID of the entity
         entityType:
           $ref: '#/components/schemas/EntityType'
+          description: Entity type for this leaderboard entry
         score:
           type: number
           format: double

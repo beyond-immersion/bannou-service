@@ -99,6 +99,9 @@ public partial class IngestEventRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type the event is attributed to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -218,6 +221,9 @@ public partial class GetEntitySummaryRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type to summarize
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -241,6 +247,9 @@ public partial class EntitySummaryResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for this summary
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -299,7 +308,7 @@ public partial class QueryEntitySummariesRequest
     public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Filter by entity type
+    /// Optional filter by entity type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -390,6 +399,9 @@ public partial class GetSkillRatingRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type whose rating is requested
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -421,6 +433,9 @@ public partial class SkillRatingResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for this rating record
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -524,6 +539,9 @@ public partial class MatchResult
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for this match participant
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -585,6 +603,9 @@ public partial class SkillRatingChange
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid EntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type for this rating change
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -642,12 +663,18 @@ public partial class RecordControllerEventRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetEntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type being controlled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetEntityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType TargetEntityType { get; set; } = default!;
 
+    /// <summary>
+    /// Whether control was possessed or released
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -773,12 +800,18 @@ public partial class ControllerHistoryEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetEntityId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity type that was controlled
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetEntityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EntityType TargetEntityType { get; set; } = default!;
 
+    /// <summary>
+    /// Control action that occurred (possess/release)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

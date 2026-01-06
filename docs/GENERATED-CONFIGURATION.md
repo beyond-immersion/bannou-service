@@ -14,6 +14,27 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
 | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
 
+### Achievement
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | bool | `true` | Automatically sync achievements to platforms when unlocked |
+| `ACHIEVEMENT_DEFINITION_STORE_NAME` | string | `achievement-definition` | Name of the state store for achievement definitions (MySQL r... |
+| `ACHIEVEMENT_ENABLED` | bool | `true` | Enable/disable Achievement service |
+| `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (stub - not implemented) |
+| `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (stub - not implemented) |
+| `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
+| `ACHIEVEMENT_PROGRESS_STORE_NAME` | string | `achievement-progress` | Name of the state store for progress tracking (Redis for hot... |
+| `ACHIEVEMENT_RARE_THRESHOLD_PERCENT` | double | `5.0` | Threshold percentage below which an achievement is considere... |
+| `ACHIEVEMENT_RARITY_CALCULATION_INTERVAL_MINUTES` | int | `60` | How often to recalculate achievement rarity percentages |
+| `ACHIEVEMENT_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for achievement sync |
+| `ACHIEVEMENT_STEAM_APP_ID` | string | **REQUIRED** | Steam App ID for achievement mapping |
+| `ACHIEVEMENT_SYNC_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed platform syncs |
+| `ACHIEVEMENT_SYNC_RETRY_DELAY_SECONDS` | int | `60` | Delay between sync retry attempts in seconds |
+| `ACHIEVEMENT_UNLOCK_STORE_NAME` | string | `achievement-unlock` | Name of the state store for unlock records (MySQL for persis... |
+| `ACHIEVEMENT_XBOX_CLIENT_ID` | string | **REQUIRED** | Xbox Live client ID (stub - not implemented) |
+| `ACHIEVEMENT_XBOX_CLIENT_SECRET` | string | **REQUIRED** | Xbox Live client secret (stub - not implemented) |
+
 ### Actor
 
 | Environment Variable | Type | Default | Description |
@@ -47,6 +68,22 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_STATE_STORE_NAME` | string | `actor-state` | Name of the state store for actor state persistence |
 | `ACTOR_STATE_UPDATE_TRANSPORT` | string | `messaging` | State update transport: messaging (default, works in bannou ... |
 | `ACTOR_TEMPLATE_STATESTORE_NAME` | string | `actor-templates` | Name of the state store for actor templates |
+
+### Analytics
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `ANALYTICS_ENABLED` | bool | `true` | Enable/disable Analytics service |
+| `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds to flush event buffer |
+| `ANALYTICS_EVENT_BUFFER_SIZE` | int | `1000` | Maximum events to buffer before flushing to storage |
+| `ANALYTICS_GLICKO2_DEFAULT_DEVIATION` | double | `350.0` | Default rating deviation for new entities (higher = less cer... |
+| `ANALYTICS_GLICKO2_DEFAULT_RATING` | double | `1500.0` | Default Glicko-2 rating for new entities |
+| `ANALYTICS_GLICKO2_DEFAULT_VOLATILITY` | double | `0.06` | Default volatility for new entities (0.06 is standard) |
+| `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | double | `0.5` | Glicko-2 system constant (tau) - controls volatility change ... |
+| `ANALYTICS_HISTORY_STORE_NAME` | string | `analytics-history` | Name of the state store for event history (MySQL recommended... |
+| `ANALYTICS_RATING_STORE_NAME` | string | `analytics-rating` | Name of the state store for skill ratings (Redis recommended... |
+| `ANALYTICS_SUMMARY_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached entity summaries |
+| `ANALYTICS_SUMMARY_STORE_NAME` | string | `analytics-summary` | Name of the state store for entity summaries (Redis recommen... |
 
 ### Asset
 
@@ -247,6 +284,19 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
 | `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
 
+### Leaderboard
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | bool | `true` | Automatically archive leaderboard data when season ends |
+| `LEADERBOARD_DEFINITION_STORE_NAME` | string | `leaderboard-definition` | Name of the state store for leaderboard definitions (MySQL r... |
+| `LEADERBOARD_ENABLED` | bool | `true` | Enable/disable Leaderboard service |
+| `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
+| `LEADERBOARD_RANKING_STORE_NAME` | string | `leaderboard-ranking` | Name of the state store for rankings (Redis required for sor... |
+| `LEADERBOARD_RANK_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for cached rank queries |
+| `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
+| `LEADERBOARD_SEASON_STORE_NAME` | string | `leaderboard-season` | Name of the state store for season data (MySQL recommended) |
+
 ### Location
 
 | Environment Variable | Type | Default | Description |
@@ -414,9 +464,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 290
-- **Required (no default)**: 40
-- **Optional (has default)**: 250
+- **Total properties**: 325
+- **Required (no default)**: 46
+- **Optional (has default)**: 279
 
 ## Environment Variable Naming Convention
 
