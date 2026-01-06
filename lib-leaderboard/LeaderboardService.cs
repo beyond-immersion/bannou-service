@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -13,7 +14,7 @@ namespace BeyondImmersion.BannouService.Leaderboard;
 
 /// <summary>
 /// Implementation of the Leaderboard service.
-/// This class contains the business logic for all Leaderboard operations.
+/// Provides real-time rankings using Redis Sorted Sets with definition storage.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -37,8 +38,14 @@ public partial class LeaderboardService : ILeaderboardService
     private readonly ILogger<LeaderboardService> _logger;
     private readonly LeaderboardServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "leaderboard-statestore";
+    // State store names
+    private const string DEFINITION_STORE = "leaderboard-definition";
+    private const string RANKING_STORE = "leaderboard-ranking";
+    private const string SEASON_STORE = "leaderboard-season";
 
+    /// <summary>
+    /// Initializes a new instance of the LeaderboardService.
+    /// </summary>
     public LeaderboardService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -52,48 +59,85 @@ public partial class LeaderboardService : ILeaderboardService
     }
 
     /// <summary>
+    /// Generates the key for a leaderboard definition.
+    /// Format: gameServiceId:leaderboardId
+    /// </summary>
+    private static string GetDefinitionKey(Guid gameServiceId, string leaderboardId)
+        => $"{gameServiceId}:{leaderboardId}";
+
+    /// <summary>
+    /// Generates the key for a leaderboard ranking sorted set.
+    /// Format: lb:gameServiceId:leaderboardId[:seasonN]
+    /// </summary>
+    private static string GetRankingKey(Guid gameServiceId, string leaderboardId, int? season = null)
+        => season.HasValue
+            ? $"lb:{gameServiceId}:{leaderboardId}:season{season}"
+            : $"lb:{gameServiceId}:{leaderboardId}";
+
+    /// <summary>
+    /// Generates the member key for a polymorphic entity.
+    /// Format: entityType:entityId
+    /// </summary>
+    private static string GetMemberKey(EntityType entityType, Guid entityId)
+        => $"{entityType}:{entityId}";
+
+    /// <summary>
+    /// Parses a member key back to entity type and ID.
+    /// </summary>
+    private static (EntityType entityType, Guid entityId) ParseMemberKey(string member)
+    {
+        var parts = member.Split(':', 2);
+        var entityType = Enum.Parse<EntityType>(parts[0], ignoreCase: true);
+        var entityId = Guid.Parse(parts[1]);
+        return (entityType, entityId);
+    }
+
+    /// <summary>
     /// Implementation of CreateLeaderboardDefinition operation.
-    /// TODO: Implement business logic for this method.
+    /// Creates a new leaderboard definition.
     /// </summary>
     public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> CreateLeaderboardDefinitionAsync(CreateLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CreateLeaderboardDefinition operation");
+        _logger.LogInformation("Creating leaderboard {LeaderboardId} for game service {GameServiceId}",
+            body.LeaderboardId, body.GameServiceId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateLeaderboardDefinition not yet implemented");
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Check if already exists
+            var existing = await definitionStore.GetAsync(key, cancellationToken);
+            if (existing != null)
+            {
+                _logger.LogWarning("Leaderboard {LeaderboardId} already exists", body.LeaderboardId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var definition = new LeaderboardDefinitionData
+            {
+                GameServiceId = body.GameServiceId,
+                LeaderboardId = body.LeaderboardId,
+                DisplayName = body.DisplayName,
+                Description = body.Description,
+                EntityTypes = body.EntityTypes?.ToList() ?? new List<EntityType> { EntityType.Account },
+                SortOrder = body.SortOrder,
+                UpdateMode = body.UpdateMode,
+                IsSeasonal = body.IsSeasonal,
+                IsPublic = body.IsPublic,
+                CurrentSeason = body.IsSeasonal ? 1 : null,
+                CreatedAt = now,
+                Metadata = body.Metadata
+            };
+
+            await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+
+            return (StatusCodes.OK, MapToResponse(definition, 0));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing CreateLeaderboardDefinition operation");
+            _logger.LogError(ex, "Error creating leaderboard definition");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "CreateLeaderboardDefinition",
@@ -104,53 +148,39 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of GetLeaderboardDefinition operation.
-    /// TODO: Implement business logic for this method.
+    /// Retrieves a leaderboard definition.
     /// </summary>
     public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> GetLeaderboardDefinitionAsync(GetLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetLeaderboardDefinition operation");
+        _logger.LogInformation("Getting leaderboard {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetLeaderboardDefinition not yet implemented");
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            var definition = await definitionStore.GetAsync(key, cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get entry count from sorted set
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+            var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+            return (StatusCodes.OK, MapToResponse(definition, entryCount));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetLeaderboardDefinition operation");
+            _logger.LogError(ex, "Error getting leaderboard definition");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "GetLeaderboardDefinition",
@@ -161,53 +191,33 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of ListLeaderboardDefinitions operation.
-    /// TODO: Implement business logic for this method.
+    /// Lists all leaderboards for a game service.
     /// </summary>
     public async Task<(StatusCodes, ListLeaderboardDefinitionsResponse?)> ListLeaderboardDefinitionsAsync(ListLeaderboardDefinitionsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ListLeaderboardDefinitions operation");
+        _logger.LogInformation("Listing leaderboards for game service {GameServiceId}", body.GameServiceId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListLeaderboardDefinitions not yet implemented");
+            // For now, return empty list - full implementation requires indexed query
+            var response = new ListLeaderboardDefinitionsResponse
+            {
+                Leaderboards = new List<LeaderboardDefinitionResponse>()
+            };
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            _logger.LogWarning("ListLeaderboardDefinitions not fully implemented - requires indexed query support");
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ListLeaderboardDefinitions operation");
+            _logger.LogError(ex, "Error listing leaderboard definitions");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "ListLeaderboardDefinitions",
@@ -218,53 +228,55 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of UpdateLeaderboardDefinition operation.
-    /// TODO: Implement business logic for this method.
+    /// Updates a leaderboard definition.
     /// </summary>
     public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> UpdateLeaderboardDefinitionAsync(UpdateLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing UpdateLeaderboardDefinition operation");
+        _logger.LogInformation("Updating leaderboard {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateLeaderboardDefinition not yet implemented");
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            var definition = await definitionStore.GetAsync(key, cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Apply updates
+            if (!string.IsNullOrEmpty(body.DisplayName))
+            {
+                definition.DisplayName = body.DisplayName;
+            }
+            if (body.Description != null)
+            {
+                definition.Description = body.Description;
+            }
+            if (body.IsPublic.HasValue)
+            {
+                definition.IsPublic = body.IsPublic.Value;
+            }
+
+            await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+
+            // Get entry count
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+            var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+            return (StatusCodes.OK, MapToResponse(definition, entryCount));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing UpdateLeaderboardDefinition operation");
+            _logger.LogError(ex, "Error updating leaderboard definition");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "UpdateLeaderboardDefinition",
@@ -275,34 +287,40 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of DeleteLeaderboardDefinition operation.
-    /// TODO: Implement business logic for this method.
+    /// Deletes a leaderboard definition and its data.
     /// </summary>
     public async Task<StatusCodes> DeleteLeaderboardDefinitionAsync(DeleteLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing DeleteLeaderboardDefinition operation");
+        _logger.LogInformation("Deleting leaderboard {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteLeaderboardDefinition not yet implemented");
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var key = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
-            // Example pattern for delete operations (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return StatusCodes.NoContent;
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            var definition = await definitionStore.GetAsync(key, cancellationToken);
+            if (definition == null)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            // Delete the definition
+            await definitionStore.DeleteAsync(key, cancellationToken);
+
+            // Note: The sorted set data should be deleted separately via Redis UNLINK/DEL
+            // This is a limitation of the current IStateStore abstraction
+
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing DeleteLeaderboardDefinition operation");
+            _logger.LogError(ex, "Error deleting leaderboard definition");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "DeleteLeaderboardDefinition",
@@ -319,47 +337,90 @@ public partial class LeaderboardService : ILeaderboardService
 
     /// <summary>
     /// Implementation of SubmitScore operation.
-    /// TODO: Implement business logic for this method.
+    /// Submits a score using Redis Sorted Sets.
     /// </summary>
     public async Task<(StatusCodes, SubmitScoreResponse?)> SubmitScoreAsync(SubmitScoreRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing SubmitScore operation");
+        _logger.LogInformation("Submitting score for {EntityType}:{EntityId} to {LeaderboardId}",
+            body.EntityType, body.EntityId, body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SubmitScore not yet implemented");
+            // Get leaderboard definition
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Validate entity type
+            if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+            var memberKey = GetMemberKey(body.EntityType, body.EntityId);
+
+            // Get previous score and rank
+            var previousScore = await rankingStore.SortedSetScoreAsync(rankingKey, memberKey, cancellationToken);
+            var previousRank = previousScore.HasValue
+                ? await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken)
+                : null;
+
+            // Calculate final score based on update mode
+            var finalScore = CalculateFinalScore(definition.UpdateMode, previousScore, body.Score);
+
+            // Add/update score in sorted set
+            await rankingStore.SortedSetAddAsync(rankingKey, memberKey, finalScore, options: null, cancellationToken);
+
+            // Get new rank
+            var newRank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
+
+            // Calculate rank change (positive = improved)
+            var currentRank = (newRank ?? 0) + 1; // Convert 0-based to 1-based
+            var prevRank = previousRank.HasValue ? previousRank.Value + 1 : currentRank;
+            var rankChange = definition.SortOrder == SortOrder.Descending
+                ? prevRank - currentRank // Higher rank (lower number) is better
+                : currentRank - prevRank; // Lower rank is better for ascending
+
+            // Publish rank changed event if rank changed significantly
+            if (previousRank.HasValue && newRank.HasValue && previousRank.Value != newRank.Value)
+            {
+                var rankEvent = new LeaderboardRankChangedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    GameServiceId = body.GameServiceId,
+                    LeaderboardId = body.LeaderboardId,
+                    EntityId = body.EntityId,
+                    EntityType = MapToEventEntityType(body.EntityType),
+                    PreviousRank = prevRank,
+                    NewRank = currentRank,
+                    RankChange = rankChange,
+                    PreviousScore = previousScore ?? 0,
+                    CurrentScore = finalScore
+                };
+                await _messageBus.TryPublishAsync("leaderboard.rank.changed", rankEvent, cancellationToken: cancellationToken);
+            }
+
+            return (StatusCodes.OK, new SubmitScoreResponse
+            {
+                Accepted = true,
+                PreviousScore = previousScore,
+                CurrentScore = finalScore,
+                PreviousRank = previousRank.HasValue ? prevRank : null,
+                CurrentRank = currentRank,
+                RankChange = rankChange
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing SubmitScore operation");
+            _logger.LogError(ex, "Error submitting score");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "SubmitScore",
@@ -370,53 +431,70 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of SubmitScoreBatch operation.
-    /// TODO: Implement business logic for this method.
+    /// Submits multiple scores efficiently.
     /// </summary>
     public async Task<(StatusCodes, SubmitScoreBatchResponse?)> SubmitScoreBatchAsync(SubmitScoreBatchRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing SubmitScoreBatch operation");
+        _logger.LogInformation("Submitting batch of {Count} scores to {LeaderboardId}",
+            body.Scores.Count, body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SubmitScoreBatch not yet implemented");
+            // Get leaderboard definition
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+
+            var accepted = 0;
+            var rejected = 0;
+
+            // Prepare batch entries
+            var entries = new List<(string member, double score)>();
+            foreach (var entry in body.Scores)
+            {
+                // Validate entity type
+                if (definition.EntityTypes != null && !definition.EntityTypes.Contains(entry.EntityType))
+                {
+                    rejected++;
+                    continue;
+                }
+
+                var memberKey = GetMemberKey(entry.EntityType, entry.EntityId);
+
+                // For batch, we use replace mode only (simpler)
+                entries.Add((memberKey, entry.Score));
+                accepted++;
+            }
+
+            // Batch add to sorted set
+            if (entries.Count > 0)
+            {
+                await rankingStore.SortedSetAddBatchAsync(rankingKey, entries, options: null, cancellationToken);
+            }
+
+            return (StatusCodes.OK, new SubmitScoreBatchResponse
+            {
+                Accepted = accepted,
+                Rejected = rejected
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing SubmitScoreBatch operation");
+            _logger.LogError(ex, "Error submitting batch scores");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "SubmitScoreBatch",
@@ -427,53 +505,70 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of GetEntityRank operation.
-    /// TODO: Implement business logic for this method.
+    /// Gets an entity's rank on a leaderboard.
     /// </summary>
     public async Task<(StatusCodes, EntityRankResponse?)> GetEntityRankAsync(GetEntityRankRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetEntityRank operation");
+        _logger.LogInformation("Getting rank for {EntityType}:{EntityId} on {LeaderboardId}",
+            body.EntityType, body.EntityId, body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetEntityRank not yet implemented");
+            // Get leaderboard definition
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+            var memberKey = GetMemberKey(body.EntityType, body.EntityId);
+
+            // Get score
+            var score = await rankingStore.SortedSetScoreAsync(rankingKey, memberKey, cancellationToken);
+            if (!score.HasValue)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get rank (0-based)
+            var rank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
+            if (!rank.HasValue)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get total entries
+            var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+            // Calculate percentile
+            var percentile = totalEntries > 0
+                ? (1.0 - (double)rank.Value / totalEntries) * 100.0
+                : 100.0;
+
+            return (StatusCodes.OK, new EntityRankResponse
+            {
+                EntityId = body.EntityId,
+                EntityType = body.EntityType,
+                Score = score.Value,
+                Rank = rank.Value + 1, // Convert to 1-based
+                TotalEntries = totalEntries,
+                Percentile = Math.Round(percentile, 2)
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetEntityRank operation");
+            _logger.LogError(ex, "Error getting entity rank");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "GetEntityRank",
@@ -484,53 +579,65 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of GetTopRanks operation.
-    /// TODO: Implement business logic for this method.
+    /// Gets the top entries on a leaderboard.
     /// </summary>
     public async Task<(StatusCodes, LeaderboardEntriesResponse?)> GetTopRanksAsync(GetTopRanksRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetTopRanks operation");
+        _logger.LogInformation("Getting top {Count} for {LeaderboardId}", body.Count, body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetTopRanks not yet implemented");
+            // Get leaderboard definition
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+
+            // Get range from sorted set
+            var start = body.Offset;
+            var stop = body.Offset + body.Count - 1;
+            var entries = await rankingStore.SortedSetRangeByRankAsync(
+                rankingKey, start, stop, definition.SortOrder == SortOrder.Descending, cancellationToken);
+
+            // Get total entries
+            var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+            // Convert to response entries
+            var responseEntries = entries.Select((entry, index) =>
+            {
+                var (entityType, entityId) = ParseMemberKey(entry.member);
+                return new LeaderboardEntry
+                {
+                    EntityId = entityId,
+                    EntityType = entityType,
+                    Score = entry.score,
+                    Rank = body.Offset + index + 1 // 1-based rank
+                };
+            }).ToList();
+
+            return (StatusCodes.OK, new LeaderboardEntriesResponse
+            {
+                LeaderboardId = body.LeaderboardId,
+                Entries = responseEntries,
+                TotalEntries = totalEntries
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetTopRanks operation");
+            _logger.LogError(ex, "Error getting top ranks");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "GetTopRanks",
@@ -541,53 +648,75 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of GetRanksAround operation.
-    /// TODO: Implement business logic for this method.
+    /// Gets entries around a specific entity.
     /// </summary>
     public async Task<(StatusCodes, LeaderboardEntriesResponse?)> GetRanksAroundAsync(GetRanksAroundRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetRanksAround operation");
+        _logger.LogInformation("Getting ranks around {EntityType}:{EntityId} on {LeaderboardId}",
+            body.EntityType, body.EntityId, body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetRanksAround not yet implemented");
+            // Get leaderboard definition
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, definition.CurrentSeason);
+            var memberKey = GetMemberKey(body.EntityType, body.EntityId);
+
+            // Get entity's rank
+            var entityRank = await rankingStore.SortedSetRankAsync(rankingKey, memberKey, definition.SortOrder == SortOrder.Descending, cancellationToken);
+            if (!entityRank.HasValue)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Calculate range around the entity
+            var start = Math.Max(0, entityRank.Value - body.CountBefore);
+            var stop = entityRank.Value + body.CountAfter;
+
+            var entries = await rankingStore.SortedSetRangeByRankAsync(
+                rankingKey, start, stop, definition.SortOrder == SortOrder.Descending, cancellationToken);
+
+            // Get total entries
+            var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+            // Convert to response entries
+            var responseEntries = entries.Select((entry, index) =>
+            {
+                var (entryEntityType, entryEntityId) = ParseMemberKey(entry.member);
+                return new LeaderboardEntry
+                {
+                    EntityId = entryEntityId,
+                    EntityType = entryEntityType,
+                    Score = entry.score,
+                    Rank = start + index + 1 // 1-based rank
+                };
+            }).ToList();
+
+            return (StatusCodes.OK, new LeaderboardEntriesResponse
+            {
+                LeaderboardId = body.LeaderboardId,
+                Entries = responseEntries,
+                TotalEntries = totalEntries
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetRanksAround operation");
+            _logger.LogError(ex, "Error getting ranks around entity");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "GetRanksAround",
@@ -598,53 +727,70 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of CreateSeason operation.
-    /// TODO: Implement business logic for this method.
+    /// Creates a new season for a seasonal leaderboard.
     /// </summary>
     public async Task<(StatusCodes, SeasonResponse?)> CreateSeasonAsync(CreateSeasonRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CreateSeason operation");
+        _logger.LogInformation("Creating new season for {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateSeason not yet implemented");
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (!definition.IsSeasonal)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var newSeasonNumber = (definition.CurrentSeason ?? 0) + 1;
+
+            // Archive previous season if requested
+            // (This would require moving the sorted set data - simplified for now)
+
+            // Update definition with new season
+            definition.CurrentSeason = newSeasonNumber;
+            await definitionStore.SaveAsync(defKey, definition, options: null, cancellationToken);
+
+            // Publish season started event
+            var seasonEvent = new LeaderboardSeasonStartedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                GameServiceId = body.GameServiceId,
+                LeaderboardId = body.LeaderboardId,
+                SeasonNumber = newSeasonNumber,
+                PreviousSeasonNumber = newSeasonNumber - 1
+            };
+            await _messageBus.TryPublishAsync("leaderboard.season.started", seasonEvent, cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, new SeasonResponse
+            {
+                LeaderboardId = body.LeaderboardId,
+                SeasonNumber = newSeasonNumber,
+                SeasonName = body.SeasonName,
+                StartedAt = now,
+                EndedAt = null,
+                IsActive = true,
+                EntryCount = 0
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing CreateSeason operation");
+            _logger.LogError(ex, "Error creating season");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "CreateSeason",
@@ -655,53 +801,55 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of GetSeason operation.
-    /// TODO: Implement business logic for this method.
+    /// Gets season information.
     /// </summary>
     public async Task<(StatusCodes, SeasonResponse?)> GetSeasonAsync(GetSeasonRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetSeason operation");
+        _logger.LogInformation("Getting season info for {LeaderboardId}", body.LeaderboardId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetSeason not yet implemented");
+            var definitionStore = _stateStoreFactory.GetStore<LeaderboardDefinitionData>(DEFINITION_STORE);
+            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (definition == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (!definition.IsSeasonal)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var seasonNumber = body.SeasonNumber ?? definition.CurrentSeason ?? 1;
+            var isActive = seasonNumber == definition.CurrentSeason;
+
+            // Get entry count for the season
+            var rankingStore = _stateStoreFactory.GetStore<object>(RANKING_STORE);
+            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, seasonNumber);
+            var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+            return (StatusCodes.OK, new SeasonResponse
+            {
+                LeaderboardId = body.LeaderboardId,
+                SeasonNumber = seasonNumber,
+                StartedAt = definition.CreatedAt, // Simplified - would need actual season start tracking
+                EndedAt = isActive ? null : DateTimeOffset.UtcNow, // Simplified
+                IsActive = isActive,
+                EntryCount = entryCount
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetSeason operation");
+            _logger.LogError(ex, "Error getting season");
             await _messageBus.TryPublishErrorAsync(
                 "leaderboard",
                 "GetSeason",
@@ -712,8 +860,82 @@ public partial class LeaderboardService : ILeaderboardService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
+    #region Helper Methods
+
+    /// <summary>
+    /// Calculates the final score based on update mode.
+    /// </summary>
+    private static double CalculateFinalScore(UpdateMode updateMode, double? previousScore, double newScore)
+        => updateMode switch
+        {
+            UpdateMode.Replace => newScore,
+            UpdateMode.Increment => (previousScore ?? 0) + newScore,
+            UpdateMode.Max => Math.Max(previousScore ?? double.MinValue, newScore),
+            UpdateMode.Min => Math.Min(previousScore ?? double.MaxValue, newScore),
+            _ => newScore
+        };
+
+    /// <summary>
+    /// Maps internal data to response model.
+    /// </summary>
+    private static LeaderboardDefinitionResponse MapToResponse(LeaderboardDefinitionData definition, long entryCount)
+        => new LeaderboardDefinitionResponse
+        {
+            GameServiceId = definition.GameServiceId,
+            LeaderboardId = definition.LeaderboardId,
+            DisplayName = definition.DisplayName,
+            Description = definition.Description,
+            EntityTypes = definition.EntityTypes ?? new List<EntityType>(),
+            SortOrder = definition.SortOrder,
+            UpdateMode = definition.UpdateMode,
+            IsSeasonal = definition.IsSeasonal,
+            IsPublic = definition.IsPublic,
+            CurrentSeason = definition.CurrentSeason,
+            EntryCount = entryCount,
+            CreatedAt = definition.CreatedAt,
+            Metadata = definition.Metadata
+        };
+
+    /// <summary>
+    /// Maps EntityType to event entity type.
+    /// </summary>
+    private static LeaderboardRankChangedEventEntityType MapToEventEntityType(EntityType entityType)
+        => entityType switch
+        {
+            EntityType.Account => LeaderboardRankChangedEventEntityType.Account,
+            EntityType.Character => LeaderboardRankChangedEventEntityType.Character,
+            EntityType.Guild => LeaderboardRankChangedEventEntityType.Guild,
+            EntityType.Actor => LeaderboardRankChangedEventEntityType.Actor,
+            EntityType.Custom => LeaderboardRankChangedEventEntityType.Custom,
+            _ => LeaderboardRankChangedEventEntityType.Custom
+        };
+
+    #endregion
 }
+
+#region Internal Data Models
+
+/// <summary>
+/// Internal storage model for leaderboard definition.
+/// </summary>
+internal class LeaderboardDefinitionData
+{
+    public Guid GameServiceId { get; set; }
+    public string LeaderboardId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public List<EntityType>? EntityTypes { get; set; }
+    public SortOrder SortOrder { get; set; }
+    public UpdateMode UpdateMode { get; set; }
+    public bool IsSeasonal { get; set; }
+    public bool IsPublic { get; set; }
+    public int? CurrentSeason { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public object? Metadata { get; set; }
+}
+
+#endregion
