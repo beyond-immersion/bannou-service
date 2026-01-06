@@ -144,14 +144,13 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public string? KubeconfigPath { get; set; }
 
     /// <summary>
-    /// Redis connection string for orchestrator state (REQUIRED - service fails fast if missing)
+    /// Redis connection string for orchestrator state.
     /// Environment variable: ORCHESTRATOR_REDIS_CONNECTION_STRING
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string RedisConnectionString { get; set; } = string.Empty;
+    public string RedisConnectionString { get; set; } = "redis:6379";
 
     /// <summary>
-    /// RabbitMQ connection string for orchestrator messaging (REQUIRED - service fails fast if missing)
+    /// RabbitMQ connection string for orchestrator messaging. No default - credentials vary by environment.
     /// Environment variable: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
     /// </summary>
     [Required(AllowEmptyStrings = false)]

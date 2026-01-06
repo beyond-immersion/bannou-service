@@ -16,3 +16,236 @@ x-service-configuration:
       description: Enable/disable Behavior service
       default: true
       env: BEHAVIOR_ENABLED
+
+    # === Urgency Thresholds (Tier 2) ===
+    LowUrgencyThreshold:
+      type: number
+      env: BEHAVIOR_LOW_URGENCY_THRESHOLD
+      default: 0.3
+      description: Threshold below which urgency is considered low (0.0-1.0)
+
+    HighUrgencyThreshold:
+      type: number
+      env: BEHAVIOR_HIGH_URGENCY_THRESHOLD
+      default: 0.7
+      description: Threshold above which urgency is considered high (0.0-1.0)
+
+    # === Low Urgency Planning Parameters (Tier 2) ===
+    LowUrgencyMaxPlanDepth:
+      type: integer
+      env: BEHAVIOR_LOW_URGENCY_MAX_PLAN_DEPTH
+      default: 10
+      description: Maximum depth for GOAP planning search at low urgency
+
+    LowUrgencyPlanTimeoutMs:
+      type: integer
+      env: BEHAVIOR_LOW_URGENCY_PLAN_TIMEOUT_MS
+      default: 100
+      description: Maximum time in ms for GOAP planning at low urgency
+
+    LowUrgencyMaxPlanNodes:
+      type: integer
+      env: BEHAVIOR_LOW_URGENCY_MAX_PLAN_NODES
+      default: 1000
+      description: Maximum nodes to explore during GOAP planning at low urgency
+
+    # === Medium Urgency Planning Parameters (Tier 2) ===
+    MediumUrgencyMaxPlanDepth:
+      type: integer
+      env: BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_DEPTH
+      default: 6
+      description: Maximum depth for GOAP planning search at medium urgency
+
+    MediumUrgencyPlanTimeoutMs:
+      type: integer
+      env: BEHAVIOR_MEDIUM_URGENCY_PLAN_TIMEOUT_MS
+      default: 50
+      description: Maximum time in ms for GOAP planning at medium urgency
+
+    MediumUrgencyMaxPlanNodes:
+      type: integer
+      env: BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_NODES
+      default: 500
+      description: Maximum nodes to explore during GOAP planning at medium urgency
+
+    # === High Urgency Planning Parameters (Tier 2) ===
+    HighUrgencyMaxPlanDepth:
+      type: integer
+      env: BEHAVIOR_HIGH_URGENCY_MAX_PLAN_DEPTH
+      default: 3
+      description: Maximum depth for GOAP planning search at high urgency
+
+    HighUrgencyPlanTimeoutMs:
+      type: integer
+      env: BEHAVIOR_HIGH_URGENCY_PLAN_TIMEOUT_MS
+      default: 20
+      description: Maximum time in ms for GOAP planning at high urgency
+
+    HighUrgencyMaxPlanNodes:
+      type: integer
+      env: BEHAVIOR_HIGH_URGENCY_MAX_PLAN_NODES
+      default: 200
+      description: Maximum nodes to explore during GOAP planning at high urgency
+
+    # === Attention Weights (Tier 2) ===
+    DefaultThreatWeight:
+      type: number
+      env: BEHAVIOR_DEFAULT_THREAT_WEIGHT
+      default: 10.0
+      description: Attention priority weight for threat perceptions
+
+    DefaultNoveltyWeight:
+      type: number
+      env: BEHAVIOR_DEFAULT_NOVELTY_WEIGHT
+      default: 5.0
+      description: Attention priority weight for novel perceptions
+
+    DefaultSocialWeight:
+      type: number
+      env: BEHAVIOR_DEFAULT_SOCIAL_WEIGHT
+      default: 3.0
+      description: Attention priority weight for social perceptions
+
+    DefaultRoutineWeight:
+      type: number
+      env: BEHAVIOR_DEFAULT_ROUTINE_WEIGHT
+      default: 1.0
+      description: Attention priority weight for routine perceptions
+
+    DefaultThreatFastTrackThreshold:
+      type: number
+      env: BEHAVIOR_DEFAULT_THREAT_FAST_TRACK_THRESHOLD
+      default: 0.8
+      description: Urgency threshold for fast-tracking threat perceptions (0.0-1.0)
+
+    # === Significance Scoring Weights (Tier 2) ===
+    DefaultEmotionalWeight:
+      type: number
+      env: BEHAVIOR_DEFAULT_EMOTIONAL_WEIGHT
+      default: 0.4
+      description: Weight for emotional significance in perception scoring
+
+    DefaultGoalRelevanceWeight:
+      type: number
+      env: BEHAVIOR_DEFAULT_GOAL_RELEVANCE_WEIGHT
+      default: 0.4
+      description: Weight for goal relevance in perception scoring
+
+    DefaultRelationshipWeight:
+      type: number
+      env: BEHAVIOR_DEFAULT_RELATIONSHIP_WEIGHT
+      default: 0.2
+      description: Weight for relationship significance in perception scoring
+
+    # === Memory Configuration (Tier 2) ===
+    DefaultMemoryLimit:
+      type: integer
+      env: BEHAVIOR_DEFAULT_MEMORY_LIMIT
+      default: 100
+      description: Maximum memory entries per actor
+
+    MemoryStoreMaxRetries:
+      type: integer
+      env: BEHAVIOR_MEMORY_STORE_MAX_RETRIES
+      default: 3
+      description: Max retries for memory store operations
+
+    MemoryMinimumRelevanceThreshold:
+      type: number
+      env: BEHAVIOR_MEMORY_MINIMUM_RELEVANCE_THRESHOLD
+      default: 0.1
+      description: Minimum relevance score for memory retrieval (0.0-1.0)
+
+    # === Memory Relevance Scoring Weights (Tier 2) ===
+    DefaultStorageThreshold:
+      type: number
+      env: BEHAVIOR_DEFAULT_STORAGE_THRESHOLD
+      default: 0.7
+      description: Significance score threshold for storing memories (0.0-1.0)
+
+    MemoryCategoryMatchWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_CATEGORY_MATCH_WEIGHT
+      default: 0.3
+      description: Weight for category match in memory relevance scoring
+
+    MemoryContentOverlapWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_CONTENT_OVERLAP_WEIGHT
+      default: 0.4
+      description: Weight for content keyword overlap in memory relevance scoring
+
+    MemoryMetadataOverlapWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_METADATA_OVERLAP_WEIGHT
+      default: 0.2
+      description: Weight for metadata key overlap in memory relevance scoring
+
+    MemoryRecencyBonusWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_RECENCY_BONUS_WEIGHT
+      default: 0.1
+      description: Maximum recency bonus for memories less than 1 hour old
+
+    MemorySignificanceBonusWeight:
+      type: number
+      env: BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT
+      default: 0.1
+      description: Weight for memory significance in relevance scoring
+
+    # === Compiler Limits (Tier 2) ===
+    CompilerMaxConstants:
+      type: integer
+      env: BEHAVIOR_COMPILER_MAX_CONSTANTS
+      default: 256
+      description: Maximum constants in behavior constant pool
+
+    CompilerMaxStrings:
+      type: integer
+      env: BEHAVIOR_COMPILER_MAX_STRINGS
+      default: 65536
+      description: Maximum strings in behavior string table
+
+    # === State Store Configuration (Tier 3) ===
+    StatestoreName:
+      type: string
+      env: BEHAVIOR_STATESTORE_NAME
+      default: "behavior-statestore"
+      description: Name of the state store for behavior metadata
+
+    MemoryStatestoreName:
+      type: string
+      env: BEHAVIOR_MEMORY_STATESTORE_NAME
+      default: "agent-memories"
+      description: Name of the state store for actor memories
+
+    # === Key Prefix Configuration (Tier 3) ===
+    BundleMembershipKeyPrefix:
+      type: string
+      env: BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX
+      default: "bundle-membership:"
+      description: Key prefix for bundle membership entries
+
+    BehaviorMetadataKeyPrefix:
+      type: string
+      env: BEHAVIOR_METADATA_KEY_PREFIX
+      default: "behavior-metadata:"
+      description: Key prefix for behavior metadata entries
+
+    GoapMetadataKeyPrefix:
+      type: string
+      env: BEHAVIOR_GOAP_METADATA_KEY_PREFIX
+      default: "goap-metadata:"
+      description: Key prefix for GOAP metadata entries
+
+    MemoryKeyPrefix:
+      type: string
+      env: BEHAVIOR_MEMORY_KEY_PREFIX
+      default: "memory:"
+      description: Key prefix for memory entries
+
+    MemoryIndexKeyPrefix:
+      type: string
+      env: BEHAVIOR_MEMORY_INDEX_KEY_PREFIX
+      default: "memory-index:"
+      description: Key prefix for memory index entries

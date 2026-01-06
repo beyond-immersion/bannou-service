@@ -57,7 +57,7 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// Redis connection string (host:port format) for Redis-backed state stores
     /// Environment variable: STATE_REDIS_CONNECTION_STRING
     /// </summary>
-    public string? RedisConnectionString { get; set; }
+    public string? RedisConnectionString { get; set; } = "redis:6379";
 
     /// <summary>
     /// MySQL connection string for MySQL-backed state stores

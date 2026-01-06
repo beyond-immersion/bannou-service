@@ -750,6 +750,9 @@
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.VmConfig.MaxConstants">
             <summary>Maximum number of constants (256).</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Compiler.VmConfig.MaxStrings">
+            <summary>Maximum number of strings in the string table (65536).</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.VmConfig.MaxInstructions">
             <summary>Maximum bytecode length.</summary>
         </member>
@@ -6406,6 +6409,13 @@
             Message payload data
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SendMessageCommand.Urgency">
+            <summary>
+            Optional urgency level (0-1) for the message perception.
+            <br/>If not provided, defaults to 0.5.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ReloadBehaviorCommand">
             <summary>
             Command to reload behavior for an actor (hot-reload support).
@@ -6421,6 +6431,64 @@
         <member name="P:BeyondImmersion.BannouService.Events.ReloadBehaviorCommand.NewBehaviorRef">
             <summary>
             New asset reference to fetch
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent">
+            <summary>
+            Perception event published by game servers for characters they manage.
+            <br/>Actors subscribe to character.{characterId}.perceptions to receive these.
+            <br/>sourceAppId used to route state updates back to originating game server.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.EventName">
+            <summary>
+            Event type identifier for character perception events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.CharacterId">
+            <summary>
+            Character this perception applies to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.SourceAppId">
+            <summary>
+            App-id of game server (for routing state updates back)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterPerceptionEvent.Perception">
+            <summary>
+            The perception data to deliver to the actor
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PerceptionData">
+            <summary>
+            Data representing a perception event for an actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.PerceptionType">
+            <summary>
+            Perception type (visual, auditory, tactile, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SourceId">
+            <summary>
+            ID of the entity causing this perception
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SourceType">
+            <summary>
+            Type of source (character, npc, object, environment)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Data">
+            <summary>
+            Perception-specific data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Urgency">
+            <summary>
+            How urgent this perception is (0-1)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateCreatedEvent">
@@ -10806,6 +10874,14 @@
         <member name="P:BeyondImmersion.BannouService.Actor.AutoSpawnConfig.MaxInstances">
             <summary>
             Maximum auto-spawned instances (0 = unlimited)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.AutoSpawnConfig.CharacterIdCaptureGroup">
+            <summary>
+            1-based regex capture group index for extracting CharacterId from actor ID.
+            <br/>Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
+            <br/>actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Actor.ActorTemplateResponse">

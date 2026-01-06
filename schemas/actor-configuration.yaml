@@ -143,5 +143,62 @@ x-service-configuration:
       default: 50
       description: Maximum time allowed for GOAP planning in milliseconds
 
+    # === Local Mode Defaults (Tier 1) ===
+    LocalModeNodeId:
+      type: string
+      env: ACTOR_LOCAL_MODE_NODE_ID
+      default: "bannou-local"
+      description: Node ID used when running in local/bannou deployment mode
+
+    LocalModeAppId:
+      type: string
+      env: ACTOR_LOCAL_MODE_APP_ID
+      default: "bannou"
+      description: App ID used when running in local/bannou deployment mode
+
+    # === Perception Thresholds (Tier 2) ===
+    PerceptionFilterThreshold:
+      type: number
+      env: ACTOR_PERCEPTION_FILTER_THRESHOLD
+      default: 0.1
+      description: Minimum urgency for perception to be processed (0.0-1.0)
+
+    PerceptionMemoryThreshold:
+      type: number
+      env: ACTOR_PERCEPTION_MEMORY_THRESHOLD
+      default: 0.7
+      description: Minimum urgency for perception to become a memory (0.0-1.0)
+
+    ShortTermMemoryMinutes:
+      type: integer
+      env: ACTOR_SHORT_TERM_MEMORY_MINUTES
+      default: 5
+      description: Expiration time in minutes for short-term memories from high-urgency perceptions
+
+    DefaultMemoryExpirationMinutes:
+      type: integer
+      env: ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES
+      default: 60
+      description: Default expiration time in minutes for actor memories
+
+    # === State Store Configuration (Tier 3) ===
+    TemplateStatestoreName:
+      type: string
+      env: ACTOR_TEMPLATE_STATESTORE_NAME
+      default: "actor-templates"
+      description: Name of the state store for actor templates
+
+    InstanceStatestoreName:
+      type: string
+      env: ACTOR_INSTANCE_STATESTORE_NAME
+      default: "actor-instances"
+      description: Name of the state store for actor instance tracking
+
+    ActorStateStoreName:
+      type: string
+      env: ACTOR_STATE_STORE_NAME
+      default: "actor-state"
+      description: Name of the state store for actor state persistence
+
 components:
   schemas: {}

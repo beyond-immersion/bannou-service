@@ -15,6 +15,9 @@ public static class VmConfig
     /// <summary>Maximum number of constants (256).</summary>
     public const int MaxConstants = 256;
 
+    /// <summary>Maximum number of strings in the string table (65536).</summary>
+    public const int MaxStrings = 65536;
+
     /// <summary>Maximum bytecode length.</summary>
     public const int MaxInstructions = 65536;
 

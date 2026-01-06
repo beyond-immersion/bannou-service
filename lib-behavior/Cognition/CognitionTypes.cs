@@ -7,132 +7,292 @@ namespace BeyondImmersion.Bannou.Behavior.Cognition;
 
 /// <summary>
 /// Constants for the cognition pipeline.
-/// Tests that validate specific thresholds should reference these constants
-/// to stay synchronized with implementation changes.
+/// Values can be initialized from <see cref="BeyondImmersion.BannouService.Behavior.BehaviorServiceConfiguration"/>
+/// at startup via <see cref="Initialize"/>. Tests that validate specific thresholds should
+/// reference these constants to stay synchronized with implementation changes.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This class uses a static initialization pattern to allow configuration from environment
+/// variables while maintaining the static access pattern used throughout the cognition system.
+/// Call <see cref="Initialize"/> once at service startup (from BehaviorService constructor).
+/// </para>
+/// <para>
+/// If <see cref="Initialize"/> is not called, default values matching the original constants are used.
+/// </para>
+/// </remarks>
 public static class CognitionConstants
 {
+    #region Initialization
+
+    private static bool _isInitialized;
+
+    /// <summary>
+    /// Gets whether the constants have been initialized from configuration.
+    /// </summary>
+    public static bool IsInitialized => _isInitialized;
+
+    /// <summary>
+    /// Initializes cognition constants from service configuration.
+    /// Should be called once at BehaviorService startup.
+    /// </summary>
+    /// <param name="config">The behavior service configuration.</param>
+    /// <remarks>
+    /// This method is idempotent - subsequent calls after the first are ignored.
+    /// This prevents issues with scoped service instantiation calling it multiple times.
+    /// </remarks>
+    public static void Initialize(BeyondImmersion.BannouService.Behavior.BehaviorServiceConfiguration config)
+    {
+        if (_isInitialized)
+            return;
+
+        ArgumentNullException.ThrowIfNull(config);
+
+        // Urgency thresholds
+        _lowUrgencyThreshold = (float)config.LowUrgencyThreshold;
+        _highUrgencyThreshold = (float)config.HighUrgencyThreshold;
+
+        // Low urgency planning parameters
+        _lowUrgencyMaxDepth = config.LowUrgencyMaxPlanDepth;
+        _lowUrgencyTimeoutMs = config.LowUrgencyPlanTimeoutMs;
+        _lowUrgencyMaxNodes = config.LowUrgencyMaxPlanNodes;
+
+        // Medium urgency planning parameters
+        _mediumUrgencyMaxDepth = config.MediumUrgencyMaxPlanDepth;
+        _mediumUrgencyTimeoutMs = config.MediumUrgencyPlanTimeoutMs;
+        _mediumUrgencyMaxNodes = config.MediumUrgencyMaxPlanNodes;
+
+        // High urgency planning parameters
+        _highUrgencyMaxDepth = config.HighUrgencyMaxPlanDepth;
+        _highUrgencyTimeoutMs = config.HighUrgencyPlanTimeoutMs;
+        _highUrgencyMaxNodes = config.HighUrgencyMaxPlanNodes;
+
+        // Attention weights
+        _defaultThreatWeight = (float)config.DefaultThreatWeight;
+        _defaultNoveltyWeight = (float)config.DefaultNoveltyWeight;
+        _defaultSocialWeight = (float)config.DefaultSocialWeight;
+        _defaultRoutineWeight = (float)config.DefaultRoutineWeight;
+        _defaultThreatFastTrackThreshold = (float)config.DefaultThreatFastTrackThreshold;
+
+        // Significance weights
+        _defaultEmotionalWeight = (float)config.DefaultEmotionalWeight;
+        _defaultGoalRelevanceWeight = (float)config.DefaultGoalRelevanceWeight;
+        _defaultRelationshipWeight = (float)config.DefaultRelationshipWeight;
+
+        // Memory relevance
+        _memoryMinimumRelevanceThreshold = (float)config.MemoryMinimumRelevanceThreshold;
+
+        // Memory scoring weights
+        _defaultStorageThreshold = (float)config.DefaultStorageThreshold;
+        _memoryCategoryMatchWeight = (float)config.MemoryCategoryMatchWeight;
+        _memoryContentOverlapWeight = (float)config.MemoryContentOverlapWeight;
+        _memoryMetadataOverlapWeight = (float)config.MemoryMetadataOverlapWeight;
+        _memoryRecencyBonusWeight = (float)config.MemoryRecencyBonusWeight;
+        _memorySignificanceBonusWeight = (float)config.MemorySignificanceBonusWeight;
+
+        _isInitialized = true;
+    }
+
+    /// <summary>
+    /// Resets constants to default values. Primarily for testing.
+    /// </summary>
+    internal static void Reset()
+    {
+        _lowUrgencyThreshold = 0.3f;
+        _highUrgencyThreshold = 0.7f;
+
+        _lowUrgencyMaxDepth = 10;
+        _lowUrgencyTimeoutMs = 100;
+        _lowUrgencyMaxNodes = 1000;
+
+        _mediumUrgencyMaxDepth = 6;
+        _mediumUrgencyTimeoutMs = 50;
+        _mediumUrgencyMaxNodes = 500;
+
+        _highUrgencyMaxDepth = 3;
+        _highUrgencyTimeoutMs = 20;
+        _highUrgencyMaxNodes = 200;
+
+        _defaultThreatWeight = 10.0f;
+        _defaultNoveltyWeight = 5.0f;
+        _defaultSocialWeight = 3.0f;
+        _defaultRoutineWeight = 1.0f;
+        _defaultThreatFastTrackThreshold = 0.8f;
+
+        _defaultEmotionalWeight = 0.4f;
+        _defaultGoalRelevanceWeight = 0.4f;
+        _defaultRelationshipWeight = 0.2f;
+
+        _memoryMinimumRelevanceThreshold = 0.1f;
+
+        _defaultStorageThreshold = 0.7f;
+        _memoryCategoryMatchWeight = 0.3f;
+        _memoryContentOverlapWeight = 0.4f;
+        _memoryMetadataOverlapWeight = 0.2f;
+        _memoryRecencyBonusWeight = 0.1f;
+        _memorySignificanceBonusWeight = 0.1f;
+
+        _isInitialized = false;
+    }
+
+    #endregion
+
     #region Urgency Thresholds
+
+    private static float _lowUrgencyThreshold = 0.3f;
+    private static float _highUrgencyThreshold = 0.7f;
 
     /// <summary>
     /// Urgency threshold below which planning uses low-urgency parameters (full deliberation).
-    /// Urgency in range [0, LowUrgencyThreshold) → low urgency.
+    /// Urgency in range [0, LowUrgencyThreshold) -> low urgency.
     /// </summary>
-    public const float LowUrgencyThreshold = 0.3f;
+    public static float LowUrgencyThreshold => _lowUrgencyThreshold;
 
     /// <summary>
     /// Urgency threshold below which planning uses medium-urgency parameters (quick decision).
-    /// Urgency in range [LowUrgencyThreshold, HighUrgencyThreshold) → medium urgency.
+    /// Urgency in range [LowUrgencyThreshold, HighUrgencyThreshold) -> medium urgency.
     /// </summary>
-    public const float HighUrgencyThreshold = 0.7f;
+    public static float HighUrgencyThreshold => _highUrgencyThreshold;
 
     #endregion
 
     #region Planning Parameters - Low Urgency (Full Deliberation)
 
+    private static int _lowUrgencyMaxDepth = 10;
+    private static int _lowUrgencyTimeoutMs = 100;
+    private static int _lowUrgencyMaxNodes = 1000;
+
     /// <summary>Maximum search depth for low-urgency planning.</summary>
-    public const int LowUrgencyMaxDepth = 10;
+    public static int LowUrgencyMaxDepth => _lowUrgencyMaxDepth;
 
     /// <summary>Timeout in milliseconds for low-urgency planning.</summary>
-    public const int LowUrgencyTimeoutMs = 100;
+    public static int LowUrgencyTimeoutMs => _lowUrgencyTimeoutMs;
 
     /// <summary>Maximum nodes to expand for low-urgency planning.</summary>
-    public const int LowUrgencyMaxNodes = 1000;
+    public static int LowUrgencyMaxNodes => _lowUrgencyMaxNodes;
 
     #endregion
 
     #region Planning Parameters - Medium Urgency (Quick Decision)
 
+    private static int _mediumUrgencyMaxDepth = 6;
+    private static int _mediumUrgencyTimeoutMs = 50;
+    private static int _mediumUrgencyMaxNodes = 500;
+
     /// <summary>Maximum search depth for medium-urgency planning.</summary>
-    public const int MediumUrgencyMaxDepth = 6;
+    public static int MediumUrgencyMaxDepth => _mediumUrgencyMaxDepth;
 
     /// <summary>Timeout in milliseconds for medium-urgency planning.</summary>
-    public const int MediumUrgencyTimeoutMs = 50;
+    public static int MediumUrgencyTimeoutMs => _mediumUrgencyTimeoutMs;
 
     /// <summary>Maximum nodes to expand for medium-urgency planning.</summary>
-    public const int MediumUrgencyMaxNodes = 500;
+    public static int MediumUrgencyMaxNodes => _mediumUrgencyMaxNodes;
 
     #endregion
 
     #region Planning Parameters - High Urgency (Immediate Reaction)
 
+    private static int _highUrgencyMaxDepth = 3;
+    private static int _highUrgencyTimeoutMs = 20;
+    private static int _highUrgencyMaxNodes = 200;
+
     /// <summary>Maximum search depth for high-urgency planning.</summary>
-    public const int HighUrgencyMaxDepth = 3;
+    public static int HighUrgencyMaxDepth => _highUrgencyMaxDepth;
 
     /// <summary>Timeout in milliseconds for high-urgency planning.</summary>
-    public const int HighUrgencyTimeoutMs = 20;
+    public static int HighUrgencyTimeoutMs => _highUrgencyTimeoutMs;
 
     /// <summary>Maximum nodes to expand for high-urgency planning.</summary>
-    public const int HighUrgencyMaxNodes = 200;
+    public static int HighUrgencyMaxNodes => _highUrgencyMaxNodes;
 
     #endregion
 
     #region Attention Weights Defaults
 
+    private static float _defaultThreatWeight = 10.0f;
+    private static float _defaultNoveltyWeight = 5.0f;
+    private static float _defaultSocialWeight = 3.0f;
+    private static float _defaultRoutineWeight = 1.0f;
+    private static float _defaultThreatFastTrackThreshold = 0.8f;
+
     /// <summary>Default priority multiplier for threat perceptions.</summary>
-    public const float DefaultThreatWeight = 10.0f;
+    public static float DefaultThreatWeight => _defaultThreatWeight;
 
     /// <summary>Default priority multiplier for novel perceptions.</summary>
-    public const float DefaultNoveltyWeight = 5.0f;
+    public static float DefaultNoveltyWeight => _defaultNoveltyWeight;
 
     /// <summary>Default priority multiplier for social perceptions.</summary>
-    public const float DefaultSocialWeight = 3.0f;
+    public static float DefaultSocialWeight => _defaultSocialWeight;
 
     /// <summary>Default priority multiplier for routine perceptions.</summary>
-    public const float DefaultRoutineWeight = 1.0f;
+    public static float DefaultRoutineWeight => _defaultRoutineWeight;
 
     /// <summary>Default urgency threshold for threat fast-track.</summary>
-    public const float DefaultThreatFastTrackThreshold = 0.8f;
+    public static float DefaultThreatFastTrackThreshold => _defaultThreatFastTrackThreshold;
 
     #endregion
 
     #region Significance Weights Defaults
 
+    private static float _defaultEmotionalWeight = 0.4f;
+    private static float _defaultGoalRelevanceWeight = 0.4f;
+    private static float _defaultRelationshipWeight = 0.2f;
+
     /// <summary>Default weight for emotional impact in significance scoring.</summary>
-    public const float DefaultEmotionalWeight = 0.4f;
+    public static float DefaultEmotionalWeight => _defaultEmotionalWeight;
 
     /// <summary>Default weight for goal relevance in significance scoring.</summary>
-    public const float DefaultGoalRelevanceWeight = 0.4f;
+    public static float DefaultGoalRelevanceWeight => _defaultGoalRelevanceWeight;
 
     /// <summary>Default weight for relationship factor in significance scoring.</summary>
-    public const float DefaultRelationshipWeight = 0.2f;
+    public static float DefaultRelationshipWeight => _defaultRelationshipWeight;
+
+    private static float _defaultStorageThreshold = 0.7f;
 
     /// <summary>Default threshold for storing memories based on significance.</summary>
-    public const float DefaultStorageThreshold = 0.7f;
+    public static float DefaultStorageThreshold => _defaultStorageThreshold;
 
     #endregion
 
     #region Memory Relevance Scoring
 
+    private static float _memoryCategoryMatchWeight = 0.3f;
+    private static float _memoryContentOverlapWeight = 0.4f;
+    private static float _memoryMetadataOverlapWeight = 0.2f;
+    private static float _memoryRecencyBonusWeight = 0.1f;
+    private static float _memorySignificanceBonusWeight = 0.1f;
+
     /// <summary>
     /// Weight for category match in memory relevance scoring.
     /// A memory with matching category gets this added to its score.
     /// </summary>
-    public const float MemoryCategoryMatchWeight = 0.3f;
+    public static float MemoryCategoryMatchWeight => _memoryCategoryMatchWeight;
 
     /// <summary>
     /// Weight for content keyword overlap in memory relevance scoring.
     /// Score contribution = this weight * (overlap count / max word count).
     /// </summary>
-    public const float MemoryContentOverlapWeight = 0.4f;
+    public static float MemoryContentOverlapWeight => _memoryContentOverlapWeight;
 
     /// <summary>
     /// Weight for metadata key overlap in memory relevance scoring.
     /// Score contribution = this weight * (overlap count / max key count).
     /// </summary>
-    public const float MemoryMetadataOverlapWeight = 0.2f;
+    public static float MemoryMetadataOverlapWeight => _memoryMetadataOverlapWeight;
 
     /// <summary>
     /// Maximum recency bonus for memories less than 1 hour old.
     /// Score contribution = this weight * (1 - hours_old) for memories &lt; 1 hour.
     /// </summary>
-    public const float MemoryRecencyBonusWeight = 0.1f;
+    public static float MemoryRecencyBonusWeight => _memoryRecencyBonusWeight;
 
     /// <summary>
     /// Weight for memory significance bonus.
     /// Score contribution = this weight * memory.Significance.
     /// </summary>
-    public const float MemorySignificanceBonusWeight = 0.1f;
+    public static float MemorySignificanceBonusWeight => _memorySignificanceBonusWeight;
+
+    private static float _memoryMinimumRelevanceThreshold = 0.1f;
 
     /// <summary>
     /// Minimum relevance score for a memory to be considered relevant.
@@ -143,7 +303,7 @@ public static class CognitionConstants
     /// A value of 0.1 requires at least some meaningful connection (e.g., a category
     /// match alone would score 0.3, a single word overlap might score ~0.04).
     /// </remarks>
-    public const float MemoryMinimumRelevanceThreshold = 0.1f;
+    public static float MemoryMinimumRelevanceThreshold => _memoryMinimumRelevanceThreshold;
 
     #endregion
 }

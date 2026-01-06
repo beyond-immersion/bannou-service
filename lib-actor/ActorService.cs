@@ -46,8 +46,7 @@ public partial class ActorService : IActorService
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IActorPoolManager _poolManager;
 
-    private const string TEMPLATE_STORE = "actor-templates";
-    private const string INSTANCE_STORE = "actor-instances";
+    // State store names now come from configuration (TemplateStatestoreName, InstanceStatestoreName)
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
 
     /// <summary>
@@ -111,7 +110,7 @@ public partial class ActorService : IActorService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var templateId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
@@ -146,7 +145,7 @@ public partial class ActorService : IActorService
             await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
 
             // Add to template index
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
             if (!allIds.Contains(templateId.ToString()))
             {
@@ -197,7 +196,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             ActorTemplateData? template = null;
 
             if (body.TemplateId.HasValue)
@@ -245,8 +244,8 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
 
             // Get all template IDs from index
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
@@ -300,7 +299,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
@@ -392,7 +391,7 @@ public partial class ActorService : IActorService
 
         try
         {
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var existing = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (existing == null)
@@ -427,7 +426,7 @@ public partial class ActorService : IActorService
             await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
 
             // Remove from template index
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
             var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken) ?? new List<string>();
             if (allIds.Remove(body.TemplateId.ToString()))
             {
@@ -486,7 +485,7 @@ public partial class ActorService : IActorService
         try
         {
             // Get template
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
+            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
             var template = await templateStore.GetAsync(body.TemplateId.ToString(), cancellationToken);
 
             if (template == null)
@@ -540,8 +539,8 @@ public partial class ActorService : IActorService
                 }
 
                 await runner.StartAsync(cancellationToken);
-                nodeId = "bannou-local";
-                nodeAppId = "bannou";
+                nodeId = _configuration.LocalModeNodeId;
+                nodeAppId = _configuration.LocalModeAppId;
                 startedAt = runner.StartedAt;
             }
             else
@@ -653,8 +652,8 @@ public partial class ActorService : IActorService
             if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
             {
                 return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? "bannou-local" : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? "bannou" : null));
+                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null));
             }
 
             // In pool mode, check if actor is assigned to a pool node
@@ -682,20 +681,20 @@ public partial class ActorService : IActorService
             }
 
             // Actor not found - check for auto-spawn templates
-            var matchingTemplate = await FindAutoSpawnTemplateAsync(body.ActorId, cancellationToken);
+            var (matchingTemplate, extractedCharacterId) = await FindAutoSpawnTemplateAsync(body.ActorId, cancellationToken);
             if (matchingTemplate != null)
             {
                 _logger.LogInformation(
-                    "Auto-spawning actor {ActorId} from template {TemplateId} (category: {Category})",
-                    body.ActorId, matchingTemplate.TemplateId, matchingTemplate.Category);
+                    "Auto-spawning actor {ActorId} from template {TemplateId} (category: {Category}, characterId: {CharacterId})",
+                    body.ActorId, matchingTemplate.TemplateId, matchingTemplate.Category, extractedCharacterId);
 
                 // Spawn the actor using the matched template
-                // Note: CharacterId can be inferred from actorId pattern (e.g., "npc-brain-{characterId}")
-                // but for now we leave it null - caller should use SpawnActor directly if they need characterId binding
+                // CharacterId is extracted from actor ID pattern via characterIdCaptureGroup if configured
                 var spawnRequest = new SpawnActorRequest
                 {
                     TemplateId = matchingTemplate.TemplateId,
-                    ActorId = body.ActorId
+                    ActorId = body.ActorId,
+                    CharacterId = extractedCharacterId
                 };
 
                 var (spawnStatus, spawnResponse) = await SpawnActorAsync(spawnRequest, cancellationToken);
@@ -732,19 +731,19 @@ public partial class ActorService : IActorService
     /// </summary>
     /// <param name="actorId">The actor ID to match against template patterns.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The matching template, or null if no auto-spawn template matches.</returns>
-    private async Task<ActorTemplateData?> FindAutoSpawnTemplateAsync(
+    /// <returns>A tuple containing the matching template (or null) and extracted CharacterId (or null).</returns>
+    private async Task<(ActorTemplateData? Template, Guid? CharacterId)> FindAutoSpawnTemplateAsync(
         string actorId,
         CancellationToken cancellationToken)
     {
-        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(TEMPLATE_STORE);
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(TEMPLATE_STORE);
+        var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(_configuration.TemplateStatestoreName);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(_configuration.TemplateStatestoreName);
 
         // Get all template IDs
         var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, cancellationToken);
         if (allIds == null || allIds.Count == 0)
         {
-            return null;
+            return (null, null);
         }
 
         // Load all templates
@@ -765,9 +764,11 @@ public partial class ActorService : IActorService
             }
 
             // Check if actorId matches the pattern
+            Match match;
             try
             {
-                if (!Regex.IsMatch(actorId, template.AutoSpawn.IdPattern))
+                match = Regex.Match(actorId, template.AutoSpawn.IdPattern);
+                if (!match.Success)
                 {
                     continue;
                 }
@@ -779,6 +780,29 @@ public partial class ActorService : IActorService
                     "Invalid regex pattern in template {TemplateId}: {Pattern}",
                     template.TemplateId, template.AutoSpawn.IdPattern);
                 continue;
+            }
+
+            // Extract CharacterId from capture group if configured
+            Guid? extractedCharacterId = null;
+            if (template.AutoSpawn.CharacterIdCaptureGroup is int groupIndex && groupIndex > 0)
+            {
+                if (match.Groups.Count > groupIndex)
+                {
+                    var groupValue = match.Groups[groupIndex].Value;
+                    if (Guid.TryParse(groupValue, out var parsedId))
+                    {
+                        extractedCharacterId = parsedId;
+                        _logger.LogDebug(
+                            "Extracted CharacterId {CharacterId} from actor ID {ActorId} using capture group {Group}",
+                            extractedCharacterId, actorId, groupIndex);
+                    }
+                    else
+                    {
+                        _logger.LogDebug(
+                            "Capture group {Group} value '{Value}' is not a valid GUID for actor ID {ActorId}",
+                            groupIndex, groupValue, actorId);
+                    }
+                }
             }
 
             // Check max instances limit if configured
@@ -804,10 +828,10 @@ public partial class ActorService : IActorService
             }
 
             // Found a matching template
-            return template;
+            return (template, extractedCharacterId);
         }
 
-        return null;
+        return (null, null);
     }
 
     /// <summary>
@@ -840,7 +864,7 @@ public partial class ActorService : IActorService
                     ActorId = body.ActorId,
                     TemplateId = runner.TemplateId,
                     CharacterId = runner.CharacterId ?? Guid.Empty,
-                    NodeId = "bannou-local",
+                    NodeId = _configuration.LocalModeNodeId,
                     Status = runner.Status.ToString().ToLowerInvariant(),
                     StartedAt = runner.StartedAt,
                     DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
@@ -940,8 +964,8 @@ public partial class ActorService : IActorService
                 .Skip(body.Offset)
                 .Take(body.Limit)
                 .Select(r => r.GetStateSnapshot().ToResponse(
-                    nodeId: _configuration.DeploymentMode == "bannou" ? "bannou-local" : null,
-                    nodeAppId: _configuration.DeploymentMode == "bannou" ? "bannou" : null))
+                    nodeId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeNodeId : null,
+                    nodeAppId: _configuration.DeploymentMode == "bannou" ? _configuration.LocalModeAppId : null))
                 .ToList();
 
             return (StatusCodes.OK, new ListActorsResponse

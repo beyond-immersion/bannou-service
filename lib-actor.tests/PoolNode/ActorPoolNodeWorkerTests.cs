@@ -323,5 +323,109 @@ public class ActorPoolNodeWorkerTests
             Times.Once);
     }
 
+    [Fact]
+    public async Task HandleMessageCommandAsync_CustomUrgency_PassesThrough()
+    {
+        // Arrange
+        var worker = CreateWorker();
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
+        mockRunner.SetupGet(r => r.PerceptionQueueDepth).Returns(1);
+
+        PerceptionData? capturedPerception = null;
+        mockRunner.Setup(r => r.InjectPerception(It.IsAny<PerceptionData>()))
+            .Callback<PerceptionData>(p => capturedPerception = p)
+            .Returns(true);
+
+        var outRunner = mockRunner.Object;
+        _actorRegistryMock
+            .Setup(r => r.TryGet("actor-1", out outRunner))
+            .Returns(true);
+
+        var command = new SendMessageCommand
+        {
+            ActorId = "actor-1",
+            MessageType = "high-priority-message",
+            Urgency = 0.8f
+        };
+
+        // Act
+        await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedPerception);
+        Assert.Equal(0.8f, capturedPerception.Urgency);
+    }
+
+    [Fact]
+    public async Task HandleMessageCommandAsync_NoUrgency_DefaultsToHalf()
+    {
+        // Arrange
+        var worker = CreateWorker();
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
+        mockRunner.SetupGet(r => r.PerceptionQueueDepth).Returns(1);
+
+        PerceptionData? capturedPerception = null;
+        mockRunner.Setup(r => r.InjectPerception(It.IsAny<PerceptionData>()))
+            .Callback<PerceptionData>(p => capturedPerception = p)
+            .Returns(true);
+
+        var outRunner = mockRunner.Object;
+        _actorRegistryMock
+            .Setup(r => r.TryGet("actor-1", out outRunner))
+            .Returns(true);
+
+        var command = new SendMessageCommand
+        {
+            ActorId = "actor-1",
+            MessageType = "normal-message"
+            // Note: Urgency not set, should default to 0.5
+        };
+
+        // Act
+        await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedPerception);
+        Assert.Equal(0.5f, capturedPerception.Urgency);
+    }
+
+    [Theory]
+    [InlineData(0.0f)]
+    [InlineData(1.0f)]
+    public async Task HandleMessageCommandAsync_BoundaryUrgency_WorksCorrectly(float urgency)
+    {
+        // Arrange
+        var worker = CreateWorker();
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
+        mockRunner.SetupGet(r => r.PerceptionQueueDepth).Returns(1);
+
+        PerceptionData? capturedPerception = null;
+        mockRunner.Setup(r => r.InjectPerception(It.IsAny<PerceptionData>()))
+            .Callback<PerceptionData>(p => capturedPerception = p)
+            .Returns(true);
+
+        var outRunner = mockRunner.Object;
+        _actorRegistryMock
+            .Setup(r => r.TryGet("actor-1", out outRunner))
+            .Returns(true);
+
+        var command = new SendMessageCommand
+        {
+            ActorId = "actor-1",
+            MessageType = "boundary-test",
+            Urgency = urgency
+        };
+
+        // Act
+        await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedPerception);
+        Assert.Equal(urgency, capturedPerception.Urgency);
+    }
+
     #endregion
 }

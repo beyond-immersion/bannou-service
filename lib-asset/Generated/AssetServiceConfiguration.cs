@@ -227,4 +227,136 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string? MinioWebhookSecret { get; set; }
 
+    /// <summary>
+    /// Path prefix for temporary upload staging in storage bucket
+    /// Environment variable: ASSET_TEMP_UPLOAD_PATH_PREFIX
+    /// </summary>
+    public string TempUploadPathPrefix { get; set; } = "temp";
+
+    /// <summary>
+    /// Path prefix for final asset storage in bucket
+    /// Environment variable: ASSET_FINAL_ASSET_PATH_PREFIX
+    /// </summary>
+    public string FinalAssetPathPrefix { get; set; } = "assets";
+
+    /// <summary>
+    /// Path prefix for finalized bundles in storage bucket
+    /// Environment variable: ASSET_BUNDLE_CURRENT_PATH_PREFIX
+    /// </summary>
+    public string BundleCurrentPathPrefix { get; set; } = "bundles/current";
+
+    /// <summary>
+    /// Path prefix for ZIP conversion cache in storage bucket
+    /// Environment variable: ASSET_BUNDLE_ZIP_CACHE_PATH_PREFIX
+    /// </summary>
+    public string BundleZipCachePathPrefix { get; set; } = "bundles/zip-cache";
+
+    /// <summary>
+    /// Path prefix for bundle upload staging in storage bucket
+    /// Environment variable: ASSET_BUNDLE_UPLOAD_PATH_PREFIX
+    /// </summary>
+    public string BundleUploadPathPrefix { get; set; } = "bundles/uploads";
+
+    /// <summary>
+    /// Maximum seconds to wait for processor availability
+    /// Environment variable: ASSET_PROCESSOR_AVAILABILITY_MAX_WAIT_SECONDS
+    /// </summary>
+    public int ProcessorAvailabilityMaxWaitSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Polling interval in seconds when waiting for processor
+    /// Environment variable: ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS
+    /// </summary>
+    public int ProcessorAvailabilityPollIntervalSeconds { get; set; } = 2;
+
+    /// <summary>
+    /// Maximum retry attempts for asset processing
+    /// Environment variable: ASSET_PROCESSING_MAX_RETRIES
+    /// </summary>
+    public int ProcessingMaxRetries { get; set; } = 5;
+
+    /// <summary>
+    /// Delay in seconds between processing retries
+    /// Environment variable: ASSET_PROCESSING_RETRY_DELAY_SECONDS
+    /// </summary>
+    public int ProcessingRetryDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Name of the state store for asset metadata
+    /// Environment variable: ASSET_STATESTORE_NAME
+    /// </summary>
+    public string StatestoreName { get; set; } = "asset-statestore";
+
+    /// <summary>
+    /// Name of the state store for processor pool management
+    /// Environment variable: ASSET_PROCESSOR_POOL_STORE_NAME
+    /// </summary>
+    public string ProcessorPoolStoreName { get; set; } = "asset-processor-pool";
+
+    /// <summary>
+    /// Key prefix for upload session entries in state store
+    /// Environment variable: ASSET_UPLOAD_SESSION_KEY_PREFIX
+    /// </summary>
+    public string UploadSessionKeyPrefix { get; set; } = "upload:";
+
+    /// <summary>
+    /// Key prefix for asset entries in state store
+    /// Environment variable: ASSET_KEY_PREFIX
+    /// </summary>
+    public string AssetKeyPrefix { get; set; } = "asset:";
+
+    /// <summary>
+    /// Key prefix for asset index entries in state store
+    /// Environment variable: ASSET_INDEX_KEY_PREFIX
+    /// </summary>
+    public string AssetIndexKeyPrefix { get; set; } = "asset-index:";
+
+    /// <summary>
+    /// Key prefix for bundle entries in state store
+    /// Environment variable: ASSET_BUNDLE_KEY_PREFIX
+    /// </summary>
+    public string BundleKeyPrefix { get; set; } = "bundle:";
+
+    /// <summary>
+    /// Pool type name for texture processing
+    /// Environment variable: ASSET_TEXTURE_PROCESSOR_POOL_TYPE
+    /// </summary>
+    public string TextureProcessorPoolType { get; set; } = "texture-processor";
+
+    /// <summary>
+    /// Pool type name for 3D model processing
+    /// Environment variable: ASSET_MODEL_PROCESSOR_POOL_TYPE
+    /// </summary>
+    public string ModelProcessorPoolType { get; set; } = "model-processor";
+
+    /// <summary>
+    /// Pool type name for audio processing
+    /// Environment variable: ASSET_AUDIO_PROCESSOR_POOL_TYPE
+    /// </summary>
+    public string AudioProcessorPoolType { get; set; } = "audio-processor";
+
+    /// <summary>
+    /// Default pool type name for general asset processing
+    /// Environment variable: ASSET_DEFAULT_PROCESSOR_POOL_TYPE
+    /// </summary>
+    public string DefaultProcessorPoolType { get; set; } = "asset-processor";
+
+    /// <summary>
+    /// Comma-separated list of additional processable content types beyond defaults
+    /// Environment variable: ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES
+    /// </summary>
+    public string? AdditionalProcessableContentTypes { get; set; }
+
+    /// <summary>
+    /// Comma-separated ext=type pairs for additional extension mappings (e.g., ".ktx=image/ktx")
+    /// Environment variable: ASSET_ADDITIONAL_EXTENSION_MAPPINGS
+    /// </summary>
+    public string? AdditionalExtensionMappings { get; set; }
+
+    /// <summary>
+    /// Comma-separated list of additional forbidden content types
+    /// Environment variable: ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES
+    /// </summary>
+    public string? AdditionalForbiddenContentTypes { get; set; }
+
 }

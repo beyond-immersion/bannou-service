@@ -62,7 +62,11 @@ paths:
         trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
         \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
+        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
+        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -96,7 +100,11 @@ paths:
         trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
         \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
+        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
+        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an actor template (category definition)\",\n    \"description\"\
         : \"\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CreateActorTemplate\"\n}"
   /actor/template/get:
@@ -160,7 +168,11 @@ paths:
         trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
         \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
+        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
+        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an actor template by ID or category\",\n    \"description\": \"\",\n\
         \    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetActorTemplate\"\n}"
   /actor/template/list:
@@ -230,7 +242,12 @@ paths:
         \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
         \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
         {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                }\n            }\n        }\n    }\n}"
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
+        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all actor templates\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"ListActorTemplates\"\n}"
   /actor/template/update:
@@ -278,7 +295,11 @@ paths:
         trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
         \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
+        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
+        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -312,7 +333,11 @@ paths:
         trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
         \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           }\n            }\n        }\n    }\n}"
+        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
+        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
+        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update an actor template\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateActorTemplate\"\n}"
   /actor/template/delete:
@@ -713,6 +738,14 @@ components:
           type: integer
           nullable: true
           description: Maximum auto-spawned instances (0 = unlimited)
+        characterIdCaptureGroup:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: |
+            1-based regex capture group index for extracting CharacterId from actor ID.
+            Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
+            actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
 
     ActorTemplateResponse:
       type: object

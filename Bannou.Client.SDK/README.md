@@ -10,6 +10,7 @@ The Client SDK provides everything a game client needs to communicate with Banno
 - **Event reception** for real-time updates pushed from services
 - **Capability manifest** for dynamic API discovery
 - **Shortcuts** for subscription-based access patterns
+ - **Game transport helpers**: MessagePack DTOs + LiteNetLib client transport for UDP gameplay state
 
 ## Quick Start
 
@@ -40,6 +41,37 @@ client.OnEvent += (sender, eventData) =>
 
 // Clean up
 await client.DisposeAsync();
+```
+
+### Internal Mode (service token or network trust)
+
+```csharp
+var client = new BannouClient();
+// Connect directly to an internal Connect node without JWT login
+// Provide serviceToken when CONNECT_INTERNAL_AUTH_MODE=service-token; omit for network-trust.
+await client.ConnectInternalAsync("ws://bannou-internal/connect", serviceToken: "shared-secret");
+```
+
+## Game Transport (UDP) Client
+- Envelope: `GameProtocolEnvelope` (version + `GameMessageType`)
+- DTOs: snapshots/deltas, combat events, opportunities, connect, input, cinematic extensions
+- Client transport: `LiteNetLibClientTransport` (optional fuzz via `TransportFuzzOptions`)
+
+```csharp
+var transport = new LiteNetLibClientTransport();
+await transport.ConnectAsync("127.0.0.1", 9000, GameProtocolEnvelope.CurrentVersion);
+transport.OnServerMessage += (ver, type, payload) =>
+{
+    if (type == GameMessageType.ArenaStateSnapshot)
+    {
+        var snap = MessagePackSerializer.Deserialize<ArenaStateSnapshot>(payload, GameProtocolEnvelope.DefaultOptions);
+    }
+};
+
+// Send input
+var input = new PlayerInputMessage { Tick = 1, MoveX = 1, MoveY = 0 };
+var bytes = MessagePackSerializer.Serialize(input, GameProtocolEnvelope.DefaultOptions);
+await transport.SendAsync(GameMessageType.PlayerInput, bytes, reliable: true);
 ```
 
 ## Architecture

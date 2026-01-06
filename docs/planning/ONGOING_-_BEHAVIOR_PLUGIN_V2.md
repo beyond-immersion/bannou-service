@@ -1,8 +1,8 @@
 # Behavior Plugin V2 - GOAP Planning & ABML Runtime
 
-> **Status**: PHASES 1-3 COMPLETE, PHASE 4 PARTIAL (Cognition handlers implemented, orchestration pending)
+> **Status**: PHASES 1-4 MOSTLY COMPLETE, PHASE 5 IN PROGRESS
 > **Created**: 2024-12-28
-> **Updated**: 2026-01-01 (Phase 4 partial implementation verified)
+> **Updated**: 2026-01-05 (Phase 5 actor integration Bannou-side COMPLETE)
 > **Related Documents**:
 > - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
@@ -10,11 +10,11 @@
 > - [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md) - Actor infrastructure (authoritative)
 
 **Implementation Status**:
-- **Phase 1 (ABML Runtime)**: COMPLETE - 585 tests passing. See [ABML Guide](../guides/ABML.md).
-- **Phase 2 (GOAP)**: COMPLETE - See [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md). Full A* planner, metadata caching, API endpoints.
-- **Phase 3 (Multi-Channel)**: COMPLETE - Sync points, barriers, deadlock detection.
-- **Phase 4 (Cognition)**: PARTIAL - Handlers implemented (FilterAttention, AssessSignificance, EvaluateGoalImpact, QueryMemory, StoreMemory, TriggerGoapReplan). Pipeline orchestration pending.
-- **Phase 5 (Actor Integration)**: PLANNED - Requires lib-actor infrastructure (see [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md)).
+- **Phase 1 (ABML Runtime)**: ✅ COMPLETE - 585 tests passing. See [ABML Guide](../guides/ABML.md).
+- **Phase 2 (GOAP)**: ✅ COMPLETE - See [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md). Full A* planner, metadata caching, API endpoints.
+- **Phase 3 (Multi-Channel)**: ✅ COMPLETE - Sync points, barriers, deadlock detection.
+- **Phase 4 (Cognition)**: ✅ MOSTLY COMPLETE - All 6 handlers implemented (FilterAttention, AssessSignificance, EvaluateGoalImpact, QueryMemory, StoreMemory, TriggerGoapReplan). Registered in DocumentExecutorFactory. Pipeline orchestration via ABML behaviors.
+- **Phase 5 (Actor Integration)**: 🔄 IN PROGRESS - Bannou-side perception/state wiring COMPLETE. Stride-side integration NEXT. See [ACTORS_PLUGIN_V3.md §5.2](./UPCOMING_-_ACTORS_PLUGIN_V3.md).
 
 **Bannou-Specific Constraints**: See [ABML Guide Appendix A](../guides/ABML.md#appendix-a-bannou-implementation-requirements) for mandatory infrastructure patterns.
 

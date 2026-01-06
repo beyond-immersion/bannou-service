@@ -19,6 +19,8 @@ public class ActorRunner : IActorRunner
 {
     private readonly ILogger<ActorRunner> _logger;
     private readonly IMessageBus _messageBus;
+    private readonly IMessageSubscriber _messageSubscriber;
+    private readonly IMeshInvocationClient _meshClient;
     private readonly ActorTemplateData _template;
     private readonly ActorServiceConfiguration _config;
     private readonly Channel<PerceptionData> _perceptionQueue;
@@ -37,6 +39,10 @@ public class ActorRunner : IActorRunner
     private DateTimeOffset _lastStateSave;
     private bool _disposed;
     private readonly object _statusLock = new();
+
+    // NPC Brain integration: subscription to character perception events and source tracking
+    private IAsyncDisposable? _perceptionSubscription;
+    private string? _lastSourceAppId;
 
     /// <inheritdoc/>
     public string ActorId { get; }
@@ -89,6 +95,8 @@ public class ActorRunner : IActorRunner
     /// <param name="characterId">Optional character ID for NPC brain actors.</param>
     /// <param name="config">Service configuration.</param>
     /// <param name="messageBus">Message bus for publishing events.</param>
+    /// <param name="messageSubscriber">Message subscriber for dynamic subscriptions.</param>
+    /// <param name="meshClient">Mesh client for routing state updates to game servers.</param>
     /// <param name="stateStore">State store for actor persistence.</param>
     /// <param name="behaviorCache">Behavior document cache.</param>
     /// <param name="executor">Document executor for behavior execution.</param>
@@ -100,6 +108,8 @@ public class ActorRunner : IActorRunner
         Guid? characterId,
         ActorServiceConfiguration config,
         IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
+        IMeshInvocationClient meshClient,
         IStateStore<ActorStateSnapshot> stateStore,
         IBehaviorDocumentCache behaviorCache,
         IDocumentExecutor executor,
@@ -111,6 +121,8 @@ public class ActorRunner : IActorRunner
         CharacterId = characterId;
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
+        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
         _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
@@ -137,7 +149,6 @@ public class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
         if (_disposed)
             throw new ObjectDisposedException(nameof(ActorRunner));
 
@@ -159,6 +170,12 @@ public class ActorRunner : IActorRunner
 
         // Start the behavior loop in background
         _loopTask = RunBehaviorLoopAsync(_loopCts.Token);
+
+        // Setup perception subscription for NPC brain actors
+        if (CharacterId.HasValue)
+        {
+            await SetupPerceptionSubscriptionAsync(cancellationToken);
+        }
 
         Status = ActorStatus.Running;
         _logger.LogInformation("Actor {ActorId} started successfully", ActorId);
@@ -201,6 +218,20 @@ public class ActorRunner : IActorRunner
         if (_template.AutoSaveIntervalSeconds > 0)
         {
             await PersistStateAsync(cancellationToken);
+        }
+
+        // Clean up perception subscription
+        if (_perceptionSubscription != null)
+        {
+            try
+            {
+                await _perceptionSubscription.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Actor {ActorId} error disposing perception subscription", ActorId);
+            }
+            _perceptionSubscription = null;
         }
 
         Status = ActorStatus.Stopped;
@@ -252,6 +283,20 @@ public class ActorRunner : IActorRunner
         if (Status == ActorStatus.Running)
         {
             await StopAsync(graceful: false);
+        }
+
+        // Ensure perception subscription is cleaned up (belt-and-suspenders)
+        if (_perceptionSubscription != null)
+        {
+            try
+            {
+                await _perceptionSubscription.DisposeAsync();
+            }
+            catch (Exception)
+            {
+                // Swallow - we're disposing
+            }
+            _perceptionSubscription = null;
         }
 
         _loopCts?.Dispose();
@@ -362,7 +407,7 @@ public class ActorRunner : IActorRunner
         while (_perceptionQueue.Reader.TryRead(out var perception))
         {
             // Apply attention filter (based on urgency)
-            if (perception.Urgency < 0.1f)
+            if (perception.Urgency < (float)_config.PerceptionFilterThreshold)
             {
                 // Skip very low urgency perceptions
                 continue;
@@ -373,13 +418,13 @@ public class ActorRunner : IActorRunner
             _state.SetWorkingMemory(key, perception);
 
             // Assess significance and potentially store as memory
-            if (perception.Urgency >= 0.7f)
+            if (perception.Urgency >= (float)_config.PerceptionMemoryThreshold)
             {
                 // High urgency perceptions become memories
                 _state.AddMemory(
                     $"recent:{perception.PerceptionType}",
                     new { perception.SourceId, perception.SourceType, perception.Data, perception.Urgency },
-                    DateTimeOffset.UtcNow.AddMinutes(5)); // Short-term memory
+                    DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes)); // Short-term memory
             }
 
             processedCount++;
@@ -613,6 +658,8 @@ public class ActorRunner : IActorRunner
 
     /// <summary>
     /// Publishes a CharacterStateUpdate event if there are pending changes.
+    /// Routes directly to the game server via lib-mesh if we have a source app-id,
+    /// otherwise falls back to pub/sub.
     /// </summary>
     private async Task PublishStateUpdateIfNeededAsync(CancellationToken ct)
     {
@@ -632,11 +679,37 @@ public class ActorRunner : IActorRunner
             BehaviorChange = _state.GetPendingBehaviorChange()
         };
 
-        await _messageBus.TryPublishAsync("character.state_update", evt, cancellationToken: ct);
-        _state.ClearPendingChanges();
+        var targetAppId = _lastSourceAppId;
+        if (!string.IsNullOrEmpty(targetAppId))
+        {
+            // Route directly to game server via lib-mesh (no response expected)
+            try
+            {
+                await _meshClient.InvokeMethodAsync(
+                    targetAppId,
+                    "character/state-update",
+                    evt,
+                    ct);
+                _logger.LogDebug("Actor {ActorId} sent state update to {AppId} for character {CharacterId}",
+                    ActorId, targetAppId, CharacterId);
+            }
+            catch (MeshInvocationException ex)
+            {
+                _logger.LogWarning(ex, "Actor {ActorId} failed to send state update to {AppId}, falling back to pub/sub",
+                    ActorId, targetAppId);
+                // Fall back to pub/sub
+                await _messageBus.TryPublishAsync("character.state_update", evt, cancellationToken: ct);
+            }
+        }
+        else
+        {
+            // No source app-id yet, use pub/sub fallback
+            await _messageBus.TryPublishAsync("character.state_update", evt, cancellationToken: ct);
+            _logger.LogDebug("Actor {ActorId} published state update via pub/sub for character {CharacterId} (no source app-id)",
+                ActorId, CharacterId);
+        }
 
-        _logger.LogDebug("Actor {ActorId} published state update for character {CharacterId}",
-            ActorId, CharacterId);
+        _state.ClearPendingChanges();
     }
 
     /// <summary>
@@ -732,5 +805,69 @@ public class ActorRunner : IActorRunner
         _state.ClearPendingChanges();
 
         _logger.LogDebug("Actor {ActorId} restored state from snapshot", ActorId);
+    }
+
+    /// <summary>
+    /// Sets up a dynamic subscription to receive perception events for this actor's character.
+    /// Subscribes to character.{characterId}.perceptions topic using topic exchange.
+    /// </summary>
+    private async Task SetupPerceptionSubscriptionAsync(CancellationToken ct)
+    {
+        if (!CharacterId.HasValue)
+            return;
+
+        var topic = $"character.{CharacterId.Value}.perceptions";
+        _logger.LogInformation("Actor {ActorId} subscribing to {Topic}", ActorId, topic);
+
+        try
+        {
+            _perceptionSubscription = await _messageSubscriber.SubscribeDynamicAsync<CharacterPerceptionEvent>(
+                topic,
+                async (evt, innerCt) => await HandlePerceptionEventAsync(evt, innerCt),
+                exchangeType: SubscriptionExchangeType.Topic,
+                cancellationToken: ct);
+
+            _logger.LogDebug("Actor {ActorId} subscribed to perception stream for character {CharacterId}",
+                ActorId, CharacterId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Actor {ActorId} failed to subscribe to perception stream for character {CharacterId}",
+                ActorId, CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "SetupPerceptionSubscription",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { ActorId, CharacterId });
+            // Don't throw - actor can still function without perception subscription
+        }
+    }
+
+    /// <summary>
+    /// Handles a perception event received from the message bus.
+    /// Tracks the source app-id for routing state updates back, then injects the perception.
+    /// </summary>
+    private Task HandlePerceptionEventAsync(CharacterPerceptionEvent evt, CancellationToken ct)
+    {
+        // Track source app-id for routing state updates back to the game server
+        _lastSourceAppId = evt.SourceAppId;
+
+        // Convert to PerceptionData and inject into the queue
+        var perception = new PerceptionData
+        {
+            PerceptionType = evt.Perception.PerceptionType,
+            SourceId = evt.Perception.SourceId,
+            SourceType = evt.Perception.SourceType,
+            Data = evt.Perception.Data,
+            Urgency = evt.Perception.Urgency
+        };
+
+        InjectPerception(perception);
+
+        _logger.LogDebug("Actor {ActorId} received perception from {SourceAppId} (type: {Type})",
+            ActorId, evt.SourceAppId, perception.PerceptionType);
+
+        return Task.CompletedTask;
     }
 }

@@ -12,6 +12,8 @@ namespace BeyondImmersion.BannouService.Actor.Runtime;
 public class ActorRunnerFactory : IActorRunnerFactory
 {
     private readonly IMessageBus _messageBus;
+    private readonly IMessageSubscriber _messageSubscriber;
+    private readonly IMeshInvocationClient _meshClient;
     private readonly ActorServiceConfiguration _config;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -22,6 +24,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// Creates a new actor runner factory.
     /// </summary>
     /// <param name="messageBus">Message bus for publishing events.</param>
+    /// <param name="messageSubscriber">Message subscriber for dynamic subscriptions.</param>
+    /// <param name="meshClient">Mesh client for routing state updates to game servers.</param>
     /// <param name="config">Service configuration.</param>
     /// <param name="loggerFactory">Logger factory for creating loggers.</param>
     /// <param name="stateStoreFactory">State store factory for actor persistence.</param>
@@ -29,6 +33,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     public ActorRunnerFactory(
         IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
+        IMeshInvocationClient meshClient,
         ActorServiceConfiguration config,
         ILoggerFactory loggerFactory,
         IStateStoreFactory stateStoreFactory,
@@ -36,6 +42,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
         IDocumentExecutorFactory executorFactory)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
+        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
@@ -64,7 +72,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         var logger = _loggerFactory.CreateLogger<ActorRunner>();
 
         // Get the actor-state store for this actor
-        var stateStore = _stateStoreFactory.GetStore<ActorStateSnapshot>("actor-state");
+        var stateStore = _stateStoreFactory.GetStore<ActorStateSnapshot>(_config.ActorStateStoreName);
 
         // Create a document executor for this actor
         var executor = _executorFactory.Create();
@@ -75,6 +83,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
             characterId,
             _config,
             _messageBus,
+            _messageSubscriber,
+            _meshClient,
             stateStore,
             _behaviorCache,
             executor,

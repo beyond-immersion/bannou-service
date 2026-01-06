@@ -120,17 +120,18 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public string? JwtPublicKey { get; set; }
 
     /// <summary>
-    /// RabbitMQ connection string for client event subscriptions (REQUIRED - service fails fast if missing)
+    /// RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.
     /// Environment variable: CONNECT_RABBITMQ_CONNECTION_STRING
     /// </summary>
     [Required(AllowEmptyStrings = false)]
     public string RabbitMqConnectionString { get; set; } = string.Empty;
 
     /// <summary>
-    /// Server salt for client GUID generation. Must be shared across all Connect instances.
+    /// Server salt for client GUID generation. REQUIRED - must be shared across all Connect instances for session shortcuts to work correctly.
     /// Environment variable: CONNECT_SERVER_SALT
     /// </summary>
-    public string? ServerSalt { get; set; }
+    [Required(AllowEmptyStrings = false)]
+    public string ServerSalt { get; set; } = string.Empty;
 
     /// <summary>
     /// WebSocket URL returned to clients for reconnection
@@ -155,5 +156,23 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Environment variable: CONNECT_INTERNAL_SERVICE_TOKEN
     /// </summary>
     public string? InternalServiceToken { get; set; }
+
+    /// <summary>
+    /// Session time-to-live in seconds (default 24 hours)
+    /// Environment variable: CONNECT_SESSION_TTL_SECONDS
+    /// </summary>
+    public int SessionTtlSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Heartbeat data TTL in Redis in seconds (default 5 minutes)
+    /// Environment variable: CONNECT_HEARTBEAT_TTL_SECONDS
+    /// </summary>
+    public int HeartbeatTtlSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Window for client reconnection after disconnect in seconds (default 5 minutes)
+    /// Environment variable: CONNECT_RECONNECTION_WINDOW_SECONDS
+    /// </summary>
+    public int ReconnectionWindowSeconds { get; set; } = 300;
 
 }

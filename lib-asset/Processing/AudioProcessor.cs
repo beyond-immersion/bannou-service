@@ -36,7 +36,7 @@ public sealed class AudioProcessor : IAssetProcessor
     };
 
     /// <inheritdoc />
-    public string PoolType => "audio-processor";
+    public string PoolType => _configuration.AudioProcessorPoolType;
 
     /// <inheritdoc />
     public IReadOnlyList<string> SupportedContentTypes => AudioContentTypes;

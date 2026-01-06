@@ -32,7 +32,7 @@ public sealed class ModelProcessor : IAssetProcessor
     };
 
     /// <inheritdoc />
-    public string PoolType => "model-processor";
+    public string PoolType => _configuration.ModelProcessorPoolType;
 
     /// <inheritdoc />
     public IReadOnlyList<string> SupportedContentTypes => ModelContentTypes;

@@ -14,6 +14,7 @@ Bannou.SDK/Generated/
 
 test-nuget/
 nuget-packages/
+packages/
 
 # Visual Studio Code
 .vscode

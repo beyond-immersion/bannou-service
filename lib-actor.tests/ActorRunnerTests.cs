@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -62,6 +63,9 @@ public class ActorRunnerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        var messageSubscriberMock = new Mock<IMessageSubscriber>();
+        var meshClientMock = new Mock<IMeshInvocationClient>();
+
         var stateStoreMock = new Mock<IStateStore<ActorStateSnapshot>>();
         stateStoreMock.Setup(s => s.SaveAsync(
                 It.IsAny<string>(),
@@ -104,6 +108,8 @@ public class ActorRunnerTests
             characterId,
             config ?? CreateTestConfig(),
             messageBusMock.Object,
+            messageSubscriberMock.Object,
+            meshClientMock.Object,
             stateStoreMock.Object,
             behaviorCacheMock.Object,
             executorMock.Object,

@@ -16,6 +16,7 @@ x-service-configuration:
       type: string
       description: Secret key for JWT token signing (REQUIRED - service fails fast if missing)
       env: AUTH_JWT_SECRET
+      example: "your-jwt-secret-key-change-in-production-min-32-chars"
     JwtIssuer:
       type: string
       description: JWT token issuer
@@ -35,9 +36,9 @@ x-service-configuration:
     # Connect Service URL
     ConnectUrl:
       type: string
-      description: URL to the Connect service for WebSocket connections. REQUIRED - no default value.
+      description: URL to the Connect service for WebSocket connections returned to clients after authentication.
       env: AUTH_CONNECT_URL
-      required: true
+      default: "ws://localhost:5014/connect"
 
     # Mock Providers for Testing
     MockProviders:
@@ -77,6 +78,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Discord OAuth redirect URI
       env: AUTH_DISCORD_REDIRECT_URI
+      example: "https://your-domain.com/auth/callback/discord"
 
     # Google OAuth
     GoogleClientId:
@@ -94,6 +96,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Google OAuth redirect URI
       env: AUTH_GOOGLE_REDIRECT_URI
+      example: "https://your-domain.com/auth/callback/google"
 
     # Twitch OAuth
     TwitchClientId:
@@ -111,6 +114,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Twitch OAuth redirect URI
       env: AUTH_TWITCH_REDIRECT_URI
+      example: "https://your-domain.com/auth/callback/twitch"
 
     # Steam Authentication
     SteamApiKey:
@@ -123,6 +127,7 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
       description: Steam application ID
       env: AUTH_STEAM_APP_ID
+      example: "480"
 
     # Password Reset
     PasswordResetTokenTtlMinutes:
@@ -135,3 +140,4 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable
       description: Base URL for password reset page
       env: AUTH_PASSWORD_RESET_BASE_URL
+      example: "https://your-domain.com/reset-password"

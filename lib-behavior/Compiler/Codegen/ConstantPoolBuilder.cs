@@ -3,6 +3,8 @@
 // Manages constant pool with deduplication during compilation.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Abml.Compiler;
+
 namespace BeyondImmersion.Bannou.Behavior.Compiler.Codegen;
 
 /// <summary>
@@ -22,7 +24,10 @@ public sealed class ConstantPoolBuilder
     /// <summary>
     /// Maximum number of constants (byte index limit).
     /// </summary>
-    public const int MaxConstants = 256;
+    /// <remarks>
+    /// References <see cref="VmConfig.MaxConstants"/> as the authoritative value.
+    /// </remarks>
+    public static int MaxConstants => VmConfig.MaxConstants;
 
     /// <summary>
     /// Adds or retrieves an existing constant from the pool.

@@ -2,7 +2,7 @@
 
 > **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Revised**: 2026-01-02
+> **Revised**: 2026-01-05 (Updated for Phase 5 NPC Brain Integration progress)
 > **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
@@ -170,8 +170,25 @@ This is fundamentally different from:
 | **Bytecode Interpreter** | `sdk-sources/Behavior/Runtime/` | ✅ Complete | 61 tests |
 | **Intent System** | `sdk-sources/Behavior/Intent/` | ✅ Complete | 79 tests |
 | **Cinematic Interpreter** | `sdk-sources/Behavior/Runtime/` | ✅ Complete | Continuation points |
+| **NPC Brain Integration** | `lib-actor/Runtime/` | ✅ Bannou-side | Perception/state wiring |
+| **Game Transport (UDP)** | `Bannou.SDK/GameTransport/` | ✅ Complete | LiteNetLib integration |
+| **Server SDK** | `Bannou.SDK/` | ✅ Complete | Full DI, mesh, all clients |
 
 **Total**: 900+ tests passing (585 ABML + 226 compiler + 140 SDK)
+
+### 3.1.1 SDK Enhancements (2026-01-05)
+
+The `Bannou.SDK` now provides comprehensive game server integration:
+
+- **Generated Service Clients**: Type-safe clients for all 18+ Bannou services
+- **Mesh Service Routing**: Redis-based service discovery and YARP proxy integration
+- **Game Transport (UDP)**: LiteNetLib-based server/client transport with MessagePack serialization
+  - `LiteNetLibServerTransport` / `LiteNetLibClientTransport`
+  - Message types: `PlayerInputMessage`, `ArenaStateSnapshot`, `ArenaStateDelta`, `OpportunityDataMessage`
+  - Stride integration sketches for game server and client
+- **WebSocket Integration**: `BannouClient` for Connect service events
+- **Internal Connection Mode**: Service-to-service without JWT (service token or network trust auth)
+- **Behavior Runtime**: Full ABML bytecode interpreter included for game server execution
 
 ### 3.2 Remaining Design-to-Implementation Gaps
 
@@ -546,12 +563,29 @@ The streaming composition model ensures graceful degradation:
 
 - [x] ~~Behavior Distribution Service~~ → lib-asset handles this (behavior is an asset type)
 - [x] `/behavior/models/sync` API - via lib-asset sync
+- [x] Server SDK with full mesh integration (`Bannou.SDK`)
+- [x] Game Transport (UDP) with LiteNetLib for real-time state sync
 - [ ] Extension delivery protocol (for continuation point extensions)
 - [ ] Control handoff mechanism (cinematic takes control)
 - [ ] Integration tests with mock game server
 
-### Phase 4: Event Brain (see ACTORS_PLUGIN_V3.md §8.4)
-**Goal**: Cloud-side orchestration working
+### Phase 4: NPC Brain Integration 🔄 IN PROGRESS (see ACTORS_PLUGIN_V3.md §5)
+**Goal**: Character Agent ↔ Game Server perception/state flow
+
+**Bannou-side (COMPLETE 2026-01-05):**
+- [x] Perception subscription (`character.{characterId}.perceptions`) in ActorRunner
+- [x] State update routing via lib-mesh (`PublishStateUpdateIfNeededAsync`)
+- [x] `CharacterPerceptionEvent` schema with `sourceAppId` for routing
+- [x] All 6 cognition handlers implemented and registered
+
+**Stride-side (NEXT):**
+- [ ] Publish perception events for managed characters
+- [ ] Handle `character/state-update` endpoint
+- [ ] Apply state updates to behavior input slots
+- [ ] Implement lizard brain fallback
+
+### Phase 5: Event Brain
+**Goal**: Cloud-side cinematic orchestration working
 
 - [ ] Event Brain actor schema (Event Actor in ACTORS_V3 terminology)
 - [ ] Character Agent query API
@@ -559,7 +593,7 @@ The streaming composition model ensures graceful degradation:
 - [ ] Option generation algorithm
 - [ ] Choreography emission (produces cinematics)
 
-### Phase 5: Full Integration
+### Phase 6: Full Integration
 **Goal**: THE_DREAM works end-to-end
 
 - [ ] Regional Watcher (spawns Event Agents)

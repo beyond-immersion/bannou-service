@@ -1,8 +1,8 @@
 # Actor Plugin V3 - Distributed Behavior Execution
 
-> **Status**: IN PROGRESS (Phase 0-4 COMPLETE, Phase 5 NPC Brain Integration NEXT)
+> **Status**: IN PROGRESS (Phase 0-4 COMPLETE, Phase 5 NPC Brain Integration IN PROGRESS)
 > **Created**: 2026-01-01
-> **Updated**: 2026-01-04 (Phase 0 verified complete, Phase 5 detailed, stride-demo integration documented)
+> **Updated**: 2026-01-05 (Phase 5.2 Bannou-side perception/state wiring COMPLETE)
 > **Related Documents**:
 > - [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior compilation and GOAP planning
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Bytecode compilation and client execution
@@ -2526,9 +2526,9 @@ public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharact
 - Workers self-register via `actor.pool-node.registered` event after container starts
 - Environment variables properly set: APP_ID, ACTOR_POOL_NODE_ID, ACTOR_POOL_NODE_APP_ID
 
-### Phase 5: NPC Brain Integration ⏳ NEXT SESSION
+### Phase 5: NPC Brain Integration 🔄 IN PROGRESS
 
-**Status**: Cognition handlers implemented, perception/state routing needs wiring
+**Status**: Bannou-side perception/state wiring COMPLETE, Stride-side integration NEXT
 
 #### 5.1 What's Already Done
 - [x] All 6 cognition handlers implemented in lib-behavior/Handlers/ (53KB total):
@@ -2613,16 +2613,24 @@ The architecture uses lib-messaging (RabbitMQ) as the primary transport, with In
 
 ##### 5.2.3 Implementation Tasks
 
-**Bannou-side (lib-actor):**
-- [ ] Subscribe to `character.{characterId}.perceptions` when actor spawns with characterId
-- [ ] Unsubscribe when actor stops
-- [ ] Publish `CharacterStateUpdateEvent` to `character.{characterId}.state-updates`
-- [ ] Define `CharacterStateUpdateEvent` schema in actor-events.yaml
-- [ ] Add state update publishing to ActorRunner after cognition completes
+**Bannou-side (lib-actor):** ✅ COMPLETE (2026-01-05)
+- [x] Subscribe to `character.{characterId}.perceptions` when actor spawns with characterId
+  - Added `SetupPerceptionSubscriptionAsync` in `ActorRunner.cs`
+  - Uses `IMessageSubscriber.SubscribeDynamicAsync<CharacterPerceptionEvent>` with topic exchange
+- [x] Unsubscribe when actor stops
+  - Cleanup in both `StopAsync` and `DisposeAsync` (belt-and-suspenders)
+- [x] Publish `CharacterStateUpdateEvent` via lib-mesh to game server
+  - Modified `PublishStateUpdateIfNeededAsync` to route via `IMeshInvocationClient`
+  - Uses `_lastSourceAppId` from perception events for routing
+  - Falls back to pub/sub if mesh routing fails
+- [x] Define `CharacterPerceptionEvent` schema in `actor-events.yaml`
+  - Includes `characterId`, `sourceAppId`, and `perception` (refs `PerceptionData`)
+- [x] Add dependencies to `ActorRunnerFactory` (`IMessageSubscriber`, `IMeshInvocationClient`)
+- [x] Track `_lastSourceAppId` from perception events for state update routing
 
-**Stride-side (game server):**
+**Stride-side (game server):** 🔜 NEXT
 - [ ] Publish `CharacterPerceptionEvent` to `character.{characterId}.perceptions` fanout
-- [ ] Subscribe to `character.{characterId}.state-updates` for managed characters
+- [ ] Handle `character/state-update` endpoint for lib-mesh invocations
 - [ ] Apply state updates to character behavior input slots
 - [ ] Implement "lizard brain" fallback when no state updates received
 
@@ -2656,13 +2664,13 @@ These can be tackled immediately to improve the foundation:
   - Added `TestInjectPerceptionActorNotFound` - verifies 404 for non-existent actor
   - Total actor HTTP tests: 21 (template CRUD, lifecycle, validation, auto-spawn, perception)
 
-##### Quick Win Follow-ups (Minor Improvements for Later)
+##### Quick Win Follow-ups (Completed)
 
-Two minor items to revisit when extending the system:
+Both minor improvements have been implemented:
 
-1. **Hardcoded urgency in HandleMessageCommandAsync**: `ActorPoolNodeWorker.HandleMessageCommandAsync` uses a fixed `Urgency = 0.5f` when converting `SendMessageCommand` to `PerceptionData`. Consider extending the `SendMessageCommand` schema to include an optional urgency field so callers can specify priority.
+1. **✅ Urgency field in SendMessageCommand**: Added optional `urgency` field (0-1 float) to `SendMessageCommand` schema. `ActorPoolNodeWorker.HandleMessageCommandAsync` now uses `command.Urgency ?? 0.5f` when converting to `PerceptionData`. Callers can specify message priority. Tests added in `ActorPoolNodeWorkerTests.cs`.
 
-2. **CharacterId not inferred in auto-spawn**: `ActorService.FindAutoSpawnTemplateAsync` doesn't extract CharacterId from the actorId pattern (e.g., `npc-brain-{characterId}`). For now, callers needing characterId binding should use `SpawnActor` directly. Future enhancement: add optional `characterIdPattern` capture group to `AutoSpawnConfig`.
+2. **✅ CharacterId extraction in auto-spawn**: Added `characterIdCaptureGroup` field to `AutoSpawnConfig` schema. `ActorService.FindAutoSpawnTemplateAsync` now returns a tuple `(ActorTemplateData? Template, Guid? CharacterId)` and extracts CharacterId from regex capture groups when configured. `GetActorAsync` passes the extracted CharacterId to `SpawnActorAsync`. Tests added in `ActorServiceTests.cs`.
 
 #### 5.4 Stride Demo Integration Reference
 
@@ -2683,4 +2691,4 @@ These files need the perception/state update flows wired in Phase 5.
 
 ---
 
-*Last Updated: 2026-01-04*
+*Last Updated: 2026-01-05*

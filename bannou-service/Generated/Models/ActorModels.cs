@@ -107,6 +107,16 @@ public partial class AutoSpawnConfig
     [System.Text.Json.Serialization.JsonPropertyName("maxInstances")]
     public int? MaxInstances { get; set; } = default!;
 
+    /// <summary>
+    /// 1-based regex capture group index for extracting CharacterId from actor ID.
+    /// <br/>Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
+    /// <br/>actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterIdCaptureGroup")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int? CharacterIdCaptureGroup { get; set; } = default!;
+
 }
 
 /// <summary>

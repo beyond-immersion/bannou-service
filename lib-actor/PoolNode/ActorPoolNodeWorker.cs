@@ -341,7 +341,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 SourceId = "message-bus",
                 SourceType = "message",
                 Data = command.Payload,
-                Urgency = 0.5f // Default urgency for messages; can be extended later
+                Urgency = command.Urgency ?? 0.5f
             };
 
             var queued = runner.InjectPerception(perception);

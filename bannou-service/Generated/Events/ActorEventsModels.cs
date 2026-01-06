@@ -444,6 +444,15 @@ public partial class SendMessageCommand
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     public object? Payload { get; set; } = default!;
 
+    /// <summary>
+    /// Optional urgency level (0-1) for the message perception.
+    /// <br/>If not provided, defaults to 0.5.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("urgency")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Urgency { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -470,6 +479,92 @@ public partial class ReloadBehaviorCommand
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string NewBehaviorRef { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Perception event published by game servers for characters they manage.
+/// <br/>Actors subscribe to character.{characterId}.perceptions to receive these.
+/// <br/>sourceAppId used to route state updates back to originating game server.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterPerceptionEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for character perception events
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "character.perception";
+
+    /// <summary>
+    /// Character this perception applies to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// App-id of game server (for routing state updates back)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceAppId { get; set; } = default!;
+
+    /// <summary>
+    /// The perception data to deliver to the actor
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("perception")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public PerceptionData Perception { get; set; } = new PerceptionData();
+
+}
+
+/// <summary>
+/// Data representing a perception event for an actor
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PerceptionData
+{
+
+    /// <summary>
+    /// Perception type (visual, auditory, tactile, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("perceptionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PerceptionType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity causing this perception
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of source (character, npc, object, environment)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    public string? SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Perception-specific data
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    public object? Data { get; set; } = default!;
+
+    /// <summary>
+    /// How urgent this perception is (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("urgency")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float Urgency { get; set; } = 0.5F;
 
 }
 

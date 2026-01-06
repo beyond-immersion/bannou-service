@@ -84,11 +84,10 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     public string StunServers { get; set; } = "stun:stun.l.google.com:19302";
 
     /// <summary>
-    /// Salt for SIP password generation (REQUIRED when ScaledTierEnabled=true - service fails fast if missing)
+    /// Salt for SIP password generation. Required only when ScaledTierEnabled=true - service fails fast if missing when scaled tier is enabled.
     /// Environment variable: VOICE_SIP_PASSWORD_SALT
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string SipPasswordSalt { get; set; } = string.Empty;
+    public string? SipPasswordSalt { get; set; }
 
     /// <summary>
     /// SIP domain for voice communication

@@ -21,6 +21,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_CONTROL_PLANE_APP_ID` | string | `bannou` | App-id of control plane for pool node registration. Pool nod... |
 | `ACTOR_DEFAULT_ACTORS_PER_NODE` | int | `100` | Default capacity per pool node |
 | `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | int | `60` | Default interval for periodic state saves (0 to disable) |
+| `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | int | `60` | Default expiration time in minutes for actor memories |
 | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
 | `ACTOR_DEPLOYMENT_MODE` | string | `bannou` | Actor deployment mode: bannou (local dev), pool-per-type, sh... |
 | `ACTOR_GOAP_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search |
@@ -28,40 +29,67 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_GOAP_REPLAN_THRESHOLD` | double | `0.3` | Threshold for triggering GOAP replanning when goal relevance... |
 | `ACTOR_HEARTBEAT_INTERVAL_SECONDS` | int | `10` | Pool node heartbeat frequency |
 | `ACTOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `30` | Mark node unhealthy after this many seconds without heartbea... |
+| `ACTOR_INSTANCE_STATESTORE_NAME` | string | `actor-instances` | Name of the state store for actor instance tracking |
+| `ACTOR_LOCAL_MODE_APP_ID` | string | `bannou` | App ID used when running in local/bannou deployment mode |
+| `ACTOR_LOCAL_MODE_NODE_ID` | string | `bannou-local` | Node ID used when running in local/bannou deployment mode |
 | `ACTOR_MAX_POOL_NODES` | int | `10` | Maximum pool nodes allowed (auto-scale mode) |
 | `ACTOR_MESSAGE_QUEUE_SIZE` | int | `50` | Max messages queued per actor before dropping oldest |
 | `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
+| `ACTOR_PERCEPTION_FILTER_THRESHOLD` | double | `0.1` | Minimum urgency for perception to be processed (0.0-1.0) |
+| `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | double | `0.7` | Minimum urgency for perception to become a memory (0.0-1.0) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
 | `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
 | `ACTOR_POOL_NODE_CAPACITY` | int | `100` | Maximum actors this pool node can run. Overrides DefaultActo... |
 | `ACTOR_POOL_NODE_ID` | string | **REQUIRED** | If set, this instance runs as a pool node (not control plane... |
 | `ACTOR_POOL_NODE_IMAGE` | string | `bannou-actor-pool:latest` | Docker image for pool nodes (pool-per-type, shared-pool, aut... |
 | `ACTOR_POOL_NODE_TYPE` | string | `shared` | Pool type this node belongs to: shared, npc-brain, event-coo... |
+| `ACTOR_SHORT_TERM_MEMORY_MINUTES` | int | `5` | Expiration time in minutes for short-term memories from high... |
+| `ACTOR_STATE_STORE_NAME` | string | `actor-state` | Name of the state store for actor state persistence |
 | `ACTOR_STATE_UPDATE_TRANSPORT` | string | `messaging` | State update transport: messaging (default, works in bannou ... |
+| `ACTOR_TEMPLATE_STATESTORE_NAME` | string | `actor-templates` | Name of the state store for actor templates |
 
 ### Asset
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ASSET_ADDITIONAL_EXTENSION_MAPPINGS` | string | **REQUIRED** | Comma-separated ext=type pairs for additional extension mapp... |
+| `ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional forbidden content types |
+| `ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional processable content types... |
 | `ASSET_AUDIO_BITRATE_KBPS` | int | `192` | Default audio bitrate in kbps |
 | `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format (mp3, opus, aac) |
 | `ASSET_AUDIO_PRESERVE_LOSSLESS` | bool | `true` | Keep original lossless file alongside transcoded version |
+| `ASSET_AUDIO_PROCESSOR_POOL_TYPE` | string | `audio-processor` | Pool type name for audio processing |
 | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | string | `lz4` | Default compression for bundles (lz4, lzma, none) |
+| `ASSET_BUNDLE_CURRENT_PATH_PREFIX` | string | `bundles/current` | Path prefix for finalized bundles in storage bucket |
+| `ASSET_BUNDLE_KEY_PREFIX` | string | `bundle:` | Key prefix for bundle entries in state store |
+| `ASSET_BUNDLE_UPLOAD_PATH_PREFIX` | string | `bundles/uploads` | Path prefix for bundle upload staging in storage bucket |
+| `ASSET_BUNDLE_ZIP_CACHE_PATH_PREFIX` | string | `bundles/zip-cache` | Path prefix for ZIP conversion cache in storage bucket |
+| `ASSET_DEFAULT_PROCESSOR_POOL_TYPE` | string | `asset-processor` | Default pool type name for general asset processing |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
 | `ASSET_FFMPEG_PATH` | string | **REQUIRED** | Path to FFmpeg binary (empty = use system PATH) |
 | `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
+| `ASSET_FINAL_ASSET_PATH_PREFIX` | string | `assets` | Path prefix for final asset storage in bucket |
+| `ASSET_INDEX_KEY_PREFIX` | string | `asset-index:` | Key prefix for asset index entries in state store |
+| `ASSET_KEY_PREFIX` | string | `asset:` | Key prefix for asset entries in state store |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
 | `ASSET_MAX_UPLOAD_SIZE_MB` | int | `500` | Maximum upload size in megabytes |
 | `ASSET_MINIO_WEBHOOK_SECRET` | string | **REQUIRED** | Secret for validating MinIO webhook requests |
+| `ASSET_MODEL_PROCESSOR_POOL_TYPE` | string | `model-processor` | Pool type name for 3D model processing |
 | `ASSET_MULTIPART_PART_SIZE_MB` | int | `16` | Size of each part in multipart uploads in megabytes |
 | `ASSET_MULTIPART_THRESHOLD_MB` | int | `50` | File size threshold for multipart uploads in megabytes |
+| `ASSET_PROCESSING_MAX_RETRIES` | int | `5` | Maximum retry attempts for asset processing |
 | `ASSET_PROCESSING_MODE` | string | `both` | Service mode (api, worker, both) |
 | `ASSET_PROCESSING_POOL_TYPE` | string | `asset-processor` | Processing pool identifier for orchestrator |
+| `ASSET_PROCESSING_RETRY_DELAY_SECONDS` | int | `30` | Delay in seconds between processing retries |
+| `ASSET_PROCESSOR_AVAILABILITY_MAX_WAIT_SECONDS` | int | `60` | Maximum seconds to wait for processor availability |
+| `ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS` | int | `2` | Polling interval in seconds when waiting for processor |
 | `ASSET_PROCESSOR_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Heartbeat emission interval in seconds |
 | `ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Mark node unhealthy after this many seconds without heartbea... |
 | `ASSET_PROCESSOR_IDLE_TIMEOUT_SECONDS` | int | `300` | Seconds of zero-load before auto-termination (0 to disable) |
 | `ASSET_PROCESSOR_MAX_CONCURRENT_JOBS` | int | `10` | Maximum concurrent jobs per processor node |
 | `ASSET_PROCESSOR_NODE_ID` | string | **REQUIRED** | Unique processor node ID (set by orchestrator when spawning ... |
+| `ASSET_PROCESSOR_POOL_STORE_NAME` | string | `asset-processor-pool` | Name of the state store for processor pool management |
+| `ASSET_STATESTORE_NAME` | string | `asset-statestore` | Name of the state store for asset metadata |
 | `ASSET_STORAGE_ACCESS_KEY` | string | **REQUIRED** | Storage access key/username |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
 | `ASSET_STORAGE_ENDPOINT` | string | `http://minio:9000` | Storage endpoint URL (MinIO/S3 compatible) |
@@ -70,7 +98,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_STORAGE_REGION` | string | `us-east-1` | Storage region (for S3/R2) |
 | `ASSET_STORAGE_SECRET_KEY` | string | **REQUIRED** | Storage secret key/password |
 | `ASSET_STORAGE_USE_SSL` | bool | `false` | Use SSL/TLS for storage connections |
+| `ASSET_TEMP_UPLOAD_PATH_PREFIX` | string | `temp` | Path prefix for temporary upload staging in storage bucket |
+| `ASSET_TEXTURE_PROCESSOR_POOL_TYPE` | string | `texture-processor` | Pool type name for texture processing |
 | `ASSET_TOKEN_TTL_SECONDS` | int | `3600` | TTL for pre-signed upload/download URLs in seconds |
+| `ASSET_UPLOAD_SESSION_KEY_PREFIX` | string | `upload:` | Key prefix for upload session entries in state store |
 | `ASSET_WORKER_POOL` | string | **REQUIRED** | Worker pool identifier when running in worker mode |
 | `ASSET_ZIP_CACHE_TTL_HOURS` | int | `24` | TTL for cached ZIP conversions in hours |
 
@@ -78,7 +109,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `AUTH_CONNECT_URL` | string | **REQUIRED** | URL to the Connect service for WebSocket connections. REQUIR... |
+| `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to the Connect service for WebSocket connections returne... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
 | `AUTH_DISCORD_REDIRECT_URI` | string | **REQUIRED** | Discord OAuth redirect URI |
@@ -105,7 +136,44 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX` | string | `bundle-membership:` | Key prefix for bundle membership entries |
+| `BEHAVIOR_COMPILER_MAX_CONSTANTS` | int | `256` | Maximum constants in behavior constant pool |
+| `BEHAVIOR_COMPILER_MAX_STRINGS` | int | `65536` | Maximum strings in behavior string table |
+| `BEHAVIOR_DEFAULT_EMOTIONAL_WEIGHT` | double | `0.4` | Weight for emotional significance in perception scoring |
+| `BEHAVIOR_DEFAULT_GOAL_RELEVANCE_WEIGHT` | double | `0.4` | Weight for goal relevance in perception scoring |
+| `BEHAVIOR_DEFAULT_MEMORY_LIMIT` | int | `100` | Maximum memory entries per actor |
+| `BEHAVIOR_DEFAULT_NOVELTY_WEIGHT` | double | `5.0` | Attention priority weight for novel perceptions |
+| `BEHAVIOR_DEFAULT_RELATIONSHIP_WEIGHT` | double | `0.2` | Weight for relationship significance in perception scoring |
+| `BEHAVIOR_DEFAULT_ROUTINE_WEIGHT` | double | `1.0` | Attention priority weight for routine perceptions |
+| `BEHAVIOR_DEFAULT_SOCIAL_WEIGHT` | double | `3.0` | Attention priority weight for social perceptions |
+| `BEHAVIOR_DEFAULT_STORAGE_THRESHOLD` | double | `0.7` | Significance score threshold for storing memories (0.0-1.0) |
+| `BEHAVIOR_DEFAULT_THREAT_FAST_TRACK_THRESHOLD` | double | `0.8` | Urgency threshold for fast-tracking threat perceptions (0.0-... |
+| `BEHAVIOR_DEFAULT_THREAT_WEIGHT` | double | `10.0` | Attention priority weight for threat perceptions |
 | `BEHAVIOR_ENABLED` | bool | `true` | Enable/disable Behavior service |
+| `BEHAVIOR_GOAP_METADATA_KEY_PREFIX` | string | `goap-metadata:` | Key prefix for GOAP metadata entries |
+| `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_DEPTH` | int | `3` | Maximum depth for GOAP planning search at high urgency |
+| `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_NODES` | int | `200` | Maximum nodes to explore during GOAP planning at high urgenc... |
+| `BEHAVIOR_HIGH_URGENCY_PLAN_TIMEOUT_MS` | int | `20` | Maximum time in ms for GOAP planning at high urgency |
+| `BEHAVIOR_HIGH_URGENCY_THRESHOLD` | double | `0.7` | Threshold above which urgency is considered high (0.0-1.0) |
+| `BEHAVIOR_LOW_URGENCY_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search at low urgency |
+| `BEHAVIOR_LOW_URGENCY_MAX_PLAN_NODES` | int | `1000` | Maximum nodes to explore during GOAP planning at low urgency |
+| `BEHAVIOR_LOW_URGENCY_PLAN_TIMEOUT_MS` | int | `100` | Maximum time in ms for GOAP planning at low urgency |
+| `BEHAVIOR_LOW_URGENCY_THRESHOLD` | double | `0.3` | Threshold below which urgency is considered low (0.0-1.0) |
+| `BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_DEPTH` | int | `6` | Maximum depth for GOAP planning search at medium urgency |
+| `BEHAVIOR_MEDIUM_URGENCY_MAX_PLAN_NODES` | int | `500` | Maximum nodes to explore during GOAP planning at medium urge... |
+| `BEHAVIOR_MEDIUM_URGENCY_PLAN_TIMEOUT_MS` | int | `50` | Maximum time in ms for GOAP planning at medium urgency |
+| `BEHAVIOR_MEMORY_CATEGORY_MATCH_WEIGHT` | double | `0.3` | Weight for category match in memory relevance scoring |
+| `BEHAVIOR_MEMORY_CONTENT_OVERLAP_WEIGHT` | double | `0.4` | Weight for content keyword overlap in memory relevance scori... |
+| `BEHAVIOR_MEMORY_INDEX_KEY_PREFIX` | string | `memory-index:` | Key prefix for memory index entries |
+| `BEHAVIOR_MEMORY_KEY_PREFIX` | string | `memory:` | Key prefix for memory entries |
+| `BEHAVIOR_MEMORY_METADATA_OVERLAP_WEIGHT` | double | `0.2` | Weight for metadata key overlap in memory relevance scoring |
+| `BEHAVIOR_MEMORY_MINIMUM_RELEVANCE_THRESHOLD` | double | `0.1` | Minimum relevance score for memory retrieval (0.0-1.0) |
+| `BEHAVIOR_MEMORY_RECENCY_BONUS_WEIGHT` | double | `0.1` | Maximum recency bonus for memories less than 1 hour old |
+| `BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT` | double | `0.1` | Weight for memory significance in relevance scoring |
+| `BEHAVIOR_MEMORY_STATESTORE_NAME` | string | `agent-memories` | Name of the state store for actor memories |
+| `BEHAVIOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Max retries for memory store operations |
+| `BEHAVIOR_METADATA_KEY_PREFIX` | string | `behavior-metadata:` | Key prefix for behavior metadata entries |
+| `BEHAVIOR_STATESTORE_NAME` | string | `behavior-statestore` | Name of the state store for behavior metadata |
 
 ### Character
 
@@ -127,15 +195,18 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_DEFAULT_SERVICES` | string[] | `['auth', 'website']` | Services available to unauthenticated connections |
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
 | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
+| `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
 | `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
 | `CONNECT_JWT_PUBLIC_KEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions (R... |
+| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions. N... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
-| `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. Must be shared acros... |
+| `CONNECT_RECONNECTION_WINDOW_SECONDS` | int | `300` | Window for client reconnection after disconnect in seconds (... |
+| `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. REQUIRED - must be s... |
+| `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL returned to clients for reconnection |
 
 ### Documentation
@@ -174,7 +245,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
 | `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
-| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. If not set, generates rando... |
+| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
 
 ### Location
 
@@ -203,7 +274,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
-| `MESH_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for service registry storage. REQUIR... |
+| `MESH_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for service registry storage. |
 | `MESH_REDIS_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for Redis connection establishment ... |
 | `MESH_REDIS_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of Redis connection retry attempts |
 | `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
@@ -262,14 +333,17 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
-| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging (REQUI... |
-| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for orchestrator state (REQUIRED - s... |
+| `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging. No de... |
+| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for orchestrator state. |
 
 ### Permission
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `PERMISSION_ENABLED` | bool | `true` | Enable/disable Permission service |
+| `PERMISSION_LOCK_BASE_DELAY_MS` | int | `100` | Base delay in ms between lock retry attempts (exponential ba... |
+| `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
+| `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
 
 ### Realm
 
@@ -305,7 +379,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
 | `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
 | `STATE_MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
-| `STATE_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
 ### Subscription
@@ -327,7 +401,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
 | `VOICE_SIP_DOMAIN` | string | `voice.bannou.local` | SIP domain for voice communication |
-| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation (REQUIRED when ScaledTierEn... |
+| `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation. Required only when ScaledT... |
 | `VOICE_STUN_SERVERS` | string | `stun:stun.l.google.com:19302` | Comma-separated list of STUN server URLs for WebRTC |
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
@@ -340,9 +414,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 216
-- **Required (no default)**: 41
-- **Optional (has default)**: 175
+- **Total properties**: 290
+- **Required (no default)**: 40
+- **Optional (has default)**: 250
 
 ## Environment Variable Naming Convention
 

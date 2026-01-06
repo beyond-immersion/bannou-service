@@ -17,8 +17,10 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable
       description: Comma-separated list of admin email addresses
       env: ACCOUNT_ADMIN_EMAILS
+      example: "admin@example.com,devops@example.com"
     AdminEmailDomain:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable
       description: Email domain that grants admin access (e.g., "@company.com")
       env: ACCOUNT_ADMIN_EMAIL_DOMAIN
+      example: "@admin.example.com"

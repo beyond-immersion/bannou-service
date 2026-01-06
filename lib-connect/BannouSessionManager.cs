@@ -13,6 +13,7 @@ public class BannouSessionManager : ISessionManager
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
+    private readonly ConnectServiceConfiguration _configuration;
     private readonly ILogger<BannouSessionManager> _logger;
 
     // State store name (must match Redis configuration)
@@ -27,9 +28,7 @@ public class BannouSessionManager : ISessionManager
     private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
     private const string ACCOUNT_SESSIONS_KEY_PREFIX = "account-sessions:";
 
-    // Default TTL values
-    private static readonly int SESSION_TTL_SECONDS = (int)TimeSpan.FromHours(24).TotalSeconds;
-    private static readonly int HEARTBEAT_TTL_SECONDS = (int)TimeSpan.FromMinutes(5).TotalSeconds;
+    // TTL values now come from configuration (SessionTtlSeconds, HeartbeatTtlSeconds)
 
     /// <summary>
     /// Creates a new BannouSessionManager with the specified infrastructure services.
@@ -37,10 +36,12 @@ public class BannouSessionManager : ISessionManager
     public BannouSessionManager(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
+        ConnectServiceConfiguration configuration,
         ILogger<BannouSessionManager> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -55,7 +56,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(SESSION_TTL_SECONDS);
+            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(_configuration.SessionTtlSeconds);
 
             var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(STATE_STORE);
             await store.SaveAsync(key, serviceMappings, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
@@ -120,7 +121,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
-            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(SESSION_TTL_SECONDS);
+            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(_configuration.SessionTtlSeconds);
 
             var store = _stateStoreFactory.GetStore<ConnectionStateData>(STATE_STORE);
             await store.SaveAsync(key, stateData, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
@@ -191,7 +192,7 @@ public class BannouSessionManager : ISessionManager
             };
 
             var store = _stateStoreFactory.GetStore<SessionHeartbeat>(STATE_STORE);
-            await store.SaveAsync(key, heartbeatData, new StateOptions { Ttl = HEARTBEAT_TTL_SECONDS });
+            await store.SaveAsync(key, heartbeatData, new StateOptions { Ttl = _configuration.HeartbeatTtlSeconds });
 
             _logger.LogDebug("Updated heartbeat for session {SessionId} on instance {InstanceId}",
                 sessionId, instanceId);
@@ -385,7 +386,7 @@ public class BannouSessionManager : ISessionManager
             state.LastActivity = DateTimeOffset.UtcNow;
 
             // Store updated state with normal TTL
-            await SetConnectionStateAsync(sessionId, state, TimeSpan.FromHours(24));
+            await SetConnectionStateAsync(sessionId, state, TimeSpan.FromSeconds(_configuration.SessionTtlSeconds));
 
             // Remove reconnection token
             await RemoveReconnectionTokenAsync(reconnectionToken);
@@ -509,7 +510,7 @@ public class BannouSessionManager : ISessionManager
             existingSessions.Add(sessionId);
 
             // Save with TTL matching session TTL
-            await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = SESSION_TTL_SECONDS });
+            await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = _configuration.SessionTtlSeconds });
 
             _logger.LogDebug("Added session {SessionId} to account {AccountId} index (total: {Count})",
                 sessionId, accountId, existingSessions.Count);
@@ -555,7 +556,7 @@ public class BannouSessionManager : ISessionManager
             }
             else
             {
-                await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = SESSION_TTL_SECONDS });
+                await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = _configuration.SessionTtlSeconds });
                 _logger.LogDebug("Removed session {SessionId} from account {AccountId} index (remaining: {Count})",
                     sessionId, accountId, existingSessions.Count);
             }

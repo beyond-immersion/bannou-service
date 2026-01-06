@@ -185,6 +185,8 @@ For real-time events, use the WebSocket client:
 using BeyondImmersion.Bannou.Client.SDK;
 
 var client = new BannouClient();
+// For internal nodes, skip JWT and use service token or network trust:
+// await client.ConnectInternalAsync("ws://bannou-internal/connect", serviceToken: "shared-secret");
 await client.ConnectWithTokenAsync(connectUrl, serverAccessToken);
 
 client.OnEvent += (sender, eventData) =>
@@ -202,6 +204,110 @@ client.OnEvent += (sender, eventData) =>
             break;
     }
 };
+
+## Game Transport (UDP) Quick Start (LiteNetLib)
+
+```csharp
+using BeyondImmersion.Bannou.GameProtocol;
+using BeyondImmersion.Bannou.GameProtocol.Messages;
+using BeyondImmersion.Bannou.GameTransport;
+using MessagePack;
+
+// Server
+var server = new LiteNetLibServerTransport();
+await server.StartAsync(new GameTransportConfig { Port = 9000 });
+server.OnClientMessage += (clientId, version, type, payload) =>
+{
+    var input = MessagePackSerializer.Deserialize<PlayerInputMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+    Console.WriteLine($"Tick {input.Tick} from {clientId}");
+};
+
+// Client
+var client = new LiteNetLibClientTransport();
+await client.ConnectAsync("127.0.0.1", 9000, GameProtocolEnvelope.CurrentVersion);
+client.OnServerMessage += (version, type, payload) =>
+{
+    if (type == GameMessageType.ArenaStateSnapshot)
+    {
+        var snapshot = MessagePackSerializer.Deserialize<ArenaStateSnapshot>(payload, GameProtocolEnvelope.DefaultOptions);
+        Console.WriteLine($"Snapshot tick {snapshot.Tick}");
+    }
+};
+
+// Send player input
+var msg = new PlayerInputMessage { Tick = 1, MoveX = 1, MoveY = 0 };
+var bytes = MessagePackSerializer.Serialize(msg, GameProtocolEnvelope.DefaultOptions);
+await client.SendAsync(GameMessageType.PlayerInput, bytes, reliable: true);
+```
+
+## Stride Integration Sketch
+
+Server (Stride host):
+```csharp
+// Startup
+var transport = new LiteNetLibServerTransport();
+await transport.StartAsync(new GameTransportConfig { Port = 9000, SnapshotIntervalTicks = 60 });
+
+transport.OnClientMessage += (clientId, version, type, payload) =>
+{
+    switch (type)
+    {
+        case GameMessageType.PlayerInput:
+            var input = MessagePackSerializer.Deserialize<PlayerInputMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+            // queue input for simulation tick
+            break;
+        case GameMessageType.OpportunityResponse:
+            var resp = MessagePackSerializer.Deserialize<OpportunityResponseMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+            // route to Event Brain / QTE handler
+            break;
+    }
+};
+
+// Per tick: broadcast deltas/snapshots
+var delta = new ArenaStateDelta { Tick = tick };
+// ... fill entities with bitmask flags ...
+var deltaBytes = MessagePackSerializer.Serialize(delta, GameProtocolEnvelope.DefaultOptions);
+await transport.BroadcastAsync(GameMessageType.ArenaStateDelta, deltaBytes, reliable: false);
+```
+
+Client (Stride script):
+```csharp
+private LiteNetLibClientTransport _transport;
+
+public override async Task Start()
+{
+    _transport = new LiteNetLibClientTransport();
+    _transport.OnServerMessage += HandleServerMessage;
+    await _transport.ConnectAsync("127.0.0.1", 9000, GameProtocolEnvelope.CurrentVersion);
+}
+
+private void HandleServerMessage(byte version, GameMessageType type, ReadOnlyMemory<byte> payload)
+{
+    switch (type)
+    {
+        case GameMessageType.ArenaStateSnapshot:
+            var snap = MessagePackSerializer.Deserialize<ArenaStateSnapshot>(payload, GameProtocolEnvelope.DefaultOptions);
+            // feed into interpolation buffer
+            break;
+        case GameMessageType.ArenaStateDelta:
+            var delta = MessagePackSerializer.Deserialize<ArenaStateDelta>(payload, GameProtocolEnvelope.DefaultOptions);
+            // apply delta to buffer
+            break;
+        case GameMessageType.OpportunityData:
+            var opp = MessagePackSerializer.Deserialize<OpportunityDataMessage>(payload, GameProtocolEnvelope.DefaultOptions);
+            // show QTE UI
+            break;
+    }
+}
+
+// Send input each frame/tick
+private async Task SendInputAsync()
+{
+    var input = new PlayerInputMessage { Tick = _tick++, MoveX = moveX, MoveY = moveY };
+    var bytes = MessagePackSerializer.Serialize(input, GameProtocolEnvelope.DefaultOptions);
+    await _transport.SendAsync(GameMessageType.PlayerInput, bytes, reliable: true);
+}
+```
 ```
 
 ## Real-World Example: HTTP Tester
