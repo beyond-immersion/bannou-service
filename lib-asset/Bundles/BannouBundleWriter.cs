@@ -55,7 +55,7 @@ public sealed class BannouBundleWriter : IDisposable
 
         // Calculate content hash
         var hashBytes = SHA256.HashData(data);
-        var contentHash = Convert.ToHexStringLower(hashBytes);
+        var contentHash = Convert.ToHexString(hashBytes).ToLowerInvariant();
 
         // Compress the data
         var maxCompressedSize = LZ4Codec.MaximumOutputSize(data.Length);

@@ -546,11 +546,17 @@ public sealed class BundleValidationResult
 /// </summary>
 public enum ValidationStage
 {
+    /// <summary>Validation has not started.</summary>
     Pending,
+    /// <summary>Validating bundle structure.</summary>
     Structure,
+    /// <summary>Validating bundle manifest.</summary>
     Manifest,
+    /// <summary>Validating bundle content.</summary>
     Content,
+    /// <summary>Validation completed successfully.</summary>
     Complete,
+    /// <summary>Validation failed.</summary>
     Failed
 }
 
@@ -580,7 +586,9 @@ public sealed class ValidationError
 /// </summary>
 public enum ValidationSeverity
 {
+    /// <summary>Non-fatal warning.</summary>
     Warning,
+    /// <summary>Fatal error.</summary>
     Error
 }
 
@@ -589,10 +597,15 @@ public enum ValidationSeverity
 /// </summary>
 public sealed class ExtractedAssetInfo
 {
+    /// <summary>Asset identifier.</summary>
     public string AssetId { get; set; } = string.Empty;
+    /// <summary>Original filename.</summary>
     public string Filename { get; set; } = string.Empty;
+    /// <summary>MIME content type.</summary>
     public string ContentType { get; set; } = string.Empty;
+    /// <summary>SHA256 hash of uncompressed content.</summary>
     public string ContentHash { get; set; } = string.Empty;
+    /// <summary>Uncompressed size in bytes.</summary>
     public long Size { get; set; }
 }
 

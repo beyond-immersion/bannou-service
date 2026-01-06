@@ -22,6 +22,11 @@ public static class EventSubscriptionRegistration
     /// </summary>
     public static void RegisterAll()
     {
+        // From achievement-events.yaml
+        EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
+        EventSubscriptionRegistry.Register<AnalyticsMilestoneReachedEvent>("analytics.milestone.reached");
+        EventSubscriptionRegistry.Register<LeaderboardRankChangedEvent>("leaderboard.rank.changed");
+
         // From actor-events.yaml
         EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
@@ -30,6 +35,11 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");
         EventSubscriptionRegistry.Register<ActorStatusChangedEvent>("actor.instance.status-changed");
         EventSubscriptionRegistry.Register<ActorCompletedEvent>("actor.instance.completed");
+
+        // From analytics-events.yaml
+        EventSubscriptionRegistry.Register<GameSessionActionPerformedEvent>("game-session.action.performed");
+        EventSubscriptionRegistry.Register<GameSessionCreatedEvent>("game-session.created");
+        EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
 
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
@@ -45,6 +55,10 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
         EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
+
+        // From leaderboard-events.yaml
+        EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
+        EventSubscriptionRegistry.Register<AnalyticsRatingUpdatedEvent>("analytics.rating.updated");
 
         // From mesh-events.yaml
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou-service-heartbeats");

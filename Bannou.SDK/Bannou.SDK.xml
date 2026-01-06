@@ -9726,6 +9726,1080 @@
             Whether there are pages before this one
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.IAchievementClient">
+            <summary>
+            Client interface for the Achievement service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.CreateAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new achievement definition
+            </summary>
+            <remarks>
+            Create a new achievement with specified criteria and platform mappings.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Achievement created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.GetAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.GetAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get achievement definition
+            </summary>
+            <remarks>
+            Retrieve details about a specific achievement.
+            </remarks>
+            <returns>Achievement definition retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.ListAchievementDefinitionsAsync(BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List achievement definitions
+            </summary>
+            <remarks>
+            List achievements for a game service with optional platform filtering.
+            </remarks>
+            <returns>Achievement definitions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.UpdateAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update achievement definition
+            </summary>
+            <remarks>
+            Update properties of an existing achievement.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Achievement updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.DeleteAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.DeleteAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete achievement definition
+            </summary>
+            <remarks>
+            Delete an achievement. Earned instances are preserved in history.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Achievement deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.GetAchievementProgressAsync(BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity's achievement progress
+            </summary>
+            <remarks>
+            Get progress for an entity across all achievements or a specific one.
+            </remarks>
+            <returns>Progress retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.UpdateAchievementProgressAsync(BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update achievement progress
+            </summary>
+            <remarks>
+            Increment progress toward an achievement. If target is reached, auto-unlocks.
+            <br/>Service-only endpoint - called by game logic.
+            </remarks>
+            <returns>Progress updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.UnlockAchievementAsync(BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Directly unlock an achievement
+            </summary>
+            <remarks>
+            Immediately unlock an achievement without progress tracking.
+            <br/>Service-only endpoint - used for non-progressive achievements.
+            </remarks>
+            <returns>Achievement unlocked successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.ListUnlockedAchievementsAsync(BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List unlocked achievements
+            </summary>
+            <remarks>
+            Get all achievements unlocked by an entity.
+            </remarks>
+            <returns>Unlocked achievements retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.SyncPlatformAchievementsAsync(BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Manually trigger platform sync
+            </summary>
+            <remarks>
+            Force synchronization of achievements with external platforms.
+            <br/>Admin-only endpoint.
+            </remarks>
+            <returns>Sync completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.IAchievementClient.GetPlatformSyncStatusAsync(BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get platform sync status
+            </summary>
+            <remarks>
+            Get the sync status for an entity on a specific platform.
+            </remarks>
+            <returns>Sync status retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.AchievementClient">
+            <summary>
+            Client implementation for the Achievement service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Achievement.AchievementClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Achievement.AchievementClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Achievement.AchievementClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Achievement.AchievementClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Achievement.AchievementClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.CreateAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new achievement definition
+            </summary>
+            <remarks>
+            Create a new achievement with specified criteria and platform mappings.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Achievement created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.GetAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.GetAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get achievement definition
+            </summary>
+            <remarks>
+            Retrieve details about a specific achievement.
+            </remarks>
+            <returns>Achievement definition retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.ListAchievementDefinitionsAsync(BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List achievement definitions
+            </summary>
+            <remarks>
+            List achievements for a game service with optional platform filtering.
+            </remarks>
+            <returns>Achievement definitions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.UpdateAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update achievement definition
+            </summary>
+            <remarks>
+            Update properties of an existing achievement.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Achievement updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.DeleteAchievementDefinitionAsync(BeyondImmersion.BannouService.Achievement.DeleteAchievementDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete achievement definition
+            </summary>
+            <remarks>
+            Delete an achievement. Earned instances are preserved in history.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Achievement deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.GetAchievementProgressAsync(BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity's achievement progress
+            </summary>
+            <remarks>
+            Get progress for an entity across all achievements or a specific one.
+            </remarks>
+            <returns>Progress retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.UpdateAchievementProgressAsync(BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update achievement progress
+            </summary>
+            <remarks>
+            Increment progress toward an achievement. If target is reached, auto-unlocks.
+            <br/>Service-only endpoint - called by game logic.
+            </remarks>
+            <returns>Progress updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.UnlockAchievementAsync(BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Directly unlock an achievement
+            </summary>
+            <remarks>
+            Immediately unlock an achievement without progress tracking.
+            <br/>Service-only endpoint - used for non-progressive achievements.
+            </remarks>
+            <returns>Achievement unlocked successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.ListUnlockedAchievementsAsync(BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List unlocked achievements
+            </summary>
+            <remarks>
+            Get all achievements unlocked by an entity.
+            </remarks>
+            <returns>Unlocked achievements retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.SyncPlatformAchievementsAsync(BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Manually trigger platform sync
+            </summary>
+            <remarks>
+            Force synchronization of achievements with external platforms.
+            <br/>Admin-only endpoint.
+            </remarks>
+            <returns>Sync completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.GetPlatformSyncStatusAsync(BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get platform sync status
+            </summary>
+            <remarks>
+            Get the sync status for an entity on a specific platform.
+            </remarks>
+            <returns>Sync status retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.AchievementClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Achievement.AchievementClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Achievement.AchievementClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.EntityType">
+            <summary>
+            Type of entity that can earn achievements
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.AchievementType">
+            <summary>
+            Type of achievement
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.Platform">
+            <summary>
+            External platform for achievement sync
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.SyncStatus">
+            <summary>
+            Status of platform synchronization
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest">
+            <summary>
+            Request to create a new achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service owning this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.AchievementId">
+            <summary>
+            Unique identifier for this achievement (lowercase, no spaces)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.DisplayName">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.Description">
+            <summary>
+            Description of how to earn this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.HiddenDescription">
+            <summary>
+            Description shown before achievement is earned (for hidden types)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.AchievementType">
+            <summary>
+            Type of achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.EntityTypes">
+            <summary>
+            Which entity types can earn this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.ProgressTarget">
+            <summary>
+            Target value for progressive achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.Points">
+            <summary>
+            Point value of this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.IconUrl">
+            <summary>
+            URL to achievement icon
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.Platforms">
+            <summary>
+            Platforms where this achievement exists
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.PlatformIds">
+            <summary>
+            Platform-specific achievement IDs (e.g., {"steam": "ACH_001"})
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.Prerequisites">
+            <summary>
+            Achievement IDs that must be unlocked first
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.IsActive">
+            <summary>
+            Whether this achievement can be earned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.Metadata">
+            <summary>
+            Additional achievement-specific metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.GetAchievementDefinitionRequest">
+            <summary>
+            Request to get an achievement definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetAchievementDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetAchievementDefinitionRequest.AchievementId">
+            <summary>
+            ID of the achievement
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest">
+            <summary>
+            Request to list achievement definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest.Platform">
+            <summary>
+            Filter by platform
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest.AchievementType">
+            <summary>
+            Filter by achievement type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest.IsActive">
+            <summary>
+            Filter by active status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest.IncludeHidden">
+            <summary>
+            Include hidden achievements in response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsResponse">
+            <summary>
+            Response containing achievement definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsResponse.Achievements">
+            <summary>
+            List of achievement definitions
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest">
+            <summary>
+            Request to update an achievement definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest.AchievementId">
+            <summary>
+            ID of the achievement to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest.DisplayName">
+            <summary>
+            New display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest.IsActive">
+            <summary>
+            New active status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementDefinitionRequest.PlatformIds">
+            <summary>
+            Updated platform ID mappings
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.DeleteAchievementDefinitionRequest">
+            <summary>
+            Request to delete an achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.DeleteAchievementDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.DeleteAchievementDefinitionRequest.AchievementId">
+            <summary>
+            ID of the achievement to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse">
+            <summary>
+            Achievement definition details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.GameServiceId">
+            <summary>
+            ID of the owning game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.AchievementId">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.DisplayName">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.Description">
+            <summary>
+            How to earn this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.HiddenDescription">
+            <summary>
+            Description for hidden achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.EntityTypes">
+            <summary>
+            Allowed entity types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.ProgressTarget">
+            <summary>
+            Target for progressive achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.Points">
+            <summary>
+            Point value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.IconUrl">
+            <summary>
+            Achievement icon URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.Platforms">
+            <summary>
+            Available platforms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.PlatformIds">
+            <summary>
+            Platform-specific IDs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.Prerequisites">
+            <summary>
+            Required achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.IsActive">
+            <summary>
+            Whether achievement is earnable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.EarnedCount">
+            <summary>
+            How many entities have earned this
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.CreatedAt">
+            <summary>
+            When the achievement was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.Metadata">
+            <summary>
+            Additional metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest">
+            <summary>
+            Request to get achievement progress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest.AchievementId">
+            <summary>
+            Specific achievement ID (null for all)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse">
+            <summary>
+            Achievement progress for an entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse.Progress">
+            <summary>
+            Progress for each achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse.TotalPoints">
+            <summary>
+            Total points from unlocked achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse.UnlockedCount">
+            <summary>
+            Number of unlocked achievements
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.AchievementProgress">
+            <summary>
+            Progress toward a single achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgress.AchievementId">
+            <summary>
+            Achievement identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgress.DisplayName">
+            <summary>
+            Achievement display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgress.CurrentProgress">
+            <summary>
+            Current progress (for progressive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgress.TargetProgress">
+            <summary>
+            Target progress (for progressive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgress.PercentComplete">
+            <summary>
+            Completion percentage (0-100)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgress.IsUnlocked">
+            <summary>
+            Whether achievement is unlocked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgress.UnlockedAt">
+            <summary>
+            When achievement was unlocked
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest">
+            <summary>
+            Request to update achievement progress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest.AchievementId">
+            <summary>
+            ID of the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest.Increment">
+            <summary>
+            Amount to increment progress
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressResponse">
+            <summary>
+            Response after updating progress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressResponse.AchievementId">
+            <summary>
+            Achievement identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressResponse.PreviousProgress">
+            <summary>
+            Progress before update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressResponse.NewProgress">
+            <summary>
+            Progress after update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressResponse.TargetProgress">
+            <summary>
+            Target to unlock
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressResponse.Unlocked">
+            <summary>
+            Whether this update unlocked the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressResponse.UnlockedAt">
+            <summary>
+            Unlock timestamp (if unlocked)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest">
+            <summary>
+            Request to directly unlock an achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest.AchievementId">
+            <summary>
+            ID of the achievement to unlock
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest.SkipPlatformSync">
+            <summary>
+            Skip syncing to external platforms
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.UnlockAchievementResponse">
+            <summary>
+            Response after unlocking an achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementResponse.AchievementId">
+            <summary>
+            Achievement identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementResponse.Unlocked">
+            <summary>
+            Whether unlock was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementResponse.UnlockedAt">
+            <summary>
+            Unlock timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementResponse.PlatformSyncStatus">
+            <summary>
+            Sync status by platform
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest">
+            <summary>
+            Request to list unlocked achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest.Platform">
+            <summary>
+            Filter by platform
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsResponse">
+            <summary>
+            Response containing unlocked achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsResponse.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsResponse.Achievements">
+            <summary>
+            List of unlocked achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsResponse.TotalPoints">
+            <summary>
+            Total points earned
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.UnlockedAchievement">
+            <summary>
+            An unlocked achievement instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockedAchievement.AchievementId">
+            <summary>
+            Achievement identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockedAchievement.DisplayName">
+            <summary>
+            Achievement name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockedAchievement.Description">
+            <summary>
+            Achievement description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockedAchievement.Points">
+            <summary>
+            Point value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockedAchievement.IconUrl">
+            <summary>
+            Achievement icon
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockedAchievement.UnlockedAt">
+            <summary>
+            When it was unlocked
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest">
+            <summary>
+            Request to sync achievements with external platform
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest.EntityId">
+            <summary>
+            ID of the entity (must be account for platform sync)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest.ForceResync">
+            <summary>
+            Force resync even if already synced
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse">
+            <summary>
+            Response after platform sync attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse.Synced">
+            <summary>
+            Number of achievements successfully synced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse.Failed">
+            <summary>
+            Number of sync failures
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse.NotLinked">
+            <summary>
+            Whether account is not linked to platform
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse.Errors">
+            <summary>
+            Error messages for failed syncs
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest">
+            <summary>
+            Request to get platform sync status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest.Platform">
+            <summary>
+            Specific platform (null for all)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.PlatformSyncStatusResponse">
+            <summary>
+            Platform sync status for an entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformSyncStatusResponse.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformSyncStatusResponse.Platforms">
+            <summary>
+            Sync status per platform
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Achievement.PlatformStatus">
+            <summary>
+            Sync status for a single platform
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.IsLinked">
+            <summary>
+            Whether entity is linked to this platform
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.ExternalId">
+            <summary>
+            External platform user ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.SyncedCount">
+            <summary>
+            Achievements successfully synced
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.PendingCount">
+            <summary>
+            Achievements pending sync
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.FailedCount">
+            <summary>
+            Achievements that failed to sync
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.LastSyncAt">
+            <summary>
+            Last successful sync timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.LastError">
+            <summary>
+            Most recent sync error
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Actor.IActorClient">
             <summary>
             Client interface for the Actor service.
@@ -10517,6 +11591,793 @@
         <member name="P:BeyondImmersion.BannouService.Actor.InjectPerceptionResponse.QueueDepth">
             <summary>
             Current depth of the perception queue
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.IAnalyticsClient">
+            <summary>
+            Client interface for the Analytics service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.IngestEventAsync(BeyondImmersion.BannouService.Analytics.IngestEventRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Ingest a single analytics event
+            </summary>
+            <remarks>
+            High-throughput event ingestion endpoint for recording game events.
+            <br/>Events are buffered in memory and periodically flushed to persistent storage.
+            <br/>Service-only endpoint - not exposed to clients.
+            </remarks>
+            <returns>Event ingested successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.IngestEventBatchAsync(BeyondImmersion.BannouService.Analytics.IngestEventBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Ingest multiple analytics events
+            </summary>
+            <remarks>
+            Batch event ingestion for high-volume scenarios. Accepts up to 1000 events per request.
+            <br/>Service-only endpoint - not exposed to clients.
+            </remarks>
+            <returns>Events ingested successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.GetEntitySummaryAsync(BeyondImmersion.BannouService.Analytics.GetEntitySummaryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity statistics summary
+            </summary>
+            <remarks>
+            Retrieve aggregated statistics for an entity. Summaries include total counts,
+            <br/>averages, and derived metrics computed from ingested events.
+            </remarks>
+            <returns>Entity summary retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.QueryEntitySummariesAsync(BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query entity summaries with filters
+            </summary>
+            <remarks>
+            Query multiple entity summaries with filtering and sorting options.
+            <br/>Useful for dashboards and reporting.
+            </remarks>
+            <returns>Query executed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.GetSkillRatingAsync(BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity Glicko-2 skill rating
+            </summary>
+            <remarks>
+            Retrieve the current Glicko-2 skill rating for an entity.
+            <br/>Returns rating, rating deviation (RD), and volatility.
+            </remarks>
+            <returns>Skill rating retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.UpdateSkillRatingAsync(BeyondImmersion.BannouService.Analytics.UpdateSkillRatingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update entity skill rating after match
+            </summary>
+            <remarks>
+            Update skill ratings for entities after a match result.
+            <br/>Uses Glicko-2 algorithm to compute new ratings based on outcomes.
+            <br/>Service-only endpoint - typically called by game-session service.
+            </remarks>
+            <returns>Skill ratings updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.RecordControllerEventAsync(BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record controller possession event
+            </summary>
+            <remarks>
+            Record when an account takes or releases control of an entity.
+            <br/>Used for tracking which player controlled which character/actor at what time.
+            <br/>Service-only endpoint.
+            </remarks>
+            <returns>Controller event recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.IAnalyticsClient.QueryControllerHistoryAsync(BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query controller history
+            </summary>
+            <remarks>
+            Query who controlled what entity during a time range.
+            <br/>Useful for audit trails and replays.
+            </remarks>
+            <returns>Controller history retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.AnalyticsClient">
+            <summary>
+            Client implementation for the Analytics service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Analytics.AnalyticsClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Analytics.AnalyticsClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Analytics.AnalyticsClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.AnalyticsClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Analytics.AnalyticsClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Analytics.AnalyticsClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.IngestEventAsync(BeyondImmersion.BannouService.Analytics.IngestEventRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Ingest a single analytics event
+            </summary>
+            <remarks>
+            High-throughput event ingestion endpoint for recording game events.
+            <br/>Events are buffered in memory and periodically flushed to persistent storage.
+            <br/>Service-only endpoint - not exposed to clients.
+            </remarks>
+            <returns>Event ingested successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.IngestEventBatchAsync(BeyondImmersion.BannouService.Analytics.IngestEventBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Ingest multiple analytics events
+            </summary>
+            <remarks>
+            Batch event ingestion for high-volume scenarios. Accepts up to 1000 events per request.
+            <br/>Service-only endpoint - not exposed to clients.
+            </remarks>
+            <returns>Events ingested successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.GetEntitySummaryAsync(BeyondImmersion.BannouService.Analytics.GetEntitySummaryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity statistics summary
+            </summary>
+            <remarks>
+            Retrieve aggregated statistics for an entity. Summaries include total counts,
+            <br/>averages, and derived metrics computed from ingested events.
+            </remarks>
+            <returns>Entity summary retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.QueryEntitySummariesAsync(BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query entity summaries with filters
+            </summary>
+            <remarks>
+            Query multiple entity summaries with filtering and sorting options.
+            <br/>Useful for dashboards and reporting.
+            </remarks>
+            <returns>Query executed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.GetSkillRatingAsync(BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity Glicko-2 skill rating
+            </summary>
+            <remarks>
+            Retrieve the current Glicko-2 skill rating for an entity.
+            <br/>Returns rating, rating deviation (RD), and volatility.
+            </remarks>
+            <returns>Skill rating retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.UpdateSkillRatingAsync(BeyondImmersion.BannouService.Analytics.UpdateSkillRatingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update entity skill rating after match
+            </summary>
+            <remarks>
+            Update skill ratings for entities after a match result.
+            <br/>Uses Glicko-2 algorithm to compute new ratings based on outcomes.
+            <br/>Service-only endpoint - typically called by game-session service.
+            </remarks>
+            <returns>Skill ratings updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.RecordControllerEventAsync(BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record controller possession event
+            </summary>
+            <remarks>
+            Record when an account takes or releases control of an entity.
+            <br/>Used for tracking which player controlled which character/actor at what time.
+            <br/>Service-only endpoint.
+            </remarks>
+            <returns>Controller event recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.QueryControllerHistoryAsync(BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query controller history
+            </summary>
+            <remarks>
+            Query who controlled what entity during a time range.
+            <br/>Useful for audit trails and replays.
+            </remarks>
+            <returns>Controller history retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Analytics.AnalyticsClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.EntityType">
+            <summary>
+            Type of entity being tracked
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.ControllerAction">
+            <summary>
+            Type of controller action
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.IngestEventRequest">
+            <summary>
+            Request to ingest a single analytics event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.GameServiceId">
+            <summary>
+            ID of the game service that generated this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.EventType">
+            <summary>
+            Type of event (e.g., kill, death, score, action)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.EntityId">
+            <summary>
+            ID of the entity this event relates to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.Value">
+            <summary>
+            Numeric value associated with the event (e.g., score amount)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.Metadata">
+            <summary>
+            Additional event-specific data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.IngestEventResponse">
+            <summary>
+            Response after ingesting an event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventResponse.EventId">
+            <summary>
+            Unique identifier assigned to this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventResponse.Accepted">
+            <summary>
+            Whether the event was accepted for processing
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.IngestEventBatchRequest">
+            <summary>
+            Request to ingest multiple analytics events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventBatchRequest.Events">
+            <summary>
+            List of events to ingest (max 1000)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.IngestEventBatchResponse">
+            <summary>
+            Response after batch event ingestion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventBatchResponse.Accepted">
+            <summary>
+            Number of events accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventBatchResponse.Rejected">
+            <summary>
+            Number of events rejected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventBatchResponse.Errors">
+            <summary>
+            Error messages for rejected events
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.GetEntitySummaryRequest">
+            <summary>
+            Request to get statistics for an entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.GetEntitySummaryRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.GetEntitySummaryRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse">
+            <summary>
+            Aggregated statistics for an entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.TotalEvents">
+            <summary>
+            Total number of events recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.FirstEventAt">
+            <summary>
+            Timestamp of first recorded event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.LastEventAt">
+            <summary>
+            Timestamp of most recent event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.EventCounts">
+            <summary>
+            Count of events by type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.Aggregates">
+            <summary>
+            Aggregated numeric values (sums, averages)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest">
+            <summary>
+            Request to query multiple entity summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.EntityType">
+            <summary>
+            Filter by entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.EventType">
+            <summary>
+            Filter by event type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.MinEvents">
+            <summary>
+            Minimum number of events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.SortBy">
+            <summary>
+            Field to sort by
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.SortDescending">
+            <summary>
+            Sort in descending order
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.Limit">
+            <summary>
+            Maximum results to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.Offset">
+            <summary>
+            Number of results to skip
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesResponse">
+            <summary>
+            Response containing queried entity summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesResponse.Summaries">
+            <summary>
+            List of matching entity summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesResponse.Total">
+            <summary>
+            Total number of matching entities
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest">
+            <summary>
+            Request to get skill rating for an entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest.RatingType">
+            <summary>
+            Type of rating (e.g., overall, ranked, casual)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.SkillRatingResponse">
+            <summary>
+            Glicko-2 skill rating for an entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.RatingType">
+            <summary>
+            Type of rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.Rating">
+            <summary>
+            Current Glicko-2 rating (typically 1500 start)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.RatingDeviation">
+            <summary>
+            Rating deviation (uncertainty) - lower is more confident
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.Volatility">
+            <summary>
+            Rating volatility (consistency of performance)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.MatchesPlayed">
+            <summary>
+            Number of rated matches played
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.LastMatchAt">
+            <summary>
+            Timestamp of last rated match
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingRequest">
+            <summary>
+            Request to update skill ratings after a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingRequest.RatingType">
+            <summary>
+            Type of rating to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingRequest.MatchId">
+            <summary>
+            Unique identifier for this match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingRequest.Results">
+            <summary>
+            Results for all participants (min 2)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.MatchResult">
+            <summary>
+            Individual result in a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.MatchResult.EntityId">
+            <summary>
+            ID of the participating entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.MatchResult.Outcome">
+            <summary>
+            Match outcome (1.0 = win, 0.5 = draw, 0.0 = loss)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.MatchResult.Score">
+            <summary>
+            Optional numeric score for the match
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingResponse">
+            <summary>
+            Response after updating skill ratings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingResponse.MatchId">
+            <summary>
+            ID of the processed match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.UpdateSkillRatingResponse.UpdatedRatings">
+            <summary>
+            Updated ratings for all participants
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.SkillRatingChange">
+            <summary>
+            Rating change for a single entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingChange.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingChange.PreviousRating">
+            <summary>
+            Rating before this match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingChange.NewRating">
+            <summary>
+            Rating after this match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingChange.RatingChange">
+            <summary>
+            Change in rating (can be negative)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest">
+            <summary>
+            Request to record a controller possession/release event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.AccountId">
+            <summary>
+            ID of the account taking/releasing control
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.TargetEntityId">
+            <summary>
+            ID of the entity being controlled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.Timestamp">
+            <summary>
+            When the control event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.SessionId">
+            <summary>
+            Game session ID (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest">
+            <summary>
+            Request to query controller history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest.AccountId">
+            <summary>
+            Filter by controlling account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest.TargetEntityId">
+            <summary>
+            Filter by controlled entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest.TargetEntityType">
+            <summary>
+            Filter by entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest.StartTime">
+            <summary>
+            Start of time range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest.EndTime">
+            <summary>
+            End of time range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryRequest.Limit">
+            <summary>
+            Maximum results to return
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryResponse">
+            <summary>
+            Response containing controller history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.QueryControllerHistoryResponse.Events">
+            <summary>
+            Controller events matching the query
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent">
+            <summary>
+            A single controller possession/release event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.AccountId">
+            <summary>
+            ID of the controlling account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.TargetEntityId">
+            <summary>
+            ID of the controlled entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.SessionId">
+            <summary>
+            Associated game session ID
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.IAuthClient">
@@ -16555,6 +18416,1004 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.StunServers">
             <summary>
             STUN server URIs for NAT traversal (clients should configure these early)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient">
+            <summary>
+            Client interface for the Leaderboard service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.CreateLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new leaderboard definition
+            </summary>
+            <remarks>
+            Create a new leaderboard with specified properties.
+            <br/>Developer-only endpoint for setting up game leaderboards.
+            </remarks>
+            <returns>Leaderboard created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.GetLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.GetLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get leaderboard definition
+            </summary>
+            <remarks>
+            Retrieve details about a specific leaderboard.
+            </remarks>
+            <returns>Leaderboard definition retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.ListLeaderboardDefinitionsAsync(BeyondImmersion.BannouService.Leaderboard.ListLeaderboardDefinitionsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List leaderboard definitions
+            </summary>
+            <remarks>
+            List all leaderboards for a game service.
+            </remarks>
+            <returns>Leaderboard definitions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.UpdateLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update leaderboard definition
+            </summary>
+            <remarks>
+            Update properties of an existing leaderboard.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Leaderboard updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.DeleteLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.DeleteLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete leaderboard definition
+            </summary>
+            <remarks>
+            Delete a leaderboard and all its scores.
+            <br/>Developer-only endpoint. This action is irreversible.
+            </remarks>
+            <returns>Leaderboard deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.SubmitScoreAsync(BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Submit or update a score
+            </summary>
+            <remarks>
+            Submit a score for an entity. Behavior depends on leaderboard's updateMode:
+            <br/>- replace: Always use the new score
+            <br/>- increment: Add to existing score
+            <br/>- max: Keep the higher score
+            <br/>- min: Keep the lower score
+            <br/>Service-only endpoint.
+            </remarks>
+            <returns>Score submitted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.SubmitScoreBatchAsync(BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Submit multiple scores
+            </summary>
+            <remarks>
+            Batch score submission for high-volume scenarios.
+            <br/>Service-only endpoint.
+            </remarks>
+            <returns>Scores submitted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.GetEntityRankAsync(BeyondImmersion.BannouService.Leaderboard.GetEntityRankRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity's rank
+            </summary>
+            <remarks>
+            Get the current rank and score for a specific entity.
+            </remarks>
+            <returns>Rank retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.GetTopRanksAsync(BeyondImmersion.BannouService.Leaderboard.GetTopRanksRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get top entries
+            </summary>
+            <remarks>
+            Get the top N entries on a leaderboard.
+            </remarks>
+            <returns>Top ranks retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.GetRanksAroundAsync(BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entries around entity
+            </summary>
+            <remarks>
+            Get leaderboard entries surrounding a specific entity.
+            <br/>Useful for showing a player's position with nearby competitors.
+            </remarks>
+            <returns>Ranks retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.CreateSeasonAsync(BeyondImmersion.BannouService.Leaderboard.CreateSeasonRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Start a new season
+            </summary>
+            <remarks>
+            Archive the current leaderboard and start a new season.
+            <br/>Admin-only endpoint. Previous scores are preserved in history.
+            </remarks>
+            <returns>Season created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient.GetSeasonAsync(BeyondImmersion.BannouService.Leaderboard.GetSeasonRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current season info
+            </summary>
+            <remarks>
+            Get information about the current or a specific past season.
+            </remarks>
+            <returns>Season info retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient">
+            <summary>
+            Client implementation for the Leaderboard service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Leaderboard.LeaderboardClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.CreateLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new leaderboard definition
+            </summary>
+            <remarks>
+            Create a new leaderboard with specified properties.
+            <br/>Developer-only endpoint for setting up game leaderboards.
+            </remarks>
+            <returns>Leaderboard created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.GetLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.GetLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get leaderboard definition
+            </summary>
+            <remarks>
+            Retrieve details about a specific leaderboard.
+            </remarks>
+            <returns>Leaderboard definition retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ListLeaderboardDefinitionsAsync(BeyondImmersion.BannouService.Leaderboard.ListLeaderboardDefinitionsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List leaderboard definitions
+            </summary>
+            <remarks>
+            List all leaderboards for a game service.
+            </remarks>
+            <returns>Leaderboard definitions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.UpdateLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update leaderboard definition
+            </summary>
+            <remarks>
+            Update properties of an existing leaderboard.
+            <br/>Developer-only endpoint.
+            </remarks>
+            <returns>Leaderboard updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.DeleteLeaderboardDefinitionAsync(BeyondImmersion.BannouService.Leaderboard.DeleteLeaderboardDefinitionRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete leaderboard definition
+            </summary>
+            <remarks>
+            Delete a leaderboard and all its scores.
+            <br/>Developer-only endpoint. This action is irreversible.
+            </remarks>
+            <returns>Leaderboard deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.SubmitScoreAsync(BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Submit or update a score
+            </summary>
+            <remarks>
+            Submit a score for an entity. Behavior depends on leaderboard's updateMode:
+            <br/>- replace: Always use the new score
+            <br/>- increment: Add to existing score
+            <br/>- max: Keep the higher score
+            <br/>- min: Keep the lower score
+            <br/>Service-only endpoint.
+            </remarks>
+            <returns>Score submitted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.SubmitScoreBatchAsync(BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Submit multiple scores
+            </summary>
+            <remarks>
+            Batch score submission for high-volume scenarios.
+            <br/>Service-only endpoint.
+            </remarks>
+            <returns>Scores submitted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.GetEntityRankAsync(BeyondImmersion.BannouService.Leaderboard.GetEntityRankRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entity's rank
+            </summary>
+            <remarks>
+            Get the current rank and score for a specific entity.
+            </remarks>
+            <returns>Rank retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.GetTopRanksAsync(BeyondImmersion.BannouService.Leaderboard.GetTopRanksRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get top entries
+            </summary>
+            <remarks>
+            Get the top N entries on a leaderboard.
+            </remarks>
+            <returns>Top ranks retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.GetRanksAroundAsync(BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get entries around entity
+            </summary>
+            <remarks>
+            Get leaderboard entries surrounding a specific entity.
+            <br/>Useful for showing a player's position with nearby competitors.
+            </remarks>
+            <returns>Ranks retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.CreateSeasonAsync(BeyondImmersion.BannouService.Leaderboard.CreateSeasonRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Start a new season
+            </summary>
+            <remarks>
+            Archive the current leaderboard and start a new season.
+            <br/>Admin-only endpoint. Previous scores are preserved in history.
+            </remarks>
+            <returns>Season created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.GetSeasonAsync(BeyondImmersion.BannouService.Leaderboard.GetSeasonRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current season info
+            </summary>
+            <remarks>
+            Get information about the current or a specific past season.
+            </remarks>
+            <returns>Season info retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Leaderboard.LeaderboardClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.EntityType">
+            <summary>
+            Type of entity on the leaderboard
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.SortOrder">
+            <summary>
+            How scores are sorted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.UpdateMode">
+            <summary>
+            How to handle score updates
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest">
+            <summary>
+            Request to create a new leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service owning this leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.LeaderboardId">
+            <summary>
+            Unique identifier for this leaderboard (lowercase, no spaces)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.DisplayName">
+            <summary>
+            Human-readable name for the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.Description">
+            <summary>
+            Description of what this leaderboard tracks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.EntityTypes">
+            <summary>
+            Which entity types can appear on this leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.SortOrder">
+            <summary>
+            Sort order (descending for high scores, ascending for times)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.UpdateMode">
+            <summary>
+            How to handle score updates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.IsSeasonal">
+            <summary>
+            Whether this leaderboard resets each season
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.IsPublic">
+            <summary>
+            Whether the leaderboard is publicly visible
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateLeaderboardDefinitionRequest.Metadata">
+            <summary>
+            Additional leaderboard-specific metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.GetLeaderboardDefinitionRequest">
+            <summary>
+            Request to get a leaderboard definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetLeaderboardDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetLeaderboardDefinitionRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.ListLeaderboardDefinitionsRequest">
+            <summary>
+            Request to list leaderboard definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.ListLeaderboardDefinitionsRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.ListLeaderboardDefinitionsRequest.IncludeArchived">
+            <summary>
+            Include archived/deleted leaderboards
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.ListLeaderboardDefinitionsResponse">
+            <summary>
+            Response containing leaderboard definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.ListLeaderboardDefinitionsResponse.Leaderboards">
+            <summary>
+            List of leaderboard definitions
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest">
+            <summary>
+            Request to update a leaderboard definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest.DisplayName">
+            <summary>
+            New display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.UpdateLeaderboardDefinitionRequest.IsPublic">
+            <summary>
+            New visibility setting
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.DeleteLeaderboardDefinitionRequest">
+            <summary>
+            Request to delete a leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.DeleteLeaderboardDefinitionRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.DeleteLeaderboardDefinitionRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse">
+            <summary>
+            Leaderboard definition details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.GameServiceId">
+            <summary>
+            ID of the owning game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.LeaderboardId">
+            <summary>
+            Unique identifier for this leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.DisplayName">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.Description">
+            <summary>
+            Description of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.EntityTypes">
+            <summary>
+            Allowed entity types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.IsSeasonal">
+            <summary>
+            Whether the leaderboard is seasonal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.IsPublic">
+            <summary>
+            Whether the leaderboard is publicly visible
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.CurrentSeason">
+            <summary>
+            Current season number (if seasonal)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.EntryCount">
+            <summary>
+            Number of entries on the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.CreatedAt">
+            <summary>
+            When the leaderboard was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.Metadata">
+            <summary>
+            Additional metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest">
+            <summary>
+            Request to submit a score
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.Score">
+            <summary>
+            Score value to submit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.Metadata">
+            <summary>
+            Optional metadata about this score (e.g., how it was achieved)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.SubmitScoreResponse">
+            <summary>
+            Response after score submission
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreResponse.Accepted">
+            <summary>
+            Whether the score was accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreResponse.PreviousScore">
+            <summary>
+            Previous score (null if first entry)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreResponse.CurrentScore">
+            <summary>
+            Current score after update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreResponse.PreviousRank">
+            <summary>
+            Previous rank (null if first entry)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreResponse.CurrentRank">
+            <summary>
+            Current rank after update (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreResponse.RankChange">
+            <summary>
+            Change in rank (positive = improved)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchRequest">
+            <summary>
+            Request to submit multiple scores
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchRequest.Scores">
+            <summary>
+            List of scores to submit (max 1000)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.BatchScoreEntry">
+            <summary>
+            A single score in a batch submission
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.BatchScoreEntry.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.BatchScoreEntry.Score">
+            <summary>
+            Score value
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchResponse">
+            <summary>
+            Response after batch score submission
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchResponse.Accepted">
+            <summary>
+            Number of scores accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreBatchResponse.Rejected">
+            <summary>
+            Number of scores rejected
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.GetEntityRankRequest">
+            <summary>
+            Request to get an entity's rank
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetEntityRankRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetEntityRankRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetEntityRankRequest.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse">
+            <summary>
+            Entity's rank on a leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.Score">
+            <summary>
+            Entity's current score
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.Rank">
+            <summary>
+            Entity's current rank (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.TotalEntries">
+            <summary>
+            Total entries on the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.Percentile">
+            <summary>
+            Percentile ranking (0-100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.GetTopRanksRequest">
+            <summary>
+            Request to get top leaderboard entries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetTopRanksRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetTopRanksRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetTopRanksRequest.Count">
+            <summary>
+            Number of entries to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetTopRanksRequest.Offset">
+            <summary>
+            Number of entries to skip
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest">
+            <summary>
+            Request to get entries around an entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest.EntityId">
+            <summary>
+            ID of the entity to center on
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest.CountBefore">
+            <summary>
+            Entries to show before the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest.CountAfter">
+            <summary>
+            Entries to show after the entity
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntriesResponse">
+            <summary>
+            Response containing leaderboard entries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntriesResponse.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntriesResponse.Entries">
+            <summary>
+            List of leaderboard entries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntriesResponse.TotalEntries">
+            <summary>
+            Total entries on the leaderboard
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry">
+            <summary>
+            A single entry on a leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.Score">
+            <summary>
+            Entity's score
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.Rank">
+            <summary>
+            Entity's rank (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.DisplayName">
+            <summary>
+            Cached display name for the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.Metadata">
+            <summary>
+            Entry metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.CreateSeasonRequest">
+            <summary>
+            Request to create a new season
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateSeasonRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateSeasonRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateSeasonRequest.SeasonName">
+            <summary>
+            Optional name for the new season
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.CreateSeasonRequest.ArchivePrevious">
+            <summary>
+            Whether to archive the previous season's data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.GetSeasonRequest">
+            <summary>
+            Request to get season information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetSeasonRequest.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetSeasonRequest.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetSeasonRequest.SeasonNumber">
+            <summary>
+            Specific season number (null for current)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Leaderboard.SeasonResponse">
+            <summary>
+            Season information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SeasonResponse.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SeasonResponse.SeasonNumber">
+            <summary>
+            Season number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SeasonResponse.SeasonName">
+            <summary>
+            Name of the season
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SeasonResponse.StartedAt">
+            <summary>
+            When this season started
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SeasonResponse.EndedAt">
+            <summary>
+            When this season ended (null if active)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SeasonResponse.IsActive">
+            <summary>
+            Whether this is the current season
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SeasonResponse.EntryCount">
+            <summary>
+            Number of entries in this season
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Location.ILocationClient">
@@ -30315,81 +33174,6 @@
         <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.ChannelResolution.AllContributions">
             <summary>All contributions to this channel.</summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace">
-            <summary>
-            Debug trace showing which model contributed to each channel.
-            Only available in DEBUG builds to avoid allocation in release.
-            </summary>
-            <remarks>
-            <para>
-            This trace helps understand why a particular action was chosen.
-            For example, if Combat model's "attack" was chosen over Interaction
-            model's "talk", the trace shows both contributions and their urgencies.
-            </para>
-            <para>
-            Usage in game debugger:
-            <code>
-            var merged = evaluator.EvaluateCharacter(characterId, inputs);
-            if (merged.Trace != null)
-            {
-                foreach (var resolution in merged.Trace.Channels)
-                {
-                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
-                    foreach (var contrib in resolution.AllContributions)
-                    {
-                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
-                    }
-                }
-            }
-            </code>
-            </para>
-            </remarks>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.Timestamp">
-            <summary>
-            Timestamp when this trace was created.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.Channels">
-            <summary>
-            All channel resolutions in this trace.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.SDK.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.SDK.Behavior.Intent.ChannelContribution[])">
-            <summary>
-            Adds a channel resolution to the trace.
-            </summary>
-            <param name="channel">The intent channel.</param>
-            <param name="winner">The winning model type (null for blended).</param>
-            <param name="winningUrgency">The winning/combined urgency.</param>
-            <param name="contributions">All contributions to this channel.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.SDK.Behavior.Runtime.IntentChannel)">
-            <summary>
-            Gets the resolution for a specific channel.
-            </summary>
-            <param name="channel">The intent channel to look up.</param>
-            <returns>The resolution for that channel, or null if not found.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType)">
-            <summary>
-            Gets whether a specific model contributed to any channel.
-            </summary>
-            <param name="modelType">The behavior model type to check.</param>
-            <returns>True if the model contributed to at least one channel.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType)">
-            <summary>
-            Gets all channels where the specified model won.
-            </summary>
-            <param name="modelType">The behavior model type to check.</param>
-            <returns>Channels won by this model.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.ContributionTrace.ToString">
-            <summary>
-            Formats the trace as a human-readable string.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType">
             <summary>
             The fixed set of behavior model types for multi-model coordination.
@@ -30570,21 +33354,6 @@
             Selects the vocalization with highest urgency.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
-            <summary>
-            Collects contributions for debugging from all outputs.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType}[])">
-            <summary>
-            Collects locomotion contributions for debugging.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.SDK.Behavior.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.SDK.Behavior.Intent.BehaviorModelType}[])">
-            <summary>
-            Collects attention contributions for debugging.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.SDK.Behavior.Intent.LocomotionIntent">
             <summary>
             Locomotion intent with blendable target position.
@@ -30725,12 +33494,6 @@
         <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.MergedIntent.VocalizationUrgency">
             <summary>
             Urgency of the winning vocalization [0.0 - 1.0].
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.MergedIntent.Trace">
-            <summary>
-            Debug trace showing which model contributed to each channel.
-            Only available in DEBUG builds.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.SDK.Behavior.Intent.MergedIntent.Empty">
