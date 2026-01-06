@@ -38,18 +38,12 @@ public partial class AnalyticsService : IAnalyticsService
     private readonly ILogger<AnalyticsService> _logger;
     private readonly AnalyticsServiceConfiguration _configuration;
 
-    // State store names from configuration
-    private const string SUMMARY_STORE = "analytics-summary";
-    private const string RATING_STORE = "analytics-rating";
-    private const string CONTROLLER_STORE = "analytics-controller";
+    // State store key prefixes
     private const string SUMMARY_INDEX_PREFIX = "analytics-summary-index";
     private const string CONTROLLER_INDEX_PREFIX = "analytics-controller-index";
 
-    // Glicko-2 constants
-    private const double DEFAULT_RATING = 1500.0;
-    private const double DEFAULT_RD = 350.0;
-    private const double DEFAULT_VOLATILITY = 0.06;
-    private const double TAU = 0.5; // System constant (controls volatility change rate)
+    // Glicko-2 scale conversion constant
+    private const double GlickoScale = 173.7178;
 
     /// <summary>
     /// Initializes a new instance of the AnalyticsService.
@@ -122,7 +116,7 @@ public partial class AnalyticsService : IAnalyticsService
         try
         {
             var eventId = Guid.NewGuid();
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(SUMMARY_STORE);
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
             // Get or create entity summary
@@ -269,7 +263,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(SUMMARY_STORE);
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
             var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
 
             var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
@@ -316,7 +310,38 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(SUMMARY_STORE);
+            if (body.Limit <= 0)
+            {
+                _logger.LogWarning("Invalid limit {Limit} for analytics summary query", body.Limit);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (body.Offset < 0)
+            {
+                _logger.LogWarning("Invalid offset {Offset} for analytics summary query", body.Offset);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (body.MinEvents < 0)
+            {
+                _logger.LogWarning("Invalid minEvents {MinEvents} for analytics summary query", body.MinEvents);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (!string.IsNullOrWhiteSpace(body.SortBy))
+            {
+                var sortBy = body.SortBy.Trim().ToLowerInvariant();
+                if (sortBy != "totalevents" &&
+                    sortBy != "firsteventat" &&
+                    sortBy != "lasteventat" &&
+                    sortBy != "eventcount")
+                {
+                    _logger.LogWarning("Unsupported sortBy value {SortBy} for analytics summary query", body.SortBy);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
             var indexKey = GetSummaryIndexKey(body.GameServiceId);
             var entityKeys = await summaryStore.GetSetAsync<string>(indexKey, cancellationToken);
 
@@ -411,21 +436,25 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(RATING_STORE);
+            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(_configuration.RatingStoreName);
             var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
 
             var rating = await ratingStore.GetAsync(ratingKey, cancellationToken);
             if (rating == null)
             {
+                var defaultRating = _configuration.Glicko2DefaultRating;
+                var defaultDeviation = _configuration.Glicko2DefaultDeviation;
+                var defaultVolatility = _configuration.Glicko2DefaultVolatility;
+
                 // Return default rating for new players
                 return (StatusCodes.OK, new SkillRatingResponse
                 {
                     EntityId = body.EntityId,
                     EntityType = body.EntityType,
                     RatingType = body.RatingType,
-                    Rating = DEFAULT_RATING,
-                    RatingDeviation = DEFAULT_RD,
-                    Volatility = DEFAULT_VOLATILITY,
+                    Rating = defaultRating,
+                    RatingDeviation = defaultDeviation,
+                    Volatility = defaultVolatility,
                     MatchesPlayed = 0,
                     LastMatchAt = null
                 });
@@ -476,7 +505,7 @@ public partial class AnalyticsService : IAnalyticsService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(RATING_STORE);
+            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(_configuration.RatingStoreName);
             var updatedRatings = new List<SkillRatingChange>();
             var now = DateTimeOffset.UtcNow;
 
@@ -492,9 +521,9 @@ public partial class AnalyticsService : IAnalyticsService
                     EntityType = result.EntityType,
                     RatingType = body.RatingType,
                     GameServiceId = body.GameServiceId,
-                    Rating = DEFAULT_RATING,
-                    RatingDeviation = DEFAULT_RD,
-                    Volatility = DEFAULT_VOLATILITY,
+                    Rating = _configuration.Glicko2DefaultRating,
+                    RatingDeviation = _configuration.Glicko2DefaultDeviation,
+                    Volatility = _configuration.Glicko2DefaultVolatility,
                     MatchesPlayed = 0
                 };
             }
@@ -588,7 +617,7 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(CONTROLLER_STORE);
+            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(_configuration.HistoryStoreName);
             var eventId = Guid.NewGuid();
             var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
 
@@ -643,7 +672,20 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(CONTROLLER_STORE);
+            if (body.Limit <= 0)
+            {
+                _logger.LogWarning("Invalid limit {Limit} for controller history query", body.Limit);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (body.StartTime.HasValue && body.EndTime.HasValue && body.StartTime > body.EndTime)
+            {
+                _logger.LogWarning("Invalid controller history time range {StartTime} to {EndTime}",
+                    body.StartTime, body.EndTime);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(_configuration.HistoryStoreName);
             var indexKey = body.AccountId.HasValue
                 ? GetControllerAccountIndexKey(body.GameServiceId, body.AccountId.Value)
                 : GetControllerIndexKey(body.GameServiceId);
@@ -741,16 +783,19 @@ public partial class AnalyticsService : IAnalyticsService
         SkillRatingData player,
         List<(SkillRatingData opponent, double outcome)> results)
     {
-        // Convert ratings to Glicko-2 scale (μ = (r - 1500) / 173.7178)
-        var mu = (player.Rating - 1500) / 173.7178;
-        var phi = player.RatingDeviation / 173.7178;
+        var baseRating = _configuration.Glicko2DefaultRating;
+        var maxDeviation = _configuration.Glicko2DefaultDeviation;
+
+        // Convert ratings to Glicko-2 scale (μ = (r - baseRating) / 173.7178)
+        var mu = (player.Rating - baseRating) / GlickoScale;
+        var phi = player.RatingDeviation / GlickoScale;
         var sigma = player.Volatility;
 
         if (results.Count == 0)
         {
             // No games played, only update RD due to rating period
             var newPhi = Math.Sqrt(phi * phi + sigma * sigma);
-            return (player.Rating, Math.Min(newPhi * 173.7178, DEFAULT_RD), sigma);
+            return (player.Rating, Math.Min(newPhi * GlickoScale, maxDeviation), sigma);
         }
 
         // Calculate v (estimated variance)
@@ -759,8 +804,8 @@ public partial class AnalyticsService : IAnalyticsService
 
         foreach (var (opponent, outcome) in results)
         {
-            var muJ = (opponent.Rating - 1500) / 173.7178;
-            var phiJ = opponent.RatingDeviation / 173.7178;
+            var muJ = (opponent.Rating - baseRating) / GlickoScale;
+            var phiJ = opponent.RatingDeviation / GlickoScale;
 
             var gPhiJ = G(phiJ);
             var e = E(mu, muJ, phiJ);
@@ -786,12 +831,12 @@ public partial class AnalyticsService : IAnalyticsService
         var newMu = mu + newPhi2 * delta / v;
 
         // Convert back to Glicko-1 scale
-        var newRating = newMu * 173.7178 + 1500;
-        var newRD = newPhiValue * 173.7178;
+        var newRating = newMu * GlickoScale + baseRating;
+        var newRD = newPhiValue * GlickoScale;
 
         // Clamp values to reasonable ranges
         newRating = Math.Clamp(newRating, 100, 4000);
-        newRD = Math.Clamp(newRD, 30, DEFAULT_RD);
+        newRD = Math.Clamp(newRD, 30, maxDeviation);
 
         return (newRating, newRD, newSigma);
     }
@@ -816,23 +861,24 @@ public partial class AnalyticsService : IAnalyticsService
         var a = Math.Log(sigma * sigma);
         var deltaSq = delta * delta;
         var phiSq = phi * phi;
+        var tau = _configuration.Glicko2SystemConstant;
 
         double f(double x)
         {
             var ex = Math.Exp(x);
             var num = ex * (deltaSq - phiSq - v - ex);
             var den = 2.0 * Math.Pow(phiSq + v + ex, 2);
-            return num / den - (x - a) / (TAU * TAU);
+            return num / den - (x - a) / (tau * tau);
         }
 
         // Initial bounds
         var upperBound = deltaSq > phiSq + v
             ? Math.Log(deltaSq - phiSq - v)
-            : a - TAU;
+            : a - tau;
 
         while (f(upperBound) < 0)
         {
-            upperBound -= TAU;
+            upperBound -= tau;
         }
 
         var lowerBound = a;
@@ -932,14 +978,6 @@ public partial class AnalyticsService : IAnalyticsService
             "eventcount" => OrderByEventCount(summaries, body.EventType, descending),
             _ => summaries
         };
-
-        if (sortBy != "totalevents" &&
-            sortBy != "firsteventat" &&
-            sortBy != "lasteventat" &&
-            sortBy != "eventcount")
-        {
-            _logger.LogWarning("Unsupported sortBy value {SortBy} for analytics summary query", body.SortBy);
-        }
 
         return ordered.ToList();
     }

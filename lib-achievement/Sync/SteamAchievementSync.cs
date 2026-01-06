@@ -81,7 +81,7 @@ public class SteamAchievementSync : IPlatformAchievementSync
             // POST to https://api.steampowered.com/ISteamUserStats/SetUserStatsForGame/v1/
             // with parameters: key, steamid, appid, count, name[0], value[0]
 
-            _logger.LogWarning("Steam achievement sync not fully implemented - API call skipped");
+            _logger.LogError("Steam achievement sync not implemented - API call skipped");
 
             // For now, simulate success for development
             await Task.Delay(10, ct); // Simulate API latency
