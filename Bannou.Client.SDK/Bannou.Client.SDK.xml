@@ -1127,6 +1127,81 @@
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution.AllContributions">
             <summary>All contributions to this channel.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds to avoid allocation in release.
+            </summary>
+            <remarks>
+            <para>
+            This trace helps understand why a particular action was chosen.
+            For example, if Combat model's "attack" was chosen over Interaction
+            model's "talk", the trace shows both contributions and their urgencies.
+            </para>
+            <para>
+            Usage in game debugger:
+            <code>
+            var merged = evaluator.EvaluateCharacter(characterId, inputs);
+            if (merged.Trace != null)
+            {
+                foreach (var resolution in merged.Trace.Channels)
+                {
+                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
+                    foreach (var contrib in resolution.AllContributions)
+                    {
+                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
+                    }
+                }
+            }
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.Timestamp">
+            <summary>
+            Timestamp when this trace was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.Channels">
+            <summary>
+            All channel resolutions in this trace.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution[])">
+            <summary>
+            Adds a channel resolution to the trace.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <param name="winner">The winning model type (null for blended).</param>
+            <param name="winningUrgency">The winning/combined urgency.</param>
+            <param name="contributions">All contributions to this channel.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel)">
+            <summary>
+            Gets the resolution for a specific channel.
+            </summary>
+            <param name="channel">The intent channel to look up.</param>
+            <returns>The resolution for that channel, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets whether a specific model contributed to any channel.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>True if the model contributed to at least one channel.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets all channels where the specified model won.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>Channels won by this model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.ToString">
+            <summary>
+            Formats the trace as a human-readable string.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType">
             <summary>
             The fixed set of behavior model types for multi-model coordination.
@@ -1307,6 +1382,21 @@
             Selects the vocalization with highest urgency.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
+            <summary>
+            Collects contributions for debugging from all outputs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects locomotion contributions for debugging.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects attention contributions for debugging.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent">
             <summary>
             Locomotion intent with blendable target position.
@@ -1447,6 +1537,12 @@
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.VocalizationUrgency">
             <summary>
             Urgency of the winning vocalization [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Trace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Empty">
@@ -4545,6 +4641,191 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent">
+            <summary>
+            Published when an entity unlocks an achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.Timestamp">
+            <summary>
+            When the achievement was unlocked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.AchievementId">
+            <summary>
+            ID of the unlocked achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.DisplayName">
+            <summary>
+            Achievement display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.Description">
+            <summary>
+            Achievement description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.EntityId">
+            <summary>
+            ID of the entity that unlocked it
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.Points">
+            <summary>
+            Points earned from this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.TotalPoints">
+            <summary>
+            Entity's new total achievement points
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.IconUrl">
+            <summary>
+            Achievement icon URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.IsRare">
+            <summary>
+            Whether this is a rare achievement (earned by &lt;5% of players)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementUnlockedEvent.Rarity">
+            <summary>
+            Percentage of players who have earned this (0-100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent">
+            <summary>
+            Published when progress is made on a progressive achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.Timestamp">
+            <summary>
+            When the progress was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.AchievementId">
+            <summary>
+            ID of the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.DisplayName">
+            <summary>
+            Achievement display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.EntityId">
+            <summary>
+            ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.PreviousProgress">
+            <summary>
+            Progress before update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.NewProgress">
+            <summary>
+            Progress after update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.TargetProgress">
+            <summary>
+            Target to unlock
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementProgressUpdatedEvent.PercentComplete">
+            <summary>
+            Completion percentage (0-100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent">
+            <summary>
+            Published when an achievement is synced to an external platform
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.Timestamp">
+            <summary>
+            When the sync occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.AchievementId">
+            <summary>
+            ID of the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.EntityId">
+            <summary>
+            ID of the entity (account for platform sync)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.Platform">
+            <summary>
+            Platform that was synced to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.PlatformAchievementId">
+            <summary>
+            Platform-specific achievement ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.Success">
+            <summary>
+            Whether sync was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementPlatformSyncedEvent.ErrorMessage">
+            <summary>
+            Error message if sync failed
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent">
             <summary>
             Periodic heartbeat from pool nodes to control plane.
@@ -5153,6 +5434,166 @@
         <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent">
+            <summary>
+            Published when an entity's score or statistic changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.Timestamp">
+            <summary>
+            When the score was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.EntityId">
+            <summary>
+            ID of the entity whose score changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.ScoreType">
+            <summary>
+            Type of score that changed (e.g., kills, points, xp)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.PreviousValue">
+            <summary>
+            Previous score value (null if first score)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.NewValue">
+            <summary>
+            New score value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.Delta">
+            <summary>
+            Change in score (newValue - previousValue)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsScoreUpdatedEvent.SessionId">
+            <summary>
+            Game session ID where this occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent">
+            <summary>
+            Published when an entity's Glicko-2 skill rating changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.Timestamp">
+            <summary>
+            When the rating was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.EntityId">
+            <summary>
+            ID of the entity whose rating changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.RatingType">
+            <summary>
+            Type of rating (e.g., overall, ranked, casual)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.PreviousRating">
+            <summary>
+            Previous Glicko-2 rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.NewRating">
+            <summary>
+            New Glicko-2 rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.RatingChange">
+            <summary>
+            Change in rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.NewRatingDeviation">
+            <summary>
+            New rating deviation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsRatingUpdatedEvent.MatchId">
+            <summary>
+            ID of the match that caused this update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent">
+            <summary>
+            Published when an entity reaches a statistical milestone
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.Timestamp">
+            <summary>
+            When the milestone was reached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.EntityId">
+            <summary>
+            ID of the entity that reached the milestone
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.MilestoneType">
+            <summary>
+            Type of milestone (e.g., total_kills, games_played)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.MilestoneValue">
+            <summary>
+            Value at which milestone was reached (e.g., 100, 1000)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AnalyticsMilestoneReachedEvent.MilestoneName">
+            <summary>
+            Human-readable milestone name (e.g., "Century Club")
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent">
@@ -6584,6 +7025,156 @@
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent">
+            <summary>
+            Published when an entity's rank changes on a leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.Timestamp">
+            <summary>
+            When the rank changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.EntityId">
+            <summary>
+            ID of the entity whose rank changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.PreviousRank">
+            <summary>
+            Previous rank (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.NewRank">
+            <summary>
+            New rank (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.RankChange">
+            <summary>
+            Change in rank (positive = improved)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.PreviousScore">
+            <summary>
+            Previous score
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardRankChangedEvent.CurrentScore">
+            <summary>
+            Current score
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent">
+            <summary>
+            Published when a new entity joins a leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.Timestamp">
+            <summary>
+            When the entry was added
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.EntityId">
+            <summary>
+            ID of the new entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.EntityType">
+            <summary>
+            Type of entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.Score">
+            <summary>
+            Initial score
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.Rank">
+            <summary>
+            Initial rank (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardEntryAddedEvent.TotalEntries">
+            <summary>
+            Total entries after addition
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent">
+            <summary>
+            Published when a new leaderboard season begins
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent.Timestamp">
+            <summary>
+            When the season started
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent.LeaderboardId">
+            <summary>
+            ID of the leaderboard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent.SeasonNumber">
+            <summary>
+            New season number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent.SeasonName">
+            <summary>
+            Name of the new season
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LeaderboardSeasonStartedEvent.PreviousSeasonNumber">
+            <summary>
+            Previous season number (null if first)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.LocationCreatedEvent">
@@ -10488,6 +11079,1082 @@
             Additional context for the recompilation
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader">
+            <summary>
+            Reads assets from the .bannou bundle format.
+            Supports random access to individual assets via the binary index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.#ctor(System.IO.Stream,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader},System.Boolean)">
+            <summary>
+            Creates a new bundle reader.
+            </summary>
+            <param name="inputStream">The stream containing the bundle.</param>
+            <param name="logger">Optional logger.</param>
+            <param name="leaveOpen">Whether to leave the stream open when disposed.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.Manifest">
+            <summary>
+            Gets the bundle manifest.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.Index">
+            <summary>
+            Gets the bundle index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadHeader">
+            <summary>
+            Reads and parses the bundle header (manifest and index).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadHeaderAsync(System.Threading.CancellationToken)">
+            <summary>
+            Reads and parses the bundle header asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.GetAssetEntry(System.String)">
+            <summary>
+            Gets an asset entry by ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.GetAssetEntryByIndex(System.Int32)">
+            <summary>
+            Gets an asset entry by index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadAsset(System.String)">
+            <summary>
+            Reads and decompresses an asset by its ID.
+            </summary>
+            <returns>The decompressed asset data, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadAssetByIndex(System.Int32)">
+            <summary>
+            Reads and decompresses an asset by its index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadAssetAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads and decompresses an asset by ID asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadAssetByIndexAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Reads and decompresses an asset by index asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadAssetToStreamAsync(System.String,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Reads an asset and writes it to a destination stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadAllAssets">
+            <summary>
+            Enumerates all assets in the bundle.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.ReadAllAssetsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Enumerates all assets in the bundle asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BannouBundleReader.Dispose">
+            <summary>
+            Disposes the reader.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest">
+            <summary>
+            Manifest describing the contents of a .bannou bundle.
+            Stored as manifest.json at the start of the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.FormatVersion">
+            <summary>
+            Bundle format version for compatibility checking.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.BundleId">
+            <summary>
+            Unique identifier for this bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.Name">
+            <summary>
+            Human-readable name for the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.Description">
+            <summary>
+            Optional description of the bundle contents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.Version">
+            <summary>
+            Version string for the bundle contents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.CreatedAt">
+            <summary>
+            Timestamp when the bundle was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.CreatedBy">
+            <summary>
+            Account ID of the bundle creator.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.TotalUncompressedSize">
+            <summary>
+            Total uncompressed size of all assets in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.TotalCompressedSize">
+            <summary>
+            Total compressed size of all assets in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.AssetCount">
+            <summary>
+            Number of assets in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.CompressionAlgorithm">
+            <summary>
+            Compression algorithm used (e.g., "lz4").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.Assets">
+            <summary>
+            List of asset entries in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.Tags">
+            <summary>
+            Optional metadata tags for the bundle.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.BundleManifest.CurrentFormatVersion">
+            <summary>
+            Current format version constant.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry">
+            <summary>
+            Entry describing a single asset within a bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.AssetId">
+            <summary>
+            Asset ID (unique within the bundle).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.Filename">
+            <summary>
+            Original filename of the asset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.ContentType">
+            <summary>
+            Content type (MIME type) of the asset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.UncompressedSize">
+            <summary>
+            Uncompressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.CompressedSize">
+            <summary>
+            Compressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.ContentHash">
+            <summary>
+            SHA256 hash of the uncompressed content.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.Index">
+            <summary>
+            Index of this asset in the bundle (0-based).
+            Used to look up offset in index.bin.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleAssetEntry.Metadata">
+            <summary>
+            Optional asset-specific metadata.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BundleIndex">
+            <summary>
+            Binary index format for fast random access to bundle assets.
+            Stored as index.bin after the manifest.
+            Each entry is 48 bytes in big-endian format.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.BundleIndex.EntrySize">
+            <summary>
+            Size of each index entry in bytes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.BundleIndex.MagicBytes">
+            <summary>
+            Magic bytes at the start of the index file.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleIndex.Entries">
+            <summary>
+            Index entries for each asset.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BundleIndex.WriteTo(System.IO.Stream)">
+            <summary>
+            Writes the index to a stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BundleIndex.ReadFrom(System.IO.Stream)">
+            <summary>
+            Reads an index from a stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BundleIndex.GetEntry(System.Int32)">
+            <summary>
+            Gets the entry at the specified index.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BundleIndexEntry">
+            <summary>
+            Single entry in the bundle index.
+            48 bytes total:
+            - 8 bytes: Offset in the bundle file
+            - 8 bytes: Compressed size
+            - 8 bytes: Uncompressed size
+            - 24 bytes: Content hash (first 24 bytes of SHA256)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleIndexEntry.Offset">
+            <summary>
+            Offset of the compressed chunk in the bundle file.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleIndexEntry.CompressedSize">
+            <summary>
+            Compressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleIndexEntry.UncompressedSize">
+            <summary>
+            Uncompressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleIndexEntry.ContentHashPrefix">
+            <summary>
+            First 24 bytes of the SHA256 content hash.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BundleIndexEntry.WriteTo(System.IO.Stream)">
+            <summary>
+            Writes this entry to a stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BundleIndexEntry.ReadFrom(System.IO.Stream)">
+            <summary>
+            Reads an entry from a stream.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BundleValidator">
+            <summary>
+            Validates uploaded bundles for structure, manifest, and content integrity.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BundleValidator.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Asset.Bundles.BundleValidator},BeyondImmersion.BannouService.Asset.Bundles.BundleValidatorOptions)">
+            <summary>
+            Creates a new bundle validator.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.Bundles.BundleValidator.ValidateAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Validates a bundle stream and returns the validation result.
+            </summary>
+            <param name="bundleStream">The bundle stream to validate.</param>
+            <param name="expectedBundleId">Expected bundle ID for verification.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Validation result with details.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BundleValidatorOptions">
+            <summary>
+            Options for bundle validation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidatorOptions.MaxAssetCount">
+            <summary>
+            Maximum number of assets allowed in a bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidatorOptions.MaxAssetSizeBytes">
+            <summary>
+            Maximum size of a single asset in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidatorOptions.ForbiddenContentTypes">
+            <summary>
+            Forbidden content types.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult">
+            <summary>
+            Result of bundle validation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.BundleId">
+            <summary>
+            Bundle ID that was validated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.IsValid">
+            <summary>
+            Whether validation passed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.Stage">
+            <summary>
+            Stage at which validation stopped.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.AssetCount">
+            <summary>
+            Number of assets in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.Manifest">
+            <summary>
+            Parsed manifest from the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.Errors">
+            <summary>
+            List of validation errors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.Warnings">
+            <summary>
+            List of validation warnings.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.ExtractedAssets">
+            <summary>
+            Extracted asset information (for registration).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.BundleValidationResult.ValidatedAt">
+            <summary>
+            When validation was performed.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.ValidationStage">
+            <summary>
+            Validation stages.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationStage.Pending">
+            <summary>Validation has not started.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationStage.Structure">
+            <summary>Validating bundle structure.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationStage.Manifest">
+            <summary>Validating bundle manifest.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationStage.Content">
+            <summary>Validating bundle content.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationStage.Complete">
+            <summary>Validation completed successfully.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationStage.Failed">
+            <summary>Validation failed.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.ValidationError">
+            <summary>
+            A validation error or warning.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ValidationError.Code">
+            <summary>
+            Error code.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ValidationError.Message">
+            <summary>
+            Error message.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ValidationError.Severity">
+            <summary>
+            Error severity.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.ValidationSeverity">
+            <summary>
+            Validation error severity.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationSeverity.Warning">
+            <summary>Non-fatal warning.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.Bundles.ValidationSeverity.Error">
+            <summary>Fatal error.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.ExtractedAssetInfo">
+            <summary>
+            Information about an extracted asset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ExtractedAssetInfo.AssetId">
+            <summary>Asset identifier.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ExtractedAssetInfo.Filename">
+            <summary>Original filename.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ExtractedAssetInfo.ContentType">
+            <summary>MIME content type.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ExtractedAssetInfo.ContentHash">
+            <summary>SHA256 hash of uncompressed content.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.Bundles.ExtractedAssetInfo.Size">
+            <summary>Uncompressed size in bytes.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.StructureValidationResult">
+            <summary>
+            Internal result for structure validation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.ManifestValidationResult">
+            <summary>
+            Internal result for manifest validation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Bundles.ContentValidationResult">
+            <summary>
+            Internal result for content validation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetType">
+            <summary>
+            Type classification for assets
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.Realm">
+            <summary>
+            Game realm the asset belongs to
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ProcessingStatus">
+            <summary>
+            Asset processing pipeline status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CompressionType">
+            <summary>
+            Compression algorithm for bundles
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleFormat">
+            <summary>
+            Bundle file format
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.UploadRequest">
+            <summary>
+            Request to initiate an asset upload and receive a pre-signed URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Owner">
+            <summary>
+            Owner of this asset operation. NOT a session ID.
+            <br/>For user-initiated uploads: the accountId (UUID format).
+            <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Filename">
+            <summary>
+            Original filename with extension
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Size">
+            <summary>
+            File size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.ContentType">
+            <summary>
+            MIME content type (e.g., image/png, model/gltf-binary)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Metadata">
+            <summary>
+            Optional metadata for asset categorization
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.UploadResponse">
+            <summary>
+            Response containing pre-signed URL and configuration for uploading an asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.UploadId">
+            <summary>
+            Unique upload session identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.UploadUrl">
+            <summary>
+            Pre-signed URL for uploading the file
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.ExpiresAt">
+            <summary>
+            When the upload URL expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.Multipart">
+            <summary>
+            Configuration for multipart uploads if file size requires it
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.RequiredHeaders">
+            <summary>
+            Headers the client must include when uploading to the pre-signed URL
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CompleteUploadRequest">
+            <summary>
+            Request to finalize an upload and trigger asset processing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.UploadId">
+            <summary>
+            Upload session ID from requestUpload
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.Parts">
+            <summary>
+            For multipart uploads - ETags of completed parts (null for single-file uploads)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CompletedPart">
+            <summary>
+            Information about a completed part in a multipart upload
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.PartNumber">
+            <summary>
+            Part number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.Etag">
+            <summary>
+            ETag returned from part upload
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.MultipartConfig">
+            <summary>
+            Configuration for multipart uploads of large files
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.Required">
+            <summary>
+            Whether multipart upload is required for this file size
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.PartSize">
+            <summary>
+            Size of each part in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.MaxParts">
+            <summary>
+            Maximum number of parts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.UploadUrls">
+            <summary>
+            Pre-signed URLs for each part of the multipart upload
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.PartUploadInfo">
+            <summary>
+            Upload information for a single part in a multipart upload
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.PartNumber">
+            <summary>
+            Part number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.UploadUrl">
+            <summary>
+            Pre-signed URL for uploading this part
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.MinSize">
+            <summary>
+            Minimum size for this part
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.MaxSize">
+            <summary>
+            Maximum size for this part
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetMetadataInput">
+            <summary>
+            User-provided metadata for asset categorization
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadataInput.AssetType">
+            <summary>
+            Type classification for the asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadataInput.Realm">
+            <summary>
+            Game realm the asset belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadataInput.Tags">
+            <summary>
+            Searchable tags for the asset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetMetadata">
+            <summary>
+            Complete asset metadata including system-generated fields
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.AssetId">
+            <summary>
+            Unique asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ContentHash">
+            <summary>
+            SHA256 hash of file contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Filename">
+            <summary>
+            Original filename
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ContentType">
+            <summary>
+            MIME content type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Size">
+            <summary>
+            File size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.AssetType">
+            <summary>
+            Type classification for the asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Realm">
+            <summary>
+            Game realm the asset belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Tags">
+            <summary>
+            Searchable tags for the asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ProcessingStatus">
+            <summary>
+            Current status of asset processing pipeline
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.IsArchived">
+            <summary>
+            Whether the asset is in cold/archival storage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.CreatedAt">
+            <summary>
+            Timestamp when the asset was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.UpdatedAt">
+            <summary>
+            Timestamp when the asset was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetAssetRequest">
+            <summary>
+            Request to retrieve asset metadata and download URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.AssetId">
+            <summary>
+            Asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.Version">
+            <summary>
+            Version ID or 'latest'
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl">
+            <summary>
+            Asset metadata combined with a pre-signed download URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.AssetId">
+            <summary>
+            Unique asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.VersionId">
+            <summary>
+            Version identifier for this specific asset version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.DownloadUrl">
+            <summary>
+            Pre-signed download URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ExpiresAt">
+            <summary>
+            When the download URL expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Size">
+            <summary>
+            File size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ContentHash">
+            <summary>
+            SHA256 hash of file contents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ContentType">
+            <summary>
+            MIME content type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Metadata">
+            <summary>
+            Complete asset metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ListVersionsRequest">
+            <summary>
+            Request to list all versions of an asset with pagination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.AssetId">
+            <summary>
+            Asset identifier to list versions for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.Limit">
+            <summary>
+            Maximum number of versions to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.Offset">
+            <summary>
+            Number of versions to skip for pagination
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetVersionList">
+            <summary>
+            Paginated list of asset versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.AssetId">
+            <summary>
+            Asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Versions">
+            <summary>
+            List of asset versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Total">
+            <summary>
+            Total number of versions available
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Limit">
+            <summary>
+            Maximum number of versions returned per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Offset">
+            <summary>
+            Number of versions skipped
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetVersion">
+            <summary>
+            Metadata for a specific version of an asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.VersionId">
+            <summary>
+            Unique version identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.CreatedAt">
+            <summary>
+            Timestamp when this version was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.Size">
+            <summary>
+            File size in bytes for this version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.IsArchived">
+            <summary>
+            Whether this version is in cold storage
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetSearchRequest">
+            <summary>
+            Search criteria for filtering assets with pagination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Tags">
+            <summary>
+            Filter by tags (assets must have all specified tags) (null to skip tag filtering)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.AssetType">
+            <summary>
+            Filter by asset type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Realm">
+            <summary>
+            Filter by game realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.ContentType">
+            <summary>
+            MIME content type filter (null to skip content type filtering)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Limit">
+            <summary>
+            Maximum number of results to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Offset">
+            <summary>
+            Number of results to skip for pagination
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetSearchResult">
+            <summary>
+            Paginated results from an asset search query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Assets">
+            <summary>
+            List of matching assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Total">
+            <summary>
+            Total number of matching assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Limit">
+            <summary>
+            Maximum number of results returned per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Offset">
+            <summary>
+            Number of results skipped
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CreateBundleRequest">
+            <summary>
+            Request to create a new asset bundle from multiple assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Owner">
+            <summary>
+            Owner of this bundle. NOT a session ID.
+            <br/>For user-initiated bundles: the accountId (UUID format).
+            <br/>For service-initiated bundles: the service name (e.g., "orchestrator").
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.BundleId">
+            <summary>
+            Unique bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Version">
+            <summary>
+            Bundle version string
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.AssetIds">
+            <summary>
+            List of asset IDs to include in the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Compression">
+            <summary>
+            Compression algorithm to use for the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Metadata">
+            <summary>
+            Custom metadata for the bundle (null if none)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CreateBundleResponse">
+            <summary>
+            Response with bundle creation status and estimated size
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.BundleId">
+            <summary>
+            Unique bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.Status">
+            <summary>
+            Bundle creation status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.EstimatedSize">
+            <summary>
+            Estimated bundle size in bytes
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetBundleRequest">
+            <summary>
+            Request to retrieve bundle metadata and download URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.BundleId">
+            <summary>
+            Bundle identifier to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.Format">
+            <summary>
+            Desired download format (bannou or zip)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl">
+            <summary>
+            Bundle metadata combined with a pre-signed download URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.BundleId">
+            <summary>
+            Unique bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.Version">
+            <summary>
+            Bundle version string
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.DownloadUrl">
+            <summary>
+            Pre-signed URL for downloading the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.Format">
+            <summary>
+            Format of the downloadable bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.ExpiresAt">
+            <summary>
+            When the download URL expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.Size">
+            <summary>
+            Bundle file size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.AssetCount">
+            <summary>
+            Number of assets contained in the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.FromCache">
+            <summary>
+            True if ZIP format was served from conversion cache
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleUploadRequest">
+            <summary>
+            Request to upload a pre-built asset bundle file
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Owner">
+            <summary>
+            Owner of this bundle upload. NOT a session ID.
+            <br/>For user-initiated uploads: the accountId (UUID format).
+            <br/>For service-initiated uploads: the service name (e.g., "orchestrator").
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Filename">
+            <summary>
+            Must end with .bannou or .zip
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Size">
+            <summary>
+            Bundle file size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.ManifestPreview">
+            <summary>
+            Optional preview of bundle manifest for validation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleManifestPreview">
+            <summary>
+            Preview of bundle manifest for validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.BundleId">
+            <summary>
+            Bundle identifier from the manifest
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.Version">
+            <summary>
+            Bundle version from the manifest
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.AssetCount">
+            <summary>
+            Number of assets declared in the manifest
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Account.AuthProvider">
             <summary>
             All authentication provider types including email
@@ -11371,620 +13038,6 @@
         <member name="P:BeyondImmersion.BannouService.Actor.InjectPerceptionResponse.QueueDepth">
             <summary>
             Current depth of the perception queue
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetType">
-            <summary>
-            Type classification for assets
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.Realm">
-            <summary>
-            Game realm the asset belongs to
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.ProcessingStatus">
-            <summary>
-            Asset processing pipeline status
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.CompressionType">
-            <summary>
-            Compression algorithm for bundles
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleFormat">
-            <summary>
-            Bundle file format
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.UploadRequest">
-            <summary>
-            Request to initiate an asset upload and receive a pre-signed URL
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Owner">
-            <summary>
-            Owner of this asset operation. NOT a session ID.
-            <br/>For user-initiated uploads: the accountId (UUID format).
-            <br/>For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Filename">
-            <summary>
-            Original filename with extension
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Size">
-            <summary>
-            File size in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.ContentType">
-            <summary>
-            MIME content type (e.g., image/png, model/gltf-binary)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Metadata">
-            <summary>
-            Optional metadata for asset categorization
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.UploadResponse">
-            <summary>
-            Response containing pre-signed URL and configuration for uploading an asset
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.UploadId">
-            <summary>
-            Unique upload session identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.UploadUrl">
-            <summary>
-            Pre-signed URL for uploading the file
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.ExpiresAt">
-            <summary>
-            When the upload URL expires
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.Multipart">
-            <summary>
-            Configuration for multipart uploads if file size requires it
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.RequiredHeaders">
-            <summary>
-            Headers the client must include when uploading to the pre-signed URL
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.CompleteUploadRequest">
-            <summary>
-            Request to finalize an upload and trigger asset processing
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.UploadId">
-            <summary>
-            Upload session ID from requestUpload
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.Parts">
-            <summary>
-            For multipart uploads - ETags of completed parts (null for single-file uploads)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.CompletedPart">
-            <summary>
-            Information about a completed part in a multipart upload
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.PartNumber">
-            <summary>
-            Part number (1-based)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.Etag">
-            <summary>
-            ETag returned from part upload
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.MultipartConfig">
-            <summary>
-            Configuration for multipart uploads of large files
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.Required">
-            <summary>
-            Whether multipart upload is required for this file size
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.PartSize">
-            <summary>
-            Size of each part in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.MaxParts">
-            <summary>
-            Maximum number of parts
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.UploadUrls">
-            <summary>
-            Pre-signed URLs for each part of the multipart upload
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.PartUploadInfo">
-            <summary>
-            Upload information for a single part in a multipart upload
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.PartNumber">
-            <summary>
-            Part number (1-based)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.UploadUrl">
-            <summary>
-            Pre-signed URL for uploading this part
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.MinSize">
-            <summary>
-            Minimum size for this part
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.MaxSize">
-            <summary>
-            Maximum size for this part
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetMetadataInput">
-            <summary>
-            User-provided metadata for asset categorization
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadataInput.AssetType">
-            <summary>
-            Type classification for the asset
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadataInput.Realm">
-            <summary>
-            Game realm the asset belongs to
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadataInput.Tags">
-            <summary>
-            Searchable tags for the asset
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetMetadata">
-            <summary>
-            Complete asset metadata including system-generated fields
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.AssetId">
-            <summary>
-            Unique asset identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ContentHash">
-            <summary>
-            SHA256 hash of file contents
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Filename">
-            <summary>
-            Original filename
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ContentType">
-            <summary>
-            MIME content type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Size">
-            <summary>
-            File size in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.AssetType">
-            <summary>
-            Type classification for the asset
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Realm">
-            <summary>
-            Game realm the asset belongs to
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Tags">
-            <summary>
-            Searchable tags for the asset
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ProcessingStatus">
-            <summary>
-            Current status of asset processing pipeline
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.IsArchived">
-            <summary>
-            Whether the asset is in cold/archival storage
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.CreatedAt">
-            <summary>
-            Timestamp when the asset was created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.UpdatedAt">
-            <summary>
-            Timestamp when the asset was last updated
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.GetAssetRequest">
-            <summary>
-            Request to retrieve asset metadata and download URL
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.AssetId">
-            <summary>
-            Asset identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.Version">
-            <summary>
-            Version ID or 'latest'
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl">
-            <summary>
-            Asset metadata combined with a pre-signed download URL
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.AssetId">
-            <summary>
-            Unique asset identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.VersionId">
-            <summary>
-            Version identifier for this specific asset version
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.DownloadUrl">
-            <summary>
-            Pre-signed download URL
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ExpiresAt">
-            <summary>
-            When the download URL expires
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Size">
-            <summary>
-            File size in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ContentHash">
-            <summary>
-            SHA256 hash of file contents
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ContentType">
-            <summary>
-            MIME content type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Metadata">
-            <summary>
-            Complete asset metadata
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.ListVersionsRequest">
-            <summary>
-            Request to list all versions of an asset with pagination
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.AssetId">
-            <summary>
-            Asset identifier to list versions for
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.Limit">
-            <summary>
-            Maximum number of versions to return
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.ListVersionsRequest.Offset">
-            <summary>
-            Number of versions to skip for pagination
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetVersionList">
-            <summary>
-            Paginated list of asset versions
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.AssetId">
-            <summary>
-            Asset identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Versions">
-            <summary>
-            List of asset versions
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Total">
-            <summary>
-            Total number of versions available
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Limit">
-            <summary>
-            Maximum number of versions returned per page
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersionList.Offset">
-            <summary>
-            Number of versions skipped
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetVersion">
-            <summary>
-            Metadata for a specific version of an asset
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.VersionId">
-            <summary>
-            Unique version identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.CreatedAt">
-            <summary>
-            Timestamp when this version was created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.Size">
-            <summary>
-            File size in bytes for this version
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.IsArchived">
-            <summary>
-            Whether this version is in cold storage
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetSearchRequest">
-            <summary>
-            Search criteria for filtering assets with pagination
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Tags">
-            <summary>
-            Filter by tags (assets must have all specified tags) (null to skip tag filtering)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.AssetType">
-            <summary>
-            Filter by asset type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Realm">
-            <summary>
-            Filter by game realm
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.ContentType">
-            <summary>
-            MIME content type filter (null to skip content type filtering)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Limit">
-            <summary>
-            Maximum number of results to return
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Offset">
-            <summary>
-            Number of results to skip for pagination
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetSearchResult">
-            <summary>
-            Paginated results from an asset search query
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Assets">
-            <summary>
-            List of matching assets
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Total">
-            <summary>
-            Total number of matching assets
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Limit">
-            <summary>
-            Maximum number of results returned per page
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchResult.Offset">
-            <summary>
-            Number of results skipped
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.CreateBundleRequest">
-            <summary>
-            Request to create a new asset bundle from multiple assets
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Owner">
-            <summary>
-            Owner of this bundle. NOT a session ID.
-            <br/>For user-initiated bundles: the accountId (UUID format).
-            <br/>For service-initiated bundles: the service name (e.g., "orchestrator").
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.BundleId">
-            <summary>
-            Unique bundle identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Version">
-            <summary>
-            Bundle version string
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.AssetIds">
-            <summary>
-            List of asset IDs to include in the bundle
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Compression">
-            <summary>
-            Compression algorithm to use for the bundle
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Metadata">
-            <summary>
-            Custom metadata for the bundle (null if none)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.CreateBundleResponse">
-            <summary>
-            Response with bundle creation status and estimated size
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.BundleId">
-            <summary>
-            Unique bundle identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.Status">
-            <summary>
-            Bundle creation status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.EstimatedSize">
-            <summary>
-            Estimated bundle size in bytes
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.GetBundleRequest">
-            <summary>
-            Request to retrieve bundle metadata and download URL
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.BundleId">
-            <summary>
-            Bundle identifier to retrieve
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.GetBundleRequest.Format">
-            <summary>
-            Desired download format (bannou or zip)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl">
-            <summary>
-            Bundle metadata combined with a pre-signed download URL
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.BundleId">
-            <summary>
-            Unique bundle identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.Version">
-            <summary>
-            Bundle version string
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.DownloadUrl">
-            <summary>
-            Pre-signed URL for downloading the bundle
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.Format">
-            <summary>
-            Format of the downloadable bundle
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.ExpiresAt">
-            <summary>
-            When the download URL expires
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.Size">
-            <summary>
-            Bundle file size in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.AssetCount">
-            <summary>
-            Number of assets contained in the bundle
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.FromCache">
-            <summary>
-            True if ZIP format was served from conversion cache
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleUploadRequest">
-            <summary>
-            Request to upload a pre-built asset bundle file
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Owner">
-            <summary>
-            Owner of this bundle upload. NOT a session ID.
-            <br/>For user-initiated uploads: the accountId (UUID format).
-            <br/>For service-initiated uploads: the service name (e.g., "orchestrator").
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Filename">
-            <summary>
-            Must end with .bannou or .zip
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.Size">
-            <summary>
-            Bundle file size in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleUploadRequest.ManifestPreview">
-            <summary>
-            Optional preview of bundle manifest for validation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleManifestPreview">
-            <summary>
-            Preview of bundle manifest for validation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.BundleId">
-            <summary>
-            Bundle identifier from the manifest
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.Version">
-            <summary>
-            Bundle version from the manifest
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.AssetCount">
-            <summary>
-            Number of assets declared in the manifest
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.Provider">
