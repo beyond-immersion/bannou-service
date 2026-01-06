@@ -38,7 +38,7 @@ public partial class AnalyticsService
     public async Task HandleGameActionPerformedAsync(GameSessionActionPerformedEvent evt)
     {
         // TODO: Implement game-session.action.performed event handling
-        _logger.LogInformation("Received game-session.action.performed event for {GameServiceId}", evt.GameServiceId);
+        _logger.LogInformation("Received game-session.action.performed event for session {SessionId}", evt.SessionId);
         await Task.CompletedTask;
     }
 
@@ -50,7 +50,7 @@ public partial class AnalyticsService
     public async Task HandleGameSessionCreatedAsync(GameSessionCreatedEvent evt)
     {
         // TODO: Implement game-session.created event handling
-        _logger.LogInformation("Received game-session.created event for {GameServiceId}", evt.GameServiceId);
+        _logger.LogInformation("Received game-session.created event for session {SessionId}", evt.SessionId);
         await Task.CompletedTask;
     }
 
@@ -62,7 +62,7 @@ public partial class AnalyticsService
     public async Task HandleGameSessionDeletedAsync(GameSessionDeletedEvent evt)
     {
         // TODO: Implement game-session.deleted event handling
-        _logger.LogInformation("Received game-session.deleted event for {GameServiceId}", evt.GameServiceId);
+        _logger.LogInformation("Received game-session.deleted event for session {SessionId}", evt.SessionId);
         await Task.CompletedTask;
     }
 }
