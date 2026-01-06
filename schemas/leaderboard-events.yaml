@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard Service Events
+  description: |
+    Event subscription and publication declarations for Leaderboard service.
+
+    **Data Flow**: Leaderboard subscribes to analytics events and publishes rank changes:
+    - Subscribes to analytics.score.updated for automatic score updates
+    - Publishes leaderboard.rank.changed for clients/achievements to consume
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Analytics events for automatic score updates
+    - topic: analytics.score.updated
+      event: AnalyticsScoreUpdatedEvent
+      handler: HandleScoreUpdated
+    - topic: analytics.rating.updated
+      event: AnalyticsRatingUpdatedEvent
+      handler: HandleRatingUpdated
+  x-event-publications:
+    # Published when an entity's rank changes
+    - topic: leaderboard.rank.changed
+      event: LeaderboardRankChangedEvent
+      description: Published when an entity's rank changes on a leaderboard
+    # Published when an entity enters a leaderboard for the first time
+    - topic: leaderboard.entry.added
+      event: LeaderboardEntryAddedEvent
+      description: Published when a new entity joins a leaderboard
+    # Published when a new season starts
+    - topic: leaderboard.season.started
+      event: LeaderboardSeasonStartedEvent
+      description: Published when a new leaderboard season begins
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # ============================================
+    # Published Events
+    # ============================================
+    LeaderboardRankChangedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity's rank changes on a leaderboard
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - leaderboardId
+        - entityId
+        - entityType
+        - previousRank
+        - newRank
+        - currentScore
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the rank changed
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity whose rank changed
+        entityType:
+          type: string
+          enum:
+            - account
+            - character
+            - guild
+            - actor
+            - custom
+          description: Type of entity
+        previousRank:
+          type: integer
+          format: int64
+          description: Previous rank (1-based)
+        newRank:
+          type: integer
+          format: int64
+          description: New rank (1-based)
+        rankChange:
+          type: integer
+          format: int64
+          description: Change in rank (positive = improved)
+        previousScore:
+          type: number
+          format: double
+          description: Previous score
+        currentScore:
+          type: number
+          format: double
+          description: Current score
+
+    LeaderboardEntryAddedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a new entity joins a leaderboard
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - leaderboardId
+        - entityId
+        - entityType
+        - score
+        - rank
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the entry was added
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the new entity
+        entityType:
+          type: string
+          enum:
+            - account
+            - character
+            - guild
+            - actor
+            - custom
+          description: Type of entity
+        score:
+          type: number
+          format: double
+          description: Initial score
+        rank:
+          type: integer
+          format: int64
+          description: Initial rank (1-based)
+        totalEntries:
+          type: integer
+          format: int64
+          description: Total entries after addition
+
+    LeaderboardSeasonStartedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a new leaderboard season begins
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - leaderboardId
+        - seasonNumber
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the season started
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        seasonNumber:
+          type: integer
+          description: New season number
+        seasonName:
+          type: string
+          nullable: true
+          description: Name of the new season
+        previousSeasonNumber:
+          type: integer
+          nullable: true
+          description: Previous season number (null if first)
