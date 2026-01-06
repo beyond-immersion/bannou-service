@@ -31,11 +31,12 @@ public partial class LeaderboardService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
+    public async Task HandleScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
     {
         // TODO: Implement analytics.score.updated event handling
-        _logger.LogInformation("[EVENT] Received analytics.score.updated event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received analytics.score.updated event for {EntityType}:{EntityId} ({ScoreType})",
+            evt.EntityType, evt.EntityId, evt.ScoreType);
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -43,10 +44,11 @@ public partial class LeaderboardService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleRatingUpdatedAsync(AnalyticsRatingUpdatedEvent evt)
+    public async Task HandleRatingUpdatedAsync(AnalyticsRatingUpdatedEvent evt)
     {
         // TODO: Implement analytics.rating.updated event handling
-        _logger.LogInformation("[EVENT] Received analytics.rating.updated event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received analytics.rating.updated event for {EntityType}:{EntityId} ({RatingType})",
+            evt.EntityType, evt.EntityId, evt.RatingType);
+        await Task.CompletedTask;
     }
 }

@@ -35,11 +35,11 @@ public partial class AnalyticsService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleGameActionPerformedAsync(GameSessionActionPerformedEvent evt)
+    public async Task HandleGameActionPerformedAsync(GameSessionActionPerformedEvent evt)
     {
         // TODO: Implement game-session.action.performed event handling
-        _logger.LogInformation("[EVENT] Received game-session.action.performed event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received game-session.action.performed event for {GameServiceId}", evt.GameServiceId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -47,11 +47,11 @@ public partial class AnalyticsService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleGameSessionCreatedAsync(GameSessionCreatedEvent evt)
+    public async Task HandleGameSessionCreatedAsync(GameSessionCreatedEvent evt)
     {
         // TODO: Implement game-session.created event handling
-        _logger.LogInformation("[EVENT] Received game-session.created event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received game-session.created event for {GameServiceId}", evt.GameServiceId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -59,10 +59,10 @@ public partial class AnalyticsService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleGameSessionDeletedAsync(GameSessionDeletedEvent evt)
+    public async Task HandleGameSessionDeletedAsync(GameSessionDeletedEvent evt)
     {
         // TODO: Implement game-session.deleted event handling
-        _logger.LogInformation("[EVENT] Received game-session.deleted event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received game-session.deleted event for {GameServiceId}", evt.GameServiceId);
+        await Task.CompletedTask;
     }
 }

@@ -45,6 +45,7 @@ public partial class AchievementService : IAchievementService
     private const string PROGRESS_STORE = "achievement-progress";
     private const string UNLOCK_STORE = "achievement-unlock";
     private const string SYNC_STATUS_STORE = "achievement-sync-status";
+    private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
 
     /// <summary>
     /// Initializes a new instance of the AchievementService.
@@ -54,6 +55,7 @@ public partial class AchievementService : IAchievementService
         IStateStoreFactory stateStoreFactory,
         ILogger<AchievementService> logger,
         AchievementServiceConfiguration configuration,
+        IEventConsumer eventConsumer,
         IEnumerable<IPlatformAchievementSync> platformSyncs)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -61,6 +63,8 @@ public partial class AchievementService : IAchievementService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _platformSyncs = platformSyncs ?? throw new ArgumentNullException(nameof(platformSyncs));
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -69,6 +73,13 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private static string GetDefinitionKey(Guid gameServiceId, string achievementId)
         => $"{gameServiceId}:{achievementId}";
+
+    /// <summary>
+    /// Generates the key for the achievement definition index.
+    /// Format: achievement-definitions:gameServiceId
+    /// </summary>
+    private static string GetDefinitionIndexKey(Guid gameServiceId)
+        => $"{DEFINITION_INDEX_PREFIX}:{gameServiceId}";
 
     /// <summary>
     /// Generates the key for entity progress.
@@ -128,6 +139,10 @@ public partial class AchievementService : IAchievementService
             };
 
             await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+            await definitionStore.AddToSetAsync(
+                GetDefinitionIndexKey(body.GameServiceId),
+                body.AchievementId,
+                cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(definition, 0));
         }
@@ -196,15 +211,62 @@ public partial class AchievementService : IAchievementService
 
         try
         {
-            // For now, return empty list - full implementation requires indexed query
-            var response = new ListAchievementDefinitionsResponse
+            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(DEFINITION_STORE);
+            var indexKey = GetDefinitionIndexKey(body.GameServiceId);
+            var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+            if (achievementIds.Count == 0)
             {
-                Achievements = new List<AchievementDefinitionResponse>()
-            };
+                return (StatusCodes.OK, new ListAchievementDefinitionsResponse
+                {
+                    Achievements = new List<AchievementDefinitionResponse>()
+                });
+            }
 
-            _logger.LogWarning("ListAchievementDefinitions not fully implemented - requires indexed query support");
+            var achievements = new List<AchievementDefinitionResponse>();
 
-            return (StatusCodes.OK, response);
+            foreach (var achievementId in achievementIds)
+            {
+                var defKey = GetDefinitionKey(body.GameServiceId, achievementId);
+                var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                if (body.Platform.HasValue &&
+                    (definition.Platforms == null || !definition.Platforms.Contains(body.Platform.Value)))
+                {
+                    continue;
+                }
+
+                if (body.AchievementType.HasValue && definition.AchievementType != body.AchievementType.Value)
+                {
+                    continue;
+                }
+
+                if (body.IsActive.HasValue && definition.IsActive != body.IsActive.Value)
+                {
+                    continue;
+                }
+
+                if (!body.IncludeHidden &&
+                    (definition.AchievementType == AchievementType.Hidden || definition.AchievementType == AchievementType.Secret))
+                {
+                    continue;
+                }
+
+                achievements.Add(MapToResponse(definition, definition.EarnedCount));
+            }
+
+            var ordered = achievements
+                .OrderBy(a => a.AchievementId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return (StatusCodes.OK, new ListAchievementDefinitionsResponse
+            {
+                Achievements = ordered
+            });
         }
         catch (Exception ex)
         {
@@ -301,6 +363,10 @@ public partial class AchievementService : IAchievementService
             }
 
             await definitionStore.DeleteAsync(key, cancellationToken);
+            await definitionStore.RemoveFromSetAsync(
+                GetDefinitionIndexKey(body.GameServiceId),
+                body.AchievementId,
+                cancellationToken);
 
             return StatusCodes.OK;
         }

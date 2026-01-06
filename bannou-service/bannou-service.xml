@@ -11437,7 +11437,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.AchievementType">
             <summary>
-            Type of achievement
+            Classification of the achievement (affects visibility and progress behavior)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.CreateAchievementDefinitionRequest.EntityTypes">
@@ -11517,7 +11517,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest.AchievementType">
             <summary>
-            Filter by achievement type
+            Filter by achievement classification
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.ListAchievementDefinitionsRequest.IsActive">
@@ -11620,6 +11620,11 @@
             Description for hidden achievements
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.AchievementType">
+            <summary>
+            Classification of the achievement
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.AchievementDefinitionResponse.EntityTypes">
             <summary>
             Allowed entity types
@@ -11690,6 +11695,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest.EntityType">
+            <summary>
+            Entity type whose progress is requested
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.GetAchievementProgressRequest.AchievementId">
             <summary>
             Specific achievement ID (null for all)
@@ -11703,6 +11713,11 @@
         <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse.EntityId">
             <summary>
             ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse.EntityType">
+            <summary>
+            Entity type that owns this progress summary
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.AchievementProgressResponse.Progress">
@@ -11780,6 +11795,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest.EntityType">
+            <summary>
+            Entity type receiving the progress increment
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.UpdateAchievementProgressRequest.Increment">
             <summary>
             Amount to increment progress
@@ -11840,6 +11860,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest.EntityType">
+            <summary>
+            Entity type to unlock the achievement for
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.UnlockAchievementRequest.SkipPlatformSync">
             <summary>
             Skip syncing to external platforms
@@ -11885,6 +11910,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest.EntityType">
+            <summary>
+            Entity type whose unlocked achievements are listed
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsRequest.Platform">
             <summary>
             Filter by platform
@@ -11898,6 +11928,11 @@
         <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsResponse.EntityId">
             <summary>
             ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsResponse.EntityType">
+            <summary>
+            Entity type for the returned unlocked achievements
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.ListUnlockedAchievementsResponse.Achievements">
@@ -11960,6 +11995,16 @@
             ID of the entity (must be account for platform sync)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest.EntityType">
+            <summary>
+            Entity type to sync (must be account for platform links)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest.Platform">
+            <summary>
+            External platform to sync achievements to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsRequest.ForceResync">
             <summary>
             Force resync even if already synced
@@ -11968,6 +12013,11 @@
         <member name="T:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse">
             <summary>
             Response after platform sync attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse.Platform">
+            <summary>
+            Platform targeted by the sync attempt
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.SyncPlatformAchievementsResponse.Synced">
@@ -12005,6 +12055,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest.EntityType">
+            <summary>
+            Entity type whose platform sync status is requested
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.GetPlatformSyncStatusRequest.Platform">
             <summary>
             Specific platform (null for all)
@@ -12020,6 +12075,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformSyncStatusResponse.EntityType">
+            <summary>
+            Entity type for the reported platform status
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.PlatformSyncStatusResponse.Platforms">
             <summary>
             Sync status per platform
@@ -12028,6 +12088,11 @@
         <member name="T:BeyondImmersion.BannouService.Achievement.PlatformStatus">
             <summary>
             Sync status for a single platform
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.Platform">
+            <summary>
+            Platform this status entry describes
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Achievement.PlatformStatus.IsLinked">
@@ -13220,6 +13285,11 @@
             ID of the entity this event relates to
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.EntityType">
+            <summary>
+            Entity type the event is attributed to
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.IngestEventRequest.Timestamp">
             <summary>
             When the event occurred
@@ -13295,6 +13365,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.GetEntitySummaryRequest.EntityType">
+            <summary>
+            Entity type to summarize
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse">
             <summary>
             Aggregated statistics for an entity
@@ -13303,6 +13378,11 @@
         <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.EntityId">
             <summary>
             ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.EntityType">
+            <summary>
+            Entity type for this summary
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.EntitySummaryResponse.TotalEvents">
@@ -13342,7 +13422,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.EntityType">
             <summary>
-            Filter by entity type
+            Optional filter by entity type
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.QueryEntitySummariesRequest.EventType">
@@ -13405,6 +13485,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest.EntityType">
+            <summary>
+            Entity type whose rating is requested
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.GetSkillRatingRequest.RatingType">
             <summary>
             Type of rating (e.g., overall, ranked, casual)
@@ -13418,6 +13503,11 @@
         <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.EntityId">
             <summary>
             ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.EntityType">
+            <summary>
+            Entity type for this rating record
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingResponse.RatingType">
@@ -13485,6 +13575,11 @@
             ID of the participating entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.MatchResult.EntityType">
+            <summary>
+            Entity type for this match participant
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.MatchResult.Outcome">
             <summary>
             Match outcome (1.0 = win, 0.5 = draw, 0.0 = loss)
@@ -13520,6 +13615,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingChange.EntityType">
+            <summary>
+            Entity type for this rating change
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.SkillRatingChange.PreviousRating">
             <summary>
             Rating before this match
@@ -13553,6 +13653,16 @@
         <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.TargetEntityId">
             <summary>
             ID of the entity being controlled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.TargetEntityType">
+            <summary>
+            Entity type being controlled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.Action">
+            <summary>
+            Whether control was possessed or released
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.RecordControllerEventRequest.Timestamp">
@@ -13633,6 +13743,16 @@
         <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.TargetEntityId">
             <summary>
             ID of the controlled entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.TargetEntityType">
+            <summary>
+            Entity type that was controlled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.Action">
+            <summary>
+            Control action that occurred (possess/release)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Analytics.ControllerHistoryEvent.Timestamp">
@@ -22246,6 +22366,16 @@
             Allowed entity types
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.SortOrder">
+            <summary>
+            Ordering used when ranking scores (descending for high scores, ascending for low)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.UpdateMode">
+            <summary>
+            Rule applied when new scores are submitted (replace/increment/max/min)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardDefinitionResponse.IsSeasonal">
             <summary>
             Whether the leaderboard is seasonal
@@ -22294,6 +22424,11 @@
         <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.EntityId">
             <summary>
             ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.EntityType">
+            <summary>
+            Entity type submitting the score
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Leaderboard.SubmitScoreRequest.Score">
@@ -22371,6 +22506,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.BatchScoreEntry.EntityType">
+            <summary>
+            Entity type for this score entry
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Leaderboard.BatchScoreEntry.Score">
             <summary>
             Score value
@@ -22411,6 +22551,11 @@
             ID of the entity
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetEntityRankRequest.EntityType">
+            <summary>
+            Entity type whose rank is requested
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse">
             <summary>
             Entity's rank on a leaderboard
@@ -22419,6 +22564,11 @@
         <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.EntityId">
             <summary>
             ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.EntityType">
+            <summary>
+            Entity type for the ranked entity
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Leaderboard.EntityRankResponse.Score">
@@ -22486,6 +22636,11 @@
             ID of the entity to center on
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest.EntityType">
+            <summary>
+            Entity type of the anchor entry
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Leaderboard.GetRanksAroundRequest.CountBefore">
             <summary>
             Entries to show before the entity
@@ -22524,6 +22679,11 @@
         <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.EntityId">
             <summary>
             ID of the entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.EntityType">
+            <summary>
+            Entity type for this leaderboard entry
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Leaderboard.LeaderboardEntry.Score">

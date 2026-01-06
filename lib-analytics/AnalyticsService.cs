@@ -42,6 +42,8 @@ public partial class AnalyticsService : IAnalyticsService
     private const string SUMMARY_STORE = "analytics-summary";
     private const string RATING_STORE = "analytics-rating";
     private const string CONTROLLER_STORE = "analytics-controller";
+    private const string SUMMARY_INDEX_PREFIX = "analytics-summary-index";
+    private const string CONTROLLER_INDEX_PREFIX = "analytics-controller-index";
 
     // Glicko-2 constants
     private const double DEFAULT_RATING = 1500.0;
@@ -56,12 +58,15 @@ public partial class AnalyticsService : IAnalyticsService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<AnalyticsService> logger,
-        AnalyticsServiceConfiguration configuration)
+        AnalyticsServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -84,6 +89,27 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     private static string GetControllerKey(Guid gameServiceId, Guid accountId, DateTimeOffset timestamp)
         => $"{gameServiceId}:controller:{accountId}:{timestamp:o}";
+
+    /// <summary>
+    /// Generates the key for the entity summary index.
+    /// Format: analytics-summary-index:gameServiceId
+    /// </summary>
+    private static string GetSummaryIndexKey(Guid gameServiceId)
+        => $"{SUMMARY_INDEX_PREFIX}:{gameServiceId}";
+
+    /// <summary>
+    /// Generates the key for the controller history index.
+    /// Format: analytics-controller-index:gameServiceId
+    /// </summary>
+    private static string GetControllerIndexKey(Guid gameServiceId)
+        => $"{CONTROLLER_INDEX_PREFIX}:{gameServiceId}";
+
+    /// <summary>
+    /// Generates the key for controller history by account.
+    /// Format: analytics-controller-index:gameServiceId:account:accountId
+    /// </summary>
+    private static string GetControllerAccountIndexKey(Guid gameServiceId, Guid accountId)
+        => $"{CONTROLLER_INDEX_PREFIX}:{gameServiceId}:account:{accountId}";
 
     /// <summary>
     /// Implementation of IngestEvent operation.
@@ -124,6 +150,10 @@ public partial class AnalyticsService : IAnalyticsService
             summary.Aggregates[body.EventType] = newValue;
 
             await summaryStore.SaveAsync(entityKey, summary, options: null, cancellationToken);
+            await summaryStore.AddToSetAsync(
+                GetSummaryIndexKey(body.GameServiceId),
+                entityKey,
+                cancellationToken: cancellationToken);
 
             // Publish score updated event if value changed
             if (body.Value != 0)
@@ -286,17 +316,72 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            // For now, return empty results - full query implementation requires Redis SCAN or MySQL
-            // This is a placeholder that demonstrates the response structure
-            var response = new QueryEntitySummariesResponse
+            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(SUMMARY_STORE);
+            var indexKey = GetSummaryIndexKey(body.GameServiceId);
+            var entityKeys = await summaryStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+            if (entityKeys.Count == 0)
             {
-                Summaries = new List<EntitySummaryResponse>(),
-                Total = 0
-            };
+                return (StatusCodes.OK, new QueryEntitySummariesResponse
+                {
+                    Summaries = new List<EntitySummaryResponse>(),
+                    Total = 0
+                });
+            }
 
-            _logger.LogWarning("QueryEntitySummaries not fully implemented - requires indexed query support");
+            var summaries = new List<EntitySummaryData>();
 
-            return (StatusCodes.OK, response);
+            foreach (var entityKey in entityKeys)
+            {
+                var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
+                if (summary == null)
+                {
+                    continue;
+                }
+
+                if (body.EntityType.HasValue && summary.EntityType != body.EntityType.Value)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(body.EventType))
+                {
+                    if (summary.EventCounts == null || !summary.EventCounts.ContainsKey(body.EventType))
+                    {
+                        continue;
+                    }
+                }
+
+                if (body.MinEvents > 0 && summary.TotalEvents < body.MinEvents)
+                {
+                    continue;
+                }
+
+                summaries.Add(summary);
+            }
+
+            var total = summaries.Count;
+            var ordered = ApplySummarySort(summaries, body);
+            var paged = ordered
+                .Skip(body.Offset)
+                .Take(body.Limit)
+                .Select(summary => new EntitySummaryResponse
+                {
+                    EntityId = summary.EntityId,
+                    EntityType = summary.EntityType,
+                    TotalEvents = summary.TotalEvents,
+                    FirstEventAt = summary.FirstEventAt,
+                    LastEventAt = summary.LastEventAt,
+                    EventCounts = summary.EventCounts,
+                    Aggregates = summary.Aggregates
+                })
+                .ToList();
+
+            return (StatusCodes.OK, new QueryEntitySummariesResponse
+            {
+                Summaries = paged,
+                Total = total
+            });
         }
         catch (Exception ex)
         {
@@ -520,6 +605,14 @@ public partial class AnalyticsService : IAnalyticsService
             };
 
             await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
+            await controllerStore.AddToSetAsync(
+                GetControllerIndexKey(body.GameServiceId),
+                key,
+                cancellationToken: cancellationToken);
+            await controllerStore.AddToSetAsync(
+                GetControllerAccountIndexKey(body.GameServiceId, body.AccountId),
+                key,
+                cancellationToken: cancellationToken);
 
             return StatusCodes.OK;
         }
@@ -550,16 +643,77 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            // For now, return empty results - full query implementation requires indexed query support
-            // This is a placeholder that demonstrates the response structure
-            var response = new QueryControllerHistoryResponse
+            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(CONTROLLER_STORE);
+            var indexKey = body.AccountId.HasValue
+                ? GetControllerAccountIndexKey(body.GameServiceId, body.AccountId.Value)
+                : GetControllerIndexKey(body.GameServiceId);
+            var eventKeys = await controllerStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+            if (eventKeys.Count == 0)
             {
-                Events = new List<ControllerHistoryEvent>()
-            };
+                return (StatusCodes.OK, new QueryControllerHistoryResponse
+                {
+                    Events = new List<ControllerHistoryEvent>()
+                });
+            }
 
-            _logger.LogWarning("QueryControllerHistory not fully implemented - requires indexed query support");
+            var events = new List<ControllerHistoryData>();
 
-            return (StatusCodes.OK, response);
+            foreach (var eventKey in eventKeys)
+            {
+                var historyEvent = await controllerStore.GetAsync(eventKey, cancellationToken);
+                if (historyEvent == null)
+                {
+                    continue;
+                }
+
+                if (body.AccountId.HasValue && historyEvent.AccountId != body.AccountId.Value)
+                {
+                    continue;
+                }
+
+                if (body.TargetEntityId.HasValue && historyEvent.TargetEntityId != body.TargetEntityId.Value)
+                {
+                    continue;
+                }
+
+                if (body.TargetEntityType.HasValue && historyEvent.TargetEntityType != body.TargetEntityType.Value)
+                {
+                    continue;
+                }
+
+                if (body.StartTime.HasValue && historyEvent.Timestamp < body.StartTime.Value)
+                {
+                    continue;
+                }
+
+                if (body.EndTime.HasValue && historyEvent.Timestamp > body.EndTime.Value)
+                {
+                    continue;
+                }
+
+                events.Add(historyEvent);
+            }
+
+            var ordered = events
+                .OrderByDescending(e => e.Timestamp)
+                .Take(body.Limit)
+                .Select(evt => new ControllerHistoryEvent
+                {
+                    EventId = evt.EventId,
+                    AccountId = evt.AccountId,
+                    TargetEntityId = evt.TargetEntityId,
+                    TargetEntityType = evt.TargetEntityType,
+                    Action = evt.Action,
+                    Timestamp = evt.Timestamp,
+                    SessionId = evt.SessionId
+                })
+                .ToList();
+
+            return (StatusCodes.OK, new QueryControllerHistoryResponse
+            {
+                Events = ordered
+            });
         }
         catch (Exception ex)
         {
@@ -747,6 +901,62 @@ public partial class AnalyticsService : IAnalyticsService
                 break; // Only publish one milestone per event
             }
         }
+    }
+
+    /// <summary>
+    /// Applies sorting rules for entity summary queries.
+    /// </summary>
+    private IReadOnlyList<EntitySummaryData> ApplySummarySort(
+        List<EntitySummaryData> summaries,
+        QueryEntitySummariesRequest body)
+    {
+        if (string.IsNullOrWhiteSpace(body.SortBy))
+        {
+            return summaries;
+        }
+
+        var sortBy = body.SortBy.Trim().ToLowerInvariant();
+        var descending = body.SortDescending;
+
+        IEnumerable<EntitySummaryData> ordered = sortBy switch
+        {
+            "totalevents" => descending
+                ? summaries.OrderByDescending(s => s.TotalEvents)
+                : summaries.OrderBy(s => s.TotalEvents),
+            "firsteventat" => descending
+                ? summaries.OrderByDescending(s => s.FirstEventAt)
+                : summaries.OrderBy(s => s.FirstEventAt),
+            "lasteventat" => descending
+                ? summaries.OrderByDescending(s => s.LastEventAt)
+                : summaries.OrderBy(s => s.LastEventAt),
+            "eventcount" => OrderByEventCount(summaries, body.EventType, descending),
+            _ => summaries
+        };
+
+        if (sortBy != "totalevents" &&
+            sortBy != "firsteventat" &&
+            sortBy != "lasteventat" &&
+            sortBy != "eventcount")
+        {
+            _logger.LogWarning("Unsupported sortBy value {SortBy} for analytics summary query", body.SortBy);
+        }
+
+        return ordered.ToList();
+    }
+
+    private static IEnumerable<EntitySummaryData> OrderByEventCount(
+        List<EntitySummaryData> summaries,
+        string? eventType,
+        bool descending)
+    {
+        if (string.IsNullOrWhiteSpace(eventType))
+        {
+            return summaries;
+        }
+
+        return descending
+            ? summaries.OrderByDescending(s => s.EventCounts.GetValueOrDefault(eventType))
+            : summaries.OrderBy(s => s.EventCounts.GetValueOrDefault(eventType));
     }
 
     /// <summary>

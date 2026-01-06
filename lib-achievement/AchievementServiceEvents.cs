@@ -35,11 +35,12 @@ public partial class AchievementService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
+    public async Task HandleScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
     {
         // TODO: Implement analytics.score.updated event handling
-        _logger.LogInformation("[EVENT] Received analytics.score.updated event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received analytics.score.updated event for {EntityType}:{EntityId}",
+            evt.EntityType, evt.EntityId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -47,11 +48,12 @@ public partial class AchievementService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleMilestoneReachedAsync(AnalyticsMilestoneReachedEvent evt)
+    public async Task HandleMilestoneReachedAsync(AnalyticsMilestoneReachedEvent evt)
     {
         // TODO: Implement analytics.milestone.reached event handling
-        _logger.LogInformation("[EVENT] Received analytics.milestone.reached event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received analytics.milestone.reached event for {EntityType}:{EntityId} ({MilestoneType}={MilestoneValue})",
+            evt.EntityType, evt.EntityId, evt.MilestoneType, evt.MilestoneValue);
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -59,10 +61,11 @@ public partial class AchievementService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleRankChangedAsync(LeaderboardRankChangedEvent evt)
+    public async Task HandleRankChangedAsync(LeaderboardRankChangedEvent evt)
     {
         // TODO: Implement leaderboard.rank.changed event handling
-        _logger.LogInformation("[EVENT] Received leaderboard.rank.changed event");
-        return Task.CompletedTask;
+        _logger.LogInformation("Received leaderboard.rank.changed event for {EntityType}:{EntityId} on {LeaderboardId}",
+            evt.EntityType, evt.EntityId, evt.LeaderboardId);
+        await Task.CompletedTask;
     }
 }

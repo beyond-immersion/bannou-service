@@ -26,15 +26,15 @@ instructions when working with Codex or other coding agents.
 ## Schema-First Workflow
 
 1. Edit the OpenAPI YAML in `/schemas/`.
-2. Generate code: `scripts/generate-all-services.sh` (or `make generate`).
-3. Implement only in the service implementation class.
-4. Format: `make format`.
+2. Implement only in the service implementation class.
+3. Ask the user to run regeneration/build/format when needed (do not run these commands yourself unless explicitly asked).
 
 ## Verification
 
-- Do not claim completion until `dotnet build` succeeds (use `make build`).
+- Do not claim completion until the user confirms `dotnet build` succeeded.
 - For any testing-related task, first read `docs/guides/TESTING.md` in full and respond with:
   "I have referred to the service testing document."
+ - Leave test execution to the user unless explicitly requested.
 
 ## Useful Commands (from `Makefile`)
 
