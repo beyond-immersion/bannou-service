@@ -480,7 +480,8 @@ The streaming composition model ensures graceful degradation:
 | ~~**Extension Format**~~ | ~~ABML syntax for extensions that attach to points~~ | ~~Medium~~ | ✅ COMPLETE |
 | ~~**Bytecode Extensions**~~ | ~~Extended format for continuation/extension~~ | ~~Medium~~ | ✅ COMPLETE |
 | ~~**Streaming Interpreter**~~ | ~~Runtime support for mid-execution attachment~~ | ~~High~~ | ✅ COMPLETE |
-| **Extension Delivery** | Protocol for pushing extensions to game servers | Medium | Event schema complete, integration pending |
+| ~~**Extension Delivery Schema**~~ | ~~Event schema for pushing extensions~~ | ~~Low~~ | ✅ COMPLETE (`CinematicExtensionAvailableEvent`) |
+| **Extension Delivery Integration** | Event Brain publishes extensions to game servers | Medium | Phase 5 (Event Brain) |
 
 ### 6.2 High Priority Gaps (Enable Core Functionality)
 
@@ -488,9 +489,9 @@ The streaming composition model ensures graceful degradation:
 |-----|-------------|--------|--------------|
 | ~~**Bytecode Compiler**~~ | ~~AST → bytecode compilation~~ | ~~High~~ | ✅ COMPLETE |
 | ~~**Bytecode Interpreter**~~ | ~~Stack-based VM for client execution~~ | ~~High~~ | ✅ COMPLETE |
-| **Event Brain Actor Schema** | Actor type definition | Medium | Actor plugin (see ACTORS_V3) |
-| **Character Agent Query API** | `/agent/query-combat-options` | Medium | Behavior plugin |
-| **Control Handoff** | How cinematics take control from basic behavior | Medium | Intent system |
+| **Event Brain Actor Schema** | Actor type definition | Medium | Phase 5 |
+| **Character Agent Query API** | `/agent/query-combat-options` | Medium | Phase 5 |
+| **Control Handoff** | How cinematics take control from basic behavior | Medium | Phase 5 (after Event Brain) |
 
 ### 6.3 Medium Priority Gaps (Quality of Life)
 
@@ -558,7 +559,7 @@ The streaming composition model ensures graceful degradation:
 - [x] Streaming interpreter (`CinematicInterpreter` with pause/resume, `EvaluateWithPause()`, `ResumeWithDefaultFlow()`, `ResumeWithExtension()`)
 - [x] Tests: 13 tests covering extension arrives early/on-time/late/never, timeout, force resume, reset
 
-### Phase 3: Distribution & Integration ✅ MOSTLY COMPLETE
+### Phase 3: Distribution & Integration ✅ COMPLETE
 **Goal**: Models flow to game servers, cinematics can be triggered
 
 - [x] ~~Behavior Distribution Service~~ → lib-asset handles this (behavior is an asset type)
@@ -566,9 +567,8 @@ The streaming composition model ensures graceful degradation:
 - [x] Server SDK with full mesh integration (`Bannou.SDK`)
 - [x] Game Transport (UDP) with LiteNetLib for real-time state sync
 - [x] Extension delivery event schema (`CinematicExtensionAvailableEvent` in behavior-events.yaml)
-- [ ] Extension delivery integration (mesh routing + pub/sub fallback)
-- [ ] Control handoff mechanism (cinematic takes control)
-- [ ] Integration tests with mock game server
+
+*Note: Extension publishing and control handoff moved to Phase 5 (requires Event Brain to exist first)*
 
 ### Phase 4: NPC Brain Integration 🔄 IN PROGRESS (see ACTORS_PLUGIN_V3.md §5)
 **Goal**: Character Agent ↔ Game Server perception/state flow
@@ -593,6 +593,8 @@ The streaming composition model ensures graceful degradation:
 - [ ] Event tap subscriptions (direct perception routing, not control plane)
 - [ ] Option generation algorithm
 - [ ] Choreography emission (produces cinematics)
+- [ ] Extension delivery integration (Event Brain publishes `CinematicExtensionAvailableEvent` via mesh + pub/sub fallback)
+- [ ] Control handoff mechanism (cinematic takes control from basic behavior)
 
 ### Phase 6: Full Integration
 **Goal**: THE_DREAM works end-to-end
@@ -600,6 +602,7 @@ The streaming composition model ensures graceful degradation:
 - [ ] Regional Watcher (spawns Event Agents)
 - [ ] Map Service affordance queries
 - [ ] Dynamic QTE presentation
+- [ ] Integration tests with mock game server
 - [ ] End-to-end test: basic combat → escalation → cinematic → resolution
 
 ---

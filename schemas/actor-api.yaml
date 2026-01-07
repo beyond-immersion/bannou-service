@@ -1117,14 +1117,24 @@ components:
     PerceptionData:
       type: object
       additionalProperties: false
-      description: Data representing a perception event for an actor
+      description: |
+        Data representing a perception event for an actor.
+
+        Spatial context can be provided in two ways (hybrid approach):
+        1. Typed: Use the optional spatialContext field for structured spatial data
+        2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+
+        The typed approach is recommended when game server has structured spatial data.
+        The schema-less approach allows flexibility for game-specific spatial formats.
       required:
       - perceptionType
       - sourceId
       properties:
         perceptionType:
           type: string
-          description: Perception type (visual, auditory, tactile, etc.)
+          description: |
+            Perception type. Common values: visual, auditory, tactile, olfactory,
+            proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
         sourceId:
           type: string
           description: ID of the entity causing this perception
@@ -1136,7 +1146,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Perception-specific data
+          description: |
+            Perception-specific data. For perceptionType="spatial", this can contain
+            game-specific spatial context in any format the game server defines.
         urgency:
           type: number
           format: float
@@ -1144,6 +1156,129 @@ components:
           maximum: 1
           default: 0.5
           description: How urgent this perception is (0-1)
+        spatialContext:
+          $ref: '#/components/schemas/SpatialContext'
+          nullable: true
+          description: |
+            Optional typed spatial context from game server's local spatial state.
+            Provides structured information about terrain, nearby objects, hazards, etc.
+            Alternative to using perceptionType="spatial" with schema-less data.
+
+    SpatialContext:
+      type: object
+      additionalProperties: true
+      description: |
+        Spatial context derived from game server's authoritative spatial state.
+        Included in perception events to give NPC actors awareness of their environment
+        without requiring direct map subscriptions.
+
+        Note: additionalProperties=true allows game-specific extensions.
+      properties:
+        terrainType:
+          type: string
+          nullable: true
+          description: Terrain type at character position (grass, stone, water, etc.)
+        elevation:
+          type: number
+          format: float
+          nullable: true
+          description: Elevation at character position
+        nearbyObjects:
+          type: array
+          nullable: true
+          description: Objects within perception radius
+          items:
+            $ref: '#/components/schemas/NearbyObject'
+        hazardsInRange:
+          type: array
+          nullable: true
+          description: Active hazards within detection range
+          items:
+            $ref: '#/components/schemas/HazardInfo'
+        pathableDirections:
+          type: array
+          nullable: true
+          description: Directions the character can move (for navigation awareness)
+          items:
+            type: string
+            description: Cardinal or relative direction (north, south, east, west, forward, etc.)
+        coverNearby:
+          type: boolean
+          nullable: true
+          description: Whether cover is available within close range
+        indoors:
+          type: boolean
+          nullable: true
+          description: Whether character is currently indoors/under roof
+
+    NearbyObject:
+      type: object
+      additionalProperties: true
+      description: Information about a nearby object perceived by the character
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier of the object
+        objectType:
+          type: string
+          description: Type of object (boulder_cluster, tree, building, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance from character in game units
+        direction:
+          type: string
+          description: Relative direction (north, south, east, west, above, below, etc.)
+        position:
+          $ref: '#/components/schemas/Position3D'
+          nullable: true
+          description: Optional absolute position
+
+    HazardInfo:
+      type: object
+      additionalProperties: true
+      description: Information about a hazard in range
+      properties:
+        hazardType:
+          type: string
+          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance to hazard edge
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Hazard severity (0-1)
+        direction:
+          type: string
+          nullable: true
+          description: Direction to hazard center
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: 3D position in world coordinates
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate (typically vertical)
+        z:
+          type: number
+          format: float
+          description: Z coordinate
 
     InjectPerceptionResponse:
       type: object

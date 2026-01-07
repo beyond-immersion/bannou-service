@@ -1912,6 +1912,183 @@ flows:
             - assess_significance: { ... }
 ```
 
+### 8.6 Cross-Region Event Actor Patterns
+
+Event Actors manage regions and may need to handle situations where characters move between regions. There are two valid patterns for cross-region scenarios:
+
+#### 8.6.1 Pattern A: Follow and Resubscribe
+
+An Event Actor "follows" a character by unsubscribing from the old region and subscribing to the new one:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PATTERN A: FOLLOW AND RESUBSCRIBE                                          │
+│                                                                              │
+│  1. Event Actor managing Region ABC receives event:                         │
+│     "Character fled to region ZYX"                                          │
+│                                                                              │
+│  2. Actor behavior decides: "I should follow this target"                   │
+│                                                                              │
+│  3. Unsubscribe from map.{regionABC}.*                                      │
+│     (via dynamic subscription management)                                    │
+│                                                                              │
+│  4. Subscribe to map.{regionZYX}.*                                          │
+│                                                                              │
+│  5. Request snapshot for new region to get current spatial state            │
+│                                                                              │
+│  6. Continue pursuit with new spatial context                               │
+│                                                                              │
+│  Actor identity preserved, just watching different region                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```yaml
+# ABML behavior for following across regions
+flows:
+  handle_target_fled:
+    actions:
+      - cond:
+          - when: "${perception.type == 'character_left_region'}"
+            then:
+              - set: { variable: new_region, value: "${perception.destination_region}" }
+              - log: { message: "Target fled to ${new_region}, following..." }
+
+              # Unsubscribe from current region
+              - unsubscribe:
+                  topic: "map.${current_region}.*.*"
+
+              # Update tracking
+              - set: { variable: current_region, value: "${new_region}" }
+
+              # Subscribe to new region
+              - subscribe:
+                  topic: "map.${new_region}.*.*"
+
+              # Request snapshot for new region context
+              - service_call:
+                  service: mapping
+                  method: request-snapshot
+                  parameters:
+                    region_id: "${new_region}"
+                    kinds: ["static_geometry", "dynamic_objects", "hazards"]
+
+              # Continue pursuit
+              - call: { flow: continue_pursuit }
+```
+
+**Use case**: A single "chase coordinator" that follows one target through multiple regions sequentially.
+
+#### 8.6.2 Pattern B: Spawn Child Actor
+
+An Event Actor spawns a child actor in the new region to continue the event there:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PATTERN B: SPAWN CHILD ACTOR                                               │
+│                                                                              │
+│  1. Event Actor managing Region ABC receives event:                         │
+│     "Character fled to region ZYX"                                          │
+│                                                                              │
+│  2. Actor behavior decides: "Spawn pursuer in new region"                   │
+│                                                                              │
+│  3. POST /actor/spawn-child                                                  │
+│     { parentActorId: self, regionId: ZYX, task: "pursue_target",            │
+│       targetCharacterId: "...", inheritedContext: {...} }                   │
+│                                                                              │
+│  4. Child actor activates in region ZYX                                     │
+│     - Subscribes to map.{regionZYX}.*                                       │
+│     - Has pursuit context from parent                                       │
+│                                                                              │
+│  5. Parent continues orchestrating in original region                       │
+│     - May manage multiple children across regions                           │
+│     - Children report status back to parent                                 │
+│                                                                              │
+│  Good for: nested regions, distributed orchestration, parallel pursuit     │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```yaml
+# ABML behavior for spawning child pursuer
+flows:
+  handle_target_fled:
+    actions:
+      - cond:
+          - when: "${perception.type == 'character_left_region'}"
+            then:
+              - set: { variable: target_region, value: "${perception.destination_region}" }
+              - log: { message: "Target fled to ${target_region}, spawning child pursuer..." }
+
+              # Spawn child actor in the new region
+              - service_call:
+                  service: actor
+                  method: spawn-child
+                  parameters:
+                    parent_actor_id: "${self.id}"
+                    region_id: "${target_region}"
+                    template: "pursuit-coordinator"
+                    initial_context:
+                      target_character_id: "${perception.character_id}"
+                      pursuit_reason: "${pursuit_reason}"
+                      escalation_level: "${escalation_level + 1}"
+                  result_variable: "child_actor"
+
+              # Track child for coordination
+              - append:
+                  variable: child_actors
+                  value: "${child_actor.id}"
+
+              # Parent continues managing original region
+              - log: { message: "Child ${child_actor.id} pursuing in ${target_region}" }
+```
+
+**Use case**: Hierarchical orchestration where parent coordinates overall event while children handle region-specific aspects.
+
+#### 8.6.3 Nested Regions
+
+Regions can CONTAIN other regions (not just neighbor them). This is why Pattern B (child actors) is essential:
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│  NESTED REGIONS                                                            │
+│                                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  Region: "Kingdom of Aldoria"                                        │  │
+│  │  Event Actor: kingdom_coordinator                                    │  │
+│  │  Subscribes to: map.{kingdom}.*.*                                   │  │
+│  │                                                                      │  │
+│  │  ┌─────────────────────────┐  ┌─────────────────────────┐           │  │
+│  │  │ Region: "Forest of      │  │ Region: "City of        │           │  │
+│  │  │ Whispers"               │  │ Starfall"               │           │  │
+│  │  │ Child Actor: forest_evt │  │ Child Actor: city_evt   │           │  │
+│  │  │                         │  │                         │           │  │
+│  │  │ ┌─────────────────────┐ │  │ ┌─────────────────────┐ │           │  │
+│  │  │ │ Region: "Witch's    │ │  │ │ Region: "Royal      │ │           │  │
+│  │  │ │ Hollow"             │ │  │ │ Palace"             │ │           │  │
+│  │  │ │ Child: hollow_evt   │ │  │ │ Child: palace_evt   │ │           │  │
+│  │  │ └─────────────────────┘ │  │ └─────────────────────┘ │           │  │
+│  │  └─────────────────────────┘  └─────────────────────────┘           │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                            │
+│  IMPORTANT: Event actors watch ONE region each.                           │
+│  They spawn children for nested regions as needed.                        │
+│  An actor NEVER subscribes to multiple regions simultaneously.            │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 8.6.4 Key Design Principle
+
+**An Event Actor subscribes to exactly ONE region's event stream at a time.**
+
+This constraint exists because:
+1. **Simplicity**: Actor logic doesn't need to multiplex multiple region streams
+2. **Scalability**: Each actor has bounded subscription scope
+3. **Locality**: Actors reason about one spatial context at a time
+4. **Child actors exist specifically** for handling parallel regional concerns
+
+If an event spans multiple regions:
+- Use Pattern A (resubscribe) if it's sequential movement through regions
+- Use Pattern B (child actors) if parallel presence in multiple regions is needed
+
 ---
 
 ## 9. Open Questions & Decisions
