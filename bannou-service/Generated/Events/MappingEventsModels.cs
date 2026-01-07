@@ -527,6 +527,12 @@ public partial class MapObjectsChangedEvent
     public long? Version { get; set; } = default!;
 
     /// <summary>
+    /// App-id of authority that published these changes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    public string? SourceAppId { get; set; } = default!;
+
+    /// <summary>
     /// List of object changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changes")]

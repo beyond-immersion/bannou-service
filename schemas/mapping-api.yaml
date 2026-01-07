@@ -62,12 +62,18 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateChannelRequest\"\
         ,\n    \"$defs\": {\n        \"CreateChannelRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create a new map channel\",\n            \"required\": [\n                \"regionId\",\n         \
-        \       \"kind\"\n            ],\n            \"properties\": {\n                \"regionId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Region
-        for this channel\"\n                },\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\"\
+        \       \"kind\",\n                \"sourceAppId\"\n            ],\n            \"properties\": {\n              \
+        \  \"sourceAppId\": {\n                    \"type\": \"string\",\n                    \"description\": \"App-id of
+        the caller taking authority (used for event metadata)\"\n                },\n                \"regionId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Region for this channel\"\n                },\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\"\
         ,\n                    \"description\": \"Map kind for this channel\"\n                },\n                \"nonAuthorityHandling\"\
         : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
-        How to handle non-authority publishes\"\n                },\n                \"alertConfig\": {\n                \
+        How to handle non-authority publishes\"\n                },\n                \"takeoverMode\": {\n               \
+        \     \"$ref\": \"#/$defs/AuthorityTakeoverMode\",\n                    \"description\": \"Policy for authority takeover
+        when channel exists with expired authority.\\npreserve_and_diff (default): Keep existing data, new authority sends
+        updates.\\nreset: Clear all channel data before new authority takes over.\\nrequire_consume: New authority must call
+        RequestSnapshot before publishing.\\n\"\n                },\n                \"alertConfig\": {\n                \
         \    \"$ref\": \"#/$defs/NonAuthorityAlertConfig\",\n                    \"description\": \"Configuration for non-authority
         publish alerts\",\n                    \"nullable\": true\n                },\n                \"initialSnapshot\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
@@ -82,26 +88,30 @@ paths:
         \        },\n        \"NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How to handle publish attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\"\
         ,\n                \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\"\
-        : \"reject_and_alert\"\n        },\n        \"NonAuthorityAlertConfig\": {\n            \"type\": \"object\",\n  \
-        \          \"description\": \"Configuration for non-authority publish alerts\",\n            \"properties\": {\n \
-        \               \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n\
-        \                    \"description\": \"Whether to emit warning events\"\n                },\n                \"alertTopic\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Custom topic for warnings (default
-        map.warnings.unauthorized_publish)\",\n                    \"nullable\": true\n                },\n              \
-        \  \"includePayloadSummary\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
-        \                    \"description\": \"Include truncated payload in warning for debugging\"\n                }\n\
-        \            }\n        },\n        \"MapPayload\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Schema-less payload. Only envelope fields are validated.\\nThe 'data' field can contain ANYTHING the publisher
-        wants.\\nlib-mapping does not validate contents - only publisher and consumer care.\\n\",\n            \"required\"\
-        : [\n                \"objectType\"\n            ],\n            \"properties\": {\n                \"objectId\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique ID for this object (generated if not provided)\"\n                },\n                \"objectType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Publisher-defined type (used for
-        indexing and filtering)\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Position for point objects\",\n                    \"nullable\": true\n\
-        \                },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n          \
-        \          \"description\": \"Bounds for area objects\",\n                    \"nullable\": true\n               \
-        \ },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : \"reject_and_alert\"\n        },\n        \"AuthorityTakeoverMode\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Policy for handling authority takeover when creating a channel that\\nalready has expired
+        authority. Controls what happens to existing data.\\n\",\n            \"enum\": [\n                \"preserve_and_diff\"\
+        ,\n                \"reset\",\n                \"require_consume\"\n            ],\n            \"default\": \"preserve_and_diff\"\
+        \n        },\n        \"NonAuthorityAlertConfig\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Configuration for non-authority publish alerts\",\n            \"properties\": {\n                \"enabled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Whether to emit warning events\"\n                },\n                \"alertTopic\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Custom topic for warnings (default map.warnings.unauthorized_publish)\"\
+        ,\n                    \"nullable\": true\n                },\n                \"includePayloadSummary\": {\n    \
+        \                \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Include truncated payload in warning for debugging\"\n                }\n            }\n        },\n        \"\
+        MapPayload\": {\n            \"type\": \"object\",\n            \"description\": \"Schema-less payload. Only envelope
+        fields are validated.\\nThe 'data' field can contain ANYTHING the publisher wants.\\nlib-mapping does not validate
+        contents - only publisher and consumer care.\\n\",\n            \"required\": [\n                \"objectType\"\n\
+        \            ],\n            \"properties\": {\n                \"objectId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique ID for this object
+        (generated if not provided)\"\n                },\n                \"objectType\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Publisher-defined type (used for indexing and filtering)\"\n\
+        \                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n    \
+        \                \"description\": \"Position for point objects\",\n                    \"nullable\": true\n      \
+        \          },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                \
+        \    \"description\": \"Bounds for area objects\",\n                    \"nullable\": true\n                },\n \
+        \               \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"description\": \"SCHEMA-LESS. Can contain anything.\\nlib-mapping does not validate
         this.\\nExamples: cover_rating, health, respawn_delay, etc.\\n\",\n                    \"nullable\": true\n      \
         \          }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n          \
@@ -275,23 +285,25 @@ paths:
         \        \"channelId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"Channel to publish to\"\n                },\n                \"authorityToken\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Authority token for validation\"\
-        \n                },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n         \
-        \           \"description\": \"Affected area (null means entire region)\",\n                    \"nullable\": true\n\
-        \                },\n                \"deltaType\": {\n                    \"$ref\": \"#/$defs/DeltaType\",\n    \
-        \                \"description\": \"Whether this is incremental or full\"\n                },\n                \"\
-        payload\": {\n                    \"$ref\": \"#/$defs/MapPayload\",\n                    \"description\": \"The payload
-        to publish\"\n                },\n                \"payloadAssetRef\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"For large payloads, lib-asset reference instead of inline\",\n         \
-        \           \"nullable\": true\n                }\n            }\n        },\n        \"Bounds\": {\n            \"\
-        type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\"\
-        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
-        \      \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\"\
-        : \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n    \
-        \            }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n        \
-        \    \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n            \
-        \    \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n    \
-        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        \n                },\n                \"sourceAppId\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"App-id of caller (for warnings on non-authority attempts)\",\n                    \"nullable\"\
+        : true\n                },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
+        \                 \"description\": \"Affected area (null means entire region)\",\n                    \"nullable\"\
+        : true\n                },\n                \"deltaType\": {\n                    \"$ref\": \"#/$defs/DeltaType\"\
+        ,\n                    \"description\": \"Whether this is incremental or full\"\n                },\n            \
+        \    \"payload\": {\n                    \"$ref\": \"#/$defs/MapPayload\",\n                    \"description\": \"\
+        The payload to publish\"\n                },\n                \"payloadAssetRef\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"For large payloads, lib-asset reference instead of inline\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"Bounds\": {\n \
+        \           \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n  \
+        \          \"required\": [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\"\
+        : {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\"\
+        : \"Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                   \
+        \ \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\
+        \n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n   \
+        \         \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n       \
+        \         \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
         : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
         : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
         up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
@@ -362,8 +374,10 @@ paths:
         \                \"channelId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Channel to publish to\"\n                },\n                \"authorityToken\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Authority token for validation\"\
-        \n                },\n                \"changes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"maxItems\": 100,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ObjectChange\"\
+        \n                },\n                \"sourceAppId\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"App-id of caller (for warnings on non-authority attempts)\",\n                    \"nullable\"\
+        : true\n                },\n                \"changes\": {\n                    \"type\": \"array\",\n           \
+        \         \"maxItems\": 100,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ObjectChange\"\
         \n                    },\n                    \"description\": \"Object changes to publish\"\n                }\n\
         \            }\n        },\n        \"ObjectChange\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A single change to a map object\",\n            \"required\": [\n                \"objectId\",\n             \
@@ -449,28 +463,30 @@ paths:
         \                  \"$ref\": \"#/$defs/MapKind\"\n                    },\n                    \"description\": \"\
         Which kinds to include (default all)\",\n                    \"nullable\": true\n                },\n            \
         \    \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"Optional
-        bounds filter\",\n                    \"nullable\": true\n                }\n            }\n        },\n        \"\
-        MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"The category of spatial data this
-        map contains.\\nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"\
-        enum\": [\n                \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n \
-        \               \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n     \
-        \           \"dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n           \
-        \     \"ownership\",\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n   \
-        \     },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
-        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
-        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
-        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
-        }"
+        bounds filter\",\n                    \"nullable\": true\n                },\n                \"authorityToken\":
+        {\n                    \"type\": \"string\",\n                    \"description\": \"Optional authority token. If
+        provided and valid, clears the\\nRequiresConsumeBeforePublish flag for require_consume takeover mode.\\n\",\n    \
+        \                \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\nDifferent
+        kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n              \
+        \  \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n                \"resources\"\
+        ,\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"dynamic_objects\"\
+        ,\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\",\n          \
+        \      \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"Bounds\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n \
+        \           \"required\": [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\"\
+        : {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\"\
+        : \"Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                   \
+        \ \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\
+        \n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n   \
+        \         \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n       \
+        \         \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
+        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RequestSnapshotResponse\"\
         ,\n    \"$defs\": {\n        \"RequestSnapshotResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Snapshot response\",\n            \"properties\": {\n                \"regionId\": {\n                    \"type\"\
@@ -1196,6 +1212,534 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Release authoring checkout without committing\",\n    \"description\":
         \"Discards pending changes and releases the checkout lock.\\nUse when abandoning edits.\\n\",\n    \"tags\": [\n \
         \       \"Authoring\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"releaseAuthoring\"\n}"
+
+  # ========== MAP DEFINITION CRUD APIs ==========
+  /mapping/definition/create:
+    post:
+      summary: Create a map definition template
+      description: |
+        Creates a new map definition (template) that describes the structure
+        of a region. Definitions are templates that can be used to bootstrap
+        channels with predefined layer configurations.
+      operationId: createDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDefinitionRequest'
+      responses:
+        '200':
+          description: Definition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDefinition'
+        '409':
+          description: Definition with this name already exists
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateDefinitionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to create a map definition\",\n            \"required\": [\n                \"name\"\n            ],\n\
+        \            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n   \
+        \                 \"type\": \"string\",\n                    \"description\": \"Description of the map template\"\
+        ,\n                    \"nullable\": true\n                },\n                \"layers\": {\n                   \
+        \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\
+        \n                    },\n                    \"description\": \"Layer configurations\",\n                    \"nullable\"\
+        : true\n                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\"\
+        ,\n                    \"description\": \"Default bounds for regions using this definition\",\n                  \
+        \  \"nullable\": true\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Additional metadata\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a
+        map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n            \"properties\"\
+        : {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\"\
+        : \"The layer kind\"\n                },\n                \"storageMode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"durable\",\n                        \"cached\",\n  \
+        \                      \"ephemeral\"\n                    ],\n                    \"default\": \"cached\",\n     \
+        \               \"description\": \"How this layer's data should be stored\"\n                },\n                \"\
+        ttlSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"TTL for cached/ephemeral
+        data (0 = no TTL)\",\n                    \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\"\
+        : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
+        Default non-authority handling for channels using this layer\"\n                },\n                \"cellSize\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Spatial cell size for indexing (default from config if not set)\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update
+        frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n            \
+        \    \"static_geometry\",\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\"\
+        ,\n                \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n \
+        \               \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n      \
+        \          \"visual_effects\"\n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority sources\",\n\
+        \            \"enum\": [\n                \"reject_and_alert\",\n                \"accept_and_alert\",\n         \
+        \       \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"Bounds\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\"\
+        ,\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n            \"\
+        properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n             \
+        \       \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\":
+        {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest
+        x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\":
+        \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"\
+        x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n             \
+        \   \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
+        Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MapDefinition\"\
+        ,\n    \"$defs\": {\n        \"MapDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A map definition template that describes the structure of a region\",\n            \"required\": [\n         \
+        \       \"definitionId\",\n                \"name\",\n                \"createdAt\"\n            ],\n            \"\
+        properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this definition\"\n     \
+        \           },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Description of the map template\",\n                    \"nullable\"\
+        : true\n                },\n                \"layers\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n   \
+        \                 \"description\": \"Layer configurations for this map\",\n                    \"nullable\": true\n\
+        \                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
+        \                 \"description\": \"Default bounds for regions using this definition\",\n                    \"nullable\"\
+        : true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"description\": \"Additional metadata (schema-less)\"\
+        ,\n                    \"nullable\": true\n                },\n                \"createdAt\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
+        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
+        layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n        \
+        \    \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n        \
+        \            \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n     \
+        \                   \"cached\",\n                        \"ephemeral\"\n                    ],\n                 \
+        \   \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\n  \
+        \              },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n \
+        \               },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
+        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
+        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
+        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
+        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
+        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
+        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
+        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
+        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create a map definition template\",\n    \"description\": \"Creates a new
+        map definition (template) that describes the structure\\nof a region. Definitions are templates that can be used to
+        bootstrap\\nchannels with predefined layer configurations.\\n\",\n    \"tags\": [\n        \"Definition\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"createDefinition\"\n}"
+  /mapping/definition/get:
+    post:
+      summary: Get a map definition by ID
+      description: Returns the full map definition including all layer configurations.
+      operationId: getDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDefinitionRequest'
+      responses:
+        '200':
+          description: Definition found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDefinition'
+        '404':
+          description: Definition not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"GetDefinitionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get a map definition\",\n            \"required\": [\n                \"definitionId\"\n          \
+        \  ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Definition ID to retrieve\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MapDefinition\"\
+        ,\n    \"$defs\": {\n        \"MapDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A map definition template that describes the structure of a region\",\n            \"required\": [\n         \
+        \       \"definitionId\",\n                \"name\",\n                \"createdAt\"\n            ],\n            \"\
+        properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this definition\"\n     \
+        \           },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Description of the map template\",\n                    \"nullable\"\
+        : true\n                },\n                \"layers\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n   \
+        \                 \"description\": \"Layer configurations for this map\",\n                    \"nullable\": true\n\
+        \                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
+        \                 \"description\": \"Default bounds for regions using this definition\",\n                    \"nullable\"\
+        : true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"description\": \"Additional metadata (schema-less)\"\
+        ,\n                    \"nullable\": true\n                },\n                \"createdAt\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
+        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
+        layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n        \
+        \    \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n        \
+        \            \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n     \
+        \                   \"cached\",\n                        \"ephemeral\"\n                    ],\n                 \
+        \   \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\n  \
+        \              },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n \
+        \               },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
+        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
+        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
+        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
+        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
+        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
+        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
+        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
+        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a map definition by ID\",\n    \"description\": \"Returns the full
+        map definition including all layer configurations.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"getDefinition\"\n}"
+  /mapping/definition/list:
+    post:
+      summary: List map definitions with optional filters
+      description: Returns a paginated list of map definitions.
+      operationId: listDefinitions
+      tags:
+      - Definition
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListDefinitionsRequest'
+      responses:
+        '200':
+          description: Definitions list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDefinitionsResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListDefinitionsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListDefinitionsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to list map definitions\",\n            \"properties\": {\n                \"nameFilter\": {\n       \
+        \             \"type\": \"string\",\n                    \"description\": \"Filter by name (partial match)\",\n  \
+        \                  \"nullable\": true\n                },\n                \"offset\": {\n                    \"type\"\
+        : \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Pagination offset\"\n\
+        \                },\n                \"limit\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"default\": 50,\n                    \"description\": \"Max results to return\"\n                }\n         \
+        \   }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListDefinitionsResponse\"\
+        ,\n    \"$defs\": {\n        \"ListDefinitionsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing list of map definitions\",\n            \"properties\": {\n                \"definitions\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/MapDefinition\"\n                    },\n                    \"description\": \"List of definitions\"\n\
+        \                },\n                \"total\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"description\": \"Total count matching filter\"\n                },\n                \"offset\": {\n         \
+        \           \"type\": \"integer\",\n                    \"description\": \"Current offset\"\n                },\n\
+        \                \"limit\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Results limit used\"\n                }\n            }\n        },\n        \"MapDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"A map definition template that describes the structure of a region\"\
+        ,\n            \"required\": [\n                \"definitionId\",\n                \"name\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
+        for this definition\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the map template\"\
+        ,\n                    \"nullable\": true\n                },\n                \"layers\": {\n                   \
+        \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\
+        \n                    },\n                    \"description\": \"Layer configurations for this map\",\n          \
+        \          \"nullable\": true\n                },\n                \"defaultBounds\": {\n                    \"$ref\"\
+        : \"#/$defs/Bounds\",\n                    \"description\": \"Default bounds for regions using this definition\",\n\
+        \                    \"nullable\": true\n                },\n                \"metadata\": {\n                   \
+        \ \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"description\"\
+        : \"Additional metadata (schema-less)\",\n                    \"nullable\": true\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the definition was created\"\n                },\n                \"\
+        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the definition was last updated\",\n                    \"nullable\": true\n\
+        \                }\n            }\n        },\n        \"LayerDefinition\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Configuration for a specific layer within a map definition\",\n            \"required\"\
+        : [\n                \"kind\"\n            ],\n            \"properties\": {\n                \"kind\": {\n      \
+        \              \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"The layer kind\"\n         \
+        \       },\n                \"storageMode\": {\n                    \"type\": \"string\",\n                    \"\
+        enum\": [\n                        \"durable\",\n                        \"cached\",\n                        \"ephemeral\"\
+        \n                    ],\n                    \"default\": \"cached\",\n                    \"description\": \"How
+        this layer's data should be stored\"\n                },\n                \"ttlSeconds\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n     \
+        \               \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\": {\n     \
+        \               \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"Default non-authority
+        handling for channels using this layer\"\n                },\n                \"cellSize\": {\n                  \
+        \  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Spatial
+        cell size for indexing (default from config if not set)\",\n                    \"nullable\": true\n             \
+        \   }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies, storage models,
+        and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\",\n   \
+        \             \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n               \
+        \ \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n                \"\
+        weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"visual_effects\"\
+        \n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n        \
+        \    \"description\": \"How to handle publish attempts from non-authority sources\",\n            \"enum\": [\n  \
+        \              \"reject_and_alert\",\n                \"accept_and_alert\",\n                \"reject_silent\"\n \
+        \           ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"Bounds\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\"\
+        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
+        \      \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n    \
+        \            }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n        \
+        \    \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n            \
+        \    \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
+        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List map definitions with optional filters\",\n    \"description\": \"\
+        Returns a paginated list of map definitions.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"listDefinitions\"\n}"
+  /mapping/definition/update:
+    post:
+      summary: Update a map definition
+      description: |
+        Updates an existing map definition. Cannot change the definition ID.
+        Layer configurations can be modified.
+      operationId: updateDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDefinitionRequest'
+      responses:
+        '200':
+          description: Definition updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapDefinition'
+        '404':
+          description: Definition not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateDefinitionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update a map definition\",\n            \"required\": [\n                \"definitionId\"\n       \
+        \     ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Definition ID to update\"\n \
+        \               },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"New name (optional)\",\n                    \"nullable\": true\n                },\n            \
+        \    \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"New description
+        (optional)\",\n                    \"nullable\": true\n                },\n                \"layers\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\
+        \n                    },\n                    \"description\": \"New layer configurations (replaces existing)\",\n\
+        \                    \"nullable\": true\n                },\n                \"defaultBounds\": {\n              \
+        \      \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"New default bounds\",\n             \
+        \       \"nullable\": true\n                },\n                \"metadata\": {\n                    \"type\": \"\
+        object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"New metadata
+        (replaces existing)\",\n                    \"nullable\": true\n                }\n            }\n        },\n   \
+        \     \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for
+        a specific layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n\
+        \            \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n\
+        \                    \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n\
+        \                        \"cached\",\n                        \"ephemeral\"\n                    ],\n            \
+        \        \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\
+        \n                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n            \
+        \        \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n\
+        \                },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
+        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
+        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
+        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
+        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
+        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
+        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
+        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
+        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MapDefinition\"\
+        ,\n    \"$defs\": {\n        \"MapDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A map definition template that describes the structure of a region\",\n            \"required\": [\n         \
+        \       \"definitionId\",\n                \"name\",\n                \"createdAt\"\n            ],\n            \"\
+        properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this definition\"\n     \
+        \           },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Description of the map template\",\n                    \"nullable\"\
+        : true\n                },\n                \"layers\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n   \
+        \                 \"description\": \"Layer configurations for this map\",\n                    \"nullable\": true\n\
+        \                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
+        \                 \"description\": \"Default bounds for regions using this definition\",\n                    \"nullable\"\
+        : true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"description\": \"Additional metadata (schema-less)\"\
+        ,\n                    \"nullable\": true\n                },\n                \"createdAt\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
+        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
+        layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n        \
+        \    \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n        \
+        \            \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n     \
+        \                   \"cached\",\n                        \"ephemeral\"\n                    ],\n                 \
+        \   \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\n  \
+        \              },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n \
+        \               },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
+        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
+        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
+        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
+        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
+        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
+        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
+        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
+        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update a map definition\",\n    \"description\": \"Updates an existing
+        map definition. Cannot change the definition ID.\\nLayer configurations can be modified.\\n\",\n    \"tags\": [\n\
+        \        \"Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateDefinition\"\n}"
+  /mapping/definition/delete:
+    post:
+      summary: Delete a map definition
+      description: Deletes a map definition. Cannot delete if active channels reference it.
+      operationId: deleteDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDefinitionRequest'
+      responses:
+        '200':
+          description: Definition deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteDefinitionResponse'
+        '404':
+          description: Definition not found
+        '409':
+          description: Definition in use by active channels
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteDefinitionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to delete a map definition\",\n            \"required\": [\n                \"definitionId\"\n       \
+        \     ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Definition ID to delete\"\n \
+        \               }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response to delete request\",\n            \"properties\": {\n                \"deleted\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"description\": \"Whether the definition was deleted\"\n      \
+        \          }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a map definition\",\n    \"description\": \"Deletes a map definition.
+        Cannot delete if active channels reference it.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"deleteDefinition\"\n}"
 components:
   schemas:
     # ========== ENUMS ==========
@@ -1230,6 +1774,17 @@ components:
       - accept_and_alert
       - reject_silent
       default: reject_and_alert
+
+    AuthorityTakeoverMode:
+      type: string
+      description: |
+        Policy for handling authority takeover when creating a channel that
+        already has expired authority. Controls what happens to existing data.
+      enum:
+      - preserve_and_diff
+      - reset
+      - require_consume
+      default: preserve_and_diff
 
     AffordanceType:
       type: string
@@ -1565,7 +2120,11 @@ components:
       required:
       - regionId
       - kind
+      - sourceAppId
       properties:
+        sourceAppId:
+          type: string
+          description: App-id of the caller taking authority (used for event metadata)
         regionId:
           type: string
           format: uuid
@@ -1576,6 +2135,13 @@ components:
         nonAuthorityHandling:
           $ref: '#/components/schemas/NonAuthorityHandlingMode'
           description: How to handle non-authority publishes
+        takeoverMode:
+          $ref: '#/components/schemas/AuthorityTakeoverMode'
+          description: |
+            Policy for authority takeover when channel exists with expired authority.
+            preserve_and_diff (default): Keep existing data, new authority sends updates.
+            reset: Clear all channel data before new authority takes over.
+            require_consume: New authority must call RequestSnapshot before publishing.
         alertConfig:
           $ref: '#/components/schemas/NonAuthorityAlertConfig'
           description: Configuration for non-authority publish alerts
@@ -1657,6 +2223,10 @@ components:
         authorityToken:
           type: string
           description: Authority token for validation
+        sourceAppId:
+          type: string
+          description: App-id of caller (for warnings on non-authority attempts)
+          nullable: true
         bounds:
           $ref: '#/components/schemas/Bounds'
           description: Affected area (null means entire region)
@@ -1703,6 +2273,10 @@ components:
         authorityToken:
           type: string
           description: Authority token for validation
+        sourceAppId:
+          type: string
+          description: App-id of caller (for warnings on non-authority attempts)
+          nullable: true
         changes:
           type: array
           maxItems: 100
@@ -1747,6 +2321,12 @@ components:
         bounds:
           $ref: '#/components/schemas/Bounds'
           description: Optional bounds filter
+          nullable: true
+        authorityToken:
+          type: string
+          description: |
+            Optional authority token. If provided and valid, clears the
+            RequiresConsumeBeforePublish flag for require_consume takeover mode.
           nullable: true
 
     RequestSnapshotResponse:
@@ -2130,3 +2710,204 @@ components:
         released:
           type: boolean
           description: Whether checkout was released
+
+    # ========== MAP DEFINITION MODELS ==========
+    MapDefinition:
+      type: object
+      description: A map definition template that describes the structure of a region
+      required:
+      - definitionId
+      - name
+      - createdAt
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Unique identifier for this definition
+        name:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          description: Description of the map template
+          nullable: true
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayerDefinition'
+          description: Layer configurations for this map
+          nullable: true
+        defaultBounds:
+          $ref: '#/components/schemas/Bounds'
+          description: Default bounds for regions using this definition
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata (schema-less)
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: When the definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the definition was last updated
+          nullable: true
+
+    LayerDefinition:
+      type: object
+      description: Configuration for a specific layer within a map definition
+      required:
+      - kind
+      properties:
+        kind:
+          $ref: '#/components/schemas/MapKind'
+          description: The layer kind
+        storageMode:
+          type: string
+          enum: [durable, cached, ephemeral]
+          default: cached
+          description: How this layer's data should be stored
+        ttlSeconds:
+          type: integer
+          description: TTL for cached/ephemeral data (0 = no TTL)
+          nullable: true
+        defaultNonAuthorityHandling:
+          $ref: '#/components/schemas/NonAuthorityHandlingMode'
+          description: Default non-authority handling for channels using this layer
+        cellSize:
+          type: number
+          format: double
+          description: Spatial cell size for indexing (default from config if not set)
+          nullable: true
+
+    CreateDefinitionRequest:
+      type: object
+      description: Request to create a map definition
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          description: Description of the map template
+          nullable: true
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayerDefinition'
+          description: Layer configurations
+          nullable: true
+        defaultBounds:
+          $ref: '#/components/schemas/Bounds'
+          description: Default bounds for regions using this definition
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata
+          nullable: true
+
+    GetDefinitionRequest:
+      type: object
+      description: Request to get a map definition
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to retrieve
+
+    ListDefinitionsRequest:
+      type: object
+      description: Request to list map definitions
+      properties:
+        nameFilter:
+          type: string
+          description: Filter by name (partial match)
+          nullable: true
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+        limit:
+          type: integer
+          default: 50
+          description: Max results to return
+
+    ListDefinitionsResponse:
+      type: object
+      description: Response containing list of map definitions
+      properties:
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapDefinition'
+          description: List of definitions
+        total:
+          type: integer
+          description: Total count matching filter
+        offset:
+          type: integer
+          description: Current offset
+        limit:
+          type: integer
+          description: Results limit used
+
+    UpdateDefinitionRequest:
+      type: object
+      description: Request to update a map definition
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to update
+        name:
+          type: string
+          description: New name (optional)
+          nullable: true
+        description:
+          type: string
+          description: New description (optional)
+          nullable: true
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayerDefinition'
+          description: New layer configurations (replaces existing)
+          nullable: true
+        defaultBounds:
+          $ref: '#/components/schemas/Bounds'
+          description: New default bounds
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: New metadata (replaces existing)
+          nullable: true
+
+    DeleteDefinitionRequest:
+      type: object
+      description: Request to delete a map definition
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition ID to delete
+
+    DeleteDefinitionResponse:
+      type: object
+      description: Response to delete request
+      properties:
+        deleted:
+          type: boolean
+          description: Whether the definition was deleted

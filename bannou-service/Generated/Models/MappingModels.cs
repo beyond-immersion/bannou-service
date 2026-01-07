@@ -95,6 +95,28 @@ public enum NonAuthorityHandlingMode
 #pragma warning restore CS1591
 
 /// <summary>
+/// Policy for handling authority takeover when creating a channel that
+/// <br/>already has expired authority. Controls what happens to existing data.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthorityTakeoverMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"preserve_and_diff")]
+    Preserve_and_diff = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"reset")]
+    Reset = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"require_consume")]
+    Require_consume = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Well-known affordance types with predefined scoring logic.
 /// <br/>Use 'custom' for novel affordance definitions.
 /// <br/>
@@ -749,6 +771,14 @@ public partial class CreateChannelRequest
 {
 
     /// <summary>
+    /// App-id of the caller taking authority (used for event metadata)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceAppId { get; set; } = default!;
+
+    /// <summary>
     /// Region for this channel
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("regionId")]
@@ -771,6 +801,17 @@ public partial class CreateChannelRequest
     [System.Text.Json.Serialization.JsonPropertyName("nonAuthorityHandling")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public NonAuthorityHandlingMode NonAuthorityHandling { get; set; } = default!;
+
+    /// <summary>
+    /// Policy for authority takeover when channel exists with expired authority.
+    /// <br/>preserve_and_diff (default): Keep existing data, new authority sends updates.
+    /// <br/>reset: Clear all channel data before new authority takes over.
+    /// <br/>require_consume: New authority must call RequestSnapshot before publishing.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("takeoverMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityTakeoverMode TakeoverMode { get; set; } = default!;
 
     /// <summary>
     /// Configuration for non-authority publish alerts
@@ -962,6 +1003,12 @@ public partial class PublishMapUpdateRequest
     public string AuthorityToken { get; set; } = default!;
 
     /// <summary>
+    /// App-id of caller (for warnings on non-authority attempts)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    public string? SourceAppId { get; set; } = default!;
+
+    /// <summary>
     /// Affected area (null means entire region)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
@@ -1065,6 +1112,12 @@ public partial class PublishObjectChangesRequest
     public string AuthorityToken { get; set; } = default!;
 
     /// <summary>
+    /// App-id of caller (for warnings on non-authority attempts)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    public string? SourceAppId { get; set; } = default!;
+
+    /// <summary>
     /// Object changes to publish
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changes")]
@@ -1159,6 +1212,14 @@ public partial class RequestSnapshotRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
     public Bounds? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Optional authority token. If provided and valid, clears the
+    /// <br/>RequiresConsumeBeforePublish flag for require_consume takeover mode.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityToken")]
+    public string? AuthorityToken { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1975,6 +2036,435 @@ public partial class AuthoringReleaseResponse
     }
 
 }
+
+/// <summary>
+/// A map definition template that describes the structure of a region
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MapDefinition
+{
+
+    /// <summary>
+    /// Unique identifier for this definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Description of the map template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Layer configurations for this map
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("layers")]
+    public System.Collections.Generic.ICollection<LayerDefinition>? Layers { get; set; } = default!;
+
+    /// <summary>
+    /// Default bounds for regions using this definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultBounds")]
+    public Bounds? DefaultBounds { get; set; } = default!;
+
+    /// <summary>
+    /// Additional metadata (schema-less)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// When the definition was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the definition was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Configuration for a specific layer within a map definition
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LayerDefinition
+{
+
+    /// <summary>
+    /// The layer kind
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("kind")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind Kind { get; set; } = default!;
+
+    /// <summary>
+    /// How this layer's data should be stored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storageMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LayerDefinitionStorageMode StorageMode { get; set; } = BeyondImmersion.BannouService.Mapping.LayerDefinitionStorageMode.Cached;
+
+    /// <summary>
+    /// TTL for cached/ephemeral data (0 = no TTL)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
+    public int? TtlSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// Default non-authority handling for channels using this layer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultNonAuthorityHandling")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public NonAuthorityHandlingMode DefaultNonAuthorityHandling { get; set; } = default!;
+
+    /// <summary>
+    /// Spatial cell size for indexing (default from config if not set)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cellSize")]
+    public double? CellSize { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Request to create a map definition
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CreateDefinitionRequest
+{
+
+    /// <summary>
+    /// Human-readable name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Description of the map template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Layer configurations
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("layers")]
+    public System.Collections.Generic.ICollection<LayerDefinition>? Layers { get; set; } = default!;
+
+    /// <summary>
+    /// Default bounds for regions using this definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultBounds")]
+    public Bounds? DefaultBounds { get; set; } = default!;
+
+    /// <summary>
+    /// Additional metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Request to get a map definition
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetDefinitionRequest
+{
+
+    /// <summary>
+    /// Definition ID to retrieve
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Request to list map definitions
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListDefinitionsRequest
+{
+
+    /// <summary>
+    /// Filter by name (partial match)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nameFilter")]
+    public string? NameFilter { get; set; } = default!;
+
+    /// <summary>
+    /// Pagination offset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    public int Offset { get; set; } = 0;
+
+    /// <summary>
+    /// Max results to return
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    public int Limit { get; set; } = 50;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Response containing list of map definitions
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListDefinitionsResponse
+{
+
+    /// <summary>
+    /// List of definitions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitions")]
+    public System.Collections.Generic.ICollection<MapDefinition> Definitions { get; set; } = default!;
+
+    /// <summary>
+    /// Total count matching filter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("total")]
+    public int Total { get; set; } = default!;
+
+    /// <summary>
+    /// Current offset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    public int Offset { get; set; } = default!;
+
+    /// <summary>
+    /// Results limit used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    public int Limit { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Request to update a map definition
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateDefinitionRequest
+{
+
+    /// <summary>
+    /// Definition ID to update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// New name (optional)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// New description (optional)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// New layer configurations (replaces existing)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("layers")]
+    public System.Collections.Generic.ICollection<LayerDefinition>? Layers { get; set; } = default!;
+
+    /// <summary>
+    /// New default bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultBounds")]
+    public Bounds? DefaultBounds { get; set; } = default!;
+
+    /// <summary>
+    /// New metadata (replaces existing)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Request to delete a map definition
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteDefinitionRequest
+{
+
+    /// <summary>
+    /// Definition ID to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Response to delete request
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteDefinitionResponse
+{
+
+    /// <summary>
+    /// Whether the definition was deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deleted")]
+    public bool Deleted { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum LayerDefinitionStorageMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"durable")]
+    Durable = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cached")]
+    Cached = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ephemeral")]
+    Ephemeral = 2,
+
+}
+#pragma warning restore CS1591
 
 
 

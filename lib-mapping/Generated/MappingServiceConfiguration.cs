@@ -119,4 +119,82 @@ public class MappingServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int DefaultLayerCacheTtlSeconds { get; set; } = 3600;
 
+    /// <summary>
+    /// Window in milliseconds for batching rapid updates into single event (0 = disabled)
+    /// Environment variable: MAPPING_EVENT_AGGREGATION_WINDOW_MS
+    /// </summary>
+    public int EventAggregationWindowMs { get; set; } = 100;
+
+    /// <summary>
+    /// TTL for terrain layer data (-1 = no TTL, durable)
+    /// Environment variable: MAPPING_TTL_TERRAIN
+    /// </summary>
+    public int TtlTerrain { get; set; } = -1;
+
+    /// <summary>
+    /// TTL for static geometry layer data (-1 = no TTL, durable)
+    /// Environment variable: MAPPING_TTL_STATIC_GEOMETRY
+    /// </summary>
+    public int TtlStaticGeometry { get; set; } = -1;
+
+    /// <summary>
+    /// TTL for navigation layer data (-1 = no TTL, durable)
+    /// Environment variable: MAPPING_TTL_NAVIGATION
+    /// </summary>
+    public int TtlNavigation { get; set; } = -1;
+
+    /// <summary>
+    /// TTL for resources layer data
+    /// Environment variable: MAPPING_TTL_RESOURCES
+    /// </summary>
+    public int TtlResources { get; set; } = 3600;
+
+    /// <summary>
+    /// TTL for spawn points layer data
+    /// Environment variable: MAPPING_TTL_SPAWN_POINTS
+    /// </summary>
+    public int TtlSpawnPoints { get; set; } = 3600;
+
+    /// <summary>
+    /// TTL for points of interest layer data
+    /// Environment variable: MAPPING_TTL_POINTS_OF_INTEREST
+    /// </summary>
+    public int TtlPointsOfInterest { get; set; } = 3600;
+
+    /// <summary>
+    /// TTL for dynamic objects layer data
+    /// Environment variable: MAPPING_TTL_DYNAMIC_OBJECTS
+    /// </summary>
+    public int TtlDynamicObjects { get; set; } = 3600;
+
+    /// <summary>
+    /// TTL for hazards layer data (short-lived)
+    /// Environment variable: MAPPING_TTL_HAZARDS
+    /// </summary>
+    public int TtlHazards { get; set; } = 300;
+
+    /// <summary>
+    /// TTL for weather effects layer data
+    /// Environment variable: MAPPING_TTL_WEATHER_EFFECTS
+    /// </summary>
+    public int TtlWeatherEffects { get; set; } = 600;
+
+    /// <summary>
+    /// TTL for ownership layer data (-1 = no TTL, durable)
+    /// Environment variable: MAPPING_TTL_OWNERSHIP
+    /// </summary>
+    public int TtlOwnership { get; set; } = -1;
+
+    /// <summary>
+    /// TTL for combat effects layer data (very short-lived, ephemeral)
+    /// Environment variable: MAPPING_TTL_COMBAT_EFFECTS
+    /// </summary>
+    public int TtlCombatEffects { get; set; } = 30;
+
+    /// <summary>
+    /// TTL for visual effects layer data (short-lived, ephemeral)
+    /// Environment variable: MAPPING_TTL_VISUAL_EFFECTS
+    /// </summary>
+    public int TtlVisualEffects { get; set; } = 60;
+
 }

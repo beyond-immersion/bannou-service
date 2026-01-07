@@ -89,3 +89,72 @@ x-service-configuration:
       description: Default TTL for cached layer data (ephemeral kinds)
       default: 3600
       env: MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS
+
+    # Event Aggregation
+    EventAggregationWindowMs:
+      type: integer
+      description: Window in milliseconds for batching rapid updates into single event (0 = disabled)
+      default: 100
+      env: MAPPING_EVENT_AGGREGATION_WINDOW_MS
+
+    # Per-Kind TTL Settings (in seconds, 0 = use default, -1 = no TTL)
+    TtlTerrain:
+      type: integer
+      description: TTL for terrain layer data (-1 = no TTL, durable)
+      default: -1
+      env: MAPPING_TTL_TERRAIN
+    TtlStaticGeometry:
+      type: integer
+      description: TTL for static geometry layer data (-1 = no TTL, durable)
+      default: -1
+      env: MAPPING_TTL_STATIC_GEOMETRY
+    TtlNavigation:
+      type: integer
+      description: TTL for navigation layer data (-1 = no TTL, durable)
+      default: -1
+      env: MAPPING_TTL_NAVIGATION
+    TtlResources:
+      type: integer
+      description: TTL for resources layer data
+      default: 3600
+      env: MAPPING_TTL_RESOURCES
+    TtlSpawnPoints:
+      type: integer
+      description: TTL for spawn points layer data
+      default: 3600
+      env: MAPPING_TTL_SPAWN_POINTS
+    TtlPointsOfInterest:
+      type: integer
+      description: TTL for points of interest layer data
+      default: 3600
+      env: MAPPING_TTL_POINTS_OF_INTEREST
+    TtlDynamicObjects:
+      type: integer
+      description: TTL for dynamic objects layer data
+      default: 3600
+      env: MAPPING_TTL_DYNAMIC_OBJECTS
+    TtlHazards:
+      type: integer
+      description: TTL for hazards layer data (short-lived)
+      default: 300
+      env: MAPPING_TTL_HAZARDS
+    TtlWeatherEffects:
+      type: integer
+      description: TTL for weather effects layer data
+      default: 600
+      env: MAPPING_TTL_WEATHER_EFFECTS
+    TtlOwnership:
+      type: integer
+      description: TTL for ownership layer data (-1 = no TTL, durable)
+      default: -1
+      env: MAPPING_TTL_OWNERSHIP
+    TtlCombatEffects:
+      type: integer
+      description: TTL for combat effects layer data (very short-lived, ephemeral)
+      default: 30
+      env: MAPPING_TTL_COMBAT_EFFECTS
+    TtlVisualEffects:
+      type: integer
+      description: TTL for visual effects layer data (short-lived, ephemeral)
+      default: 60
+      env: MAPPING_TTL_VISUAL_EFFECTS

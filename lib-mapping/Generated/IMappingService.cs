@@ -94,4 +94,29 @@ public partial interface IMappingService : IBannouService
         /// </summary>
         Task<(StatusCodes, AuthoringReleaseResponse?)> ReleaseAuthoringAsync(AuthoringReleaseRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CreateDefinition operation
+        /// </summary>
+        Task<(StatusCodes, MapDefinition?)> CreateDefinitionAsync(CreateDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetDefinition operation
+        /// </summary>
+        Task<(StatusCodes, MapDefinition?)> GetDefinitionAsync(GetDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListDefinitions operation
+        /// </summary>
+        Task<(StatusCodes, ListDefinitionsResponse?)> ListDefinitionsAsync(ListDefinitionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UpdateDefinition operation
+        /// </summary>
+        Task<(StatusCodes, MapDefinition?)> UpdateDefinitionAsync(UpdateDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeleteDefinition operation
+        /// </summary>
+        Task<(StatusCodes, DeleteDefinitionResponse?)> DeleteDefinitionAsync(DeleteDefinitionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

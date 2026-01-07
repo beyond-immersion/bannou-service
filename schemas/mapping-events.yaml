@@ -362,6 +362,10 @@ components:
           format: int64
           description: Version after changes
           nullable: true
+        sourceAppId:
+          type: string
+          description: App-id of authority that published these changes
+          nullable: true
         changes:
           type: array
           items:

@@ -210,6 +210,69 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringReleaseResponse>> ReleaseAuthoringAsync(AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Create a map definition template
+    /// </summary>
+
+    /// <remarks>
+    /// Creates a new map definition (template) that describes the structure
+    /// <br/>of a region. Definitions are templates that can be used to bootstrap
+    /// <br/>channels with predefined layer configurations.
+    /// </remarks>
+
+    /// <returns>Definition created</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> CreateDefinitionAsync(CreateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get a map definition by ID
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the full map definition including all layer configurations.
+    /// </remarks>
+
+    /// <returns>Definition found</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> GetDefinitionAsync(GetDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List map definitions with optional filters
+    /// </summary>
+
+    /// <remarks>
+    /// Returns a paginated list of map definitions.
+    /// </remarks>
+
+    /// <returns>Definitions list</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDefinitionsResponse>> ListDefinitionsAsync(ListDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update a map definition
+    /// </summary>
+
+    /// <remarks>
+    /// Updates an existing map definition. Cannot change the definition ID.
+    /// <br/>Layer configurations can be modified.
+    /// </remarks>
+
+    /// <returns>Definition updated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> UpdateDefinitionAsync(UpdateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Delete a map definition
+    /// </summary>
+
+    /// <remarks>
+    /// Deletes a map definition. Cannot delete if active channels reference it.
+    /// </remarks>
+
+    /// <returns>Definition deleted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDefinitionResponse>> DeleteDefinitionAsync(DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -495,6 +558,89 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         return ConvertToActionResult(statusCode, result);
     }
 
+    /// <summary>
+    /// Create a map definition template
+    /// </summary>
+    /// <remarks>
+    /// Creates a new map definition (template) that describes the structure
+    /// <br/>of a region. Definitions are templates that can be used to bootstrap
+    /// <br/>channels with predefined layer configurations.
+    /// </remarks>
+    /// <returns>Definition created</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/definition/create")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> CreateDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CreateDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get a map definition by ID
+    /// </summary>
+    /// <remarks>
+    /// Returns the full map definition including all layer configurations.
+    /// </remarks>
+    /// <returns>Definition found</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/definition/get")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> GetDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List map definitions with optional filters
+    /// </summary>
+    /// <remarks>
+    /// Returns a paginated list of map definitions.
+    /// </remarks>
+    /// <returns>Definitions list</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/definition/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDefinitionsResponse>> ListDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListDefinitionsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Update a map definition
+    /// </summary>
+    /// <remarks>
+    /// Updates an existing map definition. Cannot change the definition ID.
+    /// <br/>Layer configurations can be modified.
+    /// </remarks>
+    /// <returns>Definition updated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/definition/update")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> UpdateDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UpdateDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Delete a map definition
+    /// </summary>
+    /// <remarks>
+    /// Deletes a map definition. Cannot delete if active channels reference it.
+    /// </remarks>
+    /// <returns>Definition deleted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mapping/definition/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDefinitionResponse>> DeleteDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DeleteDefinitionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
 
 
     #region Meta Endpoints for CreateChannel
@@ -509,9 +655,14 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
             "description": "Request to create a new map channel",
             "required": [
                 "regionId",
-                "kind"
+                "kind",
+                "sourceAppId"
             ],
             "properties": {
+                "sourceAppId": {
+                    "type": "string",
+                    "description": "App-id of the caller taking authority (used for event metadata)"
+                },
                 "regionId": {
                     "type": "string",
                     "format": "uuid",
@@ -524,6 +675,10 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "nonAuthorityHandling": {
                     "$ref": "#/$defs/NonAuthorityHandlingMode",
                     "description": "How to handle non-authority publishes"
+                },
+                "takeoverMode": {
+                    "$ref": "#/$defs/AuthorityTakeoverMode",
+                    "description": "Policy for authority takeover when channel exists with expired authority.\npreserve_and_diff (default): Keep existing data, new authority sends updates.\nreset: Clear all channel data before new authority takes over.\nrequire_consume: New authority must call RequestSnapshot before publishing.\n"
                 },
                 "alertConfig": {
                     "$ref": "#/$defs/NonAuthorityAlertConfig",
@@ -567,6 +722,16 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "reject_silent"
             ],
             "default": "reject_and_alert"
+        },
+        "AuthorityTakeoverMode": {
+            "type": "string",
+            "description": "Policy for handling authority takeover when creating a channel that\nalready has expired authority. Controls what happens to existing data.\n",
+            "enum": [
+                "preserve_and_diff",
+                "reset",
+                "require_consume"
+            ],
+            "default": "preserve_and_diff"
         },
         "NonAuthorityAlertConfig": {
             "type": "object",
@@ -1034,6 +1199,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "string",
                     "description": "Authority token for validation"
                 },
+                "sourceAppId": {
+                    "type": "string",
+                    "description": "App-id of caller (for warnings on non-authority attempts)",
+                    "nullable": true
+                },
                 "bounds": {
                     "$ref": "#/$defs/Bounds",
                     "description": "Affected area (null means entire region)",
@@ -1252,6 +1422,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "authorityToken": {
                     "type": "string",
                     "description": "Authority token for validation"
+                },
+                "sourceAppId": {
+                    "type": "string",
+                    "description": "App-id of caller (for warnings on non-authority attempts)",
+                    "nullable": true
                 },
                 "changes": {
                     "type": "array",
@@ -1476,6 +1651,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "bounds": {
                     "$ref": "#/$defs/Bounds",
                     "description": "Optional bounds filter",
+                    "nullable": true
+                },
+                "authorityToken": {
+                    "type": "string",
+                    "description": "Optional authority token. If provided and valid, clears the\nRequiresConsumeBeforePublish flag for require_consume takeover mode.\n",
                     "nullable": true
                 }
             }
@@ -3506,6 +3686,1420 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
             _ReleaseAuthoring_Info,
             _ReleaseAuthoring_RequestSchema,
             _ReleaseAuthoring_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateDefinition
+
+    private static readonly string _CreateDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CreateDefinitionRequest",
+    "$defs": {
+        "CreateDefinitionRequest": {
+            "type": "object",
+            "description": "Request to create a map definition",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the map template",
+                    "nullable": true
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LayerDefinition"
+                    },
+                    "description": "Layer configurations",
+                    "nullable": true
+                },
+                "defaultBounds": {
+                    "$ref": "#/$defs/Bounds",
+                    "description": "Default bounds for regions using this definition",
+                    "nullable": true
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Additional metadata",
+                    "nullable": true
+                }
+            }
+        },
+        "LayerDefinition": {
+            "type": "object",
+            "description": "Configuration for a specific layer within a map definition",
+            "required": [
+                "kind"
+            ],
+            "properties": {
+                "kind": {
+                    "$ref": "#/$defs/MapKind",
+                    "description": "The layer kind"
+                },
+                "storageMode": {
+                    "type": "string",
+                    "enum": [
+                        "durable",
+                        "cached",
+                        "ephemeral"
+                    ],
+                    "default": "cached",
+                    "description": "How this layer's data should be stored"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "nullable": true
+                },
+                "defaultNonAuthorityHandling": {
+                    "$ref": "#/$defs/NonAuthorityHandlingMode",
+                    "description": "Default non-authority handling for channels using this layer"
+                },
+                "cellSize": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Spatial cell size for indexing (default from config if not set)",
+                    "nullable": true
+                }
+            }
+        },
+        "MapKind": {
+            "type": "string",
+            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "enum": [
+                "terrain",
+                "static_geometry",
+                "navigation",
+                "resources",
+                "spawn_points",
+                "points_of_interest",
+                "dynamic_objects",
+                "hazards",
+                "weather_effects",
+                "ownership",
+                "combat_effects",
+                "visual_effects"
+            ]
+        },
+        "NonAuthorityHandlingMode": {
+            "type": "string",
+            "description": "How to handle publish attempts from non-authority sources",
+            "enum": [
+                "reject_and_alert",
+                "accept_and_alert",
+                "reject_silent"
+            ],
+            "default": "reject_and_alert"
+        },
+        "Bounds": {
+            "type": "object",
+            "description": "An axis-aligned bounding box in 3D space",
+            "required": [
+                "min",
+                "max"
+            ],
+            "properties": {
+                "min": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Minimum corner (lowest x, y, z values)"
+                },
+                "max": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Maximum corner (highest x, y, z values)"
+                }
+            }
+        },
+        "Position3D": {
+            "type": "object",
+            "description": "A point in 3D space",
+            "required": [
+                "x",
+                "y",
+                "z"
+            ],
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "X coordinate (typically east-west)"
+                },
+                "y": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Y coordinate (typically up-down / elevation)"
+                },
+                "z": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Z coordinate (typically north-south)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CreateDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MapDefinition",
+    "$defs": {
+        "MapDefinition": {
+            "type": "object",
+            "description": "A map definition template that describes the structure of a region",
+            "required": [
+                "definitionId",
+                "name",
+                "createdAt"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this definition"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the map template",
+                    "nullable": true
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LayerDefinition"
+                    },
+                    "description": "Layer configurations for this map",
+                    "nullable": true
+                },
+                "defaultBounds": {
+                    "$ref": "#/$defs/Bounds",
+                    "description": "Default bounds for regions using this definition",
+                    "nullable": true
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Additional metadata (schema-less)",
+                    "nullable": true
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was last updated",
+                    "nullable": true
+                }
+            }
+        },
+        "LayerDefinition": {
+            "type": "object",
+            "description": "Configuration for a specific layer within a map definition",
+            "required": [
+                "kind"
+            ],
+            "properties": {
+                "kind": {
+                    "$ref": "#/$defs/MapKind",
+                    "description": "The layer kind"
+                },
+                "storageMode": {
+                    "type": "string",
+                    "enum": [
+                        "durable",
+                        "cached",
+                        "ephemeral"
+                    ],
+                    "default": "cached",
+                    "description": "How this layer's data should be stored"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "nullable": true
+                },
+                "defaultNonAuthorityHandling": {
+                    "$ref": "#/$defs/NonAuthorityHandlingMode",
+                    "description": "Default non-authority handling for channels using this layer"
+                },
+                "cellSize": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Spatial cell size for indexing (default from config if not set)",
+                    "nullable": true
+                }
+            }
+        },
+        "MapKind": {
+            "type": "string",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "enum": [
+                "terrain",
+                "static_geometry",
+                "navigation",
+                "resources",
+                "spawn_points",
+                "points_of_interest",
+                "dynamic_objects",
+                "hazards",
+                "weather_effects",
+                "ownership",
+                "combat_effects",
+                "visual_effects"
+            ]
+        },
+        "NonAuthorityHandlingMode": {
+            "type": "string",
+            "description": "How to handle publish attempts from non-authority sources",
+            "enum": [
+                "reject_and_alert",
+                "accept_and_alert",
+                "reject_silent"
+            ],
+            "default": "reject_and_alert"
+        },
+        "Bounds": {
+            "type": "object",
+            "description": "An axis-aligned bounding box in 3D space",
+            "required": [
+                "min",
+                "max"
+            ],
+            "properties": {
+                "min": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Minimum corner (lowest x, y, z values)"
+                },
+                "max": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Maximum corner (highest x, y, z values)"
+                }
+            }
+        },
+        "Position3D": {
+            "type": "object",
+            "description": "A point in 3D space",
+            "required": [
+                "x",
+                "y",
+                "z"
+            ],
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "X coordinate (typically east-west)"
+                },
+                "y": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Y coordinate (typically up-down / elevation)"
+                },
+                "z": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Z coordinate (typically north-south)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CreateDefinition_Info = """
+{
+    "summary": "Create a map definition template",
+    "description": "Creates a new map definition (template) that describes the structure\nof a region. Definitions are templates that can be used to bootstrap\nchannels with predefined layer configurations.\n",
+    "tags": [
+        "Definition"
+    ],
+    "deprecated": false,
+    "operationId": "createDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/create",
+            _CreateDefinition_Info));
+
+    /// <summary>Returns request schema for CreateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/create",
+            "request-schema",
+            _CreateDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for CreateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/create",
+            "response-schema",
+            _CreateDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/create",
+            _CreateDefinition_Info,
+            _CreateDefinition_RequestSchema,
+            _CreateDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetDefinition
+
+    private static readonly string _GetDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetDefinitionRequest",
+    "$defs": {
+        "GetDefinitionRequest": {
+            "type": "object",
+            "description": "Request to get a map definition",
+            "required": [
+                "definitionId"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Definition ID to retrieve"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MapDefinition",
+    "$defs": {
+        "MapDefinition": {
+            "type": "object",
+            "description": "A map definition template that describes the structure of a region",
+            "required": [
+                "definitionId",
+                "name",
+                "createdAt"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this definition"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the map template",
+                    "nullable": true
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LayerDefinition"
+                    },
+                    "description": "Layer configurations for this map",
+                    "nullable": true
+                },
+                "defaultBounds": {
+                    "$ref": "#/$defs/Bounds",
+                    "description": "Default bounds for regions using this definition",
+                    "nullable": true
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Additional metadata (schema-less)",
+                    "nullable": true
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was last updated",
+                    "nullable": true
+                }
+            }
+        },
+        "LayerDefinition": {
+            "type": "object",
+            "description": "Configuration for a specific layer within a map definition",
+            "required": [
+                "kind"
+            ],
+            "properties": {
+                "kind": {
+                    "$ref": "#/$defs/MapKind",
+                    "description": "The layer kind"
+                },
+                "storageMode": {
+                    "type": "string",
+                    "enum": [
+                        "durable",
+                        "cached",
+                        "ephemeral"
+                    ],
+                    "default": "cached",
+                    "description": "How this layer's data should be stored"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "nullable": true
+                },
+                "defaultNonAuthorityHandling": {
+                    "$ref": "#/$defs/NonAuthorityHandlingMode",
+                    "description": "Default non-authority handling for channels using this layer"
+                },
+                "cellSize": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Spatial cell size for indexing (default from config if not set)",
+                    "nullable": true
+                }
+            }
+        },
+        "MapKind": {
+            "type": "string",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "enum": [
+                "terrain",
+                "static_geometry",
+                "navigation",
+                "resources",
+                "spawn_points",
+                "points_of_interest",
+                "dynamic_objects",
+                "hazards",
+                "weather_effects",
+                "ownership",
+                "combat_effects",
+                "visual_effects"
+            ]
+        },
+        "NonAuthorityHandlingMode": {
+            "type": "string",
+            "description": "How to handle publish attempts from non-authority sources",
+            "enum": [
+                "reject_and_alert",
+                "accept_and_alert",
+                "reject_silent"
+            ],
+            "default": "reject_and_alert"
+        },
+        "Bounds": {
+            "type": "object",
+            "description": "An axis-aligned bounding box in 3D space",
+            "required": [
+                "min",
+                "max"
+            ],
+            "properties": {
+                "min": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Minimum corner (lowest x, y, z values)"
+                },
+                "max": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Maximum corner (highest x, y, z values)"
+                }
+            }
+        },
+        "Position3D": {
+            "type": "object",
+            "description": "A point in 3D space",
+            "required": [
+                "x",
+                "y",
+                "z"
+            ],
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "X coordinate (typically east-west)"
+                },
+                "y": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Y coordinate (typically up-down / elevation)"
+                },
+                "z": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Z coordinate (typically north-south)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetDefinition_Info = """
+{
+    "summary": "Get a map definition by ID",
+    "description": "Returns the full map definition including all layer configurations.",
+    "tags": [
+        "Definition"
+    ],
+    "deprecated": false,
+    "operationId": "getDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/get",
+            _GetDefinition_Info));
+
+    /// <summary>Returns request schema for GetDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/get",
+            "request-schema",
+            _GetDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for GetDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/get",
+            "response-schema",
+            _GetDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for GetDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/get",
+            _GetDefinition_Info,
+            _GetDefinition_RequestSchema,
+            _GetDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListDefinitions
+
+    private static readonly string _ListDefinitions_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListDefinitionsRequest",
+    "$defs": {
+        "ListDefinitionsRequest": {
+            "type": "object",
+            "description": "Request to list map definitions",
+            "properties": {
+                "nameFilter": {
+                    "type": "string",
+                    "description": "Filter by name (partial match)",
+                    "nullable": true
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Pagination offset"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Max results to return"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListDefinitions_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListDefinitionsResponse",
+    "$defs": {
+        "ListDefinitionsResponse": {
+            "type": "object",
+            "description": "Response containing list of map definitions",
+            "properties": {
+                "definitions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MapDefinition"
+                    },
+                    "description": "List of definitions"
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total count matching filter"
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Current offset"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Results limit used"
+                }
+            }
+        },
+        "MapDefinition": {
+            "type": "object",
+            "description": "A map definition template that describes the structure of a region",
+            "required": [
+                "definitionId",
+                "name",
+                "createdAt"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this definition"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the map template",
+                    "nullable": true
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LayerDefinition"
+                    },
+                    "description": "Layer configurations for this map",
+                    "nullable": true
+                },
+                "defaultBounds": {
+                    "$ref": "#/$defs/Bounds",
+                    "description": "Default bounds for regions using this definition",
+                    "nullable": true
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Additional metadata (schema-less)",
+                    "nullable": true
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was last updated",
+                    "nullable": true
+                }
+            }
+        },
+        "LayerDefinition": {
+            "type": "object",
+            "description": "Configuration for a specific layer within a map definition",
+            "required": [
+                "kind"
+            ],
+            "properties": {
+                "kind": {
+                    "$ref": "#/$defs/MapKind",
+                    "description": "The layer kind"
+                },
+                "storageMode": {
+                    "type": "string",
+                    "enum": [
+                        "durable",
+                        "cached",
+                        "ephemeral"
+                    ],
+                    "default": "cached",
+                    "description": "How this layer's data should be stored"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "nullable": true
+                },
+                "defaultNonAuthorityHandling": {
+                    "$ref": "#/$defs/NonAuthorityHandlingMode",
+                    "description": "Default non-authority handling for channels using this layer"
+                },
+                "cellSize": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Spatial cell size for indexing (default from config if not set)",
+                    "nullable": true
+                }
+            }
+        },
+        "MapKind": {
+            "type": "string",
+            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "enum": [
+                "terrain",
+                "static_geometry",
+                "navigation",
+                "resources",
+                "spawn_points",
+                "points_of_interest",
+                "dynamic_objects",
+                "hazards",
+                "weather_effects",
+                "ownership",
+                "combat_effects",
+                "visual_effects"
+            ]
+        },
+        "NonAuthorityHandlingMode": {
+            "type": "string",
+            "description": "How to handle publish attempts from non-authority sources",
+            "enum": [
+                "reject_and_alert",
+                "accept_and_alert",
+                "reject_silent"
+            ],
+            "default": "reject_and_alert"
+        },
+        "Bounds": {
+            "type": "object",
+            "description": "An axis-aligned bounding box in 3D space",
+            "required": [
+                "min",
+                "max"
+            ],
+            "properties": {
+                "min": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Minimum corner (lowest x, y, z values)"
+                },
+                "max": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Maximum corner (highest x, y, z values)"
+                }
+            }
+        },
+        "Position3D": {
+            "type": "object",
+            "description": "A point in 3D space",
+            "required": [
+                "x",
+                "y",
+                "z"
+            ],
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "X coordinate (typically east-west)"
+                },
+                "y": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Y coordinate (typically up-down / elevation)"
+                },
+                "z": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Z coordinate (typically north-south)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListDefinitions_Info = """
+{
+    "summary": "List map definitions with optional filters",
+    "description": "Returns a paginated list of map definitions.",
+    "tags": [
+        "Definition"
+    ],
+    "deprecated": false,
+    "operationId": "listDefinitions"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDefinitions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/list",
+            _ListDefinitions_Info));
+
+    /// <summary>Returns request schema for ListDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDefinitions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/list",
+            "request-schema",
+            _ListDefinitions_RequestSchema));
+
+    /// <summary>Returns response schema for ListDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDefinitions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/list",
+            "response-schema",
+            _ListDefinitions_ResponseSchema));
+
+    /// <summary>Returns full schema for ListDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDefinitions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/list",
+            _ListDefinitions_Info,
+            _ListDefinitions_RequestSchema,
+            _ListDefinitions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateDefinition
+
+    private static readonly string _UpdateDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateDefinitionRequest",
+    "$defs": {
+        "UpdateDefinitionRequest": {
+            "type": "object",
+            "description": "Request to update a map definition",
+            "required": [
+                "definitionId"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Definition ID to update"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "New name (optional)",
+                    "nullable": true
+                },
+                "description": {
+                    "type": "string",
+                    "description": "New description (optional)",
+                    "nullable": true
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LayerDefinition"
+                    },
+                    "description": "New layer configurations (replaces existing)",
+                    "nullable": true
+                },
+                "defaultBounds": {
+                    "$ref": "#/$defs/Bounds",
+                    "description": "New default bounds",
+                    "nullable": true
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "New metadata (replaces existing)",
+                    "nullable": true
+                }
+            }
+        },
+        "LayerDefinition": {
+            "type": "object",
+            "description": "Configuration for a specific layer within a map definition",
+            "required": [
+                "kind"
+            ],
+            "properties": {
+                "kind": {
+                    "$ref": "#/$defs/MapKind",
+                    "description": "The layer kind"
+                },
+                "storageMode": {
+                    "type": "string",
+                    "enum": [
+                        "durable",
+                        "cached",
+                        "ephemeral"
+                    ],
+                    "default": "cached",
+                    "description": "How this layer's data should be stored"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "nullable": true
+                },
+                "defaultNonAuthorityHandling": {
+                    "$ref": "#/$defs/NonAuthorityHandlingMode",
+                    "description": "Default non-authority handling for channels using this layer"
+                },
+                "cellSize": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Spatial cell size for indexing (default from config if not set)",
+                    "nullable": true
+                }
+            }
+        },
+        "MapKind": {
+            "type": "string",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "enum": [
+                "terrain",
+                "static_geometry",
+                "navigation",
+                "resources",
+                "spawn_points",
+                "points_of_interest",
+                "dynamic_objects",
+                "hazards",
+                "weather_effects",
+                "ownership",
+                "combat_effects",
+                "visual_effects"
+            ]
+        },
+        "NonAuthorityHandlingMode": {
+            "type": "string",
+            "description": "How to handle publish attempts from non-authority sources",
+            "enum": [
+                "reject_and_alert",
+                "accept_and_alert",
+                "reject_silent"
+            ],
+            "default": "reject_and_alert"
+        },
+        "Bounds": {
+            "type": "object",
+            "description": "An axis-aligned bounding box in 3D space",
+            "required": [
+                "min",
+                "max"
+            ],
+            "properties": {
+                "min": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Minimum corner (lowest x, y, z values)"
+                },
+                "max": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Maximum corner (highest x, y, z values)"
+                }
+            }
+        },
+        "Position3D": {
+            "type": "object",
+            "description": "A point in 3D space",
+            "required": [
+                "x",
+                "y",
+                "z"
+            ],
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "X coordinate (typically east-west)"
+                },
+                "y": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Y coordinate (typically up-down / elevation)"
+                },
+                "z": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Z coordinate (typically north-south)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MapDefinition",
+    "$defs": {
+        "MapDefinition": {
+            "type": "object",
+            "description": "A map definition template that describes the structure of a region",
+            "required": [
+                "definitionId",
+                "name",
+                "createdAt"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this definition"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the map template",
+                    "nullable": true
+                },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LayerDefinition"
+                    },
+                    "description": "Layer configurations for this map",
+                    "nullable": true
+                },
+                "defaultBounds": {
+                    "$ref": "#/$defs/Bounds",
+                    "description": "Default bounds for regions using this definition",
+                    "nullable": true
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Additional metadata (schema-less)",
+                    "nullable": true
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the definition was last updated",
+                    "nullable": true
+                }
+            }
+        },
+        "LayerDefinition": {
+            "type": "object",
+            "description": "Configuration for a specific layer within a map definition",
+            "required": [
+                "kind"
+            ],
+            "properties": {
+                "kind": {
+                    "$ref": "#/$defs/MapKind",
+                    "description": "The layer kind"
+                },
+                "storageMode": {
+                    "type": "string",
+                    "enum": [
+                        "durable",
+                        "cached",
+                        "ephemeral"
+                    ],
+                    "default": "cached",
+                    "description": "How this layer's data should be stored"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "TTL for cached/ephemeral data (0 = no TTL)",
+                    "nullable": true
+                },
+                "defaultNonAuthorityHandling": {
+                    "$ref": "#/$defs/NonAuthorityHandlingMode",
+                    "description": "Default non-authority handling for channels using this layer"
+                },
+                "cellSize": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Spatial cell size for indexing (default from config if not set)",
+                    "nullable": true
+                }
+            }
+        },
+        "MapKind": {
+            "type": "string",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "enum": [
+                "terrain",
+                "static_geometry",
+                "navigation",
+                "resources",
+                "spawn_points",
+                "points_of_interest",
+                "dynamic_objects",
+                "hazards",
+                "weather_effects",
+                "ownership",
+                "combat_effects",
+                "visual_effects"
+            ]
+        },
+        "NonAuthorityHandlingMode": {
+            "type": "string",
+            "description": "How to handle publish attempts from non-authority sources",
+            "enum": [
+                "reject_and_alert",
+                "accept_and_alert",
+                "reject_silent"
+            ],
+            "default": "reject_and_alert"
+        },
+        "Bounds": {
+            "type": "object",
+            "description": "An axis-aligned bounding box in 3D space",
+            "required": [
+                "min",
+                "max"
+            ],
+            "properties": {
+                "min": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Minimum corner (lowest x, y, z values)"
+                },
+                "max": {
+                    "$ref": "#/$defs/Position3D",
+                    "description": "Maximum corner (highest x, y, z values)"
+                }
+            }
+        },
+        "Position3D": {
+            "type": "object",
+            "description": "A point in 3D space",
+            "required": [
+                "x",
+                "y",
+                "z"
+            ],
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "X coordinate (typically east-west)"
+                },
+                "y": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Y coordinate (typically up-down / elevation)"
+                },
+                "z": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Z coordinate (typically north-south)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateDefinition_Info = """
+{
+    "summary": "Update a map definition",
+    "description": "Updates an existing map definition. Cannot change the definition ID.\nLayer configurations can be modified.\n",
+    "tags": [
+        "Definition"
+    ],
+    "deprecated": false,
+    "operationId": "updateDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/update",
+            _UpdateDefinition_Info));
+
+    /// <summary>Returns request schema for UpdateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/update",
+            "request-schema",
+            _UpdateDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/update",
+            "response-schema",
+            _UpdateDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/update",
+            _UpdateDefinition_Info,
+            _UpdateDefinition_RequestSchema,
+            _UpdateDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteDefinition
+
+    private static readonly string _DeleteDefinition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteDefinitionRequest",
+    "$defs": {
+        "DeleteDefinitionRequest": {
+            "type": "object",
+            "description": "Request to delete a map definition",
+            "required": [
+                "definitionId"
+            ],
+            "properties": {
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Definition ID to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteDefinition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteDefinitionResponse",
+    "$defs": {
+        "DeleteDefinitionResponse": {
+            "type": "object",
+            "description": "Response to delete request",
+            "properties": {
+                "deleted": {
+                    "type": "boolean",
+                    "description": "Whether the definition was deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteDefinition_Info = """
+{
+    "summary": "Delete a map definition",
+    "description": "Deletes a map definition. Cannot delete if active channels reference it.",
+    "tags": [
+        "Definition"
+    ],
+    "deprecated": false,
+    "operationId": "deleteDefinition"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDefinition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/delete",
+            _DeleteDefinition_Info));
+
+    /// <summary>Returns request schema for DeleteDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDefinition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/delete",
+            "request-schema",
+            _DeleteDefinition_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDefinition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/delete",
+            "response-schema",
+            _DeleteDefinition_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteDefinition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("mapping/definition/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDefinition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Mapping",
+            "Post",
+            "mapping/definition/delete",
+            _DeleteDefinition_Info,
+            _DeleteDefinition_RequestSchema,
+            _DeleteDefinition_ResponseSchema));
 
     #endregion
 
