@@ -1,12 +1,17 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-analytics.tests")]
 
@@ -35,12 +40,20 @@ public partial class AnalyticsService : IAnalyticsService
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IGameServiceClient _gameServiceClient;
+    private readonly IGameSessionClient _gameSessionClient;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<AnalyticsService> _logger;
     private readonly AnalyticsServiceConfiguration _configuration;
 
     // State store key prefixes
     private const string SUMMARY_INDEX_PREFIX = "analytics-summary-index";
     private const string CONTROLLER_INDEX_PREFIX = "analytics-controller-index";
+    private const string EVENT_BUFFER_INDEX_KEY = "analytics-event-buffer-index";
+    private const string EVENT_BUFFER_ENTRY_PREFIX = "analytics-event-buffer-entry";
+    private const string SESSION_MAPPING_PREFIX = "analytics-session-mapping";
+    private const string GAME_SERVICE_CACHE_PREFIX = "analytics-game-service-cache";
+    private const string BUFFER_LOCK_RESOURCE = "analytics-event-buffer-flush";
 
     // Glicko-2 scale conversion constant
     private const double GlickoScale = 173.7178;
@@ -51,12 +64,18 @@ public partial class AnalyticsService : IAnalyticsService
     public AnalyticsService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
+        IGameServiceClient gameServiceClient,
+        IGameSessionClient gameSessionClient,
+        IDistributedLockProvider lockProvider,
         ILogger<AnalyticsService> logger,
         AnalyticsServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _gameServiceClient = gameServiceClient ?? throw new ArgumentNullException(nameof(gameServiceClient));
+        _gameSessionClient = gameSessionClient ?? throw new ArgumentNullException(nameof(gameSessionClient));
+        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
@@ -115,64 +134,27 @@ public partial class AnalyticsService : IAnalyticsService
 
         try
         {
-            var eventId = Guid.NewGuid();
-            var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
-            var entityKey = GetEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
-
-            // Get or create entity summary
-            var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
-            var isNew = summary == null;
-            var previousValue = summary?.Aggregates?.GetValueOrDefault(body.EventType);
-
-            summary ??= new EntitySummaryData
+            var bufferedEvent = new BufferedAnalyticsEvent
             {
+                EventId = Guid.NewGuid(),
+                GameServiceId = body.GameServiceId,
                 EntityId = body.EntityId,
                 EntityType = body.EntityType,
-                GameServiceId = body.GameServiceId,
-                FirstEventAt = body.Timestamp,
-                EventCounts = new Dictionary<string, long>(),
-                Aggregates = new Dictionary<string, double>()
+                EventType = body.EventType,
+                Timestamp = body.Timestamp,
+                Value = body.Value,
+                Metadata = ConvertMetadataToDictionary(body.Metadata)
             };
 
-            // Update summary
-            summary.TotalEvents++;
-            summary.LastEventAt = body.Timestamp;
-            summary.EventCounts[body.EventType] = summary.EventCounts.GetValueOrDefault(body.EventType) + 1;
-
-            // Update aggregates (sum values by event type)
-            var newValue = summary.Aggregates.GetValueOrDefault(body.EventType) + body.Value;
-            summary.Aggregates[body.EventType] = newValue;
-
-            await summaryStore.SaveAsync(entityKey, summary, options: null, cancellationToken);
-            await summaryStore.AddToSetAsync(
-                GetSummaryIndexKey(body.GameServiceId),
-                entityKey,
-                cancellationToken: cancellationToken);
-
-            // Publish score updated event if value changed
-            if (body.Value != 0)
+            var buffered = await BufferAnalyticsEventAsync(bufferedEvent, cancellationToken);
+            if (!buffered)
             {
-                var scoreEvent = new AnalyticsScoreUpdatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    GameServiceId = body.GameServiceId,
-                    EntityId = body.EntityId,
-                    EntityType = MapToScoreEventEntityType(body.EntityType),
-                    ScoreType = body.EventType,
-                    PreviousValue = previousValue,
-                    NewValue = newValue,
-                    Delta = body.Value
-                };
-                await _messageBus.TryPublishAsync("analytics.score.updated", scoreEvent, cancellationToken: cancellationToken);
-
-                // Check for milestones (100, 500, 1000, 5000, 10000, etc.)
-                await CheckAndPublishMilestoneAsync(body.GameServiceId, body.EntityId, body.EntityType, body.EventType, newValue, cancellationToken);
+                return (StatusCodes.InternalServerError, null);
             }
 
             return (StatusCodes.OK, new IngestEventResponse
             {
-                EventId = eventId,
+                EventId = bufferedEvent.EventId,
                 Accepted = true
             });
         }
@@ -211,15 +193,30 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 try
                 {
-                    var (status, _) = await IngestEventAsync(evt, cancellationToken);
-                    if (status == StatusCodes.OK)
+                    var bufferedEvent = new BufferedAnalyticsEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        GameServiceId = evt.GameServiceId,
+                        EntityId = evt.EntityId,
+                        EntityType = evt.EntityType,
+                        EventType = evt.EventType,
+                        Timestamp = evt.Timestamp,
+                        Value = evt.Value,
+                        Metadata = ConvertMetadataToDictionary(evt.Metadata)
+                    };
+
+                    var buffered = await BufferAnalyticsEventAsync(
+                        bufferedEvent,
+                        cancellationToken,
+                        flushAfterEnqueue: false);
+                    if (buffered)
                     {
                         accepted++;
                     }
                     else
                     {
                         rejected++;
-                        errors.Add($"Event for {evt.EntityType}:{evt.EntityId} returned status {status}");
+                        errors.Add($"Event for {evt.EntityType}:{evt.EntityId} failed to buffer");
                     }
                 }
                 catch (Exception ex)
@@ -227,6 +224,11 @@ public partial class AnalyticsService : IAnalyticsService
                     rejected++;
                     errors.Add($"Event for {evt.EntityType}:{evt.EntityId} failed: {ex.Message}");
                 }
+            }
+
+            if (accepted > 0)
+            {
+                await FlushBufferedEventsIfNeededAsync(cancellationToken);
             }
 
             return (StatusCodes.OK, new IngestEventBatchResponse
@@ -361,6 +363,7 @@ public partial class AnalyticsService : IAnalyticsService
                 var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
                 if (summary == null)
                 {
+                    await summaryStore.RemoveFromSetAsync(indexKey, entityKey, cancellationToken);
                     continue;
                 }
 
@@ -914,6 +917,775 @@ public partial class AnalyticsService : IAnalyticsService
     #region Helper Methods
 
     /// <summary>
+    /// Builds the key for a buffered analytics event entry.
+    /// </summary>
+    private static string GetEventBufferEntryKey(Guid eventId)
+        => $"{EVENT_BUFFER_ENTRY_PREFIX}:{eventId}";
+
+    /// <summary>
+    /// Builds the cache key for a game service stub.
+    /// </summary>
+    private static string GetGameServiceCacheKey(string stubName)
+        => $"{GAME_SERVICE_CACHE_PREFIX}:{stubName}";
+
+    /// <summary>
+    /// Builds the cache key for a game session mapping.
+    /// </summary>
+    private static string GetSessionMappingKey(Guid sessionId)
+        => $"{SESSION_MAPPING_PREFIX}:{sessionId}";
+
+    private StateOptions? BuildSummaryCacheOptions()
+    {
+        if (_configuration.SummaryCacheTtlSeconds <= 0)
+        {
+            return null;
+        }
+
+        return new StateOptions { Ttl = _configuration.SummaryCacheTtlSeconds };
+    }
+
+    private async Task<bool> EnsureSummaryStoreRedisAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var backend = _stateStoreFactory.GetBackendType(_configuration.SummaryStoreName);
+            if (backend == StateBackend.Redis)
+            {
+                return true;
+            }
+
+            var message = "Analytics summary store must use Redis to support buffered ingestion";
+            _logger.LogError(
+                "{Message} (StoreName: {StoreName}, Backend: {Backend})",
+                message,
+                _configuration.SummaryStoreName,
+                backend);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "EnsureSummaryStoreRedis",
+                "analytics_summary_store_invalid",
+                message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: $"store:{_configuration.SummaryStoreName};backend:{backend}",
+                stack: null,
+                cancellationToken: cancellationToken);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to determine analytics summary store backend");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "EnsureSummaryStoreRedis",
+                "analytics_summary_store_lookup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: $"store:{_configuration.SummaryStoreName}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return false;
+        }
+    }
+
+    private static Dictionary<string, object>? ConvertMetadataToDictionary(object? metadata)
+    {
+        if (metadata == null)
+        {
+            return null;
+        }
+
+        if (metadata is IDictionary<string, object> typedDictionary)
+        {
+            return new Dictionary<string, object>(typedDictionary, StringComparer.OrdinalIgnoreCase);
+        }
+
+        if (metadata is System.Collections.IDictionary dictionary)
+        {
+            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            foreach (System.Collections.DictionaryEntry entry in dictionary)
+            {
+                if (entry.Key is string key && entry.Value != null)
+                {
+                    result[key] = entry.Value;
+                }
+            }
+            return result;
+        }
+
+        if (metadata is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+        {
+            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            foreach (var property in jsonElement.EnumerateObject())
+            {
+                var value = ConvertJsonElement(property.Value);
+                if (value != null)
+                {
+                    result[property.Name] = value;
+                }
+            }
+            return result;
+        }
+
+        return null;
+    }
+
+    private static object? ConvertJsonElement(JsonElement element)
+        => element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Object => element.EnumerateObject()
+                .ToDictionary(p => p.Name, p => ConvertJsonElement(p.Value), StringComparer.OrdinalIgnoreCase),
+            JsonValueKind.Array => element.EnumerateArray().Select(ConvertJsonElement).ToList(),
+            JsonValueKind.Null => null,
+            JsonValueKind.Undefined => null,
+            _ => element.ToString()
+        };
+
+    private async Task<Guid?> ResolveGameServiceIdAsync(string gameType, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(gameType))
+        {
+            var message = "Game type is required to resolve game service ID";
+            _logger.LogError(message);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceId",
+                "game_type_missing",
+                message,
+                dependency: null,
+                endpoint: "event:game-session",
+                details: null,
+                stack: null,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+
+        var stubName = gameType.Trim().ToLowerInvariant();
+        var cacheOptions = BuildSummaryCacheOptions();
+        if (cacheOptions != null)
+        {
+            var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(_configuration.SummaryStoreName);
+            var cacheKey = GetGameServiceCacheKey(stubName);
+            var cached = await cacheStore.GetAsync(cacheKey, cancellationToken);
+            if (cached != null)
+            {
+                return cached.ServiceId;
+            }
+        }
+
+        try
+        {
+            var response = await _gameServiceClient.GetServiceAsync(new GetServiceRequest
+            {
+                StubName = stubName
+            }, cancellationToken);
+
+            if (response == null)
+            {
+                var message = "Game service lookup returned no data";
+                _logger.LogError("{Message} (GameType: {GameType})", message, gameType);
+                await _messageBus.TryPublishErrorAsync(
+                    "analytics",
+                    "ResolveGameServiceId",
+                    "game_service_lookup_empty",
+                    message,
+                    dependency: "game-service",
+                    endpoint: "service:game-service/get",
+                    details: $"gameType:{gameType}",
+                    stack: null,
+                    cancellationToken: cancellationToken);
+                return null;
+            }
+
+            if (cacheOptions != null)
+            {
+                var cacheStore = _stateStoreFactory.GetStore<GameServiceCacheEntry>(_configuration.SummaryStoreName);
+                var cacheKey = GetGameServiceCacheKey(stubName);
+                await cacheStore.SaveAsync(cacheKey, new GameServiceCacheEntry
+                {
+                    ServiceId = response.ServiceId,
+                    CachedAt = DateTimeOffset.UtcNow
+                }, cacheOptions, cancellationToken);
+            }
+
+            return response.ServiceId;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to resolve game service for game type {GameType}", gameType);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceId",
+                "game_service_lookup_failed",
+                ex.Message,
+                dependency: "game-service",
+                endpoint: "service:game-service/get",
+                details: $"gameType:{gameType}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game service for game type {GameType}", gameType);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceId",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "game-service",
+                endpoint: "service:game-service/get",
+                details: $"gameType:{gameType}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+    }
+
+    private async Task<Guid?> ResolveGameServiceIdForSessionAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+            var mappingKey = GetSessionMappingKey(sessionId);
+            var mapping = await mappingStore.GetAsync(mappingKey, cancellationToken);
+            if (mapping != null)
+            {
+                return mapping.GameServiceId;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read game session mapping for session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForSession",
+                "session_mapping_lookup_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: $"sessionId:{sessionId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+        }
+
+        try
+        {
+            var session = await _gameSessionClient.GetGameSessionAsync(new GetGameSessionRequest
+            {
+                SessionId = sessionId
+            }, cancellationToken);
+
+            if (session == null)
+            {
+                var message = "Game session lookup returned no data";
+                _logger.LogError("{Message} (SessionId: {SessionId})", message, sessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "analytics",
+                    "ResolveGameServiceIdForSession",
+                    "game_session_lookup_empty",
+                    message,
+                    dependency: "game-session",
+                    endpoint: "service:game-session/get",
+                    details: $"sessionId:{sessionId}",
+                    stack: null,
+                    cancellationToken: cancellationToken);
+                return null;
+            }
+
+            var gameType = session.GameType.ToString().ToLowerInvariant();
+            var gameServiceId = await ResolveGameServiceIdAsync(gameType, cancellationToken);
+            if (gameServiceId.HasValue)
+            {
+                await SaveGameSessionMappingAsync(sessionId, gameType, gameServiceId.Value, cancellationToken);
+            }
+
+            return gameServiceId;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to resolve game session {SessionId} for analytics event", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForSession",
+                "game_session_lookup_failed",
+                ex.Message,
+                dependency: "game-session",
+                endpoint: "service:game-session/get",
+                details: $"sessionId:{sessionId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error resolving game session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "game-session",
+                endpoint: "service:game-session/get",
+                details: $"sessionId:{sessionId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return null;
+        }
+    }
+
+    private async Task SaveGameSessionMappingAsync(
+        Guid sessionId,
+        string gameType,
+        Guid gameServiceId,
+        CancellationToken cancellationToken)
+    {
+        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+        var mappingKey = GetSessionMappingKey(sessionId);
+        var cacheOptions = BuildSummaryCacheOptions();
+        await mappingStore.SaveAsync(mappingKey, new GameSessionMappingData
+        {
+            SessionId = sessionId,
+            GameType = gameType,
+            GameServiceId = gameServiceId,
+            UpdatedAt = DateTimeOffset.UtcNow
+        }, cacheOptions, cancellationToken);
+    }
+
+    private async Task RemoveGameSessionMappingAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(_configuration.SummaryStoreName);
+        var mappingKey = GetSessionMappingKey(sessionId);
+        await mappingStore.DeleteAsync(mappingKey, cancellationToken);
+    }
+
+    private async Task<bool> BufferAnalyticsEventAsync(
+        BufferedAnalyticsEvent bufferedEvent,
+        CancellationToken cancellationToken,
+        bool flushAfterEnqueue = true)
+    {
+        if (!await EnsureSummaryStoreRedisAsync(cancellationToken))
+        {
+            return false;
+        }
+
+        if (bufferedEvent.Metadata != null && bufferedEvent.Metadata.Count == 0)
+        {
+            bufferedEvent.Metadata = null;
+        }
+
+        IStateStore<BufferedAnalyticsEvent>? bufferStore = null;
+        IStateStore<object>? bufferIndexStore = null;
+        string? eventKey = null;
+
+        try
+        {
+            bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(_configuration.SummaryStoreName);
+            bufferIndexStore = _stateStoreFactory.GetStore<object>(_configuration.SummaryStoreName);
+            eventKey = GetEventBufferEntryKey(bufferedEvent.EventId);
+
+            await bufferStore.SaveAsync(eventKey, bufferedEvent, options: null, cancellationToken);
+            await bufferIndexStore.SortedSetAddAsync(
+                EVENT_BUFFER_INDEX_KEY,
+                eventKey,
+                bufferedEvent.Timestamp.ToUnixTimeMilliseconds(),
+                options: null,
+                cancellationToken: cancellationToken);
+
+            if (flushAfterEnqueue)
+            {
+                await FlushBufferedEventsIfNeededAsync(cancellationToken);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                if (bufferStore != null && eventKey != null)
+                {
+                    await bufferStore.DeleteAsync(eventKey, cancellationToken);
+                }
+            }
+            catch (Exception cleanupException)
+            {
+                _logger.LogError(cleanupException,
+                    "Failed to clean up buffered analytics event {EventId} after error",
+                    bufferedEvent.EventId);
+            }
+
+            _logger.LogError(ex,
+                "Failed to buffer analytics event {EventId} for {EntityType}:{EntityId}",
+                bufferedEvent.EventId,
+                bufferedEvent.EntityType,
+                bufferedEvent.EntityId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "BufferAnalyticsEvent",
+                "analytics_event_buffer_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: $"eventId:{bufferedEvent.EventId}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return false;
+        }
+    }
+
+    private async Task FlushBufferedEventsIfNeededAsync(CancellationToken cancellationToken)
+    {
+        if (!await EnsureSummaryStoreRedisAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var bufferSize = _configuration.EventBufferSize;
+        if (bufferSize <= 0)
+        {
+            var message = "Analytics event buffer size must be greater than zero";
+            _logger.LogError(message);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "FlushBufferedEventsIfNeeded",
+                "analytics_buffer_size_invalid",
+                message,
+                dependency: null,
+                endpoint: "config:analytics",
+                details: $"bufferSize:{bufferSize}",
+                stack: null,
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        var flushIntervalSeconds = _configuration.EventBufferFlushIntervalSeconds;
+        if (flushIntervalSeconds < 0)
+        {
+            var message = "Analytics event buffer flush interval must be non-negative";
+            _logger.LogError(message);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "FlushBufferedEventsIfNeeded",
+                "analytics_buffer_interval_invalid",
+                message,
+                dependency: null,
+                endpoint: "config:analytics",
+                details: $"flushIntervalSeconds:{flushIntervalSeconds}",
+                stack: null,
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        var bufferIndexStore = _stateStoreFactory.GetStore<object>(_configuration.SummaryStoreName);
+        var bufferCount = await bufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
+        if (bufferCount == 0)
+        {
+            return;
+        }
+
+        var shouldFlush = bufferCount >= bufferSize;
+        if (!shouldFlush && flushIntervalSeconds > 0)
+        {
+            var oldest = await bufferIndexStore.SortedSetRangeByRankAsync(
+                EVENT_BUFFER_INDEX_KEY,
+                0,
+                0,
+                descending: false,
+                cancellationToken);
+            if (oldest.Count == 0)
+            {
+                return;
+            }
+
+            var oldestTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(oldest[0].score));
+            shouldFlush = (DateTimeOffset.UtcNow - oldestTimestamp).TotalSeconds >= flushIntervalSeconds;
+        }
+
+        if (!shouldFlush)
+        {
+            return;
+        }
+
+        var lockExpirySeconds = Math.Max(10, flushIntervalSeconds > 0 ? flushIntervalSeconds * 2 : 10);
+        await using var lockResponse = await _lockProvider.LockAsync(
+            _configuration.SummaryStoreName,
+            BUFFER_LOCK_RESOURCE,
+            Guid.NewGuid().ToString(),
+            lockExpirySeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            return;
+        }
+
+        bufferCount = await bufferIndexStore.SortedSetCountAsync(EVENT_BUFFER_INDEX_KEY, cancellationToken);
+        if (bufferCount == 0)
+        {
+            return;
+        }
+
+        shouldFlush = bufferCount >= bufferSize;
+        if (!shouldFlush && flushIntervalSeconds > 0)
+        {
+            var oldest = await bufferIndexStore.SortedSetRangeByRankAsync(
+                EVENT_BUFFER_INDEX_KEY,
+                0,
+                0,
+                descending: false,
+                cancellationToken);
+            if (oldest.Count == 0)
+            {
+                return;
+            }
+
+            var oldestTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(oldest[0].score));
+            shouldFlush = (DateTimeOffset.UtcNow - oldestTimestamp).TotalSeconds >= flushIntervalSeconds;
+        }
+
+        if (!shouldFlush)
+        {
+            return;
+        }
+
+        try
+        {
+            var bufferStore = _stateStoreFactory.GetStore<BufferedAnalyticsEvent>(_configuration.SummaryStoreName);
+            await FlushBufferedEventsBatchAsync(bufferIndexStore, bufferStore, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error flushing analytics event buffer");
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "FlushBufferedEventsIfNeeded",
+                "analytics_buffer_flush_failed",
+                ex.Message,
+                dependency: "state",
+                endpoint: "state:summary",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task FlushBufferedEventsBatchAsync(
+        IStateStore<object> bufferIndexStore,
+        IStateStore<BufferedAnalyticsEvent> bufferStore,
+        CancellationToken cancellationToken)
+    {
+        var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(_configuration.SummaryStoreName);
+        var summaryOptions = BuildSummaryCacheOptions();
+        var batchSize = Math.Max(1, _configuration.EventBufferSize);
+
+        while (true)
+        {
+            var entries = await bufferIndexStore.SortedSetRangeByRankAsync(
+                EVENT_BUFFER_INDEX_KEY,
+                0,
+                batchSize - 1,
+                descending: false,
+                cancellationToken: cancellationToken);
+
+            if (entries.Count == 0)
+            {
+                return;
+            }
+
+            var eventKeys = entries.Select(e => e.member).ToList();
+            var bufferedEvents = await bufferStore.GetBulkAsync(eventKeys, cancellationToken);
+            var envelopes = new List<(string key, BufferedAnalyticsEvent evt)>();
+
+            foreach (var key in eventKeys)
+            {
+                if (bufferedEvents.TryGetValue(key, out var bufferedEvent))
+                {
+                    envelopes.Add((key, bufferedEvent));
+                }
+                else
+                {
+                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, key, cancellationToken);
+                }
+            }
+
+            if (envelopes.Count == 0)
+            {
+                if (entries.Count < batchSize)
+                {
+                    return;
+                }
+
+                continue;
+            }
+
+            var eventsByEntity = new Dictionary<string, List<(string key, BufferedAnalyticsEvent evt)>>();
+            foreach (var envelope in envelopes)
+            {
+                var entityKey = GetEntityKey(envelope.evt.GameServiceId, envelope.evt.EntityType, envelope.evt.EntityId);
+                if (!eventsByEntity.TryGetValue(entityKey, out var list))
+                {
+                    list = new List<(string key, BufferedAnalyticsEvent evt)>();
+                    eventsByEntity[entityKey] = list;
+                }
+                list.Add(envelope);
+            }
+
+            foreach (var kvp in eventsByEntity)
+            {
+                var entityKey = kvp.Key;
+                var entityEvents = kvp.Value;
+                var summary = await summaryStore.GetAsync(entityKey, cancellationToken);
+
+                if (summary == null)
+                {
+                    var firstEvent = entityEvents[0].evt;
+                    summary = new EntitySummaryData
+                    {
+                        EntityId = firstEvent.EntityId,
+                        EntityType = firstEvent.EntityType,
+                        GameServiceId = firstEvent.GameServiceId,
+                        FirstEventAt = firstEvent.Timestamp,
+                        EventCounts = new Dictionary<string, long>(),
+                        Aggregates = new Dictionary<string, double>()
+                    };
+                }
+                else
+                {
+                    summary.EventCounts ??= new Dictionary<string, long>();
+                    summary.Aggregates ??= new Dictionary<string, double>();
+                }
+
+                var scoreEvents = new List<AnalyticsScoreUpdatedEvent>();
+                var milestoneChecks = new List<(Guid gameServiceId, Guid entityId, EntityType entityType, string scoreType, double newValue)>();
+
+                foreach (var envelope in entityEvents)
+                {
+                    var bufferedEvent = envelope.evt;
+                    var hasPrevious = summary.Aggregates.TryGetValue(bufferedEvent.EventType, out var previousAggregate);
+                    var previousValue = hasPrevious ? (double?)previousAggregate : null;
+                    var newValue = previousAggregate + bufferedEvent.Value;
+
+                    summary.Aggregates[bufferedEvent.EventType] = newValue;
+                    summary.EventCounts[bufferedEvent.EventType] = summary.EventCounts.GetValueOrDefault(bufferedEvent.EventType) + 1;
+                    summary.TotalEvents++;
+
+                    if (summary.FirstEventAt == default || bufferedEvent.Timestamp < summary.FirstEventAt)
+                    {
+                        summary.FirstEventAt = bufferedEvent.Timestamp;
+                    }
+                    if (summary.LastEventAt == default || bufferedEvent.Timestamp > summary.LastEventAt)
+                    {
+                        summary.LastEventAt = bufferedEvent.Timestamp;
+                    }
+
+                    if (bufferedEvent.Value != 0)
+                    {
+                        scoreEvents.Add(new AnalyticsScoreUpdatedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            GameServiceId = bufferedEvent.GameServiceId,
+                            EntityId = bufferedEvent.EntityId,
+                            EntityType = MapToScoreEventEntityType(bufferedEvent.EntityType),
+                            ScoreType = bufferedEvent.EventType,
+                            PreviousValue = previousValue,
+                            NewValue = newValue,
+                            Delta = bufferedEvent.Value,
+                            SessionId = bufferedEvent.SessionId
+                        });
+                        milestoneChecks.Add((bufferedEvent.GameServiceId, bufferedEvent.EntityId, bufferedEvent.EntityType, bufferedEvent.EventType, newValue));
+                    }
+                }
+
+                var summarySaved = false;
+                try
+                {
+                    await summaryStore.SaveAsync(entityKey, summary, summaryOptions, cancellationToken);
+                    summarySaved = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving analytics summary for {EntityKey}", entityKey);
+                    await _messageBus.TryPublishErrorAsync(
+                        "analytics",
+                        "FlushBufferedEventsBatch",
+                        "analytics_summary_save_failed",
+                        ex.Message,
+                        dependency: "state",
+                        endpoint: "state:summary",
+                        details: $"entityKey:{entityKey}",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
+                }
+
+                if (!summarySaved)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    await summaryStore.AddToSetAsync(
+                        GetSummaryIndexKey(summary.GameServiceId),
+                        entityKey,
+                        summaryOptions,
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating analytics summary index for {EntityKey}", entityKey);
+                    await _messageBus.TryPublishErrorAsync(
+                        "analytics",
+                        "FlushBufferedEventsBatch",
+                        "analytics_summary_index_failed",
+                        ex.Message,
+                        dependency: "state",
+                        endpoint: "state:summary",
+                        details: $"entityKey:{entityKey}",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
+                }
+
+                foreach (var scoreEvent in scoreEvents)
+                {
+                    await _messageBus.TryPublishAsync(
+                        "analytics.score.updated",
+                        scoreEvent,
+                        cancellationToken: cancellationToken);
+                }
+
+                foreach (var milestone in milestoneChecks)
+                {
+                    await CheckAndPublishMilestoneAsync(
+                        milestone.gameServiceId,
+                        milestone.entityId,
+                        milestone.entityType,
+                        milestone.scoreType,
+                        milestone.newValue,
+                        cancellationToken);
+                }
+
+                foreach (var envelope in entityEvents)
+                {
+                    await bufferStore.DeleteAsync(envelope.key, cancellationToken);
+                    await bufferIndexStore.SortedSetRemoveAsync(EVENT_BUFFER_INDEX_KEY, envelope.key, cancellationToken);
+                }
+            }
+
+            if (entries.Count < batchSize)
+            {
+                return;
+            }
+        }
+    }
+
+    /// <summary>
     /// Checks if a milestone has been reached and publishes event if so.
     /// </summary>
     private async Task CheckAndPublishMilestoneAsync(
@@ -1043,6 +1815,42 @@ public partial class AnalyticsService : IAnalyticsService
 }
 
 #region Internal Data Models
+
+/// <summary>
+/// Buffered analytics event stored prior to summary aggregation.
+/// </summary>
+internal sealed class BufferedAnalyticsEvent
+{
+    public Guid EventId { get; set; }
+    public Guid GameServiceId { get; set; }
+    public Guid EntityId { get; set; }
+    public EntityType EntityType { get; set; }
+    public string EventType { get; set; } = string.Empty;
+    public DateTimeOffset Timestamp { get; set; }
+    public double Value { get; set; }
+    public Guid? SessionId { get; set; }
+    public Dictionary<string, object>? Metadata { get; set; }
+}
+
+/// <summary>
+/// Cached mapping for game service IDs by stub name.
+/// </summary>
+internal sealed class GameServiceCacheEntry
+{
+    public Guid ServiceId { get; set; }
+    public DateTimeOffset CachedAt { get; set; }
+}
+
+/// <summary>
+/// Cached mapping between game sessions and game service IDs.
+/// </summary>
+internal sealed class GameSessionMappingData
+{
+    public Guid SessionId { get; set; }
+    public string GameType { get; set; } = string.Empty;
+    public Guid GameServiceId { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
 
 /// <summary>
 /// Internal storage model for entity summary data.
