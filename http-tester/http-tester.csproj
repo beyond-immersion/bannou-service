@@ -41,6 +41,9 @@
     <ProjectReference Include="..\lib-mesh\lib-mesh.csproj" />
     <ProjectReference Include="..\lib-state\lib-state.csproj" />
     <ProjectReference Include="..\lib-messaging\lib-messaging.csproj" />
+    <ProjectReference Include="..\lib-analytics\lib-analytics.csproj" />
+    <ProjectReference Include="..\lib-leaderboard\lib-leaderboard.csproj" />
+    <ProjectReference Include="..\lib-achievement\lib-achievement.csproj" />
   </ItemGroup>
 
 </Project>
